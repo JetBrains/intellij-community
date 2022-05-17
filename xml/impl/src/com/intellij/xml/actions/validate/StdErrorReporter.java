@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions.validate;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -54,7 +54,7 @@ public final class StdErrorReporter extends ErrorReporter {
     commandProcessor.executeCommand(
       myProject, () -> {
         MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-        final Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
+        final Content content = ContentFactory.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
         content.putUserData(KEY, myErrorsView);
         messageView.getContentManager().addContent(content);
         messageView.getContentManager().setSelectedContent(content);

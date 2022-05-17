@@ -132,7 +132,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (!isOffline) {
       myView.setUpdating(true);
     }
-    myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
+    myContent = ContentFactory.getInstance().createContent(view, title, false);
     myContent.setHelpId(InspectionResultsView.HELP_ID);
     myContent.setDisposer(myView);
     Disposer.register(myContent, () -> {

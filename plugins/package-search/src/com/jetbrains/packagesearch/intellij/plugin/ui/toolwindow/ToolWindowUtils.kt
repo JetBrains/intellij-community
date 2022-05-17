@@ -61,7 +61,7 @@ internal fun ToolWindow.initialize(project: Project) {
         }
     }
 
-    val contentFactory = ContentFactory.SERVICE.getInstance()
+    val contentFactory = ContentFactory.getInstance()
 
     for (panel in panels) {
         panel.initialize(contentManager, contentFactory)

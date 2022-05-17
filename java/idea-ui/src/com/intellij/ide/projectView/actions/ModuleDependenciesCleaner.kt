@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions
 
 import com.intellij.analysis.AnalysisScope
@@ -129,7 +129,7 @@ class ModuleDependenciesCleaner(private val module: Module, dependenciesToCheck:
 
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       val panel = DependenciesPanel(project, listOf(builder), LinkedHashSet())
-      val content = ContentFactory.SERVICE.getInstance().createContent(panel, JavaUiBundle.message("tab.title.module.dependencies", module.name), false)
+      val content = ContentFactory.getInstance().createContent(panel, JavaUiBundle.message("tab.title.module.dependencies", module.name), false)
       content.setDisposer(panel)
       panel.setContent(content)
       DependenciesToolWindow.getInstance(project).addContent(content)

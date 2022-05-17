@@ -383,7 +383,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     final MessageView messageView = myProject.getService(MessageView.class);
     if (targetContent == null || !contentIdPair.equals(targetContent.getUserData(CONTENT_ID_KEY))) {
       errorTreeView = new NewEditableErrorTreeViewPanel(myProject, null, true, true, null);
-      targetContent = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, contentDisplayName, true);
+      targetContent = ContentFactory.getInstance().createContent(errorTreeView, contentDisplayName, true);
       targetContent.putUserData(CONTENT_ID_KEY, contentIdPair);
 
       messageView.getContentManager().addContent(targetContent);

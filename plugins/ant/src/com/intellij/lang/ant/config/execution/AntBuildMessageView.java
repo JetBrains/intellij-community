@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.ide.CommonActionsManager;
@@ -283,7 +283,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     String contentName = buildFile.getPresentableName();
     contentName = getBuildContentName() + " (" + contentName + ")";
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(messageView.getComponent(), contentName, true);
+    final Content content = ContentFactory.getInstance().createContent(messageView.getComponent(), contentName, true);
     content.putUserData(KEY, messageView);
     ijMessageView.getContentManager().addContent(content);
     ijMessageView.getContentManager().setSelectedContent(content);

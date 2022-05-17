@@ -272,7 +272,7 @@ public final class CompilerMessagesService implements BuildViewService {
 
     MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     messageView.runWhenInitialized(() -> {
-      Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
+      Content content = ContentFactory.getInstance().createContent(component, myContentName, true);
       content.setHelpId(HelpID.COMPILER);
       CONTENT_ID_KEY.set(content, myContentId);
       SESSION_ID_KEY.set(content, sessionId);

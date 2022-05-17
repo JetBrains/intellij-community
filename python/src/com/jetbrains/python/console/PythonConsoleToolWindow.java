@@ -117,7 +117,7 @@ public final class PythonConsoleToolWindow {
   private static Content createContent(final @NotNull RunContentDescriptor contentDescriptor) {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, contentDescriptor.getDisplayName(), false);
+    Content content = ContentFactory.getInstance().createContent(panel, contentDescriptor.getDisplayName(), false);
     content.setCloseable(true);
 
     resetContent(contentDescriptor, panel, content);
