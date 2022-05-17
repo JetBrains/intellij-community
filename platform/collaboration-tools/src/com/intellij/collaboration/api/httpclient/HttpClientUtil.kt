@@ -53,4 +53,4 @@ object HttpClientUtil {
 }
 
 suspend fun HttpApiClient.loadImage(request: HttpRequest): HttpResponse<Image> =
-  client.sendAndAwaitCancellable(request, imageBodyHandler(logger, request))
+  sendAndAwaitCancellable(request, imageBodyHandler(logger, request))
