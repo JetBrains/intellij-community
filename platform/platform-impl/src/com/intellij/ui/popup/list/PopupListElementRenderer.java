@@ -121,23 +121,22 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     myValueLabel = new JLabel();
     myValueLabel.setEnabled(false);
-    JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0);
-    myValueLabel.setBorder(valueBorder);
+    myValueLabel.setBorder(JBUI.Borders.empty(0, ExperimentalUI.isNewUI() ? 0 : JBUIScale.scale(8), 1, 0));
     myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     myValueLabel.setOpaque(false);
     panel.add(myValueLabel, BorderLayout.CENTER);
 
     myShortcutLabel = new JLabel();
-    JBEmptyBorder shortcutBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0,0,1,3);
-    myShortcutLabel.setBorder(shortcutBorder);
+    myShortcutLabel.setBorder(JBUI.Borders.empty(0, 0, 1, ExperimentalUI.isNewUI() ? 0 : 3));
     myShortcutLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     myShortcutLabel.setOpaque(false);
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
     Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
-    myMnemonicLabel.setBorder(JBUI.Borders.empty(insets));
+    myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
     if (!ExperimentalUI.isNewUI()) {
+      //noinspection HardCodedStringLiteral
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, insets);
       myMnemonicLabel.setPreferredSize(preferredSize);
@@ -310,6 +309,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
       if (ExperimentalUI.isNewUI() && mnemonic == null) {
+        //noinspection HardCodedStringLiteral
         Dimension preferredSize = new JLabel("W").getPreferredSize();
         JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.numberMnemonicInsets());
         myMnemonicLabel.setText("  ");
