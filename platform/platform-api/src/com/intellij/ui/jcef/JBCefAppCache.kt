@@ -34,10 +34,12 @@ class JBCefAppCache {
     val suggestedPath: Path = Paths.get(System.getProperty("ide.browser.jcef.cache.path", defaultCachePath))
 
     val invalidationMarkerFilePath = suggestedPath.resolve(invalidationMarkerFileName)
+    val logger = thisLogger()
 
     if (FileUtil.exists(invalidationMarkerFilePath.toString())) {
       try {
         FileUtil.delete(suggestedPath)
+        logger.info("Successfully deleted JCEF browser engine cache at \"$suggestedPath\"")
       }
       catch (exception: IOException) {
         Notifications.Bus.notify(
@@ -49,10 +51,11 @@ class JBCefAppCache {
           )
         )
 
-        thisLogger().error("Failed to cleanup JCEF browser engine cache due to I/O error", exception)
+        logger.error("Failed to cleanup JCEF browser engine cache due to I/O error", exception)
       }
     }
 
+    logger.debug("JCEF cache path: \"$suggestedPath\"")
     return suggestedPath
   }
 }
