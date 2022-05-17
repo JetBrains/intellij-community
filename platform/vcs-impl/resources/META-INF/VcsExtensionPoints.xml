@@ -85,7 +85,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="generalVcsSettingsExtension"
-                    beanClass="com.intellij.openapi.vcs.configurable.GeneralVcSettingsProviderEP"
+                    beanClass="com.intellij.openapi.vcs.configurable.GeneralVcsSettingsProviderEP"
                     area="IDEA_PROJECT" dynamic="true">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
