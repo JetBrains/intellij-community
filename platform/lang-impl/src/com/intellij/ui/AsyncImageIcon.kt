@@ -3,9 +3,7 @@ package com.intellij.ui
 
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtExecutorService
-import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
@@ -14,7 +12,8 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 /**
- * Provide a way to show [Image] loaded in background as [Icon] with specific [size]
+ * Provide a way to show [Image] loaded in background as [Icon]
+ * Icon size will be taken from placeholder [defaultIcon] and should be loaded and scaled to size with [imageLoader]
  * This implementation takes all scales into account
  *
  * @see [ScalingDeferredSquareImageIcon]
@@ -22,36 +21,29 @@ import javax.swing.Icon
  *
  */
 @ApiStatus.Experimental
-class ScalingAsyncImageIcon(
-  private val size: Int,
-  defaultIcon: Icon,
-  imageLoader: () -> CompletableFuture<Image?>
+class AsyncImageIcon(
+  private val defaultIcon: Icon,
+  imageLoader: (ScaleContext, Int, Int) -> CompletableFuture<Image?>
 ) : Icon {
-  private val baseIcon = IconUtil.resizeSquared(defaultIcon, size)
 
   // Icon can be located on different monitors (with different ScaleContext),
   // so it is better to cache icon for each
-  private val scaledIconCache = ScaleContext.Cache { scaleCtx ->
-    val imageIcon = imageLoader()
-      .thenApplyAsync({ image ->
+  private val imageIconCache = ScaleContext.Cache { scaleCtx ->
+    val imageIcon = imageLoader(scaleCtx, defaultIcon.iconWidth, defaultIcon.iconHeight)
+      .thenApply { image ->
         image?.let {
-          val resizedImage = ImageUtil.resize(it, size, scaleCtx)
-          IconUtil.createImageIcon(resizedImage)
+          IconUtil.createImageIcon(it)
         }
-      }, resizeExecutor)
+      }
 
-    DelegatingIcon(baseIcon, imageIcon)
+    DelegatingIcon(defaultIcon, imageIcon)
   }
 
-  override fun getIconHeight() = baseIcon.iconHeight
-  override fun getIconWidth() = baseIcon.iconWidth
+  override fun getIconHeight() = defaultIcon.iconHeight
+  override fun getIconWidth() = defaultIcon.iconWidth
 
   override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-    scaledIconCache.getOrProvide(ScaleContext.create(c))?.paintIcon(c, g, x, y)
-  }
-
-  companion object {
-    private val resizeExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("ImageIcon resize executor", 1)
+    imageIconCache.getOrProvide(ScaleContext.create(c))?.paintIcon(c, g, x, y)
   }
 }
 
