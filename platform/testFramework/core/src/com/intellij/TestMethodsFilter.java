@@ -17,7 +17,7 @@ public class TestMethodsFilter {
       ((Filterable)test).filter(new MyFilter());
     }
     catch (NoTestsRemainException e) {
-      throw new RuntimeException(e);
+      // do nothing, in the future -- filter classes
     }
   }
 
