@@ -93,7 +93,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @NotNull
   protected PsiResolveHelper getResolveHelper(@NotNull Project project) {
-    return PsiResolveHelper.SERVICE.getInstance(project);
+    return PsiResolveHelper.getInstance(project);
   }
 
   protected HighlightVisitorImpl() {

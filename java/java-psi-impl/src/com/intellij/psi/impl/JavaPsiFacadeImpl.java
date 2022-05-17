@@ -245,7 +245,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiResolveHelper getResolveHelper() {
-    return PsiResolveHelper.SERVICE.getInstance(myProject);
+    return PsiResolveHelper.getInstance(myProject);
   }
 
   @Override

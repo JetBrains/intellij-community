@@ -252,7 +252,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (!(resolved instanceof PsiMember)) {
       return true;
     }
-    if (!PsiResolveHelper.SERVICE.getInstance(resolved.getProject()).isAccessible((PsiMember)resolved, context, null)) {
+    if (!PsiResolveHelper.getInstance(resolved.getProject()).isAccessible((PsiMember)resolved, context, null)) {
       return false;
     }
     VirtualFile file = PsiUtilCore.getVirtualFile(resolved);

@@ -54,7 +54,7 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
       PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PsiCallExpression.class);
     assertNotNull(callExpression);
     CandidateInfo[] candidates =
-      PsiResolveHelper.SERVICE.getInstance(myFixture.getProject()).getReferencedMethodCandidates(callExpression, false);
+      PsiResolveHelper.getInstance(myFixture.getProject()).getReferencedMethodCandidates(callExpression, false);
     assertSize(27, candidates);
     String generateDoc = new JavaDocumentationProvider().generateDoc(callExpression, callExpression);
     assertEquals("<html>Candidates for method call <b>new StringBuilder().append()</b> are:<br><br>&nbsp;&nbsp;" +

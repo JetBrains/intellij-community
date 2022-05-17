@@ -191,7 +191,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     String qName = ((UClass)fieldContainingClass).getQualifiedName();
     if (qName == null) return false;
     String fieldQName = qName + "." + field.getName();
-    return PsiResolveHelper.SERVICE.getInstance(place.getProject()).resolveReferencedVariable(fieldQName, place) != null;
+    return PsiResolveHelper.getInstance(place.getProject()).resolveReferencedVariable(fieldQName, place) != null;
   }
 
   @Nullable
