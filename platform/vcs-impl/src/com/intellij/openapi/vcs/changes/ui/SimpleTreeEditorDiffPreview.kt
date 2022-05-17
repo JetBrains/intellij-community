@@ -30,7 +30,7 @@ abstract class SimpleTreeEditorDiffPreview(
 
   open fun returnFocusToTree() = Unit
 
-  override fun updateAvailability(event: AnActionEvent) {
+  override fun updateDiffAction(event: AnActionEvent) {
     event.presentation.isVisible = event.isFromActionToolbar || event.presentation.isEnabled
   }
 
