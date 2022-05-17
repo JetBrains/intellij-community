@@ -68,11 +68,11 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
   init {
     authManager.addListener(tabDisposable, object : AccountsListener<GithubAccount> {
-      override fun onAccountCredentialsChanged(account: GithubAccount) {
-        ApplicationManager.getApplication().invokeLater(Runnable { Updater().update() }) {
-          tabDisposable.isDisposed
-        }
-      }
+      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) = scheduleUpdate()
+      override fun onAccountCredentialsChanged(account: GithubAccount) = scheduleUpdate()
+
+      private fun scheduleUpdate() = ApplicationManager.getApplication()
+        .invokeLater(Runnable { Updater().update() }) { tabDisposable.isDisposed }
     })
     repositoryManager.addRepositoryListChangedListener(tabDisposable) {
       Updater().update()
