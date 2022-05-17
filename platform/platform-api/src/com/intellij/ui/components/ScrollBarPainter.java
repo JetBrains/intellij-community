@@ -227,7 +227,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
       double mixer = value == null ? 0 : value.doubleValue();
       Color fill = fillProducer.produce(mixer);
       Color draw = drawProducer.produce(mixer);
-      if (fill.getRGB() == draw.getRGB()) draw = null; // without border
+      if (ignoreBorder() || fill.getRGB() == draw.getRGB()) draw = null; // without border
 
       int arc = 0;
       if (SystemInfo.isMac) {
@@ -244,6 +244,10 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     protected int macMargin(boolean withBorder) {
       return withBorder ? 1 : 2;
     }
+
+    protected boolean ignoreBorder() {
+      return false;
+    }
   }
 
   static final class ThinScrollBarThumb extends Thumb {
@@ -254,6 +258,11 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     @Override
     protected int macMargin(boolean withBorder) {
       return 0;
+    }
+
+    @Override
+    protected boolean ignoreBorder() {
+      return true;
     }
   }
 }

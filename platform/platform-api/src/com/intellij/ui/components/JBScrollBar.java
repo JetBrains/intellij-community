@@ -104,15 +104,10 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   @NotNull
   public static ScrollBarUI createUI(JComponent c, boolean isThin) {
     if (SystemInfo.isMac) {
-      if (isThin) {
-        return new ThinMacScrollBarUI();
-      }
-      else {
-        return new MacScrollBarUI();
-      }
+      return isThin ? new ThinMacScrollBarUI() : new MacScrollBarUI();
     }
     else {
-      return new DefaultScrollBarUI();
+      return isThin ? new ThinScrollBarUI() : new DefaultScrollBarUI();
     }
   }
 
