@@ -2,12 +2,13 @@
 package com.intellij.ui
 
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.EdtExecutorService
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Image
+import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
@@ -26,55 +27,51 @@ class AsyncImageIcon(
   imageLoader: (ScaleContext, Int, Int) -> CompletableFuture<Image?>
 ) : Icon {
 
-  // Icon can be located on different monitors (with different ScaleContext),
-  // so it is better to cache icon for each
-  private val imageIconCache = ScaleContext.Cache { scaleCtx ->
-    val imageIcon = imageLoader(scaleCtx, defaultIcon.iconWidth, defaultIcon.iconHeight)
-      .thenApply { image ->
-        image?.let {
-          IconUtil.createImageIcon(it)
-        }
-      }
+  private val repaintScheduler = RepaintScheduler()
 
-    DelegatingIcon(defaultIcon, imageIcon)
+  // Icon can be located on different monitors (with different ScaleContext),
+  // so it is better to cache image for each
+  private val imageRequestsCache = ScaleContext.Cache { scaleCtx ->
+    imageLoader(scaleCtx, iconWidth, iconHeight).also {
+      it.thenRunAsync({ repaintScheduler.scheduleRepaint(iconWidth, iconHeight) }, EdtExecutorService.getInstance())
+    }
   }
 
   override fun getIconHeight() = defaultIcon.iconHeight
   override fun getIconWidth() = defaultIcon.iconWidth
 
-  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-    imageIconCache.getOrProvide(ScaleContext.create(c))?.paintIcon(c, g, x, y)
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    val imageRequest = imageRequestsCache.getOrProvide(ScaleContext.create(c))!!
+    if (!imageRequest.isDone && c != null) {
+      repaintScheduler.requestRepaint(c, x, y)
+    }
+
+    val image = imageRequest.getNow(null)
+    if (image == null) {
+      defaultIcon.paintIcon(c, g, x, y)
+    }
+    else {
+      val bounds = Rectangle(x, y, iconWidth, iconHeight)
+      StartupUiUtil.drawImage(g, image, bounds, c)
+    }
   }
 }
 
-private class DelegatingIcon(baseIcon: Icon, private val delegateResult: CompletableFuture<out Icon?>) : Icon {
+private class RepaintScheduler {
   // We collect repaintRequests for the icon to understand which Components should be repainted when icon is loaded
   // We can receive paintIcon few times for the same component but with different x, y
   // Only the last request should be scheduled
   private val repaintRequests = mutableMapOf<Component, DeferredIconRepaintScheduler.RepaintRequest>()
-  private var delegate: Icon = baseIcon
 
-  init {
-    delegateResult.thenApplyAsync({ icon ->
-      if (icon != null) {
-        delegate = icon
-        for ((_, repaintRequest) in repaintRequests) {
-          repaintScheduler.scheduleRepaint(repaintRequest, iconWidth, iconHeight, alwaysSchedule = false)
-        }
-      }
-      repaintRequests.clear()
-    }, EdtExecutorService.getInstance())
+  fun requestRepaint(c: Component, x: Int, y: Int) {
+    repaintRequests[c] = repaintScheduler.createRepaintRequest(c, x, y)
   }
 
-  override fun getIconHeight() = delegate.iconHeight
-
-  override fun getIconWidth() = delegate.iconWidth
-
-  override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-    delegate.paintIcon(c, g, x, y)
-    if (!delegateResult.isDone && c != null) {
-      repaintRequests[c] = repaintScheduler.createRepaintRequest(c, x, y)
+  fun scheduleRepaint(width: Int, height: Int) {
+    for ((_, repaintRequest) in repaintRequests) {
+      repaintScheduler.scheduleRepaint(repaintRequest, width, height, alwaysSchedule = false)
     }
+    repaintRequests.clear()
   }
 
   companion object {
