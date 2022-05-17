@@ -34,7 +34,7 @@ abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase() {
     myFixture.testHighlighting("$fileName.$fileExt")
     val infos = myFixture.doHighlighting(HighlightSeverity.WARNING)
     assertEquals(1, infos.size)
-    val attributes = infos[0].forcedTextAttributes
+    val attributes = infos.first().forcedTextAttributes
     assertNotNull(attributes)
     assertEquals(EffectType.BOLD_DOTTED_LINE, attributes.effectType)
   }

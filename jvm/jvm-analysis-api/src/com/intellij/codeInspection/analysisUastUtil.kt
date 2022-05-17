@@ -18,7 +18,7 @@ fun ULambdaExpression.getReturnType(): PsiType? {
   return LambdaUtil.getFunctionalInterfaceReturnType(lambdaType)
 }
 
-fun UAnnotated.findAnnotations(fqNames: Collection<String>) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }
+fun UAnnotated.findAnnotations(vararg fqNames: String) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }
 
 /**
  * Gets all classes in this file, including inner classes.
