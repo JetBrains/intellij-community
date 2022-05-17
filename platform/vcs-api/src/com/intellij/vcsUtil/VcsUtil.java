@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -74,7 +74,7 @@ public class VcsUtil {
   }
 
   public static void markFileAsDirty(final Project project, @NonNls String path) {
-    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
+    final FilePath filePath = VcsContextFactory.getInstance().createFilePathOn(new File(path));
     VcsDirtyScopeManager.getInstance(project).fileDirty(filePath);
   }
 
@@ -201,32 +201,32 @@ public class VcsUtil {
 
   @NotNull
   public static FilePath getFilePath(@NotNull VirtualFile file) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+    return VcsContextFactory.getInstance().createFilePathOn(file);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull File file) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+    return VcsContextFactory.getInstance().createFilePathOn(file);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull Path path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
+    return VcsContextFactory.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull @NonNls String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
+    return VcsContextFactory.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull
   public static FilePath getFilePathOnNonLocal(@NotNull @NonNls String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(path, isDirectory);
+    return VcsContextFactory.getInstance().createFilePathOnNonLocal(path, isDirectory);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull File file, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, isDirectory);
+    return VcsContextFactory.getInstance().createFilePathOn(file, isDirectory);
   }
 
   /**
@@ -234,17 +234,17 @@ public class VcsUtil {
    */
   @Deprecated(forRemoval = true)
   public static @NotNull FilePath getFilePathForDeletedFile(@NotNull @NonNls String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePath(path, isDirectory);
+    return VcsContextFactory.getInstance().createFilePath(path, isDirectory);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull VirtualFile parent, @NotNull @NonNls String name) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(parent, name);
+    return VcsContextFactory.getInstance().createFilePathOn(parent, name);
   }
 
   @NotNull
   public static FilePath getFilePath(@NotNull VirtualFile parent, @NotNull @NonNls String fileName, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePath(parent, fileName, isDirectory);
+    return VcsContextFactory.getInstance().createFilePath(parent, fileName, isDirectory);
   }
 
   @Nullable
