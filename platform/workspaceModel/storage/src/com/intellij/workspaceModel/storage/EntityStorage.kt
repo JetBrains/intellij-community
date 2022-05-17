@@ -24,11 +24,11 @@ import kotlin.reflect.KProperty1
  * * [VirtualFileUrl];
  * * [WorkspaceEntity] or [PersistentEntityId];
  * * [List] of another allowed type;
- * * [Array] of another allowed type;
+ * * [Map] of another allowed types where key is NOT a WorkspaceEntity;
  * * another data class with properties of the allowed types (references to entities must be wrapped into [EntityReference]);
  * * sealed abstract class where all implementations satisfy these requirements.
  *
- * Currently the entities are representing by classes inheriting from WorkspaceEntityBase, and need to have a separate class with `Data`
+ * Currently, the entities are representing by classes inheriting from WorkspaceEntityBase, and need to have a separate class with `Data`
  * suffix extending WorkspaceEntityData to store the actual data.
  *
  * # Equality and identity
