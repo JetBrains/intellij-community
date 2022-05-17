@@ -184,9 +184,8 @@ public class PluginManagerTest {
   public void testModulePluginIdContract() {
     Path pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules");
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath, true);
-    PluginSet pluginSet = new PluginSetBuilder(List.of(descriptorBundled))
-      .computeEnabledModuleMap(null)
-      .createPluginSet(List.of());
+    PluginSet pluginSet = new PluginSetBuilder(Set.of(descriptorBundled))
+      .createPluginSetWithEnabledModulesMap();
 
     PluginId moduleId = PluginId.getId("foo.bar");
     PluginId corePlugin = PluginId.getId("my.plugin");

@@ -99,7 +99,7 @@ internal class ClassLoaderConfiguratorTest {
     val barPlugin = plugins.get(1)
     assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).computeEnabledModuleMap().createPluginSet())
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).createPluginSetWithEnabledModulesMap())
     classLoaderConfigurator.configure()
 
     assertThat((barPlugin.pluginClassLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
@@ -145,7 +145,7 @@ internal class ClassLoaderConfiguratorTest {
     val plugins = loadResult.getEnabledPlugins()
     assertThat(plugins).hasSize(2)
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).computeEnabledModuleMap().createPluginSet())
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).createPluginSetWithEnabledModulesMap())
     classLoaderConfigurator.configure()
     return loadResult
   }

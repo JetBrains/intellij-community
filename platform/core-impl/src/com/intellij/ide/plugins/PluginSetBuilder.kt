@@ -6,7 +6,6 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.Java11Shim
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
@@ -17,13 +16,22 @@ import java.util.function.Predicate
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
+class PluginSetBuilder(
+  val unsortedPlugins: Set<IdeaPluginDescriptorImpl>,
+) {
+
   private val _moduleGraph = createModuleGraph(unsortedPlugins)
   private val builder = _moduleGraph.builder()
   val moduleGraph: SortedModuleGraph = _moduleGraph.sorted(builder)
 
   private val enabledPluginIds = HashMap<PluginId, IdeaPluginDescriptorImpl>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<String, IdeaPluginDescriptorImpl>(unsortedPlugins.size * 2)
+
+  constructor(
+    unsortedPlugins: Collection<IdeaPluginDescriptorImpl>,
+  ) : this(
+    LinkedHashSet(unsortedPlugins)
+  )
 
   fun checkPluginCycles(errors: MutableList<Supplier<String>>) {
     if (builder.isAcyclic) {
@@ -136,27 +144,23 @@ class PluginSetBuilder(val unsortedPlugins: List<IdeaPluginDescriptorImpl>) {
     return this
   }
 
+  fun createPluginSetWithEnabledModulesMap(): PluginSet {
+    return computeEnabledModuleMap().createPluginSet()
+  }
+
   fun createPluginSet(incompletePlugins: Collection<IdeaPluginDescriptorImpl> = Collections.emptyList()): PluginSet {
-    val java11Shim = Java11Shim.INSTANCE
-
-    val allPlugins: List<IdeaPluginDescriptorImpl>
     val sortedPlugins = getSortedPlugins()
-    if (incompletePlugins.isEmpty()) {
-      allPlugins = ContainerUtil.immutableList(*sortedPlugins)
-    }
-    else {
-      val result = ArrayList<IdeaPluginDescriptorImpl>(sortedPlugins.size + incompletePlugins.size)
-      result.addAll(sortedPlugins)
-      result.addAll(incompletePlugins)
-      allPlugins = java11Shim.copyOfCollection(result)
-    }
+    val allPlugins = LinkedHashSet<IdeaPluginDescriptorImpl>(sortedPlugins.size + incompletePlugins.size)
+    allPlugins += sortedPlugins
+    allPlugins += incompletePlugins
 
-    val enabledPlugins = java11Shim.copyOfCollection(sortedPlugins.filterTo(ArrayList(sortedPlugins.size)) { it.isEnabled })
+    val enabledPlugins = sortedPlugins.filterTo(ArrayList(sortedPlugins.size)) { it.isEnabled }
 
+    val java11Shim = Java11Shim.INSTANCE
     return PluginSet(
       moduleGraph = moduleGraph,
-      allPlugins = allPlugins,
-      enabledPlugins = enabledPlugins,
+      allPlugins = java11Shim.copyOf(allPlugins),
+      enabledPlugins = java11Shim.copyOfCollection(enabledPlugins),
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
       enabledModules = java11Shim.copyOfCollection(getEnabledModules()),

@@ -520,12 +520,10 @@ object DynamicPlugins {
           @Suppress("TestOnlyProblems")
           (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
 
-          val newPluginSet = if (options.disable) {
-            pluginSet.updateEnabledPlugins()
-          }
-          else {
-            pluginSet.removePluginAndUpdateEnabledPlugins(pluginDescriptor)
-          }
+          val newPluginSet = pluginSet.withoutModule(
+            module = pluginDescriptor,
+            disable = options.disable,
+          ).createPluginSetWithEnabledModulesMap()
 
           PluginManagerCore.setPluginSet(newPluginSet)
         }
@@ -818,7 +816,10 @@ object DynamicPlugins {
 
     val loadStartTime = System.currentTimeMillis()
 
-    val pluginSet = PluginManagerCore.getPluginSet().enablePlugin(pluginDescriptor)
+    val pluginSet = PluginManagerCore.getPluginSet()
+      .withModule(pluginDescriptor)
+      .createPluginSetWithEnabledModulesMap()
+
     val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
 
     // todo loadPlugin should be called per each module, temporary solution
@@ -1021,8 +1022,7 @@ private fun optionalDependenciesOnPlugin(
   }
 
   // 2. sort topologically
-  val unsortedPlugins = LinkedHashSet(modulesToMain.values)
-  val topologicalComparator = PluginSetBuilder(unsortedPlugins.toList())
+  val topologicalComparator = PluginSetBuilder(modulesToMain.values)
     .moduleGraph
     .topologicalComparator
 
