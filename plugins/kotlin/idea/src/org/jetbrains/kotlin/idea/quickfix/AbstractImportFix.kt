@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -82,7 +82,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 ) : KotlinQuickFixAction<T>(expression), HighPriorityAction {
     private val project = expression.project
 
-    private val modificationCountOnCreate = PsiModificationTracker.SERVICE.getInstance(project).modificationCount
+    private val modificationCountOnCreate = PsiModificationTracker.getInstance(project).modificationCount
 
     protected val suggestions = lazy(::collectSuggestions)
 
@@ -131,7 +131,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
     override fun startInWriteAction() = false
 
-    fun isOutdated() = modificationCountOnCreate != PsiModificationTracker.SERVICE.getInstance(project).modificationCount
+    fun isOutdated() = modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
 
     open fun createAction(project: Project, editor: Editor, element: KtExpression): KotlinAddImportAction {
         return createSingleImportAction(project, editor, element, suggestions())

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -142,13 +142,13 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
 
         val project = file.project
 
-        val modificationCount = PsiModificationTracker.SERVICE.getInstance(project).modificationCount
+        val modificationCount = PsiModificationTracker.getInstance(project).modificationCount
         val invokeFixLater = Disposable {
             // later because should invoke when highlighting is finished
             ApplicationManager.getApplication().invokeLater {
                 if (project.isDisposed) return@invokeLater
                 val editor = PsiEditorUtil.findEditor(file)
-                val currentModificationCount = PsiModificationTracker.SERVICE.getInstance(project).modificationCount
+                val currentModificationCount = PsiModificationTracker.getInstance(project).modificationCount
                 if (editor != null && currentModificationCount == modificationCount && timeToOptimizeImportsOnTheFly(
                         file,
                         editor,

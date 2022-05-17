@@ -431,7 +431,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private long getCurrentModificationCount() {
-    return myElement != null ? PsiModificationTracker.SERVICE.getInstance(myElement.getProject()).getModificationCount() : -1;
+    return myElement != null ? PsiModificationTracker.getInstance(myElement.getProject()).getModificationCount() : -1;
   }
 
   public void setText(@NotNull @Nls String text, @Nullable PsiElement element, @Nullable DocumentationProvider provider) {

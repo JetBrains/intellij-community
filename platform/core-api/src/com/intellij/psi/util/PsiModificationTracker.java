@@ -27,20 +27,26 @@ import java.util.function.Predicate;
  * </ol>
  */
 public interface PsiModificationTracker extends ModificationTracker {
+
   /**
-   * Provides a way to get the instance of {@link PsiModificationTracker} corresponding to a given project.
-   * @see #getInstance(Project)
+   * @deprecated use {@link PsiModificationTracker#getInstance(Project)} instead
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   final class SERVICE {
     private SERVICE() {
     }
 
-    /**
-     * @return The instance of {@link PsiModificationTracker} corresponding to the given project.
-     */
     public static PsiModificationTracker getInstance(Project project) {
-      return project.getService(PsiModificationTracker.class);
+      return PsiModificationTracker.getInstance(project);
     }
+  }
+
+  /**
+   * @return The instance of {@link PsiModificationTracker} corresponding to the given project.
+   */
+  static PsiModificationTracker getInstance(Project project) {
+    return project.getService(PsiModificationTracker.class);
   }
 
   /**

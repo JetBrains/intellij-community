@@ -142,7 +142,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void doTest(@NonNls String text, Processor<? super PsiFile> run) {
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
-    PsiModificationTracker tracker = PsiModificationTracker.SERVICE.getInstance(getProject());
+    PsiModificationTracker tracker = PsiModificationTracker.getInstance(getProject());
     long count = tracker.getModificationCount();
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       run.process(file);
@@ -514,19 +514,19 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   @NotNull
   private ModificationTracker getTracker() {
-    return PsiModificationTracker.SERVICE.getInstance(getProject());
+    return PsiModificationTracker.getInstance(getProject());
   }
 
   @NotNull
   ModificationTracker getJavaTracker() {
-    return PsiModificationTracker.SERVICE.getInstance(getProject());
+    return PsiModificationTracker.getInstance(getProject());
   }
 
   public static class JavaLanguageTrackerTest extends PsiModificationTrackerTest {
     @Override
     @NotNull
     ModificationTracker getJavaTracker() {
-      return PsiModificationTracker.SERVICE.getInstance(getProject())
+      return PsiModificationTracker.getInstance(getProject())
         .forLanguage(JavaLanguage.INSTANCE);
     }
   }

@@ -169,8 +169,8 @@ public final class JavaModuleGraphUtil {
   public static @NotNull Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project), 
-                    PsiJavaModuleModificationTracker.getInstance(project), 
+      Result.create(findCycles(project),
+                    PsiJavaModuleModificationTracker.getInstance(project),
                     ProjectRootModificationTracker.getInstance(project)));
     return Objects.requireNonNullElse(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
   }
@@ -266,8 +266,8 @@ public final class JavaModuleGraphUtil {
   private static RequiresGraph getRequiresGraph(PsiJavaModule module) {
     Project project = module.getProject();
     return CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), 
-                    PsiJavaModuleModificationTracker.getInstance(project), 
+      Result.create(buildRequiresGraph(project),
+                    PsiJavaModuleModificationTracker.getInstance(project),
                     ProjectRootModificationTracker.getInstance(project)));
   }
 
