@@ -13,7 +13,11 @@ val Field<*, *>.implWsDataFieldCode: String
       else append(implWsDataBlockingCode)
     }
     else {
-      append("var $javaName: ${type.javaType} ${defaultValue}")
+      if (defaultValue!!.startsWith("=")) {
+        append("var $javaName: ${type.javaType} ${defaultValue}")
+      } else {
+        append("var $javaName: ${type.javaType} = ${defaultValue}")
+      }
     }
   }
 private val Field<*, *>.implWsDataBlockingCode: String

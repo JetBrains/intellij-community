@@ -43,6 +43,9 @@ class KtObjModule(
   fun build(diagnostics: Diagnostics = Diagnostics()): Built {
     val simpleTypes = mutableListOf<DefType>()
     files.forEach {
+      if (it.name == "module.kt") {
+        println("")
+      }
       it.scope.visitSimpleTypes(simpleTypes)
     }
     simpleTypes.forEach { it.def.buildFields(diagnostics) }

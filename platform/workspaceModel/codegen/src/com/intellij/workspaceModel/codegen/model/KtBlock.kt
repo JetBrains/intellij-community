@@ -50,5 +50,14 @@ open class KtBlock(
     src.substring(start, p)
   }
 
+  fun isInsideGenerateBlock(): Boolean {
+    if (range == null) return false
+    val intRange = range!!.range
+    if (parent == null) return false
+    val generatedCodeRange = parent._generatedCode
+    if (generatedCodeRange == null) return false
+    return generatedCodeRange.first <= intRange.first && intRange.last <= generatedCodeRange.last
+  }
+
   private fun defaultIndent() = if (parent == null) "" else parent.indent + "    "
 }

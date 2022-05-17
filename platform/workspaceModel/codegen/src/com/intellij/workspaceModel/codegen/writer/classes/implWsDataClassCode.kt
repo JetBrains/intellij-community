@@ -83,15 +83,27 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
         line("return entity")
       }
 
-      conditionalLine({ isEntityWithPersistentId }, "override fun persistentId(): ${PersistentEntityId::class.fqn}<*>") {
+      if (isEntityWithPersistentId) {
         val persistentIdField = structure.allFields.first { it.name == "persistentId" }
         assert(persistentIdField.hasDefault == Field.Default.plain)
         val methodBody = persistentIdField.defaultValue!!
-        if (methodBody.startsWith("=")) {
-          line("return ${methodBody.substring(2)}")
-        }
-        else {
-          line("return $methodBody")
+        if (methodBody.contains("return")) {
+          if (methodBody.startsWith("{")) {
+            line("override fun persistentId(): ${PersistentEntityId::class.fqn}<*> $methodBody \n")
+          } else {
+            sectionNl("override fun persistentId(): ${PersistentEntityId::class.fqn}<*>") {
+                line(methodBody)
+            }
+          }
+        } else {
+          sectionNl("override fun persistentId(): ${PersistentEntityId::class.fqn}<*>") {
+            if (methodBody.startsWith("=")) {
+              line("return ${methodBody.substring(2)}")
+            }
+            else {
+              line("return $methodBody")
+            }
+          }
         }
       }
 
