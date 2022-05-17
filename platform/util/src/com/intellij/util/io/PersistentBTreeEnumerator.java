@@ -53,7 +53,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int COLLISION_OFFSET = 4;
   private int myValuesCount;
   private int myCollisions;
-  private int myExistingKeysEnumerated;
 
   private IntToIntBtree myBTree;
   private final boolean myInlineKeysNoMapping;
@@ -269,7 +268,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myDuplicatedValuesPageOffset = store(DATA_START + 20, myDuplicatedValuesPageOffset, toDisk);
     myValuesCount = store(DATA_START + 24, myValuesCount, toDisk);
     myCollisions = store(DATA_START + 28, myCollisions, toDisk);
-    myExistingKeysEnumerated = store(DATA_START + 32, myExistingKeysEnumerated, toDisk);
+    //store(DATA_START + 32, xxx, toDisk); empty field
     storeBTreeVars(toDisk);
   }
 
@@ -537,7 +536,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             // we found reference to no dupe key
             if (isKeyAtIndex(value, indexNodeValueAddress)) {
               if (!saveNewValue) {
-                ++myExistingKeysEnumerated;
                 return indexNodeValueAddress;
               }
               hasExistingData = true;
@@ -639,7 +637,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return new PersistentEnumeratorStatistics(myBTree.getStatistics(),
                                               myCollisions,
                                               myValuesCount,
-                                              myExistingKeysEnumerated,
                                               myKeyStorage.getCurrentLength(),
                                               myStorage.length());
   }

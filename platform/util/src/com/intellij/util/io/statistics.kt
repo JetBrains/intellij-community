@@ -49,7 +49,6 @@ data class BTreeStatistics(val pages: Int,
 data class PersistentEnumeratorStatistics(val bTreeStatistics: BTreeStatistics,
                                           val collisions: Int,
                                           val values: Int,
-                                          val existingValueEnumerations: Int,
                                           val dataFileSizeInBytes: Long,
                                           val storageSizeInBytes: Long)
 
@@ -60,6 +59,7 @@ data class PersistentHashMapStatistics(val persistentEnumeratorStatistics: Persi
 @Internal
 data class CachedChannelsStatistics(val hit: Int,
                                     val miss: Int,
+                                    val load: Int,
                                     val capacity: Int)
 
 @Internal
@@ -68,4 +68,5 @@ data class FilePageCacheStatistics(val cachedChannelsStatistics: CachedChannelsS
                                    val maxRegisteredFiles: Int,
                                    val pageHit: Int,
                                    val pageMiss: Int,
+                                   val pageLoad: Int,
                                    val capacityInBytes: Long)

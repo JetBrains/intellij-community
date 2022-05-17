@@ -7,7 +7,9 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.io.StorageLockContext
@@ -16,9 +18,13 @@ import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
 import com.intellij.util.io.stats.StorageStatsRegistrar
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.absolute
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
@@ -33,22 +39,41 @@ object StorageDiagnosticData {
   private const val fileNamePrefix = "storage-diagnostic-"
 
   private const val maxFiles = 10
+  private const val dumpPeriodInMinutes = 5L
 
-  fun dumpStorageDataStatistics() = try {
-    val stats = getStorageDataStatistics()
-    val file = IndexDiagnosticDumperUtils.getDumpFilePath(
-      fileNamePrefix,
-      LocalDateTime.now(),
-      "json",
-      IndexDiagnosticDumperUtils.indexingDiagnosticDir
+  fun dumpPeriodically() {
+    val executor = AppExecutorUtil.createBoundedScheduledExecutorService(
+      "Storage Diagnostic Dumper",
+      1,
     )
-    IndexDiagnosticDumperUtils.writeValue(file, stats)
-  }
-  finally {
-    deleteOutdatedDiagnostics()
+
+    val sessionStartTime = ApplicationManager.getApplication().startTime
+    val sessionLocalDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(sessionStartTime), ZoneId.systemDefault())
+
+    executor.scheduleWithFixedDelay(Runnable {
+      try {
+        val stats = getStorageDataStatistics()
+        val file = getDumpFile(sessionLocalDateTime)
+        IndexDiagnosticDumperUtils.writeValue(file, stats)
+      }
+      catch (e: Exception) {
+        thisLogger().error(e)
+      }
+      finally {
+        deleteOutdatedDiagnostics()
+      }
+    }, dumpPeriodInMinutes, dumpPeriodInMinutes, TimeUnit.MINUTES)
   }
 
-  private fun getStorageDataStatistics(): StorageDataStats {
+  private fun getDumpFile(time: LocalDateTime): Path = IndexDiagnosticDumperUtils.getDumpFilePath(
+    fileNamePrefix,
+    time,
+    "json",
+    IndexDiagnosticDumperUtils.indexingDiagnosticDir
+  )
+
+  @VisibleForTesting
+  fun getStorageDataStatistics(): StorageDataStats {
     val mapStats = StorageStatsRegistrar.dumpStatsForOpenMaps().toMutableMap()
     val enumeratorStats = StorageStatsRegistrar.dumpStatsForOpenEnumerators().toMutableMap()
     val vfsStorageStats = vfsStorageStatistics(mapStats, enumeratorStats)

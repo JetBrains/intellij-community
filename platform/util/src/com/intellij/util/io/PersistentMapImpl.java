@@ -1097,7 +1097,8 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   }
 
   public @NotNull PersistentHashMapStatistics getStatistics() throws IOException {
-    return new PersistentHashMapStatistics(((PersistentBTreeEnumerator<?>)myEnumerator).getStatistics(), myValueStorage == null ? 0 : myValueStorage.getSize());
+    long valueStorageSizeInBytes = myValueStorage == null ? -1 : myValueStorage.getSize();
+    return new PersistentHashMapStatistics(((PersistentBTreeEnumerator<?>)myEnumerator).getStatistics(), valueStorageSizeInBytes);
   }
 
   private class MyEnumeratorRecordHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase<?>> {

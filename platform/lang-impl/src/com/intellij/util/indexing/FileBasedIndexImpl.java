@@ -214,11 +214,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
               }
             }.queue();
           }
-
-          // dump stats only if indexes are loaded,
-          // it can be done without file-based indexes
-          // but the most important information are related to the file-based indexes.
-          StorageDiagnosticData.INSTANCE.dumpStorageDataStatistics();
         }
       }
     });
@@ -233,6 +228,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }, null);
 
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
+
+    StorageDiagnosticData.INSTANCE.dumpPeriodically();
   }
 
   void scheduleFullIndexesRescan(@NotNull String reason) {

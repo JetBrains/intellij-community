@@ -17,6 +17,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
   private final int myCapacity;
   private int myHitCount;
   private int myMissCount;
+  private int myLoadCount;
 
   @NotNull
   private final Map<Path, ChannelDescriptor> myCache;
@@ -30,7 +31,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
 
   @NotNull CachedChannelsStatistics getStatistics() {
     synchronized (myLock) {
-      return new CachedChannelsStatistics(myHitCount, myMissCount, myCapacity);
+      return new CachedChannelsStatistics(myHitCount, myMissCount, myLoadCount, myCapacity);
     }
   }
 
@@ -50,10 +51,15 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     synchronized (myLock) {
       descriptor = myCache.get(path);
       if (descriptor == null) {
-        releaseOverCachedChannels();
+        boolean somethingDropped = releaseOverCachedChannels();
         descriptor = new ChannelDescriptor(path, read);
         myCache.put(path, descriptor);
-        myMissCount++;
+        if (somethingDropped) {
+          myMissCount++;
+        }
+        else {
+          myLoadCount++;
+        }
       }
       else if (!read && descriptor.isReadOnly()) {
         if (descriptor.isLocked()) {
@@ -93,7 +99,7 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
     }
   }
 
-  private void releaseOverCachedChannels() throws IOException {
+  private boolean releaseOverCachedChannels() throws IOException {
     int dropCount = myCache.size() - myCapacity;
 
     if (dropCount >= 0) {
@@ -109,7 +115,10 @@ final class OpenChannelsCache { // TODO: Will it make sense to have a background
       for (Path file : keysToDrop) {
         closeChannel(file);
       }
+
+      return true;
     }
+    return false;
   }
 
   static final class ChannelDescriptor implements Closeable {

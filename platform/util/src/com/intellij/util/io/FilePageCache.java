@@ -103,6 +103,7 @@ final class FilePageCache {
                                            myMaxRegisteredFiles,
                                            myHits,
                                            myMisses,
+                                           myLoad,
                                            mySizeLimit);
       }
       finally {
@@ -128,6 +129,7 @@ final class FilePageCache {
   private volatile int myUncachedFileAccess;
   private int myHits;
   private int myMisses;
+  private int myLoad;
   private volatile int myMaxRegisteredFiles;
   private volatile int myMappingChangeCount;
 
@@ -243,7 +245,12 @@ final class FilePageCache {
 
       mySegmentsAccessLock.lock();
       try {
-        myMisses++;
+        if (mySegments.size() < mySizeLimit) {
+          myLoad++;
+        }
+        else {
+          myMisses++;
+        }
         mySegments.put(key, wrapper);
       }
       finally {
