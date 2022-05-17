@@ -179,15 +179,8 @@ object KotlinArtifactsDownloader {
      */
     private fun isOldAllInOneDistFormatAvailable(version: IdeKotlinVersion) = version < IdeKotlinVersion.get("1.7.20")
 
-    private fun getMavenRepos(project: Project) =
-        RemoteRepositoriesConfiguration.getInstance(project).repositories +
-                listOf( // TODO remove once KTI-724 is fixed
-                    RemoteRepositoryDescription(
-                        "kotlin.ide.plugin.dependencies",
-                        "Kotlin IDE Plugin Dependencies",
-                        "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
-                    )
-                )
+    private fun getMavenRepos(project: Project): List<RemoteRepositoryDescription> =
+        RemoteRepositoriesConfiguration.getInstance(project).repositories
 
     @Nls
     fun failedToDownloadMavenArtifact(project: Project, artifactId: String, version: String) = KotlinBasePluginBundle.message(
