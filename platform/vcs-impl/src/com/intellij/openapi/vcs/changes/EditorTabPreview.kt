@@ -86,7 +86,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     val newDoubleClickHandler = Processor<MouseEvent> { e ->
       if (isToggleEvent(tree, e)) return@Processor false
 
-      isPreviewOnDoubleClickAllowed() && openPreview(true) || oldDoubleClickHandler?.process(e) == true
+      isPreviewOnDoubleClickAllowed() && performDiffAction() || oldDoubleClickHandler?.process(e) == true
     }
 
     tree.doubleClickHandler = newDoubleClickHandler
@@ -96,7 +96,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   private fun installEnterKeyHandler(tree: ChangesTree) {
     val oldEnterKeyHandler = tree.enterKeyHandler
     val newEnterKeyHandler = Processor<KeyEvent> { e ->
-      isPreviewOnEnterAllowed() && openPreview(false) || oldEnterKeyHandler?.process(e) == true
+      isPreviewOnEnterAllowed() && performDiffAction() || oldEnterKeyHandler?.process(e) == true
     }
 
     tree.enterKeyHandler = newEnterKeyHandler
@@ -128,26 +128,26 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     }
   }
 
-  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
-    if (isPreviewVisible) openPreview(focus) else closePreview()
-  }
-
   protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpenWithRemotes(previewFile)
 
-  fun closePreview() {
+  override fun closePreview() {
     FileEditorManager.getInstance(project).closeFile(previewFile)
     updatePreviewProcessor?.clear()
   }
 
-  open fun openPreview(focusEditor: Boolean): Boolean {
+  override fun openPreview(requestFocus: Boolean): Boolean {
     updatePreviewProcessor?.refresh(false)
     if (!hasContent()) return false
 
     escapeHandler?.let { handler -> registerEscapeHandler(previewFile, handler) }
 
-    openPreview(project, previewFile, focusEditor)
+    openPreview(project, previewFile, requestFocus)
 
     return true
+  }
+
+  override fun performDiffAction(): Boolean {
+    return super.performDiffAction() // TODO: handle external tools
   }
 
   private class EditorTabDiffPreviewVirtualFile(val preview: EditorTabPreview)

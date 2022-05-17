@@ -18,7 +18,7 @@ class GitStageEditorDiffPreview(
     return changeViewProcessor.currentChange != null
   }
 
-  override fun updateAvailability(event: AnActionEvent) {
+  override fun updateDiffAction(event: AnActionEvent) {
     GitStageDiffAction.updateAvailability(event)
   }
 
@@ -33,7 +33,7 @@ class GitStageEditorDiffPreview(
 
   internal fun processDoubleClickOrEnter(isDoubleClick: Boolean): Boolean {
     val isPreviewAllowed = if (isDoubleClick) isPreviewOnDoubleClickAllowed() else isPreviewOnEnterAllowed()
-    return isPreviewAllowed && openPreview(isDoubleClick)
+    return isPreviewAllowed && performDiffAction()
   }
 
   override fun isPreviewOnDoubleClickAllowed(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
