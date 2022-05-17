@@ -15,7 +15,7 @@ open class GHApiLoadingErrorHandler(private val project: Project,
                                     resetRunnable: () -> Unit)
   : GHRetryLoadingErrorHandler(resetRunnable) {
 
-  override fun getActionForError(error: Throwable): Action? {
+  override fun getActionForError(error: Throwable): Action {
     if (error is GithubAuthenticationException) {
       return ReLoginAction()
     }
