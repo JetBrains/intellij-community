@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import textwrap
 
 import remote_sync
@@ -452,28 +453,65 @@ class RemoteSyncTest(HelpersTestCase):
 
     def test_output_state_json_non_ascii_paths(self):
         """Checks that non-ASCII paths are written without escaping in .state.json."""
-        self.collect_sources(['по-русски'])
+        test_data_root = tempfile.mkdtemp(self.test_name)
+        self.create_fs_tree(test_data_root, {
+            'по-русски': {
+                'балалайка.py': None
+            }
+        })
+
+        src_root = os.path.join(test_data_root, 'по-русски')
+        rsync = RemoteSync([src_root], self.temp_dir, None)
+        rsync._test_root = self.test_data_dir
+        rsync.run()
+
         out_state_json = self.resolve_in_temp_dir('.state.json')
         with open(out_state_json, 'r', encoding='utf-8') as state_file:
             self.assertIn('"по-русски.zip"', state_file.read())
 
     def test_input_state_json_with_non_ascii_paths(self):
         """Checks that .state.json with non-ASCII paths is correctly decoded."""
+        test_data_root = tempfile.mkdtemp(self.test_name)
+        self.create_fs_tree(test_data_root, {
+            'по-русски': {
+                'балалайка.py': None
+            }
+        })
+        src_root = os.path.join(test_data_root, 'по-русски')
+        state_json = os.path.join(test_data_root, '.state.json')
+        with open(state_json, 'w', encoding='utf-8') as f:
+            f.write(textwrap.dedent("""\
+            {
+              "roots": [
+                {
+                  "path": "по-русски",
+                  "zip_name": "по-русски.zip",
+                  "valid_entries": {
+                    "балалайка.py": {
+                      "mtime": 0
+                    }
+                  },
+                  "invalid_entries": []
+                }
+              ]
+            }
+            """))
+
         # Run a real process to test input JSON decoding
         subprocess.check_output(
             [sys.executable, remote_sync.__file__,
-             '--roots', self.resolve_in_test_data('по-русски'),
-             '--state-file', self.resolve_in_test_data('.state.json'),
+             '--roots', src_root,
+             '--state-file', state_json,
              self.temp_dir],
         )
         self.assertJsonEquals(self.resolve_in_temp_dir('.state.json'), {
             "roots": [
                 {
-                    "path": self.resolve_in_test_data("по-русски"),
+                    "path": src_root,
                     "zip_name": "по-русски.zip",
                     "valid_entries": {
                         "балалайка.py": {
-                            "mtime": self.mtime('по-русски/балалайка.py'),
+                            "mtime": self.mtime(os.path.join(src_root, 'балалайка.py')),
                         }
                     },
                     "invalid_entries": []
@@ -499,6 +537,16 @@ class RemoteSyncTest(HelpersTestCase):
         rsync._test_root = self.test_data_dir
         rsync.run()
 
-    def mtime(self, test_data_path):
-        path = self.resolve_in_test_data(test_data_path)
+    def mtime(self, path):
+        if not os.path.isabs(path):
+            path = self.resolve_in_test_data(path)
         return int(os.stat(path).st_mtime)
+
+    def create_fs_tree(self, output_dir, tree):
+        for name, subtree in tree.items():
+            abs_path = os.path.join(output_dir, name)
+            if subtree is None:
+                open(abs_path, 'w').close()
+            else:
+                os.mkdir(abs_path)
+                self.create_fs_tree(abs_path, subtree)
