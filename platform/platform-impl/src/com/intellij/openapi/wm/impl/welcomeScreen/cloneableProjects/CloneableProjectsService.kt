@@ -27,7 +27,7 @@ class CloneableProjectsService {
 
   @RequiresEdt
   fun runCloneTask(projectPath: String, cloneTask: CloneTask) {
-    val progressIndicator = CloneableProjectProgressIndicator(projectPath, cloneTask.taskInfo())
+    val progressIndicator = CloneableProjectProgressIndicator(projectPath, cloneTask.taskInfo(), CloneStatus.PROGRESS)
     addCloneableProject(progressIndicator)
 
     ApplicationManager.getApplication().executeOnPooledThread {
@@ -35,6 +35,10 @@ class CloneableProjectsService {
         when (cloneTask.run(progressIndicator)) {
           CloneStatus.SUCCESS -> {
             upgradeCloneProjectToRecent(progressIndicator)
+          }
+          CloneStatus.FAILURE -> {
+            progressIndicator.cloneStatus = CloneStatus.FAILURE
+            fireCloneFailedEvent()
           }
           else -> {}
         }
@@ -51,7 +55,8 @@ class CloneableProjectsService {
       val projectName = recentProjectManager.getProjectName(projectPath)
       val displayName = recentProjectManager.getDisplayName(projectPath) ?: projectName
 
-      CloneableProjectItem(projectPath, projectName, displayName, projectProgressIndicators, projectProgressIndicators.cloneTaskInfo)
+      CloneableProjectItem(projectPath, projectName, displayName, projectProgressIndicators,
+                           projectProgressIndicators.cloneTaskInfo, projectProgressIndicators.cloneStatus)
     }
   }
 
@@ -87,8 +92,15 @@ class CloneableProjectsService {
       .onCloneRemoved()
   }
 
+  private fun fireCloneFailedEvent() {
+    ApplicationManager.getApplication().messageBus
+      .syncPublisher(TOPIC)
+      .onCloneFailed()
+  }
+
   enum class CloneStatus {
     SUCCESS,
+    PROGRESS,
     FAILURE
   }
 
@@ -104,7 +116,8 @@ class CloneableProjectsService {
 
   private inner class CloneableProjectProgressIndicator(
     val projectPath: String,
-    val cloneTaskInfo: CloneTaskInfo
+    val cloneTaskInfo: CloneTaskInfo,
+    var cloneStatus: CloneStatus
   ) : AbstractProgressIndicatorExBase() {
     init {
       setOwnerTask(cloneTaskInfo)
@@ -129,6 +142,9 @@ class CloneableProjectsService {
 
     @JvmDefault
     fun onCloneRemoved() {}
+
+    @JvmDefault
+    fun onCloneFailed() {}
   }
 
   companion object {

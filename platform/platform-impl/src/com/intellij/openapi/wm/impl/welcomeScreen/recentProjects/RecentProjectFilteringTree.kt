@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingUtil
@@ -398,15 +399,19 @@ class RecentProjectFilteringTree(
         projectNameLabel.text = item.displayName() // NON-NLS
         projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
         projectIconLabel.icon = IconUtil.desaturate(recentProjectsManager.getProjectIcon(item.projectPath, true))
-        projectProgressBar.apply {
-          val progressIndicator = item.progressIndicator
-          if (progressIndicator.isCanceled) {
-            projectCloneStatusPanel.isVisible = false
-            projectPathLabel.text = IdeBundle.message("welcome.screen.projects.clone.failed")
-            return@apply
-          }
+        projectProgressBar.isIndeterminate = item.progressIndicator.isIndeterminate
 
-          value = (item.progressIndicator.fraction * 100).toInt()
+        projectProgressBar.apply {
+          when (item.cloneStatus) {
+            CloneStatus.PROGRESS -> {
+              projectCloneStatusPanel.isVisible = true
+              value = (item.progressIndicator.fraction * 100).toInt()
+            }
+            CloneStatus.FAILURE -> {
+              projectCloneStatusPanel.isVisible = false
+              projectPathLabel.text = IdeBundle.message("welcome.screen.projects.clone.failed.title")
+            }
+          }
         }
 
         toolTipText = item.progressIndicator.text2
