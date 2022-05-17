@@ -97,12 +97,12 @@ class KtInterface(
         byName.getOrPut(it.name) { mutableListOf() }.add(it)
       }
       byName.values.forEachIndexed { index, defFields ->
-        kind?.buildField(index, mergeFieldDefs(defFields, diagnostics), scope, type, diagnostics)
+        kind?.buildField(index, mergeFieldDefs(defFields, diagnostics), scope, type, diagnostics, module.keepUnknownFields)
       }
     }
     else if (simpleType != null && constructor != null && (kind is WsData || kind is WsSealed)) {
       constructor.defs.forEach { defField ->
-        kind?.buildField(1, defField, scope, simpleType!!, diagnostics)
+        kind?.buildField(1, defField, scope, simpleType!!, diagnostics, module.keepUnknownFields)
       }
     }
   }

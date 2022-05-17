@@ -1,8 +1,5 @@
 package org.jetbrains.deft.codegen.model
 
-import org.jetbrains.deft.codegen.ijws.fields.referencedField
-import org.jetbrains.deft.codegen.ijws.getRefType
-import org.jetbrains.deft.codegen.ijws.refsFields
 import org.jetbrains.deft.impl.TBlob
 import org.jetbrains.deft.impl.TRef
 import org.jetbrains.deft.impl.fields.*
@@ -40,7 +37,7 @@ class DefField(
     if (extensionDelegateModuleName != null) append(" by <extension in module ${extensionDelegateModuleName.text}>")
   }
 
-  fun toMemberField(scope: KtScope, owner: DefType, diagnostics: Diagnostics) {
+  fun toMemberField(scope: KtScope, owner: DefType, diagnostics: Diagnostics, keepUnknownFields: Boolean) {
     if (type == null) {
       diagnostics.add(nameRange, "only properties with explicit type supported")
       return
@@ -51,7 +48,7 @@ class DefField(
       return
     }
 
-    val valueType = type.build(scope, diagnostics, annotations) ?: return
+    val valueType = type.build(scope, diagnostics, annotations, keepUnknownFields) ?: return
     val field = Field(owner, id, name, valueType)
     configure(field)
   }
@@ -73,7 +70,7 @@ class DefField(
       return
     }
 
-    val resolvedReceiver = receiver.build(scope, diagnostics)
+    val resolvedReceiver = receiver.build(scope, diagnostics, keepUnknownFields = module.keepUnknownFields)
     if (resolvedReceiver !is TRef) {
       diagnostics.add(receiver.classifierRange, "Only Obj types supported as receivers")
       return
@@ -82,7 +79,7 @@ class DefField(
     id = module.extFields.size + 1 // todo: persistent ids
     val receiverObjType = resolvedReceiver.targetObjType
 
-    val valueType = type.build(scope, diagnostics, annotations) ?: return
+    val valueType = type.build(scope, diagnostics, annotations, keepUnknownFields = module.keepUnknownFields) ?: return
     val field = ExtField(ExtFieldId(id), receiverObjType, name, valueType)
     module.extFields.add(field)
     configure(field)

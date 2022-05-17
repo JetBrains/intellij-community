@@ -18,7 +18,7 @@ class KtType(
     if (args.isEmpty()) classifier
     else "$classifier<${args.joinToString(", ")}>"
 
-  fun build(scope: KtScope, diagnostics: Diagnostics, annotations: KtAnnotations = KtAnnotations()): ValueType<*>? {
+  fun build(scope: KtScope, diagnostics: Diagnostics, annotations: KtAnnotations = KtAnnotations(), keepUnknownFields: Boolean): ValueType<*>? {
     val childAnnotation = this.annotations.byName[Child::class.java.simpleName]
                           ?: annotations.byName[Child::class.java.simpleName]
 
@@ -33,7 +33,7 @@ class KtType(
         } else {
           val target = args.singleOrNull()
           if (target == null) diagnostics.add(classifierRange, "List should have 1 type argument: $this")
-          val elementType = target?.build(scope, diagnostics, annotations)
+          val elementType = target?.build(scope, diagnostics, annotations, keepUnknownFields)
           if (elementType != null) TList(elementType) else null
         }
       }
@@ -44,20 +44,24 @@ class KtType(
         }
         else {
           val (k, v) = args
-          val kt = k.build(scope, diagnostics, annotations)
-          val vt = v.build(scope, diagnostics, annotations)
+          val kt = k.build(scope, diagnostics, annotations, keepUnknownFields)
+          val vt = v.build(scope, diagnostics, annotations, keepUnknownFields)
           if (kt != null && vt != null) TMap(kt, vt) else null
         }
       }
       else -> {
         val ktInterface = scope.resolve(classifier)?.ktInterface
-        if (ktInterface?.kind == null && classifier !in listOf("VirtualFileUrl", "EntitySource", "PersistentEntityId")) {
+        if (ktInterface?.kind == null && classifier !in listOf("VirtualFileUrl", "EntitySource", "PersistentEntityId") && !keepUnknownFields) {
           diagnostics.add(classifierRange, "Unsupported type: $this. " +
                                            "Supported: String, Int, Boolean, List, Map, Serializable, subtypes of Obj")
           null
         }
         else {
-          val kind = if (classifier in listOf("VirtualFileUrl", "PersistentEntityId")) WsEntityInterface() else ktInterface?.kind
+          val kind = when {
+            classifier in listOf("VirtualFileUrl", "PersistentEntityId") -> WsEntityInterface()
+            keepUnknownFields -> WsUnknownType
+            else -> ktInterface?.kind
+          }
           kind?.buildValueType(ktInterface, diagnostics, this, childAnnotation)
         }
       }

@@ -77,13 +77,13 @@ object CodeWriter {
     }
   }
 
-  fun generate(dir: File, fromDirectory: String, generatedDestDir: File) {
+  fun generate(dir: File, fromDirectory: String, generatedDestDir: File, keepUnknownFields: Boolean) {
     generatedDestDir.mkdirs()
     val ktSrcs = dir.resolve(fromDirectory).listFiles()!!
       .toList()
       .filter { it.name.endsWith(".kt") }
 
-    val module = KtObjModule(null)
+    val module = KtObjModule(null, keepUnknownFields)
     ktSrcs.forEach {
       module.addFile(it.relativeTo(dir).path, null) { it.readText() }
     }

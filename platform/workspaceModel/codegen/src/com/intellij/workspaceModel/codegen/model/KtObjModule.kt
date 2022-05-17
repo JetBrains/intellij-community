@@ -9,7 +9,8 @@ import storage.codegen.patcher.KotlinReader
 import storage.codegen.patcher.PsiKotlinReader
 
 class KtObjModule(
-  val project: Project?
+  val project: Project?,
+  val keepUnknownFields: Boolean = false,
 ) : ObjModule() {
   val packages = mutableMapOf<String?, KtPackage>()
   val files = mutableListOf<KtFile>()

@@ -6,7 +6,7 @@ import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
 
 abstract class KtInterfaceKind {
-  abstract fun buildField(fieldNumber: Int, field: DefField, scope: KtScope, type: DefType, diagnostics: Diagnostics)
+  abstract fun buildField(fieldNumber: Int, field: DefField, scope: KtScope, type: DefType, diagnostics: Diagnostics, keepUnknownFields: Boolean)
   abstract fun buildValueType(
     ktInterface: KtInterface?, diagnostics: Diagnostics, ktType: KtType,
     childAnnotation: KtAnnotation?
@@ -14,8 +14,13 @@ abstract class KtInterfaceKind {
 }
 
 open class WsEntityInterface : KtInterfaceKind() {
-  override fun buildField(fieldNumber: Int, field: DefField, scope: KtScope, type: DefType, diagnostics: Diagnostics) {
-    field.toMemberField(scope, type, diagnostics)
+  override fun buildField(fieldNumber: Int,
+                          field: DefField,
+                          scope: KtScope,
+                          type: DefType,
+                          diagnostics: Diagnostics,
+                          keepUnknownFields: Boolean) {
+    field.toMemberField(scope, type, diagnostics, keepUnknownFields)
     if (fieldNumber == 0) {
       val entitySource = Field(type, field.id, "entitySource", TBlob<Any>("EntitySource"))
       entitySource.exDef = field
@@ -59,6 +64,15 @@ object WsPsiEntityInterface: WsEntityInterface() {
 }
 
 object WsEntityWithPersistentId: WsEntityInterface()
+
+object WsUnknownType: WsEntityInterface() {
+  override fun buildValueType(ktInterface: KtInterface?,
+                              diagnostics: Diagnostics,
+                              ktType: KtType,
+                              childAnnotation: KtAnnotation?): ValueType<*> {
+    return TBlob<Any>(ktType.classifier)
+  }
+}
 
 interface WsPropertyClass
 

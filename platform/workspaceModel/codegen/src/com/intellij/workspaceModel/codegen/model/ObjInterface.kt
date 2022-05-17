@@ -11,10 +11,11 @@ object ObjInterface : KtInterfaceKind() {
     field: DefField,
     scope: KtScope,
     type: DefType,
-    diagnostics: Diagnostics
+    diagnostics: Diagnostics,
+    keepUnknownFields: Boolean,
   ) {
     field.id = fieldNumber + 1 // todo: persistent ids
-    field.toMemberField(scope, type, diagnostics)
+    field.toMemberField(scope, type, diagnostics, keepUnknownFields)
   }
 
   override fun buildValueType(
