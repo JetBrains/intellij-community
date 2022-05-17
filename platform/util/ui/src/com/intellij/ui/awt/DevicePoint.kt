@@ -5,6 +5,7 @@ import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
 import java.awt.Component
 import java.awt.GraphicsConfiguration
+import java.awt.GraphicsEnvironment
 import java.awt.Point
 import java.awt.event.MouseEvent
 import kotlin.math.roundToInt
@@ -29,14 +30,48 @@ class DevicePoint {
 
   constructor(event: MouseEvent) : this(event.locationOnScreen, event.component)
 
+  /**
+   * Converts the device point to a screen point, using the screen that contains the point as the destination screen
+   */
+  val locationOnScreen: Point
+    get() {
+      if (requiresScaling()) {
+        GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices.forEach { device ->
+          val gc = device.defaultConfiguration
+          val factor = JBUIScale.sysScale(gc)
+          val deviceBounds = gc.bounds.also {
+            it.width = (it.width * factor).roundToInt()
+            it.height = (it.height * factor).roundToInt()
+          }
+          if (deviceBounds.contains(point)) {
+            return scale(point, deviceBounds.location, 1 / factor)
+          }
+        }
+      }
+
+      return point.location // Return a copy
+    }
+
+  /**
+   * Converts the device point to the screen coordinates of the given component
+   *
+   * @param destinationComponent the component to use to get the destination screen coordinates
+   * @return the device point in screen coordinates
+   */
   fun getLocationOnScreen(destinationComponent: Component) = getLocationOnScreen(destinationComponent.graphicsConfiguration)
 
+  /**
+   * Converts the device point to the screen coordinates of the given component
+   *
+   * @param destinationGraphicsConfiguration the [GraphicsConfiguration] of the destination screen
+   * @return the device point in screen coordinates
+   */
   fun getLocationOnScreen(destinationGraphicsConfiguration: GraphicsConfiguration): Point {
     return if (requiresScaling()) {
-      val scale = JBUIScale.sysScale(destinationGraphicsConfiguration)
+      val factor = JBUIScale.sysScale(destinationGraphicsConfiguration)
       // Screen bounds is in screen coordinates, but the origin is in device coordinates. We don't need width/height
       val screenOrigin = destinationGraphicsConfiguration.bounds.location
-      scale(point, screenOrigin, 1 / scale)
+      scale(point, screenOrigin, 1 / factor)
     }
     else {
       point.location  // Return a copy

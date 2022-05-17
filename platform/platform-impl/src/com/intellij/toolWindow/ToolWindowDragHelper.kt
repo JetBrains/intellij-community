@@ -7,10 +7,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-import com.intellij.openapi.wm.impl.AbstractDroppableStripe
-import com.intellij.openapi.wm.impl.SquareStripeButton
-import com.intellij.openapi.wm.impl.SquareStripeButtonLook
-import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
@@ -189,18 +186,52 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   }
 
   private fun relocate(event: MouseEvent) {
-    val devicePoint = DevicePoint(event)
+    val eventDevicePoint = DevicePoint(event)
     val dialog = dragImageDialog ?: return
     val toolWindow = getToolWindow() ?: return
 
-    val dialogScreenLocation = devicePoint.getLocationOnScreen(dialog)
-    dialog.setLocation(dialogScreenLocation.x - initialOffset.x, dialogScreenLocation.y - initialOffset.y)
+    val originalDialogSize = dialog.size
 
-    setDragOut(isDragOut(devicePoint))
+    // Initial offset is relative to the original component and therefore in screen coordinates. The dialog size is a pixel size, and is the
+    // same in all coordinates - it's not scaled between screens. This means it has the same size relative to the UI, but not the same
+    // physical size based on accurate DPI settings
+    val dialogScreenLocation = eventDevicePoint.locationOnScreen.also {
+      it.translate(-initialOffset.x, -initialOffset.y)
+    }
+    val newDialogScreenBounds = Rectangle(dialogScreenLocation, originalDialogSize)
+
+    dialog.bounds = newDialogScreenBounds
+
+    // Verify that the bounds are still correct. When moving the dialog across two screens with different DPI scale factors in Windows, the
+    // dialog might get resized or relocated, which is at best undesirable, and at worst incorrect (and possibly a bug in the JBR).
+    // When the dialog gets more than half of its width into the next screen, Windows considers it to belong to the next screen (although
+    // it doesn't yet update the graphicsConfiguration property), and resizes it. It tries to maintain the same physical size, based on DPI.
+    // A screen with a 100% scaling factor will be 96 DPI, but a 150% screen will have a DPI of 144. Moving from a 150% screen to a 100%
+    // screen will convert a size of 144 to 96, meaning the dialog will shrink. Moving in the opposite direction will cause the dialog to
+    // grow.
+    // Unfortunately, resizing the dialog will also change the width and move the dialog back to the original screen, but the size is not
+    // reset. Continuing the drag will soon put half of the dialog back into the next screen, and the dialog is resized again. This
+    // continues until the dialog is tiny. Going in the opposite direction will cause the dialog to repeatedly grow huge.
+    // Fortunately, we want the drag image to be the same size relative to the UI, so it's the same "pixel" size regardless of DPI. We can
+    // simply reset the size to the same value, and we avoid any problems. There is still a visual step as the DPI changes - the pixel
+    // values are the same, but the DPIs are different. This is normal behaviour for Windows, and can be seen with e.g. Notepad.
+    // Windows will also sometimes relocate the dialog, but this appears to be incorrect behaviour, possibly a bug in the JBR. After moving
+    // halfway into the next screen, the dialog can sometimes (and reproducibly) relocate to an incorrect location, as though the
+    // calculation to convert from device to screen coordinates is incredibly wrong (e.g. a 2880x1800@150% screen should be positioned at
+    // x=1842 based on screen coordinates of the first screen, or x=2763 based on screen coordinates of the second screen, but instead is
+    // shown at x=3919). Continue dragging, and it bounces between the correct location and similar incorrect locations until the dialog is
+    // approximately 3/4 of the way into the next screen. Perhaps this is related to the graphicsConfiguration property not being updated
+    // correctly. Is the JBR confused about what scaling factors to apply?
+    // TODO: Investigate why the JBR is positioning the dialog like this
+    if (dialog.bounds != newDialogScreenBounds) {
+      dialog.size = originalDialogSize
+    }
+
+    setDragOut(isDragOut(eventDevicePoint))
 
     val preferredStripe = getSourceStripe(toolWindow.anchor)
-    val targetStripe = getTargetStripeByDropLocation(devicePoint, preferredStripe)
-                       ?: if (!isNewUi && isPointInVisibleDockedToolWindow(devicePoint)) preferredStripe else null
+    val targetStripe = getTargetStripeByDropLocation(eventDevicePoint, preferredStripe)
+                       ?: if (!isNewUi && isPointInVisibleDockedToolWindow(eventDevicePoint)) preferredStripe else null
     lastStripe?.let {
       if (it != targetStripe) {
         removeDropTargetHighlighter(toolWindow.toolWindowManager.getToolWindowPane(it.paneId))
@@ -227,7 +258,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       //  dialog.updateIcon(image)
       //  stripe.remove(button)
       //}
-      targetStripe.processDropButton(initialButton as JComponent, dialog.contentPane as JComponent, devicePoint)
+      targetStripe.processDropButton(initialButton as JComponent, dialog.contentPane as JComponent, eventDevicePoint)
 
       if (lastDropTargetPaneId != targetStripe.paneId) {
         lastDropTargetPaneId = targetStripe.paneId
@@ -243,7 +274,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
           // docked, the tool window's screen coordinate system will be the same as the mouse event's. But if it's floating, it might be on
           // another screen (although if it's floating, we don't get bounds)
           val toolWindowBounds = getToolWindowScreenBoundsIfVisibleAndDocked(toolWindow)?.takeIf {
-            getTargetStripeByDropLocation(devicePoint, preferredStripe) == null && it.contains(event.locationOnScreen)
+            getTargetStripeByDropLocation(eventDevicePoint, preferredStripe) == null && it.contains(event.locationOnScreen)
           }
           val bounds = toolWindowBounds ?: getDropTargetScreenBounds(lastDropTargetPane!!, targetStripe.anchor)
 
