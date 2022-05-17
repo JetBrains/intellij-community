@@ -244,7 +244,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     // check if there are running instances of the same build file
 
-    MessageView ijMessageView = MessageView.SERVICE.getInstance(project);
+    MessageView ijMessageView = MessageView.getInstance(project);
     Content[] contents = ijMessageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.isPinned()) {
@@ -323,7 +323,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private void close() {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    MessageView messageView = MessageView.getInstance(myProject);
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.getComponent() == this) {

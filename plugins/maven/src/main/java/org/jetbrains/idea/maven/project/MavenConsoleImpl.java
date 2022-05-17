@@ -125,7 +125,7 @@ public class MavenConsoleImpl extends MavenConsole {
     if (!isOpen.compareAndSet(false, true)) return;
 
     MavenUtil.invokeLater(myProject, () -> {
-      MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+      MessageView messageView = MessageView.getInstance(myProject);
 
       Content content = ContentFactory.getInstance().createContent(
         myConsoleView.getComponent(), myTitle, true);
@@ -156,7 +156,7 @@ public class MavenConsoleImpl extends MavenConsole {
   }
 
   public void close() {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    MessageView messageView = MessageView.getInstance(myProject);
     for (Content each : messageView.getContentManager().getContents()) {
       MavenConsoleImpl console = each.getUserData(CONSOLE_KEY);
       if (console != null) {

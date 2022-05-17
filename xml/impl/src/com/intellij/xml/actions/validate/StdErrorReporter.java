@@ -53,7 +53,7 @@ public final class StdErrorReporter extends ErrorReporter {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       myProject, () -> {
-        MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+        MessageView messageView = MessageView.getInstance(myProject);
         final Content content = ContentFactory.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
         content.putUserData(KEY, myErrorsView);
         messageView.getContentManager().addContent(content);
