@@ -3,11 +3,10 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.io.DigestUtil
 import java.io.File
-import java.io.InputStream
 import java.security.MessageDigest
 
-private const val BUFFER_SIZE = 4096
 private val ROOT = File(PathManager.getSystemPath()).resolve("kotlin-lazy-file-pipeline-cache")
 
 /**
@@ -15,7 +14,7 @@ private val ROOT = File(PathManager.getSystemPath()).resolve("kotlin-lazy-file-p
  * - Re-calculates input when one of the outputs changes
  * - Supports "Invalidate caches"
  */
-abstract class AbstractLazyFileOutputProducer<I : Any>(uniquePipelineId: String) {
+abstract class AbstractLazyFileOutputProducer<I : Any, C>(uniquePipelineId: String) : LazyFileOutputProducer<I, C> {
     private val hashFile = ROOT.resolve("$uniquePipelineId.hash")
     private val outputsFile = ROOT.resolve("$uniquePipelineId.outputs")
 
@@ -27,9 +26,9 @@ abstract class AbstractLazyFileOutputProducer<I : Any>(uniquePipelineId: String)
             outputsFile.writeText(field.joinToString("\n"))
         }
 
-    protected fun lazyProduceOutput(input: I): List<File> {
+    override fun lazyProduceOutput(input: I, computationContext: C): List<File> {
         if (!isUpToDate(input)) {
-            outputs = produceOutput(input).ifEmpty { return emptyList() }
+            outputs = produceOutput(input, computationContext).ifEmpty { return emptyList() }
 
             hashFile.parentFile.mkdirs()
             // "Commit the state" / "Commit transaction" (should be the last step for the algorithm to be fault-tolerant)
@@ -39,11 +38,13 @@ abstract class AbstractLazyFileOutputProducer<I : Any>(uniquePipelineId: String)
         return outputs
     }
 
-    fun isUpToDate(input: I): Boolean = outputs.all { it.exists() } && hashFile.isFile && outputsFile.isFile &&
-            hashFile.readText().trim() == calculateMd5(input)
+    fun getOutputIfUpToDateOrEmpty(input: I) = if (isUpToDate(input)) outputs else emptyList()
 
-    protected abstract fun produceOutput(input: I): List<File>
-    protected abstract fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: I, buffer: ByteArray)
+    override fun isUpToDate(input: I): Boolean = outputs.isNotEmpty() && outputs.all { it.exists() } && hashFile.isFile &&
+            outputsFile.isFile && hashFile.readText().trim() == calculateMd5(input)
+
+    protected abstract fun produceOutput(input: I, computationContext: C): List<File>
+    protected abstract fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: I)
 
     private fun readOutputsFile() = outputsFile.takeIf { it.exists() }
         ?.useLines { lines ->
@@ -51,13 +52,12 @@ abstract class AbstractLazyFileOutputProducer<I : Any>(uniquePipelineId: String)
         } ?: emptyList()
 
     private fun calculateMd5(input: I): String {
-        val messageDigest = MessageDigest.getInstance("MD5")
-        val buffer = ByteArray(BUFFER_SIZE)
+        val messageDigest = DigestUtil.md5()
         // hash outputsFile too to make sure that user doesn't change this file
-        outputsFile.inputStream().use { messageDigest.update(it, buffer) }
-        updateMessageDigestWithInput(messageDigest, input, buffer)
-        messageDigest.update(outputs, buffer)
-        return messageDigest.digest().joinToString("") { "%02x".format(it) }
+        DigestUtil.updateContentHash(messageDigest, outputsFile.toPath())
+        updateMessageDigestWithInput(messageDigest, input)
+        messageDigest.update(outputs)
+        return DigestUtil.digestToHash(messageDigest)
     }
 
     companion object {
@@ -73,22 +73,15 @@ class LazyFileOutputProducerCacheInvalidator : CachesInvalidator() {
     }
 }
 
-private fun MessageDigest.update(files: List<File>, buffer: ByteArray) {
+fun MessageDigest.update(files: List<File>) {
     val messageDigest = this
     files.flatMap { it.flattenDir() }
         .map { it.canonicalFile }
         .sorted() // sort for hash stability
         .ifEmpty { error("(${files.joinToString()} is empty") }
         .forEach { file ->
-            file.inputStream().use { messageDigest.update(it, buffer) }
+            DigestUtil.updateContentHash(messageDigest, file.toPath())
         }
-}
-
-fun MessageDigest.update(input: InputStream, buffer: ByteArray = ByteArray(BUFFER_SIZE)) {
-    while (true) {
-        val len = input.read(buffer).takeIf { it != -1 } ?: break
-        update(buffer, 0, len)
-    }
 }
 
 private fun File.flattenDir(): List<File> =

@@ -2,32 +2,27 @@
 package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.util.io.Decompressor
+import com.intellij.util.io.DigestUtil
 import java.io.File
-import java.io.InputStream
 import java.security.MessageDigest
 
-class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputProducer<File>(
+class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputProducer<File, Unit>(
     // Use hash to get some unique string originated from destination.path which can be used in filename
     // (unfortunately, destination.path itself cannot be used as a filename because of slashes)
-    "${LazyZipUnpacker::class.java.name}-${destination.canonicalPath.byteInputStream().use { it.md5() }}"
+    "${LazyZipUnpacker::class.java.name}-${DigestUtil.md5Hex(destination.canonicalPath.toByteArray())}"
 ) {
 
-    override fun produceOutput(input: File): List<File> { // input is a zip file
+    override fun produceOutput(input: File, computationContext: Unit): List<File> { // input is a zip file
         destination.deleteRecursively()
         Decompressor.Zip(input).extract(destination)
         check(destination.isDirectory)
         return listOf(destination)
     }
 
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: File, buffer: ByteArray) {
-        input.inputStream().use { messageDigest.update(it, buffer) }
+    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: File) {
+        DigestUtil.updateContentHash(messageDigest, input.toPath())
     }
 
-    fun lazyUnpack(zip: File) = lazyProduceOutput(zip).singleOrNull() ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
-}
-
-private fun InputStream.md5(): String {
-    val messageDigest = MessageDigest.getInstance("MD5")
-    messageDigest.update(this)
-    return messageDigest.digest().joinToString("") { "%02x".format(it) }
+    fun lazyUnpack(zip: File) = lazyProduceOutput(zip, Unit).singleOrNull()
+        ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
 }

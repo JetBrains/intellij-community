@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
@@ -58,7 +58,7 @@ private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries
                             .getNotificationGroup("Kotlin dist downloading failed")
                             .createNotification(
                                 KotlinBundle.message("kotlin.dist.downloading.failed.msg"),
-                                KotlinArtifactsDownloader.failedToDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version),
+                                KotlinArtifactsDownloader.failedToDownloadMavenArtifact(project, KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version),
                                 NotificationType.ERROR,
                             )
                             .setImportant(true)

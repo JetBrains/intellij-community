@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.artifacts
 
+import com.intellij.util.io.DigestUtil
 import junit.framework.TestCase
 import java.io.File
 import java.security.MessageDigest
@@ -56,16 +57,16 @@ class LazyFileOutputProducerTest : TestCase() {
     }
 }
 
-private class TestFileOutputProducer(private val output: File) : AbstractLazyFileOutputProducer<String>(TEST_ID) {
-    override fun produceOutput(input: String): List<File> {
+private class TestFileOutputProducer(private val output: File) : AbstractLazyFileOutputProducer<String, Unit>(TEST_ID) {
+    override fun produceOutput(input: String, computationContext: Unit): List<File> {
         output.writeText(input)
         return listOf(output)
     }
 
-    fun lazyTestOutput(input: String) = lazyProduceOutput(input).singleOrNull()
+    fun lazyTestOutput(input: String) = lazyProduceOutput(input, Unit).singleOrNull()
         ?: error("${TestFileOutputProducer::produceOutput.name} returns single file")
 
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: String, buffer: ByteArray) {
-        input.byteInputStream().use { messageDigest.update(it, buffer) }
+    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: String) {
+        input.byteInputStream().use { DigestUtil.updateContentHash(messageDigest, it) }
     }
 }

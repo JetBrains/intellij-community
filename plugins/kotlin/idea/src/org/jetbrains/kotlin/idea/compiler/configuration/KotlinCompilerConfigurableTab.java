@@ -393,7 +393,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     private void fetchAvailableJpsCompilersAsync(Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onFinish) {
         JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
-                        KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID, KotlinArtifacts.KOTLIN_DIST_ARTIFACT_ID))
+                        KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID, KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID))
                 .onProcessed(distVersions -> {
                     if (distVersions == null) {
                         onFinish.accept(null);
