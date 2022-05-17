@@ -7,6 +7,8 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+
 
 
 interface BooleanEntity : WorkspaceEntity {
@@ -19,11 +21,22 @@ interface BooleanEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<BooleanEntity, Builder>()
+  companion object: Type<BooleanEntity, Builder>() {
+      operator fun invoke(data: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): BooleanEntity {
+          val builder = builder()
+          builder.data = data
+          builder.entitySource = entitySource
+          init?.invoke(builder)
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: BooleanEntity, modification: BooleanEntity.Builder.() -> Unit) = modifyEntity(BooleanEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface IntEntity : WorkspaceEntity {
   val data: Int
@@ -35,11 +48,22 @@ interface IntEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<IntEntity, Builder>()
+  companion object: Type<IntEntity, Builder>() {
+      operator fun invoke(data: Int, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): IntEntity {
+          val builder = builder()
+          builder.data = data
+          builder.entitySource = entitySource
+          init?.invoke(builder)
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: IntEntity, modification: IntEntity.Builder.() -> Unit) = modifyEntity(IntEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface StringEntity : WorkspaceEntity {
   val data: String
@@ -51,11 +75,22 @@ interface StringEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<StringEntity, Builder>()
+  companion object: Type<StringEntity, Builder>() {
+      operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): StringEntity {
+          val builder = builder()
+          builder.data = data
+          builder.entitySource = entitySource
+          init?.invoke(builder)
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: StringEntity, modification: StringEntity.Builder.() -> Unit) = modifyEntity(StringEntity.Builder::class.java, entity, modification)
+//endregion
 
 interface ListEntity : WorkspaceEntity {
   val data: List<String>
@@ -67,11 +102,22 @@ interface ListEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<ListEntity, Builder>()
+  companion object: Type<ListEntity, Builder>() {
+      operator fun invoke(data: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ListEntity {
+          val builder = builder()
+          builder.data = data
+          builder.entitySource = entitySource
+          init?.invoke(builder)
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ListEntity, modification: ListEntity.Builder.() -> Unit) = modifyEntity(ListEntity.Builder::class.java, entity, modification)
+//endregion
 
 
 interface OptionalIntEntity : WorkspaceEntity {
@@ -84,11 +130,21 @@ interface OptionalIntEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<OptionalIntEntity, Builder>()
+  companion object: Type<OptionalIntEntity, Builder>() {
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OptionalIntEntity {
+          val builder = builder()
+          builder.entitySource = entitySource
+          init?.invoke(builder)
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OptionalIntEntity, modification: OptionalIntEntity.Builder.() -> Unit) = modifyEntity(OptionalIntEntity.Builder::class.java, entity, modification)
+//endregion
 
 
 interface OptionalStringEntity : WorkspaceEntity {
@@ -101,11 +157,21 @@ interface OptionalStringEntity : WorkspaceEntity {
       override var entitySource: EntitySource
   }
   
-  companion object: Type<OptionalStringEntity, Builder>()
+  companion object: Type<OptionalStringEntity, Builder>() {
+      operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OptionalStringEntity {
+          val builder = builder()
+          builder.entitySource = entitySource
+          init?.invoke(builder)
+          return builder
+      }
+  }
   //@formatter:on
   //endregion
 
 }
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: OptionalStringEntity, modification: OptionalStringEntity.Builder.() -> Unit) = modifyEntity(OptionalStringEntity.Builder::class.java, entity, modification)
+//endregion
 
 // Not supported at the moment
 /*

@@ -12,6 +12,8 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -24,8 +26,6 @@ open class ListEntityImpl: ListEntity, WorkspaceEntityBase() {
 
     class Builder(val result: ListEntityData?): ModifiableWorkspaceEntityBase<ListEntity>(), ListEntity.Builder {
         constructor(): this(ListEntityData())
-                 
-        override fun build(): ListEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

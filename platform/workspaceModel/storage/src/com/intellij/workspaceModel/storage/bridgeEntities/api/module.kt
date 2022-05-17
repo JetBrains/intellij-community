@@ -67,31 +67,6 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
 }
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ModuleEntity, modification: ModuleEntity.Builder.() -> Unit) = modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
-var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
-    get() {
-        return referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()
-    }
-    set(value) {
-        val diff = (this as ModuleEntityImpl.Builder).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as FacetsOrderEntityImpl.Builder).diff == null) {
-                    value._moduleEntity = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(FacetsOrderEntityImpl.MODULEENTITY_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("FacetsOrderEntity", "moduleEntity", true, FacetsOrderEntityImpl.MODULEENTITY_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as FacetsOrderEntityImpl.Builder)._moduleEntity = this
-            }
-        }
-    }
-
 var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
     get() {
         return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
@@ -113,6 +88,31 @@ var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntit
             
             if (value != null) {
                 (value as EclipseProjectPropertiesEntityImpl.Builder)._module = this
+            }
+        }
+    }
+
+var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
+    get() {
+        return referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()
+    }
+    set(value) {
+        val diff = (this as ModuleEntityImpl.Builder).diff
+        if (diff != null) {
+            if (value != null) {
+                if ((value as FacetsOrderEntityImpl.Builder).diff == null) {
+                    value._moduleEntity = this
+                    diff.addEntity(value)
+                }
+            }
+            diff.updateOneToOneChildOfParent(FacetsOrderEntityImpl.MODULEENTITY_CONNECTION_ID, this, value)
+        }
+        else {
+            val key = ExtRefKey("FacetsOrderEntity", "moduleEntity", true, FacetsOrderEntityImpl.MODULEENTITY_CONNECTION_ID)
+            this.extReferences[key] = value
+            
+            if (value != null) {
+                (value as FacetsOrderEntityImpl.Builder)._moduleEntity = this
             }
         }
     }

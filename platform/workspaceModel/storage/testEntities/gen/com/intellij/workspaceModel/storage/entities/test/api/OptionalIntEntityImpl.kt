@@ -12,6 +12,8 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)
@@ -22,8 +24,6 @@ open class OptionalIntEntityImpl: OptionalIntEntity, WorkspaceEntityBase() {
 
     class Builder(val result: OptionalIntEntityData?): ModifiableWorkspaceEntityBase<OptionalIntEntity>(), OptionalIntEntity.Builder {
         constructor(): this(OptionalIntEntityData())
-                 
-        override fun build(): OptionalIntEntity = this
         
         override fun applyToBuilder(builder: MutableEntityStorage) {
             if (this.diff != null) {

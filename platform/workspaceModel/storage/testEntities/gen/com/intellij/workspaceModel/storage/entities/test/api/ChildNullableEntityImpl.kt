@@ -1,4 +1,3 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.EntityInformation
@@ -16,6 +15,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(0)
 @GeneratedCodeImplVersion(0)

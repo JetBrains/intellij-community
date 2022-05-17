@@ -91,7 +91,7 @@ class InterfaceTraverserTest {
   }
 
   private fun createType(): DefType {
-    val module = KtObjModule(null, ObjModule.Id("id"))
+    val module = KtObjModule(null)
     return DefType(module, "myName", null,
                    KtInterface(module, KtScope(null, null), SrcRange(Src("X") { "xyz" }, 0..1), emptyList(), null, null))
   }
