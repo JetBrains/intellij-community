@@ -307,6 +307,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
                                                               GithubBundle.message("clone.error.load.repositories"),
                                                               GithubBundle.message("retry.link"),
                                                               Runnable { addAccount(account) })
+        refillRepositories()
       }
     })
   }
@@ -343,6 +344,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
                                                               GithubBundle.message("clone.error.load.repositories"),
                                                               GithubBundle.message("retry.link"),
                                                               Runnable { loadRepositories(account, executor) })
+        refillRepositories()
       }
     })
   }
