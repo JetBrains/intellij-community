@@ -324,7 +324,6 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/android/analytics/analytics.iml" filepath="$PROJECT_DIR$/android/analytics/analytics.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.adblib.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.adblib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.analytics-crash.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.analytics-crash.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.analytics-shared.iml" filepath="$PROJECT_DIR$/android/android/prebuilts/sdktools/android.sdktools.analytics-shared.iml" />
