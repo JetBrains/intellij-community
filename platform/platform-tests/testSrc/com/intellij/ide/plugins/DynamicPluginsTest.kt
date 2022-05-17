@@ -11,6 +11,8 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.idea.TestFor
+import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -26,6 +28,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleConfigurationEditor
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -70,8 +73,15 @@ class DynamicPluginsTest {
   @JvmField
   val runInEdt = EdtRule()
 
-  private fun loadPluginWithText(pluginBuilder: PluginBuilder): Disposable {
-    return loadPluginWithText(pluginBuilder, inMemoryFs.fs)
+  private fun loadPluginWithText(
+    pluginBuilder: PluginBuilder,
+    disabledPlugins: Set<PluginId> = emptySet(),
+  ): Disposable {
+    return loadPluginWithText(
+      pluginBuilder = pluginBuilder,
+      fs = inMemoryFs.fs,
+      disabledPlugins = disabledPlugins,
+    )
   }
 
   @Test
@@ -346,18 +356,93 @@ class DynamicPluginsTest {
           .dependency("intellij.bar.foo")
       )
 
+    fun assertForModules(assertion: (String) -> Unit) {
+      listOf(
+        "intellij.bar.foo",
+        "intellij.baz.foo",
+      ).forEach(assertion)
+    }
+
     loadPluginWithText(foo).use {
       loadPluginWithText(baz).use {
-        assertThat(findEnabledModuleByName("intellij.bar.foo")).isNull()
-        assertThat(findEnabledModuleByName("intellij.baz.foo")).isNull()
+        assertForModules(::assertModuleIsNotLoaded)
 
         loadPluginWithText(bar).use {
-          assertThat(findEnabledModuleByName("intellij.bar.foo")?.pluginClassLoader).isNotNull()
-          assertThat(findEnabledModuleByName("intellij.baz.foo")?.pluginClassLoader).isNotNull()
+          assertForModules(::assertModuleIsLoaded)
         }
 
-        assertThat(findEnabledModuleByName("intellij.bar.foo")).isNull()
-        assertThat(findEnabledModuleByName("intellij.baz.foo")).isNull()
+        assertForModules(::assertModuleIsNotLoaded)
+      }
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-287123"])
+  fun testModulesConfiguration() {
+    val foo = PluginBuilder()
+      .randomId("com.intellij.foo")
+      .packagePrefix("com.intellij.foo")
+
+    val bar = PluginBuilder()
+      .randomId("com.intellij.bar")
+      .packagePrefix("com.intellij.bar")
+      .module(
+        "intellij.bar.foo",
+        PluginBuilder()
+          .packagePrefix("com.intellij.bar.foo")
+          .pluginDependency(foo.id)
+          .extensions("""<multiHostInjector implementation="com.intellij.bar.foo.InjectorImpl"/>"""),
+      )
+
+    val baz = PluginBuilder()
+      .randomId("com.intellij.baz")
+      .packagePrefix("com.intellij.baz")
+      .module(
+        "intellij.baz.bar",
+        PluginBuilder()
+          .packagePrefix("com.intellij.baz.bar")
+          .pluginDependency(bar.id),
+      ).module(
+        "intellij.baz.bar.foo",
+        PluginBuilder()
+          .packagePrefix("com.intellij.baz.bar.foo")
+          .pluginDependency(foo.id)
+          .dependency("intellij.bar.foo")
+          .dependency("intellij.baz.bar")
+          .extensions("""<multiHostInjector implementation="com.intellij.baz.bar.foo.InjectorImpl"/>"""),
+      )
+
+    fun assertForModules(assertion: (String) -> Unit) {
+      listOf(
+        "intellij.bar.foo",
+        "intellij.baz.bar",
+        "intellij.baz.bar.foo",
+      ).forEach(assertion)
+    }
+
+
+    val ep = MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME
+      .getPoint(projectRule.project) as ExtensionPointImpl<MultiHostInjector>
+    val coreInjectorsCount = ep.sortedAdapters.size
+
+    loadPluginWithText(
+      pluginBuilder = baz,
+      disabledPlugins = setOf(foo.id, bar.id).map { PluginId.getId(it) }.toSet(),
+    ).use {
+      assertForModules(::assertModuleIsNotLoaded)
+      assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount)
+
+      loadPluginWithText(
+        pluginBuilder = foo,
+        disabledPlugins = setOf(bar.id).map { PluginId.getId(it) }.toSet(),
+      ).use {
+        assertForModules(::assertModuleIsNotLoaded)
+        assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount)
+
+        loadPluginWithText(pluginBuilder = bar).use {
+          assertForModules(::assertModuleIsLoaded)
+          assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount + 2)
+        }
       }
     }
   }
@@ -711,3 +796,11 @@ private fun lexicographicallySortedPluginIds() =
     .toSortedSet(compareBy { it.pluginId })
 
 private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(id)
+
+private fun assertModuleIsNotLoaded(moduleName: String) {
+  assertThat(findEnabledModuleByName(moduleName)).isNull()
+}
+
+private fun assertModuleIsLoaded(moduleName: String) {
+  assertThat(findEnabledModuleByName(moduleName)?.pluginClassLoader).isNotNull()
+}

@@ -60,7 +60,11 @@ fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Di
   return loadPluginWithText(builder, FileSystems.getDefault())
 }
 
-internal fun loadPluginWithText(pluginBuilder: PluginBuilder, fs: FileSystem): Disposable {
+internal fun loadPluginWithText(
+  pluginBuilder: PluginBuilder,
+  fs: FileSystem,
+  disabledPlugins: Set<PluginId> = emptySet(),
+): Disposable {
   val directory = if (fs == FileSystems.getDefault()) {
     FileUtil.createTempDirectory("test", "test", true).toPath()
   }
@@ -69,8 +73,9 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, fs: FileSystem): D
   }
 
   val descriptor = loadDescriptorInTest(
-    pluginBuilder,
-    directory,
+    pluginBuilder = pluginBuilder,
+    directory = directory,
+    disabledPlugins = disabledPlugins,
   )
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   try {
@@ -91,10 +96,15 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, fs: FileSystem): D
 internal fun loadDescriptorInTest(
   pluginBuilder: PluginBuilder,
   directory: Path,
+  disabledPlugins: Set<PluginId> = emptySet(),
 ): IdeaPluginDescriptorImpl {
   val pluginDirectory = directory.resolve("plugin")
   pluginBuilder.build(pluginDirectory)
-  return loadDescriptorInTest(pluginDirectory)
+
+  return loadDescriptorInTest(
+    dir = pluginDirectory,
+    disabledPlugins = disabledPlugins,
+  )
 }
 
 internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
