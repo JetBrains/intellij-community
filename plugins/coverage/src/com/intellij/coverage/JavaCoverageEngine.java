@@ -54,12 +54,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ui.EDT;
 import jetbrains.coverage.report.ReportGenerationFailedException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.DataInputStream;
@@ -349,14 +351,13 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                        JavaCoverageBundle.message("coverage.hide.report"),
                                                        Messages.getWarningIcon());
         if (choice == Messages.OK) {
-          final CompilerManager compilerManager = CompilerManager.getInstance(project);
-          compilerManager.make(compilerManager.createProjectCompileScope(project), (aborted, errors, warnings, compileContext) -> {
-            if (aborted || errors != 0) return;
-            ApplicationManager.getApplication().invokeLater(() -> {
-              if (project.isDisposed()) return;
-              CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
-            });
-          });
+          ProjectTaskManager taskManager = ProjectTaskManager.getInstance(project);
+          Promise<ProjectTaskManager.Result> promise = taskManager.buildAllModules();
+          promise.onSuccess(result -> ApplicationManager.getApplication().invokeLater(() -> {
+                              if (project.isDisposed()) return;
+                              CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
+                            })
+          );
         } else if (!project.isDisposed()) {
           CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
         }
@@ -376,7 +377,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static VirtualFile getOutputWithRefresh(@NotNull CompilerModuleExtension extension, boolean forTest) {
     VirtualFile outputpath = forTest ? extension.getCompilerOutputPathForTests() : extension.getCompilerOutputPath();
     String compilerOutputUrl = forTest ? extension.getCompilerOutputUrlForTests() : extension.getCompilerOutputUrl();
-    boolean safeToRefresh = EDT.isCurrentThreadEdt() || !ApplicationManager.getApplication().isReadAccessAllowed();
+    boolean safeToRefresh = !EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isReadAccessAllowed();
     if (outputpath == null && compilerOutputUrl != null && safeToRefresh) {
       return VirtualFileManager.getInstance().refreshAndFindFileByUrl(compilerOutputUrl);
     }
