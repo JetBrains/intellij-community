@@ -40,20 +40,16 @@ import git4idea.ift.GitLessonsUtil.triggerOnCheckout
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepositoryManager
-import org.assertj.swing.fixture.JListFixture
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
-import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
 import training.util.toNullableString
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
-import java.util.regex.Pattern
 import javax.swing.JButton
-import javax.swing.JList
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -104,13 +100,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       test {
         waitComponent(SearchEverywhereUI::class.java)
         type("clone")
-        ideFrame {
-          val list = findComponentWithTimeout(defaultTimeout) { ui: JList<*> ->
-            val model = ui.model
-            (0 until model.size).any { ind -> model.getElementAt(ind).toString().contains(cloneActionText) }
-          }
-          JListFixture(robot, list).clickItem(Pattern.compile(""".*$cloneActionText.*"""))
-        }
+        waitAndUsePreviouslyFoundListItem { jListItemFixture ->  jListItemFixture.click() }
       }
     }
 
