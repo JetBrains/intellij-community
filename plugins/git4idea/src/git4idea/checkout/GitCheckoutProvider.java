@@ -3,6 +3,7 @@ package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -21,7 +22,8 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService;
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneResult;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -85,57 +87,72 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
                            final String directoryName, final String parentDirectory) {
     String projectAbsolutePath = Paths.get(parentDirectory, directoryName).toAbsolutePath().toString();
     String projectPath = PathUtil.toSystemDependentName(projectAbsolutePath);
-    CloneTaskInfo cloneTaskInfo = new CloneTaskInfo(DvcsBundle.message("cloning.repository", sourceRepositoryURL),
-                                                    DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL));
 
-    CloneableProjectsService.getInstance().runCloneTask(
-      projectPath, cloneTaskInfo,
-      indicator -> {
-        return doClone(project, git, indicator, directoryName, parentDirectory, sourceRepositoryURL)
-               ? CloneResult.DOWNLOADED
-               : CloneResult.FAILURE;
-      },
-      cloneResult -> {
-        File directory = new File(parentDirectory, directoryName);
-        LOG.debug(String.format("Cloned into %s with success=%s", directory, cloneResult));
-        if (cloneResult != CloneResult.DOWNLOADED) {
-          return CloneResult.FAILURE;
+    CloneTask cloneTask = new CloneTask() {
+
+      @NotNull
+      @Override
+      public CloneTaskInfo taskInfo() {
+        return new CloneTaskInfo(DvcsBundle.message("cloning.repository", sourceRepositoryURL),
+                                 DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL));
+      }
+
+      @NotNull
+      @Override
+      public CloneStatus run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
+        GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
+        if (result.success()) {
+          File directory = new File(parentDirectory, directoryName);
+          LOG.debug(String.format("Cloned into %s with success=%s", directory, result));
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            DvcsUtil.addMappingIfSubRoot(project, directory.getPath(), GitVcs.NAME);
+          });
+          destinationParent.refresh(true, true, () -> {
+            if (project.isOpen() && (!project.isDisposed()) && !project.isDefault()) {
+              VcsDirtyScopeManager.getInstance(project).fileDirty(destinationParent);
+            }
+          });
+
+          listener.directoryCheckedOut(directory, GitVcs.getKey());
+          listener.checkoutCompleted();
+
+          return CloneStatus.SUCCESS;
         }
 
-        DvcsUtil.addMappingIfSubRoot(project, directory.getPath(), GitVcs.NAME);
-        destinationParent.refresh(true, true, () -> {
-          if (project.isOpen() && (!project.isDisposed()) && !project.isDefault()) {
-            VcsDirtyScopeManager.getInstance(project).fileDirty(destinationParent);
-          }
-        });
+        notifyError(project, result);
 
-        listener.directoryCheckedOut(directory, GitVcs.getKey());
-        listener.checkoutCompleted();
-        return CloneResult.SUCCESS;
+        return CloneStatus.FAILURE;
       }
-    );
+    };
+
+    CloneableProjectsService.getInstance().runCloneTask(projectPath, cloneTask);
   }
 
   public static boolean doClone(@NotNull Project project, @NotNull Git git,
                                 @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    return doClone(project, git, indicator, directoryName, parentDirectory, sourceRepositoryURL);
-  }
+    indicator.setIndeterminate(false);
 
-  private static boolean doClone(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator,
-                                @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
-    progressIndicator.setIndeterminate(false);
-    GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(progressIndicator);
+    GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
     GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
     if (result.success()) {
       return true;
     }
-    List<@NlsSafe String> errorLines = ContainerUtil.filter(result.getErrorOutput(), line ->
+
+    notifyError(project, result);
+
+    return false;
+  }
+
+  private static void notifyError(@NotNull Project project, @NotNull GitCommandResult commandResult) {
+    List<@NlsSafe String> errorLines = ContainerUtil.filter(commandResult.getErrorOutput(), line ->
       !ContainerUtil.exists(NON_ERROR_LINE_PREFIXES, prefix -> StringUtil.startsWithIgnoreCase(line, prefix)));
     List<HtmlChunk> displayErrorLines = ContainerUtil.map(errorLines, msg -> HtmlChunk.text(GitUtil.cleanupErrorPrefixes(msg)));
     String description = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), displayErrorLines).toString();
     VcsNotifier.getInstance(project).notifyError(CLONE_FAILED, DvcsBundle.message("error.title.cloning.repository.failed"), description, true);
-    return false;
   }
 
   @Override

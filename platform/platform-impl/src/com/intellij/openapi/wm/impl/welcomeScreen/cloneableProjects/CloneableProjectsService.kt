@@ -26,30 +26,19 @@ class CloneableProjectsService {
   private val projectProgressIndicators: MutableList<CloneableProjectProgressIndicator> = synchronizedList(mutableListOf())
 
   @RequiresEdt
-  fun runCloneTask(
-    projectPath: String,
-    cloneTaskInfo: CloneTaskInfo,
-    cloneTask: (ProgressIndicator) -> CloneResult,
-    onSuccess: (CloneResult) -> CloneResult
-  ) {
-    val progressIndicator = CloneableProjectProgressIndicator(projectPath, cloneTaskInfo)
+  fun runCloneTask(projectPath: String, cloneTask: CloneTask) {
+    val progressIndicator = CloneableProjectProgressIndicator(projectPath, cloneTask.taskInfo())
     addCloneableProject(progressIndicator)
 
-    val cloneProcess = Runnable {
-      when (val cloneResult = cloneTask(progressIndicator)) {
-        CloneResult.DOWNLOADED -> {
-          upgradeCloneProjectToRecent(progressIndicator)
-          ApplicationManager.getApplication().invokeLater {
-            onSuccess(cloneResult)
-          }
-        }
-        else -> {}
-      }
-    }
-
-    // Execute clone
     ApplicationManager.getApplication().executeOnPooledThread {
-      ProgressManager.getInstance().runProcess(cloneProcess, progressIndicator)
+      ProgressManager.getInstance().runProcess(Runnable {
+        when (cloneTask.run(progressIndicator)) {
+          CloneStatus.SUCCESS -> {
+            upgradeCloneProjectToRecent(progressIndicator)
+          }
+          else -> {}
+        }
+      }, progressIndicator)
     }
   }
 
@@ -98,9 +87,8 @@ class CloneableProjectsService {
       .onCloneRemoved()
   }
 
-  enum class CloneResult {
+  enum class CloneStatus {
     SUCCESS,
-    DOWNLOADED,
     FAILURE
   }
 
@@ -114,13 +102,25 @@ class CloneableProjectsService {
     override fun isCancellable(): Boolean = true
   }
 
-  private class CloneableProjectProgressIndicator(
+  private inner class CloneableProjectProgressIndicator(
     val projectPath: String,
     val cloneTaskInfo: CloneTaskInfo
   ) : AbstractProgressIndicatorExBase() {
     init {
       setOwnerTask(cloneTaskInfo)
     }
+
+    override fun cancel() {
+      super.cancel()
+      projectProgressIndicators.remove(this)
+      fireCloneRemovedEvent()
+    }
+  }
+
+  interface CloneTask {
+    fun taskInfo(): CloneTaskInfo
+
+    fun run(indicator: ProgressIndicator): CloneStatus
   }
 
   interface CloneProjectListener {
