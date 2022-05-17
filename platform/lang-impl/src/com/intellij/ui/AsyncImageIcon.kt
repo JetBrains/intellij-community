@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
+import com.intellij.openapi.util.ScalableIcon
+import com.intellij.ui.icons.CopyableIcon
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
@@ -23,9 +26,12 @@ import javax.swing.Icon
  */
 @ApiStatus.Experimental
 class AsyncImageIcon(
-  private val defaultIcon: Icon,
-  imageLoader: (ScaleContext, Int, Int) -> CompletableFuture<Image?>
-) : Icon {
+  defaultIcon: Icon,
+  private val scale: Float = 1.0f,
+  private val imageLoader: (ScaleContext, Int, Int) -> CompletableFuture<Image?>
+) : Icon, ScalableIcon, CopyableIcon {
+
+  private val defaultIcon = IconUtil.scale(defaultIcon, null, scale)
 
   private val repaintScheduler = RepaintScheduler()
 
@@ -55,6 +61,12 @@ class AsyncImageIcon(
       StartupUiUtil.drawImage(g, image, bounds, c)
     }
   }
+
+  override fun copy(): Icon = AsyncImageIcon(defaultIcon, scale, imageLoader)
+
+  override fun getScale(): Float = scale
+
+  override fun scale(scaleFactor: Float): Icon = AsyncImageIcon(defaultIcon, scaleFactor, imageLoader)
 }
 
 private class RepaintScheduler {
