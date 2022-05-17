@@ -25,14 +25,14 @@ open class AvailabilityProvider(
         val project = module.project
         val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(test)
         val javaPsiFacade = JavaPsiFacade.getInstance(project)
-        val hasKotlinTest =
+        val available =
             fqNames.any {
                 javaClassLookup && javaPsiFacade.findClass(it, moduleScope) != null ||
                         aliasLookup && KotlinTopLevelTypeAliasFqNameIndex.get(it, project, moduleScope).isNotEmpty() ||
                         kotlinFullClassLookup && KotlinFullClassNameIndex.get(it, project, moduleScope).isNotEmpty()
             }
 
-        return CachedValueProvider.Result.create(hasKotlinTest, ProjectRootManager.getInstance(project))
+        return CachedValueProvider.Result.create(available, ProjectRootManager.getInstance(project))
     }
 }
 
