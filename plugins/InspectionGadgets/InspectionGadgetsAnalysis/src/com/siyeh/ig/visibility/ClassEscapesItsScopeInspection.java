@@ -76,7 +76,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
           if (psiModule != null) {
             VirtualFile vFile = file.getVirtualFile();
             if (vFile != null) {
-              Module module = ProjectFileIndex.SERVICE.getInstance(holder.getProject()).getModuleForFile(vFile);
+              Module module = ProjectFileIndex.getInstance(holder.getProject()).getModuleForFile(vFile);
               if (module != null) {
                 Set<String> exportedPackageNames =
                   new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));

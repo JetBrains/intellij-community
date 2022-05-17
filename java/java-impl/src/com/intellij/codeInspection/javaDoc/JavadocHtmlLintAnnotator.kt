@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.codeInspection.javaDoc
@@ -105,7 +105,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     file is PsiJavaFile &&
     file.languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
     file.virtualFile != null &&
-    ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
+    ProjectFileIndex.getInstance(file.project).isInSourceContent(file.virtualFile)
 
   private fun createTempFile(bytes: ByteArray): File {
     val tempFile = FileUtil.createTempFile(File(PathManager.getTempPath()), "javadocHtmlLint", ".java")

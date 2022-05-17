@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -83,7 +83,7 @@ public class ExpressionStatisticsAction extends AnAction {
   @NotNull
   private static List<VirtualFile> collectJavaFiles(VirtualFile dir, Project project) {
     final List<VirtualFile> javaFiles = new ArrayList<>();
-    ProjectFileIndex.SERVICE.getInstance(project).iterateContentUnderDirectory(dir, file -> {
+    ProjectFileIndex.getInstance(project).iterateContentUnderDirectory(dir, file -> {
       if (file.getName().endsWith(".java")) {
         javaFiles.add(file);
       }

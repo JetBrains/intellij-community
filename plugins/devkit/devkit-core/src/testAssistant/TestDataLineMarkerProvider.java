@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -72,7 +72,7 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
     }
 
     final VirtualFile file = PsiUtilCore.getVirtualFile(e);
-    if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInTestSourceContent(file)) {
+    if (file == null || !ProjectFileIndex.getInstance(project).isInTestSourceContent(file)) {
       return null;
     }
 

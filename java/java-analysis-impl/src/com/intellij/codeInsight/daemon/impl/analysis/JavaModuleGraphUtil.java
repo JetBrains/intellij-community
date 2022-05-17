@@ -440,7 +440,7 @@ public final class JavaModuleGraphUtil {
     private JavaModuleScope(@NotNull Project project, @NotNull PsiJavaModule module, @NotNull VirtualFile moduleFile) {
       super(project);
       myModule = module;
-      ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       myIncludeLibraries = fileIndex.isInLibrary(moduleFile);
       myIsInTests = !myIncludeLibraries && fileIndex.isInTestSourceContent(moduleFile);
     }
@@ -460,7 +460,7 @@ public final class JavaModuleGraphUtil {
       Project project = getProject();
       if (project == null) return false;
       if (!isJvmLanguageFile(file)) return false;
-      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+      ProjectFileIndex index = ProjectFileIndex.getInstance(project);
       if (index.isInLibrary(file)) return myIncludeLibraries && myModule.equals(findDescriptorInLibrary(project, index, file));
       Module module = index.getModuleForFile(file);
       return myModule.equals(findDescriptorByModule(module, myIsInTests));

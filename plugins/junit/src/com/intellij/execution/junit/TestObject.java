@@ -425,7 +425,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private static String getVersion(PsiClass classFromCommon) {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(classFromCommon);
     if (virtualFile != null) {
-      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(classFromCommon.getProject());
+      ProjectFileIndex index = ProjectFileIndex.getInstance(classFromCommon.getProject());
       VirtualFile root = index.getClassRootForFile(virtualFile);
       if (root != null && root.getFileSystem() instanceof JarFileSystem) {
         VirtualFile manifestFile = root.findFileByRelativePath(JarFile.MANIFEST_NAME);

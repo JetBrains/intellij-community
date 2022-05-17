@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.*;
  * <p>To get all of its modules, use {@code ModuleManager.getInstance(project).getModules()}.
  *
  * <p>To iterate over all project source files and directories,
- * use {@code ProjectFileIndex.SERVICE.getInstance(project).iterateContent(iterator)}.
+ * use {@code ProjectFileIndex.getInstance(project).iterateContent(iterator)}.
  *
  * <p>To get the list of all open projects, use {@code ProjectManager.getInstance().getOpenProjects()}.
  */

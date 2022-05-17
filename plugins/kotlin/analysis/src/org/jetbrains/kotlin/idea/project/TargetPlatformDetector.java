@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.project;
 
@@ -55,7 +55,7 @@ public class TargetPlatformDetector {
 
         VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
         if (virtualFile != null) {
-            Module moduleForFile = ProjectFileIndex.SERVICE.getInstance(file.getProject()).getModuleForFile(virtualFile);
+            Module moduleForFile = ProjectFileIndex.getInstance(file.getProject()).getModuleForFile(virtualFile);
             if (moduleForFile != null) {
                 return getPlatform(moduleForFile);
             }

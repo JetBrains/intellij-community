@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compiler
 
@@ -23,13 +23,15 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
-import org.jetbrains.kotlin.idea.project.*
+import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
 
 class IDELanguageSettingsProviderHelper(private val project: Project) {
     internal val languageVersionSettings: LanguageVersionSettings
@@ -139,7 +141,7 @@ private fun detectDefaultTargetPlatformVersion(platform: TargetPlatform?): Targe
 private fun getLanguageSettingsForScripts(project: Project, file: VirtualFile, scriptDefinition: ScriptDefinition): ScriptLanguageSettings {
     val scriptModule = file.let {
         ScriptRelatedModuleNameFile[project, it]?.let { module -> ModuleManager.getInstance(project).findModuleByName(module) }
-            ?: ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(it)
+            ?: ProjectFileIndex.getInstance(project).getModuleForFile(it)
     }
 
     val environmentCompilerOptions = scriptDefinition.defaultCompilerOptions

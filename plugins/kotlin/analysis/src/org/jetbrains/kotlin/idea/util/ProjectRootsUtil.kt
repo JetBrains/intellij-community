@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.util
 
@@ -78,7 +78,7 @@ object ProjectRootsUtil {
         includeLibraryClasses: Boolean,
         includeScriptDependencies: Boolean,
         includeScriptsOutsideSourceRoots: Boolean,
-        fileIndex: ProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
+        fileIndex: ProjectFileIndex = ProjectFileIndex.getInstance(project)
     ): Boolean {
         ProgressManager.checkCanceled()
         val fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence)
@@ -133,7 +133,7 @@ object ProjectRootsUtil {
         includeLibraryClasses: Boolean,
         includeScriptDependencies: Boolean,
         includeScriptsOutsideSourceRoots: Boolean,
-        fileIndex: ProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
+        fileIndex: ProjectFileIndex = ProjectFileIndex.getInstance(project)
     ): Boolean {
         if (includeScriptsOutsideSourceRoots) {
             if (ProjectRootManager.getInstance(project).fileIndex.isInContent(file) || ScratchUtil.isScratch(file)) {
