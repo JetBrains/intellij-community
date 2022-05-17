@@ -50,7 +50,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicInteger
 
 @RunsInEdt
@@ -69,17 +68,20 @@ class DynamicPluginsTest {
   @JvmField
   val inMemoryFs = InMemoryFsRule()
 
+  private val rootPath get() = inMemoryFs.fs.getPath("/")
+  private val pluginsPath get() = rootPath.resolve("plugin")
+
   @Rule
   @JvmField
   val runInEdt = EdtRule()
 
   private fun loadPluginWithText(
     pluginBuilder: PluginBuilder,
-    disabledPlugins: Set<PluginId> = emptySet(),
+    disabledPlugins: Set<String> = emptySet(),
   ): Disposable {
     return loadPluginWithText(
       pluginBuilder = pluginBuilder,
-      fs = inMemoryFs.fs,
+      path = rootPath.resolve(Ksuid.generate()),
       disabledPlugins = disabledPlugins,
     )
   }
@@ -91,11 +93,13 @@ class DynamicPluginsTest {
     val app = ApplicationManager.getApplication()
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
 
-    val path = inMemoryFs.fs.getPath("/plugin")
-    PluginBuilder().name("testLoadListeners").applicationListeners("""
+    val pluginBuilder = PluginBuilder()
+      .name("testLoadListeners")
+      .applicationListeners("""
       <listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>
-    """.trimIndent()).build(path)
-    val descriptor = loadDescriptorInTest(path)
+    """.trimIndent())
+    val descriptor = loadDescriptorInTest(pluginBuilder, rootPath, useTempDir = true)
+
     setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPlugins::class.java.classLoader)
     DynamicPlugins.loadPlugin(descriptor)
     app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
@@ -108,9 +112,8 @@ class DynamicPluginsTest {
 
   @Test
   fun testClassloaderAfterReload() {
-    val path = inMemoryFs.fs.getPath("/plugin")
-    val builder = PluginBuilder().randomId("bar").also { it.build(path) }
-    val descriptor = loadDescriptorInTest(path)
+    val builder = PluginBuilder().randomId("bar")
+    val descriptor = loadDescriptorInTest(builder, rootPath)
     assertThat(descriptor).isNotNull
 
     DynamicPlugins.loadPlugin(descriptor)
@@ -123,7 +126,7 @@ class DynamicPluginsTest {
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
     DisabledPluginsState.saveDisabledPlugins(PathManager.getConfigDir())
-    val newDescriptor = loadDescriptorInTest(path)
+    val newDescriptor = loadDescriptorInTest(pluginsPath)
     ClassLoaderConfigurator(PluginManagerCore.getPluginSet().enablePlugin(newDescriptor)).configureModule(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor)
     try {
@@ -209,10 +212,7 @@ class DynamicPluginsTest {
       .extensionPoints("""<extensionPoint qualifiedName="$epName" interface="java.lang.Runnable"/>""")
       .extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
 
-    val descriptor = loadDescriptorInTest(
-      pluginBuilder,
-      Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null),
-    )
+    val descriptor = loadDescriptorInTest(pluginBuilder, rootPath, useTempDir = true)
     assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor))
       .isEqualTo("Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName")
   }
@@ -427,14 +427,14 @@ class DynamicPluginsTest {
 
     loadPluginWithText(
       pluginBuilder = baz,
-      disabledPlugins = setOf(foo.id, bar.id).map { PluginId.getId(it) }.toSet(),
+      disabledPlugins = setOf(foo.id, bar.id),
     ).use {
       assertForModules(::assertModuleIsNotLoaded)
       assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount)
 
       loadPluginWithText(
         pluginBuilder = foo,
-        disabledPlugins = setOf(bar.id).map { PluginId.getId(it) }.toSet(),
+        disabledPlugins = setOf(bar.id),
       ).use {
         assertForModules(::assertModuleIsNotLoaded)
         assertThat(ep.sortedAdapters).hasSize(coreInjectorsCount)
@@ -549,7 +549,7 @@ class DynamicPluginsTest {
     val project = projectRule.project
     loadPluginWithText(PluginBuilder().extensions("""
         <projectService serviceImplementation="${MyProjectService::class.java.name}"/>
-      """), inMemoryFs.fs).use {
+      """)).use {
       assertThat(project.getService(MyProjectService::class.java)).isNotNull()
     }
   }
@@ -679,10 +679,8 @@ class DynamicPluginsTest {
 
     loadPluginWithText(barBuilder).use {
       loadPluginWithText(quuxBuilder).use {
-        val descriptor = loadDescriptorInTest(
-          mainDescriptor,
-          Files.createTempDirectory(inMemoryFs.fs.getPath("/"), null),
-        )
+        val descriptor = loadDescriptorInTest(mainDescriptor, rootPath, useTempDir = true)
+
         setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo(
           "Plugin ${mainDescriptor.id} is not unload-safe because of extension to non-dynamic EP foo.barExtension in optional dependency on ${quuxBuilder.id} in optional dependency on ${barBuilder.id}")
