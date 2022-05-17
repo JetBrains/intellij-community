@@ -106,6 +106,11 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
       myWrapper = wrapper;
     }
 
+    @Override
+    public @NotNull PsiElement getDeclarationScope() {
+      return myWrapper.getParent();
+    }
+
     public @Nullable PsiRecordComponent getRecordComponent() {
       PsiClass psiClass = PsiTreeUtil.getParentOfType(this, PsiClass.class);
       if (psiClass == null) return null;

@@ -2,7 +2,8 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -58,6 +59,20 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
     assertNotNull(decl);
     ReassignVariableUtil.registerDeclaration(getEditor(), decl, getTestRootDisposable());
     ReassignVariableUtil.reassign(getEditor());
+  }
+
+  public void testLightRecordCanonicalConstructor() {
+    myFixture.configureByText("A.java", "record Rec(int x) {}");
+    PsiMethod constructor = ((PsiJavaFile)getFile()).getClasses()[0].getConstructors()[0];
+    assertTrue(constructor instanceof LightRecordCanonicalConstructor);
+    PsiParameterList list = constructor.getParameterList();
+    PsiParameter parameter = list.getParameter(0);
+    assertTrue(parameter instanceof LightRecordCanonicalConstructor.LightRecordConstructorParameter);
+    assertEquals("x", parameter.getName());
+    PsiElement scope = parameter.getDeclarationScope();
+    assertTrue(scope instanceof PsiMethod);
+    int index = ((PsiMethod)scope).getParameterList().getParameterIndex(parameter);
+    assertEquals(0, index);
   }
 
   private void doTest() {
