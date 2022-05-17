@@ -1154,6 +1154,8 @@
         <action id="SetCaretVisualAttributesInternalAction" internal="true" class="com.intellij.internal.SetCaretVisualAttributesAction"/>
         <action id="EditorRenderingBenchmarkAction" internal="true"
                 class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"/>
+        <action id="ActionUpdateBenchmarkAction" internal="true"
+                class="com.intellij.internal.performance.ActionsUpdateBenchmarkAction"/>
       </group>
       <group id="Internal.UI" popup="true">
         <group id="Internal.UI.Demos" popup="true">
