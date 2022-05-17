@@ -11,7 +11,7 @@ interface CombinedDiffTool: FrameDiffTool
 
 /**
  * This tool intended only for persistence purpose.
- * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactoryBase].
+ * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactory].
  */
 internal class CombinedSideBySideDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
@@ -23,7 +23,7 @@ internal class CombinedSideBySideDiffTool : CombinedDiffTool {
 
 /**
  * This tool intended only for persistence purpose.
- * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactoryBase].
+ * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactory].
  */
 internal class CombinedUnifiedDiffTool : CombinedDiffTool {
   override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
