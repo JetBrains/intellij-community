@@ -7,8 +7,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.content.Content
 
 abstract class ContentTabAction(val icon: ActiveIcon) {
+  /**
+   * Whether the icon is painted before or after the tab text
+   */
   open val afterText: Boolean = true
 
+  /**
+   * Whether the action is visible on a tab label
+   */
   abstract val available: Boolean
   abstract fun runAction()
 
@@ -16,6 +22,9 @@ abstract class ContentTabAction(val icon: ActiveIcon) {
   open val tooltip: String? = null
 }
 
+/**
+ * Allows to add clickable icons to the tab labels of Tool Window contents
+ */
 interface ContentTabActionProvider {
   companion object {
     @JvmField
