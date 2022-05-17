@@ -485,7 +485,7 @@ public class ChangesViewManager implements ChangesViewEx,
         }
 
         @Override
-        public void updateAvailability(@NotNull AnActionEvent e) {
+        public void updateDiffAction(@NotNull AnActionEvent e) {
           ShowDiffFromLocalChangesActionProvider.updateAvailability(e);
         }
 
@@ -525,7 +525,7 @@ public class ChangesViewManager implements ChangesViewEx,
       PreviewDiffSplitterComponent previewSplitter =
         new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
       previewSplitter.setFirstComponent(myContentPanel);
-      previewSplitter.setPreviewVisible(myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN, false);
+      DiffPreview.setPreviewVisible(previewSplitter, myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
       myView.addSelectionListener(() -> {
         boolean fromModelRefresh = myModelUpdateInProgress;
@@ -873,20 +873,20 @@ public class ChangesViewManager implements ChangesViewEx,
         refreshView();
       }
     }
-
   }
-
 
   public boolean isDiffPreviewAvailable() {
     if (myToolWindowPanel == null) return false;
 
-    return myToolWindowPanel.mySplitterDiffPreview != null || ChangesViewToolWindowPanel.isOpenEditorDiffPreviewWithSingleClick.asBoolean();
+    return myToolWindowPanel.mySplitterDiffPreview != null ||
+           myToolWindowPanel.myEditorDiffPreview != null && ChangesViewToolWindowPanel.isOpenEditorDiffPreviewWithSingleClick.asBoolean();
   }
 
   public void diffPreviewChanged(boolean state) {
     if (myToolWindowPanel == null) return;
-    ObjectUtils.chooseNotNull(myToolWindowPanel.mySplitterDiffPreview, myToolWindowPanel.myEditorDiffPreview)
-      .setPreviewVisible(state, false);
+    DiffPreview preview = ObjectUtils.chooseNotNull(myToolWindowPanel.mySplitterDiffPreview,
+                                                    myToolWindowPanel.myEditorDiffPreview);
+    DiffPreview.setPreviewVisible(preview, state);
     myToolWindowPanel.setCommitSplitOrientation();
   }
 

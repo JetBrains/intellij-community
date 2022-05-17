@@ -107,11 +107,7 @@ abstract class EditorDiffPreview(protected val project: Project,
     }
   }
 
-  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
-    if (isPreviewVisible) openPreviewInEditor(focus) else closePreview()
-  }
-
-  fun openPreviewInEditor(focusEditor: Boolean) {
+  override fun openPreview(requestFocus: Boolean): Boolean {
     val currentFocusOwner = IdeFocusManager.getInstance(project).focusOwner
     val escapeHandler = Runnable {
       closePreview()
@@ -120,10 +116,11 @@ abstract class EditorDiffPreview(protected val project: Project,
     }
 
     registerEscapeHandler(previewFile, escapeHandler)
-    EditorTabPreview.openPreview(project, previewFile, focusEditor)
+    EditorTabPreview.openPreview(project, previewFile, requestFocus)
+    return true
   }
 
-  fun closePreview() {
+  override fun closePreview() {
     if (previewFileDelegate.isInitialized()) {
       FileEditorManager.getInstance(project).closeFile(previewFile)
     }
@@ -171,5 +168,9 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
       changesBrowser.getDiffRequestProducer(it, false)
     }
     return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
+  }
+
+  override fun performDiffAction(): Boolean {
+    return super.performDiffAction() // TODO: handle external tools
   }
 }
