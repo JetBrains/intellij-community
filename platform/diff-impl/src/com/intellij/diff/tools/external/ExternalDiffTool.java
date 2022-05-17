@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,10 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,20 +47,29 @@ public final class ExternalDiffTool {
     return isEnabled() && ExternalDiffSettings.isNotBuiltinDiffTool();
   }
 
+  public static boolean wantShowExternalToolFor(@NotNull List<? extends DiffRequestProducer> diffProducers) {
+    if (isDefault()) return true;
+
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    return diffProducers.stream()
+      .map(DiffRequestProducer::getName)
+      .filter(filePath -> !FileUtilRt.getExtension(filePath).equals("tmp"))
+      .map(filePath -> fileTypeManager.getFileTypeByFileName(filePath))
+      .distinct()
+      .anyMatch(fileType -> ExternalDiffSettings.findDiffTool(fileType) != null);
+  }
+
   public static void show(@Nullable final Project project,
                           @NotNull final DiffRequestChain chain,
-                          @NotNull final DiffDialogHints hints,
-                          @NotNull final ExternalDiffSettings.ExternalTool externalDiffTool) {
+                          @NotNull final DiffDialogHints hints) {
     try {
       final List<DiffRequest> requests = loadRequestsUnderProgress(project, chain);
       if (requests == null) return;
 
       List<DiffRequest> showInBuiltin = new ArrayList<>();
       for (DiffRequest request : requests) {
-        if (canShow(request)) {
-          showRequest(project, request, externalDiffTool);
-        }
-        else {
+        boolean success = tryShowRequestInExternal(project, request);
+        if (!success) {
           showInBuiltin.add(request);
         }
       }
@@ -72,6 +84,23 @@ public final class ExternalDiffTool {
       LOG.warn(e);
       Messages.showErrorDialog(project, e.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
     }
+  }
+
+  private static boolean tryShowRequestInExternal(@Nullable Project project, @NotNull DiffRequest request)
+    throws IOException, ExecutionException {
+    if (!canShow(request)) return false;
+
+    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
+    ExternalDiffSettings.ExternalTool externalTool = StreamEx.of(contents)
+      .map(content -> content.getContentType())
+      .nonNull()
+      .map(fileType -> ExternalDiffSettings.findDiffTool(fileType))
+      .nonNull()
+      .findFirst().orElse(null);
+    if (externalTool == null) return false;
+
+    showRequest(project, request, externalTool);
+    return true;
   }
 
   @Nullable
@@ -126,7 +155,8 @@ public final class ExternalDiffTool {
     if (!errorRequests.isEmpty()) {
       HtmlBuilder message = new HtmlBuilder()
         .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errorRequests, producer -> HtmlChunk.text(producer.getName())));
-      new Notification("Diff Changes Loading Error", DiffBundle.message("can.t.load.some.changes"), message.toString(), NotificationType.ERROR).notify(project);
+      new Notification("Diff Changes Loading Error", DiffBundle.message("can.t.load.some.changes"), message.toString(),
+                       NotificationType.ERROR).notify(project);
     }
 
     return requests;
@@ -134,7 +164,8 @@ public final class ExternalDiffTool {
 
   private static <T> T computeWithModalProgress(@Nullable Project project,
                                                 @NotNull @NlsContexts.DialogTitle String title,
-                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable) throws Exception {
+                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
+    throws Exception {
     return ProgressManager.getInstance().run(new Task.WithResult<T, Exception>(project, title, true) {
       @Override
       protected T compute(@NotNull ProgressIndicator indicator) throws Exception {
@@ -145,7 +176,7 @@ public final class ExternalDiffTool {
 
   public static void showRequest(@Nullable Project project,
                                  @NotNull DiffRequest request,
-                                 @NotNull final ExternalDiffSettings.ExternalTool externalDiffTool) throws ExecutionException, IOException {
+                                 @NotNull ExternalDiffSettings.ExternalTool externalDiffTool) throws ExecutionException, IOException {
     request.onAssigned(true);
     try {
       List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
