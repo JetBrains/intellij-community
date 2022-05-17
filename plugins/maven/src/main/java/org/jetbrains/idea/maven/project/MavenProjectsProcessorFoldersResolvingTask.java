@@ -44,6 +44,7 @@ public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsPro
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     myResolver.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);
+    //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false, c -> {
       Sdk sdk = c.getJdk();
       String version = sdk.getVersionString();
