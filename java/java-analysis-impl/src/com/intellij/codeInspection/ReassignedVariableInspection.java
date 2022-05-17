@@ -66,7 +66,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
           }
           else if (resolved instanceof PsiParameter) {
             Boolean isReassigned = myParameterIsReassigned.computeIfAbsent((PsiParameter)resolved,
-                      param -> HighlightControlFlowUtil.isAssigned((PsiParameter)param));
+                                                                           HighlightControlFlowUtil::isAssigned);
             if (isReassigned) {
               myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolved));
             }
