@@ -3,27 +3,31 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.util.io.Decompressor
 import java.io.File
+import java.io.InputStream
 import java.security.MessageDigest
 
-class LazyZipUnpacker(private val destination: File) {
-    private val hashFile = destination.resolveSibling("$destination.md5")
+class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputProducer<File>(
+    // Use hash to get some unique string originated from destination.path which can be used in filename
+    // (unfortunately, destination.path itself cannot be used as a filename because of slashes)
+    "${LazyZipUnpacker::class.java.name}-${destination.canonicalPath.byteInputStream().use { it.md5() }}"
+) {
 
-    fun lazyUnpack(zip: File): File {
-        if (!isUpToDate(zip)) {
-            destination.deleteRecursively()
-            Decompressor.Zip(zip).extract(destination)
-            check(destination.isDirectory)
-
-            hashFile.parentFile.mkdirs()
-            // "Commit the state" / "Commit transaction" (should be the last step for the algorithm to be fault-tolerant)
-            hashFile.writeText(calculateMd5(zip))
-            check(isUpToDate(zip))
-        }
-        return destination
+    override fun produceOutput(input: File): List<File> { // input is a zip file
+        destination.deleteRecursively()
+        Decompressor.Zip(input).extract(destination)
+        check(destination.isDirectory)
+        return listOf(destination)
     }
 
-    fun isUpToDate(zip: File): Boolean = hashFile.exists() && hashFile.readText().trim() == calculateMd5(zip).trim()
+    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: File, buffer: ByteArray) {
+        input.inputStream().use { messageDigest.update(it, buffer) }
+    }
 
-    private fun calculateMd5(zip: File): String =
-        MessageDigest.getInstance("MD5").digest(zip.readBytes()).joinToString("") { "%02x".format(it) }
+    fun lazyUnpack(zip: File) = lazyProduceOutput(zip).singleOrNull() ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
+}
+
+private fun InputStream.md5(): String {
+    val messageDigest = MessageDigest.getInstance("MD5")
+    messageDigest.update(this)
+    return messageDigest.digest().joinToString("") { "%02x".format(it) }
 }
