@@ -18,7 +18,7 @@ internal class DocumentationEditSourceAction : AnAction(), UpdateInBackground {
   private fun targetPointer(dc: DataContext): Pointer<out DocumentationTarget>? = documentationBrowser(dc)?.targetPointer
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = targetPointer(e.dataContext)?.dereference()?.navigatable != null
+    e.presentation.isEnabledAndVisible = targetPointer(e.dataContext)?.dereference()?.navigatable?.canNavigate() == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
