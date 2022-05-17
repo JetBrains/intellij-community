@@ -1056,7 +1056,7 @@ private fun loadModules(
     }
   }
 
-  (ActionManager.getInstance() as ActionManagerImpl).registerActions(modules.asSequence())
+  (ActionManager.getInstance() as ActionManagerImpl).registerActions(modules)
 }
 
 private fun analyzeSnapshot(hprofPath: String, pluginId: PluginId): String {

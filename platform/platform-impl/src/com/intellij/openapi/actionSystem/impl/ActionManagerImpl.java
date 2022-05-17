@@ -61,7 +61,6 @@ import com.intellij.util.xml.dom.XmlElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import kotlin.Unit;
-import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +137,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       }
     }
 
-    registerActions(PluginManagerCore.getPluginSet().getEnabledModules());
+    registerActions(PluginManagerCore.getPluginSet().getRawListOfEnabledModules());
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
     DYNAMIC_EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
@@ -162,10 +161,10 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   @ApiStatus.Internal
-  public void registerActions(@NotNull Sequence<IdeaPluginDescriptorImpl> modules) {
+  public void registerActions(@NotNull Iterable<IdeaPluginDescriptorImpl> modules) {
     KeymapManagerEx keymapManager = Objects.requireNonNull(KeymapManagerEx.getInstanceEx());
-    for (Iterator<IdeaPluginDescriptorImpl> iter = modules.iterator(); iter.hasNext(); ) {
-      IdeaPluginDescriptorImpl module = iter.next();
+
+    for (IdeaPluginDescriptorImpl module : modules) {
       registerPluginActions(module, keymapManager);
       PrecomputedExtensionModelKt.executeRegisterTaskForOldContent(module, it -> {
         registerPluginActions(it, keymapManager);
