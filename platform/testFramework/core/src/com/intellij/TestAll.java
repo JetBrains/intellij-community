@@ -293,6 +293,8 @@ public class TestAll implements Test {
     Test test = getTest(testCaseClass);
     if (test == null) return;
 
+    TestMethodsFilter.tryToFilterTests(test);
+
     try {
       test.run(testResult);
     }
