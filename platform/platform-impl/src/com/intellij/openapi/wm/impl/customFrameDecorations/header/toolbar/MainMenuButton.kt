@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -50,9 +51,14 @@ internal class MainMenuButton {
 
   companion object {
     private fun createMenuButton(action: AnAction): ActionButton {
-      return ActionButton(action, PresentationFactory().getPresentation(action),
-                          ActionPlaces.MAIN_MENU_IN_POPUP, Dimension(40, 40))
-        .apply { setLook(HeaderToolbarButtonLook()) }
+      val button = object: ActionButton(action, PresentationFactory().getPresentation(action),
+                                ActionPlaces.MAIN_MENU_IN_POPUP, Dimension(40, 40)) {
+        override fun getDataContext(): DataContext {
+          return DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) ?: super.getDataContext()
+        }
+      }
+      button.setLook(HeaderToolbarButtonLook())
+      return button
     }
   }
 }
