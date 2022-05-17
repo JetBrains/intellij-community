@@ -14,31 +14,38 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_RESULT_OF_LAMBDA
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+fun KtExpression.isLambdaReturnValueHintsApplicable(): Boolean {
+    if (this is KtWhenExpression || this is KtBlockExpression) {
+        return false
+    }
+
+    if (this is KtIfExpression && !this.isOneLiner()) {
+        return false
+    }
+
+    if (this.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
+        return false
+    }
+
+    if (!KtPsiUtil.isStatement(this)) {
+        if (!allowLabelOnExpressionPart(this)) {
+            return false
+        }
+    } else if (forceLabelOnExpressionPart(this)) {
+        return false
+    }
+    val functionLiteral = this.getParentOfType<KtFunctionLiteral>(true)
+    val body = functionLiteral?.bodyExpression ?: return false
+    if (body.statements.size == 1 && body.statements[0] == this) {
+        return false
+    }
+
+    return true
+}
+
 @Suppress("UnstableApiUsage")
 fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {
-    if (expression is KtWhenExpression || expression is KtBlockExpression) {
-        return null
-    }
-
-    if (expression is KtIfExpression && !expression.isOneLiner()) {
-        return null
-    }
-
-    if (expression.getParentOfType<KtIfExpression>(true)?.isOneLiner() == true) {
-        return null
-    }
-
-    if (!KtPsiUtil.isStatement(expression)) {
-        if (!allowLabelOnExpressionPart(expression)) {
-            return null
-        }
-    } else if (forceLabelOnExpressionPart(expression)) {
-        return null
-    }
-
-    val functionLiteral = expression.getParentOfType<KtFunctionLiteral>(true)
-    val body = functionLiteral?.bodyExpression ?: return null
-    if (body.statements.size == 1 && body.statements[0] == expression) {
+    if (!expression.isLambdaReturnValueHintsApplicable()) {
         return null
     }
 

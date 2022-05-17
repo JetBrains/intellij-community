@@ -113,8 +113,12 @@ enum class HintType(
         KotlinBundle.message("hints.settings.dont.show.lambda.return"),
         true
     ) {
-        override fun isApplicable(e: PsiElement) =
-            e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall()
+        override fun isApplicable(e: PsiElement): Boolean {
+            return e is KtExpression &&
+                    e !is KtFunctionLiteral &&
+                    !e.isNameReferenceInCall() &&
+                    e.isLambdaReturnValueHintsApplicable()
+        }
 
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
             e.safeAs<KtExpression>()?.let { expression ->
