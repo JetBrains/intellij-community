@@ -65,10 +65,18 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         if (parent instanceof PsiNamedElement) {
           fixes.add(quickFixFactory.createRenameToIgnoredFix((PsiNamedElement)parent, true));
         }
+        String message;
+        if (refMethod.isAbstract()) {
+          message = JavaBundle.message("inspection.unused.parameter.composer");
+        }
+        else if (refMethod.getDerivedMethods().isEmpty()) {
+          message = JavaBundle.message("inspection.unused.parameter.problem.descriptor");
+        }
+        else {
+          message = JavaBundle.message("inspection.unused.parameter.composer1");
+        }
         result.add(manager.createProblemDescriptor(anchor,
-                                                   JavaBundle.message(refMethod.isAbstract()
-                                                                      ? "inspection.unused.parameter.composer"
-                                                                      : "inspection.unused.parameter.composer1"),
+                                                   message,
                                                    fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
       }
