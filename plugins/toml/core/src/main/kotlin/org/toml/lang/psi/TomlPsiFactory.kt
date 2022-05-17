@@ -35,7 +35,7 @@ class TomlPsiFactory(private val project: Project, private val markGenerated: Bo
     fun createNewline(): PsiElement = createWhitespace("\n")
 
     fun createWhitespace(ws: String): PsiElement =
-        PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(ws)
+        PsiParserFacade.getInstance(project).createWhiteSpaceFromText(ws)
 
     fun createLiteral(value: String): TomlLiteral =
         // If you're creating a string value, like `serde = "1.0.90"` make sure that the `value` parameter actually

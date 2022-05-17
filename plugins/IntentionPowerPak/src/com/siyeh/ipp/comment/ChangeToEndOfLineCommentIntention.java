@@ -49,7 +49,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
 
     final Project project = oldComment.getProject();
     // newline followed by space convinces formatter to indent line
-    final PsiElement ws = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n ");
+    final PsiElement ws = PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n ");
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final int last = lines[lines.length - 1].trim().isEmpty() ? lines.length - 2 : lines.length - 1;
     final int first = lines[0].trim().isEmpty() ? 1 : 0;
