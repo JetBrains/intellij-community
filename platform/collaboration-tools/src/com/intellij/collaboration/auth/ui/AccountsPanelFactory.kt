@@ -220,7 +220,8 @@ private class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader:
   : AvatarIconsProvider<A> {
 
   private val cachingDelegate = object : CachingAvatarIconsProvider<Pair<A, String>>(defaultAvatarIcon) {
-    override fun loadImage(key: Pair<A, String>): Image? = detailsLoader.loadAvatarAsync(key.first, key.second).asCompletableFuture().join()
+    override fun loadImageAsync(key: Pair<A, String>): CompletableFuture<Image?> =
+      detailsLoader.loadAvatarAsync(key.first, key.second).asCompletableFuture()
   }
 
 

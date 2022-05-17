@@ -151,21 +151,20 @@ class GHAccountSelectorComponentFactory {
     }
   }
 
-  private class AccountAvatarIconsProvider : CachingAvatarIconsProvider<GithubAccount>(
-    GithubIcons.DefaultAvatar) {
+  private class AccountAvatarIconsProvider : CachingAvatarIconsProvider<GithubAccount>(GithubIcons.DefaultAvatar) {
 
     private val requestExecutorManager = GithubApiRequestExecutorManager.getInstance()
     private val accountInformationProvider = GithubAccountInformationProvider.getInstance()
     private val avatarLoader = CachingGHUserAvatarLoader.getInstance()
 
-    override fun loadImage(key: GithubAccount): Image? {
+    override fun loadImageAsync(key: GithubAccount): CompletableFuture<Image?> {
       val executor = requestExecutorManager.getExecutor(key)
       return ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
         accountInformationProvider.getInformation(executor, it, key)
       }.thenCompose {
         val url = it.avatarUrl ?: return@thenCompose CompletableFuture.completedFuture(null)
         avatarLoader.requestAvatar(executor, url)
-      }.get()
+      }
     }
   }
 }

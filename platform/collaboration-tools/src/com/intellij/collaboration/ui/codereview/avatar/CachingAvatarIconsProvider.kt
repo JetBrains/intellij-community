@@ -2,7 +2,6 @@
 package com.intellij.collaboration.ui.codereview.avatar
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ui.AsyncImageIcon
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
@@ -27,22 +26,21 @@ abstract class CachingAvatarIconsProvider<T : Any>(private val defaultIcon: Icon
 
     return iconsCache.get(key to iconSize) {
       AsyncImageIcon(IconUtil.resizeSquared(defaultIcon, iconSize)) { scaleCtx, width, height ->
-        CompletableFuture<Image?>().completeAsync({ loadAndResizeImage(key, scaleCtx, width, height) }, avatarLoadingExecutor)
+        loadAndResizeImage(key, scaleCtx, width, height)
       }
     }
   }
 
-  private fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int): Image? {
-    val image = loadImage(key) ?: return null
-    return ImageUtil.resize(image, scaleCtx, width, height)
-  }
+  private fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int) =
+    loadImageAsync(key).thenApplyAsync({ image ->
+                                         image?.let { ImageUtil.resize(it, scaleCtx, width, height) }
+                                       }, avatarResizeExecutor)
 
-  protected abstract fun loadImage(key: T): Image?
+  protected abstract fun loadImageAsync(key: T): CompletableFuture<Image?>
 
   companion object {
-    private val avatarLoadingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-      "Collaboration Tools avatars loading executor",
-      ProcessIOExecutorService.INSTANCE,
+    private val avatarResizeExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+      "Collaboration Tools images resizing executor",
       3
     )
   }
