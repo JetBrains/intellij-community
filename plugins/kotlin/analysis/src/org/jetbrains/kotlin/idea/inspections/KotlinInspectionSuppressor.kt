@@ -8,18 +8,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.highlighter.createSuppressWarningActions
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.findSingleLiteralStringTemplateText
 import org.jetbrains.kotlin.idea.util.findSuppressAnnotation
+import org.jetbrains.kotlin.idea.util.findSuppressedTools
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
-import org.jetbrains.kotlin.resolve.constants.ArrayValue
-import org.jetbrains.kotlin.resolve.constants.StringValue
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -48,29 +45,7 @@ class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDet
 
     override fun getSuppressionIds(element: PsiElement): String? = suppressionIds(element).ifNotEmpty { joinToString(separator = ",") }
 
-    fun suppressionIds(element: PsiElement): List<String> {
-        val builder = mutableListOf<String>()
-        val suppressionCache = KotlinCacheService.getInstance(element.project).getSuppressionCache()
-        for (annotationDescriptor in suppressionCache.getSuppressionAnnotations(element)) {
-            processAnnotation(builder, annotationDescriptor)
-        }
-
-        return builder
-    }
-
-    private fun processAnnotation(builder: MutableList<String>, annotationDescriptor: AnnotationDescriptor) {
-        if (annotationDescriptor.fqName != StandardNames.FqNames.suppress) return
-
-        for (arrayValue in annotationDescriptor.allValueArguments.values) {
-            if (arrayValue is ArrayValue) {
-                for (value in arrayValue.value) {
-                    if (value is StringValue) {
-                        builder.add(value.value)
-                    }
-                }
-            }
-        }
-    }
+    fun suppressionIds(element: PsiElement): List<String> = element.safeAs<KtAnnotated>()?.findSuppressedTools().orEmpty()
 
     override fun createRemoveRedundantSuppressionFix(toolId: String): LocalQuickFix = RemoveRedundantSuppression(toolId)
 
