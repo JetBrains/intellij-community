@@ -137,7 +137,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
       val configuration = configuration
-      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration))
+      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration(null, configuration), isTemplate)
     }
   }
 
