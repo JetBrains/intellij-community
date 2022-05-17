@@ -7,9 +7,9 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.awt.DevicePoint
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -60,7 +60,8 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     }
   }
 
-  override fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
+  override fun getStripeFor(devicePoint: DevicePoint, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
+    val screenPoint = devicePoint.getLocationOnScreen(pane)
     return if (preferred.containsPoint(screenPoint)) {
       preferred
     }

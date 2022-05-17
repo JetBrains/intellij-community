@@ -7,8 +7,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.awt.DevicePoint
 import java.awt.Dimension
-import java.awt.Point
 import javax.swing.JComponent
 
 internal interface ToolWindowButtonManager {
@@ -33,7 +33,7 @@ internal interface ToolWindowButtonManager {
 
   fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
 
-  fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe?
+  fun getStripeFor(devicePoint: DevicePoint, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe?
 
   fun getStripeWidth(anchor: ToolWindowAnchor): Int
   fun getStripeHeight(anchor: ToolWindowAnchor): Int

@@ -10,8 +10,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.awt.DevicePoint
 import java.awt.Dimension
-import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -123,7 +123,8 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
     }
   }
 
-  override fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
+  override fun getStripeFor(devicePoint: DevicePoint, preferred: AbstractDroppableStripe, pane: JComponent): AbstractDroppableStripe? {
+    val screenPoint = devicePoint.getLocationOnScreen(pane)
     if (Rectangle(pane.locationOnScreen, pane.size).contains(screenPoint)) {
       // Find the stripe that owns this point. Depending on implementation, this could be just the physical bounds of the stripe, or could
       // include the virtual bounds of the drop area for the stripe. Because these bounds might overlap, check the preferred stripe first

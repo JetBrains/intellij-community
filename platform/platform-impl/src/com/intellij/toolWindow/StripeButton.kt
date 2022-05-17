@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.RelativeFont
+import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
@@ -191,7 +192,8 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     }
     dragButtonImage!!.location = xy
     SwingUtilities.convertPointToScreen(xy, dragPane)
-    val stripe = toolWindow.toolWindowManager.getToolWindowPane(toolWindow).getStripeFor(xy, parent as Stripe)
+    val devicePoint = DevicePoint(xy, dragPane!!)
+    val stripe = toolWindow.toolWindowManager.getToolWindowPane(toolWindow).getStripeFor(devicePoint, parent as Stripe)
     if (stripe == null) {
       if (lastStripe != null) {
         lastStripe!!.resetDrop()
@@ -201,7 +203,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       if (lastStripe != null && lastStripe !== stripe) {
         lastStripe!!.resetDrop()
       }
-      stripe.processDropButton(this, dragButtonImage!!, xy)
+      stripe.processDropButton(this, dragButtonImage!!, devicePoint)
     }
     lastStripe = stripe
   }

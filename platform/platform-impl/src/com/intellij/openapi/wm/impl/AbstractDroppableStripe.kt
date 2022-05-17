@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.StripeButtonManager
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
+import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
@@ -115,7 +116,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     repaint()
   }
 
-  fun processDropButton(button: JComponent, buttonImage: JComponent, screenPoint: Point) {
+  fun processDropButton(button: JComponent, buttonImage: JComponent, devicePoint: DevicePoint) {
     if (!isDroppingButton()) {
       buttonImage.paint(createThumbnailDragImage(button).graphics)
 
@@ -124,7 +125,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       computedPreferredSize = null
     }
 
-    val dropPoint = screenPoint.location.also {
+    val dropPoint = devicePoint.getLocationOnScreen(this).location.also {
       SwingUtilities.convertPointFromScreen(it, this)
       // If the major axis of the drop point is not within the bounds of a stripe, the drop highlight isn't drawn. This isn't a problem for
       // the old UI (x is always valid for full width horizontal stripe, etc.), but it is for the new UI's TOP and BOTTOM stripes, which are

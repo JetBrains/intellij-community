@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegistere
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.reference.SoftReference
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.JBUIScale
@@ -283,8 +284,8 @@ class ToolWindowPane internal constructor(frame: JFrame,
   val isBottomSideToolWindowsVisible: Boolean
     get() = getComponentAt(ToolWindowAnchor.BOTTOM) != null
 
-  internal fun getStripeFor(screenPoint: Point, preferred: AbstractDroppableStripe): AbstractDroppableStripe? {
-    return buttonManager.getStripeFor(screenPoint, preferred, this)
+  internal fun getStripeFor(devicePoint: DevicePoint, preferred: AbstractDroppableStripe): AbstractDroppableStripe? {
+    return buttonManager.getStripeFor(devicePoint, preferred, this)
   }
 
   fun stretchWidth(window: ToolWindow, value: Int) {
