@@ -4,7 +4,31 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 interface DiffPreview {
-  fun updateAvailability(event: AnActionEvent) = Unit
   fun updatePreview(fromModelRefresh: Boolean) = Unit
-  fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean = false) = Unit
+
+  fun openPreview(requestFocus: Boolean): Boolean
+  fun closePreview()
+
+  /**
+   * Allows overriding 'Show Diff' action availability and presentation
+   */
+  fun updateDiffAction(event: AnActionEvent) = Unit
+
+  /**
+   * Allows overriding 'Show Diff' action behavior.
+   * For example, by using External Diff Tools when applicable.
+   */
+  fun performDiffAction(): Boolean = openPreview(true)
+
+  companion object {
+    @JvmStatic
+    fun setPreviewVisible(preview: DiffPreview, value: Boolean) {
+      if (value) {
+        preview.openPreview(false)
+      }
+      else {
+        preview.closePreview()
+      }
+    }
+  }
 }
