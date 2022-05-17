@@ -185,10 +185,12 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     }
 
     if (results.isEmpty()) {
+      CachedValuesManager valuesManager = CachedValuesManager.getManager(project);
+      ProjectRootModificationTracker rootModificationTracker = ProjectRootModificationTracker.getInstance(project);
       for (Module module : ModuleManager.getInstance(project).getModules()) {
-        String targetModuleName = CachedValuesManager.getManager(project)
-          .getCachedValue(module, () -> CachedValueProvider.Result.create(LightJavaModule.moduleName(module.getName()), 
-                                                                          ModuleManager.getInstance(project)));
+        String targetModuleName = valuesManager
+          .getCachedValue(module, () -> CachedValueProvider.Result.create(LightJavaModule.moduleName(module.getName()),
+                                                                          rootModificationTracker));
         if (moduleName.equals(targetModuleName)) {
           VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
           if (sourceRoots.length > 0) {
