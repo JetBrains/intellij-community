@@ -11,14 +11,22 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 class KotlinPlainTextSymbolCompletionContributorTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testBasics() {
         myFixture.configureByText(
-            "Test.kt", "class MyClass(val param1: Int, val param2: String) {fun method1() {}}" +
-                    "object MyObject {}" +
-                    "fun myFunction() {}"
+            "Test.kt", """class MyClass(val param1: Int, val param2: String, param3: String) {
+                |  fun method1() {}
+                |  object Xyz {}
+                |}
+                |object MyObject {
+                |  fun objectMethod() {}
+                |}
+                |fun myFunction() {}
+                |""".trimMargin()
         )
         checkCompletion(file, "MyC", 1, "MyClass")
-        checkCompletion(file, "M", 1, "MyClass", "method1", "param1", "param2", "MyObject", "myFunction")
-        checkCompletion(file, "MyClass.", 0, "MyClass.method1", "MyClass.param1", "MyClass.param2")
-        checkCompletion(file, "MyClass::", 0, "MyClass::method1")
+        checkCompletion(file, "M", 1, "MyClass", "method1", "param1", "param2", "MyObject", "objectMethod", "myFunction")
+        checkCompletion(file, "MyClass.", 0, "MyClass.method1", "MyClass.Xyz", "MyClass.param1", "MyClass.param2")
+        checkCompletion(file, "MyClass::", 0, "MyClass::method1", "MyClass::param1", "MyClass::param2")
+        checkCompletion(file, "MyClass#", 0, "MyClass#method1", "MyClass#param1", "MyClass#param2")
+        checkCompletion(file, "MyObject.", 0, "MyObject.objectMethod")
     }
 
     private fun checkCompletion(file: PsiFile, prefix: String, invocationCount: Int, vararg expected: String) {
