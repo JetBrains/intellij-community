@@ -1468,11 +1468,11 @@ public class JBTabsImpl extends JComponent
   @Override
   @NotNull
   public ActionCallback select(@NotNull TabInfo info, boolean requestFocus) {
-    return _setSelected(info, requestFocus);
+    return _setSelected(info, requestFocus, false);
   }
 
   @NotNull
-  private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus) {
+  private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus, boolean requestFocusInWindow) {
     if (!isEnabled()) {
       return ActionCallback.REJECTED;
     }
@@ -1483,15 +1483,15 @@ public class JBTabsImpl extends JComponent
         @NotNull
         @Override
         public ActionCallback run() {
-          return executeSelectionChange(info, requestFocus);
+          return executeSelectionChange(info, requestFocus, requestFocusInWindow);
         }
       });
     }
-    return executeSelectionChange(info, requestFocus);
+    return executeSelectionChange(info, requestFocus, requestFocusInWindow);
   }
 
   @NotNull
-  private ActionCallback executeSelectionChange(@NotNull TabInfo info, boolean requestFocus) {
+  private ActionCallback executeSelectionChange(@NotNull TabInfo info, boolean requestFocus, boolean requestFocusInWindow) {
     if (mySelectedInfo != null && mySelectedInfo.equals(info)) {
       if (!requestFocus) {
         return ActionCallback.DONE;
@@ -1503,9 +1503,9 @@ public class JBTabsImpl extends JComponent
         // This might look like a no-op, but in some cases it's not. In particular, it's required when a focus transfer has just been
         // requested to another component. E.g. this happens on 'unsplit' operation when we remove an editor component from UI hierarchy and
         // re-add it at once in a different layout, and want that editor component to preserve focus afterwards.
-        return requestFocus(owner);
+        return requestFocus(owner, requestFocusInWindow);
       }
-      return requestFocus(getToFocus());
+      return requestFocus(getToFocus(), requestFocusInWindow);
     }
 
     if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null && isMyChildIsFocusedNow()) {
@@ -1542,7 +1542,7 @@ public class JBTabsImpl extends JComponent
     JComponent toFocus = getToFocus();
     if (myProject != null && toFocus != null) {
       ActionCallback result = new ActionCallback();
-      requestFocus(toFocus).doWhenProcessed(() -> {
+      requestFocus(toFocus, requestFocusInWindow).doWhenProcessed(() -> {
         if (myProject.isDisposed()) {
           result.setRejected();
         }
@@ -1554,7 +1554,12 @@ public class JBTabsImpl extends JComponent
     }
     else {
       ApplicationManager.getApplication().invokeLater(() -> {
-        requestFocus();
+        if (requestFocusInWindow) {
+          requestFocusInWindow();
+        }
+        else {
+          requestFocus();
+        }
       }, ModalityState.NON_MODAL);
       return removeDeferred();
     }
@@ -1602,12 +1607,17 @@ public class JBTabsImpl extends JComponent
   }
 
   @NotNull
-  private ActionCallback requestFocus(final Component toFocus) {
+  private ActionCallback requestFocus(final Component toFocus, boolean inWindow) {
     if (toFocus == null) return ActionCallback.DONE;
 
     if (isShowing()) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        myFocusManager.requestFocusInProject(toFocus, myProject);
+        if (inWindow) {
+          toFocus.requestFocusInWindow();
+        }
+        else {
+          myFocusManager.requestFocusInProject(toFocus, myProject);
+        }
       }, ModalityState.NON_MODAL);
       return ActionCallback.DONE;
     }
@@ -2489,17 +2499,21 @@ public class JBTabsImpl extends JComponent
   @Override
   @NotNull
   public ActionCallback removeTab(final TabInfo info) {
-    return removeTab(info, null, true);
+    return doRemoveTab(info, null, false);
   }
 
+  // TODO cleanup API by removing 'transferFocus' parameter where needed, after current approach (with the need to transfer focus being
+  //  determined automatically) proves to be working
   @Override
   @NotNull
   public ActionCallback removeTab(final TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus) {
-    return removeTab(info, forcedSelectionTransfer, transferFocus, false);
+    return doRemoveTab(info, forcedSelectionTransfer, false);
   }
 
   @NotNull
-  private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
+  private ActionCallback doRemoveTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean isDropTarget) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread(), "This method should be invoked on EDT");
+
     if (myRemoveNotifyInProgress) {
       LOG.warn(new IllegalStateException("removeNotify in progress"));
     }
@@ -2527,11 +2541,12 @@ public class JBTabsImpl extends JComponent
 
     if (toSelect != null) {
       boolean clearSelection = info.equals(mySelectedInfo);
+      boolean transferFocus = hasFocus(info);
       processRemove(info, false);
       if (clearSelection) {
         mySelectedInfo = info;
       }
-      _setSelected(toSelect, transferFocus).doWhenProcessed(() -> removeDeferred().notifyWhenDone(result));
+      _setSelected(toSelect, transferFocus, true).doWhenProcessed(() -> removeDeferred().notifyWhenDone(result));
     }
     else {
       processRemove(info, true);
@@ -2547,6 +2562,20 @@ public class JBTabsImpl extends JComponent
     fireTabRemoved(info);
 
     return result;
+  }
+
+  private boolean hasFocus(@NotNull TabInfo info) {
+    TabLabel label = myInfo2Label.get(info);
+    Toolbar toolbar = myInfo2Toolbar.get(info);
+    JComponent component = info.getComponent();
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+    while (focusOwner != null) {
+      if (focusOwner == label || focusOwner == toolbar || focusOwner == component) {
+        return true;
+      }
+      focusOwner = focusOwner.getParent();
+    }
+    return false;
   }
 
   private void processRemove(final TabInfo info, boolean forcedNow) {
@@ -3393,7 +3422,7 @@ public class JBTabsImpl extends JComponent
       myForcedRelayout = true;
       setDropInfoIndex(-1);
       setDropSide(-1);
-      removeTab(dropInfo, null, false, true);
+      doRemoveTab(dropInfo, null, true);
     }
   }
 
