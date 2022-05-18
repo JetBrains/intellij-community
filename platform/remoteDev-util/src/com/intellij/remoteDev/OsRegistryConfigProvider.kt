@@ -50,11 +50,11 @@ class OsRegistryConfigProvider(private val configName: String) {
 
     // these WOW64 keys are ignored by 32-bit Windows, see https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-key-security-and-access-rights
     val uris = listOf(
-      "HKCU_64" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, regKey, regValue, WinNT.KEY_WOW64_64KEY) },
-      "HKCU_32" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, regKey, regValue, WinNT.KEY_WOW64_32KEY) },
-
       "HKLM_64" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, regKey, regValue, WinNT.KEY_WOW64_64KEY) },
       "HKLM_32" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE, regKey, regValue, WinNT.KEY_WOW64_32KEY) },
+
+      "HKCU_64" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, regKey, regValue, WinNT.KEY_WOW64_64KEY) },
+      "HKCU_32" to { Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, regKey, regValue, WinNT.KEY_WOW64_32KEY) }
     )
 
     fun Pair<String, () -> String>.readable() = "${this.first}\\$regKey\\$regValue"
@@ -95,7 +95,7 @@ class OsRegistryConfigProvider(private val configName: String) {
     val home = System.getProperty("user.home")
 
     // non-user writable location first, even if that's wrong according to spec as that's what we want
-    val configLookupDirs = listOf(env["XDG_CONFIG_HOME"] ?: "$home/.config/", "/etc/xdg/").toMutableList()
+    val configLookupDirs = listOf("/etc/xdg/", env["XDG_CONFIG_HOME"] ?: "$home/.config/").toMutableList()
     logger.info("Looking for $key in xdg config dirs: $configLookupDirs")
 
     // we already set /etc/xdg as the first one, so no need to default to it
@@ -159,7 +159,7 @@ class OsRegistryConfigProvider(private val configName: String) {
 
   private fun getFromLibraryApplicationSupport(key: String): OsRegistrySystemSetting<String>? {
     val home = System.getProperty("user.home")
-    val dirs = listOf("$home/", "/")
+    val dirs = listOf("/", "$home/")
     val configDirectoryPath = "Library/Application Support/JetBrains/$configName"
     return getFromDirectories(key, dirs.map { File(it) }, configDirectoryPath)
   }
