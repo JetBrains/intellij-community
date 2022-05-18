@@ -18,6 +18,6 @@ object CommunityRunTestsBuildTarget {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val outputDir = "$communityHome/out/tests"
     val context = CompilationContextImpl.create(communityHome, communityHome, outputDir)
-    TestingTasks.create(context).runTests(emptyList(), "intellij.idea.community.main", null)
+    TestingTasks.create(context).runTests(mutableListOf(), "intellij.idea.community.main", null)
   }
 }

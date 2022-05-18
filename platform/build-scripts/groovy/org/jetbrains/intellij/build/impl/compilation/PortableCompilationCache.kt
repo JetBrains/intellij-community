@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.io.File
 
-internal class PortableCompilationCache(private val context: CompilationContext) {
+class PortableCompilationCache(private val context: CompilationContext) {
   companion object {
     @JvmStatic
     val CAN_BE_USED = ProjectStamps.PORTABLE_CACHES && IS_CONFIGURED

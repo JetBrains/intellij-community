@@ -21,7 +21,7 @@ interface TestingTasks {
    * @param defaultMainModule    main module to be used instead of [TestingOptions.mainModule] if it isn't specified
    * @param rootExcludeCondition if not `null` tests from modules which sources are fit this predicate will be skipped
    */
-  fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: Predicate<File>?)
+  fun runTests(additionalJvmOptions: MutableList<String>, defaultMainModule: String?, rootExcludeCondition: Predicate<File>?)
 
   /**
    * Run all tests annotated with [SkipInHeadlessEnvironment]
@@ -41,8 +41,8 @@ interface TestingTasks {
    *
    * Mutates incoming collections.
    */
-  fun prepareEnvForTestRun(jvmArgs: List<String>,
-                           systemProperties: Map<String, String>,
-                           classPath: List<String>,
+  fun prepareEnvForTestRun(jvmArgs: MutableList<String>,
+                           systemProperties: MutableMap<String, String>,
+                           classPath: MutableList<String>,
                            remoteDebugging: Boolean)
 }
