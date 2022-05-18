@@ -49,8 +49,7 @@ final class RefreshWorker {
     myRefreshQueue.addLast(refreshRoot);
   }
 
-  @NotNull
-  List<VFileEvent> getEvents() {
+  @NotNull List<VFileEvent> getEvents() {
     if (myLocalFileSystemRefreshWorker != null) return myLocalFileSystemRefreshWorker.getEvents();
     return myHelper.getEvents();
   }
@@ -99,16 +98,16 @@ final class RefreshWorker {
     VfsUsageCollector.logRefreshScan(myFullScans, myPartialScans, retries, t, myVfsTime / 1_000_000, myIoTime / 1_000_000);
   }
 
-  private void queueDirectory(@NotNull NewVirtualFile root) {
+  private void queueDirectory(NewVirtualFile root) {
     if (root instanceof VirtualDirectoryImpl) {
       myRefreshQueue.addLast(root);
     }
     else {
-      LOG.error("not a directory: " + root + " (" + root.getClass());
+      LOG.error("not a directory: " + root + " (" + root.getClass() + ')');
     }
   }
 
-  private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) throws RefreshCancelledException {
+  private void processQueue(NewVirtualFileSystem fs, PersistentFS persistence) throws RefreshCancelledException {
     nextDir:
     while (!myRefreshQueue.isEmpty()) {
       VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.removeFirst();
@@ -137,9 +136,7 @@ final class RefreshWorker {
     }
   }
 
-  private boolean fullDirRefresh(@NotNull NewVirtualFileSystem fs,
-                                 @NotNull PersistentFS persistence,
-                                 @NotNull VirtualDirectoryImpl dir) {
+  private boolean fullDirRefresh(NewVirtualFileSystem fs, PersistentFS persistence, VirtualDirectoryImpl dir) {
     var t = System.nanoTime();
     Pair<List<String>, List<VirtualFile>> snapshot = LocalFileSystemRefreshWorker.getDirectorySnapshot(dir);
     myVfsTime += System.nanoTime() - t;
@@ -162,6 +159,7 @@ final class RefreshWorker {
       }
     }
     else {
+      //noinspection SlowAbstractSetRemoveAll
       newNames.removeAll(persistedNames);
     }
 
@@ -248,9 +246,7 @@ final class RefreshWorker {
     return !isFullScanDirectoryChanged(dir, persistedNames, children);
   }
 
-  private boolean isFullScanDirectoryChanged(@NotNull VirtualDirectoryImpl dir,
-                                             @NotNull List<String> names,
-                                             @NotNull List<? extends VirtualFile> children) {
+  private boolean isFullScanDirectoryChanged(VirtualDirectoryImpl dir, List<String> names, List<VirtualFile> children) {
     var t = System.nanoTime();
     var changed = ReadAction.compute(() -> {
       checkCancelled(dir);
@@ -260,9 +256,7 @@ final class RefreshWorker {
     return changed;
   }
 
-  private boolean partialDirRefresh(@NotNull NewVirtualFileSystem fs,
-                                    @NotNull PersistentFS persistence,
-                                    @NotNull VirtualDirectoryImpl dir) {
+  private boolean partialDirRefresh(NewVirtualFileSystem fs, PersistentFS persistence, VirtualDirectoryImpl dir) {
     var t = System.nanoTime();
     Pair<List<VirtualFile>, List<String>> snapshot = ReadAction.compute(() -> {
       checkCancelled(dir);
@@ -328,7 +322,7 @@ final class RefreshWorker {
     return !isDirectoryChanged(dir, cached, wanted);
   }
 
-  private boolean isDirectoryChanged(@NotNull VirtualDirectoryImpl dir, @NotNull List<VirtualFile> cached, @NotNull List<String> wanted) {
+  private boolean isDirectoryChanged(VirtualDirectoryImpl dir, List<VirtualFile> cached, List<String> wanted) {
     var t = System.nanoTime();
     var changed = ReadAction.compute(() -> {
       checkCancelled(dir);
@@ -349,7 +343,7 @@ final class RefreshWorker {
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
     if (canonicalize) {
-      name = fs.getCanonicallyCasedName(file);  // need case-exact names in file events
+      name = fs.getCanonicallyCasedName(file);  // we need case-exact names in file events
     }
     myIoTime += System.nanoTime() - t;
     return new ChildInfoImpl(name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
@@ -362,7 +356,7 @@ final class RefreshWorker {
     }
   }
 
-  private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
+  private void checkCancelled(NewVirtualFile stopAt) throws RefreshCancelledException {
     Consumer<? super VirtualFile> testListener = ourTestListener;
     if (testListener != null) {
       testListener.accept(stopAt);
@@ -378,16 +372,16 @@ final class RefreshWorker {
     }
   }
 
-  private static void forceMarkDirty(@NotNull NewVirtualFile file) {
-    file.markClean();  // otherwise consequent markDirty() won't have any effect
+  private static void forceMarkDirty(NewVirtualFile file) {
+    file.markClean();  // otherwise, consequent markDirty() won't have any effect
     file.markDirty();
   }
 
-  private void checkAndScheduleChildRefresh(@NotNull NewVirtualFileSystem fs,
-                                            @NotNull PersistentFS persistence,
+  private void checkAndScheduleChildRefresh(NewVirtualFileSystem fs,
+                                            PersistentFS persistence,
                                             @Nullable NewVirtualFile parent,
-                                            @NotNull NewVirtualFile child,
-                                            @NotNull FileAttributes childAttributes) {
+                                            NewVirtualFile child,
+                                            FileAttributes childAttributes) {
     if (!VfsEventGenerationHelper.checkDirty(child)) {
       return;
     }
@@ -421,10 +415,10 @@ final class RefreshWorker {
     }
   }
 
-  private boolean checkAndScheduleFileTypeChange(@NotNull NewVirtualFileSystem fs,
+  private boolean checkAndScheduleFileTypeChange(NewVirtualFileSystem fs,
                                                  @Nullable NewVirtualFile parent,
-                                                 @NotNull NewVirtualFile child,
-                                                 @NotNull FileAttributes childAttributes) {
+                                                 NewVirtualFile child,
+                                                 FileAttributes childAttributes) {
     boolean currentIsDirectory = child.isDirectory(), upToDateIsDirectory = childAttributes.isDirectory();
     boolean currentIsSymlink = child.is(VFileProperty.SYMLINK), upToDateIsSymlink = childAttributes.isSymLink();
     boolean currentIsSpecial = child.is(VFileProperty.SPECIAL), upToDateIsSpecial = childAttributes.isSpecial();
@@ -449,7 +443,7 @@ final class RefreshWorker {
   }
 
   // true if the event was scheduled
-  private boolean checkAndScheduleFileNameChange(@Nullable ObjectOpenCustomHashSet<String> actualNames, @NotNull VirtualFile child) {
+  private boolean checkAndScheduleFileNameChange(@Nullable ObjectOpenCustomHashSet<String> actualNames, VirtualFile child) {
     if (actualNames != null) {
       String currentName = child.getName();
       String actualName = actualNames.get(currentName);

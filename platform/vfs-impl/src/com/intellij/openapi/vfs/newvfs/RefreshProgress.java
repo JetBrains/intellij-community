@@ -16,15 +16,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 final class RefreshProgress extends ProgressIndicatorBase {
-  @NotNull
-  public static ProgressIndicator create(@NotNull @NlsContexts.Tooltip String message) {
+  static @NotNull ProgressIndicator create(@NotNull @NlsContexts.Tooltip String message) {
     Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
     return app == null || app.isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress(message);
   }
 
   private final @NlsContexts.Tooltip String myMessage;
 
-  private RefreshProgress(@NotNull @NlsContexts.Tooltip String message) {
+  private RefreshProgress(@NlsContexts.Tooltip String message) {
     super(true);
     myMessage = message;
   }
@@ -42,33 +41,25 @@ final class RefreshProgress extends ProgressIndicatorBase {
   }
 
   private void scheduleUiUpdate() {
-    // wrapping in invokeLater here reduces a number of events posted to EDT in case of multiple IDE frames
+    // wrapping in `invokeLater` here reduces the number of events posted to EDT in the case of multiple IDE frames
     UIUtil.invokeLaterIfNeeded(() -> {
       if (ApplicationManager.getApplication().isDisposed()) {
         return;
       }
 
       Project[] projects = ProjectUtilCore.getOpenProjects();
-      if (projects.length == 0) {
-        return;
-      }
-
       WindowManager windowManager = WindowManager.getInstance();
-      if (windowManager == null) {
-        return;
-      }
-
-      for (Project project : projects) {
-        StatusBar statusBar = windowManager.getStatusBar(project);
-        if (statusBar == null) {
-          continue;
-        }
-
-        if (isRunning()) {
-          statusBar.startRefreshIndication(myMessage);
-        }
-        else {
-          statusBar.stopRefreshIndication();
+      if (projects.length != 0 && windowManager != null) {
+        for (Project project : projects) {
+          StatusBar statusBar = windowManager.getStatusBar(project);
+          if (statusBar != null) {
+            if (isRunning()) {
+              statusBar.startRefreshIndication(myMessage);
+            }
+            else {
+              statusBar.stopRefreshIndication();
+            }
+          }
         }
       }
     });

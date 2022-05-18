@@ -147,20 +147,14 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  @NotNull
   @Override
-  public RefreshSession createSession(boolean async, boolean recursively, @Nullable Runnable finishRunnable, @NotNull ModalityState state) {
+  public @NotNull RefreshSession createSession(boolean async, boolean recursively, @Nullable Runnable finishRunnable, @NotNull ModalityState state) {
     return new RefreshSessionImpl(async, recursively, finishRunnable, state);
   }
 
   @Override
   public void processSingleEvent(boolean async, @NotNull VFileEvent event) {
     new RefreshSessionImpl(async, event).launch();
-  }
-
-  public static boolean isRefreshInProgress() {
-    RefreshQueueImpl refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
-    return !(((BoundedTaskExecutor)refreshQueue.myQueue).isEmpty() && refreshQueue.mySessions.isEmpty());
   }
 
   @Override
@@ -171,6 +165,11 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
         session.cancel();
       }
     }
+  }
+
+  public static boolean isRefreshInProgress() {
+    RefreshQueueImpl refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
+    return !(((BoundedTaskExecutor)refreshQueue.myQueue).isEmpty() && refreshQueue.mySessions.isEmpty());
   }
 
   @TestOnly

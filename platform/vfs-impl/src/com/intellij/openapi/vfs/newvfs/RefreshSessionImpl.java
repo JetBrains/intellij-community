@@ -36,7 +36,7 @@ final class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
-  private final Throwable myStartTrace;
+  private final @Nullable Throwable myStartTrace;
   private final Semaphore mySemaphore = new Semaphore();
 
   private List<VirtualFile> myWorkQueue = new ArrayList<>();
@@ -195,7 +195,7 @@ final class RefreshSessionImpl extends RefreshSession {
           app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
             indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
             int progressThresholdMillis = 5_000;
-            ((ProgressIndicatorWithDelayedPresentation) indicator).setDelayInMillis(progressThresholdMillis);
+            ((ProgressIndicatorWithDelayedPresentation)indicator).setDelayInMillis(progressThresholdMillis);
             long t = System.nanoTime();
             fireEventsInWriteAction(events, appliers, asyncProcessing);
             t = (System.nanoTime() - t) / 1_000_000;
@@ -212,7 +212,7 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   private void fireEventsInWriteAction(List<CompoundVFileEvent> events, List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
-    final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+    VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
     try {
@@ -251,6 +251,7 @@ final class RefreshSessionImpl extends RefreshSession {
   @Override
   public String toString() {
     int size = myWorkQueue.size();
-    return "RefreshSessionImpl: " + size + " roots in the queue" + (size == 0 ? "" : ": "+ContainerUtil.getFirstItem(myWorkQueue)) + (size>=2 ? ", ..." : "");
+    return "RefreshSessionImpl: " + size + " root(s) in the queue" +
+           (size == 0 ? "" : ": " + ContainerUtil.getFirstItem(myWorkQueue)) + (size >= 2 ? ", ..." : "");
   }
 }
