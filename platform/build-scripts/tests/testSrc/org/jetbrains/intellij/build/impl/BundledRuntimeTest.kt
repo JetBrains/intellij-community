@@ -22,12 +22,6 @@ class BundledRuntimeTest {
               continue
             }
 
-            if (os == OsFamily.LINUX && arch == JvmArchitecture.aarch64 && prefix == JetBrainsRuntimeDistribution.JCEF) {
-              // Not supported yet
-              // https://youtrack.jetbrains.com/issue/JBR-3906
-              continue
-            }
-
             val home = try {
               bundledRuntime.extract(prefix.artifactPrefix, os, arch)
             }
