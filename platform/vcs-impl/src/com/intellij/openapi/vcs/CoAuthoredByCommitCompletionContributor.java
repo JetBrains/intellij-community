@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -17,11 +18,9 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
-
 public class CoAuthoredByCommitCompletionContributor extends CompletionContributor {
 
-  private static final String CO_AUTHORED_BY = "Co-authored-by: ";
+  private static final String[] PREFIXES = {"Co-authored-by: ", "Signed-off-by: ", "Reviewed-by: ", "Acked-by: ", "Tested-by: "};
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -35,21 +34,23 @@ public class CoAuthoredByCommitCompletionContributor extends CompletionContribut
     CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, true));
 
     int start = parameters.getOffset() - prefix.length();
-    if (CO_AUTHORED_BY.toLowerCase(Locale.ROOT).startsWith(prefix.toLowerCase(Locale.ROOT))) {
-      if (start > 0 && document.getCharsSequence().charAt(start - 1) == '\n') {
-        prefixed.addElement(LookupElementBuilder.create(CO_AUTHORED_BY));
+    CharSequence charSequence = document.getCharsSequence();
+    for (String knownPrefix : PREFIXES) {
+      if (StringUtil.startsWithIgnoreCase(knownPrefix, prefix) && start > 0 && charSequence.charAt(start - 1) == '\n') {
+        prefixed.addElement(LookupElementBuilder.create(knownPrefix));
       }
-    }
-    if (start >= CO_AUTHORED_BY.length() + 1 &&
-        document.getCharsSequence().subSequence(start - CO_AUTHORED_BY.length() - 1, start).toString()
-          .equals("\n" + CO_AUTHORED_BY)) {
-      result.stopHere();
-      int count = parameters.getInvocationCount();
-      if (count > 0 || !prefix.isEmpty()) {
-        CompletionResultSet usersSet = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, count == 0));
-        for (VcsUser user : project.getService(VcsUserRegistry.class).getUsers()) {
-          usersSet.addElement(LookupElementBuilder.create(user.toString()).withIcon(AllIcons.General.User));
+      else if (start >= knownPrefix.length() + 1 &&
+          charSequence.charAt(start - knownPrefix.length() - 1) == '\n' &&
+          charSequence.subSequence(start - knownPrefix.length(), start).toString().equals(knownPrefix)) {
+        result.stopHere();
+        int count = parameters.getInvocationCount();
+        if (count > 0 || !prefix.isEmpty()) {
+          CompletionResultSet usersSet = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, count == 0));
+          for (VcsUser user : project.getService(VcsUserRegistry.class).getUsers()) {
+            usersSet.addElement(LookupElementBuilder.create(user.toString()).withIcon(AllIcons.General.User));
+          }
         }
+        return;
       }
     }
   }
