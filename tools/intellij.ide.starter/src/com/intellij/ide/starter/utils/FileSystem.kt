@@ -174,7 +174,12 @@ object FileSystem {
     if(this.toFile().isFile){
       size = this.toFile().length()
     } else{
-      size = Files.walk(this).mapToLong { p: Path -> p.toFile().length() }.sum()
+      size = Files.walk(this).mapToLong { p: Path ->
+        if (p.toFile().isFile) {
+          p.toFile().length()
+        }
+        else 0
+      }.sum()
     }
     return size.formatSize()
   }

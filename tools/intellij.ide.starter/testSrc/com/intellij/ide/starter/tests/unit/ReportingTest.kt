@@ -1,13 +1,21 @@
 package com.intellij.ide.starter.tests.unit
 
+import com.intellij.ide.starter.utils.FileSystem.getFileOrDirectoryPresentableSize
 import com.intellij.ide.starter.utils.convertToHashCodeWithOnlyLetters
+import com.intellij.ide.starter.utils.formatSize
 import com.intellij.ide.starter.utils.generifyErrorMessage
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import java.io.File
+import java.nio.charset.Charset
+import java.nio.file.Files
 import java.util.stream.Stream
+import kotlin.io.path.div
+import kotlin.io.path.fileSize
+import kotlin.random.Random
 
 
 class ReportingTest {
@@ -34,5 +42,35 @@ class ReportingTest {
   fun skipNonAlphaNumericSymbolsWhenConvertFromHashCode() {
     // Eg: AEFKQ]H => AEFKQH
     convertToHashCodeWithOnlyLetters(-399429869).shouldBe("AEFKQH")
+  }
+
+  @Test
+  fun testMeasureConversion() {
+    // Eg: AEFKQ]H => AEFKQH
+    100.toLong().formatSize().shouldBe("100 B")
+    0.toLong().formatSize().shouldBe("0 B")
+    1023.toLong().formatSize().shouldBe("1023 B")
+    1024.toLong().formatSize().shouldBe("1.0 KB")
+    (1024 * 1024).toLong().formatSize().shouldBe("1.0 MB")
+    (1024 * 1024 * 1024).toLong().formatSize().shouldBe("1.0 GB")
+  }
+
+  @Test
+  fun testHash() {
+    convertToHashCodeWithOnlyLetters(1232390123).shouldBe("BFJESZ")
+    convertToHashCodeWithOnlyLetters(234790123).shouldBe("AKCQIU")
+  }
+
+  @Test
+  fun testSizeOfFolder() {
+    val folder = Files.createTempDirectory(Random.nextInt().toString())
+    print(folder)
+    val file = File((folder / "test.txt").toString())
+    file.writeText("ABC", Charset.defaultCharset())
+    file.toPath().getFileOrDirectoryPresentableSize().shouldBe("3 B")
+    val file2 = File((folder / "test2.txt").toString())
+    file2.writeText("DE", Charset.defaultCharset())
+    folder.getFileOrDirectoryPresentableSize().shouldBe("5 B")
+
   }
 }

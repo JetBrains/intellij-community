@@ -44,6 +44,7 @@ dependencies {
   implementation "org.kodein.di:kodein-di-jvm:7.9.0"
   implementation "org.rauschig:jarchivelib:1.2.0"
   implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1"
+  implementation "commons-logging:commons-logging:1.2"
 
   implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
   testImplementation 'com.jetbrains.intellij.performanceTesting:performance-testing-maven-commands:LATEST-TRUNK-SNAPSHOT'
