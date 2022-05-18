@@ -385,12 +385,12 @@ final class BuildContextImpl implements BuildContext {
 
   @Override
   boolean shouldBuildDistributions() {
-    return options.targetOS.toLowerCase() != BuildOptions.OS_NONE
+    return options.targetOs.toLowerCase() != BuildOptions.OS_NONE
   }
 
   @Override
   boolean shouldBuildDistributionForOS(String os) {
-    return shouldBuildDistributions() && options.targetOS.toLowerCase() in [BuildOptions.OS_ALL, os]
+    return shouldBuildDistributions() && options.targetOs.toLowerCase() in [BuildOptions.OS_ALL, os]
   }
 
   @Override

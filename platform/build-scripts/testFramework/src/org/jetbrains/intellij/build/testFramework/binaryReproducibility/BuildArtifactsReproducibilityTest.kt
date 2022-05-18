@@ -26,9 +26,9 @@ class BuildArtifactsReproducibilityTest {
     options.randomSeedNumber = randomSeedNumber
     // FIXME IJI-823 workaround
     options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
-    if (options.targetOS != BuildOptions.OS_NONE && options.targetOS != OsFamily.currentOs.osId) {
+    if (options.targetOs != BuildOptions.OS_NONE && options.targetOs != OsFamily.currentOs.osId) {
       // only Linux build is reproducible for now
-      options.targetOS = BuildOptions.OS_LINUX
+      options.targetOs = BuildOptions.OS_LINUX
     }
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
   }

@@ -211,7 +211,7 @@ private fun getCommunityHomePath(homePath: Path): Path {
 private fun createBuildOptions(runDir: Path): BuildOptions {
   val buildOptions = BuildOptions()
   buildOptions.useCompiledClassesFromProjectOutput = true
-  buildOptions.targetOS = BuildOptions.OS_NONE
+  buildOptions.targetOs = BuildOptions.OS_NONE
   buildOptions.cleanOutputFolder = false
   buildOptions.skipDependencySetup = true
   buildOptions.outputRootPath = runDir.toString()

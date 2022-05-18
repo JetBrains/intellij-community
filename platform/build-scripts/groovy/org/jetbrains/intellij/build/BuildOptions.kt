@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.Path
 import java.util.concurrent.ThreadLocalRandom
 
 /**
@@ -164,7 +165,7 @@ class BuildOptions {
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  var targetOS: String?
+  var targetOs: String?
 
   /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
@@ -194,7 +195,7 @@ class BuildOptions {
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
-  var pathToCompiledClassesArchive: String? = System.getProperty("intellij.build.compiled.classes.archive")
+  var pathToCompiledClassesArchive: Path? = System.getProperty("intellij.build.compiled.classes.archive")?.let { Path.of(it) }
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
@@ -250,10 +251,7 @@ class BuildOptions {
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
-  val bundledPluginDirectoriesToSkip: Set<String> = System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "")
-    .split('.')
-    .dropLastWhile { it.isEmpty() }
-    .toSet()
+  val bundledPluginDirectoriesToSkip = getSetProperty("intellij.build.bundled.plugin.dirs.to.skip")
 
   /**
    * Specifies list of names of directories of non-bundled plugins (determined by [ProductModulesLayout.pluginsToPublish] and
@@ -262,7 +260,7 @@ class BuildOptions {
    * [ProductModulesLayout.buildAllCompatiblePlugins] are built. In order to skip building all non-bundled plugins, set the property to
    * `none`.
    */
-  val nonBundledPluginDirectoriesToInclude = System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", "").split('.').toSet()
+  val nonBundledPluginDirectoriesToInclude = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
    * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from gradle.properties will be used.
@@ -300,13 +298,14 @@ class BuildOptions {
   var randomSeedNumber: Long = 0
 
   init {
-    targetOS = System.getProperty(TARGET_OS_PROPERTY)
-    if (OS_CURRENT == targetOS) {
-      targetOS = if (SystemInfo.isWindows) OS_WINDOWS else if (SystemInfo.isMac) OS_MAC else if (SystemInfo.isLinux) OS_LINUX else null
+    targetOs = System.getProperty(TARGET_OS_PROPERTY)
+    if (targetOs == OS_CURRENT) {
+      targetOs = if (SystemInfoRt.isWindows) OS_WINDOWS else if (SystemInfoRt.isMac) OS_MAC else if (SystemInfoRt.isLinux) OS_LINUX else null
     }
-    else if (targetOS == null || targetOS!!.isEmpty()) {
-      targetOS = OS_ALL
+    else if (targetOs.isNullOrEmpty()) {
+      targetOs = OS_ALL
     }
+
     val sourceDateEpoch = System.getenv("SOURCE_DATE_EPOCH")
     buildDateInSeconds = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
@@ -325,4 +324,8 @@ private fun parseBooleanValue(text: String): Boolean {
     text.equals(java.lang.Boolean.FALSE.toString(), ignoreCase = true) -> false
     else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
   }
+}
+
+private fun getSetProperty(name: String): Set<String> {
+  return java.util.Set.copyOf((System.getProperty(name) ?: return emptySet()).split(','))
 }

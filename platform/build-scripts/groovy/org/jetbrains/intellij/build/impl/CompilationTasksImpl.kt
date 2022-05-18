@@ -1,251 +1,183 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl;
+package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.util.io.Decompressor;
-import com.intellij.util.lang.JavaVersion;
-import groovy.lang.Closure;
-import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.trace.Span;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.intellij.build.BuildOptions;
-import org.jetbrains.intellij.build.CompilationContext;
-import org.jetbrains.intellij.build.CompilationTasks;
-import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil;
-import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache;
-import org.jetbrains.jps.model.module.JpsModule;
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.io.Decompressor
+import com.intellij.util.lang.JavaVersion
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
+import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.tasks.use
+import java.nio.file.Files
+import java.nio.file.Path
 
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
+  private val jpsCache = PortableCompilationCache(context)
 
-public final class CompilationTasksImpl implements CompilationTasks {
-  public CompilationTasksImpl(CompilationContext context) {
-    this.context = context;
-    this.jpsCache = new PortableCompilationCache(context);
-  }
-
-  @Override
-  public void compileModules(@Nullable Collection<String> moduleNames, @Nullable List<String> includingTestsInModules) {
-    reuseCompiledClassesIfProvided();
-    if (context.getOptions().getUseCompiledClassesFromProjectOutput()) {
-      context.getMessages().info(
-        "Compilation skipped, the compiled classes from \'" + String.valueOf(context.getProjectOutputDirectory()) + "\' will be used");
-      resolveProjectDependencies();
+  override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
+    reuseCompiledClassesIfProvided()
+    val options = context.options
+    val messages = context.messages
+    if (options.useCompiledClassesFromProjectOutput) {
+      messages.info("Compilation skipped, the compiled classes from \'${context.projectOutputDirectory}\' will be used")
+      resolveProjectDependencies()
     }
-    else if (jpsCache.getCanBeUsed()) {
-      context.getMessages().info("JPS remote cache will be used");
-      jpsCache.downloadCacheAndCompileProject();
+    else if (jpsCache.canBeUsed) {
+      messages.info("JPS remote cache will be used")
+      jpsCache.downloadCacheAndCompileProject()
     }
-    else if (context.getOptions().getPathToCompiledClassesArchive() != null) {
-      context.getMessages().info(
-        "Compilation skipped, the compiled classes from \'" + context.getOptions().getPathToCompiledClassesArchive() + "\' will be used");
-      resolveProjectDependencies();
+    else if (options.pathToCompiledClassesArchive != null) {
+      messages.info("Compilation skipped, the compiled classes from \'${options.pathToCompiledClassesArchive}\' will be used")
+      resolveProjectDependencies()
     }
-    else if (context.getOptions().getPathToCompiledClassesArchivesMetadata() != null) {
-      context.getMessages().info("Compilation skipped, the compiled classes from \'" +
-                                 context.getOptions().getPathToCompiledClassesArchivesMetadata() +
-                                 "\' will be used");
-      resolveProjectDependencies();
+    else if (options.pathToCompiledClassesArchivesMetadata != null) {
+      messages.info("Compilation skipped, the compiled classes from \'${options.pathToCompiledClassesArchivesMetadata}\' will be used")
+      resolveProjectDependencies()
     }
     else {
       if (!JavaVersion.current().isAtLeast(11)) {
-        context.getMessages().error(
-          "Build script must be executed under Java 11 to compile intellij project, but it\'s executed under Java " +
-          String.valueOf(JavaVersion.current()));
+        messages.error("Build script must be executed under Java 11 to compile intellij project, " +
+                       "but it\'s executed under Java ${JavaVersion.current()}")
       }
-
-
-      resolveProjectDependencies();
-      context.getMessages().progress("Compiling project");
-      JpsCompilationRunner runner = new JpsCompilationRunner(context);
+      resolveProjectDependencies()
+      messages.progress("Compiling project")
+      val runner = JpsCompilationRunner(context)
       try {
         if (moduleNames == null) {
           if (includingTestsInModules == null) {
-            runner.buildAll();
+            runner.buildAll()
           }
           else {
-            runner.buildProduction();
+            runner.buildProduction()
           }
         }
         else {
-          List<String> invalidModules = moduleNames.stream().filter(new Closure<Boolean>(this, this) {
-            public Boolean doCall(String it) { return context.findModule(it) == null; }
-
-            public Boolean doCall() {
-              return doCall(null);
-            }
-          }).collect((Collector<? super String, ?, List<String>>)Collectors.toUnmodifiableList());
+          val invalidModules = moduleNames.filter { context.findModule(it) == null }
           if (!invalidModules.isEmpty()) {
-            context.getMessages().warning("The following modules won\'t be compiled: " + String.valueOf(invalidModules));
+            messages.warning("The following modules won\'t be compiled: $invalidModules")
           }
-
-          runner.buildModules(DefaultGroovyMethods.findAll(DefaultGroovyMethods.collect(moduleNames, new Closure<JpsModule>(this, this) {
-            public JpsModule doCall(String it) { return context.findModule(it); }
-
-            public JpsModule doCall() {
-              return doCall(null);
-            }
-          }), new Closure<Boolean>(this, this) {
-            public Boolean doCall(JpsModule it) { return it != null; }
-
-            public Boolean doCall() {
-              return doCall(null);
-            }
-          }));
+          runner.buildModules(moduleNames.mapNotNull(context::findModule))
         }
-
-
         if (includingTestsInModules != null) {
-          for (String moduleName : includingTestsInModules) {
-            runner.buildModuleTests(context.findModule(moduleName));
+          for (moduleName in includingTestsInModules) {
+            runner.buildModuleTests(context.findModule(moduleName))
           }
         }
       }
-      catch (Throwable e) {
-        context.getMessages().error("Compilation failed with exception: " + String.valueOf(e), e);
+      catch (e: Throwable) {
+        messages.error("Compilation failed with exception: $e", e)
       }
     }
   }
 
-  @Override
-  public void buildProjectArtifacts(Set<String> artifactNames) {
+  override fun buildProjectArtifacts(artifactNames: Set<String>) {
     if (artifactNames.isEmpty()) {
-      return;
+      return
     }
-
 
     try {
-      boolean buildIncludedModules = !areCompiledClassesProvided(context.getOptions());
-      if (buildIncludedModules && jpsCache.getCanBeUsed()) {
-        jpsCache.downloadCacheAndCompileProject();
-        buildIncludedModules = false;
+      var buildIncludedModules = !areCompiledClassesProvided(context.options)
+      if (buildIncludedModules && jpsCache.canBeUsed) {
+        jpsCache.downloadCacheAndCompileProject()
+        buildIncludedModules = false
       }
-
-      new JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules);
+      JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules)
     }
-    catch (Throwable e) {
-      context.getMessages().error("Building project artifacts failed with exception: " + String.valueOf(e), e);
-    }
-  }
-
-  @Override
-  public void resolveProjectDependencies() {
-    new JpsCompilationRunner(context).resolveProjectDependencies();
-  }
-
-  @Override
-  public void compileAllModulesAndTests() {
-    compileModules(null, null);
-  }
-
-  @Override
-  public void resolveProjectDependenciesAndCompileAll() {
-    resolveProjectDependencies();
-    context.getCompilationData().setStatisticsReported(false);
-    compileAllModulesAndTests();
-  }
-
-  public static boolean areCompiledClassesProvided(BuildOptions options) {
-    return options.getUseCompiledClassesFromProjectOutput() ||
-           options.getPathToCompiledClassesArchive() != null ||
-           options.getPathToCompiledClassesArchivesMetadata() != null;
-  }
-
-  @Override
-  public void reuseCompiledClassesIfProvided() {
-    synchronized (org.jetbrains.intellij.build.impl.CompilationTasksImpl) {
-      if (context.getCompilationData().getCompiledClassesAreLoaded()) {
-        return;
-      }
-
-      if (context.getOptions().getCleanOutputFolder()) {
-        cleanOutput();
-      }
-      else {
-        context.getMessages().info("cleanOutput step was skipped");
-      }
-
-      if (context.getOptions().getUseCompiledClassesFromProjectOutput()) {
-        context.getMessages().info("Compiled classes reused from \'" + String.valueOf(context.getProjectOutputDirectory()) + "\'");
-      }
-      else if (context.getOptions().getPathToCompiledClassesArchivesMetadata() != null) {
-        CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.getMessages(), context.getProjectOutputDirectory(),
-                                                           context.getOptions());
-      }
-      else if (context.getOptions().getPathToCompiledClassesArchive() != null) {
-        unpackCompiledClasses(context.getProjectOutputDirectory().toPath());
-      }
-      else if (jpsCache.getCanBeUsed() && !jpsCache.isCompilationRequired()) {
-        jpsCache.downloadCacheAndCompileProject();
-      }
-
-      context.getCompilationData().setCompiledClassesAreLoaded(true);
+    catch (e: Throwable) {
+      context.messages.error("Building project artifacts failed with exception: $e", e)
     }
   }
 
-  private void unpackCompiledClasses(final Path classesOutput) {
-    context.getMessages().block("Unpack compiled classes archive", new Supplier<Void>() {
-      @Override
-      public Void get() {
-        NioFiles.deleteRecursively(classesOutput);
-        new Decompressor.Zip(Path.of(context.getOptions().getPathToCompiledClassesArchive())).extract(classesOutput);
-        return null;
-      }
-    });
+  override fun resolveProjectDependencies() {
+    JpsCompilationRunner(context).resolveProjectDependencies()
   }
 
-  private void cleanOutput() {
-    final Set<String> outputDirectoriesToKeep = new HashSet<String>(5);
-    outputDirectoriesToKeep.add("log");
-    if (areCompiledClassesProvided(context.getOptions())) {
-      outputDirectoriesToKeep.add("classes");
+  override fun compileAllModulesAndTests() {
+    compileModules(moduleNames = null, includingTestsInModules = null)
+  }
+
+  override fun resolveProjectDependenciesAndCompileAll() {
+    resolveProjectDependencies()
+    context.compilationData.statisticsReported = false
+    compileAllModulesAndTests()
+  }
+
+  @Synchronized
+  override fun reuseCompiledClassesIfProvided() {
+    if (context.compilationData.compiledClassesAreLoaded) {
+      return
     }
 
-    if (context.getOptions().getIncrementalCompilation()) {
-      outputDirectoriesToKeep.add(context.getCompilationData().getDataStorageRoot().getName());
-      outputDirectoriesToKeep.add("classes");
-      outputDirectoriesToKeep.add("project-artifacts");
+    if (context.options.cleanOutputFolder) {
+      cleanOutput(context)
+    }
+    else {
+      context.messages.info("cleanOutput step was skipped")
     }
 
-    final Path outputPath = context.getPaths().getBuildOutputDir();
-    context.getMessages().block(TracerManager.spanBuilder("clean output").setAttribute("path", outputPath.toString())
-                                  .setAttribute(AttributeKey.stringArrayKey("outputDirectoriesToKeep"),
-                                                List.copyOf(outputDirectoriesToKeep)), new Supplier<Void>() {
-      @Override
-      public Void get() {
-        DirectoryStream<Path> dirStream = Files.newDirectoryStream(outputPath);
-        try {
-          Span span = Span.current();
-          for (Path file : dirStream) {
-            Attributes attributes = Attributes.of(AttributeKey.stringKey("dir"), outputPath.relativize(file).toString());
-            if (outputDirectoriesToKeep.contains(file.getFileName().toString())) {
-              span.addEvent("skip cleaning", attributes);
-            }
-            else {
-              span.addEvent("delete", attributes);
-              NioFiles.deleteRecursively(file);
-            }
+    if (context.options.useCompiledClassesFromProjectOutput) {
+      context.messages.info("Compiled classes reused from \'${context.projectOutputDirectory}\'")
+    }
+    else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
+      CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
+    }
+    else if (context.options.pathToCompiledClassesArchive != null) {
+      unpackCompiledClasses(context.projectOutputDirectory.toPath(), context)
+    }
+    else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired) {
+      jpsCache.downloadCacheAndCompileProject()
+    }
+    context.compilationData.compiledClassesAreLoaded = true
+  }
+}
+
+private fun cleanOutput(context: CompilationContext) {
+  val outputDirectoriesToKeep = HashSet<String>(5)
+  outputDirectoriesToKeep.add("log")
+  if (areCompiledClassesProvided(context.options)) {
+    outputDirectoriesToKeep.add("classes")
+  }
+  if (context.options.incrementalCompilation) {
+    outputDirectoriesToKeep.add(context.compilationData.dataStorageRoot.name)
+    outputDirectoriesToKeep.add("classes")
+    outputDirectoriesToKeep.add("project-artifacts")
+  }
+
+  val outDir = context.paths.buildOutputDir
+  spanBuilder("clean output")
+    .setAttribute("path", outDir.toString())
+    .setAttribute(AttributeKey.stringArrayKey("outputDirectoriesToKeep"), java.util.List.copyOf(outputDirectoriesToKeep))
+    .startSpan().use { span ->
+      Files.newDirectoryStream(outDir).use { dirStream ->
+        for (file in dirStream) {
+          val attributes = Attributes.of(AttributeKey.stringKey("dir"), outDir.relativize(file).toString())
+          if (outputDirectoriesToKeep.contains(file.fileName.toString())) {
+            span.addEvent("skip cleaning", attributes)
+          }
+          else {
+            span.addEvent("delete", attributes)
+            NioFiles.deleteRecursively(file)
           }
         }
-        finally {
-          dirStream.close();
-        }
-
-        return null;
       }
-    });
-  }
+      null
+    }
+}
 
-  private final CompilationContext context;
-  private final PortableCompilationCache jpsCache;
+internal fun areCompiledClassesProvided(options: BuildOptions): Boolean {
+  return options.useCompiledClassesFromProjectOutput ||
+         options.pathToCompiledClassesArchive != null ||
+         options.pathToCompiledClassesArchivesMetadata != null
+}
+
+private fun unpackCompiledClasses(classOutput: Path, context: CompilationContext) {
+  spanBuilder("unpack compiled classes archive").startSpan().use {
+    NioFiles.deleteRecursively(classOutput)
+    Decompressor.Zip(context.options.pathToCompiledClassesArchive ?: throw IllegalStateException("intellij.build.compiled.classes.archive is not set")).extract(classOutput)
+  }
 }

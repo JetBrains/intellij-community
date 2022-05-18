@@ -134,7 +134,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
         if (context.buildNumber == null) {
           context.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
         }
-        else if (context.options.targetOS != BuildOptions.OS_ALL) {
+        else if (context.options.targetOs != BuildOptions.OS_ALL) {
           context.messages.warning("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
         }
         else {
@@ -447,7 +447,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
   override fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
     val currentOs = OsFamily.currentOs
     context.paths.distAllDir = targetDirectory
-    context.options.targetOS = currentOs.osId
+    context.options.targetOs = currentOs.osId
     context.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
     BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)

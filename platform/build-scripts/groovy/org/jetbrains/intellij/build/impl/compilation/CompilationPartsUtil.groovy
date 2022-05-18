@@ -40,8 +40,7 @@ import java.util.function.Predicate
 import java.util.zip.GZIPOutputStream
 
 @CompileStatic
-class CompilationPartsUtil {
-
+final class CompilationPartsUtil {
   static void packAndUploadToServer(CompilationContext context, String zipsLocation) {
     upload(zipsLocation, context.messages, pack(context, zipsLocation))
   }
