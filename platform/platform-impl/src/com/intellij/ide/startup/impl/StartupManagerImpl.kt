@@ -71,11 +71,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
             AppExecutorUtil.getAppExecutorService().execute {
               if (!project.isDisposed) {
                 BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) {
-                  startupManager.runActivityAndMeasureDuration(
-                    activity,
-                    pluginId,
-                    ProgressManager.getInstance().progressIndicator,
-                  )
+                  startupManager.runActivityAndMeasureDuration(activity, pluginId)
                 }
               }
             }
@@ -143,12 +139,13 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   override fun startupActivityPassed() = isStartupActivitiesPassed
 
-  override fun postStartupActivityPassed() =
-    when (postStartupActivitiesPassed) {
+  override fun postStartupActivityPassed(): Boolean {
+    return when (postStartupActivitiesPassed) {
       ALL_PASSED -> true
       -1 -> throw RuntimeException("Aborted; check the log for a reason")
       else -> false
     }
+  }
 
   override fun getAllActivitiesPassedFuture() = allActivitiesPassed
 
@@ -212,7 +209,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       }
 
       indicator?.checkCanceled()
-      runActivityAndMeasureDuration(adapter.createInstance<StartupActivity>(project) ?: continue, pluginId, indicator)
+      runActivityAndMeasureDuration(adapter.createInstance(project) ?: continue, pluginId, indicator)
     }
   }
 
@@ -229,7 +226,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       val uiFreezeWarned = AtomicBoolean()
       val counter = AtomicInteger()
       val dumbService = DumbService.getInstance(project)
-      StartupActivity.POST_STARTUP_ACTIVITY.processWithPluginDescriptor { extension: StartupActivity, pluginDescriptor: PluginDescriptor ->
+      StartupActivity.POST_STARTUP_ACTIVITY.processWithPluginDescriptor { extension, pluginDescriptor ->
         if (project.isDisposed) {
           return@processWithPluginDescriptor
         }
@@ -287,7 +284,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     indicator?.pushState()
     val startTime = StartUpMeasurer.getCurrentTime()
     try {
-      runStartupActivity(activity)
+      runStartupActivity(activity, project)
     }
     catch (e: Throwable) {
       if (e is ControlFlowException) {
@@ -304,12 +301,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       activity.javaClass,
       pluginId,
     )
-  }
-
-  private fun runStartupActivity(activity: StartupActivity) {
-    if (project !is LightEditCompatible || activity is LightEditCompatible) {
-      activity.runActivity(project)
-    }
   }
 
   private fun runPostStartupActivitiesRegisteredDynamically() {
@@ -421,7 +412,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           return@runUnderDisposeAwareIndicator
         }
         try {
-          runStartupActivity(activity)
+          runStartupActivity(activity, project)
         }
         catch (e: Throwable) {
           if (e is ControlFlowException) {
@@ -478,6 +469,13 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     }
   }
 }
+
+private fun runStartupActivity(activity: StartupActivity, project: Project) {
+  if (project !is LightEditCompatible || activity is LightEditCompatible) {
+    activity.runActivity(project)
+  }
+}
+
 
 private fun addCompletedActivity(startTime: Long, runnableClass: Class<*>, pluginId: PluginId): Long {
   return StartUpMeasurer.addCompletedActivity(
