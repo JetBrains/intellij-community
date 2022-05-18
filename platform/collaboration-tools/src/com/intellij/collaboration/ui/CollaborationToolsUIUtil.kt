@@ -12,10 +12,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeListener
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JList
-import javax.swing.KeyStroke
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 
 object CollaborationToolsUIUtil {
@@ -94,3 +91,24 @@ object CollaborationToolsUIUtil {
     .removePrefix("http://")
     .removeSuffix("/")
 }
+
+internal fun <E> ListModel<E>.findIndex(item: E): Int {
+  for (i in 0 until size) {
+    if (getElementAt(i) == item) return i
+  }
+  return -1
+}
+
+internal val <E> ListModel<E>.items
+  get() = Iterable {
+    object : Iterator<E> {
+      private var idx = -1
+
+      override fun hasNext(): Boolean = idx < size - 1
+
+      override fun next(): E {
+        idx++
+        return getElementAt(idx)
+      }
+    }
+  }

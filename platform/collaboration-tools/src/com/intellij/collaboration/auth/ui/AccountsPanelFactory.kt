@@ -7,9 +7,8 @@ import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.ExceptionUtil
-import com.intellij.collaboration.ui.codereview.avatar.AvatarIconsProvider
-import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
+import com.intellij.collaboration.ui.findIndex
+import com.intellij.collaboration.ui.items
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
@@ -28,7 +27,6 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.future.asCompletableFuture
-import java.awt.Image
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -213,42 +211,3 @@ private constructor(disposable: Disposable,
     })
   }
 }
-
-private class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader: AccountsDetailsLoader<A, *>,
-                                                      private val defaultAvatarIcon: Icon,
-                                                      private val avatarUrlSupplier: (A) -> String?)
-  : AvatarIconsProvider<A> {
-
-  private val cachingDelegate = object : CachingAvatarIconsProvider<Pair<A, String>>(defaultAvatarIcon) {
-    override fun loadImageAsync(key: Pair<A, String>): CompletableFuture<Image?> =
-      detailsLoader.loadAvatarAsync(key.first, key.second).asCompletableFuture()
-  }
-
-
-  override fun getIcon(key: A?, iconSize: Int): Icon {
-    val account = key ?: return cachingDelegate.getIcon(null, iconSize)
-    val uri = avatarUrlSupplier(key) ?: return cachingDelegate.getIcon(null, iconSize)
-    return cachingDelegate.getIcon(account to uri, iconSize)
-  }
-}
-
-private fun <E> ListModel<E>.findIndex(item: E): Int {
-  for (i in 0 until size) {
-    if (getElementAt(i) == item) return i
-  }
-  return -1
-}
-
-private val <E> ListModel<E>.items
-  get() = Iterable {
-    object : Iterator<E> {
-      private var idx = -1
-
-      override fun hasNext(): Boolean = idx < size - 1
-
-      override fun next(): E {
-        idx++
-        return getElementAt(idx)
-      }
-    }
-  }
