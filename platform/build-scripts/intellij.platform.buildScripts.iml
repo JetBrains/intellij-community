@@ -62,5 +62,6 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="networknt.json.schema.validator" level="project" />
     <orderEntry type="library" name="decentxml" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
   </component>
 </module>

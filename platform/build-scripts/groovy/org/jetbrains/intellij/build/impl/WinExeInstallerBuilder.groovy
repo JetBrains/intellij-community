@@ -10,6 +10,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
@@ -169,7 +170,7 @@ final class WinExeInstallerBuilder {
     if (Files.notExists(installerFile)) {
       context.messages.error("Windows installer wasn't created.")
     }
-    context.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
+    context.executeStep(TraceManager.spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
       context.signFiles(List.of(installerFile), Collections.emptyMap())
     }
     context.notifyArtifactWasBuilt(installerFile)

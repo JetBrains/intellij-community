@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTraceEventAttributes
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTracer
@@ -25,7 +26,7 @@ private class BuildDependenciesOpenTelemetrySpan(name: String, attributes: Build
   private val span: Span
 
   init {
-    val spanBuilder = TracerManager.spanBuilder(name)
+    val spanBuilder = TraceManager.spanBuilder(name)
     spanBuilder.setAllAttributes((attributes as BuildDependenciesOpenTelemetryAttributes).getAttributes())
     span = spanBuilder.startSpan()
   }

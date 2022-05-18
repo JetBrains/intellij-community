@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
 
-import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import static org.jetbrains.intellij.build.TraceManager.spanBuilder
 
 @CompileStatic
 final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {

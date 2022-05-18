@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
@@ -111,7 +112,7 @@ final class BundledRuntimeImpl implements BundledRuntime {
   }
 
   private static void doExtract(Path archive, Path destinationDir, OsFamily os) {
-    Span span = TracerManager.spanBuilder("extract JBR")
+    Span span = TraceManager.spanBuilder("extract JBR")
       .setAttribute("archive", archive.toString())
       .setAttribute("os", os.osName)
       .setAttribute("destination", destinationDir.toString())

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
@@ -21,7 +22,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
-import org.jetbrains.intellij.build.tasks.TraceKt
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -89,7 +89,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         @Override
         boolean process(File file) {
           if (signFileFilter.accept(file)) {
-            buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", file.toString()), BuildOptions.WIN_SIGN_STEP) {
+            buildContext.executeStep(TraceManager.spanBuilder("sign").setAttribute("file", file.toString()), BuildOptions.WIN_SIGN_STEP) {
               buildContext.signFiles(List.of(file.toPath()), BuildOptions.WIN_SIGN_OPTIONS)
             }
           }
@@ -99,7 +99,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     customizer.getBinariesToSign(buildContext).each {
       def path = winDistPath.resolve(it)
-      buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", path.toString()), BuildOptions.WIN_SIGN_STEP) {
+      buildContext.executeStep(TraceManager.spanBuilder("sign").setAttribute("file", path.toString()), BuildOptions.WIN_SIGN_STEP) {
         buildContext.signFiles(List.of(path), BuildOptions.WIN_SIGN_OPTIONS)
       }
     }
@@ -358,7 +358,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
                                                           BuildContext context) {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     Path targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
-    return TraceKt.createTask(TracerManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
+    return com.intellij.diagnostic.telemetry.TraceKt.createTask(TraceManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
                                 .setAttribute("targetFile", targetFile.toString())) {
       Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)

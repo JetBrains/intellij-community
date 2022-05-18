@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.tracer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
@@ -21,7 +24,6 @@ fun buildMacZip(targetFile: Path,
     .setAttribute("file", targetFile.toString())
     .setAttribute("zipRoot", zipRoot)
     .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
-    .startSpan()
     .use {
       val fs = targetFile.fileSystem
       val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }

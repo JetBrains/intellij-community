@@ -110,7 +110,7 @@ final class MacDmgBuilder {
                                    BuildContext context) {
     Path tempDir = context.paths.tempDir.resolve(sitFile.fileName.toString().replace(".sit", ""))
     if (jreArchivePath != null || sign) {
-      BuildHelperKt.span(TracerManager.spanBuilder("bundle JBR and sign sit locally")
+      BuildHelperKt.span(TraceManager.spanBuilder("bundle JBR and sign sit locally")
                          .setAttribute("jreArchive", jreArchivePath.toString())
                          .setAttribute("sitFile", sitFile.toString()), new Runnable() {
         @Override

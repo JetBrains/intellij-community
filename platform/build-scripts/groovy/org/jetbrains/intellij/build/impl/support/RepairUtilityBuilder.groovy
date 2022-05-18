@@ -19,7 +19,7 @@ import java.nio.file.StandardCopyOption
 import java.util.function.Consumer
 
 import static java.nio.file.attribute.PosixFilePermission.*
-import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import static org.jetbrains.intellij.build.TraceManager.spanBuilder
 
 /**
  * Builds 'repair' command line utility which is a simple and automated way to fix the IDE when it cannot start:

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import com.intellij.util.lang.JavaVersion
@@ -9,10 +10,9 @@ import io.opentelemetry.api.common.Attributes
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
-import org.jetbrains.intellij.build.tasks.use
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -152,7 +152,7 @@ private fun cleanOutput(context: CompilationContext) {
   spanBuilder("clean output")
     .setAttribute("path", outDir.toString())
     .setAttribute(AttributeKey.stringArrayKey("outputDirectoriesToKeep"), java.util.List.copyOf(outputDirectoriesToKeep))
-    .startSpan().use { span ->
+    .use { span ->
       Files.newDirectoryStream(outDir).use { dirStream ->
         for (file in dirStream) {
           val attributes = Attributes.of(AttributeKey.stringKey("dir"), outDir.relativize(file).toString())
@@ -176,7 +176,7 @@ internal fun areCompiledClassesProvided(options: BuildOptions): Boolean {
 }
 
 private fun unpackCompiledClasses(classOutput: Path, context: CompilationContext) {
-  spanBuilder("unpack compiled classes archive").startSpan().use {
+  spanBuilder("unpack compiled classes archive").use {
     NioFiles.deleteRecursively(classOutput)
     Decompressor.Zip(context.options.pathToCompiledClassesArchive ?: throw IllegalStateException("intellij.build.compiled.classes.archive is not set")).extract(classOutput)
   }

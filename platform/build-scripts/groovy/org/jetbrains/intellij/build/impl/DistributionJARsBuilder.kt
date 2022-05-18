@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.createTask
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
@@ -17,12 +19,12 @@ import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getSearchableOptionsDir
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
 import org.jetbrains.intellij.build.impl.PlatformModules.collectPlatformModules
 import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsTask
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
@@ -294,7 +296,7 @@ class DistributionJARsBuilder {
       // patchers must be executed _before_ pack because patcher patches module output
       if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
         val patchers = layout.patchers
-        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).startSpan().useWithScope {
+        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope {
           for (patcher in patchers) {
             patcher.accept(moduleOutputPatcher, context)
           }
@@ -354,7 +356,7 @@ class DistributionJARsBuilder {
 
       val resourceGenerators = layout.resourceGenerators
       if (!resourceGenerators.isEmpty()) {
-        spanBuilder("generate and pack resources").startSpan().useWithScope {
+        spanBuilder("generate and pack resources").useWithScope {
           for (item in resourceGenerators) {
             val resourceFile = item.apply(targetDirectory, context) ?: continue
             if (Files.isRegularFile(resourceFile)) {
@@ -798,7 +800,7 @@ class DistributionJARsBuilder {
                               context: BuildContext): PluginRepositorySpec {
     val directory = getActualPluginDirectoryName(helpPlugin, context)
     val destFile = targetDir.resolve("$directory.zip")
-    spanBuilder("build help plugin").setAttribute("dir", directory).startSpan().useWithScope {
+    spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope {
       buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                    plugins = listOf(helpPlugin),
                    targetDirectory = pluginsToPublishDir,
@@ -870,7 +872,7 @@ private fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
   if (!scrambleTasks.isEmpty()) {
     // scrambling can require classes from platform
     buildPlatformTask?.let { task ->
-      spanBuilder("wait for platform lib for scrambling").startSpan().useWithScope { task.join() }
+      spanBuilder("wait for platform lib for scrambling").useWithScope { task.join() }
     }
     invokeAllSettled(scrambleTasks)
   }

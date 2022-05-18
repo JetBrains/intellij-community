@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.createTask
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -12,11 +14,9 @@ import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OpenedPackages.getCommandLineArguments
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
-import org.jetbrains.intellij.build.tasks.createTask
-import org.jetbrains.intellij.build.tasks.useWithScope
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,7 +28,7 @@ import kotlin.io.path.copyTo
 val DEFAULT_TIMEOUT = TimeUnit.MINUTES.toMillis(10L)
 
 fun span(spanBuilder: SpanBuilder, task: Runnable) {
-  spanBuilder.startSpan().useWithScope {
+  spanBuilder.useWithScope {
     task.run()
   }
 }
@@ -69,7 +69,7 @@ fun zipWithPrefix(context: CompilationContext,
 
 fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path, String>, compress: Boolean) {
   spanBuilder("pack")
-    .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString()).startSpan()
+    .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
     .useWithScope {
       org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = map, compress = compress, addDirEntries = false)
     }

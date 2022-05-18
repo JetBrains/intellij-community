@@ -378,7 +378,7 @@ final class BuildContextImpl implements BuildContext {
 
       if (!success) {
         // print all pending spans - after current span
-        TracerProviderManager.flush()
+        TracerProviderManager.INSTANCE.flush()
       }
     }
   }

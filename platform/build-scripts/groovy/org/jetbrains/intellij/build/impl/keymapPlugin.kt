@@ -2,10 +2,10 @@
 
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.writeNewZip
-import org.jetbrains.intellij.build.tasks.createTask
+import com.intellij.diagnostic.telemetry.createTask
 import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel

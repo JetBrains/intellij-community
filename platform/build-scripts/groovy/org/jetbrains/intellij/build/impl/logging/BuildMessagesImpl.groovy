@@ -12,12 +12,8 @@ import io.opentelemetry.sdk.trace.ReadableSpan
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
-import org.jetbrains.intellij.build.BuildMessageLogger
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.LogMessage
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.LayoutBuilder
-import org.jetbrains.intellij.build.impl.TracerManager
-import org.jetbrains.intellij.build.impl.TracerProviderManager
 
 import java.lang.reflect.UndeclaredThrowableException
 import java.nio.file.Path
@@ -153,7 +149,7 @@ final class BuildMessagesImpl implements BuildMessages {
   @Override
   void error(String message) {
     try {
-      TracerManager.INSTANCE.finish()
+      TraceManager.INSTANCE.finish()
     }
     catch (Throwable e) {
       System.err.println("Cannot finish tracing: " + e)
@@ -202,7 +198,7 @@ final class BuildMessagesImpl implements BuildMessages {
 
   @Override
   <V> V block(String blockName, Supplier<V> body) {
-    block(TracerManager.spanBuilder(blockName.toLowerCase()), body)
+    block(TraceManager.spanBuilder(blockName.toLowerCase()), body)
   }
 
   @Override
@@ -234,7 +230,7 @@ final class BuildMessagesImpl implements BuildMessages {
       span.setStatus(StatusCode.ERROR, e.message)
 
       // print all pending spans
-      TracerProviderManager.flush()
+      TracerProviderManager.INSTANCE.flush()
       throw e
     }
     finally {

@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl
+package com.intellij.diagnostic.telemetry
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
@@ -7,7 +7,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.IdGenerator
-import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
 import io.opentelemetry.sdk.trace.export.SpanExporter
@@ -17,7 +16,6 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 class JaegerJsonSpanExporter : SpanExporter {
@@ -26,21 +24,10 @@ class JaegerJsonSpanExporter : SpanExporter {
 
     @Volatile
     private var file: Path? = null
-    private val shutdownHookAdded = AtomicBoolean()
 
-    @JvmStatic
     fun setOutput(file: Path) {
       writer.getAndSet(null)?.let {
         finishWriter(it)
-      }
-      if (shutdownHookAdded.compareAndSet(false, true)) {
-        Runtime.getRuntime().addShutdownHook(Thread({
-                                                      val tracerProvider = TracerProviderManager.getTracerProvider()
-                                                      if (tracerProvider != null) {
-                                                        TracerProviderManager.setTracerProvider(null)
-                                                        tracerProvider.close()
-                                                      }
-                                                    }, "close tracer"))
       }
 
       val w = JsonFactory().createGenerator(Files.newBufferedWriter(file)).useDefaultPrettyPrinter()
@@ -90,16 +77,14 @@ class JaegerJsonSpanExporter : SpanExporter {
       }
     }
 
-    fun finish(tracerProvider: SdkTracerProvider?): Path? {
+    fun finish(): Path? {
       val w = writer.getAndSet(null) ?: return null
       val f = file
-      tracerProvider!!.forceFlush().join(10, TimeUnit.SECONDS)
       finishWriter(w)
       file = null
       return f
     }
 
-    @Synchronized
     private fun finishWriter(w: JsonGenerator) {
       // close spans
       w.writeEndArray()
@@ -188,7 +173,7 @@ class JaegerJsonSpanExporter : SpanExporter {
   }
 
   override fun shutdown(): CompletableResultCode {
-    writer.getAndSet(null)?.let(::finishWriter)
+    writer.getAndSet(null)?.let(Companion::finishWriter)
     return CompletableResultCode.ofSuccess()
   }
 }

@@ -1,17 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.tasks
+package com.intellij.diagnostic.telemetry
 
-import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
-
-internal val tracer: Tracer by lazy { GlobalOpenTelemetry.getTracer("build-script") }
 
 inline fun <T> createTask(spanBuilder: SpanBuilder, crossinline task: () -> T): ForkJoinTask<T> {
   val context = Context.current()
@@ -30,7 +26,13 @@ inline fun <T> createTask(spanBuilder: SpanBuilder, crossinline task: () -> T): 
   })
 }
 
-internal inline fun task(spanBuilder: SpanBuilder, crossinline operation: () -> Unit): ForkJoinTask<*> {
+/**
+ * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
+ * a null result upon [ForkJoinTask.join].
+ *
+ * See [Span](https://opentelemetry.io/docs/reference/specification).
+ */
+inline fun forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> Unit): ForkJoinTask<*> {
   val context = Context.current()
   return ForkJoinTask.adapt(Runnable {
     val thread = Thread.currentThread()
@@ -38,22 +40,25 @@ internal inline fun task(spanBuilder: SpanBuilder, crossinline operation: () -> 
       .setParent(context)
       .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
       .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
-      .startSpan()
       .useWithScope {
         operation()
       }
   })
 }
 
-inline fun <T> Span.useWithScope(operation: (Span) -> T): T {
-  return makeCurrent().use {
-    use {
-      operation(it)
-    }
+inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
+  val span = startSpan()
+  return span.makeCurrent().use {
+    span.use(operation)
   }
 }
 
-inline fun <T> Span.use(operation: (Span) -> T): T {
+inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
+  return startSpan().use(operation)
+}
+
+@PublishedApi
+internal inline fun <T> Span.use(operation: (Span) -> T): T {
   try {
     return operation(this)
   }

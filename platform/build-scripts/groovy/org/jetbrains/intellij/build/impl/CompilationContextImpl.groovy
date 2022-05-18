@@ -84,7 +84,7 @@ final class CompilationContextImpl implements CompilationContext {
 
     // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
     // (see createCopyForProduct)
-    JaegerJsonSpanExporter.setOutput(context.paths.logDir.resolve("trace.json"))
+    TracerProviderManager.INSTANCE.setOutput(context.paths.logDir.resolve("trace.json"))
     messages.debugLogPath = context.paths.logDir.resolve("debug.log")
 
     // This is not a proper place to initialize logging
@@ -253,7 +253,7 @@ final class CompilationContextImpl implements CompilationContext {
     suppressWarnings(project)
     exportModuleOutputProperties()
 
-    TracerProviderManager.flush()
+    TracerProviderManager.INSTANCE.flush()
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
 
     /**

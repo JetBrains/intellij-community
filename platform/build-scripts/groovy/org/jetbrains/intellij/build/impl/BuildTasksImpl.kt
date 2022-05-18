@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.use
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
@@ -20,13 +22,15 @@ import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.TraceManager.finish
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getLibraryName
-import org.jetbrains.intellij.build.impl.TracerManager.finish
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.zip
-import org.jetbrains.intellij.build.tasks.*
+import org.jetbrains.intellij.build.tasks.DirSource
+import org.jetbrains.intellij.build.tasks.ZipSource
+import org.jetbrains.intellij.build.tasks.buildJar
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -68,7 +72,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
 
   override fun buildDistributions() {
     try {
-      spanBuilder("build distributions").startSpan().useWithScope {
+      spanBuilder("build distributions").useWithScope {
         doBuildDistributions(context)
       }
     }
@@ -611,7 +615,6 @@ private fun downloadMissingLibrarySources(
 ) {
   spanBuilder("download missing sources")
     .setAttribute(AttributeKey.stringArrayKey("librariesWithMissingSources"), librariesWithMissingSources.map { it.name })
-    .startSpan()
     .use { span ->
       val configuration = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(context.project)
       val repositories = configuration?.repositories?.map { ArtifactRepositoryManager.createRemoteRepository(it.id, it.url) } ?: emptyList()
@@ -655,7 +658,7 @@ private fun createDistributionForOsTask(os: OsFamily,
 private fun createDistributionForOsTask(os: OsFamily, arch: JvmArchitecture, buildAction: Consumer<BuildContext>): BuildTaskRunnable {
   return BuildTaskRunnable("${os.osId} ${arch.name}") { context ->
     if (context.shouldBuildDistributionForOS(os.osId)) {
-      spanBuilder("build ${os.osName} ${arch.name} distribution").startSpan().useWithScope {
+      spanBuilder("build ${os.osName} ${arch.name} distribution").useWithScope {
         buildAction.accept(context)
       }
     }
@@ -702,16 +705,15 @@ private fun runInParallel(tasks: List<BuildTaskRunnable>, context: BuildContext)
     return
   }
 
-  val span = spanBuilder("run tasks in parallel")
-    .setAttribute(AttributeKey.stringArrayKey("tasks"), tasks.map { it.stepId })
-    .setAttribute("taskCount", tasks.size.toLong())
-    .startSpan()
   try {
-    span.use {
-      val futures = ArrayList<ForkJoinTask<*>>(tasks.size)
-      val traceContext = Context.current().with(span)
-      for (task in tasks) {
-        createTaskWrapper(task, context.forkForParallelTask(task.stepId), traceContext)?.let {
+    spanBuilder("run tasks in parallel")
+      .setAttribute(AttributeKey.stringArrayKey("tasks"), tasks.map { it.stepId })
+      .setAttribute("taskCount", tasks.size.toLong())
+      .use { span ->
+        val futures = ArrayList<ForkJoinTask<*>>(tasks.size)
+        val traceContext = Context.current().with(span)
+        for (task in tasks) {
+          createTaskWrapper(task, context.forkForParallelTask(task.stepId), traceContext)?.let {
           futures.add(it.fork())
         }
       }
@@ -756,7 +758,7 @@ private fun createTaskWrapper(task: BuildTaskRunnable,
   return ForkJoinTask.adapt {
     buildContext.messages.onForkStarted()
     try {
-      spanBuilder(task.stepId).setParent(traceContext).startSpan().useWithScope { span ->
+      spanBuilder(task.stepId).setParent(traceContext).useWithScope { span ->
         if (buildContext.options.buildStepsToSkip.contains(task.stepId)) {
           span.addEvent("skip")
           null
@@ -869,7 +871,7 @@ fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLi
 
     spanBuilder("pack")
       .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
-      .startSpan().useWithScope {
+      .useWithScope {
         zip(targetFile, zipFileMap, compress = true)
       }
 

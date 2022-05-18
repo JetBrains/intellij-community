@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.jps.api.CmdlineRemoteProto
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
@@ -213,7 +214,7 @@ final class JpsCompilationRunner {
     }
 
     long compilationStart = System.nanoTime()
-    context.messages.block(TracerManager.spanBuilder("compilation")
+    context.messages.block(TraceManager.spanBuilder("compilation")
                              .setAttribute("scope", "${allModules ? "all" : modulesSet.size()} modules")
                              .setAttribute("includeTests", includeTests)
                              .setAttribute("artifactsToBuild", artifactsToBuild.size())

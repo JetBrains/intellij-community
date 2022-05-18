@@ -2,6 +2,8 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.diagnostic.telemetry.use
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.jcraft.jsch.agentproxy.AgentProxy
 import com.jcraft.jsch.agentproxy.AgentProxyException
 import com.jcraft.jsch.agentproxy.Connector
@@ -25,6 +27,7 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.tracer
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -96,7 +99,6 @@ fun signMacApp(
       .setAttribute("file", appArchiveFile.toString())
       .setAttribute("remoteDir", remoteDir)
       .setAttribute("host", host)
-      .startSpan()
       .use {
         sftp.put(NioFileSource(appArchiveFile, filePermission = regularFileMode), "$remoteDir/${appArchiveFile.fileName}")
       }
@@ -106,7 +108,6 @@ fun signMacApp(
         .setAttribute("file", jreArchiveFile.toString())
         .setAttribute("remoteDir", remoteDir)
         .setAttribute("host", host)
-        .startSpan()
         .use {
           sftp.put(NioFileSource(jreArchiveFile, filePermission = regularFileMode), "$remoteDir/${jreArchiveFile.fileName}")
         }
@@ -117,7 +118,7 @@ fun signMacApp(
       .setAttribute("scriptDir", scriptDir.toString())
       .setAttribute("remoteDir", remoteDir)
       .setAttribute("host", host)
-      .startSpan().use {
+      .use {
         sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
         @Suppress("SpellCheckingInspection")
         for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py", "codesign.sh")) {
@@ -151,7 +152,7 @@ fun signMacApp(
                   "${it.first}=${it.second}"
                 } ?: ""
     @Suppress("SpellCheckingInspection")
-    tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).startSpan().useWithScope {
+    tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).useWithScope {
       signFile(remoteDir = remoteDir,
                commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
                file = appArchiveFile,
@@ -174,7 +175,7 @@ fun signMacApp(
     if (dmgImage != null) {
       val fileNameWithoutExt = appArchiveFile.fileName.toString().removeSuffix(".sit")
       val dmgFile = artifactDir.resolve("$fileNameWithoutExt.dmg")
-      tracer.spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).startSpan().useWithScope {
+      tracer.spanBuilder("build dmg").setAttribute("file", dmgFile.toString()).useWithScope {
         @Suppress("SpellCheckingInspection")
         processFile(localFile = dmgFile,
                     ssh = ssh,
@@ -288,7 +289,6 @@ private fun downloadResult(remoteFile: String,
   tracer.spanBuilder("download file")
     .setAttribute("remoteFile", remoteFile)
     .setAttribute("localFile", localFile.toString())
-    .startSpan()
     .use { span ->
       val localFileParent = localFile.parent
       val tempFile = localFileParent.resolve("${localFile.fileName}.download")
@@ -408,7 +408,7 @@ private inline fun executeTask(host: String,
 }
 
 private fun removeDir(ssh: SSHClient, remoteDir: String) {
-  tracer.spanBuilder("remove remote dir").setAttribute("remoteDir", remoteDir).startSpan().use {
+  tracer.spanBuilder("remove remote dir").setAttribute("remoteDir", remoteDir).use {
     ssh.startSession().use { session ->
       val command = session.exec("rm -rf '$remoteDir'")
       command.join(30, TimeUnit.SECONDS)

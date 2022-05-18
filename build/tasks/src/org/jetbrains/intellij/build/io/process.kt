@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
+import com.intellij.diagnostic.telemetry.use
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.StatusCode
-import org.jetbrains.intellij.build.tasks.tracer
-import org.jetbrains.intellij.build.tasks.use
+import org.jetbrains.intellij.build.tracer
 import java.io.File
 import java.io.InputStream
 import java.lang.System.Logger
@@ -39,7 +39,6 @@ fun runJava(mainClass: String,
     .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgsWithJson.toList())
     .setAttribute("workingDir", workingDir?.toString() ?: "")
     .setAttribute("timeoutMillis", timeoutMillis)
-    .startSpan()
     .use { span ->
       try {
         val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
@@ -109,7 +108,6 @@ internal fun runJavaWithOutputToFile(mainClass: String,
     .setAttribute("outputFile", outputFile.toString())
     .setAttribute("workingDir", workingDir?.toString() ?: "")
     .setAttribute("timeoutMillis", timeoutMillis)
-    .startSpan()
     .use { span ->
       try {
         createClassPathFile(classPath, classpathFile)
@@ -191,7 +189,6 @@ fun runProcess(args: List<String>,
   tracer.spanBuilder("runProcess")
     .setAttribute(AttributeKey.stringArrayKey("args"), args)
     .setAttribute("timeoutMillis", timeoutMillis)
-    .startSpan()
     .use {
       val timeout = Timeout(timeoutMillis)
       val process = ProcessBuilder(args)
