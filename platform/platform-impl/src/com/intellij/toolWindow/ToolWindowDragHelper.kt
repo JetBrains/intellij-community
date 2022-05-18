@@ -49,7 +49,6 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private var lastDropTargetPaneId: String? = null
   private var lastDropTargetPane: ToolWindowPane? = null
   private var dragImageDialog: DragImageDialog? = null
-  private var sourceIsHeader = false
 
   companion object {
     const val THUMB_OPACITY = .85f
@@ -124,11 +123,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
     val dragOutImage = if (decorator != null && !decorator.bounds.isEmpty) createThumbnailDragImage(decorator) else null
     val dragImage = initialButton?.let(::createStripeButtonDragImage) ?: dragOutImage
-    sourceIsHeader = true
 
     if (component is StripeButton || component is SquareStripeButton) {
       initialOffset.location = relativePoint.getPoint(component)
-      sourceIsHeader = false
     }
     else if (dragImage != null) {
       initialOffset.location = Point(dragImage.getWidth(dragSourcePane) / 4, dragImage.getHeight(dragSourcePane) / 4)
@@ -332,26 +329,16 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         stripe.finishDrop(toolWindow.toolWindowManager)
       }
       else {
+        // Set the bounds before we show the window, to avoid a visible jump
+        toolWindow.applyWindowInfo(toolWindow.toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindow.id).also {
+          val bounds = Rectangle(devicePoint.locationOnScreen, floatingWindowSize)
+          bounds.translate(-initialOffset.x, -initialOffset.y)
+          ScreenUtil.fitToScreen(bounds)
+          it.floatingBounds = bounds
+        })
+
         toolWindow.toolWindowManager.setToolWindowType(toolWindow.id, ToolWindowType.FLOATING)
-        toolWindow.toolWindowManager.activateToolWindow(toolWindow.id, {
-          val w = ComponentUtil.getWindow(toolWindow.component)
-          if (w is JDialog) {
-            val locationOnScreen = event.locationOnScreen
-            if (sourceIsHeader) {
-              val decorator = InternalDecoratorImpl.findTopLevelDecorator(toolWindow.component)
-              if (decorator != null) {
-                val shift = SwingUtilities.convertPoint(decorator, decorator.location, w)
-                locationOnScreen.translate(-shift.x, -shift.y)
-              }
-              locationOnScreen.translate(-initialOffset.x, -initialOffset.y)
-            }
-            w.location = locationOnScreen
-            val bounds = w.bounds
-            bounds.size = floatingWindowSize
-            ScreenUtil.fitToScreen(bounds)
-            w.bounds = bounds
-          }
-        }, true, null)
+        toolWindow.toolWindowManager.activateToolWindow(toolWindow.id, null, true, null)
 
         if (isNewUi) {
           val info = toolWindow.toolWindowManager.getLayout().getInfo(toolWindow.id)
