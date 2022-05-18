@@ -4,11 +4,9 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,17 +52,13 @@ final class RefreshSessionImpl extends RefreshSession {
     myFinishRunnable = finishRunnable;
     myModality = modality;
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
-    myStartTrace = rememberStartTrace();
+    Application app = ApplicationManager.getApplication();
+    myStartTrace = app.isUnitTestMode() && (async || !app.isDispatchThread()) ? new Throwable() : null;
   }
 
-  private Throwable rememberStartTrace() {
-    boolean trace = ApplicationManager.getApplication().isUnitTestMode() && (myIsAsync || !ApplicationManager.getApplication().isDispatchThread());
-    return trace ? new Throwable() : null;
-  }
-
-  RefreshSessionImpl(boolean async, @NotNull List<? extends VFileEvent> events) {
+  RefreshSessionImpl(boolean async, VFileEvent event) {
     this(async, false, null, ModalityState.defaultModalityState());
-    myEvents.addAll(events);
+    myEvents.add(event);
   }
 
   @Override
@@ -73,22 +67,22 @@ final class RefreshSessionImpl extends RefreshSession {
   }
 
   @Override
-  public void addAllFiles(@NotNull Collection<? extends VirtualFile> files) {
-    for (VirtualFile file : files) {
-      if (file == null) {
-        LOG.error("null passed among " + files);
-      }
-      else {
-        addFile(file);
-      }
-    }
+  public void addFile(@NotNull VirtualFile file) {
+    checkState();
+    doAddFile(file);
   }
 
   @Override
-  public void addFile(@NotNull VirtualFile file) {
-    if (myLaunched) {
-      throw new IllegalStateException("Adding files is only allowed before launch");
-    }
+  public void addAllFiles(@NotNull Collection<? extends @NotNull VirtualFile> files) {
+    checkState();
+    for (VirtualFile file : files) doAddFile(file);
+  }
+
+  private void checkState() {
+    if (myLaunched) throw new IllegalStateException("Already launched");
+  }
+
+  private void doAddFile(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
       myWorkQueue.add(file);
     }
@@ -104,9 +98,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public void launch() {
-    if (myLaunched) {
-      throw new IllegalStateException("launch() can be called only once");
-    }
+    checkState();
     myLaunched = true;
     mySemaphore.down();
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
@@ -196,7 +188,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
   void fireEvents(@NotNull List<CompoundVFileEvent> events, @NotNull List<AsyncFileListener.ChangeApplier> appliers, boolean asyncProcessing) {
     try {
-      ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
         WriteAction.run(() -> {
@@ -204,14 +196,11 @@ final class RefreshSessionImpl extends RefreshSession {
             indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
             int progressThresholdMillis = 5_000;
             ((ProgressIndicatorWithDelayedPresentation) indicator).setDelayInMillis(progressThresholdMillis);
-            long start = System.currentTimeMillis();
-
+            long t = System.nanoTime();
             fireEventsInWriteAction(events, appliers, asyncProcessing);
-
-            long elapsed = System.currentTimeMillis() - start;
-            if (elapsed > progressThresholdMillis) {
-              LOG.warn("Long VFS change processing (" + elapsed + "ms, " + events.size() + " events): " +
-                       StringUtil.trimLog(events.toString(), 10_000));
+            t = (System.nanoTime() - t) / 1_000_000;
+            if (t > progressThresholdMillis) {
+              LOG.warn("Long VFS change processing (" + t + "ms, " + events.size() + " events): " + StringUtil.trimLog(events.toString(), 10_000));
             }
           });
         });
