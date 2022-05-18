@@ -8,6 +8,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeaturesPanel;
 
 import javax.swing.*;
@@ -26,6 +27,8 @@ public class KotlinLanguageConfigurationForm {
     private JTextPane currentVersion;
     public ExperimentalFeaturesPanel experimentalFeaturesPanel;
     private JPanel experimentalFeaturesPanelContainer;
+    private JTextPane currentAnalyzerVersion;
+    private JPanel analyzerVersionPanel;
 
     public KotlinLanguageConfigurationForm() {
         showVerifierDisabledStatus();
@@ -43,7 +46,10 @@ public class KotlinLanguageConfigurationForm {
             currentVersion.setText(pluginVersion);
         }
 
+        currentAnalyzerVersion.setText(KotlinPluginLayout.getInstance().getIdeCompilerVersion().getRawVersion());
+
         currentVersion.setBackground(pluginVersionPanel.getBackground());
+        currentAnalyzerVersion.setBackground(analyzerVersionPanel.getBackground());
     }
 
     public void initChannels(List<@NlsSafe String> channels) {
