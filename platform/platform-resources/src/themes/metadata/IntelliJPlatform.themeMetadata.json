@@ -938,7 +938,7 @@
     },
     {
       "key": "Popup.Selection.innerInsets",
-      "description": "Inner insets in selection line (experimental UI only)",
+      "description": "Inner insets in selection line (experimental UI only). Top and bottom values are ignored",
       "since": "2022.2"
     },
     {

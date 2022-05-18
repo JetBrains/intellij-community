@@ -109,10 +109,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
         if (ExperimentalUI.isNewUI()) {
-          int rowHeight = JBUI.CurrentTheme.List.rowHeight();
-          if (rowHeight > 0) {
-            size.height = rowHeight;
-          }
+          size.height = JBUI.CurrentTheme.List.rowHeight();
         }
         return size;
       }
