@@ -229,7 +229,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
 
-    StorageDiagnosticData.INSTANCE.dumpPeriodically();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      StorageDiagnosticData.INSTANCE.dumpPeriodically();
+    }
   }
 
   void scheduleFullIndexesRescan(@NotNull String reason) {
