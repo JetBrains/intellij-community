@@ -27,6 +27,7 @@ import com.intellij.toolWindow.ToolWindowPaneOldButtonManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.awt.DevicePoint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -277,8 +278,8 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     private void setLocationFrom(MouseEvent me) {
-      Point showPoint = me.getPoint();
-      SwingUtilities.convertPointToScreen(showPoint, me.getComponent());
+      DevicePoint devicePoint = new DevicePoint(me);
+      Point showPoint = devicePoint.getLocationOnScreen();
 
       Dimension size = myImageContainer.getSize();
       showPoint.x -= size.width / 2;
@@ -288,11 +289,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     @Override
     public @NotNull DockContainer.ContentResponse getResponse(MouseEvent e) {
-      RelativePoint point = new RelativePoint(e);
+      DevicePoint point = new DevicePoint(e);
       for (DockContainer each : getAllContainers()) {
         RelativeRectangle rec = each.getAcceptArea();
         if (rec.contains(point)) {
-          DockContainer.ContentResponse response = each.getContentResponse(myContent, point);
+          DockContainer.ContentResponse response = each.getContentResponse(myContent, point.toRelativePoint(each.getContainerComponent()));
           if (response.canAccept()) {
             return response;
           }
@@ -303,11 +304,11 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
     @Override
     public void process(MouseEvent e) {
-      RelativePoint point = new RelativePoint(e);
+      DevicePoint devicePoint = new DevicePoint(e);
 
       Image img = null;
       if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
-        DockContainer over = findContainerFor(point, myContent);
+        DockContainer over = findContainerFor(devicePoint, myContent);
         if (myCurrentOverContainer != null && myCurrentOverContainer != over) {
           myCurrentOverContainer.resetDropOver(myContent);
           myCurrentOverContainer = null;
@@ -315,10 +316,12 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
         if (myCurrentOverContainer == null && over != null) {
           myCurrentOverContainer = over;
+          RelativePoint point = devicePoint.toRelativePoint(over.getContainerComponent());
           img = myCurrentOverContainer.startDropOver(myContent, point);
         }
 
         if (myCurrentOverContainer != null) {
+          RelativePoint point = devicePoint.toRelativePoint(myCurrentOverContainer.getContainerComponent());
           img = myCurrentOverContainer.processDropOver(myContent, point);
         }
 
@@ -336,10 +339,15 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       }
       else if (e.getID() == MouseEvent.MOUSE_RELEASED) {
         if (myCurrentOverContainer == null) {
+          // This relative point might be relative to a component that's on a different screen, with a different DPI scaling factor than
+          // the target location. Ideally, we should pass the DevicePoint to createNewDockContainerFor, but that will change the API. We'll
+          // fix it up inside createNewDockContainerFor
+          RelativePoint point = new RelativePoint(e);
           createNewDockContainerFor(myContent, point);
           e.consume();//Marker for DragHelper: drag into separate window is not tabs reordering
         }
         else {
+          RelativePoint point = devicePoint.toRelativePoint(myCurrentOverContainer.getContainerComponent());
           myCurrentOverContainer.add(myContent, point);
           ObjectUtils.consumeIfCast(myCurrentOverContainer, DockableEditorTabbedContainer.class, container -> {
             //Marker for DragHelper, not 'refined' drop in tab-set shouldn't affect ABC-order setting
@@ -365,21 +373,21 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
   }
 
-  private @Nullable DockContainer findContainerFor(RelativePoint point, @NotNull DockableContent<?> content) {
+  private @Nullable DockContainer findContainerFor(DevicePoint devicePoint, @NotNull DockableContent<?> content) {
     List<DockContainer> containers = new ArrayList<>(getContainers());
     containers.remove(myCurrentDragSession.myStartDragContainer);
     containers.add(0, myCurrentDragSession.myStartDragContainer);
 
     for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptArea();
-      if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
+      if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.getContainerComponent())).canAccept()) {
         return each;
       }
     }
 
     for (DockContainer each : containers) {
       RelativeRectangle rec = each.getAcceptAreaFallback();
-      if (rec.contains(point) && each.getContentResponse(content, point).canAccept()) {
+      if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.getContainerComponent())).canAccept()) {
         return each;
       }
     }
@@ -407,7 +415,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     }
 
     Dimension size = content.getPreferredSize();
-    Point showPoint = point.getScreenPoint();
+
+    // The given relative point might be relative to a component on a different screen, using different DPI screen coordinates. Convert to
+    // device coordinates first. Ideally, we would be given a DevicePoint
+    Point showPoint = new DevicePoint(point).getLocationOnScreen();
     showPoint.x -= size.width / 2;
     showPoint.y -= size.height / 2;
 

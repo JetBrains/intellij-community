@@ -8,6 +8,7 @@ import java.awt.GraphicsConfiguration
 import java.awt.GraphicsEnvironment
 import java.awt.Point
 import java.awt.event.MouseEvent
+import javax.swing.SwingUtilities
 import kotlin.math.roundToInt
 
 /**
@@ -29,6 +30,7 @@ class DevicePoint {
   }
 
   constructor(event: MouseEvent) : this(event.locationOnScreen, event.component)
+  constructor(relativePoint: RelativePoint) : this(relativePoint.screenPoint, relativePoint.component)
 
   /**
    * Converts the device point to a screen point, using the screen that contains the point as the destination screen
@@ -84,6 +86,21 @@ class DevicePoint {
       false
     }
     else JreHiDpiUtil.isJreHiDPIEnabled() // device space equals user space
+  }
+
+  /**
+   * Creates a [RelativePoint] from the current location, relative to the passed component
+   *
+   * Required because a [RelativePoint] is specific to the source component's screen's scaling factor, and cannot be used outside the source
+   * component's hierarchy.
+   *
+   * @param component the component that this point should be made relative to. This component's screen's scaling factor is used
+   * @return a [RelativePoint] representing the location, relative to the given component, in the given component's screen's coordinate system
+   */
+  fun toRelativePoint(component: Component): RelativePoint {
+    val location = getLocationOnScreen(component)
+    SwingUtilities.convertPointFromScreen(location, component)
+    return RelativePoint(component, location)
   }
 
   private fun scale(point: Point, screenOrigin: Point, factor: Float): Point {
