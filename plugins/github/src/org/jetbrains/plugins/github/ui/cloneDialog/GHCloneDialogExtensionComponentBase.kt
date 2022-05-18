@@ -12,12 +12,8 @@ import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -36,7 +32,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
@@ -48,17 +43,10 @@ import git4idea.remote.GitRememberedInputs
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.data.GithubRepo
-import org.jetbrains.plugins.github.api.data.request.Affiliation
-import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
-import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
-import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.*
 import java.nio.file.Paths
@@ -66,6 +54,8 @@ import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.ListModel
 import javax.swing.event.DocumentEvent
+import javax.swing.event.ListDataEvent
+import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates
 
 internal abstract class GHCloneDialogExtensionComponentBase(
@@ -76,7 +66,6 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   private val LOG = GithubUtil.LOG
 
-  private val progressManager: ProgressVisibilityManager
   private val githubGitHelper: GithubGitHelper = GithubGitHelper.getInstance()
 
   // UI
@@ -98,14 +87,16 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance()))
 
   // state
-  private val repositoryListModel = GHCloneDialogRepositoryListModel()
+  private val loader = GHCloneDialogRepositoryListLoaderImpl(executorManager) {
+    switchToLogin(it)
+  }
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
 
   protected val content: JComponent get() = wrapper.targetComponent
 
   init {
-    repositoryList = JBList(repositoryListModel).apply {
+    repositoryList = JBList(loader.listModel).apply {
       cellRenderer = GHRepositoryListCellRenderer { getAccounts() }
       isFocusable = false
       selectionModel = SingleSelectionModel()
@@ -117,6 +108,15 @@ internal abstract class GHCloneDialogExtensionComponentBase(
         if (evt.valueIsAdjusting) return@addListSelectionListener
         updateSelectedUrl()
       }
+    }
+    //TODO: fix jumping selection in the presence of filter
+    loader.listModel.addListDataListener(object : ListDataListener {
+      override fun intervalAdded(e: ListDataEvent?) = ScrollingUtil.ensureSelectionExists(repositoryList)
+      override fun intervalRemoved(e: ListDataEvent?) = ScrollingUtil.ensureSelectionExists(repositoryList)
+      override fun contentsChanged(e: ListDataEvent?) = ScrollingUtil.ensureSelectionExists(repositoryList)
+    })
+    loader.addLoadingStateListener {
+      repositoryList.setPaintBusy(loader.loading)
     }
 
     searchField = SearchTextField(false).also {
@@ -133,17 +133,11 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
     }
 
-    progressManager = object : ProgressVisibilityManager() {
-      override fun setProgressVisible(visible: Boolean) = repositoryList.setPaintBusy(visible)
-
-      override fun getModalityState() = ModalityState.any()
-    }
-
     val indicatorsProvider = ProgressIndicatorsProvider()
 
     @Suppress("LeakingThis")
     val parentDisposable: Disposable = this
-    Disposer.register(parentDisposable, progressManager)
+    Disposer.register(parentDisposable, loader)
     Disposer.register(parentDisposable, indicatorsProvider)
 
 
@@ -198,10 +192,10 @@ internal abstract class GHCloneDialogExtensionComponentBase(
         val newList = new.filter(::isAccountHandled)
         val delta = CollectionDelta(oldList, newList)
         for (account in delta.removedItems) {
-          repositoryListModel.clear(account)
+          loader.clear(account)
         }
         for (account in delta.newItems) {
-          loadRepositories(account)
+          loader.loadRepositories(account)
         }
         if (delta.newItems.isEmpty()) {
           switchToLogin(null)
@@ -214,7 +208,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
       override fun onAccountCredentialsChanged(account: GithubAccount) {
         if (!isAccountHandled(account)) return
-        loadRepositories(account)
+        loader.clear(account)
+        loader.loadRepositories(account)
         switchToRepositories()
         dialogStateListener.onListItemChanged()
       }
@@ -223,7 +218,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     if (accounts.isNotEmpty()) {
       switchToRepositories()
       for (account in accounts) {
-        loadRepositories(account)
+        loader.loadRepositories(account)
       }
     }
     else {
@@ -243,66 +238,6 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     wrapper.repaint()
     inLoginState = false
     updateSelectedUrl()
-  }
-
-  private fun loadRepositories(account: GithubAccount) {
-    repositoryListModel.clear(account)
-
-    val executor = try {
-      executorManager.getExecutor(account)
-    }
-    catch (e: GithubMissingTokenException) {
-      repositoryListModel.setError(account,
-                                   GithubBundle.message("account.token.missing"),
-                                   GithubBundle.message("login.link"),
-                                   Runnable { switchToLogin(account) })
-      ScrollingUtil.ensureSelectionExists(repositoryList)
-      return
-    }
-
-    progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
-      override fun run(indicator: ProgressIndicator) {
-        val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
-
-        val repoPagesRequest = GithubApiRequests.CurrentUser.Repos.pages(account.server,
-                                                                         affiliation = Affiliation.combine(Affiliation.OWNER,
-                                                                                                           Affiliation.COLLABORATOR),
-                                                                         pagination = GithubRequestPagination.DEFAULT)
-        val pageItemsConsumer: (List<GithubRepo>) -> Unit = {
-          indicator.checkCanceled()
-          runInEdt {
-            indicator.checkCanceled()
-            repositoryListModel.addRepositories(account, details, it)
-            ScrollingUtil.ensureSelectionExists(repositoryList)
-          }
-        }
-        GithubApiPagesLoader.loadAll(executor, indicator, repoPagesRequest, pageItemsConsumer)
-
-        val orgsRequest = GithubApiRequests.CurrentUser.Orgs.pages(account.server)
-        val userOrganizations = GithubApiPagesLoader.loadAll(executor, indicator, orgsRequest).sortedBy { it.login }
-
-        for (org in userOrganizations) {
-          val orgRepoRequest = GithubApiRequests.Organisations.Repos.pages(account.server, org.login, GithubRequestPagination.DEFAULT)
-          GithubApiPagesLoader.loadAll(executor, indicator, orgRepoRequest, pageItemsConsumer)
-        }
-      }
-
-      override fun onThrowable(error: Throwable) {
-        if (error is GithubAuthenticationException) {
-          repositoryListModel.setError(account,
-                                       GithubBundle.message("credentials.invalid.auth.data", ""),
-                                       GithubBundle.message("accounts.relogin"),
-                                       Runnable { switchToLogin(account) })
-        }
-        else {
-          repositoryListModel.setError(account,
-                                       GithubBundle.message("clone.error.load.repositories"),
-                                       GithubBundle.message("retry.link"),
-                                       Runnable { loadRepositories(account) })
-        }
-        ScrollingUtil.ensureSelectionExists(repositoryList)
-      }
-    })
   }
 
   override fun getView() = wrapper
