@@ -108,7 +108,7 @@ class TStructure<T : Obj, B : ObjBuilder<T>>(
         else _allFields.add(it)
       }
     }
-    _allFields.addAll(_declaredFields)
+    _allFields.addAll(_declaredFields.filter { !it.ignored })
 
     if (allFields.isEmpty()) {
       minFieldId = 0

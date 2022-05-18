@@ -43,5 +43,5 @@ package org.jetbrains.deft.annotations
  *
  * `parent` and `@Child`/`Children` actually are basic predefined opposites (see [OppositeFor]).
  */
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION, AnnotationTarget.TYPE)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
 annotation class Child

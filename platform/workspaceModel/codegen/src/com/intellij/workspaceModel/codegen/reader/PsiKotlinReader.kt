@@ -4,6 +4,7 @@ package storage.codegen.patcher
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.workspaceModel.deft.api.annotations.Ignore
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
@@ -100,9 +101,6 @@ class PsiKotlinReader(val file: KtFile) {
     val constructor = maybePrimaryConstructor(ktClass)
     val ktTypes = ktClass.superTypeListEntries.mapNotNull { type(it.typeReference) }
 
-    if (ktClass.name == "ModuleDependencyItem") {
-      println("")
-    }
     val outer = leafScope
     val innerIface = KtInterface(file.module, outer, name, ktTypes, constructor, predefinedInterfaceKind, `annotation`(ktClass.annotationEntries, ktClass))
     val inner = innerIface.scope
@@ -214,7 +212,7 @@ class PsiKotlinReader(val file: KtFile) {
 
   private fun `annotation`(annotationEntries: List<KtAnnotationEntry>, parentElement: PsiElement): KtAnnotations {
     val annotations = KtAnnotations()
-    listOf(Open::class.simpleName, Child::class.simpleName, Abstract::class.simpleName).forEach { annotationName ->
+    listOf(Open::class.simpleName, Child::class.simpleName, Abstract::class.simpleName, Ignore::class.simpleName).forEach { annotationName ->
       val annotation = annotationEntries.find { it.shortName?.identifier == annotationName }
       if (annotation != null) {
         val intRange = (annotation.textRange.startOffset + 1) until annotation.textRange.endOffset

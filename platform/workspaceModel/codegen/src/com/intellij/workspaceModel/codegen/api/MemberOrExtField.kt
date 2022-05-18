@@ -18,6 +18,7 @@ abstract class MemberOrExtField<P : Obj, V>(
   var constructorField = false
   var hasDefault: Field.Default = Field.Default.none
   var defaultValue: String? = null
+  var ignored: Boolean = false
 
   val hasSetter: Boolean
     get() =

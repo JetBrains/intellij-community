@@ -19,10 +19,12 @@ class DefField(
   val open: Boolean = annotations.flags.open
   val content: Boolean = annotations.flags.content
   val relation: Boolean = annotations.flags.relation
+  val ignored: Boolean = annotations.flags.ignored
 
   var id = 0
 
   override fun toString(): String = buildString {
+    if (ignored) append("ignored ")
     if (content) append("content ")
     if (open) append("open ")
     if (relation) append("relation ")
@@ -96,6 +98,7 @@ class DefField(
     }
     field.constructorField = constructorParam
     field.content = content
+    field.ignored = ignored
   }
 
 

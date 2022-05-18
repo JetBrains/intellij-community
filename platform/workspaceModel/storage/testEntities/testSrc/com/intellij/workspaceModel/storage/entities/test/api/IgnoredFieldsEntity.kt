@@ -24,7 +24,7 @@ interface IgnoredFieldsEntity: WorkspaceEntity {
   @Ignore val gitRevision: String?  get() = descriptor.revision
 
   fun isEditable(): Boolean {
-    return descriptor.source && displayName != null && displayName == "AnotherData"
+    return descriptor.source && displayName != null
   }
   fun isReadOnly(): Boolean {
     return !isEditable() && descriptor.url != null
@@ -57,4 +57,5 @@ fun MutableEntityStorage.modifyEntity(entity: IgnoredFieldsEntity, modification:
 //endregion
 
 
-data class AnotherDataClass(val name: String, val version: Int, val source: Boolean, val displayName: String?, val url: String?, val revision: String?)
+data class AnotherDataClass(val name: String, val version: Int, val source: Boolean, val displayName: String? = null, val url: String? = null,
+                            val revision: String? = null)
