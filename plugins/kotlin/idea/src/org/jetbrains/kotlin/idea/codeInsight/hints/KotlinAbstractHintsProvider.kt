@@ -90,10 +90,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
             val roundedPresentation = factory.roundWithBackground(basePresentation)
             return InsetPresentation(
                 MenuOnClickPresentation(roundedPresentation, project) {
-                    listOf(
-                        InlayProviderDisablingAction(provider.name, KotlinLanguage.INSTANCE, project, provider.key),
-                        ShowInlayHintsSettings()
-                    )
+                    listOf(ShowInlayHintsSettings())
                 }, left = 1
             )
         }
