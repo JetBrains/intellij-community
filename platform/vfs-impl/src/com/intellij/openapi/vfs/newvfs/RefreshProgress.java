@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.impl.ProjectUtilCore;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -25,7 +23,6 @@ final class RefreshProgress extends ProgressIndicatorBase {
   }
 
   private final @NlsContexts.Tooltip String myMessage;
-  private long myStartedTime;
 
   private RefreshProgress(@NotNull @NlsContexts.Tooltip String message) {
     super(true);
@@ -36,27 +33,12 @@ final class RefreshProgress extends ProgressIndicatorBase {
   public void start() {
     super.start();
     scheduleUiUpdate();
-
-    myStartedTime = System.currentTimeMillis();
   }
 
   @Override
   public void stop() {
     super.stop();
     scheduleUiUpdate();
-
-    long finishedTime = System.currentTimeMillis();
-    long duration = finishedTime - myStartedTime;
-    // do not report short refreshes to avoid polluting the event log and increasing its size
-    if (duration > 1000) {
-      Application application = ApplicationManager.getApplication();
-      application.runReadAction(() -> {
-        // refresh might be finished during IDE shutdown, in this case, don't report events (requred subsystems are already disposed)
-        if (application.isDisposed()) return;
-
-        VfsUsageCollector.logVfsRefreshed(myStartedTime, finishedTime, duration);
-      });
-    }
   }
 
   private void scheduleUiUpdate() {

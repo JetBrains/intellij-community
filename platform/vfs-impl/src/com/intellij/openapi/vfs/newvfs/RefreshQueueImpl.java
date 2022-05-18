@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -64,7 +64,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private void queueSessionSync(@NotNull RefreshSessionImpl session) {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
-    executeRefreshSession(session);
+    executeRefreshSession(session, -1L);
     fireEventsSync(session);
   }
 
@@ -73,14 +73,17 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void queueSessionAsync(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
-    myQueue.execute(() -> executeSession(session, modality));
+    long queuedAt = System.nanoTime();
+    myQueue.execute(() -> executeSession(session, modality, queuedAt));
     myEventCounter.eventHappened(session);
   }
 
-  private void executeSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
+  private void executeSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality, long queuedAt) {
+    long timeInQueue = (System.nanoTime() - queuedAt) / 1_000_000;
     startRefreshActivity();
     try {
-      HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, IdeCoreBundle.message("progress.title.doing.file.refresh.0", session), ()-> executeRefreshSession(session));
+      String title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);
+      HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, title, () -> executeRefreshSession(session, timeInQueue));
     }
     finally {
       finishRefreshActivity();
@@ -148,10 +151,10 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     return () -> session.fireEvents(events, appliers, true);
   }
 
-  private void executeRefreshSession(@NotNull RefreshSessionImpl session) {
+  private void executeRefreshSession(@NotNull RefreshSessionImpl session, long timeInQueue) {
     try {
       updateSessionMap(session, true);
-      session.scan();
+      session.scan(timeInQueue);
     }
     finally {
       updateSessionMap(session, false);
