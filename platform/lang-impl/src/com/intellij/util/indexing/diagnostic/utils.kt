@@ -8,6 +8,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 
 object IndexDiagnosticDumperUtils {
@@ -18,6 +19,7 @@ object IndexDiagnosticDumperUtils {
   val diagnosticTimestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
 
   fun writeValue(file: Path, value: Any) {
+    file.parent.createDirectories()
     jacksonMapper.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), value)
   }
 
