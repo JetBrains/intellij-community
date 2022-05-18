@@ -59,6 +59,35 @@ final class FilePageCache {
     myUncachedFileAccess++;
   }
 
+  public void assertNoBuffersLocked() {
+    mySegmentsAllocationLock.lock();
+    try {
+      mySegmentsAccessLock.lock();
+      try {
+        for (DirectBufferWrapper value : mySegments.values()) {
+          if (value.isLocked()) {
+            throw new AssertionError();
+          }
+        }
+        for (DirectBufferWrapper value : mySegmentsToRemove.values()) {
+          if (value.isLocked()) {
+            throw new AssertionError();
+          }
+        }
+      }
+      finally {
+        mySegmentsAccessLock.unlock();
+      }
+    }
+    finally {
+      mySegmentsAllocationLock.unlock();
+    }
+  }
+
+  public void incrementHitsCount() {
+    myHits++;
+  }
+
   private static long maxDirectMemory() {
     try {
       Class<?> aClass = Class.forName("jdk.internal.misc.VM");
@@ -194,8 +223,10 @@ final class FilePageCache {
     try {         // fast path
       mySegmentsAccessLock.lock();
       wrapper = mySegments.get(key);
-      myHits++;
-      if (wrapper != null) return wrapper;
+      if (wrapper != null) {
+        myHits++;
+        return wrapper;
+      }
     }
     finally {
       mySegmentsAccessLock.unlock();
