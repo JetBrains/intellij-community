@@ -205,15 +205,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
-        if (myRegisteredIndexes != null) {
-          if (!myRegisteredIndexes.areIndexesReady()) {
-            new Task.Modal(null, IndexingBundle.message("indexes.preparing.to.shutdown.message"), false) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                myRegisteredIndexes.waitUntilAllIndicesAreInitialized();
-              }
-            }.queue();
-          }
+        if (myRegisteredIndexes != null && !myRegisteredIndexes.areIndexesReady()) {
+          new Task.Modal(null, IndexingBundle.message("indexes.preparing.to.shutdown.message"), false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              myRegisteredIndexes.waitUntilAllIndicesAreInitialized();
+            }
+          }.queue();
         }
       }
     });
