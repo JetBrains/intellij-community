@@ -36,37 +36,44 @@ class RegistrationIndexer {
   private void process(IdeaPlugin ideaPlugin) {
     processActions(ideaPlugin);
 
-    processElements(ideaPlugin.getApplicationComponents(),
+    processElements(RegistrationEntry.RegistrationType.APPLICATION_COMPONENT,
+                    ideaPlugin.getApplicationComponents(),
                     ApplicationComponents::getComponents,
-                    Component::getImplementationClass,
-                    RegistrationEntry.RegistrationType.APPLICATION_COMPONENT);
-    processElements(ideaPlugin.getProjectComponents(),
+                    Component::getInterfaceClass, Component::getImplementationClass, Component::getHeadlessImplementationClass
+    );
+    processElements(RegistrationEntry.RegistrationType.PROJECT_COMPONENT,
+                    ideaPlugin.getProjectComponents(),
                     ProjectComponents::getComponents,
-                    Component::getImplementationClass,
-                    RegistrationEntry.RegistrationType.PROJECT_COMPONENT);
-    processElements(ideaPlugin.getModuleComponents(),
+                    Component::getInterfaceClass, Component::getImplementationClass, Component::getHeadlessImplementationClass
+    );
+    processElements(RegistrationEntry.RegistrationType.MODULE_COMPONENT,
+                    ideaPlugin.getModuleComponents(),
                     ModuleComponents::getComponents,
-                    Component::getImplementationClass,
-                    RegistrationEntry.RegistrationType.MODULE_COMPONENT);
+                    Component::getInterfaceClass, Component::getImplementationClass, Component::getHeadlessImplementationClass
+    );
 
-    processElements(ideaPlugin.getApplicationListeners(),
+    processElements(RegistrationEntry.RegistrationType.APPLICATION_LISTENER,
+                    ideaPlugin.getApplicationListeners(),
                     Listeners::getListeners,
-                    Listeners.Listener::getListenerClassName,
-                    RegistrationEntry.RegistrationType.APPLICATION_LISTENER);
-    processElements(ideaPlugin.getProjectListeners(),
+                    Listeners.Listener::getListenerClassName
+    );
+    processElements(RegistrationEntry.RegistrationType.PROJECT_LISTENER,
+                    ideaPlugin.getProjectListeners(),
                     Listeners::getListeners,
-                    Listeners.Listener::getListenerClassName,
-                    RegistrationEntry.RegistrationType.PROJECT_LISTENER);
+                    Listeners.Listener::getListenerClassName
+    );
   }
 
   private <T extends DomElement, U extends DomElement>
-  void processElements(List<T> elementContainer,
+  void processElements(RegistrationEntry.RegistrationType type,
+                       List<T> elementContainer,
                        Function<T, List<? extends U>> elementGetter,
-                       Function<U, GenericDomValue<PsiClass>> psiClassGetter,
-                       RegistrationEntry.RegistrationType type) {
+                       Function<U, GenericDomValue<PsiClass>>... psiClassGetters) {
     for (T wrapper : elementContainer) {
       for (U element : elementGetter.fun(wrapper)) {
-        addEntry(element, psiClassGetter.fun(element), type);
+        for (Function<U, GenericDomValue<PsiClass>> psiClassGetter : psiClassGetters) {
+          addEntry(element, psiClassGetter.fun(element), type);
+        }
       }
     }
   }
@@ -96,7 +103,7 @@ class RegistrationIndexer {
                           RegistrationEntry.RegistrationType type) {
     if (!DomUtil.hasXml(domElement)) return;
     String id = idValue.getStringValue();
-    if (StringUtil.isEmpty(id)) return;
+    if (StringUtil.isEmptyOrSpaces(id)) return;
 
     storeEntry(id, domElement, type);
   }
@@ -106,7 +113,7 @@ class RegistrationIndexer {
                         RegistrationEntry.RegistrationType type) {
     if (!DomUtil.hasXml(clazzValue)) return;
     final String clazz = clazzValue.getStringValue();
-    if (clazz == null) return;
+    if (StringUtil.isEmptyOrSpaces(clazz)) return;
 
     final String className = clazz.replace('$', '.');
 

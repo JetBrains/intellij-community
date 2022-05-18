@@ -37,7 +37,7 @@ import java.util.*;
  * Class FQN or ID -> entry in {@code plugin.xml}.
  * <p>
  * <ul>
- *   <li>Application/Project/Module-component class - {@link Component#getImplementationClass()}</li>
+ *   <li>Application/Project/Module-component class - {@link Component#getInterfaceClass()} / {@link Component#getImplementationClass()} / {@link Component#getHeadlessImplementationClass()}</li>
  *   <li>Action/ActionGroup class - {@link Action#getClazz()}/{@link Group#getClazz()}</li>
  *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getId()}</li>
  *   <li>Application/Project Listener class - {@link Listeners.Listener#getListenerClassName()}</li>
@@ -45,7 +45,7 @@ import java.util.*;
  */
 public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
-  private static final int INDEX_VERSION = 4;
+  private static final int INDEX_VERSION = 5;
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
