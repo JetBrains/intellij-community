@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.Contract
-import kotlin.collections.LinkedHashMap
 
 
 /**
@@ -62,6 +61,6 @@ internal class FeaturesProviderCacheDataProvider {
   }
 }
 
-internal data class FeaturesProviderCache(val currentlyOpenedFile: VirtualFile?,
-                                          val usageSortedLanguageStatistics: LinkedHashMap<String, LanguageUsageStatistics>,
-                                          val fileTypeUsageStatistics: Map<String, FileTypeUsageSummary>)
+data class FeaturesProviderCache(val currentlyOpenedFile: VirtualFile?,
+                                 val usageSortedLanguageStatistics: LinkedHashMap<String, LanguageUsageStatistics>,
+                                 val fileTypeUsageStatistics: Map<String, FileTypeUsageSummary>)
