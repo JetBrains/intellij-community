@@ -471,4 +471,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitSnippetAttributeList(PsiSnippetAttributeList attributeList) {
     visitElement(attributeList);
   }
+
+  public void visitRecordPattern(PsiRecordPattern recordPattern) {visitElement(recordPattern);}
+  public void visitRecordStructurePattern(PsiRecordStructurePattern recordStructurePattern) {visitElement(recordStructurePattern);}
 }
