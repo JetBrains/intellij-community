@@ -18,7 +18,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -34,13 +33,13 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
     open val hintsArePlacedAtTheEndOfLine = false
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Should not be used, keep for BWC",
-                replaceWith = ReplaceWith("#isHintSupported()"))
+    /**
+     * Check if specified setting is enabled for the provider.
+     * It has to return false when [#isHintSupported] returns `false`
+     */
     abstract fun isElementSupported(resolved: HintType?, settings: T): Boolean
 
-    open fun isHintSupported(hintType: HintType?, settings: T? = null): Boolean =
-        settings?.let { isElementSupported(resolved = hintType, settings = it) } ?: false
+    open fun isHintSupported(hintType: HintType): Boolean = false
 
     override fun isLanguageSupported(language: Language): Boolean = language == KotlinLanguage.INSTANCE
 
@@ -59,7 +58,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                 val resolved = HintType.resolve(element).takeIf { it.isNotEmpty() } ?: return true
                 val f = factory
                 resolved.forEach { hintType ->
-                    if (isHintSupported(hintType, settings)) {
+                    if (isElementSupported(hintType, settings)) {
                         hintType.provideHintDetails(element).forEach { details ->
                             val p = PresentationAndSettings(
                                 getInlayPresentationForInlayInfoDetails(details, f, project, this@KotlinAbstractHintsProvider),

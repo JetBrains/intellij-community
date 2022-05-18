@@ -84,16 +84,19 @@ class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinRefe
 
     override fun createSettings(): Settings = Settings()
 
-    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean = isHintSupported(resolved, settings)
-
-    override fun isHintSupported(hintType: HintType?, settings: Settings?): Boolean =
-        when (hintType) {
-            HintType.PROPERTY_HINT -> settings?.propertyType ?: true
-            HintType.LOCAL_VARIABLE_HINT -> settings?.localVariableType ?: true
-            HintType.FUNCTION_HINT -> settings?.functionReturnType ?: true
-            HintType.PARAMETER_TYPE_HINT -> settings?.parameterType ?: true
+    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean {
+        return when (resolved) {
+            HintType.PROPERTY_HINT -> settings.propertyType
+            HintType.LOCAL_VARIABLE_HINT -> settings.localVariableType
+            HintType.FUNCTION_HINT -> settings.functionReturnType
+            HintType.PARAMETER_TYPE_HINT -> settings.parameterType
             else -> false
         }
+    }
+
+    override fun isHintSupported(hintType: HintType): Boolean =
+        hintType == HintType.PROPERTY_HINT || hintType == HintType.LOCAL_VARIABLE_HINT ||
+                hintType == HintType.FUNCTION_HINT || hintType == HintType.PARAMETER_TYPE_HINT
 
     override val previewText: String = """
         val property = listOf(1, 2, 3).filter { num -> num % 2 == 0 }

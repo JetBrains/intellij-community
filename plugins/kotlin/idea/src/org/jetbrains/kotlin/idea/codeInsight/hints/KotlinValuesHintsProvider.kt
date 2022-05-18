@@ -49,13 +49,13 @@ class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsP
 
     }
 
-    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean = isHintSupported(resolved, settings)
-
-    override fun isHintSupported(hintType: HintType?, settings: Settings?): Boolean =
-        when (hintType) {
-            HintType.RANGES -> settings?.ranges  ?: true
+    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean =
+        when (resolved) {
+            HintType.RANGES -> settings.ranges
             else -> false
         }
+
+    override fun isHintSupported(hintType: HintType): Boolean = hintType == HintType.RANGES
 
     override val previewText: String? = null
 
