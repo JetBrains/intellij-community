@@ -1,47 +1,48 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build;
+package org.jetbrains.intellij.build
 
-import com.intellij.testFramework.SkipInHeadlessEnvironment;
-import org.jetbrains.intellij.build.impl.TestingTasksImpl;
+import java.io.File
+import java.nio.file.Path
+import java.util.function.Predicate
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
+interface TestingTasks {
+  companion object {
+    @JvmStatic
+    @JvmOverloads
+    fun create(context: CompilationContext, options: TestingOptions = TestingOptions()): TestingTasks {
+      return TestingTasks::class.java.classLoader
+        .loadClass("org.jetbrains.intellij.build.impl.TestingTasksImpl")
+        .getConstructor(CompilationContext::class.java, TestingOptions::class.java)
+        .newInstance(context, options) as TestingTasks
+    }
+  }
 
-public abstract class TestingTasks {
   /**
-   * @param defaultMainModule    main module to be used instead of {@link TestingOptions#mainModule} if it isn't specified
-   * @param rootExcludeCondition if not {@code null} tests from modules which sources are fit this predicate will be skipped
+   * @param defaultMainModule    main module to be used instead of [TestingOptions.mainModule] if it isn't specified
+   * @param rootExcludeCondition if not `null` tests from modules which sources are fit this predicate will be skipped
    */
-  public abstract void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition);
+  fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: Predicate<File>?)
 
   /**
-   * Run all tests annotated with {@link SkipInHeadlessEnvironment}
+   * Run all tests annotated with [SkipInHeadlessEnvironment]
    */
-  public abstract void runTestsSkippedInHeadlessEnvironment();
+  fun runTestsSkippedInHeadlessEnvironment()
 
-  public abstract Path createSnapshotsDirectory();
+  fun createSnapshotsDirectory(): Path
 
   /**
-   * <p>Updates given jvm args, system properties and classpath with common parameters used for running tests
+   *
+   * Updates given jvm args, system properties and classpath with common parameters used for running tests
    * (Xmx, debugging, config path) etc.
    *
-   * <p>The values passed as parameters have priority over the default ones, added in this method.
    *
-   * <p>Mutates incoming collections.
+   * The values passed as parameters have priority over the default ones, added in this method.
+   *
+   *
+   * Mutates incoming collections.
    */
-  public abstract void prepareEnvForTestRun(List<String> jvmArgs,
-                                            Map<String, String> systemProperties,
-                                            List<String> classPath,
-                                            boolean remoteDebugging);
-
-  public static TestingTasks create(CompilationContext context, TestingOptions options) {
-    return new TestingTasksImpl(context, options);
-  }
-
-  public static TestingTasks create(CompilationContext context) {
-    return TestingTasks.create(context, new TestingOptions());
-  }
+  fun prepareEnvForTestRun(jvmArgs: List<String>,
+                           systemProperties: Map<String, String>,
+                           classPath: List<String>,
+                           remoteDebugging: Boolean)
 }
