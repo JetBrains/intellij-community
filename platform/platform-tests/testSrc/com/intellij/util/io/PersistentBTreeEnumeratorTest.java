@@ -8,6 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
+import com.intellij.util.io.stats.FilePageCacheStatistics;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.junit.After;
@@ -177,6 +178,41 @@ public class PersistentBTreeEnumeratorTest {
 
     assertNull(myEnumerator.valueOf(1000));
     assertEquals(string, myEnumerator.valueOf(value));
+  }
+
+  @Test
+  public void testSmallEnumeratorTryEnumeratePerformance() throws IOException {
+    List<String> data = Arrays.asList("qwe", "asd", "zxc", "123");
+    for (String item : data) {
+      myEnumerator.enumerate(item);
+    }
+
+    List<String> absentData = Arrays.asList("456", "789", "jjj", "kkk");
+
+    StorageLockContext.forceDirectMemoryCache();
+    FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 400, () -> {
+      for (int i = 0; i < 10000; i++) {
+        for (String item : data) {
+          assertNotEquals(0, myEnumerator.tryEnumerate(item));
+        }
+
+        for (String item : absentData) {
+          assertEquals(0, myEnumerator.tryEnumerate(item));
+        }
+      }
+    }).assertTiming();
+    FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+
+    // ensure enumerator didn't request any page
+
+    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
+    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
+    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+
+    assertEquals(0, pageLoadDiff);
+    assertEquals(0, pageMissDiff);
+    assertEquals(0, pageHitDiff);
   }
 
   @Test
