@@ -4,10 +4,10 @@ package com.intellij.collaboration.ui.codereview.avatar
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ui.AsyncImageIcon
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.ImageUtil.*
 import java.awt.Image
 import java.time.Duration
 import java.time.temporal.ChronoUnit
@@ -32,11 +32,12 @@ abstract class CachingAvatarIconsProvider<T : Any>(private val defaultIcon: Icon
     }
   }
 
-  private fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int) =
+  private fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int): CompletableFuture<Image?> =
     loadImageAsync(key).thenApplyAsync({ image ->
                                          image?.let {
-                                           val hidpiImage = ImageUtil.ensureHiDPI(image, scaleCtx)
-                                           ImageUtil.scaleImage(hidpiImage, width, height)
+                                           val hidpiImage = ensureHiDPI(image, scaleCtx)
+                                           val scaleImage = scaleImage(hidpiImage, width, height)
+                                           createCircleImage(toBufferedImage(scaleImage))
                                          }
                                        }, avatarResizeExecutor)
 
