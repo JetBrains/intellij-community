@@ -31,7 +31,7 @@ class BuildOptions {
      */
     const val OS_NONE = "none"
 
-    /** Pre-builds SVG icons for all SVG resource files into *.jpix resources to speedup icons loading at runtime  */
+    /** Pre-builds SVG icons for all SVG resource files to speedup icons loading at runtime  */
     const val SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
 
     /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used.  */
@@ -194,7 +194,7 @@ class BuildOptions {
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
-  var pathToCompiledClassesArchive: String = System.getProperty("intellij.build.compiled.classes.archive")
+  var pathToCompiledClassesArchive: String? = System.getProperty("intellij.build.compiled.classes.archive")
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
@@ -208,7 +208,7 @@ class BuildOptions {
   var incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
 
   /**
-   * By default some build steps are executed in parallel threads. Set this property to `false` to disable this.
+   * By default, some build steps are executed in parallel threads. Set this property to `false` to disable this.
    */
   var runBuildStepsInParallel = SystemProperties.getBooleanProperty("intellij.build.run.steps.in.parallel", true)
 
