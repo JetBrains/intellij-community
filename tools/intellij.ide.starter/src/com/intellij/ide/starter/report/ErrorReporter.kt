@@ -48,7 +48,7 @@ object ErrorReporter {
             $stackTraceContent
           """.trimIndent().trimMargin().trim()
 
-          di.direct.instance<CIServer>().reportTestFailure(testName, messageText, stackTrace)
+          di.direct.instance<CIServer>().reportTestFailure(generifyErrorMessage(testName), messageText, stackTrace)
         }
       }
     }
