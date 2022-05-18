@@ -61,20 +61,6 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
     ReassignVariableUtil.reassign(getEditor());
   }
 
-  public void testLightRecordCanonicalConstructor() {
-    myFixture.configureByText("A.java", "record Rec(int x) {}");
-    PsiMethod constructor = ((PsiJavaFile)getFile()).getClasses()[0].getConstructors()[0];
-    assertTrue(constructor instanceof LightRecordCanonicalConstructor);
-    PsiParameterList list = constructor.getParameterList();
-    PsiParameter parameter = list.getParameter(0);
-    assertTrue(parameter instanceof LightRecordCanonicalConstructor.LightRecordConstructorParameter);
-    assertEquals("x", parameter.getName());
-    PsiElement scope = parameter.getDeclarationScope();
-    assertTrue(scope instanceof PsiMethod);
-    int index = ((PsiMethod)scope).getParameterList().getParameterIndex(parameter);
-    assertEquals(0, index);
-  }
-
   private void doTest() {
     myFixture.addClass("package java.lang; public abstract class Record {" +
                        "public abstract boolean equals(Object obj);" +

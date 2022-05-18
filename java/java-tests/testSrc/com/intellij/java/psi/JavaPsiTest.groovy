@@ -4,6 +4,7 @@ package com.intellij.java.psi
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.psi.javadoc.PsiDocComment
@@ -292,7 +293,21 @@ class B {}""")
                                              " * @t2\n" +
                                              " */")
   }
-  
+
+  void testLightRecordCanonicalConstructor() {
+    myFixture.configureByText("A.java", "record Rec(int x) {}")
+    PsiMethod constructor = ((PsiJavaFile)getFile()).getClasses()[0].getConstructors()[0]
+    assertTrue(constructor instanceof LightRecordCanonicalConstructor)
+    PsiParameterList list = constructor.getParameterList()
+    PsiParameter parameter = list.getParameter(0)
+    assertTrue(parameter instanceof LightRecordCanonicalConstructor.LightRecordConstructorParameter)
+    assertEquals("x", parameter.getName())
+    PsiElement scope = parameter.getDeclarationScope()
+    assertTrue(scope instanceof PsiMethod)
+    int index = ((PsiMethod)scope).getParameterList().getParameterIndex(parameter)
+    assertEquals(0, index)
+  }
+
   private PsiJavaFile configureFile(String text) {
     myFixture.configureByText("a.java", text) as PsiJavaFile
   }
