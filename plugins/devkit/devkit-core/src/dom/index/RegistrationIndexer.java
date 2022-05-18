@@ -36,46 +36,45 @@ class RegistrationIndexer {
   private void process(IdeaPlugin ideaPlugin) {
     processActions(ideaPlugin);
 
-    processElements(RegistrationEntry.RegistrationType.APPLICATION_COMPONENT,
-                    ideaPlugin.getApplicationComponents(),
-                    ApplicationComponents::getComponents,
+    processComponents(RegistrationEntry.RegistrationType.APPLICATION_COMPONENT,
+                      ideaPlugin.getApplicationComponents(),
+                      ApplicationComponents::getComponents);
+
+    processComponents(RegistrationEntry.RegistrationType.PROJECT_COMPONENT,
+                      ideaPlugin.getProjectComponents(),
+                      ProjectComponents::getComponents);
+
+    processComponents(RegistrationEntry.RegistrationType.MODULE_COMPONENT,
+                      ideaPlugin.getModuleComponents(),
+                      ModuleComponents::getComponents);
+
+
+    processListeners(RegistrationEntry.RegistrationType.APPLICATION_LISTENER,
+                     ideaPlugin.getApplicationListeners());
+    processListeners(RegistrationEntry.RegistrationType.PROJECT_LISTENER,
+                     ideaPlugin.getProjectListeners());
+  }
+
+  private <T extends DomElement, U extends Component>
+  void processComponents(RegistrationEntry.RegistrationType componentType,
+                         List<T> componentContainer,
+                         Function<T, List<? extends U>> componentGetter) {
+    processElements(componentType,
+                    componentContainer,
+                    componentGetter,
                     Component::getImplementationClass, Component::getHeadlessImplementationClass
     );
     processElements(RegistrationEntry.RegistrationType.COMPONENT_INTERFACE,
-                    ideaPlugin.getApplicationComponents(),
-                    ApplicationComponents::getComponents,
+                    componentContainer,
+                    componentGetter,
                     Component::getInterfaceClass
     );
+  }
 
-    processElements(RegistrationEntry.RegistrationType.PROJECT_COMPONENT,
-                    ideaPlugin.getProjectComponents(),
-                    ProjectComponents::getComponents,
-                    Component::getInterfaceClass, Component::getImplementationClass, Component::getHeadlessImplementationClass
-    );
-    processElements(RegistrationEntry.RegistrationType.COMPONENT_INTERFACE,
-                    ideaPlugin.getProjectComponents(),
-                    ProjectComponents::getComponents,
-                    Component::getInterfaceClass
-    );
-
-    processElements(RegistrationEntry.RegistrationType.MODULE_COMPONENT,
-                    ideaPlugin.getModuleComponents(),
-                    ModuleComponents::getComponents,
-                    Component::getInterfaceClass, Component::getImplementationClass, Component::getHeadlessImplementationClass
-    );
-    processElements(RegistrationEntry.RegistrationType.COMPONENT_INTERFACE,
-                    ideaPlugin.getModuleComponents(),
-                    ModuleComponents::getComponents,
-                    Component::getInterfaceClass
-    );
-
-    processElements(RegistrationEntry.RegistrationType.APPLICATION_LISTENER,
-                    ideaPlugin.getApplicationListeners(),
-                    Listeners::getListeners,
-                    Listeners.Listener::getListenerClassName
-    );
-    processElements(RegistrationEntry.RegistrationType.PROJECT_LISTENER,
-                    ideaPlugin.getProjectListeners(),
+  private void processListeners(RegistrationEntry.RegistrationType listenerType,
+                                List<Listeners> listenerContainer) {
+    processElements(listenerType,
+                    listenerContainer,
                     Listeners::getListeners,
                     Listeners.Listener::getListenerClassName
     );
