@@ -16,6 +16,7 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
@@ -113,9 +114,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     catch (Throwable ignored) {
       skipTasks = false
     }
-    if (!skipTasks) {
-    defaultExternalProject.tasks = getTasks(project, tasksFactory)
-    }
+    List<Task> tasks = skipTasks ? project.tasks.withType(AbstractTestTask.class).toList() as List<Task> : tasksFactory.getTasks(project).toList();
+    defaultExternalProject.tasks = getTasks(project, tasks)
     defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
     defaultExternalProject.targetCompatibility = getTargetCompatibility(project)
 
@@ -175,10 +175,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
   }
 
-  static Map<String, DefaultExternalTask> getTasks(Project project, TasksFactory tasksFactory) {
+  static Map<String, DefaultExternalTask> getTasks(Project project, List<Task> tasks) {  // Android Studio: b/235320590
     def result = [:] as Map<String, DefaultExternalTask>
 
-    for (Task task in tasksFactory.getTasks(project)) {
+    for (Task task in tasks) {  // Android Studio: b/235320590
       DefaultExternalTask externalTask = result.get(task.name)
       if (externalTask == null) {
         externalTask = new DefaultExternalTask()
