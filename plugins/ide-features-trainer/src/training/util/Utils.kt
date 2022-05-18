@@ -175,7 +175,7 @@ fun scaledRigid(width: Int, height: Int): Component {
 
 internal fun getLearnToolWindowForProject(project: Project): LearnToolWindow? {
   val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW) ?: return null
-  val jComponent = toolWindow.contentManager.contents.singleOrNull()?.component
+  val jComponent = toolWindow.contentManagerIfCreated?.contents?.singleOrNull()?.component
   return jComponent as? LearnToolWindow
 }
 
