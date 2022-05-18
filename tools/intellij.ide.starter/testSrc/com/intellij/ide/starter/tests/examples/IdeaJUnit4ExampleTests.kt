@@ -1,8 +1,6 @@
 package com.intellij.ide.starter.tests.examples
 
 import com.intellij.ide.starter.ide.command.CommandChain
-import com.intellij.ide.starter.models.IdeInfo
-import com.intellij.ide.starter.models.IdeProduct
 import com.intellij.ide.starter.tests.examples.data.TestCases
 import com.intellij.ide.starter.tests.examples.junit4.initStarterRule
 import com.intellij.ide.starter.tests.examples.junit4.toPrintableWithClass

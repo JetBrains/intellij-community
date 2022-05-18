@@ -82,7 +82,7 @@ private fun resolveLinuxIDE(unpackDir: File, executableFileName: String): Instal
   val binDir = appHome / "bin"
   val allBinFiles = binDir.listDirectoryEntries()
   val executablePath = allBinFiles.singleOrNull { file ->
-    file.fileName.toString().equals("$executableFileName.sh")
+    file.fileName.toString() == "$executableFileName.sh"
   } ?: error("Failed to detect IDE executable .sh in:\n${allBinFiles.joinToString("\n")}")
 
   return object : InstalledIDE {
@@ -301,7 +301,7 @@ fun resolveWindowsIDE(unpackDir: Path, executableFileName: String): InstalledIDE
   val allBinFiles = binDir.listDirectoryEntries()
 
   val executablePath = allBinFiles.singleOrNull { file ->
-    file.fileName.toString().equals("${executableFileName}64.exe")
+    file.fileName.toString() == "${executableFileName}64.exe"
   } ?: error("Failed to detect executable name, ending with 64.exe in:\n${allBinFiles.joinToString("\n")}")
 
   val originalVMOptionsFile = executablePath.parent.resolve("${executablePath.fileName}.vmoptions")

@@ -29,7 +29,7 @@ var di = DI {
   bindSingleton<GlobalPaths> { InstallerGlobalPaths() }
   bindSingleton<CIServer> { NoCIServer }
   bindSingleton<CodeInjector> { CodeBuilderHost() }
-  bindFactory<IDETestContext, PluginConfigurator> { testContext: IDETestContext -> PluginConfigurator(testContext) }
+  bindFactory { testContext: IDETestContext -> PluginConfigurator(testContext) }
   bindSingleton<IDEResolver> { PublicIdeResolver }
   bindFactory<IdeInfo ,IdeInstallator> { ideInfo ->
     if(ideInfo.productCode == "AI") {

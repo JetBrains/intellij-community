@@ -104,7 +104,7 @@ fun isX64Jdk(javaHome: Path): Boolean {
 }
 
 fun resolveInstalledJdk11(): Path {
-  val jdkEnv = listOf("JDK_11_X64", "JAVA_HOME").mapNotNull { System.getenv(it) }.firstOrNull() ?: System.getProperty("java.home")
+  val jdkEnv = listOf("JDK_11_X64", "JAVA_HOME").firstNotNullOfOrNull { System.getenv(it) } ?: System.getProperty("java.home")
   val javaHome = jdkEnv?.let {
     val path = Path(it)
     if (path.isSymbolicLink()) path.readSymbolicLink()
