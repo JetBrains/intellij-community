@@ -185,6 +185,16 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
   }
 }
 
+data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
+
+@JvmField
+val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
+  SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
+  SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
+  SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
+  SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
+)
+
 private fun isSourceFile(path: String): Boolean {
   return path.endsWith(".java") || path.endsWith(".groovy") || path.endsWith(".kt")
 }
@@ -714,7 +724,7 @@ private fun doBuildDistributions(context: BuildContext) {
       }
     }
     if (context.productProperties.buildCrossPlatformDistribution) {
-      if (distDirs.size == 4) {
+      if (distDirs.size == SUPPORTED_DISTRIBUTIONS.size) {
         context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
           buildCrossPlatformZip(distDirs, context)
         }

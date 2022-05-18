@@ -663,15 +663,10 @@ class DistributionJARsBuilder {
                                                       context: BuildContext): ForkJoinTask<List<DistributionFileEntry>> {
     return createTask(spanBuilder("build os-specific bundled plugins").setAttribute("isUpdateFromSources", isUpdateFromSources)) {
       val platforms = if (isUpdateFromSources) {
-        listOf(Pair(OsFamily.currentOs, JvmArchitecture.currentJvmArch))
+        listOf(SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch))
       }
       else {
-        listOf(
-          Pair(OsFamily.MACOS, JvmArchitecture.x64),
-          Pair(OsFamily.MACOS, JvmArchitecture.aarch64),
-          Pair(OsFamily.WINDOWS, JvmArchitecture.x64),
-          Pair(OsFamily.LINUX, JvmArchitecture.x64)
-        )
+        SUPPORTED_DISTRIBUTIONS
       }
 
        ForkJoinTask.invokeAll(platforms.mapNotNull { (osFamily, arch) ->
