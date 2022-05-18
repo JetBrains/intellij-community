@@ -1,7 +1,5 @@
 package com.intellij.ide.starter.utils
 
-import org.apache.commons.lang3.CharUtils
-
 private val OFFSET: Int = "AAAAAAA".hashCode();
 
 fun convertToHashCodeWithOnlyLetters(hash: Int): String {
@@ -16,7 +14,7 @@ fun convertToHashCodeWithOnlyLetters(hash: Int): String {
     longHash /= 31;
   }
 
-  return generatedChars.filter { CharUtils.isAsciiAlphanumeric(it) }.joinToString(separator = "")
+  return generatedChars.filter { it.isLetterOrDigit() }.joinToString(separator = "")
 }
 
 /**

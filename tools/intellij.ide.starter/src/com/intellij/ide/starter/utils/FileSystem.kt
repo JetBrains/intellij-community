@@ -5,7 +5,6 @@ import com.intellij.ide.starter.exec.ExecOutputRedirect
 import com.intellij.ide.starter.exec.exec
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.system.SystemInfo
-import org.apache.commons.io.FileUtils
 import org.kodein.di.instance
 import org.rauschig.jarchivelib.ArchiveFormat
 import org.rauschig.jarchivelib.ArchiverFactory
@@ -170,7 +169,15 @@ object FileSystem {
     return output.count
   }
 
-  fun Path.getFileOrDirectoryPresentableSize(): String = FileUtils.byteCountToDisplaySize(FileUtils.sizeOf(this.toFile()))
+  fun Path.getFileOrDirectoryPresentableSize(): String  {
+    val size: Long
+    if(this.toFile().isFile){
+      size = this.toFile().length()
+    } else{
+      size = Files.walk(this).mapToLong { p: Path -> p.toFile().length() }.sum()
+    }
+    return size.formatSize()
+  }
 
   fun Path.getDirectoryTreePresentableSizes(depth: Int = 1): String {
     val thisPath = this

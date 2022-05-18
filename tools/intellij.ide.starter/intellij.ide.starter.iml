@@ -32,10 +32,7 @@
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="Gradle" level="project" />
-    <orderEntry type="library" name="commons-io" level="project" />
-    <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="kodein-di-jvm" level="project" />
-    <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="module-library">
       <library name="rauschig.jarchivelib" type="repository">
         <properties maven-id="org.rauschig:jarchivelib:1.2.0" />
@@ -53,7 +50,6 @@
     <orderEntry type="module" module-name="intellij.performanceTesting.commands" scope="TEST" />
     <orderEntry type="module" module-name="intellij.performancePlugin.extended.maven.commands" scope="TEST" />
     <orderEntry type="module" module-name="intellij.performancePlugin.extended.gradle.commands" scope="TEST" />
-    <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />

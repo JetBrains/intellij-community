@@ -5,11 +5,10 @@ import com.intellij.ide.starter.exec.ExecOutputRedirect
 import com.intellij.ide.starter.exec.exec
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.system.SystemInfo
-import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.CharSetUtils
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.io.*
+import java.lang.Long.numberOfLeadingZeros
 import java.nio.charset.Charset
 import java.nio.file.FileStore
 import java.nio.file.Files
@@ -36,16 +35,16 @@ inline fun catchAll(action: () -> Unit) {
 
 fun FileStore.getDiskInfo(): String = buildString {
   appendLine("Disk info of ${name()}")
-  appendLine("  Total space: " + FileUtils.byteCountToDisplaySize(totalSpace))
-  appendLine("  Unallocated space: " + FileUtils.byteCountToDisplaySize(unallocatedSpace))
-  appendLine("  Usable space: " + FileUtils.byteCountToDisplaySize(usableSpace))
+  appendLine("  Total space: " + totalSpace.formatSize())
+  appendLine("  Unallocated space: " + unallocatedSpace.formatSize())
+  appendLine("  Usable space: " + usableSpace.formatSize())
 }
 
 fun Runtime.getRuntimeInfo(): String = buildString {
   appendLine("Memory info")
-  appendLine("  Total memory: " + FileUtils.byteCountToDisplaySize(totalMemory()))
-  appendLine("  Free memory: " + FileUtils.byteCountToDisplaySize(freeMemory()))
-  appendLine("  Max memory: " + FileUtils.byteCountToDisplaySize(maxMemory()))
+  appendLine("  Total memory: " + totalMemory().formatSize())
+  appendLine("  Free memory: " + freeMemory().formatSize())
+  appendLine("  Max memory: " + maxMemory().formatSize())
 }
 
 /**
@@ -129,7 +128,7 @@ fun String.withIndent(indent: String = "  "): String = lineSequence().map { "$in
 private fun quoteArg(arg: String): String {
 
   val specials = " #'\"\n\r\t\u000c"
-  if (!CharSetUtils.containsAny(arg, specials)) {
+  if(!specials.any { arg.contains(it) }){
     return arg
   }
 
@@ -251,6 +250,12 @@ private fun downloadAsyncProfilerIfNeeded(profiler: Path, toolsDir: Path) {
                         archivePath)
     FileSystem.unpack(archivePath, toolsDir)
   }
+}
+
+fun Long.formatSize(): String {
+  if (this < 1024) return "$this B"
+  val z = (63 - numberOfLeadingZeros(this)) / 10
+  return String.format("%.1f %sB", this.toDouble() / (1L shl z * 10), " KMGTPE"[z])
 }
 
 fun pathInsideJarFile(
