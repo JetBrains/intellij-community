@@ -165,7 +165,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private JComponent getNavBarPanel() {
     if (myNavBarPanel != null) return myNavBarPanel;
 
-    myNavigationBar = new NavBarPanel(myProject, true);
+    myNavigationBar = new ReusableNavBarPanel(myProject, true);
     myNavigationBar.getModel().setFixedComponent(true);
     myScrollPane = ScrollPaneFactory.createScrollPane(myNavigationBar);
     updateScrollBarFlippedState(null);
