@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.ProjectManager
@@ -388,18 +389,23 @@ class RecentProjectFilteringTree(
         icon = AllIcons.Actions.DeleteTag
         border = JBUI.Borders.empty(0, 0, 0, 17)
       }
-      private val projectProgressBar = JProgressBar().apply {
-        isOpaque = false
-        border = JBUI.Borders.empty(4)
-      }
       private val projectProgressLabel = JLabel().apply {
         foreground = UIUtil.getInactiveTextColor()
+      }
+      private val projectProgressBar = JProgressBar().apply {
+        isOpaque = false
+      }
+      private val projectProgressBarPanel = JBUI.Panels.simplePanel().apply {
+        isOpaque = false
+        border = JBUI.Borders.empty(8)
+
+        add(projectProgressLabel, BorderLayout.NORTH)
+        add(projectProgressBar, BorderLayout.SOUTH)
       }
       private val projectCloneStatusPanel = JBUI.Panels.simplePanel().apply {
         isOpaque = false
 
-        add(projectProgressLabel, BorderLayout.WEST)
-        add(projectProgressBar, BorderLayout.CENTER)
+        add(projectProgressBarPanel, BorderLayout.CENTER)
         add(projectCancelButton, BorderLayout.EAST)
       }
 
@@ -415,33 +421,54 @@ class RecentProjectFilteringTree(
         val cloneableProject = item.cloneableProject
         val taskInfo = cloneableProject.cloneTaskInfo
         val progressIndicator = cloneableProject.progressIndicator
+        val cloneStatus = cloneableProject.cloneStatus
 
         projectNameLabel.text = item.displayName() // NON-NLS
         projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
         projectIconLabel.icon = IconUtil.desaturate(recentProjectsManager.getProjectIcon(item.projectPath, true))
-        projectProgressBar.isIndeterminate = progressIndicator.isIndeterminate
 
         projectProgressBar.apply {
-          when (cloneableProject.cloneStatus) {
-            CloneStatus.PROGRESS -> {
-              projectCloneStatusPanel.isVisible = true
-              projectProgressLabel.text = taskInfo.actionTitle
-              value = (progressIndicator.fraction * 100).toInt()
-            }
-            CloneStatus.FAILURE -> {
-              projectCloneStatusPanel.isVisible = false
-              projectPathLabel.text = taskInfo.failedTitle
-            }
-            CloneStatus.CANCEL -> {
-              projectCloneStatusPanel.isVisible = false
-              projectPathLabel.text = taskInfo.canceledTitle
+          val isProgressIndeterminate = progressIndicator.isIndeterminate
+          if (isProgressIndeterminate) {
+            val progressBarUI = projectProgressBar.ui
+            if (progressBarUI is DarculaProgressBarUI) {
+              progressBarUI.updateIndeterminateAnimationIndex(startMillis)
             }
           }
+
+          if (cloneStatus == CloneStatus.PROGRESS) {
+            value = (progressIndicator.fraction * 100).toInt()
+          }
+
+          isIndeterminate = isProgressIndeterminate
+        }
+
+        when (cloneStatus) {
+          CloneStatus.PROGRESS -> {
+            projectCloneStatusPanel.isVisible = true
+            projectCloneStatusPanel.isEnabled = true
+            projectProgressLabel.text = taskInfo.actionTitle
+          }
+          CloneStatus.FAILURE -> {
+            projectCloneStatusPanel.isVisible = false
+            projectCloneStatusPanel.isEnabled = false
+            projectPathLabel.text = taskInfo.failedTitle
+          }
+          CloneStatus.CANCEL -> {
+            projectCloneStatusPanel.isVisible = false
+            projectCloneStatusPanel.isEnabled = false
+            projectPathLabel.text = taskInfo.canceledTitle
+          }
+          else -> {}
         }
 
         toolTipText = taskInfo.actionTooltipText
 
         return this
+      }
+
+      companion object {
+        private const val startMillis = 0L
       }
     }
   }
