@@ -11,11 +11,10 @@ import org.jetbrains.uast.UYieldExpression
 @ApiStatus.Internal
 class JavaUYieldExpression(
   override val sourcePsi: PsiYieldStatement,
-  private val psiExpression: PsiExpression?,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UYieldExpression {
   override val expression: UExpression? by lazy {
-    JavaConverter.convertOrEmpty(psiExpression, this)
+    JavaConverter.convertOrEmpty(sourcePsi.expression, this)
   }
 
   override val label: String?
