@@ -18,11 +18,9 @@ import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remote.RemoteSdkPropertiesPaths
 import com.intellij.util.io.isAncestor
@@ -145,7 +143,6 @@ fun PythonExecution.addPythonScriptAsParameter(targetScript: PythonExecution) {
   when (targetScript) {
     is PythonScriptExecution -> targetScript.pythonScriptPath?.let { pythonScriptPath -> addParameter(pythonScriptPath) }
                                 ?: throw IllegalArgumentException("Python script path must be set")
-
     is PythonModuleExecution -> targetScript.moduleName?.let { moduleName -> addParameters("-m", moduleName) }
                                 ?: throw IllegalArgumentException("Python module name must be set")
   }
@@ -213,18 +210,10 @@ fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndic
 
 /**
  * Checks whether the base directory of [project] is registered in [this] request. Adds it if it is not.
- * You can also provide [modules] to add its content roots
  */
-fun TargetEnvironmentRequest.ensureProjectAndModuleDirsAreOnTarget(project: Project, vararg modules: Module) {
-  fun TargetEnvironmentRequest.addPathToVolume(basePath: Path) {
-    if (uploadVolumes.none { it.localRootPath.isAncestor(basePath) }) {
-      uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
-    }
+fun TargetEnvironmentRequest.ensureProjectDirIsOnTarget(project: Project) {
+  val basePath = project.basePath?.let { Path.of(it) } ?: return
+  if (uploadVolumes.none { it.localRootPath.isAncestor(basePath) }) {
+    uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
   }
-  for(module in modules) {
-    ModuleRootManager.getInstance(module).contentRoots.forEach {
-      addPathToVolume(it.toNioPath())
-    }
-  }
-  project.basePath?.let { addPathToVolume(Path.of(it)) }
 }

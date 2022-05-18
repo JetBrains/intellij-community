@@ -347,7 +347,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     pythonExecution.setWorkingDir(getPythonExecutionWorkingDir(targetEnvironmentRequest));
     initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), helpersAwareTargetRequest);
     customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
-    PythonScripts.ensureProjectAndModuleDirsAreOnTarget(targetEnvironmentRequest, myConfig.getProject(), myConfig.getModule());
+    PythonScripts.ensureProjectDirIsOnTarget(targetEnvironmentRequest, myConfig.getProject());
     return pythonExecution;
   }
 
