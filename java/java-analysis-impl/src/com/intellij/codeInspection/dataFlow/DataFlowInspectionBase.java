@@ -369,6 +369,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       unreachableLabels.put(label, switchBlock);
     }
     unreachableLabels.forEach((label, switchBlock) -> {
+      if (isThrowing(label)) return;
       // duplicate case label is a compilation error so no need to highlight by the inspection
       Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
       if (!suspiciousElements.contains(label)) {
@@ -376,6 +377,27 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                new DeleteSwitchLabelFix(label));
       }
     });
+  }
+
+  private static boolean isThrowing(PsiCaseLabelElement label) {
+    PsiCaseLabelElementList caseLabelList = tryCast(label.getParent(), PsiCaseLabelElementList.class);
+    if (caseLabelList == null) return false;
+    PsiSwitchLabelStatementBase labelStatement = tryCast(caseLabelList.getParent(), PsiSwitchLabelStatementBase.class);
+    if (labelStatement == null) return false;
+    if (labelStatement instanceof PsiSwitchLabeledRuleStatement) {
+      return ControlFlowUtils.stripBraces(((PsiSwitchLabeledRuleStatement)labelStatement).getBody()) instanceof PsiThrowStatement;
+    }
+    if (labelStatement instanceof PsiSwitchLabelStatement) {
+      PsiElement cur = labelStatement;
+      while(true) {
+        PsiElement next = cur.getNextSibling();
+        if (!(next instanceof PsiComment) && !(next instanceof PsiWhiteSpace) && !(next instanceof PsiSwitchLabelStatement)) {
+          return next instanceof PsiThrowStatement;
+        }
+        cur = next;
+      }
+    }
+    return false;
   }
 
   private static boolean canRemoveUnreachableBranches(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock statement) {
