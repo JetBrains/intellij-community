@@ -1,13 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.junit.JUnitConfigurationProducer
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.execution.junit.JUnitUtil.TEST_ANNOTATION
-import com.intellij.execution.junit.JUnitUtil.TEST_CASE_CLASS
-import com.intellij.execution.junit.JUnitUtil.TEST5_ANNOTATION
+import com.intellij.execution.junit.JUnitUtil.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
@@ -57,7 +55,7 @@ private val JUNIT_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = JUnitAvailabilityProvider
 
 private class JUnitAvailabilityProvider(test: Boolean) : AvailabilityProvider(
     test,
-    fqNames = setOf(TEST_CASE_CLASS, TEST_ANNOTATION, TEST5_ANNOTATION),
+    fqNames = setOf(TEST_CASE_CLASS, TEST_ANNOTATION, CUSTOM_TESTABLE_ANNOTATION),
     javaClassLookup = true,
     aliasLookup = false,
     kotlinFullClassLookup = false
