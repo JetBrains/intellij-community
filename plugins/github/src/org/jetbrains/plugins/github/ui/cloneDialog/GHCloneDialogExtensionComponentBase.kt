@@ -50,7 +50,6 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.data.request.Affiliation
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
@@ -99,17 +98,14 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance()))
 
   // state
-  private val userDetailsByAccount = hashMapOf<GithubAccount, GithubAuthenticatedUser>()
-  private val repositoriesByAccount = hashMapOf<GithubAccount, LinkedHashSet<GithubRepo>>()
-  private val errorsByAccount = hashMapOf<GithubAccount, GHRepositoryListItem.Error>()
-  private val originListModel = CollectionListModel<GHRepositoryListItem>()
+  private val repositoryListModel = GHCloneDialogRepositoryListModel()
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
 
   protected val content: JComponent get() = wrapper.targetComponent
 
   init {
-    repositoryList = JBList(originListModel).apply {
+    repositoryList = JBList(repositoryListModel).apply {
       cellRenderer = GHRepositoryListCellRenderer { getAccounts() }
       isFocusable = false
       selectionModel = SingleSelectionModel()
@@ -202,16 +198,15 @@ internal abstract class GHCloneDialogExtensionComponentBase(
         val newList = new.filter(::isAccountHandled)
         val delta = CollectionDelta(oldList, newList)
         for (account in delta.removedItems) {
-          userDetailsByAccount.remove(account)
-          repositoriesByAccount.remove(account)
-          errorsByAccount.remove(account)
+          repositoryListModel.clear(account)
         }
         for (account in delta.newItems) {
           loadRepositories(account)
         }
         if (delta.newItems.isEmpty()) {
           switchToLogin(null)
-        } else {
+        }
+        else {
           switchToRepositories()
         }
         dialogStateListener.onListItemChanged()
@@ -251,35 +246,34 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   private fun loadRepositories(account: GithubAccount) {
-    userDetailsByAccount.remove(account)
-    repositoriesByAccount.remove(account)
-    errorsByAccount.remove(account)
-    refillRepositories()
+    repositoryListModel.clear(account)
 
     val executor = try {
       executorManager.getExecutor(account)
     }
     catch (e: GithubMissingTokenException) {
-      errorsByAccount[account] = GHRepositoryListItem.Error(account,
-                                                            GithubBundle.message("account.token.missing"),
-                                                            GithubBundle.message("login.link"),
-                                                            Runnable { switchToLogin(account) })
+      repositoryListModel.setError(account,
+                                   GithubBundle.message("account.token.missing"),
+                                   GithubBundle.message("login.link"),
+                                   Runnable { switchToLogin(account) })
+      ScrollingUtil.ensureSelectionExists(repositoryList)
       return
     }
 
     progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       override fun run(indicator: ProgressIndicator) {
         val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
-        userDetailsByAccount[account] = details
 
         val repoPagesRequest = GithubApiRequests.CurrentUser.Repos.pages(account.server,
                                                                          affiliation = Affiliation.combine(Affiliation.OWNER,
                                                                                                            Affiliation.COLLABORATOR),
                                                                          pagination = GithubRequestPagination.DEFAULT)
         val pageItemsConsumer: (List<GithubRepo>) -> Unit = {
+          indicator.checkCanceled()
           runInEdt {
-            repositoriesByAccount.getOrPut(account) { UpdateOrderLinkedHashSet() }.addAll(it)
-            refillRepositories()
+            indicator.checkCanceled()
+            repositoryListModel.addRepositories(account, details, it)
+            ScrollingUtil.ensureSelectionExists(repositoryList)
           }
         }
         GithubApiPagesLoader.loadAll(executor, indicator, repoPagesRequest, pageItemsConsumer)
@@ -294,44 +288,21 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
 
       override fun onThrowable(error: Throwable) {
-        handleApiError(account, error)
+        if (error is GithubAuthenticationException) {
+          repositoryListModel.setError(account,
+                                       GithubBundle.message("credentials.invalid.auth.data", ""),
+                                       GithubBundle.message("accounts.relogin"),
+                                       Runnable { switchToLogin(account) })
+        }
+        else {
+          repositoryListModel.setError(account,
+                                       GithubBundle.message("clone.error.load.repositories"),
+                                       GithubBundle.message("retry.link"),
+                                       Runnable { loadRepositories(account) })
+        }
+        ScrollingUtil.ensureSelectionExists(repositoryList)
       }
     })
-  }
-
-  private fun handleApiError(account: GithubAccount, error: Throwable) {
-    val errorItem = if (error is GithubAuthenticationException) {
-      GHRepositoryListItem.Error(account,
-                                 GithubBundle.message("credentials.invalid.auth.data", ""),
-                                 GithubBundle.message("accounts.relogin"),
-                                 Runnable { switchToLogin(account) })
-    }
-    else {
-      GHRepositoryListItem.Error(account,
-                                 GithubBundle.message("clone.error.load.repositories"),
-                                 GithubBundle.message("retry.link"),
-                                 Runnable { loadRepositories(account) })
-    }
-
-    errorsByAccount[account] = errorItem
-    refillRepositories()
-  }
-
-  private fun refillRepositories() {
-    val selectedValue = repositoryList.selectedValue
-    originListModel.removeAll()
-    for (account in getAccounts()) {
-      if (errorsByAccount[account] != null) {
-        originListModel.add(errorsByAccount[account])
-      }
-      val user = userDetailsByAccount[account] ?: continue
-      val repos = repositoriesByAccount[account] ?: continue
-      for (repo in repos) {
-        originListModel.add(GHRepositoryListItem.Repo(account, user, repo))
-      }
-    }
-    repositoryList.setSelectedValue(selectedValue, false)
-    ScrollingUtil.ensureSelectionExists(repositoryList)
   }
 
   override fun getView() = wrapper
@@ -435,20 +406,6 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     if (urlSelected) {
       val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl!!), GitUtil.DOT_GIT)
       cloneDirectoryChildHandle.trySetChildPath(path)
-    }
-  }
-
-  /**
-   * Since each repository can be in several states at the same time (shared access for a collaborator and shared access for org member) and
-   * repositories for collaborators are loaded in separate request before repositories for org members, we need to update order of re-added
-   * repo in order to place it close to other organization repos
-   */
-  private class UpdateOrderLinkedHashSet<T> : LinkedHashSet<T>() {
-    override fun add(element: T): Boolean {
-      val wasThere = remove(element)
-      super.add(element)
-      // Contract is "true if this set did not already contain the specified element"
-      return !wasThere
     }
   }
 
