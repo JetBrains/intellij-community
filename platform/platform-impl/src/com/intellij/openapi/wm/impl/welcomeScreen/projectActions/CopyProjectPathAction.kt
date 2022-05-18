@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import java.awt.datatransfer.StringSelection
 
@@ -14,7 +13,7 @@ import java.awt.datatransfer.StringSelection
 class CopyProjectPathAction : RecentProjectsWelcomeScreenActionBase() {
   override fun update(event: AnActionEvent) {
     val item = getSelectedItem(event)
-    event.presentation.isEnabled = item is RecentProjectItem || item is ProjectsGroupItem
+    event.presentation.isEnabled = item is RecentProjectItem
   }
 
   override fun actionPerformed(event: AnActionEvent) {
