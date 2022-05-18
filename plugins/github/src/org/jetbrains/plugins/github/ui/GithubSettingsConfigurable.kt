@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.plugins.github.GithubIcons
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
@@ -33,7 +34,12 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     val indicatorsProvider = ProgressIndicatorsProvider().also {
       Disposer.register(disposable!!, it)
     }
-    val detailsLoader = GHAccountsDetailsLoader(accountManager, indicatorsProvider, accountsModel)
+    val detailsLoader = GHAccountsDetailsLoader(indicatorsProvider) {
+      val token = accountsModel.newCredentials.getOrElse(it) {
+        accountManager.findCredentials(it)
+      } ?: return@GHAccountsDetailsLoader null
+      service<GithubApiRequestExecutor.Factory>().create(token)
+    }
 
     val panelFactory = AccountsPanelFactory(accountManager, defaultAccountHolder, accountsModel, detailsLoader, disposable!!)
 
