@@ -40,7 +40,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 @CompileStatic
-class TestingTasksImpl extends TestingTasks {
+final class TestingTasksImpl extends TestingTasks {
   protected final CompilationContext context
   protected final TestingOptions options
 
@@ -499,7 +499,7 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     if (PortableCompilationCache.CAN_BE_USED) {
-      systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = "true"
+      systemProperties.put(BuildOptions.USE_COMPILED_CLASSES_PROPERTY, "true")
     }
 
     boolean suspendDebugProcess = options.suspendDebugProcess

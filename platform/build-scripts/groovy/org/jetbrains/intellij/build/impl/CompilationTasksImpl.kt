@@ -17,7 +17,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
-  private val jpsCache = PortableCompilationCache(context)
+  private val jpsCache by lazy { PortableCompilationCache(context) }
 
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     reuseCompiledClassesIfProvided()
@@ -129,7 +129,7 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
     else if (context.options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(context.projectOutputDirectory.toPath(), context)
     }
-    else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired) {
+    else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
       jpsCache.downloadCacheAndCompileProject()
     }
     context.compilationData.compiledClassesAreLoaded = true
