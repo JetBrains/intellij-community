@@ -1,0 +1,12 @@
+PsiJavaFile:Record1.java
+  PsiRecordPattern
+    PsiModifierList:
+      <empty list>
+    PsiTypeElement:Point
+      PsiJavaCodeReferenceElement:Point
+        PsiIdentifier:Point('Point')
+        PsiReferenceParameterList
+          <empty list>
+    PsiRecordStructurePattern
+      PsiJavaToken:LPARENTH('(')
+      PsiJavaToken:RPARENTH(')')

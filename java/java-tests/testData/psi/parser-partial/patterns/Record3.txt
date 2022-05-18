@@ -1,0 +1,26 @@
+PsiJavaFile:Record3.java
+  PsiTypeTestPattern
+    PsiPatternVariable:name
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:NamedRecord
+        PsiJavaCodeReferenceElement:NamedRecord
+          PsiIdentifier:NamedRecord('NamedRecord')
+          PsiReferenceParameterList
+            <empty list>
+      PsiRecordStructurePattern
+        PsiJavaToken:LPARENTH('(')
+        PsiTypeTestPattern
+          PsiPatternVariable:s
+            PsiModifierList:
+              <empty list>
+            PsiTypeElement:String
+              PsiJavaCodeReferenceElement:String
+                PsiIdentifier:String('String')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiWhiteSpace(' ')
+            PsiIdentifier:s('s')
+        PsiJavaToken:RPARENTH(')')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:name('name')
