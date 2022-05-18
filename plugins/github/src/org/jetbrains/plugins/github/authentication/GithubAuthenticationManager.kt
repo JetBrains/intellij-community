@@ -130,7 +130,6 @@ class GithubAuthenticationManager internal constructor() {
   fun getDefaultAccount(project: Project): GithubAccount? =
     project.service<GithubProjectDefaultAccountHolder>().account
 
-  @TestOnly
   fun setDefaultAccount(project: Project, account: GithubAccount?) {
     project.service<GithubProjectDefaultAccountHolder>().account = account
   }

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -17,7 +16,6 @@ import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
@@ -28,13 +26,10 @@ import javax.swing.JComponent
 
 private val GithubAccount.isGHEAccount: Boolean get() = !isGHAccount
 
-private fun getGHEAccounts(): Collection<GithubAccount> =
-  GithubAuthenticationManager.getInstance().getAccounts().filter { it.isGHEAccount }
-
 class GHECloneDialogExtension : BaseCloneDialogExtension() {
   override fun getName(): String = GithubUtil.ENTERPRISE_SERVICE_DISPLAY_NAME
 
-  override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
+  override fun getAccounts(): Collection<GithubAccount> = GithubAuthenticationManager.getInstance().getAccounts().filter { it.isGHEAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
     GHECloneDialogExtensionComponent(project)
@@ -43,25 +38,10 @@ class GHECloneDialogExtension : BaseCloneDialogExtension() {
 private class GHECloneDialogExtensionComponent(project: Project) : GHCloneDialogExtensionComponentBase(
   project,
   GithubAuthenticationManager.getInstance(),
-  GithubApiRequestExecutorManager.getInstance(),
-  GithubAccountInformationProvider.getInstance(),
-  CachingGHUserAvatarLoader.getInstance()
+  GithubApiRequestExecutorManager.getInstance()
 ) {
 
-  init {
-    service<GHAccountManager>().addListener(this, this)
-    setup()
-  }
-
-  override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
-
-  override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-    super.onAccountListChanged(old.filter { it.isGHEAccount }, new.filter { it.isGHEAccount })
-  }
-
-  override fun onAccountCredentialsChanged(account: GithubAccount) {
-    if (account.isGHEAccount) super.onAccountCredentialsChanged(account)
-  }
+  override fun isAccountHandled(account: GithubAccount): Boolean = account.isGHEAccount
 
   override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =
     GHECloneDialogLoginPanel(account).apply {
