@@ -886,4 +886,10 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "int x = a >> 2;",
       "int x = a>>2;");
   }
+
+  public void testNamedRecordPatternSpacing() {
+    doMethodTest(
+      "return o instanceof Rec(int i)r",
+      "return o instanceof Rec(int i) r");
+  }
 }
