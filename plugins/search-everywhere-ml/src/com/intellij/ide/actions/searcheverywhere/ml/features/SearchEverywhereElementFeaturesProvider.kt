@@ -38,6 +38,11 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
       "prefix_exact" to EventFields.Boolean("${PrefixMatchingUtil.baseName}Exact"),
       "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
     )
+
+    internal fun roundDouble(value: Double): Double {
+      if (!value.isFinite()) return -1.0
+      return round(value * 100000) / 100000
+    }
   }
 
   /**
@@ -71,11 +76,6 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101
     return value
-  }
-
-  internal fun roundDouble(value: Double): Double {
-    if (!value.isFinite()) return -1.0
-    return round(value * 100000) / 100000
   }
 
   /**

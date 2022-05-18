@@ -21,20 +21,22 @@ public final class ActionsGlobalSummaryManager {
   private static final Logger LOG = Logger.getInstance(ActionsGlobalSummaryManager.class);
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
 
-  private static final int myUpdatedStatisticsVersion = 1;
+  private static final int DEFAULT_STATISTICS_VERSION = 1;
+
   private final Map<String, ActionGlobalUsageInfo> myStatisticsMap;
-  private final Map<String, ActionGlobalUsageInfo> myUpdatedStatisticsMap;
   private final ActionsGlobalTotalSummary mySummary;
-  private final ActionsGlobalTotalSummary myUpdatedSummary;
 
   public ActionsGlobalSummaryManager() {
-    myStatisticsMap = loadStatistics("/statistics/actionsUsages.csv");
-    myUpdatedStatisticsMap = loadStatistics("/statistics/actionsUsagesV1.csv");
+    myStatisticsMap = loadStatistics("/statistics/actionsUsagesV1.csv");
     mySummary = calculateTotalSummary(myStatisticsMap);
-    myUpdatedSummary = calculateTotalSummary(myUpdatedStatisticsMap);
   }
 
-  public static int getUpdatedStatisticsVersion() { return myUpdatedStatisticsVersion; }
+  public static int getDefaultStatisticsVersion() { return DEFAULT_STATISTICS_VERSION; }
+
+  /**
+   * @return Version of the global statistics used for an experimental ML model. Returns -1 if no experimental model is used.
+   */
+  public static int getUpdatedStatisticsVersion() { return -1; }
 
   @Nullable
   public ActionGlobalUsageInfo getActionStatistics(String actionID) {
@@ -43,7 +45,7 @@ public final class ActionsGlobalSummaryManager {
 
   @Nullable
   public ActionGlobalUsageInfo getUpdatedActionStatistics(String actionID) {
-    return myUpdatedStatisticsMap.get(actionID);
+    return myStatisticsMap.get(actionID);
   }
 
   @NotNull
@@ -53,7 +55,7 @@ public final class ActionsGlobalSummaryManager {
 
   @NotNull
   public ActionsGlobalTotalSummary getUpdatedTotalSummary() {
-    return myUpdatedSummary;
+    return mySummary;
   }
 
   private final static String DEFAULT_SEPARATOR = ",";
