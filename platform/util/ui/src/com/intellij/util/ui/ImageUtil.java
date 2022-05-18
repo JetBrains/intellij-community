@@ -275,13 +275,6 @@ public final class ImageUtil {
     return scaleImage(hidpiImage, scaledSize, scaledSize);
   }
 
-  public static @NotNull Image resize(@NotNull Image image, @NotNull ScaleContext scaleContext, int width, int height) {
-    Image hidpiImage = ensureHiDPI(image, scaleContext);
-    int scaledWidth = (int)scaleContext.apply(width, USR_SCALE);
-    int scaledHeight = (int)scaleContext.apply(height, USR_SCALE);
-    return scaleImage(hidpiImage, scaledWidth, scaledHeight);
-  }
-
   @NotNull
   public static BufferedImage createCircleImage(@NotNull BufferedImage image) {
     int size = min(image.getWidth(), image.getHeight());

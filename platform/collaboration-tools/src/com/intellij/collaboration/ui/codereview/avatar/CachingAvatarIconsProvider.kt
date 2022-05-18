@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.avatar
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ui.AsyncImageIcon
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.ImageUtil
@@ -33,7 +34,10 @@ abstract class CachingAvatarIconsProvider<T : Any>(private val defaultIcon: Icon
 
   private fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int) =
     loadImageAsync(key).thenApplyAsync({ image ->
-                                         image?.let { ImageUtil.resize(it, scaleCtx, width, height) }
+                                         image?.let {
+                                           val hidpiImage = ImageUtil.ensureHiDPI(image, scaleCtx)
+                                           ImageUtil.scaleImage(hidpiImage, width, height)
+                                         }
                                        }, avatarResizeExecutor)
 
   protected abstract fun loadImageAsync(key: T): CompletableFuture<Image?>
