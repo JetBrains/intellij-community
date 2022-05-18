@@ -145,7 +145,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
     else {
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
+
+      Dimension preferredSize = new JLabel("W").getPreferredSize();
+      JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
+      myMnemonicLabel.setPreferredSize(preferredSize);
     }
 
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
