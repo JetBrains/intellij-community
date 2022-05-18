@@ -8,8 +8,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
-    <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
@@ -24,5 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>
