@@ -2,6 +2,7 @@
 package com.intellij.internal.inspector
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
@@ -87,6 +88,11 @@ class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
 
     if (c is JComponent) {
       text += c.toolTipText
+
+      val helpTooltip = HelpTooltip.getTooltipFor(c)
+      if (helpTooltip != null) {
+        text += getComponentText(helpTooltip.createTipPanel())
+      }
 
       val border = c.border
       if (border is TitledBorder) {
