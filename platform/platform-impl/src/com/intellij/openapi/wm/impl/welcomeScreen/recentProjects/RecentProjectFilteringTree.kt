@@ -459,9 +459,21 @@ class RecentProjectFilteringTree(
 
     private fun activateItem(tree: Tree) {
       val node = tree.lastSelectedPathComponent.castSafelyTo<DefaultMutableTreeNode>() ?: return
-      val item = node.userObject.castSafelyTo<RecentProjectItem>() ?: return
-      val actionEvent = createActionEvent(tree)
-      item.openProject(actionEvent)
+      val item = node.userObject.castSafelyTo<RecentProjectTreeItem>() ?: return
+      when (item) {
+        is RecentProjectItem -> {
+          val actionEvent = createActionEvent(tree)
+          item.openProject(actionEvent)
+        }
+        is ProjectsGroupItem -> {
+          val treePath = tree.selectionPath ?: return
+          if (tree.isExpanded(treePath))
+            tree.collapsePath(treePath)
+          else
+            tree.expandPath(treePath)
+        }
+        else -> {}
+      }
     }
 
     private fun removeItem(tree: Tree) {
