@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -123,15 +124,10 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     final String key = listenerClass.getQualifiedName();
     assert key != null : listenerClass;
 
-    List<XmlTag> tags = collectTags(project, key, scope,
-                                    EnumSet.of(RegistrationType.APPLICATION_LISTENER, RegistrationType.PROJECT_LISTENER));
-
-    return ContainerUtil.process(tags, tag -> {
-      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
-
-      if (!(domElement instanceof Listeners.Listener)) return true;
-      return processor.process((Listeners.Listener)domElement);
-    });
+    return processAll(project, key, scope,
+                      EnumSet.of(RegistrationType.APPLICATION_LISTENER, RegistrationType.PROJECT_LISTENER),
+                      Listeners.Listener.class,
+                      processor);
   }
 
   /**
@@ -169,9 +165,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
                                                   GlobalSearchScope scope,
                                                   Processor<? super ActionOrGroup> processor) {
     String fqn = actionOrGroupClass.getQualifiedName();
-    if (fqn == null) {
-      return true;
-    }
+    assert fqn != null : actionOrGroupClass;
 
     return doProcessActionOrGroup(project, fqn, scope, EnumSet.of(RegistrationType.ACTION), processor);
   }
@@ -199,18 +193,29 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return doProcessActionOrGroup(project, actionGroupId, scope, EnumSet.of(RegistrationType.ACTION_GROUP_ID), processor);
   }
 
-  private static boolean doProcessActionOrGroup(@NotNull Project project,
-                                                @NotNull String key,
-                                                GlobalSearchScope scope,
-                                                EnumSet<RegistrationType> types,
-                                                Processor<? super ActionOrGroup> processor) {
+  private static <E extends Enum<E>> boolean doProcessActionOrGroup(@NotNull Project project,
+                                                                    @NotNull String key,
+                                                                    GlobalSearchScope scope,
+                                                                    EnumSet<RegistrationType> types,
+                                                                    Processor<? super ActionOrGroup> processor) {
+    return processAll(project, key, scope, types, ActionOrGroup.class, processor);
+  }
+
+  private static <T extends DomElement> boolean processAll(@NotNull Project project,
+                                                           @NotNull String key,
+                                                           GlobalSearchScope scope,
+                                                           EnumSet<RegistrationType> types,
+                                                           Class<T> domClazz,
+                                                           Processor<? super T> processor) {
     List<XmlTag> tags = collectTags(project, key, scope, types);
 
     return ContainerUtil.process(tags, tag -> {
       final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
 
-      if (!(domElement instanceof ActionOrGroup)) return true;
-      return processor.process((ActionOrGroup)domElement);
+      T t = ObjectUtils.tryCast(domElement, domClazz);
+      if (t == null) return true;
+      //noinspection unchecked
+      return processor.process((T)domElement);
     });
   }
 
