@@ -173,7 +173,7 @@ class RecentProjectFilteringTree(
 
       if (intersectWithActionIcon(point)) {
         when (item) {
-          is CloneableProjectItem -> CloneableProjectsService.getInstance().removeCloneProject(item.progressIndicator)
+          is CloneableProjectItem -> CloneableProjectsService.getInstance().cancelClone(item.progressIndicator)
           else -> invokePopup(mouseEvent.component, point.x, point.y)
         }
       }
