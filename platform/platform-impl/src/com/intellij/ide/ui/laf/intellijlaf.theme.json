@@ -91,7 +91,7 @@
       "mnemonic.icon.gap": 4,
       "mnemonicsBorderInsets": {
         "os.default":"0,0,0,8",
-        "os.linux":"0,8,1,8"
+        "os.linux":"0,8,0,8"
       }
     },
 

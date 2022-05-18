@@ -84,7 +84,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
 
   protected void createLabel() {
     myTextLabel = new ErrorLabel();
-    myTextLabel.setBorder(JBUI.Borders.emptyBottom(1));
+    myTextLabel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.emptyBottom(1));
     myTextLabel.setOpaque(true);
   }
 

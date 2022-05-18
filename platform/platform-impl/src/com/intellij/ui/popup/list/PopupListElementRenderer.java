@@ -121,13 +121,15 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     myValueLabel = new JLabel();
     myValueLabel.setEnabled(false);
-    myValueLabel.setBorder(JBUI.Borders.empty(0, ExperimentalUI.isNewUI() ? 0 : JBUIScale.scale(8), 1, 0));
+    JBEmptyBorder valueBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0);
+    myValueLabel.setBorder(valueBorder);
     myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     myValueLabel.setOpaque(false);
     panel.add(myValueLabel, BorderLayout.CENTER);
 
     myShortcutLabel = new JLabel();
-    myShortcutLabel.setBorder(JBUI.Borders.empty(0, 0, 1, ExperimentalUI.isNewUI() ? 0 : 3));
+    JBEmptyBorder shortcutBorder = ExperimentalUI.isNewUI() ? JBUI.Borders.empty() : JBUI.Borders.empty(0,0,1,3);
+    myShortcutLabel.setBorder(shortcutBorder);
     myShortcutLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     myShortcutLabel.setOpaque(false);
     panel.add(myShortcutLabel, BorderLayout.EAST);
