@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory;
 import com.intellij.ui.IdeUICustomization;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
@@ -33,10 +34,13 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(disposable);
     Tree recentProjectTree = recentProjectFilteringTree.getTree();
     SearchTextField searchTextField = recentProjectFilteringTree.installSearchField();
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(recentProjectTree, true);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.setOpaque(false);
 
     JPanel panel = JBUI.Panels.simplePanel();
     panel.add(searchTextField, BorderLayout.NORTH);
-    panel.add(recentProjectTree, BorderLayout.CENTER);
+    panel.add(scrollPane, BorderLayout.CENTER);
 
     PopupUtil.applyNewUIBackground(panel);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, searchTextField)
