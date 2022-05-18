@@ -1272,8 +1272,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 
-      boolean skipSizeAdjustments = mySkipWindowAdjustments;
-      Component compForSize = skipSizeAdjustments ? null : guessBestParentForSizeAdjustment();
+      Component compForSize = mySkipWindowAdjustments ? null : guessBestParentForSizeAdjustment();
+      boolean skipSizeAdjustments = compForSize == null || compForSize.getWidth() == 0 && compForSize.getHeight() == 0;
       Dimension oldSize = skipSizeAdjustments ? null : compForSize.getPreferredSize();
 
       removeAll();
