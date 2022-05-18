@@ -28,7 +28,7 @@ public class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibra
                                                   @NotNull String libraryNameForDebug) {
     DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
     if (directoryIndex instanceof DirectoryIndexImpl) {
-      ((DirectoryIndexImpl)directoryIndex).reset();
+      ((DirectoryIndexImpl)directoryIndex).reset(DirectoryIndexAnalyticsReporter.ResetReason.ADDITIONAL_LIBRARIES_PROVIDER);
     }
     additionalLibraryRootsChanged(project, presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
   }

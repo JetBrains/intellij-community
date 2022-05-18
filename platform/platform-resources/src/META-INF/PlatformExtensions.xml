@@ -397,8 +397,11 @@
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.SdkAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.SdkAppearanceServiceImpl"/>
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.roots.impl.DirectoryIndexCollector"/>
+    <directoryIndexAnalyticsReporter implementation="com.intellij.openapi.roots.impl.DirectoryIndexAnalyticsReporterImpl"/>
+
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
-        serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
+                        serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"

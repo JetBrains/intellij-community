@@ -48,6 +48,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
 
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
+  private volatile boolean myInInitialState;
 
   public DirectoryIndexImpl(@NotNull Project project) {
     myProject = project;
@@ -76,7 +77,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
           rootIndex.myPackageDirectoryCache.clear();
           for (VFileEvent event : events) {
             if (isIgnoredFileCreated(event)) {
-              myRootIndex = null;
+              reset(DirectoryIndexAnalyticsReporter.ResetReason.VFS_CHANGE);
               break;
             }
           }
@@ -148,7 +149,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     Pair<Long, RootIndex> pair = branch.getUserData(BRANCH_ROOT_INDEX);
     long modCount = branch.getBranchedVfsStructureModificationCount();
     if (pair == null || pair.first != modCount) {
-      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)));
+      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch),
+                                                 DirectoryIndexAnalyticsReporter.BuildRequestKind.BRANCH_BUILD));
     }
     return pair.second;
   }
@@ -156,7 +158,9 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
-      myRootIndex = rootIndex = new RootIndex(myProject);
+      myRootIndex = rootIndex = new RootIndex(myProject, myInInitialState ? DirectoryIndexAnalyticsReporter.BuildRequestKind.INITIAL
+                                                                          : DirectoryIndexAnalyticsReporter.BuildRequestKind.FULL_REBUILD);
+      myInInitialState = false;
     }
     return rootIndex;
   }
@@ -223,7 +227,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     }
   }
 
-  void reset() {
+  void reset(DirectoryIndexAnalyticsReporter.ResetReason reason) {
     myRootIndex = null;
+    DirectoryIndexAnalyticsReporter.reportReset(myProject, reason);
   }
 }
