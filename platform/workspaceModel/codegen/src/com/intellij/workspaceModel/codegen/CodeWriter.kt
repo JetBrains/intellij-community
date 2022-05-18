@@ -9,10 +9,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.ReferableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import com.intellij.workspaceModel.storage.*
 import deft.storage.codegen.javaImplName
 import org.jetbrains.deft.codegen.ijws.implWsCode
 import org.jetbrains.deft.codegen.model.DefType
@@ -36,7 +33,7 @@ private val LOG = logger<CodeWriter>()
 
 object CodeWriter {
   @RequiresWriteLock
-  fun generate(project: Project, sourceFolder: VirtualFile, targetFolderGenerator: () -> VirtualFile?) {
+  fun generate(project: Project, sourceFolder: VirtualFile,  keepUnknownFields: Boolean, targetFolderGenerator: () -> VirtualFile?) {
     val documentManager = FileDocumentManager.getInstance()
     val ktSrcs = mutableListOf<Pair<VirtualFile, Document>>()
     val fileMapping = mutableMapOf<String, VirtualFile>()
@@ -49,12 +46,12 @@ object CodeWriter {
       return@processFilesRecursively true
     }
 
-    val module = KtObjModule(project)
+    val module = KtObjModule(project, keepUnknownFields = keepUnknownFields)
     ktSrcs.forEach { (vfu, document) ->
       module.addPsiFile(vfu.name, vfu) { document.text }
     }
     val result = module.build()
-    val entitiesForGeneration = result.typeDefs.filterNot { it.name in skippedGenTypes || it.abstract }
+    val entitiesForGeneration = result.typeDefs.filterNot {  it.utilityType || it.abstract }
     if (!entitiesForGeneration.isEmpty()) {
       val genFolder = targetFolderGenerator.invoke()
       if (genFolder == null) {

@@ -57,10 +57,9 @@ class KtType(
           null
         }
         else {
-          val kind = when {
-            classifier in listOf("VirtualFileUrl", "PersistentEntityId") -> WsEntityInterface()
-            keepUnknownFields -> WsUnknownType
-            else -> ktInterface?.kind
+          var kind = if (classifier in listOf("VirtualFileUrl", "PersistentEntityId")) WsEntityInterface() else ktInterface?.kind
+          if (kind == null && keepUnknownFields) {
+            kind = WsUnknownType
           }
           kind?.buildValueType(ktInterface, diagnostics, this, childAnnotation)
         }

@@ -8,6 +8,10 @@ abstract class Type<T : Obj, B : ObjBuilder<T>>(val base: Type<*, *>? = null) : 
 
     val inheritanceAllowed get() = open || sealed || abstract
 
+    val superTypes: List<Type<*, *>>
+      get() = base?.superTypes?.toMutableList()?.apply { add(base) } ?: emptyList()
+
+
     val ival: Class<T> get() = javaClass.enclosingClass as Class<T>
     val ivar: Class<B> get() = ival.classes.single { it.simpleName == "Builder" } as Class<B>
 

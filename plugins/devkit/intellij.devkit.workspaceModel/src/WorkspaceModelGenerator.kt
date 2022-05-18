@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,7 +28,7 @@ object WorkspaceModelGenerator {
     }
     acceptedSourceRoots.forEach{ sourceRoot ->
       WriteAction.run<RuntimeException> {
-        CodeWriter.generate(project, sourceRoot.file!!) {
+        CodeWriter.generate(project, sourceRoot.file!!, Registry.`is`("workspace.model.generator.keep.unknown.fields")) {
           createGeneratedSourceFolder(module, sourceRoot)
         }
       }
