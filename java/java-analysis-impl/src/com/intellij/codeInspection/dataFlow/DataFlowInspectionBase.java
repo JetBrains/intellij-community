@@ -374,7 +374,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
       if (!suspiciousElements.contains(label)) {
         holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"),
-                               new DeleteSwitchLabelFix(label));
+                               new DeleteSwitchLabelFix(label, true));
       }
     });
   }
