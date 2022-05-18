@@ -32,7 +32,9 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.JBEmptyBorder
@@ -158,21 +160,29 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
     }
 
+    val accountsPanel = CompactAccountsPanelFactory(createAccountsModel(), accountDetailsLoader)
+      .create(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
+
     repositoriesPanel = panel {
       row {
-        cell(isFullWidth = true) {
-          searchField.textEditor(pushX, growX)
-          JSeparator(JSeparator.VERTICAL)(growY)
-          arrayOf<CCFlags>()
-          CompactAccountsPanelFactory(createAccountsModel(), accountDetailsLoader)
-            .create(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())()
-        }
+        cell(searchField.textEditor)
+          .resizableColumn()
+          .verticalAlign(VerticalAlign.FILL)
+          .horizontalAlign(HorizontalAlign.FILL)
+        cell(JSeparator(JSeparator.VERTICAL))
+          .verticalAlign(VerticalAlign.FILL)
+        cell(accountsPanel)
+          .verticalAlign(VerticalAlign.FILL)
       }
       row {
-        ScrollPaneFactory.createScrollPane(repositoryList)(push, grow)
-      }
+        scrollCell(repositoryList)
+          .resizableColumn()
+          .verticalAlign(VerticalAlign.FILL)
+          .horizontalAlign(HorizontalAlign.FILL)
+      }.resizableRow()
       row(GithubBundle.message("clone.dialog.directory.field")) {
-        directoryField(growX, pushX)
+        cell(directoryField)
+          .horizontalAlign(HorizontalAlign.FILL)
       }
     }
     repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
