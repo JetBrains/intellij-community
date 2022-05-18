@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="compile-testing" type="repository">
-    <properties maven-id="com.google.testing.compile:compile-testing:0.16" />
+    <properties include-transitive-deps="false" maven-id="com.google.testing.compile:compile-testing:0.16" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.16/compile-testing-0.16.jar!/" />
     </CLASSES>
