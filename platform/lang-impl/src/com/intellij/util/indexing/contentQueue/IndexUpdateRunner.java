@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
@@ -270,7 +271,7 @@ public final class IndexUpdateRunner {
       indexingJob.setLocationBeingIndexed(file);
       if (!file.isDirectory()) {
         @NotNull Supplier<@NotNull Boolean> fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker();
-        FileType type = file.getFileType();
+        FileType type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.getBytes());
         FileIndexesValuesApplier applier = ReadAction
           .nonBlocking(() -> {
             myIndexingAttemptCount.incrementAndGet();
