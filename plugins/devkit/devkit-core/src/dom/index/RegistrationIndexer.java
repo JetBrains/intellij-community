@@ -39,17 +39,34 @@ class RegistrationIndexer {
     processElements(RegistrationEntry.RegistrationType.APPLICATION_COMPONENT,
                     ideaPlugin.getApplicationComponents(),
                     ApplicationComponents::getComponents,
-                    Component::getInterfaceClass, Component::getImplementationClass, Component::getHeadlessImplementationClass
+                    Component::getImplementationClass, Component::getHeadlessImplementationClass
     );
+    processElements(RegistrationEntry.RegistrationType.COMPONENT_INTERFACE,
+                    ideaPlugin.getApplicationComponents(),
+                    ApplicationComponents::getComponents,
+                    Component::getInterfaceClass
+    );
+
     processElements(RegistrationEntry.RegistrationType.PROJECT_COMPONENT,
                     ideaPlugin.getProjectComponents(),
                     ProjectComponents::getComponents,
                     Component::getInterfaceClass, Component::getImplementationClass, Component::getHeadlessImplementationClass
     );
+    processElements(RegistrationEntry.RegistrationType.COMPONENT_INTERFACE,
+                    ideaPlugin.getProjectComponents(),
+                    ProjectComponents::getComponents,
+                    Component::getInterfaceClass
+    );
+
     processElements(RegistrationEntry.RegistrationType.MODULE_COMPONENT,
                     ideaPlugin.getModuleComponents(),
                     ModuleComponents::getComponents,
                     Component::getInterfaceClass, Component::getImplementationClass, Component::getHeadlessImplementationClass
+    );
+    processElements(RegistrationEntry.RegistrationType.COMPONENT_INTERFACE,
+                    ideaPlugin.getModuleComponents(),
+                    ModuleComponents::getComponents,
+                    Component::getInterfaceClass
     );
 
     processElements(RegistrationEntry.RegistrationType.APPLICATION_LISTENER,
