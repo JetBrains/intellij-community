@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.groovy.inspections
 
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.groovy.KotlinGroovyBundle
@@ -53,10 +54,11 @@ class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDe
 
     private inner class MyVisitor : VersionFinder() {
         override fun onFound(kotlinPluginVersion: IdeKotlinVersion, kotlinPluginStatement: GrCallExpression) {
-            val bundledCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+            val latestSupportedLanguageVersion = KotlinPluginLayout.instance.ideCompilerVersion.languageVersion
+            val projectLanguageVersion = kotlinPluginVersion.languageVersion
 
-            if (kotlinPluginVersion.artifactVersion != bundledCompilerVersion.artifactVersion) {
-                registerError(kotlinPluginStatement, kotlinPluginVersion, testVersionMessage ?: bundledCompilerVersion)
+            if (latestSupportedLanguageVersion < projectLanguageVersion || projectLanguageVersion < LanguageVersion.FIRST_SUPPORTED) {
+                registerError(kotlinPluginStatement, kotlinPluginVersion, testVersionMessage ?: latestSupportedLanguageVersion)
             }
         }
     }
