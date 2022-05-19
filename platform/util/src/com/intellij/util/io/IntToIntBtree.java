@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.stats.BTreeStatistics;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -16,6 +17,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 public final class IntToIntBtree {
+  private static final boolean CACHE_ROOT_NODE_BUFFER = SystemProperties.getBooleanProperty("idea.btree.cache.root.node.buffer", true);
+
   public static int version() {
     return 4 + (IOUtil.useNativeByteOrderForByteBuffers() ? 0xFF : 0);
   }
@@ -113,7 +116,7 @@ public final class IntToIntBtree {
 
   private final class BtreeRootNode {
     int address;
-    final BtreeIndexNodeView nodeView = new BtreeIndexNodeView(false);
+    final BtreeIndexNodeView nodeView = new BtreeIndexNodeView(CACHE_ROOT_NODE_BUFFER);
     boolean initialized;
 
     void setAddress(int _address) {
@@ -121,14 +124,21 @@ public final class IntToIntBtree {
       initialized = false;
     }
 
-    private void syncWithStore() throws IOException {
+    void syncWithStore() throws IOException {
       nodeView.setAddress(address);
       initialized = true;
     }
 
-    public BtreeIndexNodeView getNodeView() throws IOException {
+    BtreeIndexNodeView getNodeView() throws IOException {
       if (!initialized) syncWithStore();
       return nodeView;
+    }
+
+    void force() {
+      if (CACHE_ROOT_NODE_BUFFER) {
+        initialized = false;
+        nodeView.disposeBuffer();
+      }
     }
   }
 
@@ -184,11 +194,13 @@ public final class IntToIntBtree {
 
   private void initAccessNodeView() throws IOException {
     int rootAddress = root.address;
+    DirectBufferWrapper rootBuffer = CACHE_ROOT_NODE_BUFFER ? root.getNodeView().bufferWrapper : null;
+
     if (myAccessNodeView == null) {
-      myAccessNodeView = new BtreeIndexNodeView(rootAddress, true);
+      myAccessNodeView = new BtreeIndexNodeView(rootAddress, true, rootBuffer);
     }
     else {
-      myAccessNodeView.initTraversal(rootAddress);
+      myAccessNodeView.initTraversal(rootAddress, rootBuffer);
     }
   }
 
@@ -252,10 +264,12 @@ public final class IntToIntBtree {
   }
 
   public void doClose() throws IOException {
+    root.force();
     storage.close();
   }
 
   public void doFlush() throws IOException {
+    root.force();
     storage.force();
   }
 
@@ -288,6 +302,7 @@ public final class IntToIntBtree {
 
     private short myChildrenCount = -1;
     private DirectBufferWrapper bufferWrapper;
+    private boolean isSharedBuffer;
     private boolean myHasFullPagesAlongPath;
 
     private final boolean cacheBuffer;
@@ -315,9 +330,9 @@ public final class IntToIntBtree {
       this.cacheBuffer = cacheBuffer;
     }
 
-    BtreeIndexNodeView(int address, boolean cacheBuffer) throws IOException {
+    BtreeIndexNodeView(int address, boolean cacheBuffer, DirectBufferWrapper sharedBuffer) throws IOException {
       this.cacheBuffer = cacheBuffer;
-      initTraversal(address);
+      initTraversal(address, sharedBuffer);
     }
 
     private short getChildrenCount() {
@@ -401,7 +416,19 @@ public final class IntToIntBtree {
     private static final int HASH_FREE = 0;
 
     void setAddress(int _address) throws IOException {
-      setAddressInternal(_address);
+      setAddress(_address, null);
+    }
+
+    void setAddress(int _address, DirectBufferWrapper sharedBuffer) throws IOException {
+      if (doSanityCheck) assert _address % pageSize == 0;
+
+      address = _address;
+      addressInBuffer = getStorage().getOffsetInPage(address);
+      disposeBuffer();
+      if (sharedBuffer != null) {
+        bufferWrapper = sharedBuffer;
+        isSharedBuffer = true;
+      }
       syncWithStore();
     }
 
@@ -430,7 +457,12 @@ public final class IntToIntBtree {
 
     private void disposeBuffer() {
       if (bufferWrapper != null && cacheBuffer) {
-        bufferWrapper.unlock();
+        if (isSharedBuffer) {
+          isSharedBuffer = false;
+        }
+        else {
+          bufferWrapper.unlock();
+        }
       }
       bufferWrapper = null;
     }
@@ -438,14 +470,6 @@ public final class IntToIntBtree {
     @NotNull
     private PagedFileStorage getStorage() {
       return storage.getPagedFileStorage();
-    }
-
-    private void setAddressInternal(int _address) {
-      if (doSanityCheck) assert _address % pageSize == 0;
-
-      address = _address;
-      addressInBuffer = getStorage().getOffsetInPage(address);
-      disposeBuffer();
     }
 
 
@@ -603,16 +627,14 @@ public final class IntToIntBtree {
       return true;
     }
 
-    public void initTraversal(int address) throws IOException {
+    public void initTraversal(int address, DirectBufferWrapper sharedBuffer) throws IOException {
       myHasFullPagesAlongPath = false;
-      setAddress(address);
+      setAddress(address, sharedBuffer);
     }
 
     @Override
     public void close() throws IOException {
-      if (bufferWrapper != null && cacheBuffer) {
-        bufferWrapper.unlock();
-      }
+      disposeBuffer();
     }
 
     private final class HashLeafData {
@@ -674,12 +696,12 @@ public final class IntToIntBtree {
 
       try {
         if (parentAddress != 0) {
-          parent = new BtreeIndexNodeView(parentAddress, true);
+          parent = new BtreeIndexNodeView(parentAddress, true, null);
         }
 
         short maxIndex = (short)(getMaxChildrenCount() / 2);
 
-        try (BtreeIndexNodeView newIndexNode = new BtreeIndexNodeView(nextPage(), true)) {
+        try (BtreeIndexNodeView newIndexNode = new BtreeIndexNodeView(nextPage(), true, null)) {
           syncWithStore(); // next page can cause ByteBuffer to be invalidated!
           if (parent != null) parent.syncWithStore();
           root.syncWithStore();
