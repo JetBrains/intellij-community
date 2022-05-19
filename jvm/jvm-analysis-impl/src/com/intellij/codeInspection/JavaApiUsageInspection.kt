@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.java.JavaBundle
+import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
@@ -154,13 +155,15 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     }
 
     private fun processMethodOverriding(method: UMethod, overriddenMethods: Array<PsiMethod>) {
+      val overrideAnnotation = method.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)
+      if (overrideAnnotation == null && method.sourcePsi?.language != Language.findLanguageByID("kotlin")) return
       val sourcePsi = method.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
       val sinceLanguageLevel = overriddenMethods.mapNotNull { overriddenMethod ->
         LanguageLevelUtil.getLastIncompatibleLanguageLevel(overriddenMethod, languageLevel)
       }.minOrNull() ?: return
-      val toHighlight = method.findAnnotation("java.lang.Override")?.uastAnchor?.sourcePsi ?: method.uastAnchor?.sourcePsi ?: return
+      val toHighlight = overrideAnnotation?.uastAnchor?.sourcePsi ?: method.uastAnchor?.sourcePsi ?: return
       registerError(toHighlight, sinceLanguageLevel, holder, isOnTheFly)
     }
   }
