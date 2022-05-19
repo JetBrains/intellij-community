@@ -20,7 +20,7 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
     }
 
     fun getFeatureProvidersForContributor(contributorId: String): List<SearchEverywhereElementFeaturesProvider> {
-      return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) || it.isApplicableToEveryContributor }
+      return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) }
     }
 
     internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
@@ -46,16 +46,11 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
   }
 
   /**
-   * If a feature provider is applicable to every contributor of Search Everywhere,
-   * instead of specifying each one in the constructor, this value can be overriden
-   * and set to true.
-   */
-  open val isApplicableToEveryContributor: Boolean = false
-
-  /**
    * Returns true if the Search Everywhere contributor is supported by the feature provider.
+   *
+   * By default, every feature provider has a list of supported contributors, but it's possible to override this logic.
    */
-  fun isContributorSupported(contributorId: String): Boolean {
+  open fun isContributorSupported(contributorId: String): Boolean {
     return supportedContributorIds.contains(contributorId)
   }
 
