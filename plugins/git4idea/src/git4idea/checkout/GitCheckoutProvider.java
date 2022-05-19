@@ -122,7 +122,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
           return CloneStatus.SUCCESS;
         }
 
-        notifyError(project, result);
+        notifyError(project, result, sourceRepositoryURL);
 
         return CloneStatus.FAILURE;
       }
@@ -142,17 +142,26 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
       return true;
     }
 
-    notifyError(project, result);
+    notifyError(project, result, sourceRepositoryURL);
 
     return false;
   }
 
-  private static void notifyError(@NotNull Project project, @NotNull GitCommandResult commandResult) {
+  private static void notifyError(@NotNull Project project, @NotNull GitCommandResult commandResult, @NotNull String sourceRepositoryURL) {
     List<@NlsSafe String> errorLines = ContainerUtil.filter(commandResult.getErrorOutput(), line ->
       !ContainerUtil.exists(NON_ERROR_LINE_PREFIXES, prefix -> StringUtil.startsWithIgnoreCase(line, prefix)));
-    List<HtmlChunk> displayErrorLines = ContainerUtil.map(errorLines, msg -> HtmlChunk.text(GitUtil.cleanupErrorPrefixes(msg)));
-    String description = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), displayErrorLines).toString();
-    VcsNotifier.getInstance(project).notifyError(CLONE_FAILED, DvcsBundle.message("error.title.cloning.repository.failed"), description, true);
+
+    String description;
+    if (errorLines.isEmpty()) {
+      description = DvcsBundle.message("error.description.cloning.repository.failed", sourceRepositoryURL);
+    }
+    else {
+      List<HtmlChunk> displayErrorLines = ContainerUtil.map(errorLines, msg -> HtmlChunk.text(GitUtil.cleanupErrorPrefixes(msg)));
+      description = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), displayErrorLines).toString();
+    }
+
+    VcsNotifier.getInstance(project)
+      .notifyError(CLONE_FAILED, DvcsBundle.message("error.title.cloning.repository.failed"), description, true);
   }
 
   @Override
