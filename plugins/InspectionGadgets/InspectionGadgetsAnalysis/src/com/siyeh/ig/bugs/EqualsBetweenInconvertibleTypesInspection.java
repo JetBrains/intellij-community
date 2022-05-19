@@ -95,6 +95,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
           !TypeUtils.areConvertible(lhsType, rhsType) /* red code */) {
         return;
       }
+      if (LambdaUtil.notInferredType(lhsType) || LambdaUtil.notInferredType(rhsType)) return;
       TypeMismatch mismatch = InconvertibleTypesChecker.deepCheck(lhsType, rhsType, getMutualSubclassMode());
       if (mismatch != null) {
         registerError(expression.getOperationSign(), mismatch);
