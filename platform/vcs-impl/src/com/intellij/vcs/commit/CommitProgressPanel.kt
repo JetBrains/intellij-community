@@ -145,6 +145,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     add(progress!!.component)
     // we assume `isShowing == true` here - so we do not need to add progress to status bar
     failuresPanel.clearFailures()
+    revalidate()
   }
 
   private fun progressStopped() {
@@ -156,6 +157,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     progress = null
 
     failuresPanel.endProgress()
+    revalidate()
   }
 
   private fun addToStatusBar(progress: CommitChecksProgressIndicator) {
