@@ -41,7 +41,7 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest extends Light
     GutterMark gutter = myFixture.findGutter("MyComponent.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 141, "MyComponent") +
+                                                  buildTooltipText(pluginXmlFile, 141, "ActualImplementation") +
                                                   buildTooltipText(pluginXmlFile, 45, "MyComponent") +
                                                   "</body></html>",
                                                   DevKitIcons.Gutter.Plugin, "component");
