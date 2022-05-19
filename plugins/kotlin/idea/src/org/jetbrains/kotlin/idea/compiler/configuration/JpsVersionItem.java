@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinBundle;
-import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask;
 import org.jetbrains.kotlin.utils.DescriptionAware;
 
 import java.util.Objects;
@@ -46,8 +45,8 @@ class JpsVersionItem implements DescriptionAware {
         }
 
         KotlinVersion kotlinVersion = myVersion.getKotlinVersion();
-        if (kotlinVersion.compareTo(SetupKotlinJpsPluginBeforeCompileTask.getJpsMinimumSupportedVersion()) < 0 ||
-            kotlinVersion.compareTo(SetupKotlinJpsPluginBeforeCompileTask.getJpsMaximumSupportedVersion()) > 0) {
+        if (kotlinVersion.compareTo(KotlinJpsPluginSettings.getJpsMinimumSupportedVersion()) < 0 ||
+            kotlinVersion.compareTo(KotlinJpsPluginSettings.getJpsMaximumSupportedVersion()) > 0) {
             return KotlinBundle.message("configuration.text.0.unsupported.jps.version", myVersion);
         }
 

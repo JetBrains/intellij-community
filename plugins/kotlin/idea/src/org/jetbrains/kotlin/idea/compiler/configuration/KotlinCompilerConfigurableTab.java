@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.facet.DescriptionListCellRenderer;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
-import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask;
 import org.jetbrains.kotlin.idea.roots.RootUtilsKt;
 import org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt;
 import org.jetbrains.kotlin.platform.IdePlatformKind;
@@ -405,8 +404,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                                     return;
                                 }
 
-                                KotlinVersion min = SetupKotlinJpsPluginBeforeCompileTask.getJpsMinimumSupportedVersion();
-                                KotlinVersion max = SetupKotlinJpsPluginBeforeCompileTask.getJpsMaximumSupportedVersion();
+                                KotlinVersion min = KotlinJpsPluginSettings.getJpsMinimumSupportedVersion();
+                                KotlinVersion max = KotlinJpsPluginSettings.getJpsMaximumSupportedVersion();
                                 HashSet<IdeKotlinVersion> ideKotlinVersions = new HashSet<>();
                                 for (String version : distVersions) {
                                     if (!jpsClassPathVersions.contains(version)) continue;

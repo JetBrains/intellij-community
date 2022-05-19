@@ -47,6 +47,34 @@ object KotlinArtifactsDownloader {
         return KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version).toFile()
     }
 
+    /**
+     * @return **true** if all dependencies are ready
+     */
+    fun downloadMissingJpsPluginDependencies(
+        project: Project,
+        jpsVersion: String,
+        indicator: ProgressIndicator,
+        onError: (String) -> Unit,
+    ): Boolean {
+        lazyDownloadMavenArtifact(
+            project,
+            KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+            jpsVersion,
+            indicator,
+            KotlinBasePluginBundle.message("progress.text.downloading.kotlin.jps.plugin"),
+            onError = onError,
+        ) ?: return false
+
+        lazyDownloadAndUnpackKotlincDist(
+            project,
+            jpsVersion,
+            indicator,
+            onError = onError,
+        ) ?: return false
+
+        return true
+    }
+
     fun lazyDownloadAndUnpackKotlincDist(
         project: Project,
         version: String,

@@ -9,8 +9,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.project.stateStore
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.config.JpsPluginSettings
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_JPS_PLUGIN_SETTINGS_SECTION
+import org.jetbrains.kotlin.config.toKotlinVersion
+import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
@@ -24,6 +27,12 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         @JvmStatic
         val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.instance.standaloneCompilerVersion
+
+        @JvmStatic
+        val jpsMinimumSupportedVersion: KotlinVersion = IdeKotlinVersion.get("1.5.10").kotlinVersion
+
+        @JvmStatic
+        val jpsMaximumSupportedVersion: KotlinVersion = LanguageVersion.values().last().toKotlinVersion()
 
         fun validateSettings(project: Project) {
             val jpsPluginSettings = project.service<KotlinJpsPluginSettings>()
@@ -50,6 +59,50 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         fun isUnbundledJpsExperimentalFeatureEnabled(project: Project): Boolean =
             isUnitTestMode() || !project.isDefault &&
                     project.stateStore.directoryStorePath?.resolve("kotlin-unbundled-jps-experimental-feature-flag")?.exists() == true
+
+        fun supportedJpsVersion(project: Project, onUnsupportedVersion: (String) -> Unit): String? {
+            val version = jpsVersion(project) ?: return null
+
+            val parsedKotlinVersion = IdeKotlinVersion.opt(version)?.kotlinVersion
+            if (parsedKotlinVersion == null) {
+                onUnsupportedVersion(
+                    KotlinBasePluginBundle.message(
+                        "failed.to.parse.kotlin.version.0.from.1",
+                        version,
+                        SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE,
+                    ),
+                )
+
+                return null
+            }
+
+            if (parsedKotlinVersion < jpsMinimumSupportedVersion) {
+                onUnsupportedVersion(
+                    KotlinBasePluginBundle.message(
+                        "kotlin.jps.compiler.minimum.supported.version.not.satisfied",
+                        jpsMinimumSupportedVersion,
+                        version,
+                    ),
+                )
+
+                return null
+            }
+
+            if (parsedKotlinVersion > jpsMaximumSupportedVersion) {
+                onUnsupportedVersion(
+                    KotlinBasePluginBundle.message(
+                        "kotlin.jps.compiler.maximum.supported.version.not.satisfied",
+                        jpsMaximumSupportedVersion,
+                        version,
+                    ),
+                )
+
+                return null
+            }
+
+            return version
+        }
+
     }
 }
 
