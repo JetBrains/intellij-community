@@ -611,7 +611,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     @Override
     public void mouseReleased(MouseEvent e) {
-      if (e.isConsumed() || !isActionClick(e) || isMultiSelectionEnabled() && UIUtil.isSelectionButtonDown(e)) return;
+      if (!isActionClick(e) || isMultiSelectionEnabled() && UIUtil.isSelectionButtonDown(e)) return;
       IdeEventQueue.getInstance().blockNextEvents(e); // sometimes, after popup close, MOUSE_RELEASE event delivers to other components
       Object selectedValue = myList.getSelectedValue();
       ListPopupStep<Object> listStep = getListStep();
