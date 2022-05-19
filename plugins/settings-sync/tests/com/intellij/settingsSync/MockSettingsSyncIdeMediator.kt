@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.util.io.isAncestor
 import com.intellij.util.io.isFile
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -33,7 +34,10 @@ internal class MockSettingsSyncIdeMediator : SettingsSyncIdeMediator {
   companion object {
     fun getAllFilesFromSettings(appConfigPath: Path): () -> Collection<Path> {
       return {
-        Files.walk(appConfigPath).filter { it.isFile() }.toList()
+        val settingsSyncStorage = appConfigPath.resolve(SETTINGS_SYNC_STORAGE_FOLDER)
+        Files.walk(appConfigPath).filter {
+          it.isFile() && !settingsSyncStorage.isAncestor(it)
+        }.toList()
       }
     }
   }
