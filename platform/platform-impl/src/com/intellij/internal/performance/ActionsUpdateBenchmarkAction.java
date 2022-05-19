@@ -75,7 +75,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
     PotemkinProgress progress = new PotemkinProgress("Updating all actions", project, null, null);
     AtomicBoolean finished = new AtomicBoolean();
     AtomicLong lastCheckCanceled = new AtomicLong(System.nanoTime());
-    Map<String, Pair<Long, StackTraceElement[]>> missingCheckCanceled = new HashMap<>();
+    Map<String, TraceData> missingCheckCanceled = new HashMap<>();
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       long maxDiff = MIN_REPORTED_NO_CHECK_CANCELED_MILLIS;
       while (!finished.get()) {
@@ -86,7 +86,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
           StackTraceElement[] trace = EDT.getEventDispatchThread().getStackTrace();
           if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - last) > maxDiff &&
               text.equals(activityName.get())) {
-            missingCheckCanceled.put(text, Pair.create(curDiff, trace));
+            missingCheckCanceled.put(text, new TraceData(curDiff, trace, missingCheckCanceled.get(text)));
           }
         }
         TimeoutUtil.sleep(maxDiff / 3 + 1);
@@ -111,18 +111,25 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
     }
     if (!missingCheckCanceled.isEmpty()) {
       String[] keys = ArrayUtil.toStringArray(missingCheckCanceled.keySet());
-      Arrays.sort(keys, Comparator.comparing(o -> -missingCheckCanceled.get(o).first));
+      Arrays.sort(keys, Comparator.comparing(o -> -missingCheckCanceled.get(o).delta));
       for (int i = 0; i < keys.length; i++) {
-        Pair<Long, StackTraceElement[]> pair = missingCheckCanceled.get(keys[i]);
-        LOG.info("no checkCanceled (" + i + ") in " + pair.first + " ms - " + keys[i]);
+        TraceData last = Objects.requireNonNull(missingCheckCanceled.get(keys[i]));
+        int traceCount = 0;
+        for (TraceData cur = last; cur != null; cur = cur.next) traceCount++;
+        LOG.info("no checkCanceled (" + i + ") (" + traceCount + " hits) in " + last.delta + " ms - " + keys[i]);
       }
       int min = Math.min(missingCheckCanceled.size(), 5);
-      LOG.info("Top " + min + " of " + missingCheckCanceled.size() + " missing cancellation places:");
+      LOG.info("Top " + min + " of " + missingCheckCanceled.size() + " no-checkCanceled places:");
       for (int i = 0; i < keys.length && i < min; i++) {
-        Pair<Long, StackTraceElement[]> pair = missingCheckCanceled.get(keys[i]);
-        Throwable throwable = new Throwable("no checkCanceled (" + i + ") in " + pair.first + " ms - " + keys[i]);
-        throwable.setStackTrace(pair.second);
-        LOG.info(ExceptionUtil.getThrowableText(throwable, ActionsUpdateBenchmarkAction.class.getName()));
+        TraceData last = missingCheckCanceled.get(keys[i]);
+        int traceCount = 0, traceIdx = 0;
+        for (TraceData cur = last; cur != null; cur = cur.next) traceCount++;
+        for (TraceData cur = last; cur != null && traceIdx < 3; cur = cur.next, traceIdx ++) {
+          Throwable throwable = new Throwable("no checkCanceled (" + i + ") (" + (traceIdx + 1) + " of " + traceCount + " hits)" +
+                                              " in " + cur.delta + " ms - " + keys[i]);
+          throwable.setStackTrace(cur.trace);
+          LOG.info(ExceptionUtil.getThrowableText(throwable, ActionsUpdateBenchmarkAction.class.getName()));
+        }
       }
     }
   }
@@ -132,19 +139,26 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
                                             @NotNull ProgressIndicator progress,
                                             @NotNull Consumer<String> activityConsumer) {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
-    List<Pair<Integer, AnAction>> results = new ArrayList<>();
+    List<Pair<Integer, String>> results = new ArrayList<>();
 
     DataContext rawContext = DataManager.getInstance().getDataContext(component);
-    progress.setText("Preparing the data context");
 
+    progress.setText("Dropping resolve caches");
     PsiManager.getInstance(project).dropPsiCaches();
     PsiManager.getInstance(project).dropResolveCaches();
     ActionToolbarImpl.resetAllToolbars();
 
+    progress.setText("Preparing the data context");
+    LOG.info("Benchmarking actions update for component: " + component.getClass().getName());
+
     long startContext = System.nanoTime();
     DataContext wrappedContext = Utils.wrapToAsyncDataContext(rawContext);
+    LOG.info(TimeoutUtil.getDurationMillis(startContext) + " ms to create data-context");
+
+    long startPrecache = System.nanoTime();
     ReadAction.run(() -> {
       for (DataKey<?> key : DataKey.allKeys()) {
+        progress.setText("Caching '" + key.getName() + "'");
         try {
           activityConsumer.accept("DataContext(\"" + key.getName() + "\")");
           wrappedContext.getData(key);
@@ -154,9 +168,8 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
         }
       }
     });
+    LOG.info(TimeoutUtil.getDurationMillis(startPrecache) + " ms to pre-cache data-context");
 
-    long elapsedContext = TimeoutUtil.getDurationMillis(startContext);
-    LOG.info(elapsedContext + " ms to prepare data-context for component: " + component.getClass().getName());
     int count = 0;
     long startActions = System.nanoTime();
     for (String id : actionManager.getActionIds()) {
@@ -168,8 +181,9 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
       ReadAction.run(() -> {
         long elapsed;
+        String actionName = action.getClass().getName();
         try {
-          activityConsumer.accept(action.getClass().getName());
+          activityConsumer.accept(actionName);
           long start = System.nanoTime();
           ActionUtil.performDumbAwareUpdate(action, event, true);
           elapsed = TimeoutUtil.getDurationMillis(start);
@@ -178,7 +192,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
           activityConsumer.accept(null);
         }
         if (elapsed > 0) {
-          results.add(Pair.create((int)elapsed, action));
+          results.add(Pair.create((int)elapsed, actionName));
         }
       });
       count++;
@@ -186,9 +200,21 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
     long elapsedActions = TimeoutUtil.getDurationMillis(startActions);
     LOG.info(elapsedActions + " ms total to update " + count + " actions");
     results.sort(Comparator.comparingInt(o -> -o.first));
-    for (Pair<Integer, AnAction> result : results) {
+    for (Pair<Integer, String> result : results) {
       if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
-      LOG.info(result.first + " ms - " + result.second.getClass().getName());
+      LOG.info(result.first + " ms - " + result.second);
+    }
+  }
+
+  private static class TraceData {
+    final long delta;
+    final StackTraceElement[] trace;
+    final TraceData next;
+
+    TraceData(long delta, StackTraceElement @NotNull [] trace, @Nullable TraceData next) {
+      this.delta = delta;
+      this.trace = trace;
+      this.next = next;
     }
   }
 
