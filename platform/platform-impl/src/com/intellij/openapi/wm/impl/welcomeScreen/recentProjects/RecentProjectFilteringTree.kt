@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
+import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -212,13 +213,13 @@ class RecentProjectFilteringTree(
     }
 
     private fun getCloseIconRect(row: Int): Rectangle {
+      val helper = RenderingHelper(tree) // because the renderer's bounds are not full width
       val bounds = tree.getRowBounds(row)
       val icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
                                  ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
                                  ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
 
-      // Use `tree.bound` because the renderer's border is not full width
-      return Rectangle(tree.bounds.width - icon.iconWidth - JBUIScale.scale(10),
+      return Rectangle(helper.width - helper.rightMargin - icon.iconWidth - JBUIScale.scale(14),
                        bounds.y + (bounds.height - icon.iconHeight) / 2,
                        icon.iconWidth, icon.iconHeight)
     }
@@ -393,7 +394,7 @@ class RecentProjectFilteringTree(
       }
       private val projectCancelButton = JLabel().apply {
         icon = AllIcons.Actions.DeleteTag
-        border = JBUI.Borders.empty(0, 0, 0, 17)
+        border = JBUI.Borders.empty(0, 0, 0, 14)
       }
       private val projectProgressLabel = JLabel().apply {
         foreground = UIUtil.getInactiveTextColor()
