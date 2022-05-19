@@ -1,77 +1,52 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build;
+@file:Suppress("ReplaceGetOrSet")
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+package org.jetbrains.intellij.build
 
-public class LibraryLicenseBuilder {
-  public LibraryLicense build() {
-    return new LibraryLicense(name, url, version, libraryName, additionalLibraryNames, attachedTo, transitiveDependency, license,
-                              licenseUrl);
+@Suppress("MemberVisibilityCanBePrivate")
+class LibraryLicenseBuilder(
+  var name: String? = null,
+  var url: String? = null,
+  var version: String? = null,
+  var libraryName: String? = null,
+  var additionalLibraryNames: List<String> = emptyList(),
+  var attachedTo: String? = null,
+  var transitiveDependency: Boolean = false,
+  var license: String? = null,
+  var licenseUrl: String? = null,
+) {
+  @Suppress("UNCHECKED_CAST")
+  constructor(map: Map<String, Any>) : this(
+    name = map.get("name") as String?,
+    url = map.get("url") as String?,
+    version = map.get("version") as String?,
+    libraryName = map.get("libraryName") as String?,
+    additionalLibraryNames = map.get("additionalLibraryNames") as? List<String> ?: emptyList(),
+    attachedTo = map.get("attachedTo") as String?,
+    transitiveDependency = map.get("transitiveDependency") == true,
+    license = map.get("license") as String?,
+    licenseUrl = map.get("licenseUrl") as String?,
+  )
+
+  companion object {
+    fun build(builder: (b: LibraryLicenseBuilder) -> Unit): LibraryLicense {
+      val b = LibraryLicenseBuilder()
+      builder(b)
+      return b.build()
+    }
   }
 
-  public final String getName() {
-    return name;
+  fun build(): LibraryLicense {
+    return LibraryLicense(
+      name = name,
+      url = url,
+      version = version,
+      libraryName = libraryName,
+      additionalLibraryNames = additionalLibraryNames,
+      attachedTo = attachedTo,
+      transitiveDependency = transitiveDependency,
+      license = license,
+      licenseUrl = licenseUrl
+    )
   }
-
-  public final String getUrl() {
-    return url;
-  }
-
-  public final String getVersion() {
-    return version;
-  }
-
-  public final String getLibraryName() {
-    return libraryName;
-  }
-
-  public final List<String> getAdditionalLibraryNames() {
-    return additionalLibraryNames;
-  }
-
-  public final String getAttachedTo() {
-    return attachedTo;
-  }
-
-  public final boolean getTransitiveDependency() {
-    return transitiveDependency;
-  }
-
-  public final boolean isTransitiveDependency() {
-    return transitiveDependency;
-  }
-
-  public final String getLicense() {
-    return license;
-  }
-
-  public final String getLicenseUrl() {
-    return licenseUrl;
-  }
-
-  public LibraryLicenseBuilder(String name,
-                               String url,
-                               String version,
-                               String libraryName,
-                               List<String> additionalLibraryNames,
-                               String attachedTo,
-                               boolean transitiveDependency,
-                               String license,
-                               String licenseUrl) { }
-
-  public LibraryLicenseBuilder(Map args) { }
-
-  public LibraryLicenseBuilder() { }
-
-  private final String name;
-  private final String url;
-  private final String version;
-  private final String libraryName;
-  private final List<String> additionalLibraryNames = new ArrayList<String>();
-  private final String attachedTo;
-  private final boolean transitiveDependency;
-  private final String license;
-  private final String licenseUrl;
 }
