@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
@@ -25,6 +26,7 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.SingleSelectionModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.panel
@@ -38,6 +40,7 @@ import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
@@ -45,12 +48,13 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
+import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.*
+import java.awt.event.ActionEvent
 import java.nio.file.Paths
-import javax.swing.JComponent
-import javax.swing.JSeparator
-import javax.swing.ListModel
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -85,9 +89,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance()))
 
   // state
-  private val loader = GHCloneDialogRepositoryListLoaderImpl(executorManager) {
-    switchToLogin(it)
-  }
+  private val loader = GHCloneDialogRepositoryListLoaderImpl(executorManager)
   private var inLoginState = false
   private var selectedUrl by Delegates.observable<String?>(null) { _, _, _ -> onSelectedUrlChanged() }
 
@@ -97,7 +99,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   init {
     repositoryList = JBList(loader.listModel).apply {
-      cellRenderer = GHRepositoryListCellRenderer { accountListModel.itemsSet }
+      cellRenderer = GHRepositoryListCellRenderer(ErrorHandler()) { accountListModel.itemsSet }
       isFocusable = false
       selectionModel = SingleSelectionModel()
     }.also {
@@ -180,6 +182,29 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     }
     repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     setupAccountsListeners()
+  }
+
+  private inner class ErrorHandler : GHRepositoryListCellRenderer.ErrorHandler {
+
+    override fun getPresentableText(error: Throwable): @Nls String = when (error) {
+      is GithubMissingTokenException -> GithubBundle.message("account.token.missing")
+      is GithubAuthenticationException -> GithubBundle.message("credentials.invalid.auth.data", "")
+      else -> GithubBundle.message("clone.error.load.repositories")
+    }
+
+    override fun getAction(account: GithubAccount, error: Throwable) = when (error) {
+      is GithubAuthenticationException -> object : AbstractAction(GithubBundle.message("accounts.relogin")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          switchToLogin(account)
+        }
+      }
+      else -> object : AbstractAction(GithubBundle.message("retry.link")) {
+        override fun actionPerformed(e: ActionEvent?) {
+          loader.clear(account)
+          loader.loadRepositories(account)
+        }
+      }
+    }
   }
 
   protected abstract fun isAccountHandled(account: GithubAccount): Boolean

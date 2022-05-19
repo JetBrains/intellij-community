@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -33,10 +32,10 @@ internal class GHCloneDialogRepositoryListModel : AbstractListModel<GHRepository
     fireIntervalRemoved(this, startOffset, endOffset)
   }
 
-  fun setError(account: GithubAccount, error: @Nls String, linkText: @Nls String, linkHandler: Runnable) {
+  fun setError(account: GithubAccount, error: Throwable) {
     val accountItems = itemsByAccount.getOrPut(account) { mutableListOf() }
     val (startOffset, endOffset) = findAccountOffsets(account) ?: return
-    val errorItem = GHRepositoryListItem.Error(account, error, linkText, linkHandler)
+    val errorItem = GHRepositoryListItem.Error(account, error)
     accountItems.add(0, errorItem)
     fireIntervalAdded(this, endOffset, endOffset + 1)
     fireContentsChanged(this, startOffset, endOffset + 1)

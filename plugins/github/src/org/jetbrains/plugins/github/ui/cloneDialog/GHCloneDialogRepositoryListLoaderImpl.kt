@@ -18,13 +18,10 @@ import org.jetbrains.plugins.github.api.data.request.Affiliation
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
-import org.jetbrains.plugins.github.i18n.GithubBundle
 
 internal class GHCloneDialogRepositoryListLoaderImpl(
-  private val executorManager: GithubApiRequestExecutorManager,
-  private val authErrorHandler: (GithubAccount) -> Unit
+  private val executorManager: GithubApiRequestExecutorManager
 ) : GHCloneDialogRepositoryListLoader, Disposable {
 
   override val loading: Boolean
@@ -42,11 +39,7 @@ internal class GHCloneDialogRepositoryListLoaderImpl(
       executorManager.getExecutor(account)
     }
     catch (e: GithubMissingTokenException) {
-      listModel.setError(account,
-                         GithubBundle.message("account.token.missing"),
-                         GithubBundle.message("login.link")) {
-        authErrorHandler(account)
-      }
+      listModel.setError(account, e)
       return
     }
 
@@ -81,21 +74,7 @@ internal class GHCloneDialogRepositoryListLoaderImpl(
       indicatorsMap.remove(account)
       loadingEventDispatcher.multicaster.eventOccurred()
     }.errorOnEdt(ModalityState.any()) {
-      if (it is GithubAuthenticationException) {
-        listModel.setError(account,
-                           GithubBundle.message("credentials.invalid.auth.data", ""),
-                           GithubBundle.message("accounts.relogin")) {
-          authErrorHandler(account)
-        }
-      }
-      else {
-        listModel.setError(account,
-                           GithubBundle.message("clone.error.load.repositories"),
-                           GithubBundle.message("retry.link")) {
-          clear(account)
-          loadRepositories(account)
-        }
-      }
+      listModel.setError(account, it)
     }
   }
 
