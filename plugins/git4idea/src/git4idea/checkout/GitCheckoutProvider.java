@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -110,11 +109,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
           ApplicationManager.getApplication().invokeLater(() -> {
             DvcsUtil.addMappingIfSubRoot(project, directory.getPath(), GitVcs.NAME);
           });
-          destinationParent.refresh(true, true, () -> {
-            if (project.isOpen() && (!project.isDisposed()) && !project.isDefault()) {
-              VcsDirtyScopeManager.getInstance(project).fileDirty(destinationParent);
-            }
-          });
+          destinationParent.refresh(true, true);
 
           listener.directoryCheckedOut(directory, GitVcs.getKey());
           listener.checkoutCompleted();
