@@ -524,6 +524,7 @@ public final class JavaSdkImpl extends JavaSdk {
       }
     }
     else {
+      LOG.info("Trying to get jdk classes roots, jdk home: " + jdkHome + ", isJre: " + isJre);
       for (Path root : JavaSdkUtil.getJdkClassesRoots(jdkHome, isJre)) {
         result.add(VfsUtil.getUrlForLibraryRoot(root));
       }
