@@ -237,18 +237,28 @@ final class PortableCompilationCache {
       jps.buildAll()
     }
     catch (Exception e) {
-      if (context.options.incrementalCompilation && !forceDownload) {
+      if (!context.options.incrementalCompilation) {
+        throw e
+      }
+      String successMessage
+      if (forceDownload) {
+        context.messages.warning('Incremental compilation using Remote Cache failed. ' +
+                                 'Re-trying without any caches.')
+        clean()
+        successMessage = "Compilation successful after clean build retry"
+      }
+      else {
         // Portable Compilation Cache is rebuilt from scratch on CI and re-published every night to avoid possible incremental compilation issues.
         // If download isn't forced then locally available cache will be used which may suffer from those issues.
         // Hence compilation failure. Replacing local cache with remote one may help.
         context.messages.warning('Incremental compilation using locally available caches failed. ' +
                                  'Re-trying using Remote Cache.')
         downloadCache()
-        jps.buildAll()
+        successMessage = "Compilation successful after retry with fresh Remote Cache"
       }
-      else {
-        throw e
-      }
+      context.compilationData.statisticsReported = false
+      jps.buildAll()
+      println("##teamcity[buildStatus status='SUCCESS' text='$successMessage']")
     }
   }
 
