@@ -1327,6 +1327,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithNonDefaultAccessor.kt");
             }
 
+            @TestMetadata("privateToplevelProperty.kt")
+            public void testPrivateToplevelProperty() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateToplevelProperty.kt");
+            }
+
             @TestMetadata("protectedMember.kt")
             public void testProtectedMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
