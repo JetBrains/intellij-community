@@ -26,6 +26,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -59,30 +61,56 @@ public final class ExternalDiffTool {
       .anyMatch(fileType -> ExternalDiffSettings.findDiffTool(fileType) != null);
   }
 
-  public static void show(@Nullable final Project project,
-                          @NotNull final DiffRequestChain chain,
-                          @NotNull final DiffDialogHints hints) {
+  public static void show(@Nullable Project project,
+                          @NotNull DiffRequestChain chain,
+                          @NotNull DiffDialogHints hints) {
+    show(project, hints, indicator -> {
+      List<DiffRequestProducer> producers = loadProducersFromChain(project, chain);
+      return collectRequests(project, producers, indicator);
+    });
+  }
+
+  public static void show(@Nullable Project project,
+                          @NotNull List<DiffRequestProducer> requestProducers,
+                          @NotNull DiffDialogHints hints) {
+    show(project, hints, indicator -> {
+      return collectRequests(project, requestProducers, indicator);
+    });
+  }
+
+  private static void show(@Nullable Project project,
+                           @NotNull DiffDialogHints hints,
+                           @NotNull ThrowableConvertor<? super ProgressIndicator, List<DiffRequest>, ? extends Exception> requestsProducer) {
     try {
-      final List<DiffRequest> requests = loadRequestsUnderProgress(project, chain);
+      List<DiffRequest> requests = computeWithModalProgress(project,
+                                                            DiffBundle.message("progress.title.loading.requests"),
+                                                            requestsProducer);
       if (requests == null) return;
 
-      List<DiffRequest> showInBuiltin = new ArrayList<>();
-      for (DiffRequest request : requests) {
-        boolean success = tryShowRequestInExternal(project, request);
-        if (!success) {
-          showInBuiltin.add(request);
-        }
-      }
-
-      if (!showInBuiltin.isEmpty()) {
-        DiffManagerEx.getInstance().showDiffBuiltin(project, new SimpleDiffRequestChain(showInBuiltin), hints);
-      }
+      showRequests(project, requests, hints);
     }
     catch (ProcessCanceledException ignore) {
     }
     catch (Throwable e) {
       LOG.warn(e);
       Messages.showErrorDialog(project, e.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
+    }
+  }
+
+  @RequiresEdt
+  private static void showRequests(@Nullable Project project,
+                                   @NotNull List<DiffRequest> requests,
+                                   @NotNull DiffDialogHints hints) throws IOException, ExecutionException {
+    List<DiffRequest> showInBuiltin = new ArrayList<>();
+    for (DiffRequest request : requests) {
+      boolean success = tryShowRequestInExternal(project, request);
+      if (!success) {
+        showInBuiltin.add(request);
+      }
+    }
+
+    if (!showInBuiltin.isEmpty()) {
+      DiffManagerEx.getInstance().showDiffBuiltin(project, new SimpleDiffRequestChain(showInBuiltin), hints);
     }
   }
 
@@ -103,34 +131,23 @@ public final class ExternalDiffTool {
     return true;
   }
 
-  @Nullable
-  private static List<DiffRequest> loadRequestsUnderProgress(@Nullable Project project,
-                                                             @NotNull DiffRequestChain chain) throws Throwable {
+  @NotNull
+  @RequiresBackgroundThread
+  private static List<DiffRequestProducer> loadProducersFromChain(@Nullable Project project, @NotNull DiffRequestChain chain) {
+    ListSelection<? extends DiffRequestProducer> listSelection;
     if (chain instanceof AsyncDiffRequestChain) {
-      return computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), indicator -> {
-        ListSelection<? extends DiffRequestProducer> listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
-        return collectRequests(project, listSelection.getList(), listSelection.getSelectedIndex(), indicator);
-      });
+      listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
     }
     else {
-      List<? extends DiffRequestProducer> allProducers = chain.getRequests();
-      int index = chain.getIndex();
-
-      return computeWithModalProgress(project, DiffBundle.message("progress.title.loading.requests"), indicator -> {
-        return collectRequests(project, allProducers, index, indicator);
-      });
+      listSelection = ListSelection.createAt(chain.getRequests(), chain.getIndex());
     }
-  }
 
-  @NotNull
-  private static List<DiffRequest> collectRequests(@Nullable Project project,
-                                                   @NotNull List<? extends DiffRequestProducer> allProducers,
-                                                   int index,
-                                                   @NotNull ProgressIndicator indicator) {
-    // TODO: show all changes on explicit selection (not only `chain.getIndex()` one)
-    if (allProducers.isEmpty()) return Collections.emptyList();
-    List<? extends DiffRequestProducer> producers = Collections.singletonList(allProducers.get(index));
-    return collectRequests(project, producers, indicator);
+    if (listSelection.isEmpty()) return Collections.emptyList();
+
+    // We do not show all changes, as it might be an 'implicit selection' from 'getSelectedOrAll()' calls.
+    // TODO: introduce key in DiffUserDataKeys to differentiate these use cases
+    DiffRequestProducer producerToShow = listSelection.getList().get(listSelection.getSelectedIndex());
+    return Collections.singletonList(producerToShow);
   }
 
   @NotNull
