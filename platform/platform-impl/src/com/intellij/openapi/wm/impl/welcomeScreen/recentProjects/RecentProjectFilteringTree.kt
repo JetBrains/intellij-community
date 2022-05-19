@@ -78,7 +78,7 @@ class RecentProjectFilteringTree(
       )
 
       SmartExpander.installOn(this)
-      TreeHoverListener.DEFAULT.addTo(this)
+      TreeHoverToSelectionListener().addTo(this)
 
       isRootVisible = false
       cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
@@ -158,6 +158,14 @@ class RecentProjectFilteringTree(
           tree.expandPath(treePath)
         else
           tree.collapsePath(treePath)
+      }
+    }
+  }
+
+  private class TreeHoverToSelectionListener : TreeHoverListener() {
+    override fun onHover(tree: JTree, row: Int) {
+      if (row != -1) {
+        tree.setSelectionRow(row)
       }
     }
   }
@@ -260,12 +268,10 @@ class RecentProjectFilteringTree(
       selected: Boolean, expanded: Boolean,
       leaf: Boolean, row: Int, hasFocus: Boolean
     ): Component {
-      val isHovered = TreeHoverListener.getHoveredRow(tree) == row
-
       return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
         is RootItem -> JBUI.Panels.simplePanel()
-        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, isHovered, isProjectPathValid(item.projectPath))
-        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, isHovered)
+        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, selected, isProjectPathValid(item.projectPath))
+        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, selected)
         is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item)
       }
     }
@@ -305,7 +311,7 @@ class RecentProjectFilteringTree(
         add(projectActions, BorderLayout.EAST)
       }
 
-      fun customizeComponent(item: RecentProjectItem, isHovered: Boolean, isProjectPathValid: Boolean): JComponent {
+      fun customizeComponent(item: RecentProjectItem, isSelected: Boolean, isProjectPathValid: Boolean): JComponent {
         projectNameLabel.apply {
           text = item.displayName
           foreground = if (isProjectPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
@@ -318,7 +324,7 @@ class RecentProjectFilteringTree(
           disabledIcon = IconUtil.desaturate(icon)
           isEnabled = isProjectPathValid
         }
-        projectActions.isVisible = isHovered
+        projectActions.isVisible = isSelected
 
         val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
         toolTipText = if (isProjectPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
@@ -349,12 +355,12 @@ class RecentProjectFilteringTree(
         add(projectGroupActions, BorderLayout.EAST)
       }
 
-      fun customizeComponent(item: ProjectsGroupItem, isHovered: Boolean): JComponent {
+      fun customizeComponent(item: ProjectsGroupItem, isSelected: Boolean): JComponent {
         projectGroupNameLabel.apply {
           clear()
           append(item.displayName(), SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground())) // NON-NLS
         }
-        projectGroupActions.isVisible = isHovered
+        projectGroupActions.isVisible = isSelected
 
         AccessibleContextUtil.setName(this, projectGroupNameLabel) // NON-NLS
         AccessibleContextUtil.setDescription(this, projectGroupNameLabel) // NON-NLS
