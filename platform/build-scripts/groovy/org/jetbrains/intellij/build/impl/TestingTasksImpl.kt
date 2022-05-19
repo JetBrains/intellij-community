@@ -28,6 +28,7 @@ import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -56,12 +57,13 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       compilationTasks.buildProjectArtifacts(projectArtifacts)
     }
 
-    val runConfigurations = options.testConfigurations?.let { v ->
-      v.split(';').dropLastWhile(String::isEmpty).map {
-        val file = RunConfigurationProperties.findRunConfiguration(context.paths.projectHome, it, context.messages)
-        JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
+    val runConfigurations = options.testConfigurations?.splitToSequence(';')
+      ?.filter(String::isNotEmpty)
+      ?.map {
+        val file = RunConfigurationProperties.findRunConfiguration(context.paths.projectHomeDir, it)
+        JUnitRunConfigurationProperties.loadRunConfiguration(file)
       }
-    }
+      ?.toList()
     if (runConfigurations != null) {
       compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
                                       listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
@@ -392,14 +394,14 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=$hprofSnapshotFilePath", "-Dkotlinx.coroutines.debug=on"))
     jvmArgs.addAll(0, VmOptionsGenerator.COMMON_VM_OPTIONS)
-    if (options.jvmMemoryOptions != null) {
-      jvmArgs.addAll(options.jvmMemoryOptions.splitToSequence(" \t\n\r\u000c"))
-    }
-    else {
+    if (options.jvmMemoryOptions == null) {
       jvmArgs.add("-Xmx750m")
       jvmArgs.add("-Xms750m")
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsun.io.useCanonCaches=false")
+    }
+    else {
+      jvmArgs.addAll(options.jvmMemoryOptions.split(whitespaceRegex))
     }
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     val defaultSystemProperties = mapOf(
@@ -728,4 +730,4 @@ Will not upload to remote server. Please set 'intellij.test.discovery.url' syste
 }
 
 private const val NO_TESTS_ERROR = 42
-
+private val whitespaceRegex = Regex("\\s+")

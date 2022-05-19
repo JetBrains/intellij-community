@@ -1,52 +1,52 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
-import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildMessages
+import com.intellij.util.xml.dom.XmlElement
+import com.intellij.util.xml.dom.readXmlAsModel
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 
+abstract class RunConfigurationProperties(
+  val name: String,
+  val moduleName: String,
+  val vmParameters: List<String>,
+  val envVariables: Map<String, String>,
+) {
+  companion object {
+    private val whitespaceRegex = Regex("\\s+")
 
-/**
- * @author Aleksey.Rostovskiy
- */
-@CompileStatic
-abstract class RunConfigurationProperties {
-  final String name
-  final String moduleName
-  final List<String> vmParameters
-  final Map<String, String> envVariables
-
-  RunConfigurationProperties(String name,
-                             String moduleName,
-                             List<String> vmParameters,
-                             Map<String, String> envVariables) {
-    this.name = name
-    this.moduleName = moduleName
-    this.vmParameters = vmParameters
-    this.envVariables = envVariables
-  }
-
-  static File findRunConfiguration(String projectHome, String name, BuildMessages messages) {
-    def file = new File(projectHome, ".idea/runConfigurations/${FileUtil.sanitizeFileName(name)}.xml")
-    if (!file.exists()) {
-      messages.error("Cannot find run configurations: $file doesn't exist")
+    fun findRunConfiguration(projectHome: Path, name: String): Path {
+      val file = projectHome.resolve(".idea/runConfigurations/${FileUtil.sanitizeFileName(name)}.xml")
+      if (!file.exists()) {
+        throw RuntimeException("Cannot find run configurations: $file doesn't exist")
+      }
+      return file
     }
 
-    return file
-  }
-
-  @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
-  protected static getConfiguration(File file, BuildMessages messages) {
-    Node root = new XmlParser().parse(file)
-    def configuration = first((NodeList)root.get("configuration"))
-    if (configuration == null) {
-      messages.error("Cannot load configuration from '$file.name': 'configuration' tag is not found")
+    fun getConfiguration(file: Path): XmlElement {
+      val root = file.inputStream().use(::readXmlAsModel)
+      return root.getChild("configuration")
+             ?: throw RuntimeException("Cannot load configuration from '$file.name': 'configuration' tag is not found")
     }
 
-    return configuration
-  }
+    fun getVmParameters(options: Map<String, String?>): List<String> {
+      return (options.get("VM_PARAMETERS") ?: "-ea").split(whitespaceRegex)
+    }
 
-  protected static <T> T first(Collection<T> collection) {
-    collection == null || collection.isEmpty() ? null : collection.first()
+    fun getModuleName(configuration: XmlElement): String {
+      return (configuration.getChild("module")?.getAttributeValue("name")
+              ?: throw RuntimeException("Cannot run configuration: module name is not specified"))
+    }
+
+    fun getEnv(configuration: XmlElement): Map<String, String> {
+      return configuration.getChild("envs")
+               ?.children("env")
+               ?.associate { it.getAttributeValue("name")!! to it.getAttributeValue("value")!! }
+             ?: emptyMap()
+    }
   }
 }
