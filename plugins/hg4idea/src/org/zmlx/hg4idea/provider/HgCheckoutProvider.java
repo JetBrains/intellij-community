@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -67,7 +68,9 @@ public class HgCheckoutProvider implements CheckoutProvider {
       @Override
       public CloneTaskInfo taskInfo() {
         return new CloneTaskInfo(HgBundle.message("hg4idea.clone.progress", sourceRepositoryURL),
-                                 HgBundle.message("hg4idea.clone.progress.failed", sourceRepositoryURL));
+                                 HgBundle.message("hg4idea.clone.progress.failed", sourceRepositoryURL),
+                                 DvcsBundle.message("clone.repository"),
+                                 DvcsBundle.message("clone.repository.failed"));
       }
 
       @NotNull
@@ -81,7 +84,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
         if (commandResult == null || HgErrorUtil.hasErrorsInCommandExecution(commandResult)) {
           new HgCommandResultNotifier(project).notifyError(CLONE_ERROR,
                                                            commandResult,
-                                                           HgBundle.message("hg4idea.clone.error"),
+                                                           DvcsBundle.message("clone.repository.failed"),
                                                            HgBundle.message("hg4idea.clone.repo.error.msg", sourceRepositoryURL));
 
           return CloneStatus.FAILURE;

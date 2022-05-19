@@ -114,7 +114,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       @Override
       public CloneTaskInfo taskInfo() {
         return new CloneTaskInfo(message("progress.title.check.out"),
-                                 message("progress.title.check.out.cancel"));
+                                 message("progress.title.check.out.cancel"),
+                                 message("checkout.repository"),
+                                 message("checkout.repository.failed"));
       }
 
       @NotNull

@@ -376,7 +376,6 @@ class RecentProjectFilteringTree(
         border = JBUI.Borders.empty(4)
       }
       private val projectProgressLabel = JLabel().apply {
-        text = IdeBundle.message("welcome.screen.projects.cloning")
         foreground = UIUtil.getInactiveTextColor()
       }
       private val projectCloneStatusPanel = JBUI.Panels.simplePanel().apply {
@@ -405,11 +404,12 @@ class RecentProjectFilteringTree(
           when (item.cloneStatus) {
             CloneStatus.PROGRESS -> {
               projectCloneStatusPanel.isVisible = true
+              projectProgressLabel.text = item.taskInfo.actionTitle
               value = (item.progressIndicator.fraction * 100).toInt()
             }
             CloneStatus.FAILURE -> {
               projectCloneStatusPanel.isVisible = false
-              projectPathLabel.text = IdeBundle.message("welcome.screen.projects.clone.failed.title")
+              projectPathLabel.text = item.taskInfo.failureTitle
             }
           }
         }
