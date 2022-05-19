@@ -226,7 +226,7 @@ final class PortableCompilationCacheUploader {
       return false
     }
 
-    String getAsString(@NotNull final String path) throws UploadException {
+    String getAsString(@NotNull final String path) {
       CloseableHttpResponse response = null
       try {
         String url = myServerUrl + StringUtil.trimStart(path, '/')
@@ -238,7 +238,7 @@ final class PortableCompilationCacheUploader {
         return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_OCTET_STREAM.charset)
       }
       catch (Exception e) {
-        throw new UploadException("Failed to GET $path: " + e.getMessage(), e)
+        throw new RuntimeException("Failed to GET $path: " + e.getMessage(), e)
       }
       finally {
         CloseStreamUtil.closeStream(response)

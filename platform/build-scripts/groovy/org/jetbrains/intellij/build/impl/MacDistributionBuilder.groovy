@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-
+import com.intellij.diagnostic.telemetry.TraceKt
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
@@ -191,7 +191,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                                         Boolean notarize,
                                                         MacDistributionCustomizer customizer,
                                                         BuildContext context) {
-    return com.intellij.diagnostic.telemetry.TraceKt.createTask(spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name()), {
+    return TraceKt.createTask(spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name()), {
       ForkJoinTask.invokeAll(buildForArch(arch, context.bundledRuntime, macZip, notarize, customizer, context)
                                .findAll { it != null })
     })

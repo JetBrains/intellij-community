@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-
+import com.intellij.diagnostic.telemetry.TraceKt
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
@@ -358,7 +358,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
                                                           BuildContext context) {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     Path targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
-    return com.intellij.diagnostic.telemetry.TraceKt.createTask(TraceManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
+    return TraceKt.createTask(TraceManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
                                 .setAttribute("targetFile", targetFile.toString())) {
       Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
