@@ -38,7 +38,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final int IS_TESTCASE_MASK  = 0b10000000_00000000_00000000; // 24th bit
   private static final int IS_LOCAL_MASK     = 0b1_00000000_00000000_00000000; // 25th bit
 
-  private Set<RefClass> myBases; // singleton (to conserve memory) or HashSet. guarded by this
+  private Object myBases; // singleton (to conserve memory) or HashSet. guarded by this
   private Set<RefOverridable> myDerivedReferences; // singleton (to conserve memory) or HashSet. guarded by this
   private List<RefMethod> myConstructors; // guarded by this
   private RefMethodImpl myDefaultConstructor; // guarded by this
@@ -331,19 +331,24 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   @Override
   public synchronized @NotNull Set<RefClass> getBaseClasses() {
     if (myBases == null) return EMPTY_CLASS_SET;
-    return myBases;
+    //noinspection unchecked
+    return myBases instanceof Set ? (Set<RefClass>)myBases : Collections.singleton((RefClass)myBases);
   }
 
   private synchronized void addBaseClass(RefClass refClass){
     if (myBases == null) {
-      myBases = Collections.singleton(refClass);
-      return;
+      myBases = refClass;
     }
-    if (myBases.size() == 1) {
-      // convert from singleton
-      myBases = new HashSet<>(myBases);
+    else if (myBases instanceof RefClass) {
+      HashSet<RefClass> set = new HashSet<>();
+      set.add((RefClass)myBases);
+      set.add(refClass);
+      myBases = set;
     }
-    myBases.add(refClass);
+    else {
+      //noinspection unchecked
+      ((Set<RefClass>)myBases).add(refClass);
+    }
   }
 
   @Override
@@ -474,7 +479,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     super.referenceRemoved();
 
     for (RefClass subClass : getSubClasses()) {
-      ((RefClassImpl)subClass).removeBase(this);
+      ((RefClassImpl)subClass).removeBaseClass(this);
     }
 
     for (RefClass superClass : getBaseClasses()) {
@@ -482,14 +487,13 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
-  private synchronized void removeBase(RefClass superClass) {
-    final Set<RefClass> baseClasses = getBaseClasses();
-    if (baseClasses.contains(superClass)) {
-      if (baseClasses.size() == 1) {
-        myBases = null;
-        return;
-      }
-      baseClasses.remove(superClass);
+  private synchronized void removeBaseClass(RefClass superClass) {
+    if (myBases instanceof RefClass) {
+      if (myBases == superClass) myBases = null;
+    }
+    else if (myBases != null) {
+      //noinspection unchecked
+      ((Set<RefClass>)myBases).remove(superClass);
     }
   }
 
