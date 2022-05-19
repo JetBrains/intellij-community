@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.AsyncFileListener;
@@ -42,6 +43,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create();
   private final Map<Long, RefreshSessionImpl> mySessions = Collections.synchronizedMap(new HashMap<>());
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
+  private int myActivityCounter;
 
   void execute(@NotNull RefreshSessionImpl session) {
     ApplicationEx app;
@@ -67,24 +69,22 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     long queuedAt = System.nanoTime();
     myQueue.execute(() -> {
       long timeInQueue = (System.nanoTime() - queuedAt) / 1_000_000;
-      myRefreshIndicator.setText(IdeCoreBundle.message("file.synchronize.progress"));
-      myRefreshIndicator.start();
+      startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
       try {
         String title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);
         HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, title, () -> runRefreshSession(session, timeInQueue));
       }
       finally {
-        myRefreshIndicator.stop();
+        stopIndicator();
         if (Registry.is("vfs.async.event.processing")) {
-          myRefreshIndicator.setText(IdeCoreBundle.message("async.events.progress"));
-          myRefreshIndicator.start();
+          startIndicator(IdeCoreBundle.message("async.events.progress"));
           ReadAction
             .nonBlocking(() -> runAsyncListeners(session))
             .expireWith(this)
             .wrapProgress(myRefreshIndicator)
             .finishOnUiThread(modality, p -> session.fireEvents(p.first, p.second, true))
             .submit(myEventProcessingQueue)
-            .onProcessed(__ -> myRefreshIndicator.stop())
+            .onProcessed(__ -> stopIndicator())
             .onError(t -> {
               if (!myRefreshIndicator.isCanceled()) {
                 LOG.error(t);
@@ -97,6 +97,19 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
       }
     });
     myEventCounter.eventHappened(session);
+  }
+
+  private void startIndicator(@NlsContexts.ProgressText String text) {
+    if (myActivityCounter++ == 0) {
+      myRefreshIndicator.setText(text);
+      myRefreshIndicator.start();
+    }
+  }
+
+  private void stopIndicator() {
+    if (--myActivityCounter == 0) {
+      myRefreshIndicator.stop();
+    }
   }
 
   private static void fireEvents(RefreshSessionImpl session) {

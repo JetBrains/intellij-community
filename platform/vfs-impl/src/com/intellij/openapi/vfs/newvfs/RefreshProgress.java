@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.impl.ProjectUtilCore;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,26 +14,19 @@ import org.jetbrains.annotations.NotNull;
 
 final class RefreshProgress extends ProgressIndicatorBase {
   static @NotNull ProgressIndicator create() {
-    Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
-    return app == null || app.isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress();
+    return ApplicationManager.getApplication().isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress();
   }
-
-  private int myActivityCounter;
 
   @Override
   public void start() {
-    if (myActivityCounter++ == 0) {
-      super.start();
-      scheduleUiUpdate();
-    }
+    super.start();
+    scheduleUiUpdate();
   }
 
   @Override
   public void stop() {
-    if (--myActivityCounter == 0) {
-      super.stop();
-      scheduleUiUpdate();
-    }
+    super.stop();
+    scheduleUiUpdate();
   }
 
   private void scheduleUiUpdate() {
