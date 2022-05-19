@@ -49,10 +49,11 @@ public class MavenModuleImportDependencyProvider {
     List<MavenImportDependency<?>> testDependencies = new ArrayList<>(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST);
 
     addMainDependencyToTestModule(importData, mavenProject, testDependencies);
+    boolean hasSeparateTestModule = importData.getSplittedMainAndTestModules() != null;
     for (MavenArtifact artifact : mavenProject.getDependencies()) {
       MavenImportDependency<?> dependency = getDependency(artifact, mavenProject);
       if (dependency == null) continue;
-      if (dependency.getScope() == DependencyScope.TEST) {
+      if (hasSeparateTestModule && dependency.getScope() == DependencyScope.TEST) {
         testDependencies.add(dependency);
       }
       else {
