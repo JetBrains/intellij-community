@@ -84,8 +84,8 @@ final class FilePageCache {
     }
   }
 
-  public void incrementHitsCount() {
-    myHits++;
+  public void incrementFastCacheHitsCount() {
+    myFastCacheHits++;
   }
 
   private static long maxDirectMemory() {
@@ -130,9 +130,12 @@ final class FilePageCache {
         return new FilePageCacheStatistics(PagedFileStorage.CHANNELS_CACHE.getStatistics(),
                                            myUncachedFileAccess,
                                            myMaxRegisteredFiles,
+                                           myMaxLoadedSize,
                                            myHits,
+                                           myFastCacheHits,
                                            myMisses,
                                            myLoad,
+                                           myMappingChangeCount,
                                            mySizeLimit);
       }
       finally {
@@ -156,10 +159,12 @@ final class FilePageCache {
   private final long mySizeLimit;
   private long mySize;
   private volatile int myUncachedFileAccess;
+  private int myFastCacheHits;
   private int myHits;
   private int myMisses;
   private int myLoad;
   private volatile int myMaxRegisteredFiles;
+  private long myMaxLoadedSize;
   private volatile int myMappingChangeCount;
 
   FilePageCache() {
@@ -174,7 +179,9 @@ final class FilePageCache {
       @Override
       public DirectBufferWrapper put(Long key, @NotNull DirectBufferWrapper wrapper) {
         mySize += wrapper.getLength();
-        return super.put(key, wrapper);
+        DirectBufferWrapper oldShouldBeNull = super.put(key, wrapper);
+        myMaxLoadedSize = Math.max(myMaxLoadedSize, mySize);
+        return oldShouldBeNull;
       }
 
       @Nullable
@@ -276,7 +283,7 @@ final class FilePageCache {
 
       mySegmentsAccessLock.lock();
       try {
-        if (mySegments.size() < mySizeLimit) {
+        if (mySegments.size() + fileStorage.myPageSize < mySizeLimit) {
           myLoad++;
         }
         else {
