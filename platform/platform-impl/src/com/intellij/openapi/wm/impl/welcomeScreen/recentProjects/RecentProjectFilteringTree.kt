@@ -411,6 +411,7 @@ class RecentProjectFilteringTree(
 
       init {
         isOpaque = false
+        border = JBUI.Borders.empty(4)
 
         add(projectNamePanel, BorderLayout.CENTER)
         add(projectIconLabel, BorderLayout.WEST)
