@@ -963,6 +963,7 @@ public class AllIcons {
   public static final class Providers {
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", 1150623716, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("providers/apacheDerby.svg", 85626247, 2);
+    /** 16x16 */ public static final @NotNull Icon ApacheIgnite = load("providers/apacheIgnite.svg", 144064773, 2);
     /** 16x16 */ public static final @NotNull Icon ApachePhoenix = load("providers/apachePhoenix.svg", -1989183730, 0);
     /** 16x16 */ public static final @NotNull Icon Athena = load("providers/athena.svg", -820724644, 0);
     /** 16x16 */ public static final @NotNull Icon Azure = load("providers/azure.svg", 1752943562, 0);
@@ -989,6 +990,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon IntersystemCache = load("providers/intersystemCache.svg", -366365267, 2);
     /** 16x16 */ public static final @NotNull Icon Mariadb = load("providers/mariadb.svg", -1504561111, 2);
     /** 16x16 */ public static final @NotNull Icon Microsoft = load("providers/microsoft.svg", -288792143, 0);
+    /** 16x17 */ public static final @NotNull Icon MimerSQL = load("providers/mimerSQL.svg", -1308901116, 2);
     /** 16x16 */ public static final @NotNull Icon MongoDB = load("providers/mongoDB.svg", 1690199269, 0);
     /** 16x16 */ public static final @NotNull Icon Mysql = load("providers/mysql.svg", 685895166, 2);
     /** 16x16 */ public static final @NotNull Icon Netezza = load("providers/netezza.svg", 897343135, 2);
