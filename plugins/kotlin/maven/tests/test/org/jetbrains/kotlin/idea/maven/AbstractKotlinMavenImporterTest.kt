@@ -37,6 +37,9 @@ import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
+import org.jetbrains.kotlin.idea.notification.asText
+import org.jetbrains.kotlin.idea.notification.catchNotificationText
+import org.jetbrains.kotlin.idea.notification.catchNotifications
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
@@ -50,6 +53,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.oldFashionedDescription
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import java.io.File
 
@@ -663,7 +667,9 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 )
             }
 
-            Assert.assertEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            // TODO: should be reverted after KTI-724
+            assertNotEquals(kotlinMavenPluginVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java")
@@ -884,7 +890,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             """
             )
 
-            Assert.assertEquals(kotlinVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertNotEquals(kotlinVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
             assertModules("project")
             assertImporterStatePresent()
@@ -2088,9 +2095,9 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                 "module2/src/main/kotlin",
             )
 
-            val kotlinMainPluginVersion = "1.1.0"
-            val kotlinMavenPluginVersion1 = "1.2.0"
-            val kotlinMavenPluginVersion2 = "1.1.3"
+            val kotlinMainPluginVersion = "1.5.10"
+            val kotlinMavenPluginVersion1 = "1.6.21"
+            val kotlinMavenPluginVersion2 = "1.5.31"
             val mainPom = createProjectPom(
                 """
                     <groupId>test</groupId>
@@ -2173,7 +2180,81 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
 
             // The highest of available versions should be picked
-            Assert.assertEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
+            // TODO: should be reverted after KTI-724
+            Assert.assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
+            Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+        }
+    }
+
+    class JpsCompiler : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testJpsCompilerUnsupportedVersionDown() {
+            val version = "1.1.0"
+            val notifications = catchNotifications(myProject) {
+                doUnsupportedVersionTest(version)
+            }
+
+            val notification = notifications.find { it.title == "Unsupported Kotlin JPS plugin version" }
+            assertNotNull(notifications.asText, notification)
+            assertEquals(
+                notification?.content,
+                "The bundled version (${KotlinJpsPluginSettings.rawBundledVersion}) of the Kotlin JPS plugin will be used<br>" +
+                        "The reason: Kotlin JPS compiler minimum supported version is '${KotlinJpsPluginSettings.jpsMinimumSupportedVersion}' but '$version' is specified",
+            )
+        }
+
+        @Test
+        fun testJpsCompilerUnsupportedVersionUp() {
+            val maxVersion = KotlinJpsPluginSettings.jpsMaximumSupportedVersion
+            val versionToImport = KotlinVersion(maxVersion.major, maxVersion.minor, maxVersion.minor + 1)
+            val text = catchNotificationText(myProject) {
+                doUnsupportedVersionTest(versionToImport.toString())
+            }
+
+            assertEquals(
+                "The bundled version (1.6.21-release-357) of the Kotlin JPS plugin will be used<br>" +
+                        "The reason: Kotlin JPS compiler maximum supported version is '$maxVersion' but '$versionToImport' is specified",
+                text
+            )
+        }
+
+        private fun doUnsupportedVersionTest(version: String) {
+            createProjectSubDirs("src/main/kotlin")
+
+            val mainPom = createProjectPom(
+                """
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1.0.0</version>
+                    <packaging>pom</packaging>
+
+                    <modules>
+                        <module>module1</module>
+                        <module>module2</module>
+                    </modules>
+
+                    <build>
+                        <sourceDirectory>src/main/kotlin</sourceDirectory>
+
+                        <plugins>
+                            <plugin>
+                                <groupId>org.jetbrains.kotlin</groupId>
+                                <artifactId>kotlin-maven-plugin</artifactId>
+                                <version>$version</version>
+                            </plugin>
+                        </plugins>
+                    </build>
+                """
+            )
+
+            importProjects(mainPom)
+
+            assertModules("project")
+            assertImporterStatePresent()
+
+            // Fallback to bundled to unsupported version
+            Assert.assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(myProject))
+            Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
     }
 

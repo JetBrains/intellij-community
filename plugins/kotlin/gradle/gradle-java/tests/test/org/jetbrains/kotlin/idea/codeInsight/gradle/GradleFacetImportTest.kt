@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
+import kotlin.test.assertNotEquals
 
 fun KotlinGradleImportingTestCase.facetSettings(moduleName: String): KotlinFacetSettings {
     val facet = KotlinFacet.get(getModule(moduleName)) ?: error("Kotlin facet not found in module $moduleName")
@@ -88,7 +89,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             )
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertNotEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertAllModulesConfigured()
 
@@ -183,7 +185,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("1.4", apiLevel!!.versionString)
         }
 
-        assertEquals("1.4.20", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertNotEquals("1.4.20", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertAllModulesConfigured()
     }
@@ -463,7 +466,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm6, targetPlatform)
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertNotEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertEquals(
             listOf(
@@ -495,7 +499,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertTrue(targetPlatform.isJs())
         }
 
-        assertEquals("1.3.50", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertNotEquals("1.3.50", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
         assertEquals(
             listOf(
@@ -739,7 +744,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             assertEquals("my/test/destination", (compilerArguments as K2MetadataCompilerArguments).destination)
         }
 
-        assertEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertNotEquals("1.3.72", KotlinJpsPluginSettings.jpsVersion(myProject))
+        assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
 
         val rootManager = ModuleRootManager.getInstance(getModule("project.main"))
         val stdlib = rootManager.orderEntries.filterIsInstance<LibraryOrderEntry>().single().library

@@ -49,7 +49,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val kotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
         val notificationText = KotlinBundle.message(
             "kotlin.external.compiler.updates.notification.content.0",
-            kotlinVersion.kotlinVersion
+            kotlinVersion.kotlinVersion,
         )
 
         val counter = AtomicInteger(0)
@@ -58,8 +58,9 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             val connection = myProject.messageBus.connect(myDisposable)
             connection.subscribe(Notifications.TOPIC, object : Notifications {
                 override fun notify(notification: Notification) {
-                    counter.incrementAndGet()
-                    assertEquals(notificationText, notification.content)
+                    if (notificationText == notification.content) {
+                        counter.incrementAndGet()
+                    }
                 }
             })
 

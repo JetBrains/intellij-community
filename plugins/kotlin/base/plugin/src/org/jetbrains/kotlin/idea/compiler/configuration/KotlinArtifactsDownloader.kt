@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
 
@@ -121,7 +122,7 @@ object KotlinArtifactsDownloader {
         indicator: ProgressIndicator,
         onError: (String) -> Unit
     ): File? {
-        check(!EventQueue.isDispatchThread()) {
+        check(isUnitTestMode() || !EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
         }
         val prop = RepositoryLibraryProperties(

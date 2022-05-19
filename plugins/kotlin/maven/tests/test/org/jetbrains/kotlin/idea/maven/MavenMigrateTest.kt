@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.maven
 
-import org.jetbrains.kotlin.idea.notification.catchNotificationText
+import com.intellij.notification.Notification
+import org.jetbrains.kotlin.idea.notification.asText
+import org.jetbrains.kotlin.idea.notification.catchNotifications
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -14,7 +16,7 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
     }
 
     fun testMigrateApiAndLanguageVersions() {
-        val notificationText = doMigrationTest(
+        val notifications = doMigrationTest(
             before = """
                 <groupId>test</groupId>
                 <artifactId>project</artifactId>
@@ -73,13 +75,15 @@ class MavenMigrateTest : KotlinMavenImportingTestCase() {
             """.trimIndent(),
         )
 
-        assertEquals(
-            "Migrations for Kotlin code are available<br/><br/>Detected migration:<br/>&nbsp;&nbsp;Language version: 1.5 -> 1.6<br/>&nbsp;&nbsp;API version: 1.5 -> 1.6<br/>",
-            notificationText,
+        assertTrue(
+            /* message = */ notifications.asText,
+            /* condition = */ notifications.any {
+                it.content == "Migrations for Kotlin code are available<br/><br/>Detected migration:<br/>&nbsp;&nbsp;Language version: 1.5 -> 1.6<br/>&nbsp;&nbsp;API version: 1.5 -> 1.6<br/>"
+            }
         )
     }
 
-    private fun doMigrationTest(before: String, after: String): String? = catchNotificationText(myProject) {
+    private fun doMigrationTest(before: String, after: String): List<Notification> = catchNotifications(myProject) {
         importProject(before)
         importProject(after)
     }
