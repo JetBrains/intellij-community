@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
@@ -131,7 +132,13 @@ public final class UiInspectorUtil {
   public static void openClassByFqn(@Nullable Project project, @NotNull String jvmFqn, boolean requestFocus) {
     PsiElement classElement = findClassByFqn(project, jvmFqn);
     if (classElement != null) {
-      PsiNavigateUtil.navigate(classElement, requestFocus);
+      PsiElement navigationElement = classElement.getNavigationElement();
+      if (navigationElement instanceof Navigatable) {
+        ((Navigatable)navigationElement).navigate(requestFocus);
+      }
+      else {
+        PsiNavigateUtil.navigate(classElement, requestFocus);
+      }
     }
   }
 
