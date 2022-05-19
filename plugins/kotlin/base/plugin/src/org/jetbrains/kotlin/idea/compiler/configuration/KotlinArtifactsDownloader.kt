@@ -152,7 +152,7 @@ object KotlinArtifactsDownloader {
         )
         if (downloadedCompiler.isEmpty()) {
             with(prop) {
-                onError("Failed to download maven artifact ($groupId:$artifactId${getVersion()}). " +
+                onError("Failed to download maven artifact ($groupId:$artifactId:${getVersion()}). " +
                                 "Searched the artifact in following repos:\n" +
                                 repos.joinToString("\n") { it.url })
             }
