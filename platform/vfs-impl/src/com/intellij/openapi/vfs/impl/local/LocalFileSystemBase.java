@@ -785,16 +785,29 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static @Nullable FileAttributes getAttributesWithCustomTimestamp(@NotNull VirtualFile file) {
-    final FileAttributes fs = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
-    if (fs == null) return null;
+    final FileAttributes attributes = FileSystemUtil.getAttributes(FileUtilRt.toSystemDependentName(file.getPath()));
+    return copyWithCustomTimestamp(file, attributes);
+  }
+
+  protected static @Nullable FileAttributes copyWithCustomTimestamp(@NotNull VirtualFile file, @Nullable FileAttributes attributes) {
+    if (attributes == null) return null;
 
     for (LocalFileSystemTimestampEvaluator provider : LocalFileSystemTimestampEvaluator.EP_NAME.getExtensionList()) {
       final Long custom = provider.getTimestamp(file);
       if (custom != null) {
-        return new FileAttributes(fs.isDirectory(), fs.isSpecial(), fs.isSymLink(), fs.isHidden(), fs.length, custom, fs.isWritable(), fs.areChildrenCaseSensitive());
+        return new FileAttributes(
+          attributes.isDirectory(),
+          attributes.isSpecial(),
+          attributes.isSymLink(),
+          attributes.isHidden(),
+          attributes.length,
+          custom,
+          attributes.isWritable(),
+          attributes.areChildrenCaseSensitive()
+        );
       }
     }
 
-    return fs;
+    return attributes;
   }
 }
