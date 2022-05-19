@@ -113,7 +113,11 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.text.StringUtil.splitByLines;
+import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
 import static com.intellij.util.ObjectUtils.consumeIfNotNull;
+import static com.intellij.util.containers.ContainerUtil.map2List;
+import static com.intellij.util.containers.ContainerUtil.sorted;
 import static org.junit.Assert.*;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -252,12 +256,12 @@ public final class PlatformTestUtil {
   public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
     String treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
-      final Set<String> actualLines = Set.of(treeStringPresentation.split("\n"));
-      final Set<String> expectedLines = Set.of(expected.split("\n"));
-      assertEquals("Expected:\n" + expected + "\nActual:" + treeStringPresentation, expectedLines, actualLines);
+      final List<String> actualLines = sorted(map2List(splitByLines(treeStringPresentation), String::trim));
+      final List<String> expectedLines = sorted(map2List(splitByLines(expected), String::trim));
+      assertEquals("Expected:\n" + expected + "\nActual:\n" + treeStringPresentation, expectedLines, actualLines);
     }
     else {
-      assertEquals(expected.trim(), treeStringPresentation.trim());
+      assertSameLines(expected.trim(), treeStringPresentation.trim());
     }
   }
 
@@ -314,10 +318,8 @@ public final class PlatformTestUtil {
       UIUtil.dispatchAllInvocationEvents();
       return async.isProcessing();
     }
-    //noinspection deprecation
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
     if (builder == null) return false;
-    //noinspection deprecation
     AbstractTreeUi ui = builder.getUi();
     if (ui == null) return false;
     return ui.hasPendingWork();
@@ -1076,7 +1078,7 @@ public final class PlatformTestUtil {
   }
 
   /**
-   * @see PlatformTestUtil#executeConfiguration(RunConfiguration, com.intellij.execution.Executor, java.util.function.Consumer)
+   * @see PlatformTestUtil#executeConfiguration(RunConfiguration, Executor, Consumer)
    */
   public static @NotNull Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> executeConfiguration(
     @NotNull RunConfiguration runConfiguration,
