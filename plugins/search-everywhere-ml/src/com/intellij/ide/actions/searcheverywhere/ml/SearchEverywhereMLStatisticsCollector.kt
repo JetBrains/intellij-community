@@ -118,6 +118,10 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       if (elementData != null) {
         data.addAll(elementData)
       }
+      val contributors = elements.map { element -> element.contributor }.toHashSet()
+      data.add(CONTRIBUTORS.with(contributors.map { c ->
+        ObjectEventData(CONTRIBUTOR_INFO_ID.with(c.searchProviderId), CONTRIBUTOR_WEIGHT.with(c.sortWeight))
+      }))
       eventId.log(data)
     }
   }
@@ -282,8 +286,14 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     internal val CONTRIBUTOR_ID_KEY = EventFields.String("contributorId", SE_TABS)
     internal val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
 
-    private val COLLECTED_RESULTS_DATA_KEY =
-      ObjectListEventField("collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_ID_KEY, ML_WEIGHT_KEY)
+    private val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
+      "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_ID_KEY, ML_WEIGHT_KEY
+    )
+
+    // information about contributors
+    private val CONTRIBUTOR_INFO_ID = EventFields.String("id", SE_TABS)
+    private val CONTRIBUTOR_WEIGHT = EventFields.Int("weight")
+    private val CONTRIBUTORS = ObjectListEventField("contributors", CONTRIBUTOR_INFO_ID, CONTRIBUTOR_WEIGHT)
 
     // events
     private val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
@@ -317,6 +327,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
         SELECTED_ELEMENTS_DATA_KEY,
         SELECTED_ELEMENTS_CONSISTENT,
         SEARCH_STATE_FEATURES_DATA_KEY,
+        CONTRIBUTORS,
         COLLECTED_RESULTS_DATA_KEY
       )
       fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())

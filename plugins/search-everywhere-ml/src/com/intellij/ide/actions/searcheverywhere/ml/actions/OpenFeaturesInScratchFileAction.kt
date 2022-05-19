@@ -22,6 +22,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     private const val SHOULD_ORDER_BY_ML_KEY = "shouldOrderByMl"
     private const val CONTEXT_INFO_KEY = "contextInfo"
     private const val SEARCH_STATE_FEATURES_KEY = "searchStateFeatures"
+    private const val CONTRIBUTORS_KEY = "contributors"
     private const val FOUND_ELEMENTS_KEY = "foundElements"
   }
 
@@ -73,10 +74,12 @@ class OpenFeaturesInScratchFileAction : AnAction() {
       )
     }
 
+    val contributors = searchEverywhereUI.foundElementsInfo.map { info -> info.contributor }.toHashSet()
     return mapOf(
       SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(),
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
       SEARCH_STATE_FEATURES_KEY to state!!.searchStateFeatures.associate { it.field.name to it.data },
+      CONTRIBUTORS_KEY to contributors.map { c -> ContributorInfo(c.searchProviderId, c.sortWeight) },
       FOUND_ELEMENTS_KEY to features
     )
   }
@@ -107,4 +110,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
                                      val rankingWeight: Int,
                                      val contributor: String,
                                      val features: Map<String, Any>)
+
+  @JsonPropertyOrder("id", "weight")
+  private data class ContributorInfo(val id: String, val weight: Int)
 }
