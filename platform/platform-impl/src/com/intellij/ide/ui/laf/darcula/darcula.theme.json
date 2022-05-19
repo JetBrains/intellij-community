@@ -565,7 +565,9 @@
         "hoverBackground": "#4C5052",
         "pressedBackground": "#4C5052"
       }
-    }
+    },
+
+    "Plugins.borderColor": "#515151"
   },
 
   "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
