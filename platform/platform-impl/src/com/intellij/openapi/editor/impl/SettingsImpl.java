@@ -794,4 +794,8 @@ public class SettingsImpl implements EditorSettings {
     myShowVisualFormattingLayer = showVisualFormattingLayer;
   }
 
+  @Override
+  public boolean isInsertParenthesesAutomatically() {
+    return EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically();
+  }
 }
