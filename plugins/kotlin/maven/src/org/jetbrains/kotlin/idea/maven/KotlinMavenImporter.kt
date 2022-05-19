@@ -73,9 +73,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         changes: MavenProjectChanges,
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
-        KotlinJpsPluginSettings.getInstance(module.project)?.update {
-            version = ""
-        }
+        KotlinJpsPluginSettings.getInstance(module.project)?.dropExplicitVersion()
     }
 
     override fun process(

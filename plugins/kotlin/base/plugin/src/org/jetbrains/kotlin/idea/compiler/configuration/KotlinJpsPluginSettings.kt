@@ -26,7 +26,12 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {
     override fun createSettings() = JpsPluginSettings()
 
-    private fun dropExplicitVersion(): Unit = update { version = "" }
+    fun setVersion(jpsVersion: String) {
+        if (jpsVersion == settings.version) return
+        update { version = jpsVersion }
+    }
+
+    fun dropExplicitVersion(): Unit = setVersion("")
 
     companion object {
         // Use bundled by default because this will work even without internet connection
@@ -53,7 +58,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.isStableRelease) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
                 // it's important to trigger `.idea/kotlinc.xml` file creation
-                jpsPluginSettings.update { version = rawBundledVersion }
+                jpsPluginSettings.setVersion(rawBundledVersion)
             }
         }
 
@@ -126,7 +131,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         ) {
             val instance = getInstance(project) ?: return
             if (rawVersion == rawBundledVersion) {
-                instance.update { version = rawVersion }
+                instance.setVersion(rawVersion)
                 return
             }
 
@@ -164,7 +169,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             )
 
             if (ok) {
-                instance.update { version = rawVersion }
+                instance.setVersion(rawVersion)
             } else {
                 instance.dropExplicitVersion()
             }
