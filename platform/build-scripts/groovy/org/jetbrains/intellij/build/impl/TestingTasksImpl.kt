@@ -133,12 +133,11 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
                                            additionalJvmOptions: List<String>,
                                            additionalSystemProperties: Map<String, String>,
                                            context: CompilationContext) {
-    context.messages.progress("Running \'" + runConfigurationProperties.name + "\' run configuration")
-    val filteredVmOptions = removeStandardJvmOptions(runConfigurationProperties.vmParameters)
+    context.messages.progress("Running \'${runConfigurationProperties.name}\' run configuration")
     runTestsProcess(mainModule = runConfigurationProperties.moduleName,
                     testGroups = null,
                     testPatterns = runConfigurationProperties.testClassPatterns.joinToString(separator = ";"),
-                    jvmArgs = filteredVmOptions + additionalJvmOptions,
+                    jvmArgs = removeStandardJvmOptions(runConfigurationProperties.vmParameters) + additionalJvmOptions,
                     systemProperties = additionalSystemProperties,
                     envVariables = runConfigurationProperties.envVariables,
                     remoteDebugging = false,
@@ -248,12 +247,10 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     if (options.testConfigurations != null) {
       context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
     }
-    val mainModule = options.mainModule ?: defaultMainModule!!
-    val filteredOptions = removeStandardJvmOptions(StringUtilRt.splitHonorQuotes(remoteDebugJvmOptions, ' '))
-    runTestsProcess(mainModule = mainModule,
+    runTestsProcess(mainModule = options.mainModule ?: defaultMainModule!!,
                     testGroups = null,
                     testPatterns = junitClass,
-                    jvmArgs = filteredOptions + additionalJvmOptions,
+                    jvmArgs = removeStandardJvmOptions(StringUtilRt.splitHonorQuotes(remoteDebugJvmOptions, ' ')) + additionalJvmOptions,
                     systemProperties = emptyMap(),
                     remoteDebugging = true,
                     context = context)
@@ -679,10 +676,11 @@ private class MyTraceFileUploader(serverUrl: String,
   }
 }
 
+private val ignoredPrefixes = listOf("-ea", "-XX:+HeapDumpOnOutOfMemoryError", "-Xbootclasspath", "-Xmx", "-Xms", "-Didea.system.path=",
+                                     "-Didea.config.path=", "-Didea.home.path=")
+
 private fun removeStandardJvmOptions(vmOptions: List<String>): List<String> {
-  val ignoredPrefixes = listOf("-ea", "-XX:+HeapDumpOnOutOfMemoryError", "-Xbootclasspath", "-Xmx", "-Xms", "-Didea.system.path=",
-                               "-Didea.config.path=", "-Didea.home.path=")
-  return vmOptions.filter { option -> ignoredPrefixes.all { !option.startsWith(it) } }
+  return vmOptions.filter { option -> ignoredPrefixes.none(option::startsWith) }
 }
 
 private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
@@ -708,7 +706,7 @@ Will not upload to remote server. Please set 'intellij.test.discovery.url' syste
       map.put("branch", System.getProperty("teamcity.build.branch")?.takeIf(String::isNotEmpty) ?: "master")
       map.put("project", System.getProperty("intellij.test.discovery.project")?.takeIf(String::isNotEmpty) ?: "intellij")
       map.put("checkout-root-prefix", System.getProperty("intellij.build.test.discovery.checkout.root.prefix"))
-      uploader.upload(File(file), map)
+      uploader.upload(Path.of(file), map)
     }
     catch (e: Exception) {
       messages.error(e.message!!, e)
