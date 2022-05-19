@@ -358,7 +358,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       try {
         List<VirtualFile> files = changeListManager.getAffectedFiles();
         for (VirtualFile file : files) {
-          reportMessage(0, "modified file" + file.getPath());
+          reportMessage(0, "modified file: " + file.getPath());
         }
         future.complete(files);
       }
