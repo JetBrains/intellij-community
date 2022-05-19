@@ -26,9 +26,9 @@ fun convertToHashCodeWithOnlyLetters(hash: Int): String {
  *  text1234text => text<NUM>text
  **/
 fun generifyErrorMessage(originalMessage: String): String {
-  return originalMessage // text@3ba5aac, text => text<ID>, text
-    .replace("[\$@#][A-Za-z\\d-_]+".toRegex(), "<ID>") // some-text.db451f59 => some-text.<HASH>
-    .replace("[.]([A-Za-z]+\\d|\\d+[A-Za-z])[A-Za-z\\d]*".toRegex(), ".<HASH>") // 0x01 => <HEX>
-    .replace("0x[\\da-fA-F]+".toRegex(), "<HEX>") // text1234text => text<NUM>text
-    .replace("\\d+".toRegex(), "<NUM>")
+  return originalMessage
+    .replace("[\$@#][A-Za-z\\d-_]+".toRegex(), "<ID>") // text@3ba5aac, text => text<ID>, text
+    .replace("[.]([A-Za-z]+\\d|\\d+[A-Za-z])[A-Za-z\\d]*".toRegex(), ".<HASH>") // some-text.db451f59 => some-text.<HASH>
+    .replace("0x[\\da-fA-F]+".toRegex(), "<HEX>") // 0x01 => <HEX>
+    .replace("\\d+".toRegex(), "<NUM>") // text1234text => text<NUM>text
 }

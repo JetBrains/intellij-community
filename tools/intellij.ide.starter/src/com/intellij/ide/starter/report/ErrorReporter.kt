@@ -6,8 +6,9 @@ import com.intellij.ide.starter.utils.convertToHashCodeWithOnlyLetters
 import com.intellij.ide.starter.utils.generifyErrorMessage
 import org.kodein.di.direct
 import org.kodein.di.instance
-import java.nio.file.Files
+import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 
 object ErrorReporter {
@@ -17,11 +18,11 @@ object ErrorReporter {
    * Sort things out from errors directories, written by performance testing plugin
    * Take a look at [com.jetbrains.performancePlugin.ProjectLoaded.reportErrorsFromMessagePool]
    */
-  fun reportErrorsAsFailedTests(scriptErrorsDir: Path, contextName: String) {
-    if (Files.isDirectory(scriptErrorsDir)) {
+  fun reportErrorsAsFailedTests(scriptErrorsDir: Path, contextName: String): List<Pair<File, File>> {
+    return if (scriptErrorsDir.isDirectory()) {
       val errorsDirectories = scriptErrorsDir.listDirectoryEntries()
 
-      for (errorDir in errorsDirectories) {
+      errorsDirectories.map { errorDir ->
         val messageFile = errorDir.resolve("message.txt").toFile()
         val stacktraceFile = errorDir.resolve("stacktrace.txt").toFile()
 
@@ -43,14 +44,17 @@ object ErrorReporter {
           }
 
           val stackTrace = """
-            Test: $contextName
-            
-            $stackTraceContent
-          """.trimIndent().trimMargin().trim()
+                Test: $contextName
+                
+                $stackTraceContent
+              """.trimIndent().trimMargin().trim()
 
           di.direct.instance<CIServer>().reportTestFailure(generifyErrorMessage(testName), messageText, stackTrace)
         }
+
+        Pair(messageFile, stacktraceFile)
       }
     }
+    else listOf()
   }
 }
