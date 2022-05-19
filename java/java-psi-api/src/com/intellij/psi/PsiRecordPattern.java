@@ -9,4 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public interface PsiRecordPattern extends PsiPrimaryPattern, PsiNamedElement {
   @NotNull
   PsiRecordStructurePattern getStructurePattern();
+
+  @NotNull
+  PsiTypeElement getTypeElement();
 }

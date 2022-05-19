@@ -36,6 +36,13 @@ public class PsiRecordPatternImpl extends CompositePsiElement implements PsiReco
   }
 
   @Override
+  public @NotNull PsiTypeElement getTypeElement() {
+    PsiTypeElement type = (PsiTypeElement)findPsiChildByType(JavaElementType.TYPE);
+    assert type != null; // guaranteed by parser
+    return type;
+  }
+
+  @Override
   public String getName() {
     PsiElement identifier = getNameIdentifier();
     return identifier == null

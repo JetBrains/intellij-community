@@ -341,4 +341,10 @@ class B {}""")
     recordPattern.setName("foo")
     assert expression.text == "o instanceof Record(int a, boolean b)foo"
   }
+
+  void "test record pattern type"() {
+    def expression = (PsiInstanceOfExpression)PsiElementFactory.getInstance(project).createExpressionFromText("o instanceof Record(int a, boolean b)", null)
+    def recordPattern = (PsiRecordPattern)expression.pattern
+    assert recordPattern.typeElement.text == "Record"
+  }
 }
