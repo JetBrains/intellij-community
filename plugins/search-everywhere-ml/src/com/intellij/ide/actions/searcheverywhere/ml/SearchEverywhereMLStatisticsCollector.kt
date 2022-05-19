@@ -300,7 +300,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     private val SEARCH_RESTARTED = registerEvent("searchRestarted")
 
     private fun createFeaturesEventObject(): ObjectEventField {
-      val features = arrayListOf<EventField<*>>()
+      val features = arrayListOf<EventField<*>>(SearchEverywhereElementFeaturesProvider.NAME_LENGTH)
       features.addAll(SearchEverywhereElementFeaturesProvider.nameFeatureToField.values)
       for (featureProvider in SearchEverywhereElementFeaturesProvider.getFeatureProviders()) {
         features.addAll(featureProvider.getFeaturesDeclarations())

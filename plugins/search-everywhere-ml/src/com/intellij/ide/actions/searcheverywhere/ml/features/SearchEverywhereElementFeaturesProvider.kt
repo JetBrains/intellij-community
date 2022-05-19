@@ -23,6 +23,8 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
       return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) }
     }
 
+    internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
+
     internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
       "prefix_greedy_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyScore"),
@@ -85,21 +87,23 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
   protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Collection<EventPair<*>> {
     val features = mutableMapOf<String, Any>()
     PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
-    val result = features.mapNotNull { (key, value) ->
+    val result = arrayListOf<EventPair<*>>(
+      NAME_LENGTH.with(nameOfFoundElement.length)
+    )
+    features.forEach { (key, value) ->
       val field = nameFeatureToField[key]
       if (value is Boolean && field is BooleanEventField) {
-        return@mapNotNull field.with(value)
+        result.add(field.with(value))
       }
       else if (value is Double && field is DoubleEventField) {
-        return@mapNotNull field.with(roundDouble(value))
+        result.add(field.with(roundDouble(value)))
       }
       else if (value is Int && field is IntEventField) {
-        return@mapNotNull field.with(value)
+        result.add(field.with(value))
       }
       else if (value is Enum<*> && field is StringEventField) {
-        return@mapNotNull field.with(value.toString())
+        result.add(field.with(value.toString()))
       }
-      return@mapNotNull null
     }
     return result
   }
