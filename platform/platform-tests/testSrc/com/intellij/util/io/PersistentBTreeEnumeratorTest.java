@@ -249,7 +249,7 @@ public class PersistentBTreeEnumeratorTest {
     assertEquals(3, pageLoadDiff);
     assertEquals(0, pageMissDiff);
     assertEquals(0, pageHitDiff);
-    assertEquals(1007, pageFastHitDiff);
+    assertEquals(1929, pageFastHitDiff);
   }
 
   @Test

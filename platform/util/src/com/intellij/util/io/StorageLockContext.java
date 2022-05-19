@@ -120,4 +120,9 @@ public final class StorageLockContext {
   public static void assertNoBuffersLocked() {
     ourDefaultCache.assertNoBuffersLocked();
   }
+
+  @ApiStatus.Internal
+  public static long getCacheMaxSize() {
+    return ourDefaultCache.getMaxSize();
+  }
 }

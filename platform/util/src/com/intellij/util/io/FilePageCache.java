@@ -88,6 +88,10 @@ final class FilePageCache {
     myFastCacheHits++;
   }
 
+  public long getMaxSize() {
+    return mySizeLimit;
+  }
+
   private static long maxDirectMemory() {
     try {
       Class<?> aClass = Class.forName("jdk.internal.misc.VM");
@@ -283,7 +287,7 @@ final class FilePageCache {
 
       mySegmentsAccessLock.lock();
       try {
-        if (mySegments.size() + fileStorage.myPageSize < mySizeLimit) {
+        if (mySize + fileStorage.myPageSize < mySizeLimit) {
           myLoad++;
         }
         else {
