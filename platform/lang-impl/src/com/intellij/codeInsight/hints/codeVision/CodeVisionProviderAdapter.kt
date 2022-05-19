@@ -30,7 +30,7 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
     return delegate.getPlaceholderCollector(editor, psiFile)
   }
 
-  override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit): Boolean {
+  override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit?): Boolean {
     if (isInlaySettingsEditor(editor)) return true
     val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)

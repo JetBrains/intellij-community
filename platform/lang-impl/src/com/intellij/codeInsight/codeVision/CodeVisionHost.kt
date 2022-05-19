@@ -402,7 +402,7 @@ open class CodeVisionHost(val project: Project) {
         it as CodeVisionProvider<Any?>
         if (!inlaySettingsEditor && !lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
           runSafe("shouldRecomputeForEditor for ${it.id}") {
-            if (!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id] ?: Unit)) {
+            if (!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) {
               everyProviderReadyToUpdate = false
               return@forEach
             }
