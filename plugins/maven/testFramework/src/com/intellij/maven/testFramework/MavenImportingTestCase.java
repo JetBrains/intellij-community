@@ -124,6 +124,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     removeFromLocalRepository("test");
   }
 
+  protected void assertModules(String expectedName) {
+
+  }
+
+  protected String mn(String parent, String moduleName) {
+    if (!MavenProjectImporter.isImportToTreeStructureEnabled(myProject)) return moduleName;
+    return parent + "." + moduleName;
+  }
+
   protected void assertModules(String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(myProject).getModules();
     List<String> actualNames = new ArrayList<>();

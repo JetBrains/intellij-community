@@ -2,12 +2,13 @@
 package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.ide.DataManager;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
@@ -22,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -736,7 +736,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                                           "<version>1</version>");
     importProject();
     myProjectsManager.performScheduledImportInTests(); // ensure no pending requests
-    assertModules("project", "m");
+    assertModules("project", mn("project", "m"));
 
     runWriteAction(() -> m.delete(this));
 
