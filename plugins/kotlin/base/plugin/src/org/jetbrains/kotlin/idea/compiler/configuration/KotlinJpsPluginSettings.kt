@@ -19,8 +19,9 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
     companion object {
         // Use bundled by default because this will work even without internet connection
-        @JvmField
-        val DEFAULT_VERSION = KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion
+        @JvmStatic
+        val rawBundledVersion: String get() = bundledVersion.rawVersion
+        private val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.instance.standaloneCompilerVersion
 
         fun validateSettings(project: Project) {
             val jpsPluginSettings = project.service<KotlinJpsPluginSettings>()
@@ -30,10 +31,10 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 return
             }
 
-            if (jpsPluginSettings.settings.version.isEmpty()) {
+            if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.isStableRelease) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
                 // it's important to trigger `.idea/kotlinc.xml` file creation
-                jpsPluginSettings.update { version = DEFAULT_VERSION }
+                jpsPluginSettings.update { version = rawBundledVersion }
             }
         }
 
@@ -51,4 +52,4 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 }
 
 @get:NlsSafe
-val JpsPluginSettings.versionWithFallback: String get() = version.ifEmpty { KotlinJpsPluginSettings.DEFAULT_VERSION }
+val JpsPluginSettings.versionWithFallback: String get() = version.ifEmpty { KotlinJpsPluginSettings.rawBundledVersion }

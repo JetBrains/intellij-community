@@ -502,7 +502,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
         @Override
         public @NotNull String getDescription() {
-            if (!myVersion.equals(KotlinJpsPluginSettings.DEFAULT_VERSION)) return myVersion;
+            if (!myVersion.equals(KotlinJpsPluginSettings.getRawBundledVersion())) return myVersion;
             return KotlinBundle.message("configuration.text.bundled.0.jps.version", myVersion);
         }
 
@@ -620,7 +620,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
             return version;
         }
 
-        return KotlinJpsPluginSettings.DEFAULT_VERSION;
+        return KotlinJpsPluginSettings.getRawBundledVersion();
     }
 
     public void applyTo(
