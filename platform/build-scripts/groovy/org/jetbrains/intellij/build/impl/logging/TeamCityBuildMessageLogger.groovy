@@ -18,7 +18,7 @@ final class TeamCityBuildMessageLogger extends BuildMessageLogger {
     new TeamCityBuildMessageLogger(taskName, antLogger)
   } as BiFunction<String, AntTaskLogger, BuildMessageLogger>
   private static final String ANT_OUTPUT_PREFIX = "###<<<>>>###:" //copied from jetbrains.buildServer.agent.ant.ServiceMessageBuildProgressLogger
-  private static final PrintStream out = BuildUtils.realSystemOut
+  private static final PrintStream out = BuildUtils.INSTANCE.realSystemOut
   private final String parallelTaskId
   private AntTaskLogger antTaskLogger
   private boolean isTeamCityListenerRegistered
@@ -145,7 +145,7 @@ final class TeamCityBuildMessageLogger extends BuildMessageLogger {
   }
 
   private void printMessageText(String message) {
-    if (BuildUtils.isUnderJpsBootstrap()) {
+    if (BuildUtils.INSTANCE.isUnderJpsBootstrap()) {
       // under jps-bootstrap we're logging directly to teamcity
       // so special prefixes are not required
       out.println(message)

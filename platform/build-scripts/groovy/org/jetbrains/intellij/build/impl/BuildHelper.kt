@@ -18,7 +18,9 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
 import java.io.File
+import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
@@ -172,9 +174,8 @@ fun runApplicationStarter(context: BuildContext,
     for (jarFile in BuildUtils.getPluginJars(pluginPath)) {
       if (effectiveIdeClasspath.add(jarFile.toString())) {
         context.messages.debug("$jarFile from plugin $pluginPath")
-        val pluginId = BuildUtils.readPluginId(jarFile)
-        if (pluginId != null) {
-          additionalPluginIds.add(pluginId)
+        readPluginId(jarFile)?.let {
+          additionalPluginIds.add(it)
         }
       }
     }
@@ -187,6 +188,21 @@ fun runApplicationStarter(context: BuildContext,
     logFile.copyTo(logFileToPublish.toPath(), true)
     context.notifyArtifactBuilt(logFileToPublish.toPath())
     context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
+  }
+}
+
+private fun readPluginId(pluginJar: Path): String? {
+  if (!pluginJar.toString().endsWith(".jar") || !Files.isRegularFile(pluginJar)) {
+    return null
+  }
+
+  try {
+    FileSystems.newFileSystem(pluginJar, null).use {
+      return readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
+    }
+  }
+  catch (ignore: NoSuchFileException) {
+    return null
   }
 }
 
