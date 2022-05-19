@@ -6,7 +6,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Defines a code fragment type on which the <em>Surround With</em> action can be used for files
+ * Defines a code fragment type on which the <em>Code | Surround With</em> action can be used for files
  * in a custom language. All surround descriptors registered for a language are queried
  * sequentially, and as soon as one is found that returns a non-empty list of elements
  * from {@link #getElementsToSurround(PsiFile, int, int)}, the user
@@ -35,7 +35,7 @@ public interface SurroundDescriptor {
 
   /**
    * If {@code true} then only surrounders from all applicable exclusive surround descriptors
-   * will be included in the <em>Surround With</em> action.
+   * will be included in the <em>Code | Surround With</em> action.
    */
   boolean isExclusive();
 }

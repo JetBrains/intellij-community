@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Defines a single template which can be used in <em>Surround With</em> action.
+ * Defines a single template which can be used in <em>Code | Surround With</em> action.
  *
  * @see SurroundDescriptor
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/surround-with.html">Surround With (IntelliJ Platform Docs)</a>
@@ -36,7 +36,7 @@ public interface Surrounder {
   boolean isApplicable(PsiElement @NotNull [] elements);
 
   /**
-   * Performs the <em>Surround With</em> action on the specified range of elements.
+   * Performs the <em>Code | Surround With</em> action on the specified range of elements.
    *
    * @param elements the elements to be surrounded
    * @return range to select/to position the caret
