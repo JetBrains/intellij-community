@@ -39,10 +39,9 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private final Executor myEventProcessingQueue =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", AppExecutorUtil.getAppExecutorService(), 1, this);
 
-  private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(IdeCoreBundle.message("file.synchronize.progress"));
+  private final ProgressIndicator myRefreshIndicator = RefreshProgress.create();
   private final Map<Long, RefreshSessionImpl> mySessions = Collections.synchronizedMap(new HashMap<>());
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
-  private int myBusyThreads;
 
   void execute(@NotNull RefreshSessionImpl session) {
     ApplicationEx app;
@@ -68,22 +67,24 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     long queuedAt = System.nanoTime();
     myQueue.execute(() -> {
       long timeInQueue = (System.nanoTime() - queuedAt) / 1_000_000;
-      startRefreshActivity();
+      myRefreshIndicator.setText(IdeCoreBundle.message("file.synchronize.progress"));
+      myRefreshIndicator.start();
       try {
         String title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);
         HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, title, () -> runRefreshSession(session, timeInQueue));
       }
       finally {
-        finishRefreshActivity();
+        myRefreshIndicator.stop();
         if (Registry.is("vfs.async.event.processing")) {
-          startRefreshActivity();
+          myRefreshIndicator.setText(IdeCoreBundle.message("async.events.progress"));
+          myRefreshIndicator.start();
           ReadAction
             .nonBlocking(() -> runAsyncListeners(session))
             .expireWith(this)
             .wrapProgress(myRefreshIndicator)
             .finishOnUiThread(modality, p -> session.fireEvents(p.first, p.second, true))
             .submit(myEventProcessingQueue)
-            .onProcessed(__ -> finishRefreshActivity())
+            .onProcessed(__ -> myRefreshIndicator.stop())
             .onError(t -> {
               if (!myRefreshIndicator.isCanceled()) {
                 LOG.error(t);
@@ -101,18 +102,6 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static void fireEvents(RefreshSessionImpl session) {
     List<CompoundVFileEvent> events = ContainerUtil.map(session.getEvents(), CompoundVFileEvent::new);
     session.fireEvents(events, List.of(), false);
-  }
-
-  private synchronized void startRefreshActivity() {
-    if (myBusyThreads++ == 0) {
-      myRefreshIndicator.start();
-    }
-  }
-
-  private synchronized void finishRefreshActivity() {
-    if (--myBusyThreads == 0) {
-      myRefreshIndicator.stop();
-    }
   }
 
   private static Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> runAsyncListeners(RefreshSessionImpl session) {

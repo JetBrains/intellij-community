@@ -9,35 +9,33 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 final class RefreshProgress extends ProgressIndicatorBase {
-  static @NotNull ProgressIndicator create(@NotNull @NlsContexts.Tooltip String message) {
+  static @NotNull ProgressIndicator create() {
     Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
-    return app == null || app.isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress(message);
+    return app == null || app.isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress();
   }
 
-  private final @NlsContexts.Tooltip String myMessage;
-
-  private RefreshProgress(@NlsContexts.Tooltip String message) {
-    super(true);
-    myMessage = message;
-  }
+  private int myActivityCounter;
 
   @Override
   public void start() {
-    super.start();
-    scheduleUiUpdate();
+    if (myActivityCounter++ == 0) {
+      super.start();
+      scheduleUiUpdate();
+    }
   }
 
   @Override
   public void stop() {
-    super.stop();
-    scheduleUiUpdate();
+    if (--myActivityCounter == 0) {
+      super.stop();
+      scheduleUiUpdate();
+    }
   }
 
   private void scheduleUiUpdate() {
@@ -54,7 +52,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
           StatusBar statusBar = windowManager.getStatusBar(project);
           if (statusBar != null) {
             if (isRunning()) {
-              statusBar.startRefreshIndication(myMessage);
+              statusBar.startRefreshIndication(getText());
             }
             else {
               statusBar.stopRefreshIndication();
