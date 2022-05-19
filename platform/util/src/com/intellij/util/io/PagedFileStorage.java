@@ -423,6 +423,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     if (pageFromCache != null) {
+      myStorageLockContext.getBufferCache().incrementHitsCount();
       return pageFromCache;
     }
 

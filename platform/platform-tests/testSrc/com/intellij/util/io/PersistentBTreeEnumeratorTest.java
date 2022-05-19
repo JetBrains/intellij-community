@@ -190,6 +190,9 @@ public class PersistentBTreeEnumeratorTest {
     List<String> absentData = Arrays.asList("456", "789", "jjj", "kkk");
 
     StorageLockContext.forceDirectMemoryCache();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
     FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
     PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 400, () -> {
       for (int i = 0; i < 10000; i++) {
@@ -201,8 +204,11 @@ public class PersistentBTreeEnumeratorTest {
           assertEquals(0, myEnumerator.tryEnumerate(item));
         }
       }
-    }).assertTiming();
+    }).attempts(1).assertTiming();
     FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
 
     // ensure enumerator didn't request any page
 
@@ -210,7 +216,39 @@ public class PersistentBTreeEnumeratorTest {
     int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
     int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
 
-    assertEquals(0, pageLoadDiff);
+    assertEquals(1, pageLoadDiff);
+    assertEquals(0, pageMissDiff);
+    assertEquals(0, pageHitDiff);
+  }
+
+  @Test
+  public void testEnumeratorRootRecaching() throws IOException {
+    List<String> data = Arrays.asList("qwe", "asd", "zxc", "123");
+    for (String item : data) {
+      myEnumerator.enumerate(item);
+    }
+
+    StorageLockContext.forceDirectMemoryCache();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
+    for (String item : data) {
+      assertNotEquals(0, myEnumerator.tryEnumerate(item));
+      StorageLockContext.forceDirectMemoryCache();
+    }
+    FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    // ensure enumerator didn't request any page
+
+    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
+    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
+    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+
+    assertEquals(4, pageLoadDiff);
     assertEquals(0, pageMissDiff);
     assertEquals(0, pageHitDiff);
   }
