@@ -31,7 +31,6 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
@@ -173,6 +172,9 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       row(GithubBundle.message("clone.dialog.directory.field")) {
         cell(directoryField)
           .horizontalAlign(HorizontalAlign.FILL)
+          .validationOnApply {
+            CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
+          }
       }
     }
     repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
@@ -242,11 +244,10 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   override fun getView() = wrapper
 
-  override fun doValidateAll(): List<ValidationInfo> {
-    val list = ArrayList<ValidationInfo>()
-    ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
-    return list
-  }
+  override fun doValidateAll(): List<ValidationInfo> =
+    (wrapper.targetComponent as? DialogPanel)?.validationsOnApply?.values?.flatten()?.mapNotNull {
+      it.validate()
+    } ?: emptyList()
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
     val parent = Paths.get(directoryField.text).toAbsolutePath().parent
