@@ -94,9 +94,11 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   protected val content: JComponent get() = wrapper.targetComponent
 
+  private val accountListModel: ListModel<GithubAccount> = createAccountsModel()
+
   init {
     repositoryList = JBList(loader.listModel).apply {
-      cellRenderer = GHRepositoryListCellRenderer { getAccounts() }
+      cellRenderer = GHRepositoryListCellRenderer { accountListModel.itemsSet }
       isFocusable = false
       selectionModel = SingleSelectionModel()
     }.also {
@@ -149,7 +151,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
     }
 
-    val accountsPanel = CompactAccountsPanelFactory(createAccountsModel(), accountDetailsLoader)
+    val accountsPanel = CompactAccountsPanelFactory(accountListModel, accountDetailsLoader)
       .create(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
 
     repositoriesPanel = panel {
@@ -183,23 +185,23 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   protected abstract fun isAccountHandled(account: GithubAccount): Boolean
 
-  protected fun getAccounts(): List<GithubAccount> = authenticationManager.getAccounts().filter(::isAccountHandled)
+  protected fun getAccounts(): Set<GithubAccount> = accountListModel.itemsSet
 
   protected abstract fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent
 
   private fun setupAccountsListeners() {
-    authenticationManager.addListener(this, object : AccountsListener<GithubAccount> {
-      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
-        val oldList = old.filter(::isAccountHandled)
-        val newList = new.filter(::isAccountHandled)
-        val delta = CollectionDelta(oldList, newList)
+    accountListModel.addListDataListener(object : ListDataListener {
+
+      private var currentList by Delegates.observable(emptySet<GithubAccount>()) { _, oldValue, newValue ->
+        val delta = CollectionDelta(oldValue, newValue)
         for (account in delta.removedItems) {
           loader.clear(account)
         }
         for (account in delta.newItems) {
           loader.loadRepositories(account)
         }
-        if (delta.newItems.isEmpty()) {
+
+        if (newValue.isEmpty()) {
           switchToLogin(null)
         }
         else {
@@ -208,24 +210,28 @@ internal abstract class GHCloneDialogExtensionComponentBase(
         dialogStateListener.onListItemChanged()
       }
 
-      override fun onAccountCredentialsChanged(account: GithubAccount) {
-        if (!isAccountHandled(account)) return
-        loader.clear(account)
-        loader.loadRepositories(account)
+      init {
+        currentList = accountListModel.itemsSet
+      }
+
+      override fun intervalAdded(e: ListDataEvent) {
+        currentList = accountListModel.itemsSet
+      }
+
+      override fun intervalRemoved(e: ListDataEvent) {
+        currentList = accountListModel.itemsSet
+      }
+
+      override fun contentsChanged(e: ListDataEvent) {
+        for (i in e.index0..e.index1) {
+          val account = accountListModel.getElementAt(i)
+          loader.clear(account)
+          loader.loadRepositories(account)
+        }
         switchToRepositories()
         dialogStateListener.onListItemChanged()
       }
     })
-    val accounts = getAccounts()
-    if (accounts.isNotEmpty()) {
-      switchToRepositories()
-      for (account in accounts) {
-        loader.loadRepositories(account)
-      }
-    }
-    else {
-      switchToLogin(null)
-    }
   }
 
   protected fun switchToLogin(account: GithubAccount?) {
@@ -346,12 +352,16 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   private fun createAccountsModel(): ListModel<GithubAccount> {
-    val model = CollectionListModel(getAccounts())
+    val model = CollectionListModel(authenticationManager.getAccounts().filter(::isAccountHandled))
     authenticationManager.addListener(this, object : AccountsListener<GithubAccount> {
       override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+        val oldList = old.filter(::isAccountHandled)
         val newList = new.filter(::isAccountHandled)
-        model.removeAll()
-        model.add(newList)
+        val delta = CollectionDelta(oldList, newList)
+        model.add(delta.newItems.toList())
+        for (account in delta.removedItems) {
+          model.remove(account)
+        }
       }
 
       override fun onAccountCredentialsChanged(account: GithubAccount) {
@@ -398,5 +408,24 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     }
     val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_FIND)
     action.registerCustomShortcutSet(shortcuts, repositoriesPanel, this)
+  }
+
+  companion object {
+    internal val <E> ListModel<E>.items
+      get() = Iterable {
+        object : Iterator<E> {
+          private var idx = -1
+
+          override fun hasNext(): Boolean = idx < size - 1
+
+          override fun next(): E {
+            idx++
+            return getElementAt(idx)
+          }
+        }
+      }
+
+    internal val <E> ListModel<E>.itemsSet
+      get() = items.toSet()
   }
 }
