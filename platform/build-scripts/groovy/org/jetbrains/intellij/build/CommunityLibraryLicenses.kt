@@ -675,7 +675,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "SourceCodePro", attachedTo = "intellij.platform.resources", version = "2.010", license = "OFL",
                        url = "https://github.com/adobe-fonts/source-code-pro",
                        licenseUrl = "https://github.com/adobe-fonts/source-code-pro/blob/master/LICENSE.md"),
-    LibraryLicense(name = "Spantable", libraryName = "spantable.jar", version = "patched", license = "LGPL 2.1",
+    LibraryLicense(name = "Spantable", libraryName = "spantable", version = "patched", license = "LGPL 2.1",
                        licenseUrl = "https://www.gnu.org/licenses/lgpl.html",
                        url = "https://android.googlesource.com/platform/prebuilts/tools/+/master/common/spantable/"),
     LibraryLicense(name = "sphinxcontrib-napoleon", attachedTo = "intellij.python", version = "0.7",
@@ -698,7 +698,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "swingx", libraryName = "swingx", license = "LGPL 2.1",
                        url = "https://java.net/downloads/swingx/", licenseUrl = "https://www.opensource.org/licenses/lgpl-2.1.php"),
     // for tensorflow-lite-metadata module library in android.sdktools.mlkit-common
-    LibraryLicense(name = "TensorFlow Lite Metadata Library", libraryName = "tensorflow.lite.metadata",
+    LibraryLicense(name = "TensorFlow Lite Metadata Library", libraryName = "tensorflow-lite-metadata",
                        url = "https://tensorflow.org/lite").apache(),
     LibraryLicense(libraryName = "TestNG", url = "https://testng.org/doc/",
                        licenseUrl = "https://github.com/cbeust/testng/blob/master/LICENSE.txt").apache(),

@@ -132,7 +132,9 @@ final class CommunityRepositoryModules {
       withModule("intellij.packageSearch.kotlin")
     },
     plugin("intellij.gradle.dependencyUpdater"),
-    plugin("intellij.android.gradle.dsl"),
+    plugin("intellij.android.gradle.dsl") {
+      withModule("intellij.android.gradle.dsl.kotlin")
+    },
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
     },
@@ -271,29 +273,44 @@ final class CommunityRepositoryModules {
         return version
       })
 
-      withModule("intellij.android.adt.ui", "adt-ui.jar")
+      // modules:
+      // adt-ui.jar
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
+      withModule("intellij.android.adt.ui", "adt-ui.jar")
 
+      // android-base-common.jar
+      withModuleLibrary("precompiled-common", "android.sdktools.common", "android-base-common.jar")
+
+      // android-common.jar
       withModule("intellij.android.common", "android-common.jar")
 
-      withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar")
+      // android-extensions-ide.jar
+      withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar") // <= ADDED
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
 
+      // android-kotlin.jar
+      withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar") // <= ADDED
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
-      withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
 
+      // android-profilers.jar
       withModule("intellij.android.profilers.atrace", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.transportDatabase", "android-profilers.jar")
 
-      // do not add tools/adt/idea/analytics:analytics
+      // android-rt.jar
+      //tools/adt/idea/rt:intellij.android.rt <= REMOVED
+
+      // android.jar
+      //tools/adt/idea/analytics:analytics <= REMOVED
       withModule("intellij.android.android-layout-inspector", "android.jar")
-      withModule("android.sdktools.flags", "android.jar")
-      // do not add tools/adt/idea/assistant:assistant
-      // do not add tools/adt/idea/connection-assistant:connection-assistant
+      withModuleLibrary("precompiled-flags", "android.sdktools.flags", "android.jar")
+      //tools/adt/idea/assistant:assistant <= REMOVED
+      //tools/adt/idea/connection-assistant:connection-assistant <= REMOVED
       withModule("intellij.android.adb", "android.jar")
+      withModule("intellij.android.lint", "android.jar")
+      withModule("intellij.android.templates", "android.jar")
       withModule("intellij.android.apkanalyzer", "android.jar")
       withModule("intellij.android.app-inspection.api", "android.jar")
       withModule("intellij.android.app-inspection.ide", "android.jar")
@@ -306,30 +323,31 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.app-inspection.inspectors.workmanager.model", "android.jar")
       withModule("intellij.android.app-inspection.inspectors.workmanager.view", "android.jar")
       withModule("intellij.android.build-attribution", "android.jar")
-      withModule("intellij.android.compose-designer", "android.jar")
       withModule("intellij.android.compose-common", "android.jar")
       withModule("intellij.android.core", "android.jar")
+      withModule("intellij.android.navigator", "android.jar")
       withModule("intellij.android.dagger", "android.jar")
       withModule("intellij.android.databinding", "android.jar")
       withModule("intellij.android.app-inspection.inspectors.database", "android.jar")
       withModule("intellij.android.debuggers", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
-      withModule("intellij.android.designer.customview", "android.jar")
-      withModule("intellij.android.designer", "android.jar")
+      withModule("intellij.android.device-explorer", "android.jar")
       withModule("intellij.android.emulator", "android.jar")
       withModule("intellij.android.gradle-tooling.api", "android.jar")
       withModule("intellij.android.gradle-tooling.impl", "android.jar")
-      //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl // this is in IJ platform currently
+      //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
+      //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
       withModule("intellij.android.lang-databinding", "android.jar")
       withModule("intellij.android.lang", "android.jar")
       withModule("intellij.android.layout-inspector", "android.jar")
       withModule("intellij.android.layout-ui", "android.jar")
+      withModule("intellij.android.logcat", "android.jar")
       withModule("intellij.android.mlkit", "android.jar")
-      withModule("intellij.android.nav.editor", "android.jar")
       withModule("intellij.android.nav.safeargs", "android.jar")
-      //withModule("intellij.android.newProjectWizard", "android.jar") // exclude empty module from IDEA
+      withModule("intellij.android.newProjectWizard", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
       withModule("intellij.android.observable", "android.jar")
+      withModule("intellij.android.plugin", "android.jar")
       withModule("intellij.android.profilersAndroid", "android.jar")
       withModule("intellij.android.projectSystem.gradle.models", "android.jar")
       withModule("intellij.android.projectSystem.gradle.psd", "android.jar")
@@ -337,7 +355,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.projectSystem.gradle.sync", "android.jar")
       withModule("intellij.android.projectSystem.gradle", "android.jar")
       withModule("intellij.android.projectSystem", "android.jar")
-      withModule("intellij.android.resources-base", "android.jar")
       withModule("intellij.android.room", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.testRetention", "android.jar")
@@ -345,105 +362,116 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.wizard.model", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
       withModule("intellij.android.native-symbolizer", "android.jar")
-      //tools/adt/idea/whats-new-assistant:whats-new-assistant
-      withModule("android.sdktools.dynamic-layout-inspector.common", "android.jar")
+      //tools/adt/idea/whats-new-assistant:whats-new-assistant <= REMOVED
+      withModuleLibrary("precompiled-dynamic-layout-inspector.common", "android.sdktools.dynamic-layout-inspector.common", "android.jar")
       withModule("intellij.android.app-inspection.inspectors.network.ide", "android.jar")
       withModule("intellij.android.app-inspection.inspectors.network.model", "android.jar")
       withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
       withModule("intellij.android.server-flags", "android.jar")
+      withModule("intellij.android.codenavigation", "android.jar")
 
-      withModule("intellij.android.artwork")
+      // artwork.jar
+      withModule("intellij.android.artwork", "artwork.jar")
 
-      withModule("android.sdktools.repository")
-
+      // build-common.jar
       withModule("intellij.android.buildCommon", "build-common.jar")
 
-      // "data-binding.jar": [
-      withModule("android.sdktools.db-baseLibrary", "data-binding.jar")
-      withModule("android.sdktools.db-baseLibrarySupport", "data-binding.jar")
-      withModule("android.sdktools.db-compiler", "data-binding.jar")
-      withModule("android.sdktools.db-compilerCommon", "data-binding.jar")
-      //],
+      // data-binding.jar
+      withModuleLibrary("precompiled-db-baseLibrary", "android.sdktools.db-baseLibrary", "data-binding.jar")
+      withModuleLibrary("precompiled-db-baseLibrarySupport", "android.sdktools.db-baseLibrarySupport", "data-binding.jar")
+      withModuleLibrary("precompiled-db-compiler", "android.sdktools.db-compiler", "data-binding.jar")
+      withModuleLibrary("precompiled-db-compilerCommon", "android.sdktools.db-compilerCommon", "data-binding.jar")
 
-      //"game-tools.jar": [
-      //    "//tools/vendor/google/game-tools/main:android.game-tools.main",
-      //],
+      // game-tools.jar
+      //tools/vendor/google/game-tools/main:android.game-tools.main <= REMOVED
 
-      //"inspectors-common.jar": [
+      // google-analytics-library.jar
+      withModuleLibrary("precompiled-analytics-shared", "android.sdktools.analytics-shared", "google-analytics-library.jar")
+      withModuleLibrary("precompiled-analytics-tracker", "android.sdktools.analytics-tracker", "google-analytics-library.jar")
+      //tools/analytics-library/publisher:analytics-publisher <= REMOVED
+      withModuleLibrary("precompiled-analytics-crash", "android.sdktools.analytics-crash", "google-analytics-library.jar")
+
+      // inspectors-common.jar
       withModule("intellij.android.inspectors-common.api", "inspectors-common.jar")
       withModule("intellij.android.inspectors-common.api-ide", "inspectors-common.jar")
       withModule("intellij.android.inspectors-common.ui", "inspectors-common.jar")
-      //],
 
-      //"layoutlib-loader.jar": [
+      // layoutlib-api.jar
+      withModuleLibrary("precompiled-layoutlib-api", "android.sdktools.layoutlib-api", "layoutlib-api.jar")
+
+      // layoutlib-loader.jar
       withModule("intellij.android.layoutlib-loader", "layoutlib-loader.jar")
-      //],
 
-      //"lint-ide.jar": [
-      withModule("intellij.android.lint", "lint-ide.jar")
-      //],
+      // lint-ide.jar
+      withModule("intellij.android.lint.common", "lint-ide.jar")
 
-      //"manifest-merger.jar": [
-      withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
-      //],
+      // manifest-merger.jar
+      withModuleLibrary("precompiled-manifest-merger", "android.sdktools.manifest-merger", "manifest-merger.jar")
 
-      //"pixelprobe.jar": [
-      withModule("android.sdktools.chunkio", "pixelprobe.jar")
-      withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
-      //],
+      // pixelprobe.jar
+      withModuleLibrary("precompiled-chunkio", "android.sdktools.chunkio", "pixelprobe.jar")
+      withModuleLibrary("precompiled-pixelprobe", "android.sdktools.pixelprobe", "pixelprobe.jar")
 
-      //"sdk-common.jar": [
-      withModule("android.sdktools.sdk-common", "sdk-common.jar")
-      //],
+      // repository.jar
+      withModuleLibrary("precompiled-repository", "android.sdktools.repository", "repository.jar")
 
-      //"sdk-tools.jar": [
-      withModule("android.sdktools.analyzer", "sdk-tools.jar")
-      withModule("android.sdktools.android-annotations", "sdk-tools.jar")
-      withModule("android.sdktools.binary-resources", "sdk-tools.jar")
-      withModule("android.sdktools.builder-model", "sdk-tools.jar")
-      withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
-      withModule("android.sdktools.ddmlib", "sdk-tools.jar")
-      withModule("android.sdktools.deployer", "sdk-tools.jar")
-      withModule("android.sdktools.draw9patch", "sdk-tools.jar")
-      withModule("android.sdktools.dvlib", "sdk-tools.jar")
-      withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
-      withModule("android.sdktools.lint-api", "sdk-tools.jar")
-      withModule("android.sdktools.lint-checks", "sdk-tools.jar")
-      withModule("android.sdktools.lint-model", "sdk-tools.jar")
-      withModule("android.sdktools.mlkit-common", "sdk-tools.jar")
-      withModule("android.sdktools.ninepatch", "sdk-tools.jar")
-      withModule("android.sdktools.perflib", "sdk-tools.jar")
-      withModule("android.sdktools.tracer", "sdk-tools.jar")
-      withModule("android.sdktools.zipflinger", "sdk-tools.jar")
-      withModule("android.sdktools.usb-devices", "sdk-tools.jar")
-      //],
+      // sdk-common.jar
+      withModuleLibrary("precompiled-sdk-common", "android.sdktools.sdk-common", "sdk-common.jar")
 
-      //"sdklib.jar": [
-      withModule("android.sdktools.sdklib", "sdklib.jar")
-      //],
+      // sdk-tools.jar
+      withModuleLibrary("precompiled-android-annotations", "android.sdktools.android-annotations", "sdk-tools.jar")
+      withModuleLibrary("precompiled-analyzer", "android.sdktools.analyzer", "sdk-tools.jar")
+      withModuleLibrary("precompiled-binary-resources", "android.sdktools.binary-resources", "sdk-tools.jar")
+      withModuleLibrary("precompiled-builder-model", "android.sdktools.builder-model", "sdk-tools.jar")
+      //tools/base/build-system/builder-test-api:studio.android.sdktools.builder-test-api <= API for testing. Nice to have in IDEA.
+      withModuleLibrary("precompiled-adblib", "android.sdktools.adblib", "sdk-tools.jar")
+      withModuleLibrary("precompiled-ddmlib", "android.sdktools.ddmlib", "sdk-tools.jar")
+      withModuleLibrary("precompiled-deployer", "android.sdktools.deployer", "sdk-tools.jar")
+      withModuleLibrary("precompiled-dvlib", "android.sdktools.dvlib", "sdk-tools.jar")
+      withModuleLibrary("precompiled-draw9patch", "android.sdktools.draw9patch", "sdk-tools.jar")
+      withModuleLibrary("precompiled-layoutinspector", "android.sdktools.layoutinspector", "sdk-tools.jar")
+      withModuleLibrary("precompiled-lint-api", "android.sdktools.lint-api", "sdk-tools.jar")
+      withModuleLibrary("precompiled-lint-checks", "android.sdktools.lint-checks", "sdk-tools.jar")
+      withModuleLibrary("precompiled-lint-model", "android.sdktools.lint-model", "sdk-tools.jar")
+      withModuleLibrary("precompiled-manifest-parser", "android.sdktools.manifest-parser", "sdk-tools.jar")
+      withModuleLibrary("precompiled-mlkit-common", "android.sdktools.mlkit-common", "sdk-tools.jar")
+      withModuleLibrary("precompiled-ninepatch", "android.sdktools.ninepatch", "sdk-tools.jar")
+      withModuleLibrary("precompiled-perflib", "android.sdktools.perflib", "sdk-tools.jar")
+      withModuleLibrary("precompiled-resource-repository", "android.sdktools.resource-repository", "sdk-tools.jar")
+      withModuleLibrary("precompiled-tracer", "android.sdktools.tracer", "sdk-tools.jar")
+      withModuleLibrary("precompiled-usb-devices", "android.sdktools.usb-devices", "sdk-tools.jar")
+      withModuleLibrary("precompiled-zipflinger", "android.sdktools.zipflinger", "sdk-tools.jar")
 
-      //"utp.jar": [
+      // sdklib.jar
+      withModuleLibrary("precompiled-sdklib", "android.sdktools.sdklib", "sdklib.jar")
+
+      // utp.jar
       withModule("intellij.android.utp", "utp.jar")
-      //],
 
-      //"wizard-template.jar": [
-      withModule("android.sdktools.wizardTemplate.impl", "wizard-template.jar")
-      withModule("android.sdktools.wizardTemplate.plugin", "wizard-template.jar")
-      //],
+      // wizard-template.jar
+      withModuleLibrary("precompiled-wizardTemplate.impl", "android.sdktools.wizardTemplate.impl", "wizard-template.jar")
+      withModuleLibrary("precompiled-wizardTemplate.plugin", "android.sdktools.wizardTemplate.plugin", "wizard-template.jar")
 
-      //"google-analytics-library.jar": [
-      withModuleLibrary("precompiled-analytics-shared", "android.sdktools.analytics-shared", "")
-      withModuleLibrary("precompiled-analytics-tracker", "android.sdktools.analytics-tracker", "")
-      //tools/analytics-library/publisher:analytics-publisher",
-      withModuleLibrary("precompiled-analytics-crash", "android.sdktools.analytics-crash", "")
-      //],
 
-      //"android-base-common.jar": [
-      withModule("android.sdktools.common", "android-base-common.jar")
-      //],
-
-      // libs = [
-      withProjectLibrary("kotlinx-coroutines-guava")
+      // libs:
+      withProjectLibrary("layout_inspector_compose_java_proto") // <= ADDED
+      withProjectLibrary("layout_inspector_snapshot_java_proto") // <= ADDED
+      withProjectLibrary("layout_inspector_view_java_proto") // <= ADDED
+      withModuleLibrary("jb-r8", "intellij.android.kotlin.idea", "")
+      withModuleLibrary("explainer", "android.sdktools.analyzer", "")
+      withModuleLibrary("generator", "android.sdktools.analyzer", "")
+      withModuleLibrary("shared", "android.sdktools.analyzer", "")
+      withModuleLibrary("okio", "intellij.android.core", "")
+      withModuleLibrary("moshi", "intellij.android.core", "")
+      withModuleLibrary("utp-core-proto", "intellij.android.core", "")
+      //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
+      withModuleLibrary("juniversalchardet", "android.sdktools.db-compiler", "")
+      withModuleLibrary("commons-lang", "android.sdktools.db-compiler", "")
+      withModuleLibrary("javapoet", "android.sdktools.db-compiler", "")
+      withModuleLibrary("auto-common", "android.sdktools.db-compiler", "")
+      withModuleLibrary("jetifier-core", "android.sdktools.db-compilerCommon", "")
+      withModuleLibrary("flatbuffers-java", "android.sdktools.mlkit-common", "")
+      withModuleLibrary("tensorflow-lite-metadata", "android.sdktools.mlkit-common", "")
       withProjectLibrary("aapt-proto")
       withProjectLibrary("aia-proto")
       withProjectLibrary("android-test-plugin-host-device-info-proto")
@@ -451,10 +479,12 @@ final class CommunityRepositoryModules {
       withProjectLibrary("baksmali")
       withProjectLibrary("dexlib2")
       withProjectLibrary("emulator-proto")
+      //tools/adt/idea/.idea/libraries:ffmpeg <= FIXME
       withProjectLibrary("javax-inject")
-      withProjectLibrary("layoutinspector-compose-proto")
+      withProjectLibrary("kotlinx-coroutines-guava")
+      withProjectLibrary("kxml2")
       withProjectLibrary("layoutinspector-skia-proto")
-      withProjectLibrary("layoutinspector-view-proto")
+      //tools/adt/idea/.idea/libraries:layoutinspector-view-proto <= replaced with 3 x layout_inspector_xxx_java_proto
       withProjectLibrary("libam-instrumentation-data-proto")
       withProjectLibrary("libapp-processes-proto")
       withProjectLibrary("network_inspector_java_proto")
@@ -466,12 +496,31 @@ final class CommunityRepositoryModules {
       withProjectLibrary("studio-proto")
       withProjectLibrary("transport-proto")
       withProjectLibrary("zxing-core")
-      //tools/adt/idea/android/lib:android-sdk-tools-jps
-      //tools/adt/idea/app-inspection/inspectors/backgroundtask/view:background-inspector-proto
-      //tools/adt/idea/app-inspection/inspectors/workmanager/view:workmanager-inspector-proto
-      //tools/adt/idea/profilers:traceprocessor-proto
-      //tools/vendor/google/game-tools/main:game-tools-protos
-      // ]
+      withModuleLibrary("libandroid-core-proto", "intellij.android.core", "")
+      withModuleLibrary("libstudio.android-test-plugin-host-retention-proto", "intellij.android.core", "")
+      //tools/adt/idea/android/lib:android-sdk-tools-jps <= this is jarutils.jar
+      withModuleLibrary("instantapps-api", "intellij.android.core", "")
+      withModuleLibrary("spantable", "intellij.android.core", "")
+      withModuleLibrary("background-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.model", "")
+      withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.model", "")
+      withModuleLibrary("background-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.view", "")
+      withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.view", "")
+      withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.workmanager.model", "")
+      withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.workmanager.view", "")
+      //tools/adt/idea/compose-designer:ui-animation-tooling-internal <= not recognized
+      withModuleLibrary("traceprocessor-proto", "intellij.android.profilersAndroid", "")
+      withModuleLibrary("traceprocessor-proto", "intellij.android.profilers", "")
+      withModuleLibrary("pepk", "intellij.android.projectSystem.gradle", "")
+      withModuleLibrary("libstudio.android-test-plugin-result-listener-gradle-proto", "intellij.android.utp", "")
+      withModuleLibrary("deploy_java_proto", "android.sdktools.deployer", "")
+      withModuleLibrary("libjava_sites", "android.sdktools.deployer", "")
+      withModuleLibrary("libjava_sites", "intellij.android.debuggers", "")
+      withModuleLibrary("libjava_version", "android.sdktools.deployer", "")
+      //tools/vendor/google/game-tools/main:game-tools-protos <= not recognized
+      withModuleLibrary("compilerCommon.antlr_runtime.shaded", "android.sdktools.db-compiler", "")
+      withModuleLibrary("compilerCommon.antlr.shaded", "android.sdktools.db-compiler", "")
+      // :libs
+
 
       //"resources": [
       // contents of "/plugins/android/lib/layoutlib/" will be downloaded by the AndroidPlugin on demand
@@ -485,6 +534,11 @@ final class CommunityRepositoryModules {
       withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "resources/device-art-resources")
       //  "//tools/adt/idea/android/annotations:androidAnnotations",
       withResourceArchiveFromModule("intellij.android.plugin", "../android/annotations", "resources/androidAnnotations.jar")
+      //  "//tools/adt/idea/emulator/native:native_lib",
+      withResourceFromModule("intellij.android.emulator", "native/linux", "resources/native")
+      withResourceFromModule("intellij.android.emulator", "native/mac", "resources/native") // <= fixme-ank: mac-arm is broken
+      withResourceFromModule("intellij.android.emulator", "native/win", "resources/native") // <= fixme-ank: mac-arm is broken
+      //  "//tools/base/app-inspection/inspectors/backgroundtask:bundle",
       //  "//tools/base/app-inspection/inspectors/network:bundle",
       //  "//tools/base/dynamic-layout-inspector/agent/appinspection:bundle",
       //  "//tools/base/profiler/transform:profilers-transform",
@@ -504,10 +558,6 @@ final class CommunityRepositoryModules {
       // END OF BAZEL FILE
 
       // here go some differences from original Android Studio layout
-      withModule("intellij.android.jps.model")
-      withModule("android.sdktools.layoutlib-api") // force layoutlib-standard (IDEA-256114)
-      withProjectLibrary("layoutlib")
-      withProjectLibrary("kxml2")
 
       //these project-level libraries are used from Android plugin only, so it's better to include them into its lib directory
       withProjectLibrary("kotlin-gradle-plugin-model")
@@ -516,18 +566,6 @@ final class CommunityRepositoryModules {
       for (Map.Entry<String, String> entry in additionalModulesToJars.entrySet()) {
         withModule(entry.key, entry.value)
       }
-
-      // FIXME-ank: We abuse `withGeneratedResources`. There is no intention to generate any resources, instead we want to create empty
-      // output compile directory for modules with no sources, but have module libraries. This is to leverage existing logic that collects
-      // module runtime libraries, and to avoid validation error saying that the module output dir does not exist.
-      withGeneratedResources(new BiConsumer<Path, BuildContext>() {
-        @Override
-        void accept(Path targetDir, BuildContext context) {
-          for (JpsModule module in context.project.modules) {
-            Files.createDirectories(context.getModuleOutputDir(module))
-          }
-        }
-      })
 
       addition.delegate = delegate
       addition()
