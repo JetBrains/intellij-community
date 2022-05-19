@@ -2,11 +2,14 @@
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
+import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.forkJoinTask
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
@@ -35,6 +38,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.AppExecutorUtil
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.Context
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -49,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = logger<StartupManagerImpl>()
+private val tracer by lazy { TraceManager.getTracer("startupManager") }
 
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5 seconds delay after project opening.
@@ -111,6 +119,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   }
 
   override fun registerPostStartupActivity(runnable: Runnable) {
+    Span.current().addEvent("register startup activity", Attributes.of(AttributeKey.stringKey("runnable"), runnable.toString()))
+
     if (DumbService.isDumbAware(runnable)) {
       runAfterOpened(runnable)
       return
@@ -158,8 +168,10 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     // see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
     LOG.assertTrue(!isStartupActivitiesPassed)
     runActivity("project startup") {
-      runStartUpActivities(indicator, app)
-      isStartupActivitiesPassed = true
+      tracer.spanBuilder("run startup activities").useWithScope {
+        runStartUpActivities(indicator, app)
+        isStartupActivitiesPassed = true
+      }
     }
 
     indicator?.checkCanceled()
@@ -168,18 +180,18 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)        // opened from the welcome screen
 
     if (app.isUnitTestMode && !app.isDispatchThread) {
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, ::runPostStartupActivities)
     }
     else {
-      ForkJoinPool.commonPool().execute {
+      ForkJoinPool.commonPool().execute(forkJoinTask(tracer.spanBuilder("run post-startup activities")) {
         if (!project.isDisposed) {
           try {
-            BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
+            BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, ::runPostStartupActivities)
           }
           catch (ignore: ProcessCanceledException) {
           }
         }
-      }
+      })
       if (app.isUnitTestMode) {
         LOG.assertTrue(app.isDispatchThread)
         @Suppress("TestOnlyProblems")
@@ -242,7 +254,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
         if (!LightEdit.owns(project)) {
           counter.incrementAndGet()
+          val traceContext = Context.current()
           dumbService.unsafeRunWhenSmart {
+            traceContext.makeCurrent()
             val duration = runActivityAndMeasureDuration(extension, pluginDescriptor.pluginId)
             if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
               reportUiFreeze(uiFreezeWarned)
@@ -284,7 +298,12 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     indicator?.pushState()
     val startTime = StartUpMeasurer.getCurrentTime()
     try {
-      runStartupActivity(activity, project)
+      tracer.spanBuilder("run activity")
+        .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
+        .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
+        .useWithScope {
+          runStartupActivity(activity, project)
+        }
     }
     catch (e: Throwable) {
       if (e is ControlFlowException) {
@@ -304,16 +323,28 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   }
 
   private fun runPostStartupActivitiesRegisteredDynamically() {
-    runActivities(postStartupActivities, activityName = "project post-startup")
+    tracer.spanBuilder("run post-startup dynamically registered activities").useWithScope {
+      runActivities(postStartupActivities, activityName = "project post-startup")
+    }
+
     postStartupActivitiesPassed = DUMB_AWARE_PASSED
     if (LightEdit.owns(project)) {
       postStartupActivitiesPassed = ALL_PASSED
       allActivitiesPassed.complete(null)
+      return
     }
-    else {
-      DumbService.getInstance(project).unsafeRunWhenSmart(object : Runnable {
-        override fun run() {
+
+    // object runnable is used because we pass it as instance to unsafeRunWhenSmart again if needed
+    DumbService.getInstance(project).unsafeRunWhenSmart(object : Runnable {
+      private val parentContext = Context.current()
+
+      override fun run() {
+        // here setParent(parentContext) must be not use to save on one call of makeCurrent
+        // because we do pass this runnable further to unsafeRunWhenSmart
+        parentContext.makeCurrent()
+        tracer.spanBuilder("run post-startup dynamically registered dumb-unaware activities").useWithScope { span ->
           synchronized(lock) {
+            span.setAttribute(AttributeKey.longKey("count"), postStartupActivities.size.toLong())
             if (postStartupActivities.isEmpty()) {
               postStartupActivitiesPassed = ALL_PASSED
               allActivitiesPassed.complete(null)
@@ -332,8 +363,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
             allActivitiesPassed.complete(null)
           }
         }
-      })
-    }
+      }
+    })
   }
 
   private fun runActivities(activities: Deque<Runnable>, activityName: String? = null, indicator: ProgressIndicator? = null) {
@@ -347,15 +378,21 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       StartUpMeasurer.startActivity(it)
     }
     while (true) {
-      val runnable = synchronized(lock) {
-        activities.pollFirst()
-      } ?: break
+      val runnable = synchronized(lock, activities::pollFirst) ?: break
       indicator?.checkCanceled()
 
       val startTime = StartUpMeasurer.getCurrentTime()
       ProgressManager.checkCanceled()
+
+      val runnableClass = runnable.javaClass
+      val pluginId = (runnableClass.classLoader as? PluginAwareClassLoader)?.pluginId ?: PluginManagerCore.CORE_ID
       try {
-        runnable.run()
+        tracer.spanBuilder("run activity")
+          .setAttribute(AttributeKey.stringKey("class"), runnableClass.name)
+          .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
+          .useWithScope {
+            runnable.run()
+          }
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -364,11 +401,10 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         LOG.error(e)
       }
 
-      val runnableClass = runnable.javaClass
       addCompletedActivity(
         startTime = startTime,
         runnableClass = runnableClass,
-        pluginId = (runnableClass.classLoader as? PluginClassLoader)?.pluginId ?: PluginManagerCore.CORE_ID,
+        pluginId = pluginId,
       )
     }
     activity?.end()

@@ -18,6 +18,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
+// https://github.com/jaegertracing/jaeger-ui/issues/381
 class JaegerJsonSpanExporter : SpanExporter {
   companion object {
     private val writer = AtomicReference<JsonGenerator?>()
@@ -25,7 +26,12 @@ class JaegerJsonSpanExporter : SpanExporter {
     @Volatile
     private var file: Path? = null
 
-    fun setOutput(file: Path) {
+    fun setOutput(
+      file: Path,
+      serviceName: String,
+      serviceVersion: String? = null,
+      serviceNamespace: String? = null,
+    ) {
       writer.getAndSet(null)?.let {
         finishWriter(it)
       }
@@ -41,17 +47,36 @@ class JaegerJsonSpanExporter : SpanExporter {
       // process info
       w.writeObjectFieldStart("processes")
       w.writeObjectFieldStart("p1")
-      w.writeStringField("serviceName", "build")
+      w.writeStringField("serviceName", serviceName)
+
       w.writeArrayFieldStart("tags")
+
       w.writeStartObject()
       w.writeStringField("key", "time")
       w.writeStringField("type", "string")
       w.writeStringField("value", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
       w.writeEndObject()
+
+      if (serviceVersion != null) {
+        writeStringTag("service.version", serviceVersion, w)
+      }
+      if (serviceNamespace != null) {
+        writeStringTag("service.namespace", serviceNamespace, w)
+      }
+
       w.writeEndArray()
+
       w.writeEndObject()
       w.writeEndObject()
       w.writeArrayFieldStart("spans")
+    }
+
+    private fun writeStringTag(name: String, value: String, w: JsonGenerator) {
+      w.writeStartObject()
+      w.writeStringField("key", name)
+      w.writeStringField("type", "string")
+      w.writeStringField("value", value)
+      w.writeEndObject()
     }
 
     private fun writeAttributesAsJson(w: JsonGenerator, attributes: Attributes) {

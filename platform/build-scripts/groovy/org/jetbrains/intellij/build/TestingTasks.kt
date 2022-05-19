@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.TestingTasksImpl
 import java.io.File
 import java.nio.file.Path
 import java.util.function.Predicate
@@ -10,10 +11,7 @@ interface TestingTasks {
     @JvmStatic
     @JvmOverloads
     fun create(context: CompilationContext, options: TestingOptions = TestingOptions()): TestingTasks {
-      return TestingTasks::class.java.classLoader
-        .loadClass("org.jetbrains.intellij.build.impl.TestingTasksImpl")
-        .getConstructor(CompilationContext::class.java, TestingOptions::class.java)
-        .newInstance(context, options) as TestingTasks
+      return TestingTasksImpl(context, options)
     }
   }
 

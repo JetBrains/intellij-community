@@ -95,6 +95,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.platform.serviceContainer",
   "intellij.platform.objectSerializer",
   "intellij.platform.diagnostic",
+  "intellij.platform.diagnostic.telemetry",
   "intellij.platform.core.ui",
   "intellij.platform.credentialStore",
   "intellij.platform.credentialStore.ui",

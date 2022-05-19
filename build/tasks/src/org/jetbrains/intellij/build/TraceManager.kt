@@ -50,7 +50,7 @@ object TracerProviderManager {
   var spanExporterProvider: Supplier<List<SpanExporter>> = Supplier { listOf(ConsoleSpanExporter(), JaegerJsonSpanExporter()) }
 
   fun setOutput(file: Path) {
-    JaegerJsonSpanExporter.setOutput(file)
+    JaegerJsonSpanExporter.setOutput(file, serviceName = "build")
 
     if (shutdownHookAdded.compareAndSet(false, true)) {
       Runtime.getRuntime().addShutdownHook(Thread({
