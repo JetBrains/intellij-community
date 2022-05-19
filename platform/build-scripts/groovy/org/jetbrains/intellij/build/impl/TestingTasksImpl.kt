@@ -28,7 +28,6 @@ import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -196,19 +195,22 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       return
     }
 
-    val agentJar = library.getFiles(JpsOrderRootType.COMPILED)
-      .firstOrNull {  it.name.startsWith("intellij-test-discovery") && it.name.endsWith(".jar") }
+    val agentJar = library.getPaths(JpsOrderRootType.COMPILED)
+      .firstOrNull {
+        val name = it.fileName.toString()
+        name.startsWith("intellij-test-discovery") && name.endsWith(".jar")
+      }
     if (agentJar == null) {
       context.messages.error("Can\'t find the agent in $testDiscovery library, but test discovery capturing enabled.")
       return
     }
 
-    additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}")
+    additionalJvmOptions.add("-javaagent:$agentJar")
     val excludeRoots = context.projectModel.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE)
-      .mapTo(LinkedHashSet()) { it.properties.homePath }
+      .mapTo(LinkedHashSet()) { FileUtilRt.toSystemDependentName(it.properties.homePath) }
 
-    excludeRoots.add(context.paths.buildOutputRoot)
-    excludeRoots.add("${context.paths.projectHome}/out")
+    excludeRoots.add(context.paths.buildOutputDir.toString())
+    excludeRoots.add(context.paths.projectHomeDir.resolve("out").toString())
 
     additionalSystemProperties.put("test.discovery.listener", "com.intellij.TestDiscoveryBasicListener")
     additionalSystemProperties.put("test.discovery.data.listener",
@@ -219,14 +221,11 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     additionalSystemProperties.put("test.discovery.include.class.patterns", options.testDiscoveryIncludePatterns)
     additionalSystemProperties.put("test.discovery.exclude.class.patterns", options.testDiscoveryExcludePatterns)
 
-    additionalSystemProperties.put("test.discovery.excluded.roots",
-                                   excludeRoots.joinToString(separator = ";", transform = FileUtilRt::toSystemDependentName))
+    additionalSystemProperties.put("test.discovery.excluded.roots", excludeRoots.joinToString(separator = ";"))
   }
 
   private val testDiscoveryTraceFilePath: String
-    get() {
-      return options.testDiscoveryTraceFilePath ?: "${context.paths.projectHome}/intellij-tracing/td.tr"
-    }
+    get() = options.testDiscoveryTraceFilePath ?: context.paths.projectHomeDir.resolve("intellij-tracing/td.tr").toString()
 
   private fun debugTests(remoteDebugJvmOptions: String,
                          additionalJvmOptions: List<String>,
@@ -411,7 +410,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       "idea.system.path" to "$tempDir/system",
       "intellij.build.compiled.classes.archives.metadata" to System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive" to System.getProperty("intellij.build.compiled.classes.archive"),
-      BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "$context.projectOutputDirectory",
+      BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "${context.projectOutputDirectory}",
       "idea.coverage.enabled.build" to System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName" to System.getProperty("teamcity.buildConfName"),
       "java.io.tmpdir" to tempDir,
