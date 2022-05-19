@@ -8,6 +8,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.FreezingDataContext;
 import com.intellij.ide.impl.GetDataRuleType;
+import com.intellij.internal.performance.ActionsUpdateBenchmarkAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,11 +22,9 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentBitSet;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
-import com.intellij.util.containers.UnsafeWeakList;
+import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
@@ -60,6 +59,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
   private static final Object ourExplicitNull = ObjectUtils.sentinel("explicit.null");
+  private static final Interner<String> ourEDTWarnsInterner = Interner.createStringInterner();
 
   private final ComponentRef myComponentRef;
   private final AtomicReference<KeyFMap> myUserData;
@@ -162,7 +162,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed;
     Object answer = getDataInner(dataId, rulesAllowed);
 
-    int keyIndex; // for use with `nullsByRules` only, always != -1
+    int keyIndex; // for use with `nullsByContextRules` only, always != -1
     ProviderData map = myCachedData.get(0);
     if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1))) {
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
@@ -171,6 +171,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       });
       if (answer != null) {
         map.nullsByRules.clear(keyIndex);
+        map.valueByRules.set(keyIndex);
         map.put(dataId, answer);
       }
       else {
@@ -205,10 +206,14 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       answer = map.get(dataId);
       if (answer == ourExplicitNull) break;
       if (answer != null) {
+        if (map.valueByRules.get(keyIndex)) {
+          reportValueProvidedByRulesUsage(dataId);
+        }
         answer = DataValidators.validOrNull(answer, dataId, this);
         if (answer != null) break;
         // allow slow data providers and rules to re-calc the value
         map.remove(dataId);
+        map.valueByRules.clear(keyIndex);
       }
       if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
 
@@ -217,11 +222,32 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         return o == ourExplicitNull ? null : o;
       });
 
-      if (answer == null) map.nullsByRules.set(keyIndex);
-      else map.put(dataId, answer);
-      if (answer != null) break;
+      if (answer == null) {
+        map.nullsByRules.set(keyIndex);
+      }
+      else {
+        map.put(dataId, answer);
+        map.valueByRules.set(keyIndex);
+        break;
+      }
     }
     return answer;
+  }
+
+  private static void reportValueProvidedByRulesUsage(@NotNull String dataId) {
+    // ourMissingKeysConsumer is a temporary solution for platform actions tracking
+    if (ActionsUpdateBenchmarkAction.ourMissingKeysConsumer != null) {
+      ActionsUpdateBenchmarkAction.ourMissingKeysConsumer.accept(dataId);
+    }
+    if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
+    if (EDT.isCurrentThreadEdt() && SlowOperations.isInsideActivity(SlowOperations.ACTION_UPDATE) &&
+        ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
+      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName();
+      //noinspection StringEquality
+      if (message == ourEDTWarnsInterner.intern(message)) {
+        LOG.warn(message);
+      }
+    }
   }
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
@@ -346,6 +372,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static class ProviderData extends ConcurrentHashMap<String, Object> {
     final ConcurrentBitSet nullsByRules = ConcurrentBitSet.create();
     final ConcurrentBitSet nullsByContextRules = ConcurrentBitSet.create();
+    final ConcurrentBitSet valueByRules = ConcurrentBitSet.create();
   }
 
   private static class ComponentRef {

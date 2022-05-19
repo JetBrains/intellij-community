@@ -24,6 +24,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,9 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
 
   private static final long MIN_REPORTED_UPDATE_MILLIS = 5;
   private static final long MIN_REPORTED_NO_CHECK_CANCELED_MILLIS = 50;
+
+  /** @noinspection StaticNonFinalField */
+  public static Consumer<? super String> ourMissingKeysConsumer;
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -110,6 +114,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
       finished.set(true);
     }
     if (!missingCheckCanceled.isEmpty()) {
+      LOG.info("---- " + missingCheckCanceled.size() + " no-checkCanceled places detected ----");
       String[] keys = ArrayUtil.toStringArray(missingCheckCanceled.keySet());
       Arrays.sort(keys, Comparator.comparing(o -> -missingCheckCanceled.get(o).delta));
       for (int i = 0; i < keys.length; i++) {
@@ -119,12 +124,12 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
         LOG.info("no checkCanceled (" + i + ") (" + traceCount + " hits) in " + last.delta + " ms - " + keys[i]);
       }
       int min = Math.min(missingCheckCanceled.size(), 5);
-      LOG.info("Top " + min + " of " + missingCheckCanceled.size() + " no-checkCanceled places:");
+      LOG.info("---- top " + min + " of " + missingCheckCanceled.size() + " no-checkCanceled places ----");
       for (int i = 0; i < keys.length && i < min; i++) {
         TraceData last = missingCheckCanceled.get(keys[i]);
         int traceCount = 0, traceIdx = 0;
         for (TraceData cur = last; cur != null; cur = cur.next) traceCount++;
-        for (TraceData cur = last; cur != null && traceIdx < 3; cur = cur.next, traceIdx ++) {
+        for (TraceData cur = last; cur != null && traceIdx < 3; cur = cur.next, traceIdx++) {
           Throwable throwable = new Throwable("no checkCanceled (" + i + ") (" + (traceIdx + 1) + " of " + traceCount + " hits)" +
                                               " in " + cur.delta + " ms - " + keys[i]);
           throwable.setStackTrace(cur.trace);
@@ -140,6 +145,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
                                             @NotNull Consumer<String> activityConsumer) {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
     List<Pair<Integer, String>> results = new ArrayList<>();
+    List<Pair<String, String>> results2 = new ArrayList<>();
 
     DataContext rawContext = DataManager.getInstance().getDataContext(component);
 
@@ -180,9 +186,11 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
       progress.setText("Checking '" + id + "'");
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
       ReadAction.run(() -> {
+        HashSet<String> ruleKeys = new HashSet<String>();
         long elapsed;
         String actionName = action.getClass().getName();
         try {
+          ourMissingKeysConsumer = ruleKeys::add;
           activityConsumer.accept(actionName);
           long start = System.nanoTime();
           ActionUtil.performDumbAwareUpdate(action, event, true);
@@ -190,9 +198,20 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
         }
         finally {
           activityConsumer.accept(null);
+          ourMissingKeysConsumer = null;
         }
         if (elapsed > 0) {
           results.add(Pair.create((int)elapsed, actionName));
+        }
+        if (!(action instanceof UpdateInBackground)) {
+          if (ruleKeys.isEmpty()) {
+            if (event.getPresentation().isEnabled()) {
+              results2.add(Pair.create("UI only?", actionName));
+            }
+          }
+          else {
+            results2.add(Pair.create(ContainerUtil.sorted(ruleKeys).toString(), actionName));
+          }
         }
       });
       count++;
@@ -203,6 +222,11 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
     for (Pair<Integer, String> result : results) {
       if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
       LOG.info(result.first + " ms - " + result.second);
+    }
+    LOG.info("---- slow data usage for " + results2.size() + " actions ---- ");
+    results2.sort(Pair.comparingByFirst());
+    for (Pair<String, String> pair : results2) {
+      LOG.info(pair.first + " - " + pair.second);
     }
   }
 
