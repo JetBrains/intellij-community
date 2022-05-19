@@ -120,7 +120,6 @@ class CompactAccountsPanelFactory<A : Account>(
   interface PopupConfig<A : Account> {
     val avatarSize: Int
     fun createActions(): Collection<AccountMenuItem.Action>
-    fun createActions(account: A, requiresReLogin: Boolean): Collection<AccountMenuItem.Action>
   }
 
   private class PopupMenuListener<A : Account>(
@@ -144,10 +143,9 @@ class CompactAccountsPanelFactory<A : Account>(
         val accountTitle = detailsProvider.getDetails(account)?.name ?: account.name
         val serverInfo = if (account is ServerAccount) CollaborationToolsUIUtil.cleanupUrl(account.server.toString()) else ""
         val avatar = avatarIconsProvider.getIcon(account, popupConfig.avatarSize)
-        val accountActions = popupConfig.createActions(account, detailsProvider.checkErrorRequiresReLogin(account)).toList()
         val showSeparatorAbove = index != 0
 
-        menuItems += AccountMenuItem.Account(accountTitle, serverInfo, avatar, accountActions, showSeparatorAbove)
+        menuItems += AccountMenuItem.Account(accountTitle, serverInfo, avatar, emptyList(), showSeparatorAbove)
       }
       menuItems += popupConfig.createActions()
 

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.dvcs.repo.ClonePathProvider
@@ -376,25 +375,6 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     override val avatarSize: Int = VcsCloneDialogUiSpec.Components.popupMenuAvatarSize
 
     override fun createActions(): Collection<AccountMenuItem.Action> = createAccountMenuLoginActions(null)
-
-    override fun createActions(account: GithubAccount, requiresReLogin: Boolean): Collection<AccountMenuItem.Action> {
-      val actions = mutableListOf<AccountMenuItem.Action>()
-
-      if (requiresReLogin) {
-        actions += createAccountMenuLoginActions(account)
-      }
-      else if (account != authenticationManager.getDefaultAccount(project)) {
-        actions += AccountMenuItem.Action(CollaborationToolsBundle.message("accounts.set.default"),
-                                          { authenticationManager.setDefaultAccount(project, account) })
-      }
-
-      actions += AccountMenuItem.Action(GithubBundle.message("accounts.log.out"),
-                                        { authenticationManager.removeAccount(account) },
-                                        showSeparatorAbove = true)
-
-
-      return actions
-    }
   }
 
   protected abstract fun createAccountMenuLoginActions(account: GithubAccount?): Collection<AccountMenuItem.Action>
