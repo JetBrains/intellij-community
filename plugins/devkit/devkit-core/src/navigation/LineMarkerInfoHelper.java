@@ -61,7 +61,14 @@ final class LineMarkerInfoHelper {
     return ((ExtensionPoint)element).getEffectiveQualifiedName();
   }
 
-  private static final NullableFunction<PointableCandidate, String> LISTENER_NAMER =
+  private static final NullableFunction<PointableCandidate, String> LISTENER_IMPLEMENTATION_NAMER =
+    createNamer("line.marker.tooltip.listener.declaration", tag -> {
+      final DomElement element = DomUtil.getDomElement(tag);
+      if (!(element instanceof Listeners.Listener)) return "?";
+      return StringUtil.notNullize(((Listeners.Listener)element).getListenerClassName().getStringValue(), "?");
+    });
+
+  private static final NullableFunction<PointableCandidate, String> LISTENER_TOPIC_NAMER =
     createNamer("line.marker.tooltip.listener.declaration", tag -> {
       final DomElement element = DomUtil.getDomElement(tag);
       if (!(element instanceof Listeners.Listener)) return "?";
@@ -109,7 +116,14 @@ final class LineMarkerInfoHelper {
                                                                             @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.listener"),
-                                      LISTENER_NAMER);
+                                      LISTENER_TOPIC_NAMER);
+  }
+
+  static RelatedItemLineMarkerInfo<PsiElement> createListenerTopicLineMarkerInfo(@NotNull List<? extends ListenerCandidate> targets,
+                                                                            @NotNull PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.listener"),
+                                      LISTENER_IMPLEMENTATION_NAMER);
   }
 
   static RelatedItemLineMarkerInfo<?> createActionLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {

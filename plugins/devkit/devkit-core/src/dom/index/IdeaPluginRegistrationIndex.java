@@ -41,11 +41,12 @@ import java.util.*;
  *   <li>Action/ActionGroup class - {@link Action#getClazz()}/{@link Group#getClazz()}</li>
  *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getId()}</li>
  *   <li>Application/Project Listener class - {@link Listeners.Listener#getListenerClassName()}</li>
+ *   <li>Listener topic class - {@link Listeners.Listener#getTopicClassName()}</li>
  * </ul>
  */
 public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
-  private static final int INDEX_VERSION = 7;
+  private static final int INDEX_VERSION = 8;
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
@@ -121,6 +122,10 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return isRegisteredClass(psiClass, scope, RegistrationType.ACTION);
   }
 
+  public static boolean isRegisteredListenerTopic(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.LISTENER_TOPIC);
+  }
+
   public static boolean processComponent(Project project,
                                          PsiClass componentInterfaceOrImplementationClass,
                                          GlobalSearchScope scope,
@@ -141,11 +146,28 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
                                         PsiClass listenerClass,
                                         GlobalSearchScope scope,
                                         Processor<? super Listeners.Listener> processor) {
-    final String key = listenerClass.getQualifiedName();
-    assert key != null : listenerClass;
+    return doProcessListener(project, listenerClass, scope,
+                             EnumSet.of(RegistrationType.APPLICATION_LISTENER, RegistrationType.PROJECT_LISTENER),
+                             processor);
+  }
+
+  public static boolean processListenerTopic(@NotNull Project project,
+                                             PsiClass topicClass,
+                                             GlobalSearchScope scope,
+                                             Processor<? super Listeners.Listener> processor) {
+    return doProcessListener(project, topicClass, scope, EnumSet.of(RegistrationType.LISTENER_TOPIC), processor);
+  }
+
+  private static boolean doProcessListener(@NotNull Project project,
+                                           PsiClass psiClass,
+                                           GlobalSearchScope scope,
+                                           EnumSet<RegistrationType> types,
+                                           Processor<? super Listeners.Listener> processor) {
+    final String key = psiClass.getQualifiedName();
+    assert key != null : psiClass;
 
     return processAll(project, key, scope,
-                      EnumSet.of(RegistrationType.APPLICATION_LISTENER, RegistrationType.PROJECT_LISTENER),
+                      types,
                       Listeners.Listener.class,
                       processor);
   }

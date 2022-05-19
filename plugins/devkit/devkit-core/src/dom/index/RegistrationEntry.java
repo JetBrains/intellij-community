@@ -52,7 +52,8 @@ class RegistrationEntry {
     ACTION_GROUP_ID(false),
 
     APPLICATION_LISTENER(true),
-    PROJECT_LISTENER(true);
+    PROJECT_LISTENER(true),
+    LISTENER_TOPIC(true);
 
     private final boolean myIsClass;
 

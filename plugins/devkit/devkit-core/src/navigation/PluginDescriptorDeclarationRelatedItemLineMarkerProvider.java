@@ -24,7 +24,7 @@ import java.util.List;
  * Related declaration(s) in {@code plugin.xml} for class registered as:
  * <ul>
  *   <li>Action/ActionGroup</li>
- *   <li>Listener</li>
+ *   <li>Listener/Listener Topic</li>
  *   <li>Extension</li>
  *   <li>Component Interface/Implementation</li>
  * </ul>
@@ -51,12 +51,22 @@ public final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider exte
 
     if (!PsiUtil.isInstantiable(psiClass)) {
 
-      // non-instantiable, abstract/interface can be registered as component interface-class
+      // non-instantiable, abstract/interface can be registered as
+      // - component interface-class
+      // - listener topic
       if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         Project project = psiClass.getProject();
         GlobalSearchScope scope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
         if (IdeaPluginRegistrationIndex.isRegisteredComponentInterface(psiClass, scope)) {
           processComponent(identifier, psiClass, result, project, scope);
+        }
+        else if (IdeaPluginRegistrationIndex.isRegisteredListenerTopic(psiClass, scope)) {
+          List<ListenerCandidate> listenerTargets = new SmartList<>();
+          IdeaPluginRegistrationIndex.processListenerTopic(project, psiClass, scope, listener -> {
+            listenerTargets.add(new ListenerCandidate(listener));
+            return true;
+          });
+          result.add(LineMarkerInfoHelper.createListenerTopicLineMarkerInfo(listenerTargets, identifier));
         }
       }
       return;

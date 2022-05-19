@@ -10,6 +10,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
+@SuppressWarnings("NewClassNamingConvention")
 @TestDataPath("$CONTENT_ROOT/testData/navigation/listenerDeclaration")
 public class ListenerPluginDescriptorDeclarationRelatedItemLineMarkerProviderTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -45,6 +46,18 @@ public class ListenerPluginDescriptorDeclarationRelatedItemLineMarkerProviderTes
                                                   buildTooltipText(pluginXmlFile, 151, "AnotherTopic") +
                                                   buildTooltipText(pluginXmlFile, 207, "YetAnotherTopic") +
                                                   buildTooltipText(pluginXmlFile, 44, "MyListenerTopic") +
+                                                  "</body></html>",
+                                                  DevKitIcons.Gutter.Plugin, "listener");
+  }
+
+  public void testTopicMultipleListeners() {
+    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginTopicMultipleListener.xml");
+
+    GutterMark gutter = myFixture.findGutter("MyTopic.java");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter,
+                                                  "<html><body>" +
+                                                  buildTooltipText(pluginXmlFile, 143, "AnotherListener") +
+                                                  buildTooltipText(pluginXmlFile, 44, "MyListener") +
                                                   "</body></html>",
                                                   DevKitIcons.Gutter.Plugin, "listener");
   }

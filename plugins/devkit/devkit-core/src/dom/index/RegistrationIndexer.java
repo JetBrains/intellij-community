@@ -78,6 +78,10 @@ class RegistrationIndexer {
                     Listeners::getListeners,
                     Listeners.Listener::getListenerClassName
     );
+    processElements(RegistrationEntry.RegistrationType.LISTENER_TOPIC,
+                    listenerContainer,
+                    Listeners::getListeners,
+                    Listeners.Listener::getTopicClassName);
   }
 
   private <T extends DomElement, U extends DomElement>
