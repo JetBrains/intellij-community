@@ -42,7 +42,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private Set<RefOverridable> myDerivedReferences; // singleton (to conserve memory) or HashSet. guarded by this
   private List<RefMethod> myConstructors; // guarded by this
   private RefMethodImpl myDefaultConstructor; // guarded by this
-  private List<RefMethod> myOverridingMethods; // guarded by this
   private Set<RefElement> myInTypeReferences; // guarded by this
   private List<RefJavaElement> myClassExporters; // guarded by this
   private final RefModule myRefModule;
@@ -422,17 +421,9 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myConstructors.add(refConstructor);
   }
 
-  synchronized void addLibraryOverrideMethod(RefMethod refMethod) {
-    if (myOverridingMethods == null){
-      myOverridingMethods = new ArrayList<>(2);
-    }
-    myOverridingMethods.add(refMethod);
-  }
-
   @Override
   public synchronized @NotNull List<RefMethod> getLibraryMethods() {
-    if (myOverridingMethods == null) return EMPTY_METHOD_LIST;
-    return myOverridingMethods;
+    return StreamEx.of(getChildren()).select(RefMethod.class).filter(m -> m.isExternalOverride()).toList();
   }
 
   @Override
@@ -499,7 +490,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   void methodRemoved(RefMethod method) {
     getConstructors().remove(method);
-    getLibraryMethods().remove(method);
 
     if (getDefaultConstructor() == method) {
       setDefaultConstructor(null);

@@ -117,7 +117,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (!myManager.isDeclarationsFound()) return;
 
     PsiMethod javaPsi = method.getJavaPsi();
-    RefClass ownerClass = ObjectUtils.tryCast(parentRef, RefClass.class);
     if (!isConstructor()) {
       setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
 
@@ -127,9 +126,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
       if (PsiModifier.PRIVATE != getAccessModifier() && !isStatic()) {
         initializeSuperMethods(javaPsi);
-        if (ownerClass != null && isExternalOverride()) {
-          getRefManager().executeTask(() -> ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this));
-        }
       }
     }
 
@@ -278,6 +274,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public synchronized void addSuperMethod(RefMethodImpl refSuperMethod) {
+    if (refSuperMethod.checkFlag(IS_LIBRARY_OVERRIDE_MASK)) setLibraryOverride(true);
     if (mySuperMethods == null) {
       mySuperMethods = refSuperMethod;
     }
@@ -374,7 +371,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
     for (RefMethod superMethod : getSuperMethods()) {
       if (((RefMethodImpl)superMethod).isLibraryOverride(processed)) {
-        setFlag(true, IS_LIBRARY_OVERRIDE_MASK);
+        setLibraryOverride(true);
         return true;
       }
     }
