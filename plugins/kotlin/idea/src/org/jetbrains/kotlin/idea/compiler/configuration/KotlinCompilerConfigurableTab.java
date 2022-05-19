@@ -406,12 +406,16 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                                 }
 
                                 KotlinVersion min = SetupKotlinJpsPluginBeforeCompileTask.getJpsMinimumSupportedVersion();
+                                KotlinVersion max = SetupKotlinJpsPluginBeforeCompileTask.getJpsMaximumSupportedVersion();
                                 Collection<String> intersection = ContainerUtil.intersection(distVersions, jpsClassPathVersions);
                                 SortedSet<IdeKotlinVersion> sortedVersions = new TreeSet<>();
                                 for (String version : intersection) {
                                     IdeKotlinVersion parsedVersion = IdeKotlinVersion.opt(version);
-                                    if (parsedVersion != null && parsedVersion.getKotlinVersion().compareTo(min) >= 0) {
-                                        sortedVersions.add(parsedVersion);
+                                    if (parsedVersion != null) {
+                                        KotlinVersion parsedKotlinVersion = parsedVersion.getKotlinVersion();
+                                        if (parsedKotlinVersion.compareTo(min) >= 0 && parsedKotlinVersion.compareTo(max) <= 0) {
+                                            sortedVersions.add(parsedVersion);
+                                        }
                                     }
                                 }
 
