@@ -3,14 +3,12 @@ package com.intellij.internal.inspector.components;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -19,8 +17,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
@@ -29,7 +25,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -44,7 +39,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -174,7 +168,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
           public void navigate(boolean requestFocus) {
             if (myHierarchyTree.hasFocus()) {
               if (!myComponents.isEmpty()) {
-                openClass(myComponents.get(0).getClass().getName(), requestFocus);
+                UiInspectorUtil.openClassByFqn(myProject, myComponents.get(0).getClass().getName(), requestFocus);
               }
               else {
                 TreePath path = myHierarchyTree.getSelectionPath();
@@ -183,7 +177,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
                   if (obj instanceof HierarchyTree.ComponentNode) {
                     Component comp = ((HierarchyTree.ComponentNode)obj).getComponent();
                     if (comp != null) {
-                      openClass(comp.getClass().getName(), requestFocus);
+                      UiInspectorUtil.openClassByFqn(myProject, comp.getClass().getName(), requestFocus);
                     }
                   }
                 }
@@ -194,7 +188,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
               String value = myInspectorTable.getCellTextValue(row, 1);
               // remove hashcode, properties description, take first from enumeration
               String[] parts = value.split("[@,\\[]");
-              openClass(parts[0], requestFocus);
+              UiInspectorUtil.openClassByFqn(myProject, parts[0], requestFocus);
             }
           }
 
@@ -254,43 +248,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
     });
     updateHighlighting();
     getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
-  }
-
-  private void openClass(String jvmFqn, boolean requestFocus) {
-    if (myProject == null) return;
-
-    try {
-      String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
-      PluginId pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(javaPsiFacadeFqn);
-      Class<?> facade = null;
-      if (pluginId != null) {
-        IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
-        if (plugin != null) {
-          facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
-        }
-      }
-      else {
-        facade = Class.forName(javaPsiFacadeFqn);
-      }
-      if (facade != null) {
-        Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
-        Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
-        String ourFqn = jvmFqn.replace('$', '.');
-        Object result = findClass.invoke(getInstance.invoke(null, myProject), ourFqn, GlobalSearchScope.allScope(myProject));
-        if (result == null) {
-          // if provided jvmFqn is anonymous class, try to navigate to containing class
-          String[] parts = jvmFqn.split("\\$\\d+");
-          String containingClassJvmFqn = parts[0];
-          String containingClassOurFqn = containingClassJvmFqn.replace('$', '.');
-          result = findClass.invoke(getInstance.invoke(null, myProject), containingClassOurFqn, GlobalSearchScope.allScope(myProject));
-        }
-        if (result instanceof PsiElement) {
-          PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
-        }
-      }
-    }
-    catch (Exception ignore) {
-    }
   }
 
   public static String getDimensionServiceKey() {
