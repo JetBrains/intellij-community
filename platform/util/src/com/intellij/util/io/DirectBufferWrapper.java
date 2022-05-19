@@ -195,10 +195,6 @@ public final class DirectBufferWrapper {
     return myReferences == RELEASED_CODE;
   }
 
-  boolean isLocked() {
-    return myReferences > 0;
-  }
-
   void force() throws IOException {
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 

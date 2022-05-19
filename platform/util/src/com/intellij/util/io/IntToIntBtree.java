@@ -116,7 +116,7 @@ public final class IntToIntBtree {
 
   private final class BtreeRootNode {
     int address;
-    final BtreeIndexNodeView nodeView = new BtreeIndexNodeView(false);
+    final BtreeIndexNodeView nodeView = new BtreeIndexNodeView(CACHE_ROOT_NODE_BUFFER);
     boolean initialized;
 
     void setAddress(int _address) {
@@ -132,6 +132,13 @@ public final class IntToIntBtree {
     BtreeIndexNodeView getNodeView() throws IOException {
       if (!initialized) syncWithStore();
       return nodeView;
+    }
+
+    void force() {
+      if (CACHE_ROOT_NODE_BUFFER) {
+        initialized = false;
+        nodeView.disposeBuffer();
+      }
     }
   }
 
@@ -166,7 +173,7 @@ public final class IntToIntBtree {
     }
 
     if (root.address == UNDEFINED_ADDRESS) return false;
-    DirectBufferWrapper root = initAccessNodeView();
+    initAccessNodeView();
     try {
       int index = myAccessNodeView.locate(key, false);
 
@@ -181,34 +188,20 @@ public final class IntToIntBtree {
     }
     finally {
       myAccessNodeView.disposeBuffer();
-      if (root != null) {
-        root.unlock();
-      }
     }
     return true;
   }
 
-  private DirectBufferWrapper initAccessNodeView() throws IOException {
+  private void initAccessNodeView() throws IOException {
     int rootAddress = root.address;
-
-    DirectBufferWrapper wrapper;
-    if (CACHE_ROOT_NODE_BUFFER) {
-      BtreeIndexNodeView node = root.getNodeView();
-      node.lockBuffer();
-      wrapper = node.bufferWrapper;
-    }
-    else {
-      wrapper = null;
-    }
+    DirectBufferWrapper rootBuffer = CACHE_ROOT_NODE_BUFFER ? root.getNodeView().bufferWrapper : null;
 
     if (myAccessNodeView == null) {
-      myAccessNodeView = new BtreeIndexNodeView(rootAddress, true, wrapper);
+      myAccessNodeView = new BtreeIndexNodeView(rootAddress, true, rootBuffer);
     }
     else {
-      myAccessNodeView.initTraversal(rootAddress, wrapper);
+      myAccessNodeView.initTraversal(rootAddress, rootBuffer);
     }
-
-    return wrapper;
   }
 
   public void put(int key, int value) throws IOException {
@@ -238,7 +231,7 @@ public final class IntToIntBtree {
 
   private void doPut(int key, int value) throws IOException {
     if (root.address == UNDEFINED_ADDRESS) doAllocateRoot();
-    DirectBufferWrapper root = initAccessNodeView();
+    initAccessNodeView();
     try {
       int index = myAccessNodeView.locate(key, true);
 
@@ -251,9 +244,6 @@ public final class IntToIntBtree {
     }
     finally {
       myAccessNodeView.disposeBuffer();
-      if (root != null) {
-        root.unlock();
-      }
     }
   }
 
@@ -274,10 +264,12 @@ public final class IntToIntBtree {
   }
 
   public void doClose() throws IOException {
+    root.force();
     storage.close();
   }
 
   public void doFlush() throws IOException {
+    root.force();
     storage.force();
   }
 
@@ -451,18 +443,12 @@ public final class IntToIntBtree {
     }
 
     private void unlockBuffer() {
-      if (isSharedBuffer) {
-        return;
-      }
       if (!cacheBuffer) {
         bufferWrapper.unlock();
       }
     }
 
     private void lockBuffer() throws IOException {
-      if (isSharedBuffer) {
-        return;
-      }
       boolean hasBeenLocked = bufferWrapper != null && !cacheBuffer && bufferWrapper.tryLock();
       if (!hasBeenLocked && (!cacheBuffer || bufferWrapper == null)) {
         bufferWrapper = getStorage().getByteBuffer(address, false);
