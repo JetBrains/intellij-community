@@ -41,7 +41,10 @@ abstract class JetBrainsProductProperties : ProductProperties() {
 
   override fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
     return buildList {
-      addAll(super.validatePlugin(result, context))
+      val problems = super.validatePlugin(result, context).filterNot {
+        it.message.contains("The plugin file size exceeds the maximum limit of 1 GB")  // FIXME RIDER-116978
+      }
+      addAll(problems)
       if (result is PluginCreationSuccess && result.plugin.vendor?.contains("JetBrains") != true) {
         add(object : InvalidDescriptorProblem(
           descriptorPath = "",
