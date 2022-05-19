@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * in Run and Debug tool windows in Code With Me and/or JetBrains Gateway (remote development).
  * In simple case you can just use {@link #SYNC_TAB_TO_GUEST} to mark content to be synchronized.
  * If your content contains virtual files that must be visible by guests (i.e. in editors)
- * you should mark them with {@link @FILE_VISIBLE_FOR_GUEST}.
+ * you should mark them with {@link #FILE_VISIBLE_FOR_GUEST}.
  */
 @ApiStatus.Experimental
 public interface ToolWindowContentExtractor {
