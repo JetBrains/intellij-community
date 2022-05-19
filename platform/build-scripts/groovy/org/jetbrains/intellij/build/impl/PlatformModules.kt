@@ -107,6 +107,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.platform.buildScripts.downloader",
   "intellij.idea.community.build.dependencies",
   "intellij.platform.usageView.impl",
+  "intellij.platform.ml.impl",
 )
 
 object PlatformModules {
