@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -183,7 +184,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     checkServerTrusted(chain, authType, addToKeyStore, askUser, null, null);
   }
 
-  public void checkServerTrusted(final X509Certificate[] chain, String authType, boolean addToKeyStore, boolean askUser, @Nullable @NlsContexts.DialogMessage String details, @Nullable Runnable onUsedAccepted)
+  @ApiStatus.Internal
+  public void checkServerTrusted(final X509Certificate[] chain, String authType, boolean addToKeyStore, boolean askUser, @Nullable @NlsContexts.DialogMessage String details, @Nullable Runnable onUserAccepted)
     throws CertificateException {
 
     CertificateException lastCertificateException = null;
@@ -204,14 +206,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         myCustomManager.checkServerTrusted(chain, authType);
       }
       catch (CertificateException e) {
-        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, addToKeyStore, askUser, details, onUsedAccepted)) {
+        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, addToKeyStore, askUser, details, onUserAccepted)) {
           throw lastCertificateException != null ? lastCertificateException : e;
         }
       }
     }
   }
 
-  private boolean confirmAndUpdate(final X509Certificate[] chain, boolean addToKeyStore, boolean askUser, @Nullable @NlsContexts.DialogMessage String details, @Nullable Runnable onUsedAccepted) {
+  private boolean confirmAndUpdate(final X509Certificate[] chain, boolean addToKeyStore, boolean askUser, @Nullable @NlsContexts.DialogMessage String details, @Nullable Runnable onUserAccepted) {
     Application app = ApplicationManager.getApplication();
     final X509Certificate endPoint = chain[0];
     // IDEA-123467 and IDEA-123335 workaround
@@ -239,8 +241,9 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       if (addToKeyStore) {
         myCustomManager.addCertificate(endPoint);
       }
-      if (onUsedAccepted != null)
-        onUsedAccepted.run();
+      if (onUserAccepted != null) {
+        onUserAccepted.run();
+      }
     }
     return accepted;
   }
