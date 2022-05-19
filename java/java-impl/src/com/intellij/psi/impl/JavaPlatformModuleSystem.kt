@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
@@ -118,7 +119,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
       if (!(targetModule is LightJavaModule ||
             JavaModuleGraphUtil.exports(targetModule, packageName, useModule) ||
-            module != null && inAddedExports(module, targetName, packageName, useName))) {
+            module != null && inAddedExports(module, targetName, packageName, useName) ||
+            module != null && isPatchedModule(targetName, module, place))) {
         if (quick) return ERR
         val fixes = when {
           packageName.isEmpty() -> emptyList()
@@ -175,11 +177,16 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return false
   }
 
+  private fun isPatchedModule(targetModuleName: String, module: Module, place: PsiFileSystemItem): Boolean {
+    val rootForFile = ProjectRootManager.getInstance(place.project).fileIndex.getSourceRootForFile(place.virtualFile)
+    return rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(targetModuleName, module, rootForFile.path);
+  }
+
   private fun inAddedExports(module: Module, targetName: String, packageName: String, useName: String): Boolean {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     if (options.isEmpty()) return false
     val prefix = "${targetName}/${packageName}="
-    return optionValues(options, "--add-exports")
+    return JavaCompilerConfigurationProxy.optionValues(options, "--add-exports")
       .filter { it.startsWith(prefix) }
       .map { it.substring(prefix.length) }
       .flatMap { it.splitToSequence(",") }
@@ -188,27 +195,10 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun inAddedModules(module: Module, moduleName: String): Boolean {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
-    return optionValues(options, "--add-modules")
+    return JavaCompilerConfigurationProxy.optionValues(options, "--add-modules")
       .flatMap { it.splitToSequence(",") }
       .any { it == moduleName || it == "ALL-SYSTEM" || it == "ALL-MODULE-PATH" }
   }
-
-  private fun optionValues(options: List<String>, name: String) =
-    if (options.isEmpty()) emptySequence()
-    else {
-      var useValue = false
-      options.asSequence()
-        .map {
-          when {
-            it == name -> { useValue = true; "" }
-            useValue -> { useValue = false; it }
-            it.startsWith(name) && it[name.length] == '=' -> it.substring(name.length + 1)
-            else -> ""
-          }
-        }
-        .filterNot { it.isEmpty() }
-    }
-
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
     @NonNls override fun getFamilyName() = "Fix compiler option" // not visible

@@ -11,8 +11,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -21,10 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,7 +39,7 @@ import java.util.stream.Stream;
 
 // generates HighlightInfoType.ERROR-like HighlightInfos for modularity-related (Jigsaw) problems
 final class ModuleHighlightUtil {
-  static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
+  static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule javaModule) {
     if (PsiUtil.isModuleFile(file)) {
       String message = JavaErrorBundle.message("module.no.package");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
@@ -48,13 +47,39 @@ final class ModuleHighlightUtil {
       return info;
     }
 
-    if (module != null) {
+    if (javaModule != null) {
       String packageName = statement.getPackageName();
       if (packageName != null) {
-        PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(module, packageName);
+        PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(javaModule, packageName);
         if (origin != null) {
           String message = JavaErrorBundle.message("module.conflicting.packages", packageName, origin.getName());
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+        }
+      }
+    }
+    else {
+      Module module = ModuleUtilCore.findModuleForFile(file);
+      if (module == null) {
+        return null;
+      }
+      PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+      PsiPackage pack = (PsiPackage)reference.resolve();
+      if (pack != null) {
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(pack.getProject()).getFileIndex();
+        for (PsiDirectory directory : pack.getDirectories()) {
+          PsiJavaModule anotherJavaModule = JavaModuleGraphUtil.findDescriptorByElement(directory);
+          if (anotherJavaModule != null) {
+            VirtualFile moduleVFile = PsiUtilCore.getVirtualFile(anotherJavaModule);
+            if (moduleVFile != null && ContainerUtil.find(fileIndex.getOrderEntriesForFile(moduleVFile), JdkOrderEntry.class::isInstance) != null) {
+              VirtualFile rootForFile = fileIndex.getSourceRootForFile(file.getVirtualFile());
+              if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile.getPath())) {
+                return null;
+              }
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(reference)
+                .descriptionAndTooltip(JavaErrorBundle.message("module.package.exists.in.another.module", anotherJavaModule.getName())).create();
+            }
+          }
         }
       }
     }
