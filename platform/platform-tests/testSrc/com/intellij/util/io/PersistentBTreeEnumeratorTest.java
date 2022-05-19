@@ -215,10 +215,41 @@ public class PersistentBTreeEnumeratorTest {
     int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
     int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
     int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
 
     assertEquals(1, pageLoadDiff);
     assertEquals(0, pageMissDiff);
     assertEquals(0, pageHitDiff);
+    assertEquals(0, pageFastHitDiff);
+  }
+
+  @Test
+  public void testEnumeratorDiskAccessCount() throws IOException {
+    StorageLockContext.forceDirectMemoryCache();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+    FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
+
+    for (int i = 0; i < 1000; i++) {
+      myEnumerator.enumerate("value" + i);
+    }
+    for (int i = 0; i < 1000; i++) {
+      myEnumerator.tryEnumerate("value" + i);
+    }
+
+    FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
+    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
+    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
+
+    assertEquals(3, pageLoadDiff);
+    assertEquals(0, pageMissDiff);
+    assertEquals(0, pageHitDiff);
+    assertEquals(1007, pageFastHitDiff);
   }
 
   @Test
