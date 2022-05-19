@@ -23,11 +23,9 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -36,6 +34,7 @@ import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -282,7 +281,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
         KeepingPopupOpenAction dontClosePopupAction = getActionByClass(selectedValue, actionPopupStep, KeepingPopupOpenAction.class);
         if (dontClosePopupAction != null) {
           actionPopupStep.performAction((AnAction)dontClosePopupAction, e != null ? e.getModifiers() : 0, e);
-          getList().repaint();
+
+          // Update actions presentation, probably it was changed after this (current) action was executed
+          actionPopupStep.updateStepItems(() -> getList().repaint());
           return;
         }
       }
@@ -660,52 +661,93 @@ public class PopupFactoryImpl extends JBPopupFactory {
   public static class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
     private final AnAction myAction;
     private @NlsActions.ActionText String myText;
+    private @NlsContexts.DetailedDescription String myDescription;
+    private @NlsContexts.DetailedDescription String myTooltip;
+    private @NlsContexts.ListItem String myValue;
+    private boolean myIsEnabled;
+    private boolean myIsPerformGroup;
+    private boolean myIsSubstepSuppressed;
+    private Icon myIcon;
+    private Icon mySelectedIcon;
+
+    private final int myMaxIconWidth;
+    private final int myMaxIconHeight;
+
     private final Character myMnemonicChar;
     private final boolean myMnemonicsEnabled;
-    private final boolean myIsEnabled;
-    private final boolean myIsPerformGroup;
-    private final boolean myIsSubstepSuppressed;
-    private final Icon myIcon;
-    private final Icon mySelectedIcon;
+    private final boolean myHonorActionMnemonics;
+
     private final boolean myPrependWithSeparator;
     private final @NlsContexts.Separator String mySeparatorText;
-    private final @NlsContexts.DetailedDescription String myDescription;
-    private final @NlsContexts.DetailedDescription String myTooltip;
-    private final @NlsContexts.ListItem String myValue;
 
     ActionItem(@NotNull AnAction action,
-               @NotNull @NlsActions.ActionText String text,
                @Nullable Character mnemonicChar,
                boolean mnemonicsEnabled,
-               @Nullable @NlsContexts.DetailedDescription String description,
-               @Nullable @NlsContexts.DetailedDescription String tooltip,
-               boolean enabled,
-               boolean performingGroup,
-               boolean substepSuppressed,
-               @Nullable Icon icon,
-               @Nullable Icon selectedIcon,
-               final boolean prependWithSeparator,
-               @NlsContexts.Separator String separatorText,
-               @Nullable @NlsContexts.ListItem String value) {
+               boolean honorActionMnemonics,
+               int maxIconWidth,
+               int maxIconHeight,
+               boolean prependWithSeparator,
+               @NlsContexts.Separator String separatorText)
+    {
       myAction = action;
-      myText = text;
       myMnemonicChar = mnemonicChar;
       myMnemonicsEnabled = mnemonicsEnabled;
-      myIsEnabled = enabled;
-      myIsPerformGroup = performingGroup;
-      myIsSubstepSuppressed = substepSuppressed;
-      myIcon = icon;
-      mySelectedIcon = selectedIcon;
+      myHonorActionMnemonics = honorActionMnemonics;
+      myMaxIconWidth = maxIconWidth;
+      myMaxIconHeight = maxIconHeight;
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
-      myDescription = description;
-      myTooltip = tooltip;
-      myValue = value;
+
       myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
         if (evt.getPropertyName() == Presentation.PROP_TEXT) {
           myText = myAction.getTemplatePresentation().getText();
         }
       });
+    }
+
+    ActionItem(@NotNull AnAction action,
+               @NotNull @NlsActions.ActionText String text) {
+      myAction = action;
+      myText = text;
+
+      myMnemonicChar = null;
+      myMnemonicsEnabled = false;
+      myHonorActionMnemonics = false;
+      myMaxIconWidth = -1;
+      myMaxIconHeight = -1;
+      myPrependWithSeparator = false;
+      mySeparatorText = null;
+    }
+
+    public void updateFromPresentation(@NotNull Presentation presentation, @NotNull String actionPlace) {
+      String text = presentation.getText();
+      if (text != null && !myMnemonicsEnabled && myHonorActionMnemonics) {
+        text = TextWithMnemonic.fromPlainText(text, (char)myAction.getTemplatePresentation().getMnemonic()).toString();
+      }
+      myText = text;
+      LOG.assertTrue(text != null, "Action in `" + actionPlace + "` has no presentation: " + myAction.getClass().getName());
+
+      myDescription =  presentation.getDescription();
+      myTooltip = (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY);
+
+      myIsEnabled = presentation.isEnabled();
+      myIsPerformGroup = myAction instanceof ActionGroup && presentation.isPerformGroup();
+      myIsSubstepSuppressed = myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(presentation);
+
+      Couple<Icon> icons = ActionStepBuilder.calcRawIcons(myAction, presentation);
+      Icon icon = icons.first;
+      Icon selectedIcon = icons.second;
+
+      if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {
+        if (icon != null) icon = new SizedIcon(icon, myMaxIconWidth, myMaxIconHeight);
+        if (selectedIcon != null) selectedIcon = new SizedIcon(selectedIcon, myMaxIconWidth, myMaxIconHeight);
+      }
+
+      if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
+      myIcon = icon;
+      mySelectedIcon = selectedIcon;
+
+      myValue = presentation.getClientProperty(Presentation.PROP_VALUE);
     }
 
     @Nullable
