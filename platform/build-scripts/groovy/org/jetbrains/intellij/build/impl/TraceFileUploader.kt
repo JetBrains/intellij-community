@@ -1,188 +1,138 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import groovy.json.JsonOutput;
-import groovy.json.JsonSlurper;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package org.jetbrains.intellij.build.impl
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 
-public class TraceFileUploader {
-  public TraceFileUploader(@NotNull String serverUrl, @Nullable String token) {
-    myServerUrl = fixServerUrl(serverUrl);
-    myServerAuthToken = token;
-  }
+open class TraceFileUploader(serverUrl: String, token: String?) {
+  private val serverUrl = fixServerUrl(serverUrl)
+  private val serverAuthToken = token
 
-  protected void log(String message) {
-  }
+  protected open fun log(message: String) {}
 
-  public void upload(@NotNull Path file, @NotNull final Map<String, String> metadata) throws UploadException {
-    log("Preparing to upload " + file + " to " + myServerUrl);
-
+  fun upload(file: Path, metadata: Map<String, String>) {
+    log("Preparing to upload $file to $serverUrl")
     if (!Files.exists(file)) {
-      throw new UploadException("The file " + file + " does not exist");
+      throw RuntimeException("The file $file does not exist")
     }
 
-
-    final String id = uploadMetadata(getFullMetadata(file, metadata));
-    log("Performed metadata upload. Import id is: " + id);
-
-    String response = uploadFile(file, id);
-    log("Performed file upload. Server answered: " + response);
+    val id = uploadMetadata(getFullMetadata(file, metadata))
+    log("Performed metadata upload. Import id is: $id")
+    val response = uploadFile(file, id)
+    log("Performed file upload. Server answered: $response")
   }
 
-  @NotNull
-  protected static Map<String, String> getFullMetadata(@NotNull Path file, @NotNull Map<String, String> metadata) {
-    final Map<String, String> map = new LinkedHashMap<String, String>(metadata);
-    map.put("internal.upload.file.name", file.getFileName().toString());
-    map.put("internal.upload.file.path", file.toString());
-    map.put("internal.upload.file.size", String.valueOf(Files.size(file)));
-    return map;
-  }
-
-  @NotNull
-  private String uploadMetadata(@NotNull Map<String, String> metadata) throws UploadException {
-    try {
-      String postUrl = myServerUrl + "import";
-      log("Posting to url " + postUrl);
-
-      HttpURLConnection conn = (HttpURLConnection)new URL(postUrl).openConnection();
-      conn.setDoInput(true);
-      conn.setDoOutput(true);
-      conn.setUseCaches(false);
-      conn.setInstanceFollowRedirects(true);
-      conn.setRequestMethod("POST");
-
-      final String metadataContent = JsonOutput.toJson(metadata);
-      log("Uploading metadata: " + metadataContent);
-      final Byte[] content = metadataContent.getBytes(StandardCharsets.UTF_8);
-
-      conn.setRequestProperty("User-Agent", "TraceFileUploader");
-      conn.setRequestProperty("Connection", "Keep-Alive");
-      conn.setRequestProperty("Accept", "text/plain;charset=UTF-8");
-      conn.setRequestProperty("Accept-Charset", UTF_8);
-      conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-      if (myServerAuthToken != null) conn.setRequestProperty("Authorization", "Bearer " + myServerAuthToken);
-      conn.setRequestProperty("Content-Length", String.valueOf(content.length));
-      conn.setFixedLengthStreamingMode(content.length);
-
-      OutputStream output = conn.getOutputStream();
-      output.write(content);
-      output.close();
-
-      // Get the response
-      final int code = conn.getResponseCode();
-      if (code == 200 || code == 201 || code == 202 || code == 204) {
-        return readPlainMetadata(conn);
-      }
-      else {
-        throw readError(conn, code);
-      }
+  private fun uploadMetadata(metadata: Map<String, String>): String {
+    val postUrl = "${serverUrl}import"
+    log("Posting to url $postUrl")
+    val conn = URL(postUrl).openConnection() as HttpURLConnection
+    conn.doInput = true
+    conn.doOutput = true
+    conn.useCaches = false
+    conn.instanceFollowRedirects = true
+    conn.requestMethod = "POST"
+    val metadataContent = JsonOutput.toJson(metadata)
+    log("Uploading metadata: $metadataContent")
+    val content = metadataContent.toByteArray(StandardCharsets.UTF_8)
+    conn.setRequestProperty("User-Agent", "TraceFileUploader")
+    conn.setRequestProperty("Connection", "Keep-Alive")
+    conn.setRequestProperty("Accept", "text/plain;charset=UTF-8")
+    conn.setRequestProperty("Accept-Charset", StandardCharsets.UTF_8.name())
+    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8")
+    if (serverAuthToken != null) {
+      conn.setRequestProperty("Authorization", "Bearer $serverAuthToken")
     }
-    catch (Exception e) {
-      if (e instanceof UploadException) throw (UploadException)e;
-      throw new UploadException("Failed to post metadata: " + e.getMessage(), e);
+    conn.setRequestProperty("Content-Length", content.size.toString())
+    conn.setFixedLengthStreamingMode(content.size)
+
+    conn.outputStream.use { it.write(content) }
+
+    // Get the response
+    val code = conn.responseCode
+    if (code == 200 || code == 201 || code == 202 || code == 204) {
+      return readPlainMetadata(conn)
+    }
+    else {
+      throw readError(conn, code)
     }
   }
 
-  @NotNull
-  private String uploadFile(Path file, String id) throws UploadException {
-    try {
-      String postUrl = myServerUrl + "import/" + URLEncoder.encode(id, StandardCharsets.UTF_8) + "/upload/tr-single";
-      log("Posting to url " + postUrl);
-
-      HttpURLConnection conn = (HttpURLConnection)new URL(postUrl).openConnection();
-      conn.setDoInput(true);
-      conn.setDoOutput(true);
-      conn.setUseCaches(false);
-      conn.setRequestMethod("POST");
-
-      conn.setRequestProperty("User-Agent", "TraceFileUploader");
-      conn.setRequestProperty("Connection", "Keep-Alive");
-      conn.setRequestProperty("Accept-Charset", UTF_8);
-      conn.setRequestProperty("Content-Type", "application/octet-stream");
-      if (myServerAuthToken != null) {
-        conn.setRequestProperty("Authorization", "Bearer " + myServerAuthToken);
-      }
-
-      long size = Files.size(file);
-      conn.setRequestProperty("Content-Length", String.valueOf(size));
-      conn.setFixedLengthStreamingMode(size);
-
-      OutputStream output = conn.getOutputStream();
-      Files.copy(file, output);
-      output.close();
-
-      // Get the response
-      return readBody(conn);
+  private fun uploadFile(file: Path, id: String): String {
+    val postUrl = "${serverUrl}import/${URLEncoder.encode(id, StandardCharsets.UTF_8)}/upload/tr-single"
+    log("Posting to url $postUrl")
+    val connection = URL(postUrl).openConnection() as HttpURLConnection
+    connection.doInput = true
+    connection.doOutput = true
+    connection.useCaches = false
+    connection.requestMethod = "POST"
+    connection.setRequestProperty("User-Agent", "TraceFileUploader")
+    connection.setRequestProperty("Connection", "Keep-Alive")
+    connection.setRequestProperty("Accept-Charset", StandardCharsets.UTF_8.name())
+    connection.setRequestProperty("Content-Type", "application/octet-stream")
+    if (serverAuthToken != null) {
+      connection.setRequestProperty("Authorization", "Bearer $serverAuthToken")
     }
-    catch (Exception e) {
-      throw new UploadException("Failed to upload file: " + e.getMessage(), e);
+    val size = Files.size(file)
+    connection.setRequestProperty("Content-Length", size.toString())
+    connection.setFixedLengthStreamingMode(size)
+    connection.outputStream.use {
+      Files.copy(file, it)
     }
+
+    // Get the response
+    return readBody(connection)
+  }
+}
+
+private fun getFullMetadata(file: Path, metadata: Map<String, String>): Map<String, String> {
+  val map = LinkedHashMap(metadata)
+  map.put("internal.upload.file.name", file.fileName.toString())
+  map.put("internal.upload.file.path", file.toString())
+  map.put("internal.upload.file.size", Files.size(file).toString())
+  return map
+}
+
+private fun readBody(connection: HttpURLConnection): String {
+  return connection.inputStream.use { it.readAllBytes().toString(Charsets.UTF_8) }
+}
+
+private fun readError(connection: HttpURLConnection, code: Int): Exception {
+  val body = readBody(connection)
+  return IOException("Unexpected code from server: $code body: $body")
+}
+
+private fun readPlainMetadata(connection: HttpURLConnection): String {
+  val body = readBody(connection).trim()
+  if (body.startsWith('{')) {
+    val `object` = JsonSlurper().parseText(body)
+    assert(`object` is Map<*, *>)
+    return (`object` as Map<*, *>).get("id") as String
   }
 
-  @NotNull
-  private static String readBody(HttpURLConnection connection) throws IOException {
-    InputStream response = connection.getInputStream();
-    Byte[] bytes = response.readAllBytes();
-    response.close();
-    return new String(bytes, StandardCharsets.UTF_8);
+  try {
+    return body.toLong().toString()
   }
-
-  private static UploadException readError(HttpURLConnection conn, int code) throws IOException {
-    final String body = readBody(conn);
-    return new UploadException("Unexpected code from server: " + code + " body:" + body);
+  catch (ignored: NumberFormatException) {
   }
+  throw IOException("Server returned neither import json nor id: $body")
+}
 
-  private static String readPlainMetadata(@NotNull final HttpURLConnection conn) throws IOException, UploadException {
-    final String body = readBody(conn).trim();
-    if (body.startsWith("{")) {
-      Object object = new JsonSlurper().parseText(body);
-      assert object instanceof Map;
-      return ((String)(((Map)object).get("id")));
-    }
-
-    try {
-      return String.valueOf(Long.parseLong(body));
-    }
-    catch (NumberFormatException ignored) {
-    }
-
-    throw new UploadException("Server returned neither import json nor id: " + body);
+private fun fixServerUrl(serverUrl: String): String {
+  var url = serverUrl
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = "http://$url"
   }
-
-  private static String fixServerUrl(String serverUrl) {
-    String url = serverUrl;
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      url = "http://" + url;
-    }
-
-    if (!url.endsWith("/")) url += "/";
-    return url;
+  if (!url.endsWith("/")) {
+    url += '/'
   }
-
-  private final String myServerUrl;
-  private final String myServerAuthToken;
-  private static final String UTF_8 = "UTF-8";
-
-  public static class UploadException extends Exception {
-    public UploadException(String message) {
-      super(message);
-    }
-
-    public UploadException(String message, Throwable cause) {
-      super(message, cause);
-    }
-  }
+  return url
 }

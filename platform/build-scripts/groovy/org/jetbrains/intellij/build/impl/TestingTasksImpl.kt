@@ -51,13 +51,14 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     else {
       options.beforeRunProjectArtifacts.split(';').dropLastWhile(String::isEmpty).toSet()
     }
+
     if (projectArtifacts != null) {
       compilationTasks.buildProjectArtifacts(projectArtifacts)
     }
+
     val runConfigurations = options.testConfigurations?.let { v ->
       v.split(';').dropLastWhile(String::isEmpty).map {
-        val file = RunConfigurationProperties.findRunConfiguration(
-          context.paths.projectHome, it, context.messages)
+        val file = RunConfigurationProperties.findRunConfiguration(context.paths.projectHome, it, context.messages)
         JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
       }
     }
@@ -80,11 +81,11 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     else {
       val additionalSystemProperties = LinkedHashMap<String, String>()
       loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
-      if (runConfigurations != null) {
-        runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations, additionalSystemProperties, context)
+      if (runConfigurations == null) {
+        runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties, context)
       }
       else {
-        runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties, context)
+        runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations, additionalSystemProperties, context)
       }
       if (options.testDiscoveryEnabled) {
         publishTestDiscovery(context.messages, testDiscoveryTraceFilePath)
@@ -158,15 +159,17 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
           if (Files.exists(dir)) {
             excludedRoots.add(dir.toString())
           }
+
           dir = Path.of(context.getModuleTestsOutputPath(module))
           if (Files.exists(dir)) {
             excludedRoots.add(dir.toString())
           }
         }
       }
+
       val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
-      Files.writeString(excludedRootsFile, java.lang.String.join("\n", excludedRoots))
+      Files.writeString(excludedRootsFile, excludedRoots.joinToString(separator = "\n"))
       additionalSystemProperties.put("exclude.tests.roots.file", excludedRootsFile.toString())
     }
 
@@ -180,35 +183,42 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
   }
 
   private fun loadTestDiscovery(additionalJvmOptions: MutableList<String>, additionalSystemProperties: LinkedHashMap<String, String>) {
-    if (options.testDiscoveryEnabled) {
-      val testDiscovery = "intellij-test-discovery"
-      val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
-      if (library == null) {
-        context.messages.error("Can\'t find the $testDiscovery library, but test discovery capturing enabled.")
-      }
-      val agentJar = library!!.getFiles(JpsOrderRootType.COMPILED)
-        .firstOrNull {  it.name.startsWith("intellij-test-discovery") && it.name.endsWith(".jar") }
-      if (agentJar == null) {
-        context.messages.error("Can\'t find the agent in $testDiscovery library, but test discovery capturing enabled.")
-      }
-      additionalJvmOptions.add("-javaagent:${agentJar!!.absolutePath}")
-      val excludeRoots = context.projectModel.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE).mapTo(LinkedHashSet<String>()) {
-        it.properties.homePath
-      }
-
-      excludeRoots.add(context.paths.buildOutputRoot)
-      excludeRoots.add("${context.paths.projectHome}/out")
-      additionalSystemProperties.putAll(java.util.Map.of(
-        "test.discovery.listener", "com.intellij.TestDiscoveryBasicListener",
-        "test.discovery.data.listener", "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener",
-        "org.jetbrains.instrumentation.trace.file", testDiscoveryTraceFilePath,
-        "test.discovery.include.class.patterns", options.testDiscoveryIncludePatterns,
-        "test.discovery.exclude.class.patterns",
-        options.testDiscoveryExcludePatterns,
-        // "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
-        "test.discovery.excluded.roots", excludeRoots.joinToString(separator = ";", transform = FileUtilRt::toSystemDependentName)
-      ))
+    if (!options.testDiscoveryEnabled) {
+      return
     }
+
+    val testDiscovery = "intellij-test-discovery"
+    val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
+    if (library == null) {
+      context.messages.error("Can\'t find the $testDiscovery library, but test discovery capturing enabled.")
+      return
+    }
+
+    val agentJar = library.getFiles(JpsOrderRootType.COMPILED)
+      .firstOrNull {  it.name.startsWith("intellij-test-discovery") && it.name.endsWith(".jar") }
+    if (agentJar == null) {
+      context.messages.error("Can\'t find the agent in $testDiscovery library, but test discovery capturing enabled.")
+      return
+    }
+
+    additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}")
+    val excludeRoots = context.projectModel.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE)
+      .mapTo(LinkedHashSet()) { it.properties.homePath }
+
+    excludeRoots.add(context.paths.buildOutputRoot)
+    excludeRoots.add("${context.paths.projectHome}/out")
+
+    additionalSystemProperties.put("test.discovery.listener", "com.intellij.TestDiscoveryBasicListener")
+    additionalSystemProperties.put("test.discovery.data.listener",
+                                   "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener")
+    additionalSystemProperties.put("org.jetbrains.instrumentation.trace.file", testDiscoveryTraceFilePath)
+    additionalSystemProperties.put("test.discovery.include.class.patterns", options.testDiscoveryIncludePatterns)
+
+    additionalSystemProperties.put("test.discovery.include.class.patterns", options.testDiscoveryIncludePatterns)
+    additionalSystemProperties.put("test.discovery.exclude.class.patterns", options.testDiscoveryExcludePatterns)
+
+    additionalSystemProperties.put("test.discovery.excluded.roots",
+                                   excludeRoots.joinToString(separator = ";", transform = FileUtilRt::toSystemDependentName))
   }
 
   private val testDiscoveryTraceFilePath: String
@@ -370,16 +380,18 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
                                     remoteDebugging: Boolean) {
     if (jvmArgs.contains("-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")) {
       val utilModule = context.findRequiredModule("intellij.platform.util")
-      val enumerator = JpsJavaExtensionService.dependencies(utilModule).recursively().withoutSdk().includedIn(
-        JpsJavaClasspathKind.PRODUCTION_RUNTIME)
-      val utilClasspath = enumerator.classes().roots.map { it.absolutePath }
-      classPath.addAll(utilClasspath - classPath)
+      val enumerator = JpsJavaExtensionService.dependencies(utilModule)
+        .recursively()
+        .withoutSdk()
+        .includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+      val utilClasspath = enumerator.classes().roots.mapTo(LinkedHashSet()) { it.absolutePath }
+      utilClasspath.removeAll(classPath.toSet())
+      classPath.addAll(utilClasspath)
     }
     val snapshotsDir = createSnapshotsDirectory()
     val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
-    val defaultJvmArgs = VmOptionsGenerator.getCOMMON_VM_OPTIONS() +
-                         listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=$hprofSnapshotFilePath", "-Dkotlinx.coroutines.debug=on")
-    jvmArgs.addAll(0, defaultJvmArgs)
+    jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=$hprofSnapshotFilePath", "-Dkotlinx.coroutines.debug=on"))
+    jvmArgs.addAll(0, VmOptionsGenerator.COMMON_VM_OPTIONS)
     if (options.jvmMemoryOptions != null) {
       jvmArgs.addAll(options.jvmMemoryOptions.splitToSequence(" \t\n\r\u000c"))
     }
@@ -397,7 +409,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       "idea.system.path" to "$tempDir/system",
       "intellij.build.compiled.classes.archives.metadata" to System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive" to System.getProperty("intellij.build.compiled.classes.archive"),
-      (BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY) to "$context.projectOutputDirectory",
+      BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "$context.projectOutputDirectory",
       "idea.coverage.enabled.build" to System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName" to System.getProperty("teamcity.buildConfName"),
       "java.io.tmpdir" to tempDir,
