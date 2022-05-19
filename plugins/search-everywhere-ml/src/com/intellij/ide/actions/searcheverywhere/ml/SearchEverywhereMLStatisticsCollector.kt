@@ -66,14 +66,13 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
   }
 
   fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
-                        experimentGroup: Int, orderByMl: Boolean,
                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
                         timeToFirstResult: Int,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     reportElements(
-      project, SEARCH_RESTARTED, seSessionId, searchIndex, experimentGroup, orderByMl,
+      project, SEARCH_RESTARTED, seSessionId, searchIndex, cache.experimentGroup, cache.orderByMl,
       elementIdProvider, context, cache, timeToFirstResult, emptyList(),
       EMPTY_ARRAY, emptyList(), elementsProvider
     )

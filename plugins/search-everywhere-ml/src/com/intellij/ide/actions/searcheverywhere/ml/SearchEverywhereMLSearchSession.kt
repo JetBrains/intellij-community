@@ -35,6 +35,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                       experimentStrategy: SearchEverywhereMlExperiment,
                       reason: SearchRestartReason,
                       tabId: String,
+                      orderByMl: Boolean,
                       keysTyped: Int,
                       backspacesTyped: Int,
                       searchQuery: String,
@@ -45,19 +46,19 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       val startTime = System.currentTimeMillis()
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
+      val experimentGroup = experimentStrategy.experimentGroup
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(
-        sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-        searchQuery, modelProviderWithCache, providersCache
+        sessionStartTime, startTime, nextSearchIndex, searchReason,
+        tabId, experimentGroup, orderByMl,
+        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache
       )
     }
 
     if (prevState != null && experimentStrategy.isLoggingEnabledForTab(prevState.tabId)) {
-      val orderByMl = orderedByMl(prevState.tabId)
-      val experimentGroup = experimentStrategy.experimentGroup
       logger.onSearchRestarted(
-        project, sessionId, prevState.searchIndex, experimentGroup, orderByMl,
+        project, sessionId, prevState.searchIndex,
         itemIdProvider, cachedContextInfo, prevState,
         prevTimeToResult, previousElementsProvider
       )
@@ -74,10 +75,9 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
         selectedItems.forEach { statisticianService.increaseUseCount(it) }
       }
 
-      val orderByMl = orderedByMl(state.tabId)
       logger.onItemSelected(
         project, sessionId, state.searchIndex,
-        experimentStrategy.experimentGroup, orderByMl,
+        state.experimentGroup, state.orderByMl,
         itemIdProvider, cachedContextInfo, state,
         indexes, selectedItems, closePopup,
         performanceTracker.timeElapsed, elementsProvider
@@ -90,10 +90,9 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
-      val orderByMl = orderedByMl(state.tabId)
       logger.onSearchFinished(
         project, sessionId, state.searchIndex,
-        experimentStrategy.experimentGroup, orderByMl,
+        state.experimentGroup, state.orderByMl,
         itemIdProvider, cachedContextInfo, state,
         performanceTracker.timeElapsed, elementsProvider
       )
@@ -110,10 +109,6 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       return state.getMLWeight(itemIdProvider.getId(element), element, contributor, cachedContextInfo, matchingDegree)
     }
     return -1.0
-  }
-
-  private fun orderedByMl(tabId: String): Boolean {
-    return SearchEverywhereMlSessionService.getService().shouldOrderByMl(tabId)
   }
 
   fun getCurrentSearchState() = currentSearchState.get()

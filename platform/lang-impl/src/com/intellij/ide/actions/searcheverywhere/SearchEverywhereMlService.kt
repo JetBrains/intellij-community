@@ -23,7 +23,7 @@ abstract class SearchEverywhereMlService {
     }
   }
 
-  abstract fun shouldOrderByMl(tabId: String): Boolean
+  abstract fun shouldOrderByMl(): Boolean
 
   abstract fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double
 

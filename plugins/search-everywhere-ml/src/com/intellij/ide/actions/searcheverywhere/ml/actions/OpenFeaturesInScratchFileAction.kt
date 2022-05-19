@@ -74,7 +74,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     }
 
     return mapOf(
-      SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(tabId),
+      SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(),
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
       SEARCH_STATE_FEATURES_KEY to state!!.searchStateFeatures.associate { it.field.name to it.data },
       FOUND_ELEMENTS_KEY to features

@@ -11,8 +11,9 @@ import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereRankin
 import com.intellij.internal.statistic.eventLog.events.EventPair
 
 internal class SearchEverywhereMlSearchState(
-  val sessionStartTime: Long, val searchStartTime: Long,
-  val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
+  private val sessionStartTime: Long, val searchStartTime: Long,
+  val searchIndex: Int, val searchStartReason: SearchRestartReason,
+  val tabId: String, val experimentGroup: Int, val orderByMl: Boolean,
   val keysTyped: Int, val backspacesTyped: Int, private val searchQuery: String,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?
