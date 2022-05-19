@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SmartList;
@@ -25,6 +26,7 @@ import java.util.List;
  *   <li>Action/ActionGroup</li>
  *   <li>Listener</li>
  *   <li>Extension</li>
+ *   <li>Component Interface/Implementation</li>
  * </ul>
  */
 public final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
@@ -43,15 +45,27 @@ public final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider exte
   protected void process(@NotNull PsiElement identifier,
                          @NotNull PsiClass psiClass,
                          @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result) {
-    if (!PsiUtil.isInstantiable(psiClass) ||
-        psiClass.getQualifiedName() == null) {
+    if (psiClass.getQualifiedName() == null) {
+      return;
+    }
+
+    if (!PsiUtil.isInstantiable(psiClass)) {
+
+      // non-instantiable, abstract/interface can be registered as component interface-class
+      if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        Project project = psiClass.getProject();
+        GlobalSearchScope scope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
+        if (IdeaPluginRegistrationIndex.isRegisteredComponentInterface(psiClass, scope)) {
+          processComponent(identifier, psiClass, result, project, scope);
+        }
+      }
       return;
     }
 
     Project project = psiClass.getProject();
     GlobalSearchScope candidatesScope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
 
-    // only EPs are not indexed via IdeaPluginRegistrationIndex
+    // only extensions are not indexed via IdeaPluginRegistrationIndex
     if (!IdeaPluginRegistrationIndex.isRegisteredClass(psiClass, candidatesScope)) {
       List<ExtensionCandidate> epTargets = ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass);
       if (!epTargets.isEmpty()) {
@@ -87,6 +101,27 @@ public final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider exte
     });
     if (!listenerTargets.isEmpty()) {
       result.add(LineMarkerInfoHelper.createListenerLineMarkerInfo(listenerTargets, identifier));
+      return;
+    }
+
+    processComponent(identifier, psiClass, result, project, candidatesScope);
+  }
+
+  private static void processComponent(@NotNull PsiElement identifier,
+                                       @NotNull PsiClass psiClass,
+                                       @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result,
+                                       Project project,
+                                       GlobalSearchScope candidatesScope) {
+    // Components: search for _all_ occurrences
+    // - component can be registered multiple times
+    // - component-interface can occur multiple times
+    List<ComponentCandidate> componentTargets = new SmartList<>();
+    IdeaPluginRegistrationIndex.processComponent(project, psiClass, candidatesScope, component -> {
+      componentTargets.add(new ComponentCandidate(component));
+      return true;
+    });
+    if (!componentTargets.isEmpty()) {
+      result.add(LineMarkerInfoHelper.createComponentLineMarkerInfo(componentTargets, identifier));
     }
   }
 }

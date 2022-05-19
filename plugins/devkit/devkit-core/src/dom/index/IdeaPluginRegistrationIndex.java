@@ -11,7 +11,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,6 +22,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
@@ -101,6 +101,10 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return isRegisteredClass(psiClass, scope, null);
   }
 
+  public static boolean isRegisteredComponentInterface(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.COMPONENT_INTERFACE);
+  }
+
   public static boolean isRegisteredApplicationComponent(PsiClass psiClass, GlobalSearchScope scope) {
     return isRegisteredClass(psiClass, scope, RegistrationType.APPLICATION_COMPONENT);
   }
@@ -115,6 +119,22 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
 
   public static boolean isRegisteredActionOrGroup(PsiClass psiClass, GlobalSearchScope scope) {
     return isRegisteredClass(psiClass, scope, RegistrationType.ACTION);
+  }
+
+  public static boolean processComponent(Project project,
+                                         PsiClass componentInterfaceOrImplementationClass,
+                                         GlobalSearchScope scope,
+                                         Processor<? super Component> processor) {
+    String key = componentInterfaceOrImplementationClass.getQualifiedName();
+    assert key != null : componentInterfaceOrImplementationClass;
+
+    return processAll(project, key, scope,
+                      EnumSet.of(RegistrationType.APPLICATION_COMPONENT,
+                                 RegistrationType.PROJECT_COMPONENT,
+                                 RegistrationType.MODULE_COMPONENT,
+                                 RegistrationType.COMPONENT_INTERFACE),
+                      Component.class,
+                      processor);
   }
 
   public static boolean processListener(@NotNull Project project,
@@ -193,11 +213,11 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return doProcessActionOrGroup(project, actionGroupId, scope, EnumSet.of(RegistrationType.ACTION_GROUP_ID), processor);
   }
 
-  private static <E extends Enum<E>> boolean doProcessActionOrGroup(@NotNull Project project,
-                                                                    @NotNull String key,
-                                                                    GlobalSearchScope scope,
-                                                                    EnumSet<RegistrationType> types,
-                                                                    Processor<? super ActionOrGroup> processor) {
+  private static boolean doProcessActionOrGroup(@NotNull Project project,
+                                                @NotNull String key,
+                                                GlobalSearchScope scope,
+                                                EnumSet<RegistrationType> types,
+                                                Processor<? super ActionOrGroup> processor) {
     return processAll(project, key, scope, types, ActionOrGroup.class, processor);
   }
 
@@ -212,7 +232,7 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return ContainerUtil.process(tags, tag -> {
       final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
 
-      T t = ObjectUtils.tryCast(domElement, domClazz);
+      T t = DomUtil.getParentOfType(domElement, domClazz, false);
       if (t == null) return true;
       //noinspection unchecked
       return processor.process((T)domElement);
