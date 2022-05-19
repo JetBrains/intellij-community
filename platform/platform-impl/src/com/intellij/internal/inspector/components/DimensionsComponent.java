@@ -25,14 +25,10 @@ final class DimensionsComponent extends JComponent {
     myComponent = component;
     setOpaque(true);
     setBackground(JBColor.WHITE);
-    setBorder(JBUI.Borders.empty(5, 0));
+    setBorder(JBUI.Borders.customLine(JBColor.border(), 1));
 
     setFont(JBUI.Fonts.label(9));
 
-    update();
-  }
-
-  public void update() {
     myWidth = myComponent.getWidth();
     myHeight = myComponent.getHeight();
     if (myComponent instanceof JComponent) {

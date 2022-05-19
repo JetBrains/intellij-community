@@ -147,7 +147,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     myWrapperPanel = new Wrapper();
 
-    myInspectorTable = new InspectorTable(component);
+    myInspectorTable = new InspectorTable(component, myProject);
     myHierarchyTree = new HierarchyTree(component) {
       @Override
       public void onComponentsChanged(java.util.List<? extends Component> components) {
@@ -273,7 +273,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myInfo = null;
     Component showingComponent = components.get(0);
     setTitle(showingComponent.getClass().getName());
-    myInspectorTable = new InspectorTable(showingComponent);
+    myInspectorTable = new InspectorTable(showingComponent, myProject);
     myWrapperPanel.setContent(myInspectorTable);
     myNavBarPanel.setSelectedComponent(showingComponent);
   }
@@ -282,7 +282,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.clear();
     myInfo = clickInfo;
     setTitle("Click Info");
-    myInspectorTable = new InspectorTable(clickInfo);
+    myInspectorTable = new InspectorTable(clickInfo, myProject);
     myWrapperPanel.setContent(myInspectorTable);
   }
 

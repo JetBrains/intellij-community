@@ -303,31 +303,15 @@ final class ValueCellRenderer implements TableCellRenderer {
   }
 
   @NotNull
-  private static String getToStringValue(@NotNull Object value) {
+  public static String getToStringValue(@NotNull Object value) {
     StringBuilder sb = new StringBuilder();
     if (value.getClass().getName().equals("javax.swing.ArrayTable")) {
-      Object table = ReflectionUtil.getField(value.getClass(), value, Object.class, "table");
-      if (table != null) {
-        try {
-          if (table instanceof Object[]) {
-            Object[] arr = (Object[])table;
-            for (int i = 0; i < arr.length; i += 2) {
-              if (arr[i].equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
-              if (sb.length() > 0) sb.append(",");
-              sb.append('[').append(arr[i]).append("->").append(arr[i + 1]).append(']');
-            }
-          }
-          else if (table instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>)table;
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-              if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
-              if (sb.length() > 0) sb.append(",");
-              sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
-            }
-          }
-        }
-        catch (Exception e) {
-          //ignore
+      Map<Object, Object> properties = parseClientProperties(value);
+      if (properties != null) {
+        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+          if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
+          if (sb.length() > 0) sb.append(",");
+          sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
         }
       }
       if (sb.length() == 0) sb.append("-");
@@ -346,6 +330,31 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
     String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
     return toString.replace('\n', ' ');
+  }
+
+  @Nullable
+  public static Map<Object, Object> parseClientProperties(@NotNull Object value) {
+    Object table = ReflectionUtil.getField(value.getClass(), value, Object.class, "table");
+    if (table == null) return null;
+    try {
+      if (table instanceof Map) {
+        //noinspection unchecked
+        return (Map<Object, Object>)table;
+      }
+
+      if (table instanceof Object[]) {
+        Object[] arr = (Object[])table;
+        Map<Object, Object> properties = new HashMap<>();
+        for (int i = 0; i < arr.length; i += 2) {
+          if (arr[i].equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
+          properties.put(arr[i], arr[i + 1]);
+        }
+        return properties;
+      }
+    }
+    catch (Exception ignored) {
+    }
+    return null;
   }
 
   private static ColorIcon createColorIcon(Color color) {

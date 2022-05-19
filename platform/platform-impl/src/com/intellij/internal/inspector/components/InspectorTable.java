@@ -1,20 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.internal.inspector.ComponentPropertiesCollector;
 import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorPicker;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
@@ -30,6 +37,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.*;
 import java.awt.*;
@@ -37,27 +47,37 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
-final class InspectorTable extends JPanel implements DataProvider {
+import static com.intellij.execution.ui.ConsoleViewContentType.ERROR_OUTPUT;
+import static com.intellij.execution.ui.ConsoleViewContentType.NORMAL_OUTPUT;
+
+final class InspectorTable extends JBSplitter implements DataProvider {
+  private final @Nullable Project myProject;
   private final MyModel myModel;
-  private DimensionsComponent myDimensionComponent;
   private StripeTable myTable;
 
-  InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
+  InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo, @Nullable Project project) {
+    super(true, 0.75f);
+    myProject = project;
     myModel = new MyModel(clickInfo);
     init(null);
   }
 
-  InspectorTable(@NotNull final Component component) {
+  InspectorTable(@NotNull final Component component, @Nullable Project project) {
+    super(true, 0.75f);
+    myProject = project;
     myModel = new MyModel(component);
     init(component);
   }
 
   private void init(@Nullable Component component) {
-    setLayout(new BorderLayout());
+    setSplitterProportionKey("UiInspector.table.splitter.proportion");
+
     myTable = new StripeTable(myModel);
     new TableSpeedSearch(myTable);
 
@@ -123,20 +143,24 @@ final class InspectorTable extends JPanel implements DataProvider {
       }
     }.installOn(myTable);
 
+    MyCellSelectionListener selectionListener = new MyCellSelectionListener();
+    myTable.getSelectionModel().addListSelectionListener(selectionListener);
+    myTable.getColumnModel().getSelectionModel().addListSelectionListener(selectionListener);
+
     myTable.setCellSelectionEnabled(true);
     myTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
-    add(new JBScrollPane(myTable), BorderLayout.CENTER);
+    setFirstComponent(new JBScrollPane(myTable));
     if (component != null) {
-      myDimensionComponent = new DimensionsComponent(component);
-      add(myDimensionComponent, BorderLayout.SOUTH);
+      setSecondComponent(new DimensionsComponent(component));
     }
   }
 
   public void refresh() {
     myModel.refresh();
-    myDimensionComponent.update();
-    myDimensionComponent.repaint();
+    if (myModel.myComponent != null) {
+      setSecondComponent(new DimensionsComponent(myModel.myComponent));
+    }
   }
 
   @NotNull
@@ -329,6 +353,152 @@ final class InspectorTable extends JPanel implements DataProvider {
       myProperties.clear();
       myProperties.addAll(ComponentPropertiesCollector.collect(myComponent));
       fireTableDataChanged();
+    }
+  }
+
+  private class MyCellSelectionListener implements ListSelectionListener {
+    private String selectedProperty = null;
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      int row = myTable.getSelectedRow();
+      int column = myTable.getSelectedColumn();
+      if (row < 0 || column != 1) {
+        return;
+      }
+      String property = myTable.getValueAt(row, 0).toString();
+      Object value = myTable.getValueAt(row, 1);
+      if (value == null || property.equals(selectedProperty)) {
+        return;
+      }
+      selectedProperty = property;
+
+      if (value instanceof Dimension || value instanceof Rectangle || value instanceof Border || value instanceof Insets) {
+        if (myModel.myComponent != null) {
+          setSecondComponent(new DimensionsComponent(myModel.myComponent));
+        }
+      }
+      else if (myProject != null) {
+        String strValue = value.toString();
+        ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+        JComponent consoleComponent = consoleView.getComponent();
+        consoleComponent.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
+
+        if (property.equals("added-at")) {
+          consoleView.print(strValue, ERROR_OUTPUT);
+        }
+        else if (property.equals("text")) {
+          consoleView.print(strValue, NORMAL_OUTPUT);
+        }
+        else if (property.trim().equals("hierarchy")) {
+          String[] classNames = strValue.split(" *→ *");
+          printClassNamesToConsole(consoleView, classNames, true);
+        }
+        else if (property.equals("toString")) {
+          printToStringProperty(consoleView, strValue);
+        }
+        else if (property.contains("Listeners")) {
+          String listeners = ValueCellRenderer.getToStringValue(value);
+          String[] classNames = listeners.split(" *, *");
+          if (classNames.length > 1) {
+            printClassNamesToConsole(consoleView, classNames, false);
+          }
+        }
+        else if (property.equals("clientProperties")) {
+          Map<Object, Object> properties = ValueCellRenderer.parseClientProperties(value);
+          if (properties != null) {
+            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+              if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
+              consoleView.print(entry.getKey() + " -> ", NORMAL_OUTPUT);
+              printClassName(consoleView, String.valueOf(entry.getValue()));
+              consoleView.print("\n", NORMAL_OUTPUT);
+            }
+          }
+        }
+        else if (value instanceof IconLoader.CachedImageIcon) {
+          consoleView.print("Icon path: ", NORMAL_OUTPUT);
+          printIconPath(consoleView, (IconLoader.CachedImageIcon)value);
+        }
+
+        consoleView.scrollTo(0);
+
+        if (consoleView.getContentSize() > 0) {
+          setSecondComponent(consoleComponent);
+        }
+      }
+    }
+
+    private void printClassNamesToConsole(ConsoleView consoleView, String[] classNames, boolean withIndent) {
+      for (int idx = 0; idx < classNames.length; idx++) {
+        if (withIndent) {
+          consoleView.print("\t".repeat(idx), NORMAL_OUTPUT);
+        }
+        String className = classNames[idx];
+        printClassName(consoleView, className);
+        consoleView.print("\n", NORMAL_OUTPUT);
+      }
+    }
+
+    private void printClassName(ConsoleView consoleView, String className) {
+      String[] parts = className.split("@");  // there are can be class name with hashcode
+      String classFqn = parts[0];
+      PsiElement classElement = UiInspectorUtil.findClassByFqn(myProject, classFqn);
+      if (classElement != null) {
+        consoleView.printHyperlink(classFqn, project -> UiInspectorUtil.openClassByFqn(project, classFqn, true));
+        if (parts.length > 1) {
+          consoleView.print("@" + parts[1], NORMAL_OUTPUT);
+        }
+      }
+      else {
+        consoleView.print(className, NORMAL_OUTPUT);
+      }
+    }
+
+    private void printToStringProperty(ConsoleView consoleView, Object value) {
+      String strValue = value.toString();
+      int classNameEnd = strValue.indexOf("[");
+      if (classNameEnd == -1) return;
+      String className = strValue.substring(0, classNameEnd);
+      String content = strValue.substring(classNameEnd + 1, strValue.length() - 1);
+      String[] properties = content.split(" *, *");
+
+      printClassName(consoleView, className);
+      consoleView.print(" " + strValue.charAt(classNameEnd) + "\n", NORMAL_OUTPUT);
+      for (String prop : properties) {
+        if (prop.length() == 0) continue;
+        consoleView.print("\t", NORMAL_OUTPUT);
+        String[] keyValuePair = prop.split("=");
+        if (keyValuePair.length == 1) {
+          consoleView.print(keyValuePair[0], NORMAL_OUTPUT);
+          if (prop.contains("=")) {
+            consoleView.print("=", NORMAL_OUTPUT);
+          }
+        }
+        else {
+          String key = keyValuePair[0];
+          consoleView.print(key + "=", NORMAL_OUTPUT);
+          printClassName(consoleView, keyValuePair[1]);
+        }
+        consoleView.print("\n", NORMAL_OUTPUT);
+      }
+      consoleView.print("]", NORMAL_OUTPUT);
+    }
+
+    private void printIconPath(ConsoleView consoleView, IconLoader.CachedImageIcon icon) {
+      URL iconUrl = icon.getURL();
+      if (iconUrl != null) {
+        VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(iconUrl.getPath());
+        if (file != null && myProject != null) {
+          Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0);
+          consoleView.printHyperlink(file.getPath(), project -> navigatable.navigate(true));
+        }
+        else {
+          consoleView.print(iconUrl.toString(), NORMAL_OUTPUT);
+        }
+      }
+      else {
+        consoleView.print(String.valueOf(icon.getOriginalPath()), NORMAL_OUTPUT);
+      }
     }
   }
 
