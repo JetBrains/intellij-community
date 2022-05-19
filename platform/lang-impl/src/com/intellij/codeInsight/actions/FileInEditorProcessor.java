@@ -83,7 +83,7 @@ public class FileInEditorProcessor {
       return;
     }
 
-    if (myOptions.isOptimizeImports()) {
+    if (myOptions.isOptimizeImports() && myOptions.getTextRangeType() != SELECTED_TEXT) {
       myProcessor = new OptimizeImportsProcessor(myProject, myFile);
     }
 
