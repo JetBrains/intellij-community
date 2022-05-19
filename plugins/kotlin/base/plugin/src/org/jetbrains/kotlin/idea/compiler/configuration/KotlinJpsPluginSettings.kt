@@ -21,7 +21,9 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         // Use bundled by default because this will work even without internet connection
         @JvmStatic
         val rawBundledVersion: String get() = bundledVersion.rawVersion
-        private val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.instance.standaloneCompilerVersion
+
+        @JvmStatic
+        val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.instance.standaloneCompilerVersion
 
         fun validateSettings(project: Project) {
             val jpsPluginSettings = project.service<KotlinJpsPluginSettings>()
