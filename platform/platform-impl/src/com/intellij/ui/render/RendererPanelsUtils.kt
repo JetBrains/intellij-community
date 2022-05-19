@@ -37,7 +37,7 @@ import kotlin.math.max
  * 3. Don't set icons by calling [JLabel.setIcon], [SimpleColoredComponent.setIcon] and similar, they use different icon gaps. Use
  * panels from this file with a dedicated place for icon
  * 4. Don't use children insets to control insets around renderer (for example left inset for first component in a row or top/bottom insets),
- * use border instead for top panel. Therefore, such renderers can be configured with custom insets when needed
+ * use border for top panel instead. Therefore, such renderers can be configured with custom insets when needed
  * 5. For very specific/complex renderers keep writing them separately, don't complicate simple renderers
  */
 class RendererPanelsUtils {

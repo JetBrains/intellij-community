@@ -56,7 +56,7 @@ public class IdeaMenuUI extends BasicMenuUI {
 
     selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
     if (isHeaderMenu()) {
-      menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", menuItem.getForeground()));
+      menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", UIManager.getColor("Menu.foreground")));
       selectionForeground = JBColor.namedColor("MainMenu.selectionForeground", selectionForeground);
       selectionBackground = JBColor.namedColor("MainMenu.selectionBackground", selectionBackground);
     }
