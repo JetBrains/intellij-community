@@ -65,7 +65,7 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
         }
         if (includingTestsInModules != null) {
           for (moduleName in includingTestsInModules) {
-            runner.buildModuleTests(context.findModule(moduleName))
+            runner.buildModuleTests(context.findRequiredModule(moduleName))
           }
         }
       }

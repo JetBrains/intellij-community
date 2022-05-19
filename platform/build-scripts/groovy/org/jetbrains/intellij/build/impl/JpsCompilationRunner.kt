@@ -1,191 +1,193 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "HardCodedStringLiteral")
+
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.MultiMap;
-import groovy.transform.CompileStatic;
-import io.opentelemetry.api.trace.Span;
-import org.apache.tools.ant.BuildException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
-import org.jetbrains.intellij.build.CompilationContext;
-import org.jetbrains.intellij.build.TraceManager;
-import org.jetbrains.jps.api.CmdlineRemoteProto;
-import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.build.Standalone;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.cmdline.JpsModelLoader;
-import org.jetbrains.jps.gant.Log4jFileLoggerFactory;
-import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType;
-import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter;
-import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
-import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder;
-import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner;
-import org.jetbrains.jps.incremental.messages.*;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
-import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement;
-import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
-import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.module.JpsModule;
-
-import java.beans.Introspector;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
+import com.intellij.openapi.diagnostic.DefaultLogger
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.containers.MultiMap
+import groovy.transform.CompileStatic
+import org.apache.tools.ant.BuildException
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
+import org.jetbrains.jps.api.GlobalOptions
+import org.jetbrains.jps.build.Standalone
+import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
+import org.jetbrains.jps.gant.Log4jFileLoggerFactory
+import org.jetbrains.jps.incremental.MessageHandler
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType
+import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil
+import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
+import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
+import org.jetbrains.jps.incremental.messages.*
+import org.jetbrains.jps.model.artifact.JpsArtifact
+import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsModule
+import java.beans.Introspector
+import java.nio.file.Files
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import java.util.function.BiConsumer
+import java.util.function.Supplier
 
 @CompileStatic
-final class JpsCompilationRunner {
-  private static setSystemPropertyIfUndefined(String name, String value) {
-    if (System.getProperty(name) == null) {
-      System.setProperty(name, value)
+internal class JpsCompilationRunner(private val context: CompilationContext) {
+  private val compilationData = context.compilationData
+
+  companion object {
+    init {
+      // Unset 'groovy.target.bytecode' which was possibly set by outside context
+      // to get target bytecode version from corresponding java compiler settings
+      System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE)
+      setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
+      setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_PARALLELISM_PROPERTY,
+                                   Runtime.getRuntime().availableProcessors().toString())
+      setSystemPropertyIfUndefined(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
+      setSystemPropertyIfUndefined(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
+      setSystemPropertyIfUndefined(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
+
+      // https://youtrack.jetbrains.com/issue/IDEA-269280
+      System.setProperty("aether.connector.resumeDownloads", "false")
     }
   }
 
-  static {
-    // Unset 'groovy.target.bytecode' which was possibly set by outside context
-    // to get target bytecode version from corresponding java compiler settings
-    System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE)
-
-    setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
-    def availableProcessors = Runtime.getRuntime().availableProcessors().toString()
-    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_PARALLELISM_PROPERTY, availableProcessors)
-    setSystemPropertyIfUndefined(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
-    setSystemPropertyIfUndefined(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
-    setSystemPropertyIfUndefined(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
-
-    // https://youtrack.jetbrains.com/issue/IDEA-269280
-    System.setProperty("aether.connector.resumeDownloads", "false")
+  init {
+    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_ENABLED_PROPERTY,
+                                 (context.options.resolveDependenciesMaxAttempts > 1).toString())
+    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_DELAY_MS_PROPERTY,
+                                 context.options.resolveDependenciesDelayMs.toString())
+    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY,
+                                 context.options.resolveDependenciesMaxAttempts.toString())
+    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY,
+                                 TimeUnit.MINUTES.toMillis(15).toString())
   }
 
-  private final CompilationContext context
-  private final JpsCompilationData compilationData
-
-  JpsCompilationRunner(CompilationContext context) {
-    this.context = context
-    compilationData = context.compilationData
-    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_ENABLED_PROPERTY, (context.options.resolveDependenciesMaxAttempts > 1).toString())
-    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_DELAY_MS_PROPERTY, context.options.resolveDependenciesDelayMs.toString())
-    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, context.options.resolveDependenciesMaxAttempts.toString())
-    setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY, TimeUnit.MINUTES.toMillis(15).toString())
-  }
-
-  void buildModules(List<JpsModule> modules) {
-    Set<String> names = new LinkedHashSet<>()
-    context.messages.debug("Collecting dependencies for ${modules.size()} modules")
-    for (JpsModule module : modules) {
-      for (String dependency : getModuleDependencies(module, false)) {
+  fun buildModules(modules: List<JpsModule>) {
+    val names = LinkedHashSet<String>()
+    context.messages.debug("Collecting dependencies for \${modules.size()} modules")
+    for (module in modules) {
+      for (dependency in getModuleDependencies(module, false)) {
         if (names.add(dependency)) {
-          context.messages.debug(" adding $dependency required for $module.name")
+          context.messages.debug(" adding \$dependency required for \$module.name")
         }
       }
     }
-    runBuild(names, false, Collections.<String>emptyList(), false, false)
+    runBuild(modulesSet = names, allModules = false, artifactNames = emptyList(), includeTests = false, resolveProjectDependencies = false)
   }
 
-  void buildModulesWithoutDependencies(Collection<JpsModule> modules, boolean includeTests) {
-    runBuild(modules.collect { it.name }, false, Collections.<String>emptyList(), includeTests, false)
+  fun buildModulesWithoutDependencies(modules: Collection<JpsModule>, includeTests: Boolean) {
+    runBuild(modulesSet = modules.map { it.name },
+             allModules = false,
+             artifactNames = emptyList(),
+             includeTests = includeTests,
+             resolveProjectDependencies = false)
   }
 
-  void resolveProjectDependencies() {
-    runBuild(Collections.<String>emptyList(), false, Collections.<String>emptyList(), false, true)
+  fun resolveProjectDependencies() {
+    runBuild(modulesSet = emptyList(),
+             allModules = false,
+             artifactNames = emptyList(),
+             includeTests = false,
+             resolveProjectDependencies = true)
   }
 
-  void buildModuleTests(JpsModule module) {
-    runBuild(getModuleDependencies(module, true), false, Collections.<String>emptyList(), true, false)
+  fun buildModuleTests(module: JpsModule) {
+    runBuild(getModuleDependencies(module = module, includeTests = true),
+             allModules = false,
+             artifactNames = emptyList(),
+             includeTests = true,
+             resolveProjectDependencies = false)
   }
 
-  void buildAll() {
-    runBuild(Collections.<String>emptyList(), true, Collections.<String>emptyList(), true, false)
+  fun buildAll() {
+    runBuild(modulesSet = emptyList(),
+             allModules = true,
+             artifactNames = emptyList(),
+             includeTests = true,
+             resolveProjectDependencies = false)
   }
 
-  void buildProduction() {
-    runBuild(Collections.<String>emptyList(), true, Collections.<String>emptyList(), false, false)
+  fun buildProduction() {
+    runBuild(modulesSet = emptyList(),
+             allModules = true,
+             artifactNames = emptyList(),
+             includeTests = false,
+             resolveProjectDependencies = false)
   }
 
-  /**
-   * @deprecated use {@link #buildArtifacts(java.util.Set, boolean)} instead
-   */
-  void buildArtifacts(Set<String> artifactNames) {
-    buildArtifacts(artifactNames, true)
+  @Deprecated("use {@link #buildArtifacts(java.util.Set, boolean)} instead")
+  fun buildArtifacts(artifactNames: Set<String>) {
+    buildArtifacts(artifactNames = artifactNames, buildIncludedModules = true)
   }
 
-  void buildArtifacts(Set<String> artifactNames, boolean buildIncludedModules) {
-    Set<JpsArtifact> artifacts = getArtifactsWithIncluded(artifactNames)
-    Collection<String> modules = buildIncludedModules ? getModulesIncludedInArtifacts(artifacts) : Collections.<String>emptyList()
-    runBuild(modules, false, artifacts.collect {it.name}, false, false)
+  fun buildArtifacts(artifactNames: Set<String>, buildIncludedModules: Boolean) {
+    val artifacts = getArtifactsWithIncluded(artifactNames)
+    val modules = if (buildIncludedModules) getModulesIncludedInArtifacts(artifacts) else emptyList()
+    runBuild(modulesSet = modules,
+             allModules = false,
+             artifactNames = artifacts.map { it.name },
+             includeTests = false,
+             resolveProjectDependencies = false)
   }
 
-  private static Set<String> getModuleDependencies(JpsModule module, boolean includeTests) {
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively()
-    if (!includeTests) {
-      enumerator = enumerator.productionOnly()
-    }
-    return enumerator.modules.collect(new HashSet<>()) { it.name } as Set<String>
-  }
-
-  private Set<String> getModulesIncludedInArtifacts(Collection<JpsArtifact> artifacts) {
-    Set<String> modulesSet = new LinkedHashSet<>()
-    for (JpsArtifact artifact in artifacts) {
-      JpsArtifactUtil.processPackagingElements(artifact.rootElement, { element ->
-        if (element instanceof JpsModuleOutputPackagingElement) {
+  private fun getModulesIncludedInArtifacts(artifacts: Collection<JpsArtifact>): Set<String> {
+    val modulesSet: MutableSet<String> = LinkedHashSet()
+    for (artifact in artifacts) {
+      JpsArtifactUtil.processPackagingElements(artifact.rootElement) { element ->
+        if (element is JpsModuleOutputPackagingElement) {
           modulesSet.addAll(getModuleDependencies(context.findRequiredModule(element.moduleReference.moduleName), false))
         }
         true
-      } as Processor<JpsPackagingElement>)
+      }
     }
     return modulesSet
   }
 
-  private Set<JpsArtifact> getArtifactsWithIncluded(Set<String> artifactNames) {
-    List<JpsArtifact> artifacts = JpsArtifactService.instance.getArtifacts(context.project).findAll { it.name in artifactNames }
+  private fun getArtifactsWithIncluded(artifactNames: Set<String>): Set<JpsArtifact> {
+    val artifacts = JpsArtifactService.getInstance().getArtifacts(context.project).filter { it.name in artifactNames }
     return ArtifactSorter.addIncludedArtifacts(artifacts)
   }
 
-  private void setupAdditionalBuildLogging(JpsCompilationData compilationData) {
-    def categoriesWithDebugLevel = compilationData.categoriesWithDebugLevel
-    def buildLogFile = compilationData.buildLogFile
-
+  private fun setupAdditionalBuildLogging(compilationData: JpsCompilationData) {
+    val categoriesWithDebugLevel = compilationData.categoriesWithDebugLevel
+    val buildLogFile = compilationData.buildLogFile
     try {
-      Logger.Factory factory = new Log4jFileLoggerFactory(buildLogFile, categoriesWithDebugLevel)
-      AntLoggerFactory.ourFileLoggerFactory = factory
-      context.messages.info("Build log (${!categoriesWithDebugLevel.isEmpty() ? "debug level for $categoriesWithDebugLevel" : "info"}) will be written to ${buildLogFile.absolutePath}")
+      val factory = Log4jFileLoggerFactory(buildLogFile, categoriesWithDebugLevel)
+      AntLoggerFactory.fileLoggerFactory = factory
+      context.messages.info("Build log (${if (categoriesWithDebugLevel.isEmpty()) "info" else "debug level for $categoriesWithDebugLevel"}) " +
+                            "will be written to ${buildLogFile.absolutePath}")
     }
-    catch (Throwable t) {
+    catch (t: Throwable) {
       context.messages.warning("Cannot setup additional logging to $buildLogFile.absolutePath: $t.message")
     }
   }
 
-  private void runBuild(Collection<String> modulesSet,
-                        boolean allModules,
-                        Collection<String> artifactNames,
-                        boolean includeTests,
-                        boolean resolveProjectDependencies) {
-    final AntMessageHandler messageHandler = new AntMessageHandler()
-    AntLoggerFactory.ourMessageHandler = messageHandler
+  private fun runBuild(modulesSet: Collection<String>,
+                       allModules: Boolean,
+                       artifactNames: Collection<String>,
+                       includeTests: Boolean,
+                       resolveProjectDependencies: Boolean) {
+    messageHandler = AntMessageHandler(context)
     if (context.options.compilationLogEnabled) {
       setupAdditionalBuildLogging(compilationData)
     }
-    Logger.setFactory(AntLoggerFactory.class)
-    boolean forceBuild = !context.options.incrementalCompilation
 
-    List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes = new ArrayList<>()
-    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
-      if (includeTests || !type.isTests()) {
-        List<String> namesToCompile = new ArrayList<>(allModules ? context.project.modules.collect {it.name} : modulesSet)
-        if (type.isTests()) {
+    Logger.setFactory(AntLoggerFactory::class.java)
+    val forceBuild = !context.options.incrementalCompilation
+    val scopes = ArrayList<TargetTypeBuildScope>()
+    for (type in JavaModuleBuildTargetType.ALL_TYPES) {
+      if (includeTests || !type.isTests) {
+        val namesToCompile = if (allModules) context.project.modules.mapTo(mutableListOf()) { it.name } else modulesSet.toMutableList()
+        if (type.isTests) {
           namesToCompile.removeAll(compilationData.compiledModuleTests)
           compilationData.compiledModuleTests.addAll(namesToCompile)
         }
@@ -193,9 +195,11 @@ final class JpsCompilationRunner {
           namesToCompile.removeAll(compilationData.compiledModules)
           compilationData.compiledModules.addAll(namesToCompile)
         }
-        if (namesToCompile.isEmpty()) continue
+        if (namesToCompile.isEmpty()) {
+          continue
+        }
 
-        CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.Builder builder = CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild)
+        val builder = TargetTypeBuildScope.newBuilder().setTypeId(type.typeId).setForceBuild(forceBuild)
         if (allModules) {
           scopes.add(builder.setAllTargets(true).build())
         }
@@ -205,255 +209,225 @@ final class JpsCompilationRunner {
       }
     }
     if (resolveProjectDependencies && !compilationData.projectDependenciesResolved) {
-      scopes.add(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder().setTypeId("project-dependencies-resolving").setForceBuild(false).setAllTargets(true).build())
+      scopes.add(TargetTypeBuildScope.newBuilder().setTypeId("project-dependencies-resolving")
+                   .setForceBuild(false).setAllTargets(true).build())
       compilationData.projectDependenciesResolved = true
     }
-    Collection<String> artifactsToBuild = artifactNames - compilationData.builtArtifacts
+    val artifactsToBuild = artifactNames - compilationData.builtArtifacts
     if (!artifactsToBuild.isEmpty()) {
-      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.Builder builder = CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).setForceBuild(forceBuild)
+      val builder = TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.typeId).setForceBuild(forceBuild)
       scopes.add(builder.addAllTargetId(artifactsToBuild).build())
       compilationData.builtArtifacts.addAll(artifactsToBuild)
     }
-
-    long compilationStart = System.nanoTime()
-    context.messages.block(TraceManager.spanBuilder("compilation")
-                             .setAttribute("scope", "${allModules ? "all" : modulesSet.size()} modules")
+    val compilationStart = System.nanoTime()
+    val messageHandler = messageHandler!!
+    context.messages.block(spanBuilder("compilation")
+                             .setAttribute("scope", "${if (allModules) "all" else modulesSet.size} modules")
                              .setAttribute("includeTests", includeTests)
-                             .setAttribute("artifactsToBuild", artifactsToBuild.size())
+                             .setAttribute("artifactsToBuild", artifactsToBuild.size.toLong())
                              .setAttribute("resolveProjectDependencies", resolveProjectDependencies)
-                             .setAttribute("modules", String.join(", ", modulesSet))
+                             .setAttribute("modules", modulesSet.joinToString(separator = ", "))
                              .setAttribute("incremental", context.options.incrementalCompilation)
                              .setAttribute("includeTests", includeTests)
-                             .setAttribute("cacheDir", compilationData.dataStorageRoot.path), new Supplier<Void>() {
-      @Override
-      Void get() {
-        try {
-          Standalone.runBuild(new JpsModelLoader() {
-            @Override
-            JpsModel loadModel() throws IOException {
-              return context.projectModel
-            }
-          }, compilationData.dataStorageRoot, messageHandler, scopes, false)
-        }
-        catch (Throwable e) {
-          Span.current().recordException(e)
-          throw new BuildException("Compilation failed unexpectedly", e)
-        }
-        return null
+                             .setAttribute("cacheDir", compilationData.dataStorageRoot.path), Supplier {
+      try {
+        Standalone.runBuild({ context.projectModel }, compilationData.dataStorageRoot, messageHandler, scopes, false)
+      }
+      catch (e: Throwable) {
+        throw BuildException("Compilation failed unexpectedly", e)
       }
     })
-    if (!messageHandler.errorMessagesByCompiler.isEmpty()) {
-      for (Map.Entry<String, Collection<String>> entry : messageHandler.errorMessagesByCompiler.entrySet()) {
-        context.messages.compilationErrors(entry.key, (List<String>)entry.value)
+    if (!messageHandler.errorMessagesByCompiler.isEmpty) {
+      for ((key, value) in messageHandler.errorMessagesByCompiler.entrySet()) {
+        @Suppress("UNCHECKED_CAST")
+        context.messages.compilationErrors(key, value as List<String>)
       }
       context.messages.error("Compilation failed")
     }
     else if (!compilationData.statisticsReported) {
       messageHandler.printPerModuleCompilationStatistics(compilationStart)
-      context.messages.reportStatisticValue("Compilation time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart)))
+      context.messages.reportStatisticValue("Compilation time, ms",
+                                            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart).toString())
       compilationData.statisticsReported = true
     }
   }
+}
 
-  private final class AntMessageHandler implements MessageHandler {
-    private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createConcurrent()
-    private Map<String, Long> compilationStartTimeForTarget = new ConcurrentHashMap<>()
-    private Map<String, Long> compilationFinishTimeForTarget = new ConcurrentHashMap<>()
-    private float progress = -1.0
+internal class AntLoggerFactory : Logger.Factory {
+  companion object {
+    var fileLoggerFactory: Logger.Factory? = null
+  }
 
-    @Override
-    void processMessage(BuildMessage msg) {
-      String text = msg.messageText
-      switch (msg.kind) {
-        case BuildMessage.Kind.ERROR:
-          String compilerName
-          String messageText
-          if (msg instanceof CompilerMessage) {
-            CompilerMessage compilerMessage = (CompilerMessage)msg
-            compilerName = compilerMessage.getCompilerName()
-            String sourcePath = compilerMessage.getSourcePath()
-            if (sourcePath != null) {
-              messageText = sourcePath + (compilerMessage.getLine() != -1 ? ":" + compilerMessage.getLine() : "") + ":\n" + text
-            }
-            else {
-              messageText = text
-            }
+  override fun getLoggerInstance(category: String): Logger = BackedLogger(category, fileLoggerFactory?.getLoggerInstance(category))
+}
+
+private class AntMessageHandler(private val context: CompilationContext) : MessageHandler {
+  val errorMessagesByCompiler = MultiMap.createConcurrent<String, String>()
+  private val compilationStartTimeForTarget = ConcurrentHashMap<String, Long>()
+  private val compilationFinishTimeForTarget = ConcurrentHashMap<String, Long>()
+  private var progress = (-1.0).toFloat()
+  override fun processMessage(message: BuildMessage) {
+    val text = message.messageText
+    when (message.kind) {
+      BuildMessage.Kind.ERROR -> {
+        val compilerName: String
+        val messageText: String
+        if (message is CompilerMessage) {
+          compilerName = message.compilerName
+          val sourcePath = message.sourcePath
+          messageText = if (sourcePath != null) {
+            """
+ $sourcePath${if (message.line != -1L) ":" + message.line else ""}:
+ $text
+ """.trimIndent()
           }
           else {
-            compilerName = ""
-            messageText = text
+            text
           }
-          errorMessagesByCompiler.putValue(compilerName, messageText)
-          break
-        case BuildMessage.Kind.WARNING:
-          context.messages.warning(text)
-          break
-        case BuildMessage.Kind.INFO:
-          if (msg instanceof BuilderStatisticsMessage) {
-            BuilderStatisticsMessage message = (BuilderStatisticsMessage)msg
-            String buildKind = context.options.incrementalCompilation ? " (incremental)" : ""
-            context.messages.reportStatisticValue("Compilation time '$message.builderName'$buildKind, ms", String.valueOf(message.elapsedTimeMs))
-            int sources = message.getNumberOfProcessedSources()
-            context.messages.reportStatisticValue("Processed files by '$message.builderName'$buildKind", String.valueOf(sources))
-            if (!context.options.incrementalCompilation && sources > 0) {
-              context.messages.reportStatisticValue("Compilation time per file for '$message.builderName', ms",
-                                                    String.format(Locale.US, "%.2f", (double)message.elapsedTimeMs / sources))
-            }
-          }
-          else if (!text.isEmpty()) {
-            context.messages.info(text)
-          }
-          break
-        case BuildMessage.Kind.PROGRESS:
-          if (msg instanceof ProgressMessage) {
-            progress = ((ProgressMessage)msg).done
-            def currentTargets = msg.currentTargets
-            if (currentTargets != null) {
-              Collection<? extends BuildTarget<? extends BuildRootDescriptor>> buildTargets = currentTargets.targets as Collection
-              reportProgress(buildTargets, msg.messageText)
-            }
-          }
-          else if (msg instanceof BuildingTargetProgressMessage) {
-            def targets = ((BuildingTargetProgressMessage)msg).targets
-            def target = targets.first()
-            def targetId = "$target.id${targets.size() > 1 ? " and ${targets.size()} more" : ""} ($target.targetType.typeId)".toString()
-            if (((BuildingTargetProgressMessage)msg).eventType == BuildingTargetProgressMessage.Event.STARTED) {
-              reportProgress(targets, "")
-              compilationStartTimeForTarget.put(targetId, System.nanoTime())
-            }
-            else {
-              compilationFinishTimeForTarget.put(targetId, System.nanoTime())
-            }
-          }
-          break
-      }
-    }
-
-    void printPerModuleCompilationStatistics(long compilationStart) {
-      if (compilationStartTimeForTarget.isEmpty()) return
-      new File(context.paths.buildOutputRoot, "log/compilation-time.csv").withWriter { out ->
-        compilationFinishTimeForTarget.each {
-          def startTime = compilationStartTimeForTarget[it.key] - compilationStart
-          def finishTime = it.value - compilationStart
-          out.println("$it.key,$startTime,$finishTime")
-        }
-      }
-      def buildMessages = context.messages
-      buildMessages.info("Compilation time per target:")
-      def compilationTimeForTarget = compilationFinishTimeForTarget.collect {new Pair<String, Long>(it.key, (it.value - compilationStartTimeForTarget[it.key]) as long)}
-      buildMessages.info(" average: ${String.format("%.2f",((compilationTimeForTarget.collect {it.second}.sum() as double) / compilationTimeForTarget.size()) / 1000000)}ms")
-      def topTargets = compilationTimeForTarget.toSorted { it.second }.reverse().take(10)
-      buildMessages.info(" top ${topTargets.size()} targets by compilation time:")
-      topTargets.each { entry -> buildMessages.info("  $entry.first: ${TimeUnit.NANOSECONDS.toMillis(entry.second)}ms") }
-    }
-
-    private void reportProgress(Collection<? extends BuildTarget<? extends BuildRootDescriptor>> targets, String targetSpecificMessage) {
-      def targetsString = targets.collect { Introspector.decapitalize(it.presentableName) }.join(", ")
-      String progressText = progress >= 0 ? " (${(int)(100 * progress)}%)" : ""
-      String targetSpecificText = !targetSpecificMessage.isEmpty() ? ", $targetSpecificMessage" : ""
-      context.messages.progress("Compiling$progressText: $targetsString$targetSpecificText")
-    }
-  }
-
-  static final class AntLoggerFactory implements Logger.Factory {
-    public static final String COMPILER_NAME = "build runner" //it's public to workaround Groovy bug (IDEA-179735)
-    private static AntMessageHandler ourMessageHandler
-    private static Logger.Factory ourFileLoggerFactory
-
-    @NotNull
-    @Override
-    Logger getLoggerInstance(@NotNull String category) {
-      Logger fileLogger = ourFileLoggerFactory != null ? ourFileLoggerFactory.getLoggerInstance(category) : null
-      return new BackedLogger(category, fileLogger)
-    }
-
-    private static class BackedLogger extends DefaultLogger {
-      private final @Nullable Logger myFileLogger
-
-      BackedLogger(String category, @Nullable Logger fileLogger) {
-        super(category)
-        myFileLogger = fileLogger
-      }
-
-      @Override
-      void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
-        if (t != null) {
-          ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t))
         }
         else {
-          ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
+          compilerName = ""
+          messageText = text
         }
-        if (myFileLogger != null) {
-          myFileLogger.error(message, t, details)
-        }
+        errorMessagesByCompiler.putValue(compilerName, messageText)
       }
-
-      @Override
-      void warn(@NonNls String message, @Nullable Throwable t) {
-        ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
-        if (myFileLogger != null) {
-          myFileLogger.warn(message, t)
-        }
-      }
-
-      @Override
-      void info(String message) {
-        if (myFileLogger != null) {
-          myFileLogger.info(message)
+      BuildMessage.Kind.WARNING -> context.messages.warning(text)
+      BuildMessage.Kind.INFO -> if (message is BuilderStatisticsMessage) {
+        val buildKind = if (context.options.incrementalCompilation) " (incremental)" else ""
+        context.messages.reportStatisticValue("Compilation time '${message.builderName}'$buildKind, ms", message.elapsedTimeMs.toString())
+        val sources = message.numberOfProcessedSources
+        context.messages.reportStatisticValue("Processed files by '${message.builderName}'$buildKind", sources.toString())
+        if (!context.options.incrementalCompilation && sources > 0) {
+          context.messages.reportStatisticValue("Compilation time per file for '${message.builderName}', ms",
+                                                String.format(Locale.US, "%.2f", message.elapsedTimeMs.toDouble() / sources))
         }
       }
-
-      @Override
-      void info(String message, @Nullable Throwable t) {
-        if (myFileLogger != null) {
-          myFileLogger.info(message, t)
+      else if (!text.isEmpty()) {
+        context.messages.info(text)
+      }
+      BuildMessage.Kind.PROGRESS -> if (message is ProgressMessage) {
+        progress = message.done
+        message.currentTargets?.let {
+          reportProgress(it.targets, message.messageText)
         }
       }
-
-      @Override
-      boolean isDebugEnabled() {
-        return myFileLogger != null && myFileLogger.isDebugEnabled()
-      }
-
-      @Override
-      void debug(String message) {
-        if (myFileLogger != null) {
-          myFileLogger.debug(message)
+      else if (message is BuildingTargetProgressMessage) {
+        val targets = message.targets
+        val target = targets.first()
+        val targetId = "$target.id${if (targets.size > 1) " and ${targets.size} more" else ""} ($target.targetType.typeId)"
+        if (message.eventType == BuildingTargetProgressMessage.Event.STARTED) {
+          reportProgress(targets, "")
+          compilationStartTimeForTarget.put(targetId, System.nanoTime())
+        }
+        else {
+          compilationFinishTimeForTarget.put(targetId, System.nanoTime())
         }
       }
-
-      @Override
-      void debug(@Nullable Throwable t) {
-        if (myFileLogger != null) {
-          myFileLogger.debug(t)
-        }
-      }
-
-      @Override
-      void debug(String message, @Nullable Throwable t) {
-        if (myFileLogger != null) {
-          myFileLogger.debug(message, t)
-        }
-      }
-
-      @Override
-      boolean isTraceEnabled() {
-        return myFileLogger != null && myFileLogger.isTraceEnabled()
-      }
-
-      @Override
-      void trace(String message) {
-        if (myFileLogger != null) {
-          myFileLogger.trace(message)
-        }
-      }
-
-      @Override
-      void trace(@Nullable Throwable t) {
-        if (myFileLogger != null) {
-          myFileLogger.trace(t)
-        }
+      else -> {
+        // ignore
       }
     }
   }
+
+  fun printPerModuleCompilationStatistics(compilationStart: Long) {
+    if (compilationStartTimeForTarget.isEmpty()) {
+      return
+    }
+
+    Files.newBufferedWriter(context.paths.buildOutputDir.resolve("log/compilation-time.csv")).use { out ->
+      compilationFinishTimeForTarget.forEach(BiConsumer { k, v ->
+        val startTime = compilationStartTimeForTarget.get(k)!! - compilationStart
+        val finishTime = v - compilationStart
+        out.write("$k,$startTime,$finishTime\n")
+      })
+    }
+    val buildMessages = context.messages
+    buildMessages.info("Compilation time per target:")
+    val compilationTimeForTarget = compilationFinishTimeForTarget.entries.map { it.key to (it.value - compilationStartTimeForTarget.get(it.key)!!) }
+
+    buildMessages.info(" average: ${String.format("%.2f", ((compilationTimeForTarget.sumOf { it.second }.toDouble()) / compilationTimeForTarget.size) / 1000000)}ms")
+    val topTargets = compilationTimeForTarget.sortedBy { it.second }.asReversed().take(10)
+    buildMessages.info(" top ${topTargets.size} targets by compilation time:")
+    for (entry in topTargets) {
+      buildMessages.info("  ${entry.first}: ${TimeUnit.NANOSECONDS.toMillis(entry.second)}ms")
+    }
+  }
+
+  private fun reportProgress(targets: Collection<BuildTarget<*>>, targetSpecificMessage: String) {
+    val targetsString = targets.joinToString(separator = ", ") { Introspector.decapitalize(it.presentableName) }
+    val progressText = if (progress >= 0) " (${(100 * progress).toInt()}%)" else ""
+    val targetSpecificText = if (targetSpecificMessage.isEmpty()) "" else ", $targetSpecificMessage"
+    context.messages.progress("Compiling$progressText: $targetsString$targetSpecificText")
+  }
+}
+
+private class BackedLogger constructor(category: String?, private val fileLogger: Logger?) : DefaultLogger(category) {
+  override fun error(@Nls message: @NonNls String?, t: Throwable?, vararg details: String) {
+    if (t == null) {
+      messageHandler!!.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
+    }
+    else {
+      messageHandler!!.processMessage(CompilerMessage.createInternalBuilderError(COMPILER_NAME, t))
+    }
+    fileLogger?.error(message, t, *details)
+  }
+
+  override fun warn(message: @NonNls String?, t: Throwable?) {
+    messageHandler!!.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
+    fileLogger?.warn(message, t)
+  }
+
+  override fun info(message: String) {
+    fileLogger?.info(message)
+  }
+
+  override fun info(message: String, t: Throwable?) {
+    fileLogger?.info(message, t)
+  }
+
+  override fun isDebugEnabled(): Boolean {
+    return fileLogger != null && fileLogger.isDebugEnabled
+  }
+
+  override fun debug(message: String) {
+    fileLogger?.debug(message)
+  }
+
+  override fun debug(t: Throwable?) {
+    fileLogger?.debug(t)
+  }
+
+  override fun debug(message: String, t: Throwable?) {
+    fileLogger?.debug(message, t)
+  }
+
+  override fun isTraceEnabled(): Boolean {
+    return fileLogger != null && fileLogger.isTraceEnabled
+  }
+
+  override fun trace(message: String) {
+    fileLogger?.trace(message)
+  }
+
+  override fun trace(t: Throwable?) {
+    fileLogger?.trace(t)
+  }
+}
+
+private var messageHandler: AntMessageHandler? = null
+@Nls
+private const val COMPILER_NAME = "build runner"
+
+private fun setSystemPropertyIfUndefined(name: String, value: String) {
+  if (System.getProperty(name) == null) {
+    System.setProperty(name, value)
+  }
+}
+
+private fun getModuleDependencies(module: JpsModule, includeTests: Boolean): Set<String> {
+  var enumerator = JpsJavaExtensionService.dependencies(module).recursively()
+  if (!includeTests) {
+    enumerator = enumerator.productionOnly()
+  }
+  return enumerator.modules.mapTo(HashSet()) { it.name }
 }

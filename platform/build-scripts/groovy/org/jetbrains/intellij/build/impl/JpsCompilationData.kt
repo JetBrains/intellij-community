@@ -4,9 +4,9 @@ package org.jetbrains.intellij.build.impl
 import java.io.File
 
 class JpsCompilationData(val dataStorageRoot: File, val buildLogFile: File, categoriesWithDebugLevelNullable: String?) {
-  val compiledModules: Set<String> = LinkedHashSet()
-  val compiledModuleTests: Set<String> = LinkedHashSet()
-  val builtArtifacts: Set<String> = LinkedHashSet()
+  val compiledModules: MutableSet<String> = LinkedHashSet()
+  val compiledModuleTests: MutableSet<String> = LinkedHashSet()
+  val builtArtifacts: MutableSet<String> = LinkedHashSet()
   var compiledClassesAreLoaded: Boolean = false
   var statisticsReported: Boolean = false
   var projectDependenciesResolved: Boolean = false
