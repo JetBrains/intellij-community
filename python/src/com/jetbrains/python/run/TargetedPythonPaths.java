@@ -61,24 +61,6 @@ public class TargetedPythonPaths {
 
   @NotNull
   public static Collection<Function<TargetEnvironment, String>> collectPythonPath(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
-                                                                                  @Nullable Module module,
-                                                                                  @Nullable String sdkHome,
-                                                                                  boolean shouldAddContentRoots,
-                                                                                  boolean shouldAddSourceRoots,
-                                                                                  boolean isDebug) {
-    return collectPythonPath(
-      targetEnvironmentRequest,
-      new LocalPathToTargetPathConverterImpl(targetEnvironmentRequest),
-      module,
-      sdkHome,
-      shouldAddContentRoots,
-      shouldAddSourceRoots,
-      isDebug
-    );
-  }
-
-  @NotNull
-  public static Collection<Function<TargetEnvironment, String>> collectPythonPath(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
                                                                                   @NotNull Project project,
                                                                                   @Nullable Module module,
                                                                                   @Nullable String sdkHome,
@@ -253,7 +235,7 @@ public class TargetedPythonPaths {
   private static final class LocalPathToTargetPathConverterImpl implements LocalPathToTargetPathConverter {
     private final @NotNull TargetEnvironmentRequest myTargetEnvironmentRequest;
 
-    private LocalPathToTargetPathConverterImpl(@NotNull TargetEnvironmentRequest request) {myTargetEnvironmentRequest = request;}
+    private LocalPathToTargetPathConverterImpl(@NotNull TargetEnvironmentRequest request) { myTargetEnvironmentRequest = request; }
 
     @Override
     public @NotNull Function<TargetEnvironment, String> getTargetPath(@NotNull String localPath) {
