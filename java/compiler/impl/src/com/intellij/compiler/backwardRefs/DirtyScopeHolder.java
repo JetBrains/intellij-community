@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.openapi.Disposable;
@@ -17,8 +16,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -35,7 +32,15 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -91,14 +96,85 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
     compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
 
-    connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    WorkspaceModelTopics.getInstance(myProject).subscribeAfterModuleLoading(connect, new WorkspaceModelChangeListener() {
       @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-        synchronized (myLock) {
-          myVFSChangedModules.clear();
-          ContainerUtil.addAll(myVFSChangedModules, modules);
+      public void beforeChanged(@NotNull VersionedStorageChange event) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
+          Module m = extractModuleEntityChange(change, event.getStorageBefore(), event.getStorageAfter(), true);
+          if (m != null) {
+            addToDirtyModules(m);
+          }
         }
+        for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
+          Module m = extractModuleFromContentRoots(change, event.getStorageBefore(), event.getStorageAfter(), true);
+          if (m != null) {
+            addToDirtyModules(m);
+          }
+        }
+      }
+
+      @Override
+      public void changed(@NotNull VersionedStorageChange event) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
+          Module m = extractModuleEntityChange(change, event.getStorageBefore(), event.getStorageAfter(), false);
+          if (m != null) {
+            addToDirtyModules(m);
+          }
+        }
+        for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
+          Module m = extractModuleFromContentRoots(change, event.getStorageBefore(), event.getStorageAfter(), false);
+          if (m != null) {
+            addToDirtyModules(m);
+          }
+        }
+      }
+
+      private @Nullable Module extractModuleFromContentRoots(@NotNull EntityChange<ContentRootEntity> change,
+                                                             @NotNull WorkspaceEntityStorage storageBefore,
+                                                             @NotNull WorkspaceEntityStorage storageAfter,
+                                                             boolean before) {
+        if (change instanceof EntityChange.Replaced<?>) {
+          return before
+                 ? extractModule(((EntityChange.Replaced<ContentRootEntity>)change).getOldEntity(), storageBefore)
+                 : extractModule(((EntityChange.Replaced<ContentRootEntity>)change).getNewEntity(), storageAfter);
+        }
+        else if (change instanceof EntityChange.Added<?>) {
+          if (before) return null;
+          return extractModule(((EntityChange.Added<ContentRootEntity>)change).getEntity(), storageAfter);
+        }
+        else if (change instanceof EntityChange.Removed<?>) {
+          if (!before) return null;
+          return extractModule(((EntityChange.Removed<ContentRootEntity>)change).getEntity(), storageBefore);
+        }
+        throw new AssertionError();
+      }
+
+      private @Nullable Module extractModuleEntityChange(@NotNull EntityChange<ModuleEntity> change,
+                                                         @NotNull WorkspaceEntityStorage storageBefore,
+                                                         @NotNull WorkspaceEntityStorage storageAfter,
+                                                         boolean before) {
+        if (change instanceof EntityChange.Replaced<?>) {
+          return before
+                 ? extractModule(((EntityChange.Replaced<ModuleEntity>)change).getOldEntity(), storageBefore)
+                 : extractModule(((EntityChange.Replaced<ModuleEntity>)change).getNewEntity(), storageAfter);
+        }
+        else if (change instanceof EntityChange.Added<?>) {
+          if (before) return null;
+          return extractModule(((EntityChange.Added<ModuleEntity>)change).getEntity(), storageAfter);
+        }
+        else if (change instanceof EntityChange.Removed<?>) {
+          if (!before) return null;
+          return extractModule(((EntityChange.Removed<ModuleEntity>)change).getEntity(), storageBefore);
+        }
+        throw new AssertionError();
+      }
+
+      private @Nullable Module extractModule(@NotNull ModuleEntity entity, @NotNull WorkspaceEntityStorage storage) {
+        return IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(entity, storage, myProject);
+      }
+
+      private @Nullable Module extractModule(@NotNull ContentRootEntity entity, @NotNull WorkspaceEntityStorage storage) {
+        return extractModule(entity.getModule(), storage);
       }
     });
   }
@@ -314,6 +390,17 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
       else {
         myVFSChangedModules.add(module);
+      }
+    }
+  }
+
+  private void removeFromDirtyModules(@NotNull Module module) {
+    synchronized (myLock) {
+      if (myCompilationPhase) {
+        myChangedModulesDuringCompilation.remove(module);
+      }
+      else {
+        myVFSChangedModules.remove(module);
       }
     }
   }
