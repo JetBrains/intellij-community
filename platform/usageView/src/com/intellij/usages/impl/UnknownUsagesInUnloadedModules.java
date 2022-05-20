@@ -5,18 +5,16 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.intellij.usageView.UsageViewBundle.message;
 
 public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usage {
   private final String myExplanationText;
@@ -27,22 +25,22 @@ public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usag
     int n = unloadedModules.size();
     String modulesText;
     if (n == 1) {
-      String theName = Objects.requireNonNull(ContainerUtil.getFirstItem(unloadedModules)).getName();
-      modulesText = message("message.part.unloaded.module.0", theName);
+      String theName = unloadedModules.iterator().next().getName();
+      modulesText = UsageViewBundle.message("message.part.unloaded.module.0", theName);
     }
     else if (n <= LISTED_MODULES_LIMIT) {
       String listStr = StringUtil.join(unloadedModules, m -> m.getName(), ", ");
-      modulesText = message("message.part.small.number.of.unloaded.modules", n, listStr);
+      modulesText = UsageViewBundle.message("message.part.small.number.of.unloaded.modules", n, listStr);
     }
     else {
       String listStr = unloadedModules.stream()
         .limit(LISTED_MODULES_LIMIT)
         .map(m -> m.getName())
         .collect(Collectors.joining(", "));
-      modulesText = message("message.part.large.number.of.unloaded.modules", n, listStr, n - LISTED_MODULES_LIMIT);
+      modulesText = UsageViewBundle.message("message.part.large.number.of.unloaded.modules", n, listStr, n - LISTED_MODULES_LIMIT);
     }
 
-    myExplanationText = message(
+    myExplanationText = UsageViewBundle.message(
       "message.there.may.be.usages.in.0.load.all.modules.and.repeat.refactoring.to.ensure.that.all.the.usages.will.be.updated",
       modulesText);
   }
