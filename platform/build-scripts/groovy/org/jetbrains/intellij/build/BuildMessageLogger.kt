@@ -1,8 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.intellij.build.impl.logging.AntTaskLogger
+import org.jetbrains.intellij.build.impl.logging.BuildMessageLoggerBase
+import java.util.function.BiFunction
+
 abstract class BuildMessageLogger {
-  abstract fun processMessage(message: LogMessage?)
+  abstract fun processMessage(message: LogMessage)
 
   /**
    * Called for a logger of a forked task when the task is completed (i.e. [.processMessage] method won't be called anymore.
@@ -18,3 +23,37 @@ open class LogMessage(val kind: Kind, val text: String) {
 
 internal class CompilationErrorsLogMessage(@JvmField val compilerName: String, @JvmField val errorMessages: List<String>)
   : LogMessage(Kind.COMPILATION_ERRORS, "$compilerName compilation errors")
+
+class CompositeBuildMessageLogger(private val loggers: List<BuildMessageLogger>) : BuildMessageLogger() {
+  override fun processMessage(message: LogMessage) {
+    for (it in loggers) {
+      it.processMessage(message)
+    }
+  }
+
+  override fun dispose() {
+    loggers.forEach(BuildMessageLogger::dispose)
+  }
+}
+
+class ConsoleBuildMessageLogger(parallelTaskId: String) : BuildMessageLoggerBase(parallelTaskId) {
+  companion object {
+    @JvmField
+    val FACTORY: BiFunction<String, AntTaskLogger, BuildMessageLogger> = BiFunction { taskName, _ -> ConsoleBuildMessageLogger(taskName) }
+
+    private val out = BuildUtils.realSystemOut
+  }
+
+  override fun processMessage(message: LogMessage) {
+    // reported by trace exporter
+    if (message.kind != LogMessage.Kind.BLOCK_STARTED && message.kind != LogMessage.Kind.BLOCK_FINISHED) {
+      super.processMessage(message)
+    }
+  }
+
+  override fun shouldBePrinted(kind: LogMessage.Kind) = kind != LogMessage.Kind.DEBUG
+
+  override fun printLine(line: String) {
+    out.println(line)
+  }
+}

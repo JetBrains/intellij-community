@@ -1,57 +1,45 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 
-@CompileStatic
-abstract class BuildMessageLoggerBase extends BuildMessageLogger {
-  private int indent
-  private final String parallelTaskId
+abstract class BuildMessageLoggerBase(private val parallelTaskId: String?) : BuildMessageLogger() {
+  private var indent = 0
 
-  BuildMessageLoggerBase(String parallelTaskId) {
-    this.parallelTaskId = parallelTaskId
-  }
-
-  @Override
-  void processMessage(@NotNull LogMessage message) {
-    switch (message.kind) {
-      case LogMessage.Kind.BLOCK_STARTED:
+  override fun processMessage(message: LogMessage) {
+    when (message.kind) {
+      LogMessage.Kind.BLOCK_STARTED -> {
         printMessage(message.text)
         indent++
-        break
-      case LogMessage.Kind.BLOCK_FINISHED:
-        indent--
-        break
-      case LogMessage.Kind.ARTIFACT_BUILT:
+      }
+       LogMessage.Kind.BLOCK_FINISHED -> {
+         indent--
+       }
+      LogMessage.Kind.ARTIFACT_BUILT -> {
         printMessage("Artifact built: $message.text")
-        break
-      case LogMessage.Kind.COMPILATION_ERRORS:
-        String errorsString = (message as CompilationErrorsLogMessage).errorMessages.join("\n")
-        printMessage("Compilation errors (${(message as CompilationErrorsLogMessage).compilerName}):\n$errorsString")
-        break
-      default:
+      }
+      LogMessage.Kind.COMPILATION_ERRORS -> {
+        val errorsString = (message as CompilationErrorsLogMessage).errorMessages.joinToString(separator = "\n")
+        printMessage("Compilation errors (${message.compilerName}):\n$errorsString")
+      }
+      else -> {
         if (shouldBePrinted(message.kind)) {
           printMessage(message.text)
         }
-        break
+      }
     }
   }
 
-  protected boolean shouldBePrinted(LogMessage.Kind kind) {
-    true
-  }
+  protected open fun shouldBePrinted(kind: LogMessage.Kind) = true
 
-  private printMessage(String message) {
-    String taskPrefix = parallelTaskId == null ? "" : "[$parallelTaskId] "
-    message.eachLine {
-      def line = " " * indent + taskPrefix + it
-      printLine(line)
+  private fun printMessage(message: String) {
+    val taskPrefix = if (parallelTaskId == null) "" else "[$parallelTaskId] "
+    message.lineSequence().forEach {
+      printLine(" ".repeat(indent) + taskPrefix + it)
     }
   }
 
-  protected abstract void printLine(String line)
+  protected abstract fun printLine(line: String)
 }

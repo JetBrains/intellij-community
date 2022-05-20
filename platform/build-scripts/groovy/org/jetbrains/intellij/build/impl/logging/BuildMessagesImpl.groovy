@@ -90,7 +90,13 @@ final class BuildMessagesImpl implements BuildMessages {
 
     boolean underTeamCity = System.getenv("TEAMCITY_VERSION") != null
     disableAntLogging(antProject)
-    BiFunction<String, AntTaskLogger, BuildMessageLogger> mainLoggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
+    BiFunction<String, AntTaskLogger, BuildMessageLogger> mainLoggerFactory
+    if (underTeamCity) {
+      mainLoggerFactory = TeamCityBuildMessageLogger.FACTORY
+    }
+    else {
+      mainLoggerFactory = ConsoleBuildMessageLogger.FACTORY
+    }
     def debugLogger = new DebugLogger()
     BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory = { String taskName, AntTaskLogger logger ->
       new CompositeBuildMessageLogger([mainLoggerFactory.apply(taskName, logger), debugLogger.createLogger(taskName)])
