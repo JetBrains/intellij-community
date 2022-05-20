@@ -11,7 +11,7 @@ private val MODULE_GROUP_NAMES = java.util.Set.of("gradle", "uast")
 /**
  * Generates Maven artifacts for Kotlin IDE modules
  */
-class KotlinMavenArtifactsBuilder(buildContext: BuildContext?) : MavenArtifactsBuilder(buildContext) {
+class KotlinMavenArtifactsBuilder(context: BuildContext) : MavenArtifactsBuilder(context) {
   override fun shouldSkipModule(moduleName: String, moduleIsDependency: Boolean): Boolean {
     return if (moduleIsDependency) moduleName.startsWith("intellij") else false
   }
