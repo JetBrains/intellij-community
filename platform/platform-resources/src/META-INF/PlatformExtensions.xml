@@ -323,8 +323,6 @@
                         headlessImplementation="com.intellij.ide.dnd.HeadlessDnDManager"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
                         serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.ui.errorView.ErrorViewFactory"
-                        serviceImplementation="com.intellij.ui.errorView.impl.ErrorViewFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
