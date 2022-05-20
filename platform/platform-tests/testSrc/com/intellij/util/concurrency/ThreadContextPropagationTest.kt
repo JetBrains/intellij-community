@@ -2,8 +2,6 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
-import com.intellij.concurrency.TestElement
-import com.intellij.concurrency.TestElementKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.timeoutRunBlocking

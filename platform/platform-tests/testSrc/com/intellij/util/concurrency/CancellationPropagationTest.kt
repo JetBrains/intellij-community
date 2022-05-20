@@ -127,8 +127,8 @@ class CancellationPropagationTest {
           }
         }
       }
-      }.join()
-      pumpEDT()
+    }.join()
+    pumpEDT()
   }
 
   @Test
@@ -184,9 +184,9 @@ class CancellationPropagationTest {
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
-      resetThreadContext(coroutineContext).use {
-        suspendCancellableCoroutine<Unit> { continuation ->
-          Propagation.prapagata {
+    resetThreadContext(coroutineContext).use {
+      suspendCancellableCoroutine<Unit> { continuation ->
+        Propagation.prapagata {
           val parentJob = checkNotNull(Cancellation.currentJob())
           submit { // switch to another thread
             val result: Result<Unit> = runCatching {
