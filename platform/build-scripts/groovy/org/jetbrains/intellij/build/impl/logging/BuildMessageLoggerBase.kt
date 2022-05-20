@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.logging
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
@@ -16,7 +17,7 @@ abstract class BuildMessageLoggerBase extends BuildMessageLogger {
   }
 
   @Override
-  void processMessage(LogMessage message) {
+  void processMessage(@NotNull LogMessage message) {
     switch (message.kind) {
       case LogMessage.Kind.BLOCK_STARTED:
         printMessage(message.text)

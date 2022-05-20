@@ -1,39 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
-import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.LogMessage
 import org.jetbrains.intellij.build.impl.BuildUtils
-
 import java.util.function.BiFunction
 
-@CompileStatic
-final class ConsoleBuildMessageLogger extends BuildMessageLoggerBase {
-  public static final BiFunction<String, AntTaskLogger, BuildMessageLogger> FACTORY = { String taskName, AntTaskLogger logger ->
-    new ConsoleBuildMessageLogger(taskName)
-  } as BiFunction<String, AntTaskLogger, BuildMessageLogger>
-  private static final PrintStream out = BuildUtils.realSystemOut
+class ConsoleBuildMessageLogger(parallelTaskId: String) : BuildMessageLoggerBase(parallelTaskId) {
+  companion object {
+    @JvmField
+    val FACTORY = BiFunction<String, AntTaskLogger, BuildMessageLogger> { taskName, _ -> ConsoleBuildMessageLogger(taskName) }
 
-  ConsoleBuildMessageLogger(String parallelTaskId) {
-    super(parallelTaskId)
+    private val out = BuildUtils.realSystemOut
   }
 
-  @Override
-  void processMessage(LogMessage message) {
+  override fun processMessage(message: LogMessage) {
     // reported by trace exporter
     if (message.kind != LogMessage.Kind.BLOCK_STARTED && message.kind != LogMessage.Kind.BLOCK_FINISHED) {
       super.processMessage(message)
     }
   }
 
-  @Override
-  protected boolean shouldBePrinted(LogMessage.Kind kind) {
-    return kind != LogMessage.Kind.DEBUG
-  }
+  override fun shouldBePrinted(kind: LogMessage.Kind) = kind != LogMessage.Kind.DEBUG
 
-  @Override
-  protected void printLine(String line) {
+  override fun printLine(line: String) {
     out.println(line)
   }
 }
