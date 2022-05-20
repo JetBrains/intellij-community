@@ -280,33 +280,30 @@ public final class ImageUtil {
     int size = min(image.getWidth(), image.getHeight());
     Area avatarOvalArea = new Area(new Ellipse2D.Double(0.0, 0.0, size, size));
 
-    return createImageByMask(image, avatarOvalArea);
+    return clipImage(image, avatarOvalArea);
   }
 
   @NotNull
   public static BufferedImage createRoundedImage(@NotNull BufferedImage image, double arc) {
     int size = min(image.getWidth(), image.getHeight());
     Area avatarOvalArea = new Area(new RoundRectangle2D.Double(0.0, 0.0, size, size, arc, arc));
-    return createImageByMask(image, avatarOvalArea);
+    return clipImage(image, avatarOvalArea);
   }
 
   @NotNull
-  public static BufferedImage createImageByMask(@NotNull BufferedImage image, @NotNull Area area) {
-    int size = min(image.getWidth(), image.getHeight());
-    BufferedImage mask = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g2 = mask.createGraphics();
-    applyQualityRenderingHints(g2);
-    g2.fill(area);
-
-    BufferedImage shapedImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-    g2 = shapedImage.createGraphics();
-    applyQualityRenderingHints(g2);
-    g2.drawImage(image, 0, 0, null);
-    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.DST_IN));
-    g2.drawImage(mask, 0, 0, null);
-    g2.dispose();
-
-    return shapedImage;
+  public static BufferedImage clipImage(@NotNull BufferedImage image, @NotNull Shape clip) {
+    @SuppressWarnings("UndesirableClassUsage")
+    BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g = newImage.createGraphics();
+    try {
+      applyQualityRenderingHints(g);
+      g.setPaint(new TexturePaint(image, new Rectangle(0, 0, image.getWidth(), image.getHeight())));
+      g.fill(clip);
+      return newImage;
+    }
+    finally {
+      g.dispose();
+    }
   }
 
   public static void applyQualityRenderingHints(@NotNull Graphics2D g2) {
