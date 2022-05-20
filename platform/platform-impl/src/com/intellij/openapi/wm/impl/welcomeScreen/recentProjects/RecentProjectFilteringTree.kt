@@ -8,7 +8,9 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
@@ -173,7 +175,7 @@ class RecentProjectFilteringTree(
 
       if (intersectWithActionIcon(point)) {
         when (item) {
-          is CloneableProjectItem -> CloneableProjectsService.getInstance().cancelClone(item.progressIndicator)
+          is CloneableProjectItem -> cancelCloneProject(item.progressIndicator, item.taskInfo.sourceRepositoryURL)
           else -> invokePopup(mouseEvent.component, point.x, point.y)
         }
       }
@@ -210,6 +212,20 @@ class RecentProjectFilteringTree(
       return Rectangle(tree.bounds.width - icon.iconWidth - JBUIScale.scale(10),
                        bounds.y + (bounds.height - icon.iconHeight) / 2,
                        icon.iconWidth, icon.iconHeight)
+    }
+
+    private fun cancelCloneProject(progressIndicator: ProgressIndicator, sourceRepositoryURL: String) {
+      val exitCode = Messages.showYesNoDialog(
+        IdeBundle.message("clone.project.stop", sourceRepositoryURL),
+        IdeBundle.message("clone.project.stop.title"),
+        IdeBundle.message("action.stop"),
+        IdeBundle.message("button.cancel"),
+        Messages.getQuestionIcon()
+      )
+
+      if (exitCode == Messages.OK) {
+        CloneableProjectsService.getInstance().cancelClone(progressIndicator)
+      }
     }
   }
 

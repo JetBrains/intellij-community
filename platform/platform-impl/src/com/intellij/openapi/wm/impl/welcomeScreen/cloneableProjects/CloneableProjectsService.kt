@@ -124,7 +124,8 @@ class CloneableProjectsService {
     @NlsContexts.ProgressTitle private val title: String,
     @Nls private val cancelTooltipText: String,
     @Nls val actionTitle: String,
-    @Nls val failureTitle: String
+    @Nls val failureTitle: String,
+    val sourceRepositoryURL: String
   ) : TaskInfo {
     override fun getTitle(): String = title
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
