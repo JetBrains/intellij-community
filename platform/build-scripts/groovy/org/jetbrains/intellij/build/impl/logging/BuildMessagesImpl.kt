@@ -36,18 +36,16 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
       val antProject = LayoutBuilder.getAnt().project
       val key = "IntelliJBuildMessages"
       val registered = antProject.getReference<Any>(key)
-      if (registered != null) return DefaultGroovyMethods.asType(registered, BuildMessagesImpl::class.java)
+      if (registered != null) {
+        return DefaultGroovyMethods.asType(registered, BuildMessagesImpl::class.java)
+      }
+
       val underTeamCity = System.getenv("TEAMCITY_VERSION") != null
       disableAntLogging(antProject)
-      val mainLoggerFactory = if (underTeamCity) {
-        TeamCityBuildMessageLogger.FACTORY
-      }
-      else {
-        ConsoleBuildMessageLogger.FACTORY
-      }
+      val mainLoggerFactory = if (underTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
       val debugLogger = DebugLogger()
       val loggerFactory = BiFunction<String?, AntTaskLogger, BuildMessageLogger> { taskName: String?, logger: AntTaskLogger ->
-        CompositeBuildMessageLogger(java.util.List.of(mainLoggerFactory.apply(taskName, logger), debugLogger.createLogger(taskName)))
+        CompositeBuildMessageLogger(listOf(mainLoggerFactory.apply(taskName, logger), debugLogger.createLogger(taskName)))
       }
       val antTaskLogger = AntTaskLogger(antProject)
       val messages = BuildMessagesImpl(loggerFactory.apply(null, antTaskLogger), loggerFactory, antTaskLogger, debugLogger, null)
@@ -124,7 +122,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 
   override fun error(message: String, cause: Throwable) {
     val writer = StringWriter()
-    PrintWriter(writer).use { it -> cause.printStackTrace(it) }
+    PrintWriter(writer).use(cause::printStackTrace)
     processMessage(LogMessage(LogMessage.Kind.ERROR, """
    $message
    $writer
@@ -133,7 +131,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   }
 
   override fun compilationError(compilerName: String, message: String) {
-    compilationErrors(compilerName, ArrayList(Arrays.asList(message)))
+    compilationErrors(compilerName, listOf(message))
   }
 
   override fun compilationErrors(compilerName: String, messages: List<String>) {
@@ -166,10 +164,10 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     val span = spanBuilder.startSpan()
     val scope = span.makeCurrent()
     val blockName = (span as ReadableSpan).name
-    return try {
+    try {
       blockNames.push(blockName)
       processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      task()
+      return task()
     }
     catch (e: IntelliJBuildException) {
       span.setStatus(StatusCode.ERROR, e.message!!)
@@ -209,14 +207,14 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     processMessage(LogMessage(LogMessage.Kind.STATISTICS, "$key=$value"))
   }
 
-  fun processMessage(message: LogMessage) {
-    if (parentInstance != null) {
+  private fun processMessage(message: LogMessage) {
+    if (parentInstance == null) {
+      logger.processMessage(message)
+    }
+    else {
       //It appears that TeamCity currently cannot properly handle log messages from parallel tasks (https://youtrack.jetbrains.com/issue/TW-46515)
       //Until it is fixed we need to delay delivering of messages from the tasks running in parallel until all tasks have been finished.
       delayedMessages.add(message)
-    }
-    else {
-      logger.processMessage(message)
     }
   }
 

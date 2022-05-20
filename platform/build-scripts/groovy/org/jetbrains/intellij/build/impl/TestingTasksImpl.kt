@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.intellij.build.io.runProcess
@@ -29,7 +31,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.function.Predicate
-import java.util.function.Supplier
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 import java.util.stream.Stream
@@ -124,9 +125,9 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
                                             additionalSystemProperties: Map<String, String>,
                                             context: CompilationContext) {
     for (configuration in runConfigurations) {
-      context.messages.block("Run \'${configuration.name}\' run configuration", Supplier {
+      spanBuilder("run \'${configuration.name}\' run configuration").useWithScope {
         runTestsFromRunConfiguration(configuration, additionalJvmOptions, additionalSystemProperties, context)
-      })
+      }
     }
   }
 

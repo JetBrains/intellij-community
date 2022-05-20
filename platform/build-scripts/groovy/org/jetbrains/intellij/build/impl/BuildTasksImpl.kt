@@ -56,7 +56,6 @@ import java.util.*
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Consumer
 import java.util.function.Predicate
-import java.util.function.Supplier
 import java.util.stream.Collectors
 
 class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
@@ -271,7 +270,7 @@ private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
 }
 
 private fun layoutShared(context: BuildContext) {
-  context.messages.block(spanBuilder("copy files shared among all distributions"), Supplier<Void?> {
+  spanBuilder("copy files shared among all distributions").use {
     val licenseOutDir = context.paths.distAllDir.resolve("license")
     copyDir(context.paths.communityHomeDir.resolve("license"), licenseOutDir)
     for (additionalDirWithLicenses in context.productProperties.additionalDirectoriesWithLicenses) {
@@ -284,8 +283,7 @@ private fun layoutShared(context: BuildContext) {
       Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
     }
     context.productProperties.copyAdditionalFiles(context, context.paths.getDistAll())
-    null
-  })
+  }
 }
 
 private fun findBrandingResource(relativePath: String, context: BuildContext): Path {
@@ -738,7 +736,6 @@ private fun doBuildDistributions(context: BuildContext) {
       distributionJARsBuilder.buildSearchableOptions(context, context.classpathCustomizer)
       distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)!!.fork().join()
     }
-    null
   }
 
   if (context.shouldBuildDistributions()) {

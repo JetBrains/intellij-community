@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.MultiMap
@@ -37,7 +38,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
-import java.util.function.Supplier
 
 @CompileStatic
 internal class JpsCompilationRunner(private val context: CompilationContext) {
@@ -221,22 +221,23 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     }
     val compilationStart = System.nanoTime()
     val messageHandler = messageHandler!!
-    context.messages.block(spanBuilder("compilation")
-                             .setAttribute("scope", "${if (allModules) "all" else modulesSet.size} modules")
-                             .setAttribute("includeTests", includeTests)
-                             .setAttribute("artifactsToBuild", artifactsToBuild.size.toLong())
-                             .setAttribute("resolveProjectDependencies", resolveProjectDependencies)
-                             .setAttribute("modules", modulesSet.joinToString(separator = ", "))
-                             .setAttribute("incremental", context.options.incrementalCompilation)
-                             .setAttribute("includeTests", includeTests)
-                             .setAttribute("cacheDir", compilationData.dataStorageRoot.toString()), Supplier {
-      try {
-        Standalone.runBuild({ context.projectModel }, compilationData.dataStorageRoot.toFile(), messageHandler, scopes, false)
+    spanBuilder("compilation")
+      .setAttribute("scope", "${if (allModules) "all" else modulesSet.size} modules")
+      .setAttribute("includeTests", includeTests)
+      .setAttribute("artifactsToBuild", artifactsToBuild.size.toLong())
+      .setAttribute("resolveProjectDependencies", resolveProjectDependencies)
+      .setAttribute("modules", modulesSet.joinToString(separator = ", "))
+      .setAttribute("incremental", context.options.incrementalCompilation)
+      .setAttribute("includeTests", includeTests)
+      .setAttribute("cacheDir", compilationData.dataStorageRoot.toString())
+      .useWithScope {
+        try {
+          Standalone.runBuild({ context.projectModel }, compilationData.dataStorageRoot.toFile(), messageHandler, scopes, false)
+        }
+        catch (e: Throwable) {
+          throw BuildException("Compilation failed unexpectedly", e)
+        }
       }
-      catch (e: Throwable) {
-        throw BuildException("Compilation failed unexpectedly", e)
-      }
-    })
     if (!messageHandler.errorMessagesByCompiler.isEmpty) {
       for ((key, value) in messageHandler.errorMessagesByCompiler.entrySet()) {
         @Suppress("UNCHECKED_CAST")

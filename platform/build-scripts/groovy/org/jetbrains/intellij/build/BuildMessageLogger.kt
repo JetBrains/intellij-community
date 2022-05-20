@@ -36,10 +36,10 @@ class CompositeBuildMessageLogger(private val loggers: List<BuildMessageLogger>)
   }
 }
 
-class ConsoleBuildMessageLogger(parallelTaskId: String) : BuildMessageLoggerBase(parallelTaskId) {
+class ConsoleBuildMessageLogger(parallelTaskId: String?) : BuildMessageLoggerBase(parallelTaskId) {
   companion object {
     @JvmField
-    val FACTORY: BiFunction<String, AntTaskLogger, BuildMessageLogger> = BiFunction { taskName, _ -> ConsoleBuildMessageLogger(taskName) }
+    val FACTORY: BiFunction<String?, AntTaskLogger, BuildMessageLogger> = BiFunction { taskName, _ -> ConsoleBuildMessageLogger(taskName) }
 
     private val out = BuildUtils.realSystemOut
   }
