@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import com.intellij.diagnostic.telemetry.use
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.tracer
 import java.io.File
@@ -11,11 +12,9 @@ import java.io.InputStream
 import java.lang.System.Logger
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.io.path.copyTo
 
 /**
  * Executes a Java class in a forked JVM.
@@ -32,7 +31,7 @@ fun runJava(mainClass: String,
   val timeout = Timeout(timeoutMillis)
   var errorReader: CompletableFuture<Void>? = null
   val classpathFile = Files.createTempFile("classpath-", ".txt")
-  val jvmArgsWithJson = (jvmArgs + "-Dintellij.log.to.json.stdout=true")
+  val jvmArgsWithJson = jvmArgs + "-Dintellij.log.to.json.stdout=true"
   tracer.spanBuilder("runJava")
     .setAttribute("mainClass", mainClass)
     .setAttribute(AttributeKey.stringArrayKey("args"), args.toList())
@@ -51,15 +50,13 @@ fun runJava(mainClass: String,
         readOutputAndBlock(process, timeout, logger, firstError)
 
         fun javaRunFailed(reason: String) {
-          // do not throw error, but log as error to reduce bloody groovy stacktrace
-          logger.debug { "classPath=${classPathStringBuilder.substring("-classpath".length)})" }
+          Span.current().setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
           val message = "$reason\nCannot execute $mainClass (args=$args, vmOptions=$jvmArgsWithJson)"
           span.setStatus(StatusCode.ERROR, message)
-          if (onError != null) {
-            onError()
-          }
-          logger.log(Logger.Level.ERROR, null as ResourceBundle?, message)
+          onError?.invoke()
+          throw RuntimeException(message)
         }
+
         val errorMessage = firstError.get()
         if (errorMessage != null) {
           javaRunFailed("Error reported from child process logger: $errorMessage")
@@ -216,9 +213,12 @@ fun runProcess(args: List<String>,
     }
 }
 
-private fun readOutputAndBlock(process: Process, timeout: Timeout, logger: Logger, firstError: AtomicReference<String>? = null) {
+private fun readOutputAndBlock(process: Process,
+                               timeout: Timeout,
+                               logger: Logger,
+                               firstError: AtomicReference<String>? = null) {
   val mapper = ObjectMapper()
-  // join on CompletableFuture will help to process other tasks in FJP_
+  // join on CompletableFuture will help to process other tasks in FJP
   runAsync {
     consume(process.inputStream, process, timeout) {
       if (it.startsWith("{")) {
@@ -227,11 +227,8 @@ private fun readOutputAndBlock(process: Process, timeout: Timeout, logger: Logge
           val message = jObject.get("message")?.asText() ?: error("Missing field: 'message'")
           when (val level = jObject.get("level")?.asText() ?: error("Missing field: 'level'")) {
             "SEVERE" -> {
-              try {
-                firstError?.compareAndSet(null, message)
-                logger.error(message)
-                // BuildMessageImpl will fire BuildException when we are logging error
-              } catch(_: Throwable) {}
+              firstError?.compareAndSet(null, message)
+              throw RuntimeException(message)
             }
             "WARNING" -> {
               logger.warn(message)
@@ -327,7 +324,7 @@ private fun appendArg(value: String, builder: StringBuilder) {
   }
 }
 
-internal class ProcessRunTimedOut(msg: String) : RuntimeException(msg)
+internal class ProcessRunTimedOut(message: String) : RuntimeException(message)
 
 internal class Timeout(private val millis: Long) {
   companion object {
