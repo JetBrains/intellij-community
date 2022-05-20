@@ -52,8 +52,7 @@ private fun appendSystemPythonPath(pythonPath: MutableCollection<Function<Target
   }
 }
 
-fun collectPythonPath(targetEnvironmentRequest: TargetEnvironmentRequest,
-                      project: Project,
+fun collectPythonPath(project: Project,
                       module: Module?,
                       sdkHome: String?,
                       pathMapper: PyRemotePathMapper?,
@@ -62,8 +61,7 @@ fun collectPythonPath(targetEnvironmentRequest: TargetEnvironmentRequest,
                       isDebug: Boolean): Collection<Function<TargetEnvironment, String>> {
   val sdk = PythonSdkUtil.findSdkByPath(sdkHome)
   return collectPythonPath(
-    targetEnvironmentRequest,
-    LocalPathToTargetPathConverterSdkAware(targetEnvironmentRequest, project, sdk, pathMapper),
+    LocalPathToTargetPathConverterSdkAware(project, sdk, pathMapper),
     module,
     sdkHome,
     shouldAddContentRoots,
@@ -72,16 +70,14 @@ fun collectPythonPath(targetEnvironmentRequest: TargetEnvironmentRequest,
   )
 }
 
-private fun collectPythonPath(targetEnvironmentRequest: TargetEnvironmentRequest,
-                              pathConverter: LocalPathToTargetPathConverter,
+private fun collectPythonPath(pathConverter: LocalPathToTargetPathConverter,
                               module: Module?,
                               sdkHome: String?,
                               shouldAddContentRoots: Boolean,
                               shouldAddSourceRoots: Boolean,
                               isDebug: Boolean): Collection<Function<TargetEnvironment, String>> {
   val pythonPath: MutableSet<Function<TargetEnvironment, String>> = LinkedHashSet(
-    collectPythonPath(targetEnvironmentRequest,
-                      pathConverter,
+    collectPythonPath(pathConverter,
                       module,
                       shouldAddContentRoots,
                       shouldAddSourceRoots)
@@ -90,15 +86,14 @@ private fun collectPythonPath(targetEnvironmentRequest: TargetEnvironmentRequest
     //that fixes Jython problem changing sys.argv on execfile, see PY-8164
     for (helpersResource in listOf("pycharm", "pydev")) {
       val helperPath = PythonHelpersLocator.getHelperPath(helpersResource)
-      val targetHelperPath = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(helperPath)
+      val targetHelperPath = getTargetEnvironmentValueForLocalPath(helperPath)
       pythonPath.add(targetHelperPath)
     }
   }
   return pythonPath
 }
 
-private fun collectPythonPath(targetEnvironmentRequest: TargetEnvironmentRequest,
-                              pathConverter: LocalPathToTargetPathConverter,
+private fun collectPythonPath(pathConverter: LocalPathToTargetPathConverter,
                               module: Module?,
                               addContentRoots: Boolean,
                               addSourceRoots: Boolean): Collection<Function<TargetEnvironment, String>> {
@@ -118,24 +113,23 @@ private fun collectPythonPath(targetEnvironmentRequest: TargetEnvironmentRequest
         addRoots(pathConverter, pythonPathList, ModuleRootManager.getInstance(dependency).sourceRoots)
       }
     }
-    addLibrariesFromModule(targetEnvironmentRequest, module, pythonPathList)
+    addLibrariesFromModule(module, pythonPathList)
     addRootsFromModule(module, pythonPathList)
     for (dependency in dependencies) {
-      addLibrariesFromModule(targetEnvironmentRequest, dependency, pythonPathList)
+      addLibrariesFromModule(dependency, pythonPathList)
       addRootsFromModule(dependency, pythonPathList)
     }
   }
   return pythonPathList
 }
 
-fun getAddedPaths(targetEnvironmentRequest: TargetEnvironmentRequest,
-                  pythonSdk: Sdk): List<Function<TargetEnvironment, String>> {
+fun getAddedPaths(pythonSdk: Sdk): List<Function<TargetEnvironment, String>> {
   val pathList: MutableList<Function<TargetEnvironment, String>> = ArrayList()
   val sdkAdditionalData = pythonSdk.sdkAdditionalData
   if (sdkAdditionalData is PythonSdkAdditionalData) {
     val addedPaths = sdkAdditionalData.addedPathFiles
     for (file in addedPaths) {
-      addToPythonPath(LocalPathToTargetPathConverterImpl(targetEnvironmentRequest), file, pathList)
+      addToPythonPath(LocalPathToTargetPathConverterImpl(), file, pathList)
     }
   }
   return pathList
@@ -162,8 +156,7 @@ private fun addIfNeeded(pathConverter: LocalPathToTargetPathConverter,
   pathList.add(pathConverter.getTargetPath(filePath))
 }
 
-private fun addLibrariesFromModule(targetEnvironmentRequest: TargetEnvironmentRequest,
-                                   module: Module,
+private fun addLibrariesFromModule(module: Module,
                                    list: MutableCollection<Function<TargetEnvironment, String>>) {
   val entries = ModuleRootManager.getInstance(module).orderEntries
   for (entry in entries) {
@@ -176,12 +169,12 @@ private fun addLibrariesFromModule(targetEnvironmentRequest: TargetEnvironmentRe
       for (root in entry.getRootFiles(OrderRootType.CLASSES)) {
         val library = entry.library
         if (!PlatformUtils.isPyCharm()) {
-          addToPythonPath(LocalPathToTargetPathConverterImpl(targetEnvironmentRequest), root, list)
+          addToPythonPath(LocalPathToTargetPathConverterImpl(), root, list)
         }
         else if (library is LibraryEx) {
           val kind = library.kind
           if (kind === PythonLibraryType.getInstance().kind) {
-            addToPythonPath(LocalPathToTargetPathConverterImpl(targetEnvironmentRequest), root, list)
+            addToPythonPath(LocalPathToTargetPathConverterImpl(), root, list)
           }
         }
       }
@@ -216,19 +209,17 @@ private fun interface LocalPathToTargetPathConverter {
   fun getTargetPath(localPath: String): Function<TargetEnvironment, String>
 }
 
-private class LocalPathToTargetPathConverterImpl constructor(private val targetEnvironmentRequest: TargetEnvironmentRequest)
-  : LocalPathToTargetPathConverter {
+private class LocalPathToTargetPathConverterImpl : LocalPathToTargetPathConverter {
   override fun getTargetPath(localPath: String): Function<TargetEnvironment, String> {
-    return targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
+    return getTargetEnvironmentValueForLocalPath(localPath)
   }
 }
 
-private class LocalPathToTargetPathConverterSdkAware constructor(private val targetEnvironmentRequest: TargetEnvironmentRequest,
-                                                                 private val project: Project,
-                                                                 private val sdk: Sdk?,
-                                                                 private val pathMapper: PyRemotePathMapper?)
+private class LocalPathToTargetPathConverterSdkAware(private val project: Project,
+                                                     private val sdk: Sdk?,
+                                                     private val pathMapper: PyRemotePathMapper?)
   : LocalPathToTargetPathConverter {
   override fun getTargetPath(localPath: String): Function<TargetEnvironment, String> {
-    return getTargetPathForPythonConsoleExecution(targetEnvironmentRequest, project, sdk, pathMapper, localPath)
+    return getTargetPathForPythonConsoleExecution(project, sdk, pathMapper, localPath)
   }
 }
