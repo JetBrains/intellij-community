@@ -197,6 +197,7 @@ final class CommunityRepositoryModules {
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     plugin("intellij.android.smali"),
+    androidDesignPlugin(),
     plugin("intellij.completionMlRanking"),
     plugin("intellij.completionMlRankingModels") {
       bundlingRestrictions.includeInEapOnly = true
@@ -254,6 +255,35 @@ final class CommunityRepositoryModules {
     }
   )
 
+  static PluginLayout androidDesignPlugin(String mainModuleName = "intellij.android.design-plugin") {
+    plugin(mainModuleName) {
+      directoryName = "design-tools"
+      mainJarName = "design-tools.jar"
+
+      // modules:
+      // design-tools.jar
+      withModule("intellij.android.compose-designer", "design-tools.jar")
+      withModule("intellij.android.design-plugin", "design-tools.jar")
+      withModule("intellij.android.designer.customview", "design-tools.jar")
+      withModule("intellij.android.designer", "design-tools.jar")
+      withModule("intellij.android.layoutlib", "design-tools.jar")
+      withModule("intellij.android.nav.editor", "design-tools.jar")
+
+
+      // libs:
+      withProjectLibrary("layout_inspector_compose_java_proto") // <= ADDED
+      withProjectLibrary("layout_inspector_snapshot_java_proto") // <= ADDED
+      withProjectLibrary("layout_inspector_view_java_proto") // <= ADDED
+      withProjectLibrary("layoutlib")
+      // :libs
+
+      //"resources": [
+      //  "//prebuilts/studio/layoutlib:layoutlib",
+      //  "//tools/adt/idea/compose-designer:kotlin-compiler-daemon-libs",
+      //],
+    }
+  }
+
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars,
                                     String mainModuleName = "intellij.android.plugin",
                                     @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure addition = {}) {
@@ -306,7 +336,7 @@ final class CommunityRepositoryModules {
       //tools/adt/idea/analytics:analytics <= REMOVED
       withModule("intellij.android.android-layout-inspector", "android.jar")
       withModuleLibrary("precompiled-flags", "android.sdktools.flags", "android.jar")
-      //tools/adt/idea/assistant:assistant <= REMOVED
+      withModule("intellij.android.assistant", "android.jar")
       //tools/adt/idea/connection-assistant:connection-assistant <= REMOVED
       withModule("intellij.android.adb", "android.jar")
       withModule("intellij.android.lint", "android.jar")
