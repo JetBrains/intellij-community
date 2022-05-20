@@ -20,10 +20,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.Arrays;
@@ -165,9 +162,9 @@ final public class BuildDependenciesDownloader {
       numberOfTopLevelEntries = stream.count();
     }
 
-    return (codeVersion + "\n" + archiveFile + "\n" +
-           "topLevelEntries:" + numberOfTopLevelEntries + "\n" +
-           "options:" + getExtractOptionsShortString(options) + "\n").getBytes(StandardCharsets.UTF_8);
+    return (codeVersion + "\n" + archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS) + "\n" +
+            "topLevelEntries:" + numberOfTopLevelEntries + "\n" +
+            "options:" + getExtractOptionsShortString(options) + "\n").getBytes(StandardCharsets.UTF_8);
   }
 
   private static boolean checkFlagFile(Path archiveFile, Path flagFile, Path targetDirectory, BuildDependenciesExtractOptions[] options)
