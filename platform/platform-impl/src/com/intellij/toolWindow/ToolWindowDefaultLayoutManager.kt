@@ -15,7 +15,7 @@ import java.awt.Rectangle
 
 @Service(Service.Level.APP)
 @State(name = "ToolWindowLayout", storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)])
-open class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
+class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   : PersistentStateComponentWithModificationTracker<ToolWindowDefaultLayoutManager.ToolWindowLayoutStorageManagerState> {
   companion object {
     @JvmStatic
@@ -30,7 +30,7 @@ open class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   private var layout = DesktopLayout()
 
   @Suppress("unused")
-  protected constructor() : this(ExperimentalUI.isNewUI())
+  constructor() : this(ExperimentalUI.isNewUI())
 
   fun getLayoutCopy() = layout.copy()
 
