@@ -29,7 +29,7 @@ fun currentThreadContext(): CoroutineContext {
  *
  * @return handle to restore the previous thread context
  */
-fun resetThreadContext(coroutineContext: CoroutineContext): AccessToken {
+fun replaceThreadContext(coroutineContext: CoroutineContext): AccessToken {
   return updateThreadContext {
     coroutineContext
   }

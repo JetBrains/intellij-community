@@ -47,19 +47,19 @@ class ThreadContextTest {
   }
 
   @Test
-  fun `resetThreadContext replaces context`() {
+  fun `replaceThreadContext replaces context`() {
     val outerElement1 = TestElement("outer1")
-    resetThreadContext(outerElement1).use {
+    replaceThreadContext(outerElement1).use {
       assertSame(currentThreadContext(), outerElement1)
 
       val innerElement1 = TestElement("inner1")
-      resetThreadContext(innerElement1).use {
+      replaceThreadContext(innerElement1).use {
         assertSame(currentThreadContext(), innerElement1)
       }
       assertSame(currentThreadContext(), outerElement1)
 
       val innerElement2 = TestElement2("inner2")
-      resetThreadContext(innerElement2).use {
+      replaceThreadContext(innerElement2).use {
         assertSame(currentThreadContext(), innerElement2)
       }
       assertSame(currentThreadContext(), outerElement1)

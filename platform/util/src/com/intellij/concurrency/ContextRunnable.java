@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
@@ -20,7 +20,7 @@ public final class ContextRunnable implements Runnable {
   @Override
   public void run() {
     ThreadContext.checkUninitializedThreadContext();
-    try (AccessToken ignored = ThreadContext.resetThreadContext(myParentContext)) {
+    try (AccessToken ignored = ThreadContext.replaceThreadContext(myParentContext)) {
       myRunnable.run();
     }
   }
