@@ -40,6 +40,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testProperty() = doTest()
     fun testQualifier() = doTest()
     fun testRangeAnnotation() = doTest()
+    fun testReifiedGeneric() = doTest()
     fun testSingleton() = doTest()
     fun testSmartCastConflict() = doTest()
     fun testStaticAnalysisVsHumanBrain() = doTest()

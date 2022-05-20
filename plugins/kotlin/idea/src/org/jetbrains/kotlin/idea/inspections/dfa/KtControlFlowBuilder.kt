@@ -275,6 +275,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         processExpression(operand)
+        if (type == DfType.TOP) {
+            // Unknown/generic type: we cannot evaluate
+            addInstruction(EvalUnknownInstruction(KotlinExpressionAnchor(expr), 1, expr.getKotlinType().toDfType(expr)))
+            return
+        }
         val operandType = operand.getKotlinType()
         if (operandType.toDfType(expr) is DfPrimitiveType) {
             addInstruction(WrapDerivedVariableInstruction(DfTypes.NOT_NULL_OBJECT, SpecialField.UNBOX))
@@ -1571,9 +1576,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun getTypeCheckDfType(typeReference: KtTypeReference?): DfType {
         if (typeReference == null) return DfType.TOP
         val kotlinType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
+        if (kotlinType == null || kotlinType.constructor.declarationDescriptor is TypeParameterDescriptor) return DfType.TOP
         val type = kotlinType.toDfType(typeReference)
         return if (type is DfPrimitiveType) {
-            val boxedType = (kotlinType?.toPsiType(typeReference) as? PsiPrimitiveType)?.getBoxedType(typeReference)
+            val boxedType = (kotlinType.toPsiType(typeReference) as? PsiPrimitiveType)?.getBoxedType(typeReference)
             if (boxedType != null) {
                 DfTypes.typedObject(boxedType, Nullability.NOT_NULL)
             } else {
