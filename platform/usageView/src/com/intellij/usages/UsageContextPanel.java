@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -32,6 +33,11 @@ import java.util.List;
 public interface UsageContextPanel extends Disposable {
   // usage selection changes, panel should update its view for the newly select usages
   void updateLayout(@Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
+
+  default void updateLayout(@Nullable List<? extends UsageInfo> infos,
+                            @NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
+    updateLayout(infos);
+  }
 
   @NotNull
   JComponent createComponent();

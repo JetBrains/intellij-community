@@ -1543,7 +1543,7 @@ public class UsageViewImpl implements UsageViewEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCurrentUsageContextPanel != null) {
       try {
-        myCurrentUsageContextPanel.updateLayout(getSelectedUsageInfos());
+        myCurrentUsageContextPanel.updateLayout(getSelectedUsageInfos(), getSelectedGroups());
       }
       catch (IndexNotReadyException ignore) {
       }
@@ -2228,6 +2228,28 @@ public class UsageViewImpl implements UsageViewEx {
   private List<UsageInfo> getSelectedUsageInfos() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
+  }
+
+  private @NotNull Collection<Collection<? extends UsageGroup>> getSelectedGroups() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    Collection<Collection<? extends UsageGroup>> groupPaths = new ArrayList<>();
+    for (TreeNode node : selectedNodes()) {
+      if (node instanceof GroupNode) {
+        List<UsageGroup> groupPath = new ArrayList<>();
+        TreeNode parent = node;
+        while (parent != null) {
+          if (parent instanceof GroupNode) {
+            final UsageGroup group = ((GroupNode)parent).getGroup();
+            if (group != null) {
+              groupPath.add(group);
+            }
+          }
+          parent = parent.getParent();
+        }
+        groupPaths.add(groupPath);
+      }
+    }
+    return groupPaths;
   }
 
   @NotNull

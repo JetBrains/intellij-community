@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageContextPanel;
+import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class UsageContextPanelBase extends JBPanelWithEmptyText implements UsageContextPanel {
@@ -57,6 +59,17 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
   @Override
   public final void updateLayout(@Nullable final List<? extends UsageInfo> infos) {
     AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).expireWith(this).execute(() -> updateLayoutLater(infos));
+  }
+
+  @Override
+  public final void updateLayout(@Nullable List<? extends UsageInfo> infos,
+                                 @NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
+    AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).expireWith(this)
+      .execute(() -> updateLayoutLater(infos, groups));
+  }
+
+  protected void updateLayoutLater(List<? extends UsageInfo> infos, @NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
+    updateLayoutLater(infos);
   }
 
   protected abstract void updateLayoutLater(@Nullable List<? extends UsageInfo> infos);
