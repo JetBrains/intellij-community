@@ -273,6 +273,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myInfo = null;
     Component showingComponent = components.get(0);
     setTitle(showingComponent.getClass().getName());
+    Disposer.dispose(myInspectorTable);
     myInspectorTable = new InspectorTable(showingComponent, myProject);
     myWrapperPanel.setContent(myInspectorTable);
     myNavBarPanel.setSelectedComponent(showingComponent);
@@ -282,6 +283,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.clear();
     myInfo = clickInfo;
     setTitle("Click Info");
+    Disposer.dispose(myInspectorTable);
     myInspectorTable = new InspectorTable(clickInfo, myProject);
     myWrapperPanel.setContent(myInspectorTable);
   }
@@ -290,6 +292,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   public void dispose() {
     DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
+    Disposer.dispose(myInspectorTable);
     super.dispose();
     DialogWrapper.cleanupRootPane(rootPane);
     DialogWrapper.cleanupWindowListeners(this);
