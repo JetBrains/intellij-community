@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.vfs.newvfs.VfsEventGenerationHelper.LOG;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshWorker {
   private final boolean myIsRecursive;
@@ -94,9 +95,9 @@ final class RefreshWorker {
       LOG.trace("refresh cancelled");
     }
 
-    t = (System.nanoTime() - t) / 1_000_000;
+    t = NANOSECONDS.toMillis(System.nanoTime() - t);
     var retries = (myFullScans + myPartialScans) - myProcessed;
-    VfsUsageCollector.logRefreshScan(myFullScans, myPartialScans, retries, t, myVfsTime / 1_000_000, myIoTime / 1_000_000);
+    VfsUsageCollector.logRefreshScan(myFullScans, myPartialScans, retries, t, NANOSECONDS.toMillis(myVfsTime), NANOSECONDS.toMillis(myIoTime));
   }
 
   private void queueDirectory(@NotNull NewVirtualFile root) {

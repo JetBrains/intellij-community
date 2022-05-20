@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 final class RefreshSessionImpl extends RefreshSession {
   @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshSession.class);
 
@@ -164,7 +166,7 @@ final class RefreshSessionImpl extends RefreshSession {
       }
       while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
 
-      t = (System.nanoTime() - t) / 1_000_000;
+      t = NANOSECONDS.toMillis(System.nanoTime() - t);
       int localRoots = 0, archiveRoots = 0, otherRoots = 0;
       for (VirtualFile file : workQueue) {
         if (file.getFileSystem() instanceof LocalFileSystem) localRoots++;
