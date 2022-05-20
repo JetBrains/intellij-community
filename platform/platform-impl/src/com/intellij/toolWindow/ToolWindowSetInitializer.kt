@@ -80,7 +80,7 @@ internal class InitToolWindowSetActivity : StartupActivity {
   }
 }
 
-internal class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
+class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
   @Volatile
   private var isInitialized = false
 
