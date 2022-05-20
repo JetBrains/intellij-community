@@ -322,10 +322,7 @@ class InspectionRunner {
               }
               afterProcessCallback.accept(context);
             };
-            if (application.isReadAccessAllowed()) { //e.g. non-blocking read action was already taken by code smells detector
-              action.run();
-            }
-            else if (!application.tryRunReadAction(action)) {
+            if (!application.tryRunReadAction(action)) {
               throw new ProcessCanceledException();
             }
           };

@@ -389,15 +389,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         ProgressIndicator wrapper = new DaemonProgressIndicator();
         dependentIndicators.add(wrapper);
         try {
-          // avoid "attach listener"/"write action" race
-          ReadAction.run(() -> {
-            wrapper.start();
-            ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
-            // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
-            if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
-              throw new ProcessCanceledException();
-            }
-          });
+          setupCancelOnWriteProgress(disposable, wrapper);
           // use wrapper here to cancel early when write action start but do not affect the original indicator
           ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(filesToInspect, filesFailedToInspect, wrapper, TOMBSTONE, processor);
           break;
@@ -442,6 +434,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
 
     addProblemsToView(globalSimpleTools);
+  }
+
+  public static void setupCancelOnWriteProgress(Disposable disposable, ProgressIndicator wrapper) {
+    // avoid "attach listener"/"write action" race
+    ReadAction.run(() -> {
+      wrapper.start();
+      ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
+      // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
+      if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+        throw new ProcessCanceledException();
+      }
+    });
   }
 
   private static @NotNull TextRange getEffectiveRange(@NotNull SearchScope searchScope, @NotNull PsiFile file) {
