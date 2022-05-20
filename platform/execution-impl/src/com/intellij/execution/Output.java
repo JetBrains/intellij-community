@@ -17,8 +17,6 @@
 package com.intellij.execution;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author oleg
  */
 public class Output {
