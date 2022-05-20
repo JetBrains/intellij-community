@@ -47,6 +47,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     )
 
   private static final List<String> EXCLUDED_PLUGINS = List.of(
+    "intellij.android.design-plugin",
     "intellij.android.gradle.dsl",
     "intellij.android.plugin",
     "intellij.android.smali",
