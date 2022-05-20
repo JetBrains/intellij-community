@@ -29,6 +29,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testIncompleteCode1() = doTest()
     fun testInlineLambda() = doTest()
     fun testInlineStandardCalls() = doTest()
+    fun testIndices() = doTest()
     fun testJavaMethods() = doTest()
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
