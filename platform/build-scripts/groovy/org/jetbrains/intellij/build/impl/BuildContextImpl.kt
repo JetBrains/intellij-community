@@ -1,636 +1,417 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl;
+package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.Strings;
-import groovy.lang.Closure;
-import groovy.lang.GString;
-import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
-import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.context.Scope;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.codehaus.groovy.runtime.StringGroovyMethods;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.intellij.build.*;
-import org.jetbrains.intellij.build.projector.ProjectorPluginKt;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsGlobal;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.jps.model.java.JavaResourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
-import org.jetbrains.jps.util.JpsPathUtil;
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.Strings
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.api.trace.StatusCode
+import org.codehaus.groovy.runtime.StringGroovyMethods
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.ProprietaryBuildTools.Companion.DUMMY
+import org.jetbrains.intellij.build.TracerProviderManager.flush
+import org.jetbrains.intellij.build.impl.CompilationContextImpl.Companion.create
+import org.jetbrains.intellij.build.projector.configure
+import org.jetbrains.jps.model.JpsGlobal
+import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
+import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.function.BiFunction
+import java.util.stream.Collectors
 
-import java.lang.reflect.UndeclaredThrowableException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+class BuildContextImpl : BuildContext {
+  override val fullBuildNumber: String
+    get() = "${applicationInfo.productCode}-$buildNumber"
 
-public final class BuildContextImpl implements BuildContext {
-  @Override
-  public String getFullBuildNumber() {
-    return getApplicationInfo().getProductCode() + "-" + getBuildNumber();
+  override val systemSelector: String
+    get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
+
+
+  override val productProperties: ProductProperties
+  override val windowsDistributionCustomizer: WindowsDistributionCustomizer?
+  override val linuxDistributionCustomizer: LinuxDistributionCustomizer?
+  override val macDistributionCustomizer: MacDistributionCustomizer?
+  override val proprietaryBuildTools: ProprietaryBuildTools
+  override val buildNumber: String
+  override var xBootClassPathJarNames: List<String>
+  override var bootClassPathJarNames: List<String>
+  override var classpathCustomizer: (MutableSet<String>) -> Unit = {}
+
+  override val applicationInfo: ApplicationInfoProperties
+  private val global: JpsGlobal
+  private val compilationContext: CompilationContextImpl
+  private val distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>
+  private var builtinModulesData: BuiltinModulesFileData? = null
+
+  private constructor(compilationContext: CompilationContextImpl,
+                      productProperties: ProductProperties,
+                      windowsDistributionCustomizer: WindowsDistributionCustomizer?,
+                      linuxDistributionCustomizer: LinuxDistributionCustomizer?,
+                      macDistributionCustomizer: MacDistributionCustomizer?,
+                      proprietaryBuildTools: ProprietaryBuildTools?,
+                      distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) {
+    this.compilationContext = compilationContext
+    global = compilationContext.global
+    this.productProperties = productProperties
+    this.distFiles = distFiles
+    this.proprietaryBuildTools = proprietaryBuildTools ?: DUMMY
+    this.windowsDistributionCustomizer = windowsDistributionCustomizer
+    this.linuxDistributionCustomizer = linuxDistributionCustomizer
+    this.macDistributionCustomizer = macDistributionCustomizer
+    val number = options.buildNumber
+    buildNumber = number ?: readSnapshotBuildNumber(paths.communityHomeDir)
+    xBootClassPathJarNames = productProperties.xBootClassPathJarNames
+    bootClassPathJarNames = listOf("util.jar", "util_rt.jar")
+    applicationInfo = ApplicationInfoPropertiesImpl(project, productProperties, options, messages).patch(this)
+    if (productProperties.productCode == null) {
+      productProperties.productCode = applicationInfo.productCode
+    }
+    if (systemSelector.contains(" ")) {
+      messages.error("System selector must not contain spaces: $systemSelector")
+    }
+    options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
+    if (!options.buildStepsToSkip.isEmpty()) {
+      messages.info("Build steps to be skipped: ${options.buildStepsToSkip.joinToString()}")
+    }
+    configure(productProperties)
   }
 
-  @Override
-  public String getSystemSelector() {
-    return productProperties.getSystemSelector(applicationInfo, buildNumber);
+  private constructor(parent: BuildContextImpl,
+                      messages: BuildMessages,
+                      distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) {
+    compilationContext = parent.compilationContext.cloneForContext(messages)
+    this.distFiles = distFiles
+    global = compilationContext.global
+    productProperties = parent.productProperties
+    proprietaryBuildTools = parent.proprietaryBuildTools
+    windowsDistributionCustomizer = parent.windowsDistributionCustomizer
+    linuxDistributionCustomizer = parent.linuxDistributionCustomizer
+    macDistributionCustomizer = parent.macDistributionCustomizer
+    buildNumber = parent.buildNumber
+    xBootClassPathJarNames = parent.xBootClassPathJarNames
+    bootClassPathJarNames = parent.bootClassPathJarNames
+    applicationInfo = parent.applicationInfo
+    builtinModulesData = parent.builtinModulesData
   }
 
-  public static BuildContext createContext(Path communityHome,
-                                           Path projectHome,
-                                           ProductProperties productProperties,
-                                           ProprietaryBuildTools proprietaryBuildTools,
-                                           BuildOptions options) {
-    return create(communityHome, projectHome, productProperties, proprietaryBuildTools, options);
-  }
-
-  public static BuildContext createContext(Path communityHome,
-                                           Path projectHome,
-                                           ProductProperties productProperties,
-                                           ProprietaryBuildTools proprietaryBuildTools) {
-    return BuildContextImpl.createContext(communityHome, projectHome, productProperties, proprietaryBuildTools, new BuildOptions());
-  }
-
-  public static BuildContext createContext(Path communityHome, Path projectHome, ProductProperties productProperties) {
-    return BuildContextImpl.createContext(communityHome, projectHome, productProperties, ProprietaryBuildTools.getDUMMY(),
-                                          new BuildOptions());
-  }
-
-  public static BuildContextImpl create(Path communityHome,
-                                        Path projectHome,
-                                        ProductProperties productProperties,
-                                        ProprietaryBuildTools proprietaryBuildTools,
-                                        BuildOptions options) {
-    String projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString());
-    WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString);
-    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString);
-    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString);
-
-    CompilationContextImpl compilationContext = CompilationContextImpl.create(communityHome, projectHome,
-                                                                              createBuildOutputRootEvaluator(projectHomeAsString,
-                                                                                                             productProperties, options),
-                                                                              options);
-
-    return new BuildContextImpl(compilationContext, productProperties, windowsDistributionCustomizer, linuxDistributionCustomizer,
-                                macDistributionCustomizer, proprietaryBuildTools, new ConcurrentLinkedQueue<Map.Entry<Path, String>>());
-  }
-
-  private BuildContextImpl(CompilationContextImpl compilationContext,
-                           ProductProperties productProperties,
-                           WindowsDistributionCustomizer windowsDistributionCustomizer,
-                           LinuxDistributionCustomizer linuxDistributionCustomizer,
-                           MacDistributionCustomizer macDistributionCustomizer,
-                           ProprietaryBuildTools proprietaryBuildTools,
-                           @NotNull ConcurrentLinkedQueue<Map.Entry<Path, String>> distFiles) {
-    this.compilationContext = compilationContext;
-    this.global = compilationContext.getGlobal();
-    this.productProperties = productProperties;
-    this.distFiles = distFiles;
-    this.proprietaryBuildTools = proprietaryBuildTools == null ? ProprietaryBuildTools.getDUMMY() : proprietaryBuildTools;
-    this.windowsDistributionCustomizer = windowsDistributionCustomizer;
-    this.linuxDistributionCustomizer = linuxDistributionCustomizer;
-    this.macDistributionCustomizer = macDistributionCustomizer;
-
-    final String number = getOptions().getBuildNumber();
-    buildNumber = StringGroovyMethods.asBoolean(number) ? number : readSnapshotBuildNumber(getPaths().getCommunityHomeDir());
-
-    XBootClassPathJarNames = productProperties.getXBootClassPathJarNames();
-    bootClassPathJarNames = List.of("util.jar", "util_rt.jar");
-    applicationInfo = new ApplicationInfoPropertiesImpl(getProject(), productProperties, getOptions(), getMessages()).patch(this);
-    if (productProperties.getProductCode() == null && applicationInfo.getProductCode() != null) {
-      productProperties.setProductCode(applicationInfo.getProductCode());
+  companion object {
+    @JvmStatic
+    fun createContext(communityHome: Path,
+                      projectHome: Path,
+                      productProperties: ProductProperties,
+                      proprietaryBuildTools: ProprietaryBuildTools?,
+                      options: BuildOptions): BuildContext {
+      return create(communityHome = communityHome,
+                    projectHome = projectHome,
+                    productProperties = productProperties,
+                    proprietaryBuildTools = proprietaryBuildTools,
+                    options = options)
     }
 
-
-    if (getSystemSelector().contains(" ")) {
-      getMessages().error("System selector must not contain spaces: " + getSystemSelector());
+    @JvmStatic
+    fun createContext(communityHome: Path,
+                      projectHome: Path,
+                      productProperties: ProductProperties,
+                      proprietaryBuildTools: ProprietaryBuildTools?): BuildContext {
+      return createContext(communityHome = communityHome,
+                           projectHome = projectHome,
+                           productProperties = productProperties,
+                           proprietaryBuildTools = proprietaryBuildTools,
+                           options = BuildOptions())
     }
 
-
-    getOptions().getBuildStepsToSkip().addAll(productProperties.getIncompatibleBuildSteps());
-    if (!getOptions().getBuildStepsToSkip().isEmpty()) {
-      getMessages().info("Build steps to be skipped: " + String.join(", ", getOptions().getBuildStepsToSkip()));
+    @JvmStatic
+    fun createContext(communityHome: Path, projectHome: Path, productProperties: ProductProperties): BuildContext {
+      return createContext(communityHome = communityHome,
+                           projectHome = projectHome,
+                           productProperties = productProperties,
+                           proprietaryBuildTools = DUMMY,
+                           options = BuildOptions())
     }
 
-    ProjectorPluginKt.configure(productProperties);
+    @JvmStatic
+    fun create(communityHome: Path,
+               projectHome: Path,
+               productProperties: ProductProperties,
+               proprietaryBuildTools: ProprietaryBuildTools?,
+               options: BuildOptions): BuildContextImpl {
+      val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
+      val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
+      val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
+      val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
+      val compilationContext = create(communityHome = communityHome,
+                                      projectHome = projectHome,
+                                      buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHomeAsString,
+                                                                                                productProperties, options),
+                                      options = options)
+      return BuildContextImpl(compilationContext, productProperties, windowsDistributionCustomizer, linuxDistributionCustomizer,
+                              macDistributionCustomizer, proprietaryBuildTools, ConcurrentLinkedQueue())
+    }
+
+    @JvmStatic
+    fun readSnapshotBuildNumber(communityHome: Path): String {
+      return Files.readString(communityHome.resolve("build.txt")).trim { it <= ' ' }
+    }
   }
 
-  private BuildContextImpl(@NotNull BuildContextImpl parent,
-                           @NotNull BuildMessages messages,
-                           @NotNull ConcurrentLinkedQueue<Map.Entry<Path, String>> distFiles) {
-    compilationContext = parent.compilationContext.cloneForContext(messages);
-    this.distFiles = distFiles;
-    global = compilationContext.getGlobal();
-    productProperties = parent.getProductProperties();
-    proprietaryBuildTools = parent.getProprietaryBuildTools();
-    windowsDistributionCustomizer = parent.getWindowsDistributionCustomizer();
-    linuxDistributionCustomizer = parent.getLinuxDistributionCustomizer();
-    macDistributionCustomizer = parent.getMacDistributionCustomizer();
-
-    buildNumber = parent.getBuildNumber();
-
-    XBootClassPathJarNames = parent.getXBootClassPathJarNames();
-    bootClassPathJarNames = parent.getBootClassPathJarNames();
-    applicationInfo = parent.getApplicationInfo();
-    builtinModulesData = parent.builtinModulesData;
+  override fun addDistFile(file: Map.Entry<Path, String>) {
+    messages.debug("$file requested to be added to app resources")
+    distFiles.add(file)
   }
 
-  @Override
-  public void addDistFile(@NotNull Map.Entry<? extends Path, String> file) {
-    getMessages().debug(String.valueOf(file) + " requested to be added to app resources");
-    distFiles.add((Map.Entry<Path, String>)file);
+  override fun getDistFiles(): Collection<Map.Entry<Path, String>> {
+    return java.util.List.copyOf(distFiles)
   }
 
-  @NotNull
-  public Collection<Map.Entry<Path, String>> getDistFiles() {
-    return List.copyOf(distFiles);
+  override fun findApplicationInfoModule(): JpsModule {
+    return findRequiredModule(productProperties.applicationInfoModule)
   }
 
-  public static String readSnapshotBuildNumber(Path communityHome) {
-    return Files.readString(communityHome.resolve("build.txt")).trim();
+  override val options: BuildOptions
+    get() = compilationContext.options
+  @Suppress("SSBasedInspection")
+  override val messages: BuildMessages
+    get() = compilationContext.messages
+  override val dependenciesProperties: DependenciesProperties
+    get() = compilationContext.dependenciesProperties
+  override val paths: BuildPaths
+    get() = compilationContext.paths
+  override val bundledRuntime: BundledRuntime
+    get() = compilationContext.bundledRuntime
+  override val project: JpsProject
+    get() = compilationContext.project
+  override val projectModel: JpsModel
+    get() = compilationContext.projectModel
+  override val compilationData: JpsCompilationData
+    get() = compilationContext.compilationData
+  override val stableJavaExecutable: Path
+    get() = compilationContext.stableJavaExecutable
+  override val stableJdkHome: Path
+    get() = compilationContext.stableJdkHome
+  override val projectOutputDirectory: Path
+    get() = compilationContext.projectOutputDirectory
+
+  override fun findRequiredModule(name: String): JpsModule {
+    return compilationContext.findRequiredModule(name)
   }
 
-  private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(final String projectHome,
-                                                                                              final ProductProperties productProperties,
-                                                                                              final BuildOptions buildOptions) {
-    return DefaultGroovyMethods.asType(new Closure<GString>(null, null) {
-      public GString doCall(JpsProject project, BuildMessages messages) {
-        final ApplicationInfoProperties applicationInfo =
-          new ApplicationInfoPropertiesImpl(project, productProperties, buildOptions, messages);
-        return projectHome + "/out/" + productProperties.getOutputDirectoryName(applicationInfo);
-      }
-    }, (Class<T>)BiFunction.class);
+  override fun findModule(name: String): JpsModule? {
+    return compilationContext.findModule(name)
   }
 
-  @Override
-  public JpsModule findApplicationInfoModule() {
-    return findRequiredModule(productProperties.getApplicationInfoModule());
+  override fun getOldModuleName(newName: String): String? {
+    return compilationContext.getOldModuleName(newName)
   }
 
-  @Override
-  public BuildOptions getOptions() {
-    return compilationContext.getOptions();
+  override fun getModuleOutputDir(module: JpsModule): Path {
+    return compilationContext.getModuleOutputDir(module)
   }
 
-  @Override
-  public BuildMessages getMessages() {
-    return compilationContext.getMessages();
+  override fun getModuleTestsOutputPath(module: JpsModule): String {
+    return compilationContext.getModuleTestsOutputPath(module)
   }
 
-  @Override
-  public DependenciesProperties getDependenciesProperties() {
-    return compilationContext.getDependenciesProperties();
+  override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
+    return compilationContext.getModuleRuntimeClasspath(module, forTests)
   }
 
-  @Override
-  public BuildPaths getPaths() {
-    return compilationContext.getPaths();
+  override fun notifyArtifactBuilt(artifactPath: Path) {
+    compilationContext.notifyArtifactWasBuilt(artifactPath)
   }
 
-  @Override
-  public BundledRuntime getBundledRuntime() {
-    return compilationContext.getBundledRuntime();
+  override fun notifyArtifactWasBuilt(artifactPath: Path) {
+    compilationContext.notifyArtifactWasBuilt(artifactPath)
   }
 
-  @Override
-  public JpsProject getProject() {
-    return compilationContext.getProject();
-  }
-
-  @Override
-  public JpsModel getProjectModel() {
-    return compilationContext.getProjectModel();
-  }
-
-  @Override
-  public JpsCompilationData getCompilationData() {
-    return compilationContext.getCompilationData();
-  }
-
-  @Override
-  public Path getStableJavaExecutable() {
-    return compilationContext.getStableJavaExecutable();
-  }
-
-  @Override
-  public Path getStableJdkHome() {
-    return compilationContext.getStableJdkHome();
-  }
-
-  @Override
-  public Path getProjectOutputDirectory() {
-    return compilationContext.getProjectOutputDirectory();
-  }
-
-  @Override
-  public JpsModule findRequiredModule(String name) {
-    return compilationContext.findRequiredModule(name);
-  }
-
-  public JpsModule findModule(String name) {
-    return compilationContext.findModule(name);
-  }
-
-  @Override
-  public String getOldModuleName(String newName) {
-    return compilationContext.getOldModuleName(newName);
-  }
-
-  @Override
-  public Path getModuleOutputDir(JpsModule module) {
-    return compilationContext.getModuleOutputDir(module);
-  }
-
-  @Override
-  public String getModuleTestsOutputPath(JpsModule module) {
-    return compilationContext.getModuleTestsOutputPath(module);
-  }
-
-  @Override
-  public List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests) {
-    return compilationContext.getModuleRuntimeClasspath(module, forTests);
-  }
-
-  @Override
-  public void notifyArtifactBuilt(Path artifactPath) {
-    compilationContext.notifyArtifactWasBuilt(artifactPath);
-  }
-
-  @Override
-  public void notifyArtifactWasBuilt(Path artifactPath) {
-    compilationContext.notifyArtifactWasBuilt(artifactPath);
-  }
-
-  @Override
-  @Nullable
-  public Path findFileInModuleSources(@NotNull String moduleName, @NotNull String relativePath) {
-    for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName))) {
-      if (relativePath.startsWith(info.getSecond())) {
-        Path result = info.getFirst().resolve(Strings.trimStart(Strings.trimStart(relativePath, info.getSecond()), "/"));
+  override fun findFileInModuleSources(moduleName: String, relativePath: String): Path? {
+    for (info in getSourceRootsWithPrefixes(findRequiredModule(moduleName))) {
+      if (relativePath.startsWith(info.getSecond()!!)) {
+        val result = info.getFirst().resolve(Strings.trimStart(Strings.trimStart(relativePath, info.getSecond()!!), "/"))
         if (Files.exists(result)) {
-          return result;
+          return result
         }
       }
     }
-
-    return null;
+    return null
   }
 
-  @NotNull
-  private static List<Pair<Path, String>> getSourceRootsWithPrefixes(@NotNull JpsModule module) {
-    return module.getSourceRoots().stream().filter(new Predicate<JpsModuleSourceRoot>() {
-      @Override
-      public boolean test(JpsModuleSourceRoot root) {
-        return JavaModuleSourceRootTypes.PRODUCTION.contains(root.getRootType());
-      }
-    }).map(new Function<JpsModuleSourceRoot, Pair<Path, String>>() {
-      @Override
-      public Pair<Path, String> apply(JpsModuleSourceRoot moduleSourceRoot) {
-        String prefix;
-        JpsElement properties = moduleSourceRoot.getProperties();
-        if (properties instanceof JavaSourceRootProperties) {
-          prefix = ((JavaSourceRootProperties)properties).getPackagePrefix().replace(".", "/");
-        }
-        else {
-          prefix = ((JavaResourceRootProperties)properties).getRelativeOutputPath();
-        }
-
-        if (!prefix.endsWith("/")) {
-          prefix += "/";
-        }
-
-        return new Pair<Path, String>(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), Strings.trimStart(prefix, "/"));
-      }
-    }).collect((Collector<? super Pair<Path, String>, ?, List<Pair<Path, String>>>)Collectors.toList());
-  }
-
-  @Override
-  public void signFiles(@NotNull List<? extends Path> files, @NotNull Map<String, String> options) {
-    if (proprietaryBuildTools.getSignTool() == null) {
-      Span.current().addEvent("files won't be signed",
-                              Attributes.of(AttributeKey.stringArrayKey("files"), files.stream().map(new Closure<String>(this, this) {
-                                              public String doCall(Object it) { return it.toString(); }
-                                            }).collect((Collector<? super String, ?, List<String>>)Collectors.toList()), AttributeKey.stringKey("reason"),
-                                            "sign tool isn't defined"));
+  override fun signFiles(files: List<Path>, options: Map<String, String>) {
+    if (proprietaryBuildTools.signTool == null) {
+      Span.current().addEvent("files won't be signed", Attributes.of(
+        AttributeKey.stringArrayKey("files"), files.map(Path::toString),
+        AttributeKey.stringKey("reason"), "sign tool isn't defined")
+      )
     }
     else {
-      proprietaryBuildTools.getSignTool().signFiles(files, this, options);
+      proprietaryBuildTools.signTool.signFiles(files, this, options)
     }
   }
 
-  @Override
-  public boolean executeStep(String stepMessage, String stepId, final Runnable step) {
-    if (getOptions().getBuildStepsToSkip().contains(stepId)) {
-      Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage));
+  override fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean {
+    if (options.buildStepsToSkip.contains(stepId)) {
+      Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
     }
     else {
-      getMessages().block(stepMessage, new Closure<Void>(this, this) {
-        public void doCall(Object it) {
-          step.run();
-        }
-
-        public void doCall() {
-          doCall(null);
-        }
-      });
+      messages.block(stepMessage, step::run)
     }
-
-    return true;
+    return true
   }
 
-  @Override
-  public void executeStep(SpanBuilder spanBuilder, String stepId, Runnable step) {
-    if (getOptions().getBuildStepsToSkip().contains(stepId)) {
-      spanBuilder.startSpan().addEvent("skip").end();
-      return;
+  override fun executeStep(spanBuilder: SpanBuilder, stepId: String, step: Runnable) {
+    if (options.buildStepsToSkip.contains(stepId)) {
+      spanBuilder.startSpan().addEvent("skip").end()
+      return
     }
-
-
-    Span span = spanBuilder.startSpan();
-    Scope scope = span.makeCurrent();
+    val span = spanBuilder.startSpan()
+    val scope = span.makeCurrent()
     // we cannot flush tracing after "throw e" as we have to end the current span before that
-    boolean success = false;
+    var success = false
     try {
-      step.run();
-      success = true;
+      step.run()
+      success = true
     }
-    catch (Throwable e) {
-      if (e instanceof UndeclaredThrowableException) {
-        e = e.getCause();
-      }
-
-
-      span.recordException(e);
-      span.setStatus(StatusCode.ERROR, e.getMessage());
-      throw e;
+    catch (e: Throwable) {
+      span.recordException(e)
+      span.setStatus(StatusCode.ERROR, e.message!!)
+      throw e
     }
     finally {
       try {
-        scope.close();
+        scope.close()
       }
       finally {
-        span.end();
+        span.end()
       }
-
-
       if (!success) {
         // print all pending spans - after current span
-        TracerProviderManager.INSTANCE.flush();
+        flush()
       }
     }
   }
 
-  @Override
-  public boolean shouldBuildDistributions() {
-    return !getOptions().getTargetOs().toLowerCase().equals(BuildOptions.OS_NONE);
+  override fun shouldBuildDistributions(): Boolean {
+    return options.targetOs!!.lowercase(Locale.getDefault()) != BuildOptions.OS_NONE
   }
 
-  @Override
-  public boolean shouldBuildDistributionForOS(String os) {
-    return shouldBuildDistributions() && getOptions().getTargetOs().toLowerCase() in
-    new ArrayList<String>(Arrays.asList(BuildOptions.OS_ALL, os));
+  override fun shouldBuildDistributionForOS(os: String): Boolean {
+    return shouldBuildDistributions() && listOf(BuildOptions.OS_ALL, os)
+      .contains(options.targetOs!!.lowercase(Locale.getDefault()))
   }
 
-  @Override
-  public BuildContext forkForParallelTask(String taskName) {
-    return new BuildContextImpl(this, getMessages().forkForParallelTask(taskName), distFiles);
+  override fun forkForParallelTask(taskName: String): BuildContext {
+    return BuildContextImpl(this, messages.forkForParallelTask(taskName), distFiles)
   }
 
-  @Override
-  public BuildContext createCopyForProduct(ProductProperties productProperties, Path projectHomeForCustomizers) {
-    String projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString());
-    WindowsDistributionCustomizer windowsDistributionCustomizer =
-      productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString);
-    LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString);
-    MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString);
+  override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {
+    val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
+    val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString)
+    val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString)
+    val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString)
+
     /**
-     * FIXME compiled classes are assumed to be already fetched in the FIXME from {@link CompilationContextImpl#prepareForBuild}, please change them together
+     * FIXME compiled classes are assumed to be already fetched in the FIXME from [CompilationContextImpl.prepareForBuild], please change them together
      */
-    BuildOptions options = new BuildOptions();
-    options.setUseCompiledClassesFromProjectOutput(true);
-    CompilationContextImpl compilationContextCopy = compilationContext.createCopy(getMessages(), options, createBuildOutputRootEvaluator(
-      getPaths().getProjectHome(), productProperties, options));
-    BuildContextImpl copy =
-      new BuildContextImpl(compilationContextCopy, productProperties, windowsDistributionCustomizer, linuxDistributionCustomizer,
-                           macDistributionCustomizer, proprietaryBuildTools, new ConcurrentLinkedQueue<Map.Entry<Path, String>>());
-    copy.getPaths().setArtifactDir(getPaths().getArtifactDir().resolve(productProperties.getProductCode()));
-    copy.getPaths().setArtifacts(getPaths().getArtifacts() + "/" + productProperties.getProductCode());
-    copy.compilationContext.prepareForBuild();
-    return copy;
+    val options = BuildOptions()
+    options.useCompiledClassesFromProjectOutput = true
+    val compilationContextCopy = compilationContext.createCopy(messages, options, createBuildOutputRootEvaluator(
+      paths.projectHome, productProperties, options))
+    val copy = BuildContextImpl(compilationContextCopy, productProperties, windowsDistributionCustomizer, linuxDistributionCustomizer,
+                                macDistributionCustomizer, proprietaryBuildTools, ConcurrentLinkedQueue())
+    copy.paths.artifactDir = paths.artifactDir.resolve(productProperties.productCode!!)
+    copy.paths.artifacts = "${paths.artifacts}/${productProperties.productCode}"
+    copy.compilationContext.prepareForBuild()
+    return copy
   }
 
-  @Override
-  public boolean includeBreakGenLibraries() {
-    return isJavaSupportedInProduct();
+  override fun includeBreakGenLibraries(): Boolean {
+    return isJavaSupportedInProduct
   }
 
-  private boolean isJavaSupportedInProduct() {
-    return productProperties.getProductLayout().getBundledPluginModules().contains("intellij.java.plugin");
-  }
+  private val isJavaSupportedInProduct: Boolean
+    get() = productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
 
-  @Override
-  public void patchInspectScript(@NotNull Path path) {
+  override fun patchInspectScript(path: Path) {
     //todo[nik] use placeholder in inspect.sh/inspect.bat file instead
     Files.writeString(path, StringGroovyMethods.replaceAll(Files.readString(path), " inspect ",
-                                                           " " + getProductProperties().getInspectCommandName() + " "));
+                                                           " " + productProperties.inspectCommandName + " "))
   }
 
-  @Override
-  @SuppressWarnings("SpellCheckingInspection")
-  @NotNull
-  public List<String> getAdditionalJvmArguments() {
-    List<String> jvmArgs = new ArrayList<String>();
-
-    String classLoader = productProperties.getClassLoader();
+  override fun getAdditionalJvmArguments(): List<String> {
+    val jvmArgs: MutableList<String> = ArrayList()
+    val classLoader = productProperties.classLoader
     if (classLoader != null) {
-      jvmArgs.add("-Djava.system.class.loader=" + classLoader);
-      if (classLoader.equals("com.intellij.util.lang.PathClassLoader")) {
-        jvmArgs.add("-Didea.strict.classpath=true");
+      jvmArgs.add("-Djava.system.class.loader=$classLoader")
+      if (classLoader == "com.intellij.util.lang.PathClassLoader") {
+        jvmArgs.add("-Didea.strict.classpath=true")
       }
     }
-
-
-    jvmArgs.add("-Didea.vendor.name=" + applicationInfo.getShortCompanyName());
-
-    jvmArgs.add("-Didea.paths.selector=" + getSystemSelector());
-
-    if (productProperties.getPlatformPrefix() != null) {
-      jvmArgs.add("-Didea.platform.prefix=" + productProperties.getPlatformPrefix());
+    jvmArgs.add("-Didea.vendor.name=" + applicationInfo.shortCompanyName)
+    jvmArgs.add("-Didea.paths.selector=$systemSelector")
+    if (productProperties.platformPrefix != null) {
+      jvmArgs.add("-Didea.platform.prefix=" + productProperties.platformPrefix)
     }
-
-
-    jvmArgs.addAll(productProperties.getAdditionalIdeJvmArguments());
-
-    if (productProperties.getToolsJarRequired()) {
-      jvmArgs.add("-Didea.jre.check=true");
+    jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
+    if (productProperties.toolsJarRequired) {
+      jvmArgs.add("-Didea.jre.check=true")
     }
-
-
-    if (productProperties.getUseSplash()) {
-      //noinspection SpellCheckingInspection
-      jvmArgs.add("-Dsplash=true");
+    if (productProperties.useSplash) {
+      @Suppress("SpellCheckingInspection")
+      jvmArgs.add("-Dsplash=true")
     }
-
-
-    jvmArgs.addAll(BuildHelperKt.getCommandLineArgumentsForOpenPackages(this));
-
-    return jvmArgs;
+    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this))
+    return jvmArgs
   }
 
-  @Override
-  public OsSpecificDistributionBuilder getOsDistributionBuilder(OsFamily os, final Path ideaProperties) {
-    OsSpecificDistributionBuilder builder;
-    switch (os) {
-      case OsFamily.WINDOWS:
-        builder = DefaultGroovyMethods.with(windowsDistributionCustomizer, new Closure<WindowsDistributionBuilder>(this, this) {
-          public WindowsDistributionBuilder doCall(WindowsDistributionCustomizer it) {
-            return new WindowsDistributionBuilder(BuildContextImpl.this, it, ideaProperties, String.valueOf(getApplicationInfo()));
-          }
-
-          public WindowsDistributionBuilder doCall() {
-            return doCall(null);
-          }
-        });
-        break;
-      case OsFamily.LINUX:
-        builder = DefaultGroovyMethods.with(linuxDistributionCustomizer, new Closure<LinuxDistributionBuilder>(this, this) {
-          public LinuxDistributionBuilder doCall(LinuxDistributionCustomizer it) {
-            return new LinuxDistributionBuilder(BuildContextImpl.this, it, ideaProperties);
-          }
-
-          public LinuxDistributionBuilder doCall() {
-            return doCall(null);
-          }
-        });
-        break;
-      case OsFamily.MACOS:
-        builder = DefaultGroovyMethods.with(macDistributionCustomizer, new Closure<MacDistributionBuilder>(this, this) {
-          public MacDistributionBuilder doCall(MacDistributionCustomizer it) {
-            return new MacDistributionBuilder(BuildContextImpl.this, it, ideaProperties);
-          }
-
-          public MacDistributionBuilder doCall() {
-            return doCall(null);
-          }
-        });
-        break;
+  override fun getBuiltinModule(): BuiltinModulesFileData? {
+    if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+      return null
     }
-    return builder;
+    return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. " +
+                                                             "Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
   }
 
-  @Override
-  public BuiltinModulesFileData getBuiltinModule() {
-    if (getOptions().getBuildStepsToSkip().contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-      return null;
+  fun setBuiltinModules(data: BuiltinModulesFileData?) {
+    check(builtinModulesData == null) { "builtinModulesData was already set" }
+    builtinModulesData = data
+  }
+}
+
+private fun createBuildOutputRootEvaluator(projectHome: String,
+                                           productProperties: ProductProperties,
+                                           buildOptions: BuildOptions): BiFunction<JpsProject, BuildMessages, String> {
+  return BiFunction { project: JpsProject?, messages: BuildMessages? ->
+    val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions, messages)
+    projectHome + "/out/" + productProperties.getOutputDirectoryName(applicationInfo)
+  }
+}
+
+private fun getSourceRootsWithPrefixes(module: JpsModule): List<Pair<Path, String?>> {
+  return module.sourceRoots.stream().filter { root: JpsModuleSourceRoot ->
+    JavaModuleSourceRootTypes.PRODUCTION.contains(root.rootType)
+  }.map { moduleSourceRoot: JpsModuleSourceRoot ->
+    var prefix: String
+    val properties = moduleSourceRoot.properties
+    prefix = if (properties is JavaSourceRootProperties) {
+      properties.packagePrefix.replace(".", "/")
     }
-
-
-    BuiltinModulesFileData data = builtinModulesData;
-    if (data == null) {
-      throw new IllegalStateException(
-        "builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before");
+    else {
+      (properties as JavaResourceRootProperties).relativeOutputPath
     }
-
-    return data;
-  }
-
-  public void setBuiltinModules(BuiltinModulesFileData data) {
-    if (builtinModulesData != null) {
-      throw new IllegalStateException("builtinModulesData was already set");
+    if (!prefix.endsWith("/")) {
+      prefix += "/"
     }
-
-
-    builtinModulesData = data;
-  }
-
-  @Override
-  public Function1<Set<String>, Unit> getClasspathCustomizer() {
-    return classpathCustomizer;
-  }
-
-  @SuppressWarnings("unused")
-  public void setClasspathCustomizer(Function1<Set<String>, Unit> classpathCustomizer) {
-    this.classpathCustomizer = classpathCustomizer;
-  }
-
-  public final ProductProperties getProductProperties() {
-    return productProperties;
-  }
-
-  public final WindowsDistributionCustomizer getWindowsDistributionCustomizer() {
-    return windowsDistributionCustomizer;
-  }
-
-  public final LinuxDistributionCustomizer getLinuxDistributionCustomizer() {
-    return linuxDistributionCustomizer;
-  }
-
-  public final MacDistributionCustomizer getMacDistributionCustomizer() {
-    return macDistributionCustomizer;
-  }
-
-  public final ProprietaryBuildTools getProprietaryBuildTools() {
-    return proprietaryBuildTools;
-  }
-
-  public final String getBuildNumber() {
-    return buildNumber;
-  }
-
-  public List<String> getXBootClassPathJarNames() {
-    return XBootClassPathJarNames;
-  }
-
-  public void setXBootClassPathJarNames(List<String> XBootClassPathJarNames) {
-    this.XBootClassPathJarNames = XBootClassPathJarNames;
-  }
-
-  public List<String> getBootClassPathJarNames() {
-    return bootClassPathJarNames;
-  }
-
-  public void setBootClassPathJarNames(List<String> bootClassPathJarNames) {
-    this.bootClassPathJarNames = bootClassPathJarNames;
-  }
-
-  public final ApplicationInfoProperties getApplicationInfo() {
-    return applicationInfo;
-  }
-
-  private final ProductProperties productProperties;
-  private final WindowsDistributionCustomizer windowsDistributionCustomizer;
-  private final LinuxDistributionCustomizer linuxDistributionCustomizer;
-  private final MacDistributionCustomizer macDistributionCustomizer;
-  private final ProprietaryBuildTools proprietaryBuildTools;
-  private final String buildNumber;
-  private List<String> XBootClassPathJarNames;
-  private List<String> bootClassPathJarNames;
-  private Function1<Set<String>, Unit> classpathCustomizer = new Function1<Set<String>, Unit>() {
-    @Override
-    public Unit invoke(Set<String> strings) {
-      return null;
-    }
-  };
-  private final ApplicationInfoProperties applicationInfo;
-  private final JpsGlobal global;
-  private final CompilationContextImpl compilationContext;
-  private final ConcurrentLinkedQueue<Map.Entry<Path, String>> distFiles;
-  private BuiltinModulesFileData builtinModulesData;
+    Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), Strings.trimStart(prefix, "/"))
+  }.collect(Collectors.toList())
 }

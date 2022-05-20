@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.trace.SpanBuilder
 import org.jetbrains.intellij.build.impl.BuiltinModulesFileData
-import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
@@ -45,7 +44,7 @@ interface BuildContext: CompilationContext {
   /**
    * Allows to customize classpath for buildSearchableOptions and builtinModules
    */
-  val classpathCustomizer: (MutableSet<String>) -> Unit
+  var classpathCustomizer: (MutableSet<String>) -> Unit
 
   /**
    * Add file to be copied into application.
@@ -92,8 +91,6 @@ interface BuildContext: CompilationContext {
   fun forkForParallelTask(taskName: String): BuildContext
 
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
-
-  fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null): OsSpecificDistributionBuilder?
 
   /**
    * see BuildTasksImpl.buildProvidedModuleList

@@ -3,12 +3,14 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
-import org.apache.tools.ant.BuildException
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
@@ -73,19 +75,31 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
 
   fun buildModules(modules: List<JpsModule>) {
     val names = LinkedHashSet<String>()
-    context.messages.debug("Collecting dependencies for \${modules.size()} modules")
-    for (module in modules) {
-      for (dependency in getModuleDependencies(module, false)) {
-        if (names.add(dependency)) {
-          context.messages.debug(" adding \$dependency required for \$module.name")
+    spanBuilder("collect dependencies")
+      .setAttribute(AttributeKey.longKey("moduleCount"), modules.size.toLong())
+      .use { span ->
+        val requiredDependencies = ArrayList<String>()
+        for (module in modules) {
+          requiredDependencies.clear()
+          for (dependency in getModuleDependencies(module = module, includeTests = false)) {
+            if (names.add(dependency)) {
+              requiredDependencies.add(dependency)
+            }
+          }
+
+          if (!requiredDependencies.isEmpty()) {
+            span.addEvent("required dependencies", Attributes.of(
+              AttributeKey.stringKey("module"), module.name,
+              AttributeKey.stringArrayKey("module"), java.util.List.copyOf(requiredDependencies)
+            ))
+          }
         }
       }
-    }
-    runBuild(modulesSet = names, allModules = false, artifactNames = emptyList(), includeTests = false, resolveProjectDependencies = false)
+    runBuild(moduleSet = names, allModules = false, artifactNames = emptyList(), includeTests = false, resolveProjectDependencies = false)
   }
 
   fun buildModulesWithoutDependencies(modules: Collection<JpsModule>, includeTests: Boolean) {
-    runBuild(modulesSet = modules.map { it.name },
+    runBuild(moduleSet = modules.map { it.name },
              allModules = false,
              artifactNames = emptyList(),
              includeTests = includeTests,
@@ -93,7 +107,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
   }
 
   fun resolveProjectDependencies() {
-    runBuild(modulesSet = emptyList(),
+    runBuild(moduleSet = emptyList(),
              allModules = false,
              artifactNames = emptyList(),
              includeTests = false,
@@ -109,7 +123,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
   }
 
   fun buildAll() {
-    runBuild(modulesSet = emptyList(),
+    runBuild(moduleSet = emptyList(),
              allModules = true,
              artifactNames = emptyList(),
              includeTests = true,
@@ -117,7 +131,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
   }
 
   fun buildProduction() {
-    runBuild(modulesSet = emptyList(),
+    runBuild(moduleSet = emptyList(),
              allModules = true,
              artifactNames = emptyList(),
              includeTests = false,
@@ -132,7 +146,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
   fun buildArtifacts(artifactNames: Set<String>, buildIncludedModules: Boolean) {
     val artifacts = getArtifactsWithIncluded(artifactNames)
     val modules = if (buildIncludedModules) getModulesIncludedInArtifacts(artifacts) else emptyList()
-    runBuild(modulesSet = modules,
+    runBuild(moduleSet = modules,
              allModules = false,
              artifactNames = artifacts.map { it.name },
              includeTests = false,
@@ -171,7 +185,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     }
   }
 
-  private fun runBuild(modulesSet: Collection<String>,
+  private fun runBuild(moduleSet: Collection<String>,
                        allModules: Boolean,
                        artifactNames: Collection<String>,
                        includeTests: Boolean,
@@ -186,7 +200,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val scopes = ArrayList<TargetTypeBuildScope>()
     for (type in JavaModuleBuildTargetType.ALL_TYPES) {
       if (includeTests || !type.isTests) {
-        val namesToCompile = if (allModules) context.project.modules.mapTo(mutableListOf()) { it.name } else modulesSet.toMutableList()
+        val namesToCompile = if (allModules) context.project.modules.mapTo(mutableListOf()) { it.name } else moduleSet.toMutableList()
         if (type.isTests) {
           namesToCompile.removeAll(compilationData.compiledModuleTests)
           compilationData.compiledModuleTests.addAll(namesToCompile)
@@ -222,28 +236,23 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val compilationStart = System.nanoTime()
     val messageHandler = messageHandler!!
     spanBuilder("compilation")
-      .setAttribute("scope", "${if (allModules) "all" else modulesSet.size} modules")
+      .setAttribute("scope", "${if (allModules) "all" else moduleSet.size} modules")
       .setAttribute("includeTests", includeTests)
       .setAttribute("artifactsToBuild", artifactsToBuild.size.toLong())
       .setAttribute("resolveProjectDependencies", resolveProjectDependencies)
-      .setAttribute("modules", modulesSet.joinToString(separator = ", "))
+      .setAttribute("modules", moduleSet.joinToString(separator = ", "))
       .setAttribute("incremental", context.options.incrementalCompilation)
       .setAttribute("includeTests", includeTests)
       .setAttribute("cacheDir", compilationData.dataStorageRoot.toString())
       .useWithScope {
-        try {
-          Standalone.runBuild({ context.projectModel }, compilationData.dataStorageRoot.toFile(), messageHandler, scopes, false)
-        }
-        catch (e: Throwable) {
-          throw BuildException("Compilation failed unexpectedly", e)
-        }
+        Standalone.runBuild({ context.projectModel }, compilationData.dataStorageRoot.toFile(), messageHandler, scopes, false)
       }
     if (!messageHandler.errorMessagesByCompiler.isEmpty) {
       for ((key, value) in messageHandler.errorMessagesByCompiler.entrySet()) {
         @Suppress("UNCHECKED_CAST")
         context.messages.compilationErrors(key, value as List<String>)
       }
-      context.messages.error("Compilation failed")
+      throw RuntimeException("Compilation failed")
     }
     else if (!compilationData.statisticsReported) {
       messageHandler.printPerModuleCompilationStatistics(compilationStart)

@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.Pair
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
+import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -32,12 +34,11 @@ import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.function.Predicate
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.streams.toList
 
 class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
-  override fun runTests(additionalJvmOptions: MutableList<String>, defaultMainModule: String?, rootExcludeCondition: Predicate<File>?) {
+  override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: Predicate<File>?) {
     if (options.testDiscoveryEnabled && options.performanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
       return
@@ -81,12 +82,13 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     }
     else {
       val additionalSystemProperties = LinkedHashMap<String, String>()
-      loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
+      val effectiveAdditionalJvmOptions = additionalJvmOptions.toMutableList()
+      loadTestDiscovery(effectiveAdditionalJvmOptions, additionalSystemProperties)
       if (runConfigurations == null) {
-        runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties, context)
+        runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties, context)
       }
       else {
-        runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations, additionalSystemProperties, context)
+        runTestsFromRunConfigurations(effectiveAdditionalJvmOptions, runConfigurations, additionalSystemProperties, context)
       }
       if (options.testDiscoveryEnabled) {
         publishTestDiscovery(context.messages, testDiscoveryTraceFilePath)
@@ -191,19 +193,14 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     val testDiscovery = "intellij-test-discovery"
     val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
     if (library == null) {
-      context.messages.error("Can\'t find the $testDiscovery library, but test discovery capturing enabled.")
-      return
+      throw RuntimeException("Can\'t find the $testDiscovery library, but test discovery capturing enabled.")
     }
 
     val agentJar = library.getPaths(JpsOrderRootType.COMPILED)
       .firstOrNull {
         val name = it.fileName.toString()
         name.startsWith("intellij-test-discovery") && name.endsWith(".jar")
-      }
-    if (agentJar == null) {
-      context.messages.error("Can\'t find the agent in $testDiscovery library, but test discovery capturing enabled.")
-      return
-    }
+      } ?: throw RuntimeException("Can\'t find the agent in $testDiscovery library, but test discovery capturing enabled.")
 
     additionalJvmOptions.add("-javaagent:$agentJar")
     val excludeRoots = context.projectModel.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE)
@@ -448,7 +445,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       }
     }
     else if (options.debugEnabled) {
-      jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspendDebugProcess) "y" else "n"},address=$options.debugHost:$options.debugPort")
+      jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspendDebugProcess) "y" else "n"},address=${options.debugHost}:${options.debugPort}")
     }
 
     if (options.enableCausalProfiling) {
@@ -466,12 +463,13 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
   }
 
   override fun runTestsSkippedInHeadlessEnvironment() {
-    val testsSkippedInHeadlessEnvironment = context.messages.block("Loading all tests annotated with @SkipInHeadlessEnvironment",
-                                                                   ::loadTestsSkippedInHeadlessEnvironment)
+    val testsSkippedInHeadlessEnvironment = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use {
+      loadTestsSkippedInHeadlessEnvironment()
+    }
     for (it in testsSkippedInHeadlessEnvironment) {
       options.batchTestIncludes = it.getFirst()
       options.mainModule = it.getSecond()
-      runTests(ArrayList(), null, null)
+      runTests(additionalJvmOptions = emptyList(), defaultMainModule = null, rootExcludeCondition = null)
     }
   }
 
@@ -503,7 +501,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
         Stream.empty()
       }
     }
-      .collect(Collectors.toList())
+      .toList()
   }
 
   private fun runInBatchMode(mainModule: String,
@@ -512,7 +510,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
                              envVariables: Map<String, String>,
                              bootstrapClasspath: List<String>,
                              testClasspath: List<String>) {
-    val mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findModule(mainModule)!!)
+    val mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findRequiredModule(mainModule))
     val pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
     val root = Path.of(mainModuleTestsOutput)
     val testClasses = Files.walk(root).use { stream ->
@@ -520,7 +518,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       }
 
     if (testClasses.isEmpty()) {
-      context.messages.error("No tests were found in $root with $pattern")
+      throw RuntimeException("No tests were found in $root with $pattern")
     }
 
     var noTestsInAllClasses = true
@@ -530,18 +528,18 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       try {
         var noTests = true
         val loader = UrlClassLoader.build().files(files).get()
-        val aClazz: Class<*> = loader.loadClass(qName)
-        val testAnnotation: Class<*> = loader.loadClass("org.junit.Test")
-        for (m in aClazz.declaredMethods) {
-          @Suppress("UNCHECKED_CAST")
-          if (Modifier.isPublic(m.modifiers) && m.isAnnotationPresent(testAnnotation as Class<out Annotation>)) {
+        val aClass = loader.loadClass(qName)
+        @Suppress("UNCHECKED_CAST")
+        val testAnnotation = loader.loadClass("org.junit.Test") as Class<out Annotation>
+        for (m in aClass.declaredMethods) {
+          if (Modifier.isPublic(m.modifiers) && m.isAnnotationPresent(testAnnotation)) {
             val exitCode = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.name)
-            noTests = noTests && java.lang.Boolean.TRUE == (exitCode == NO_TESTS_ERROR)
+            noTests = noTests && exitCode == NO_TESTS_ERROR
           }
         }
         if (noTests) {
           val exitCode3 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, null)
-          noTests = java.lang.Boolean.TRUE == (exitCode3 == NO_TESTS_ERROR)
+          noTests = exitCode3 == NO_TESTS_ERROR
         }
         noTestsInAllClasses = noTestsInAllClasses && java.lang.Boolean.TRUE == noTests
       }
@@ -550,7 +548,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       }
     }
     if (noTestsInAllClasses) {
-      context.messages.error("No tests were found in $mainModule")
+      throw RuntimeException("No tests were found in $mainModule")
     }
   }
 
@@ -561,24 +559,33 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
                               bootstrapClasspath: List<String>,
                               testClasspath: List<String>) {
     if (isRunningInBatchMode) {
-      context.messages.info("Running tests in batch mode including " + options.batchTestIncludes)
-      runInBatchMode(mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath)
+      spanBuilder("run tests in batch mode")
+        .setAttribute(AttributeKey.stringKey("pattern"), options.batchTestIncludes)
+        .useWithScope {
+          runInBatchMode(mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath)
+        }
     }
     else {
-      context.messages.info("Run junit 5 tests")
-      val exitCode5 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, null, null)
-      context.messages.info("Finish junit 5 task")
-      context.messages.info("Run junit 3 tests")
-      val exitCode3 = runJUnit5Engine(systemProperties = systemProperties,
-                                      jvmArgs = jvmArgs,
-                                      envVariables = envVariables,
-                                      bootstrapClasspath = bootstrapClasspath,
-                                      testClasspath = testClasspath,
-                                      suiteName = options.bootstrapSuite,
-                                      methodName = null)
-      context.messages.info("Finish junit 3 task")
+      val exitCode5 = spanBuilder("run junit 5 tests").useWithScope {
+        runJUnit5Engine(systemProperties = systemProperties,
+                        jvmArgs = jvmArgs,
+                        envVariables = envVariables,
+                        bootstrapClasspath = bootstrapClasspath,
+                        testClasspath = testClasspath,
+                        suiteName = null,
+                        methodName = null)
+      }
+      val exitCode3 = spanBuilder("run junit 3 tests").useWithScope {
+        runJUnit5Engine(systemProperties = systemProperties,
+                        jvmArgs = jvmArgs,
+                        envVariables = envVariables,
+                        bootstrapClasspath = bootstrapClasspath,
+                        testClasspath = testClasspath,
+                        suiteName = options.bootstrapSuite,
+                        methodName = null)
+      }
       if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR) {
-        context.messages.error("No tests were found in the configuration")
+        throw RuntimeException("No tests were found in the configuration")
       }
     }
   }

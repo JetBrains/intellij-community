@@ -231,7 +231,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           "bin/${scriptName}.sh",
           javaExecutablePath,
           "bin/${scriptName}64.vmoptions",
-          getFrameClass(context),
+          BuildTasksImplKt.getLinuxFrameClass(context),
           )), context)
     )
   }
@@ -267,7 +267,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           new Pair<String, String>("ICON", "\${SNAP}/bin/${context.productProperties.baseFileName}.png".toString()),
           new Pair<String, String>("SCRIPT", customizer.snapName),
           new Pair<String, String>("COMMENT", context.applicationInfo.motto),
-          new Pair<String, String>("WM_CLASS", getFrameClass(context)),
+          new Pair<String, String>("WM_CLASS", BuildTasksImplKt.getLinuxFrameClass(context)),
         ]
       )
 
@@ -350,16 +350,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private void makeFileExecutable(Path file) {
     context.messages.debug("Setting file permission of $file to 0755")
     Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
-  }
-
-  // keep in sync with AppUIUtil#getFrameClass
-  static String getFrameClass(BuildContext buildContext) {
-    String name = buildContext.applicationInfo.productNameWithEdition
-      .toLowerCase(Locale.US)
-      .replace(' ', '-')
-      .replace("intellij-idea", "idea").replace("android-studio", "studio")
-      .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
-    name.startsWith("jetbrains-") ? name : "jetbrains-" + name
   }
 
   static void copyFile(Path source, Path target, CopyOption... options) {

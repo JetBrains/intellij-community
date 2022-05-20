@@ -44,33 +44,36 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
         messages.error("Build script must be executed under Java 11 to compile intellij project, " +
                        "but it\'s executed under Java ${JavaVersion.current()}")
       }
+
       resolveProjectDependencies()
       messages.progress("Compiling project")
       val runner = JpsCompilationRunner(context)
-      try {
-        if (moduleNames == null) {
-          if (includingTestsInModules == null) {
-            runner.buildAll()
-          }
-          else {
-            runner.buildProduction()
-          }
+      if (moduleNames == null) {
+        if (includingTestsInModules == null) {
+          runner.buildAll()
         }
         else {
-          val invalidModules = moduleNames.filter { context.findModule(it) == null }
-          if (!invalidModules.isEmpty()) {
-            messages.warning("The following modules won\'t be compiled: $invalidModules")
-          }
-          runner.buildModules(moduleNames.mapNotNull(context::findModule))
-        }
-        if (includingTestsInModules != null) {
-          for (moduleName in includingTestsInModules) {
-            runner.buildModuleTests(context.findRequiredModule(moduleName))
-          }
+          runner.buildProduction()
         }
       }
-      catch (e: Throwable) {
-        messages.error("Compilation failed with exception: $e", e)
+      else {
+        val invalidModules = mutableListOf<String>()
+        val modules = moduleNames.mapNotNull {
+          val module = context.findModule(it)
+          if (module == null) {
+            invalidModules.add(it)
+          }
+          module
+        }
+        if (!invalidModules.isEmpty()) {
+          messages.warning("The following modules won\'t be compiled: $invalidModules")
+        }
+        runner.buildModules(modules)
+      }
+      if (includingTestsInModules != null) {
+        for (moduleName in includingTestsInModules) {
+          runner.buildModuleTests(context.findRequiredModule(moduleName))
+        }
       }
     }
   }

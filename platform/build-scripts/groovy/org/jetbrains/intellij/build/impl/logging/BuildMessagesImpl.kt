@@ -1,19 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.UniqueNameGenerator
-import io.opentelemetry.api.trace.SpanBuilder
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.sdk.trace.ReadableSpan
-import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.TraceManager.finish
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.TracerProviderManager.flush
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -72,20 +67,19 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 
   override fun log(level: System.Logger.Level, bundle: ResourceBundle?, message: String, thrown: Throwable?) {
     when (level) {
-      System.Logger.Level.INFO -> {
-        info(message)
-      }
+      System.Logger.Level.INFO -> info(message)
       System.Logger.Level.ERROR -> {
-        error(message, thrown!!)
+        if (thrown == null) {
+          error(message)
+        }
+        else {
+          error(message, thrown)
+        }
       }
-      System.Logger.Level.WARNING -> {
-        warning(message)
-      }
-      else -> {
-        debug(message)
-      }
+      System.Logger.Level.WARNING -> warning(message)
+      else -> debug(message)
     }
-    }
+  }
 
   override fun log(level: System.Logger.Level, bundle: ResourceBundle?, format: String, vararg params: Any?) {
     log(level = level, message = format, bundle  = bundle, thrown = null)
@@ -112,22 +106,22 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 
   override fun error(message: String) {
     try {
-      finish()
+      TraceManager.finish()
     }
     catch (e: Throwable) {
       System.err.println("Cannot finish tracing: $e")
     }
-    throw BuildException(message)
+    throw RuntimeException(message)
   }
 
   override fun error(message: String, cause: Throwable) {
     val writer = StringWriter()
     PrintWriter(writer).use(cause::printStackTrace)
-    processMessage(LogMessage(LogMessage.Kind.ERROR, """
-   $message
-   $writer
-   """.trimIndent()))
-    throw BuildException(message, cause)
+    processMessage(LogMessage(kind = LogMessage.Kind.ERROR, text = """
+       $message
+       $writer
+       """.trimIndent()))
+    throw RuntimeException(message, cause)
   }
 
   override fun compilationError(compilerName: String, message: String) {
@@ -157,45 +151,21 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   }
 
   override fun <V> block(blockName: String, task: () -> V): V {
-    return block(spanBuilder(blockName.lowercase(Locale.getDefault())), task)
-  }
-
-  override fun <V> block(spanBuilder: SpanBuilder, task: () -> V): V {
-    val span = spanBuilder.startSpan()
-    val scope = span.makeCurrent()
-    val blockName = (span as ReadableSpan).name
-    try {
-      blockNames.push(blockName)
-      processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      return task()
-    }
-    catch (e: IntelliJBuildException) {
-      span.setStatus(StatusCode.ERROR, e.message!!)
-      span.recordException(e)
-      throw e
-    }
-    catch (e: BuildException) {
-      span.setStatus(StatusCode.ERROR, e.message!!)
-      span.recordException(e)
-      throw IntelliJBuildException(blockNames.joinToString(separator = " > "), e.message!!, e)
-    }
-    catch (e: Throwable) {
-      span.recordException(e)
-      span.setStatus(StatusCode.ERROR, e.message!!)
-
-      // print all pending spans
-      flush()
-      throw e
-    }
-    finally {
+    spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScope {
       try {
-        scope.close()
+        blockNames.push(blockName)
+        processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
+        return task()
+      }
+      catch (e: Throwable) {
+        // print all pending spans
+        TracerProviderManager.flush()
+        throw e
       }
       finally {
-        span.end()
+        blockNames.pop()
+        processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
       }
-      blockNames.pop()
-      processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }
   }
 

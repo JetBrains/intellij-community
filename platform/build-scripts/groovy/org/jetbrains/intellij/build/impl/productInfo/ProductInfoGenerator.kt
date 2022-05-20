@@ -15,6 +15,8 @@ private val jsonEncoder by lazy {
   Json {
     prettyPrint = true
     prettyPrintIndent = "  "
+    encodeDefaults = false
+    explicitNulls = false
   }
 }
 

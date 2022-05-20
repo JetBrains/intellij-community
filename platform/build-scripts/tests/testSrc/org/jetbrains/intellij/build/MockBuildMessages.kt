@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import io.opentelemetry.api.trace.SpanBuilder
 import junit.framework.AssertionFailedError
 import java.util.*
 
@@ -49,8 +48,6 @@ class MockBuildMessages : BuildMessages {
   }
 
   override fun <V> block(blockName: String, task: () -> V): V = task()
-
-  override fun <V> block(spanBuilder: SpanBuilder, task: () -> V): V = task()
 
   override fun artifactBuilt(relativeArtifactPath: String) {
   }

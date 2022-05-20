@@ -108,13 +108,13 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
         (context as BuildContextImpl)
           .setBuiltinModules(BuiltinModulesFileUtils.readBuiltinModulesFile(find(macZipDir, "builtinModules.json", context)))
         val macZip = find(macZipDir, "${JvmArchitecture.x64}.zip", context)
-        (context.getOsDistributionBuilder(OsFamily.MACOS) as MacDistributionBuilder).buildAndSignDmgFromZip(macZip, JvmArchitecture.x64)
+        (getOsDistributionBuilder(OsFamily.MACOS, context = context) as MacDistributionBuilder).buildAndSignDmgFromZip(macZip, JvmArchitecture.x64)
       },
       createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64) { context ->
         (context as BuildContextImpl)
           .setBuiltinModules(BuiltinModulesFileUtils.readBuiltinModulesFile(find(macZipDir, "builtinModules.json", context)))
         val macZip = find(macZipDir, "${JvmArchitecture.aarch64}.zip", context)
-        (context.getOsDistributionBuilder(OsFamily.MACOS) as MacDistributionBuilder)
+        (getOsDistributionBuilder(OsFamily.MACOS, context = context) as MacDistributionBuilder)
           .buildAndSignDmgFromZip(macZip, JvmArchitecture.aarch64)
       }
     )
@@ -162,9 +162,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     val context = context
     val projectStructureMapping = DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context)
     layoutShared(context)
-    context.productProperties.versionCheckerConfig?.let {
-      ClassVersionChecker.checkVersions(it, context, context.paths.distAllDir)
-    }
+    checkClassVersion(context.paths.distAllDir, context)
     if (context.productProperties.buildSourcesArchive) {
       buildSourcesArchive(projectStructureMapping, context)
     }
@@ -183,7 +181,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = patchIdeaPropertiesFile(context)
-      val builder = context.getOsDistributionBuilder(currentOs, propertiesFile)!!
+      val builder = getOsDistributionBuilder(currentOs, propertiesFile, context = context)
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       context.bundledRuntime.extractTo(prefix = BundledRuntimeImpl.getProductPrefix(context),
                                        os = currentOs,
@@ -369,11 +367,10 @@ private fun createDistributionForOsTask(os: OsFamily,
                                         ideaProperties: Path): Pair<BuildTaskRunnable, Ref<DistributionForOsTaskResult>> {
   val ref = Ref<DistributionForOsTaskResult>()
   return Pair(createDistributionForOsTask(os, arch) { context ->
-    context.getOsDistributionBuilder(os, ideaProperties)?.let { builder ->
-      val osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
-      builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
-      ref.set(DistributionForOsTaskResult(os, arch, osAndArchSpecificDistDirectory))
-    }
+    val builder = getOsDistributionBuilder(os, ideaProperties, context = context)
+    val osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
+    builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
+    ref.set(DistributionForOsTaskResult(os, arch, osAndArchSpecificDistDirectory))
   }, ref)
 }
 
@@ -724,7 +721,8 @@ private fun doBuildDistributions(context: BuildContext) {
       }
     }
   }
-  context.messages.block("build platform and plugin JARs") {
+
+  spanBuilder("build platform and plugin JARs").useWithScope {
     val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
     if (context.shouldBuildDistributions()) {
       val projectStructureMapping = distributionJARsBuilder.buildJARs(context)
@@ -1015,7 +1013,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
                             launcherPath = "bin/${executableName}.sh",
                             javaExecutablePath = null,
                             vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
-                            startupWmClass = LinuxDistributionBuilder.getFrameClass(context)),
+                            startupWmClass = getLinuxFrameClass(context)),
       ProductInfoLaunchData(os = OsFamily.MACOS.osName,
                             launcherPath = "MacOS/$executableName",
                             javaExecutablePath = null,
@@ -1043,9 +1041,34 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   ProductInfoValidator.checkInArchive(context, targetFile, "")
   context.notifyArtifactBuilt(targetFile)
 
-  val checkerConfig = context.productProperties.versionCheckerConfig
-  if (checkerConfig != null) {
-    ClassVersionChecker.checkVersions(checkerConfig, context, targetFile)
-  }
+  checkClassVersion(targetFile, context)
   return targetFile
+}
+
+private fun checkClassVersion( targetFile: Path, context: BuildContext) {
+  val checkerConfig = context.productProperties.versionCheckerConfig ?: return
+  if (!context.options.buildStepsToSkip.contains(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
+    ClassVersionChecker.checkVersions(checkerConfig, context.messages, targetFile)
+  }
+}
+
+fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder {
+  return when (os) {
+    OsFamily.WINDOWS -> WindowsDistributionBuilder(context, context.windowsDistributionCustomizer, ideaProperties, context.applicationInfo.toString())
+    OsFamily.LINUX -> LinuxDistributionBuilder(context, context.linuxDistributionCustomizer, ideaProperties)
+    OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer, ideaProperties)
+  }
+}
+
+// keep in sync with AppUIUtil#getFrameClass
+internal fun getLinuxFrameClass(context: BuildContext): String {
+  val name = context.applicationInfo.productNameWithEdition
+    .lowercase()
+    .replace(' ', '-')
+    .replace("intellij-idea", "idea")
+    .replace("android-studio", "studio")
+    .replace("-community-edition", "-ce")
+    .replace("-ultimate-edition", "")
+    .replace("-professional-edition", "")
+  return if (name.startsWith("jetbrains-")) name else "jetbrains-$name"
 }
