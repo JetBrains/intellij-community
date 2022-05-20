@@ -7,6 +7,7 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
@@ -41,4 +42,5 @@ class PythonLanguageRuntimeUI(project: Project,
   override fun createCustomTool(savedConfiguration: TargetEnvironmentConfiguration): Sdk? {
     return panel.getOrCreateSdk(savedConfiguration)
   }
+  override fun validate(): Collection<ValidationInfo> = panel.doValidateAll()
 }

@@ -3,6 +3,7 @@ package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ExecutionExceptionWithAttachments
+import com.intellij.ide.wizard.CommitStepException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JComponent
+import kotlin.jvm.Throws
 
 abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContexts.DialogTitle title: String,
                                                                      protected val model: M)
@@ -79,9 +81,12 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
     }
   }
 
+  @Throws(CommitStepException::class)
   override fun doCommit(commitType: CommitType?) {
     if (commitType == CommitType.Finish) {
-      customToolPanel!!.let {
+      val customToolPanel = customToolPanel!!
+      customToolPanel.validateCustomTool().firstOrNull()?.let { throw CommitStepException(it.message) }
+      customToolPanel.let {
         it.applyAll()
         model.subject.runtimes.replaceAllWith(listOf(model.languageConfigForIntrospection!!))
       }
@@ -89,7 +94,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
       try {
         model.commit()
 
-        customTool = customToolPanel!!.createCustomTool(model.subject)
+        customTool = customToolPanel.createCustomTool(model.subject)
       }
       catch (err: Throwable) {
         LOG.error("Failed to create a target", err)
