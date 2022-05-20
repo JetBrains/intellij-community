@@ -83,8 +83,10 @@ private class Constant<T>(private val value: T) : TraceableTargetEnvironmentFunc
   override fun applyInner(t: TargetEnvironment): T = value
 }
 
-fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: CharSequence): TargetEnvironmentFunction<String> =
-  JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator)
+@JvmOverloads
+fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: CharSequence,
+                                                                    transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
+  JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator, transform = transform)
 
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
   if (this is LocalTargetEnvironmentRequest) return constant(localPath)
@@ -204,11 +206,14 @@ fun TargetEnvironment.downloadFromTarget(localPath: Path, progressIndicator: Pro
 }
 
 private class JoinedStringTargetEnvironmentFunction<T>(private val iterable: Iterable<TargetEnvironmentFunction<T>>,
-                                                       private val separator: CharSequence) : TraceableTargetEnvironmentFunction<String>() {
-  override fun applyInner(t: TargetEnvironment): String = iterable.map { it.apply(t) }.joinToString(separator = separator)
+                                                       private val separator: CharSequence,
+                                                       private val transform: ((T) -> CharSequence)?)
+  : TraceableTargetEnvironmentFunction<String>() {
+  override fun applyInner(t: TargetEnvironment): String = iterable.map { it.apply(t) }.joinToString(separator = separator,
+                                                                                                    transform = transform)
 
   override fun toString(): String {
-    return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator)"
+    return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator, transform=$transform)"
   }
 }
 
