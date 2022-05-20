@@ -3,16 +3,14 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
 import kotlin.coroutines.CoroutineContext;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-@Internal
-public final class ContextRunnable implements Runnable {
+final class ContextRunnable implements Runnable {
 
   private final @NotNull CoroutineContext myParentContext;
   private final @NotNull Runnable myRunnable;
 
-  public ContextRunnable(@NotNull Runnable runnable) {
+  ContextRunnable(@NotNull Runnable runnable) {
     myParentContext = ThreadContext.currentThreadContext();
     myRunnable = runnable;
   }
