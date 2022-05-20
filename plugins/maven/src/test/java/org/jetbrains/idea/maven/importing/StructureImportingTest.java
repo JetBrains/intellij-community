@@ -80,11 +80,11 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    List<MavenProject> roots = getProjectsTree().getRootProjects();
     assertEquals(1, roots.size());
     assertEquals("project", roots.get(0).getMavenId().getArtifactId());
 
-    List<MavenProject> modules = myProjectsTree.getModules(roots.get(0));
+    List<MavenProject> modules = getProjectsTree().getModules(roots.get(0));
     assertEquals(2, modules.size());
     assertEquals("m1", modules.get(0).getMavenId().getArtifactId());
     assertEquals("m2", modules.get(1).getMavenId().getArtifactId());
@@ -262,11 +262,11 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    List<MavenProject> roots = getProjectsTree().getRootProjects();
     assertEquals(1, roots.size());
     assertEquals("project", roots.get(0).getMavenId().getArtifactId());
 
-    List<MavenProject> modules = myProjectsTree.getModules(roots.get(0));
+    List<MavenProject> modules = getProjectsTree().getModules(roots.get(0));
     assertEquals(2, modules.size());
     assertEquals("m1", modules.get(0).getMavenId().getArtifactId());
     assertEquals("m2", modules.get(1).getMavenId().getArtifactId());
@@ -314,11 +314,11 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject();
     assertModules("project", "m1");
 
-    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    List<MavenProject> roots = getProjectsTree().getRootProjects();
     assertEquals(1, roots.size());
     assertEquals("project", roots.get(0).getMavenId().getArtifactId());
 
-    List<MavenProject> modules = myProjectsTree.getModules(roots.get(0));
+    List<MavenProject> modules = getProjectsTree().getModules(roots.get(0));
     assertEquals(1, modules.size());
     assertEquals("m1", modules.get(0).getMavenId().getArtifactId());
   }
@@ -351,11 +351,11 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject();
     assertModules("project", "m1");
 
-    List<MavenProject> roots = myProjectsTree.getRootProjects();
+    List<MavenProject> roots = getProjectsTree().getRootProjects();
     assertEquals(1, roots.size());
     assertEquals("project", roots.get(0).getMavenId().getArtifactId());
 
-    List<MavenProject> modules = myProjectsTree.getModules(roots.get(0));
+    List<MavenProject> modules = getProjectsTree().getModules(roots.get(0));
     assertEquals(1, modules.size());
     assertEquals("m1", modules.get(0).getMavenId().getArtifactId());
   }
@@ -420,7 +420,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
     assertTrue(parentDir.exists());
 
-    assertEquals("asm-parent", myProjectsTree.getRootProjects().get(0).getParentId().getArtifactId());
+    assertEquals("asm-parent", getProjectsTree().getRootProjects().get(0).getParentId().getArtifactId());
     assertTrue(new File(parentDir, "asm-parent-3.0.pom").exists());
   }
 

@@ -667,7 +667,7 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                     "</build>");
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
+        MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(getProjectsTree().findProject(myProjectPom),
                                                                                                 getModule("project"),
                                                                                                 new ModifiableModelsProviderProxyWrapper(myProject)));
         a.unregisterAll(getProjectPath() + "/target", true, true);

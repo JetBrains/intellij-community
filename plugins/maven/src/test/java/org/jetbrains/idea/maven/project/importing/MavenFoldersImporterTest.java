@@ -146,9 +146,10 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
     sourceDir.mkdirs();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
-                                                                                                    getModule("project"),
-                                                                                                    new ModifiableModelsProviderProxyWrapper(myProject)));
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(
+        getProjectsTree().findProject(myProjectPom),
+        getModule("project"),
+        new ModifiableModelsProviderProxyWrapper(myProject)));
       adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
       adapter.getRootModel().commit();
     });
@@ -177,9 +178,10 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                   "<version>1</version>");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
-                                                                getModule("project"),
-                                                                new ModifiableModelsProviderProxyWrapper(myProject)));
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(
+        getProjectsTree().findProject(myProjectPom),
+        getModule("project"),
+        new ModifiableModelsProviderProxyWrapper(myProject)));
       adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                               new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
       adapter.getRootModel().commit();

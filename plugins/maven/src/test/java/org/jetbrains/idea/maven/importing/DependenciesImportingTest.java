@@ -1172,8 +1172,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModuleLibDeps("m");
 
 
-    MavenProject root = myProjectsTree.getRootProjects().get(0);
-    List<MavenProject> modules = myProjectsTree.getModules(root);
+    MavenProject root = getProjectsTree().getRootProjects().get(0);
+    List<MavenProject> modules = getProjectsTree().getModules(root);
 
     assertOrderedElementsAreEqual(root.getProblems());
     assertTrue(modules.get(0).getProblems().get(0).getDescription().contains("Unresolved dependency: 'xxx:yyy:pom:1'"));
@@ -1237,7 +1237,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertTrue(myProjectsTree.findProject(myProjectPom).hasUnresolvedArtifacts());
+    assertTrue(getProjectsTree().findProject(myProjectPom).hasUnresolvedArtifacts());
   }
 
   @Test
