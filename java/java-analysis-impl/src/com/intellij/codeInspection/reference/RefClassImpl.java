@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final int IS_SERVLET_MASK   = 0b1000000_00000000_00000000; // 23rd bit
   private static final int IS_TESTCASE_MASK  = 0b10000000_00000000_00000000; // 24th bit
   private static final int IS_LOCAL_MASK     = 0b1_00000000_00000000_00000000; // 25th bit
+  private static final int IS_ENUM_MASK      = 0b10_00000000_00000000_00000000; // 26th bit
 
   private Object myBases; // singleton (to conserve memory) or HashSet. guarded by this
   private Set<RefOverridable> myDerivedReferences; // singleton (to conserve memory) or HashSet. guarded by this
@@ -104,9 +106,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     setInterface(uClass.isInterface());
     final PsiClass psiClass = uClass.getJavaPsi();
     setRecord(psiClass.isRecord());
+    setEnum(psiClass.isEnum());
     setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
     setAnonymous(uClass.getName() == null);
-    setIsLocal(!isAnonymous() && parent != null && !(parent instanceof UClass));
+    setLocal(!isAnonymous() && parent != null && !(parent instanceof UClass));
 
     initializeSuperReferences(uClass);
 
@@ -166,7 +169,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    if (!isInterface() && !isAnonymous() && getConstructors().isEmpty()) {
+    if (!isInterface() && !isAnonymous() && !isEnum() && getConstructors().isEmpty()) {
       setDefaultConstructor(new RefImplicitConstructorImpl(this));
     }
 
@@ -382,6 +385,11 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
+  public List<RefField> getFields() {
+    return ContainerUtil.filterIsInstance(getChildren(), RefField.class);
+  }
+
+  @Override
   public synchronized @NotNull Set<RefElement> getInTypeReferences() {
     if (myInTypeReferences == null) return EMPTY_SET;
     return myInTypeReferences;
@@ -503,6 +511,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return checkFlag(IS_LOCAL_MASK);
   }
 
+  @Override
+  public boolean isEnum() {
+    return checkFlag(IS_ENUM_MASK);
+  }
 
   @Override
   public synchronized boolean isReferenced() {
@@ -578,8 +590,12 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     setFlag(testCase, IS_TESTCASE_MASK);
   }
 
-  private void setIsLocal(boolean isLocal) {
+  private void setLocal(boolean isLocal) {
     setFlag(isLocal, IS_LOCAL_MASK);
+  }
+
+  private void setEnum(boolean isEnum) {
+    setFlag(isEnum, IS_ENUM_MASK);
   }
 
   @Override

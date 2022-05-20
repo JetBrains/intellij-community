@@ -111,6 +111,7 @@ import java.util.List;
  *      <tr valign="top"><td><td><pre>access public</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
  *
  *      <tr valign="top"><td>26<td><pre>is implicitly used constructor</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>is enum class</pre><td>{@link RefClassImpl}
  *
  *      <tr valign="top"><td>27<td><pre>is with duplicates</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
  *      <tr valign="top"><td><td><pre>is abstract</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
