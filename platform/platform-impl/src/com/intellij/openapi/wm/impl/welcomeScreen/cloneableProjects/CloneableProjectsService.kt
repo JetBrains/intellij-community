@@ -42,7 +42,7 @@ class CloneableProjectsService {
           }
         }
         catch (_: ProcessCanceledException) {
-          removeCloneProject(progressIndicator)
+          onCancel(progressIndicator)
         }
         catch (exception: Throwable) {
           logger<CloneableProjectsService>().error(exception)
@@ -66,19 +66,22 @@ class CloneableProjectsService {
     }
   }
 
-  fun cancelClone(progressIndicator: ProgressIndicator) {
+  fun cancelClone(progressIndicator: CloneableProjectProgressIndicator) {
     progressIndicator.cancel()
-    removeCloneProject(progressIndicator)
+  }
+
+  fun removeCloneProject(progressIndicator: CloneableProjectProgressIndicator) {
+    if (progressIndicator.cloneStatus == CloneStatus.PROGRESS) {
+      progressIndicator.cancel()
+    }
+
+    projectProgressIndicators.remove(progressIndicator)
+    fireCloneRemovedEvent()
   }
 
   private fun addCloneableProject(progressIndicator: CloneableProjectProgressIndicator) {
     projectProgressIndicators.add(progressIndicator)
     fireCloneAddedEvent(progressIndicator)
-  }
-
-  private fun removeCloneProject(progressIndicator: ProgressIndicator) {
-    projectProgressIndicators.remove(progressIndicator)
-    fireCloneRemovedEvent()
   }
 
   private fun upgradeCloneProjectToRecent(progressIndicator: CloneableProjectProgressIndicator) {
@@ -94,6 +97,11 @@ class CloneableProjectsService {
   private fun onFailure(progressIndicator: CloneableProjectProgressIndicator) {
     progressIndicator.cloneStatus = CloneStatus.FAILURE
     fireCloneFailedEvent()
+  }
+
+  private fun onCancel(progressIndicator: CloneableProjectProgressIndicator) {
+    progressIndicator.cloneStatus = CloneStatus.CANCEL
+    fireCloneCanceledEvent()
   }
 
   private fun fireCloneAddedEvent(progressIndicator: CloneableProjectProgressIndicator) {
@@ -114,10 +122,17 @@ class CloneableProjectsService {
       .onCloneFailed()
   }
 
+  private fun fireCloneCanceledEvent() {
+    ApplicationManager.getApplication().messageBus
+      .syncPublisher(TOPIC)
+      .onCloneCanceled()
+  }
+
   enum class CloneStatus {
     SUCCESS,
     PROGRESS,
-    FAILURE
+    FAILURE,
+    CANCEL
   }
 
   class CloneTaskInfo(
@@ -125,6 +140,7 @@ class CloneableProjectsService {
     @Nls private val cancelTooltipText: String,
     @Nls val actionTitle: String,
     @Nls val failureTitle: String,
+    @Nls val cancelTitle: String,
     val sourceRepositoryURL: String
   ) : TaskInfo {
     override fun getTitle(): String = title
@@ -133,7 +149,7 @@ class CloneableProjectsService {
     override fun isCancellable(): Boolean = true
   }
 
-  private class CloneableProjectProgressIndicator(
+  class CloneableProjectProgressIndicator(
     val projectPath: String,
     val cloneTaskInfo: CloneTaskInfo,
     var cloneStatus: CloneStatus
@@ -158,6 +174,9 @@ class CloneableProjectsService {
 
     @JvmDefault
     fun onCloneFailed() {}
+
+    @JvmDefault
+    fun onCloneCanceled() {}
   }
 
   companion object {

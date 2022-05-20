@@ -8,7 +8,6 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
@@ -20,6 +19,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProjectProgressIndicator
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingUtil
@@ -214,7 +214,7 @@ class RecentProjectFilteringTree(
                        icon.iconWidth, icon.iconHeight)
     }
 
-    private fun cancelCloneProject(progressIndicator: ProgressIndicator, sourceRepositoryURL: String) {
+    private fun cancelCloneProject(progressIndicator: CloneableProjectProgressIndicator, sourceRepositoryURL: String) {
       val exitCode = Messages.showYesNoDialog(
         IdeBundle.message("clone.project.stop", sourceRepositoryURL),
         IdeBundle.message("clone.project.stop.title"),
@@ -426,6 +426,10 @@ class RecentProjectFilteringTree(
             CloneStatus.FAILURE -> {
               projectCloneStatusPanel.isVisible = false
               projectPathLabel.text = item.taskInfo.failureTitle
+            }
+            CloneStatus.CANCEL -> {
+              projectCloneStatusPanel.isVisible = false
+              projectPathLabel.text = item.taskInfo.cancelTitle
             }
           }
         }

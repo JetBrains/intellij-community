@@ -71,6 +71,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
                                  HgBundle.message("hg4idea.clone.progress.failed", sourceRepositoryURL),
                                  DvcsBundle.message("clone.repository"),
                                  DvcsBundle.message("clone.repository.failed"),
+                                 DvcsBundle.message("clone.repository.canceled"),
                                  sourceRepositoryURL);
       }
 

@@ -10,10 +10,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.*
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.util.BitUtil
 import org.jetbrains.annotations.SystemIndependent
@@ -105,7 +103,7 @@ data class CloneableProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
-  val progressIndicator: ProgressIndicatorEx,
+  val progressIndicator: CloneableProjectProgressIndicator,
   val taskInfo: CloneTaskInfo,
   val cloneStatus: CloneStatus
 ) : RecentProjectTreeItem {

@@ -96,6 +96,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
                                  DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL),
                                  DvcsBundle.message("clone.repository"),
                                  DvcsBundle.message("clone.repository.failed"),
+                                 DvcsBundle.message("clone.repository.canceled"),
                                  sourceRepositoryURL);
       }
 

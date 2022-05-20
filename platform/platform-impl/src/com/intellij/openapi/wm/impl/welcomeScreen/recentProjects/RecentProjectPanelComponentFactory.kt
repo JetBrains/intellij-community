@@ -33,6 +33,7 @@ internal object RecentProjectPanelComponentFactory {
         override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) = filteringTree.updateTree()
         override fun onCloneRemoved() = filteringTree.updateTree()
         override fun onCloneFailed() = filteringTree.updateTree()
+        override fun onCloneCanceled() = filteringTree.updateTree()
       })
     }
 

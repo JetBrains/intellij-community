@@ -117,6 +117,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                                  message("progress.title.check.out.cancel"),
                                  message("checkout.repository"),
                                  message("checkout.repository.failed"),
+                                 message("checkout.repository.canceled"),
                                  url.toString());
       }
 
