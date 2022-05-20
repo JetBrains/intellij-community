@@ -28,6 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -67,7 +68,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private void queueSession(RefreshSessionImpl session, ModalityState modality) {
-    long queuedAt = System.nanoTime();
+    var queuedAt = System.nanoTime();
     myQueue.execute(() -> {
       long timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
       startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
@@ -78,12 +79,32 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
       finally {
         stopIndicator();
         if (Registry.is("vfs.async.event.processing")) {
+          var evQueuedAt = System.nanoTime();
+          var evTimeInQueue = new AtomicLong(-1);
+          var evListenerTime = new AtomicLong(-1);
+          var evRetries = new AtomicLong(0);
           startIndicator(IdeCoreBundle.message("async.events.progress"));
           ReadAction
-            .nonBlocking(() -> runAsyncListeners(session))
+            .nonBlocking(() -> {
+              evTimeInQueue.compareAndSet(-1, NANOSECONDS.toMillis(System.nanoTime() - evQueuedAt));
+              evRetries.incrementAndGet();
+              var t = System.nanoTime();
+              try {
+                return runAsyncListeners(session);
+              }
+              finally {
+                evListenerTime.addAndGet(System.nanoTime() - t);
+              }
+            })
             .expireWith(this)
             .wrapProgress(myRefreshIndicator)
-            .finishOnUiThread(modality, p -> session.fireEvents(p.first, p.second, true))
+            .finishOnUiThread(modality, data -> {
+              var t = System.nanoTime();
+              session.fireEvents(data.first, data.second, true);
+              t = NANOSECONDS.toMillis(System.nanoTime() - t);
+              VfsUsageCollector.logEventProcessing(
+                evTimeInQueue.longValue(), NANOSECONDS.toMillis(evListenerTime.longValue()), evRetries.intValue(), t, data.second.size());
+            })
             .submit(myEventProcessingQueue)
             .onProcessed(__ -> stopIndicator())
             .onError(t -> {
@@ -114,8 +135,11 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   private static void fireEvents(RefreshSessionImpl session) {
+    var t = System.nanoTime();
     List<CompoundVFileEvent> events = ContainerUtil.map(session.getEvents(), CompoundVFileEvent::new);
     session.fireEvents(events, List.of(), false);
+    t = NANOSECONDS.toMillis(System.nanoTime() - t);
+    VfsUsageCollector.logEventProcessing(-1L, -1L, -1, t, events.size());
   }
 
   private static Pair<List<CompoundVFileEvent>, List<AsyncFileListener.ChangeApplier>> runAsyncListeners(RefreshSessionImpl session) {
