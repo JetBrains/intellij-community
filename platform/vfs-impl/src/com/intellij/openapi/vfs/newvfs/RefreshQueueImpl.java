@@ -31,6 +31,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
@@ -68,7 +69,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private void queueSession(RefreshSessionImpl session, ModalityState modality) {
     long queuedAt = System.nanoTime();
     myQueue.execute(() -> {
-      long timeInQueue = (System.nanoTime() - queuedAt) / 1_000_000;
+      long timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
       startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
       try {
         String title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);

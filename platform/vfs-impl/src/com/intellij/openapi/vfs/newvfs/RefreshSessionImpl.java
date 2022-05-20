@@ -10,7 +10,10 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -22,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshSessionImpl extends RefreshSession {
   @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshSession.class);
@@ -156,7 +161,7 @@ final class RefreshSessionImpl extends RefreshSession {
       }
       while (!myCancelled && myIsRecursive && count < RETRY_LIMIT && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
 
-      t = (System.nanoTime() - t) / 1_000_000;
+      t = NANOSECONDS.toMillis(System.nanoTime() - t);
       int localRoots = 0, archiveRoots = 0, otherRoots = 0;
       for (VirtualFile file : workQueue) {
         if (file.getFileSystem() instanceof LocalFileSystem) localRoots++;
@@ -198,7 +203,7 @@ final class RefreshSessionImpl extends RefreshSession {
             ((ProgressIndicatorWithDelayedPresentation)indicator).setDelayInMillis(progressThresholdMillis);
             long t = System.nanoTime();
             fireEventsInWriteAction(events, appliers, asyncProcessing);
-            t = (System.nanoTime() - t) / 1_000_000;
+            t = NANOSECONDS.toMillis(System.nanoTime() - t);
             if (t > progressThresholdMillis) {
               LOG.warn("Long VFS change processing (" + t + "ms, " + events.size() + " events): " + StringUtil.trimLog(events.toString(), 10_000));
             }
