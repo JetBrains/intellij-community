@@ -3,12 +3,17 @@ package com.intellij.internal.inspector.components;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.BaseNavigateToSourceAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -44,6 +49,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.actionSystem.impl.ActionButtonWithText.SHORTCUT_SHOULD_SHOWN;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER;
 
@@ -141,6 +147,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
     });
 
+    actions.addSeparator();
+    actions.add(new MyNavigateAction());
+
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
     add(toolbar.getComponent(), BorderLayout.NORTH);
@@ -166,9 +175,26 @@ public final class InspectorWindow extends JDialog implements Disposable {
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {
+            String className = findSelectedClassName();
+            if (className != null) {
+              UiInspectorUtil.openClassByFqn(myProject, className, requestFocus);
+            }
+          }
+
+          @Override
+          public boolean canNavigate() {
+            return findSelectedClassName() != null;
+          }
+
+          @Override
+          public boolean canNavigateToSource() {
+            return canNavigate();
+          }
+
+          private String findSelectedClassName() {
             if (myHierarchyTree.hasFocus()) {
               if (!myComponents.isEmpty()) {
-                UiInspectorUtil.openClassByFqn(myProject, myComponents.get(0).getClass().getName(), requestFocus);
+                return myComponents.get(0).getClass().getName();
               }
               else {
                 TreePath path = myHierarchyTree.getSelectionPath();
@@ -177,7 +203,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
                   if (obj instanceof HierarchyTree.ComponentNode) {
                     Component comp = ((HierarchyTree.ComponentNode)obj).getComponent();
                     if (comp != null) {
-                      UiInspectorUtil.openClassByFqn(myProject, comp.getClass().getName(), requestFocus);
+                      return comp.getClass().getName();
                     }
                   }
                 }
@@ -188,18 +214,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
               String value = myInspectorTable.getCellTextValue(row, 1);
               // remove hashcode, properties description, take first from enumeration
               String[] parts = value.split("[@,\\[]");
-              UiInspectorUtil.openClassByFqn(myProject, parts[0], requestFocus);
+              return parts[0];
             }
-          }
-
-          @Override
-          public boolean canNavigate() {
-            return true;
-          }
-
-          @Override
-          public boolean canNavigateToSource() {
-            return true;
+            return null;
           }
         };
       }
@@ -211,7 +228,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     splitPane.setSecondComponent(myWrapperPanel);
     splitPane.setFirstComponent(new JBScrollPane(myHierarchyTree));
     add(splitPane, BorderLayout.CENTER);
-    DataManager.registerDataProvider(splitPane, provider);
+    DataManager.registerDataProvider(getRootPane(), provider);
 
     Consumer<Component> selectionHandler = selectedComponent -> {
       TreePath pathToSelect = TreeUtil.visitVisibleRows(myHierarchyTree, path -> {
@@ -422,6 +439,40 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private abstract static class MyTextAction extends IconWithTextAction implements DumbAware {
     private MyTextAction(Supplier<String> text) {
       super(text);
+    }
+  }
+
+  private static class MyNavigateAction extends BaseNavigateToSourceAction implements CustomComponentAction {
+    private MyNavigateAction() {
+      super(true);
+      Presentation presentation = getTemplatePresentation();
+      presentation.setText(ActionsBundle.messagePointer("action.EditSource.text"));
+      presentation.setDescription(InternalActionsBundle.messagePointer("action.Anonymous.description.open.definition"));
+      presentation.putClientProperty(SHORTCUT_SHOULD_SHOWN, true);
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      return new ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        @Override
+        protected @Nullable String getShortcutText() {
+          Shortcut shortcut = ActionManager.getInstance().getKeyboardShortcut("EditSource");
+          if (shortcut != null) {
+            return KeymapUtil.getShortcutText(shortcut);
+          }
+          return null;
+        }
+      };
+    }
+
+    @Override
+    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+      component.setEnabled(presentation.isEnabled());
+    }
+
+    @Override
+    public boolean isUpdateInBackground() {
+      return false;
     }
   }
 }
