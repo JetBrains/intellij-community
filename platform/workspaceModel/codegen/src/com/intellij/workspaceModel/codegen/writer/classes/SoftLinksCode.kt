@@ -170,7 +170,8 @@ private fun ValueType<*>.operate(
   varName: String,
   simpleTypes: List<DefType>,
   context: LinesBuilder,
-  operation: LinesBuilder.(String) -> Unit
+  operation: LinesBuilder.(String) -> Unit,
+  generateNewName: Boolean = true,
 ) {
   when (this) {
     is TBlob<*> -> {
@@ -183,14 +184,14 @@ private fun ValueType<*>.operate(
         }
       } else if (isSealedClass(simpleTypes)) {
         val thisClass = simpleTypes.single { it.name == this.javaSimpleName }
-        processSealedClass(simpleTypes, thisClass, varName, context, operation)
+        processSealedClass(simpleTypes, thisClass, varName, context, operation, generateNewName)
       }
     }
     is TList<*> -> {
       val elementType = elementType
 
       context.section("for (item in ${varName})") {
-        elementType.operate("item", simpleTypes, this@section, operation)
+        elementType.operate("item", simpleTypes, this@section, operation, false)
       }
     }
     is TOptional<*> -> {
@@ -209,15 +210,16 @@ private fun processSealedClass(simpleTypes: List<DefType>,
                                thisClass: DefType,
                                varName: String,
                                context: LinesBuilder,
-                               operation: LinesBuilder.(String) -> Unit) {
+                               operation: LinesBuilder.(String) -> Unit,
+                               generateNewName: Boolean = true) {
   val children = simpleTypes.filter { it.javaSuperType == thisClass.javaSimpleName }
-  val newVarName = "_${varName.clean()}"
-  context.line("val $newVarName = $varName")
+  val newVarName = if (generateNewName) "_${varName.clean()}" else varName
+  if (generateNewName) context.line("val $newVarName = $varName")
   context.section("when ($newVarName)") {
     listBuilder(children) { item ->
       val linesBuilder = LinesBuilder(StringBuilder(), "${context.indent}    ").wrapper()
       if (item.isSealedClass()) {
-        processSealedClass(simpleTypes, item, newVarName, linesBuilder, operation)
+        processSealedClass(simpleTypes, item, newVarName, linesBuilder, operation, generateNewName)
       }
       item.structure.declaredFields.filter { it.constructorField }.forEach {
         it.type.operate("$newVarName.${it.name}", simpleTypes, linesBuilder, operation)

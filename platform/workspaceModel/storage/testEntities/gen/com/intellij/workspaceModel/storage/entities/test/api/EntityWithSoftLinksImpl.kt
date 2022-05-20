@@ -443,16 +443,15 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             }
         }
         for (item in listSealedContainer) {
-            val _item = item
-            when (_item) {
+            when (item) {
                 is SealedContainer.BigContainer ->  {
-                    result.add(_item.id)
+                    result.add(item.id)
                 }
                 is SealedContainer.SmallContainer ->  {
-                    result.add(_item.notId)
+                    result.add(item.notId)
                 }
                 is SealedContainer.ContainerContainer ->  {
-                    for (item in _item.container) {
+                    for (item in item.container) {
                         result.add(item.id)
                     }
                 }
@@ -518,16 +517,15 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             }
         }
         for (item in listSealedContainer) {
-            val _item = item
-            when (_item) {
+            when (item) {
                 is SealedContainer.BigContainer ->  {
-                    index.index(this, _item.id)
+                    index.index(this, item.id)
                 }
                 is SealedContainer.SmallContainer ->  {
-                    index.index(this, _item.notId)
+                    index.index(this, item.notId)
                 }
                 is SealedContainer.ContainerContainer ->  {
-                    for (item in _item.container) {
+                    for (item in item.container) {
                         index.index(this, item.id)
                     }
                 }
@@ -624,22 +622,21 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             }
         }
         for (item in listSealedContainer) {
-            val _item = item
-            when (_item) {
+            when (item) {
                 is SealedContainer.BigContainer ->  {
-                    val removedItem__item_id = mutablePreviousSet.remove(_item.id)
-                    if (!removedItem__item_id) {
-                        index.index(this, _item.id)
+                    val removedItem_item_id = mutablePreviousSet.remove(item.id)
+                    if (!removedItem_item_id) {
+                        index.index(this, item.id)
                     }
                 }
                 is SealedContainer.SmallContainer ->  {
-                    val removedItem__item_notId = mutablePreviousSet.remove(_item.notId)
-                    if (!removedItem__item_notId) {
-                        index.index(this, _item.notId)
+                    val removedItem_item_notId = mutablePreviousSet.remove(item.notId)
+                    if (!removedItem_item_notId) {
+                        index.index(this, item.notId)
                     }
                 }
                 is SealedContainer.ContainerContainer ->  {
-                    for (item in _item.container) {
+                    for (item in item.container) {
                         val removedItem_item_id = mutablePreviousSet.remove(item.id)
                         if (!removedItem_item_id) {
                             index.index(this, item.id)

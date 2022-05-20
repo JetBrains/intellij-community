@@ -471,16 +471,14 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     override fun getLinks(): Set<PersistentEntityId<*>> {
         val result = HashSet<PersistentEntityId<*>>()
         for (item in dependencies) {
-            val _item = item
-            when (_item) {
+            when (item) {
                 is ModuleDependencyItem.Exportable ->  {
-                    val __item = _item
-                    when (__item) {
+                    when (item) {
                         is ModuleDependencyItem.Exportable.ModuleDependency ->  {
-                            result.add(__item.module)
+                            result.add(item.module)
                         }
                         is ModuleDependencyItem.Exportable.LibraryDependency ->  {
-                            result.add(__item.library)
+                            result.add(item.library)
                         }
                     }
                 }
@@ -491,16 +489,14 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 
     override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
         for (item in dependencies) {
-            val _item = item
-            when (_item) {
+            when (item) {
                 is ModuleDependencyItem.Exportable ->  {
-                    val __item = _item
-                    when (__item) {
+                    when (item) {
                         is ModuleDependencyItem.Exportable.ModuleDependency ->  {
-                            index.index(this, __item.module)
+                            index.index(this, item.module)
                         }
                         is ModuleDependencyItem.Exportable.LibraryDependency ->  {
-                            index.index(this, __item.library)
+                            index.index(this, item.library)
                         }
                     }
                 }
@@ -512,21 +508,19 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
         // TODO verify logic
         val mutablePreviousSet = HashSet(prev)
         for (item in dependencies) {
-            val _item = item
-            when (_item) {
+            when (item) {
                 is ModuleDependencyItem.Exportable ->  {
-                    val __item = _item
-                    when (__item) {
+                    when (item) {
                         is ModuleDependencyItem.Exportable.ModuleDependency ->  {
-                            val removedItem___item_module = mutablePreviousSet.remove(__item.module)
-                            if (!removedItem___item_module) {
-                                index.index(this, __item.module)
+                            val removedItem_item_module = mutablePreviousSet.remove(item.module)
+                            if (!removedItem_item_module) {
+                                index.index(this, item.module)
                             }
                         }
                         is ModuleDependencyItem.Exportable.LibraryDependency ->  {
-                            val removedItem___item_library = mutablePreviousSet.remove(__item.library)
-                            if (!removedItem___item_library) {
-                                index.index(this, __item.library)
+                            val removedItem_item_library = mutablePreviousSet.remove(item.library)
+                            if (!removedItem_item_library) {
+                                index.index(this, item.library)
                             }
                         }
                     }

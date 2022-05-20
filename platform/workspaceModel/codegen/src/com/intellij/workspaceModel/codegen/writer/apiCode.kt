@@ -87,7 +87,7 @@ fun DefType.generatedExtensionCode(indent: String = "    "): String {
       line("fun ${MutableEntityStorage::class.fqn}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit) = modifyEntity($name.Builder::class.java, entity, modification)")
     }
     if (extFields.isNotEmpty()) {
-      extFields.forEach { line(it.wsCode) }
+      extFields.sortedBy { it.name }.forEach { line(it.wsCode) }
     }
     lineNoNl("//endregion")
   }
