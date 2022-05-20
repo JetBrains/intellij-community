@@ -245,6 +245,7 @@ final class PortableCompilationCache {
         context.messages.warning('Incremental compilation using Remote Cache failed. ' +
                                  'Re-trying without any caches.')
         clean()
+        context.options.incrementalCompilation = false
         successMessage = "Compilation successful after clean build retry"
       }
       else {
