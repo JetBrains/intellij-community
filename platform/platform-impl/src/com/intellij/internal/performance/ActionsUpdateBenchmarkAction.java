@@ -7,18 +7,16 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.PotemkinProgress;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
@@ -36,7 +34,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -46,7 +43,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(ActionsUpdateBenchmarkAction.class);
 
   private static final long MIN_REPORTED_UPDATE_MILLIS = 5;
-  private static final long MIN_REPORTED_NO_CHECK_CANCELED_MILLIS = 50;
+  private static final long MIN_REPORTED_NO_CHECK_CANCELED_MILLIS = 20;
 
   /** @noinspection StaticNonFinalField */
   public static Consumer<? super String> ourMissingKeysConsumer;
@@ -77,56 +74,74 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
   private static void updateAllActions(@NotNull Project project, @NotNull Component component) {
     AtomicReference<String> activityName = new AtomicReference<>();
     PotemkinProgress progress = new PotemkinProgress("Updating all actions", project, null, null);
-    AtomicBoolean finished = new AtomicBoolean();
+    progress.setText("Warming up...");
+    progress.setDelayInMillis(0);
     AtomicLong lastCheckCanceled = new AtomicLong(System.nanoTime());
-    Map<String, TraceData> missingCheckCanceled = new HashMap<>();
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
+    Map<String, TraceData> noCheckCanceled = new HashMap<>();
+    Runnable noCheckCanceledChecker = () -> {
       long maxDiff = MIN_REPORTED_NO_CHECK_CANCELED_MILLIS;
-      while (!finished.get()) {
+      while (progress.isRunning()) {
+        String text = activityName.get();
         long last = lastCheckCanceled.get();
         long curDiff = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - last);
-        String text = activityName.get();
         if (last != 0 && text != null && curDiff > maxDiff) {
           StackTraceElement[] trace = EDT.getEventDispatchThread().getStackTrace();
           if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - last) > maxDiff &&
               text.equals(activityName.get())) {
-            missingCheckCanceled.put(text, new TraceData(curDiff, trace, missingCheckCanceled.get(text)));
+            noCheckCanceled.put(text, new TraceData(curDiff, trace, noCheckCanceled.get(text)));
           }
         }
         TimeoutUtil.sleep(maxDiff / 3 + 1);
       }
-    });
-    progress.addStateDelegate(new DummyProgressIndicator() {
+    };
+    MyProgress cancellationChecker = new MyProgress() {
       @Override
-      public void checkCanceled() throws ProcessCanceledException {
+      public void interact() {
         lastCheckCanceled.set(System.nanoTime());
       }
-    });
+    };
     try {
-      progress.runInSwingThread(() -> {
-        updateAllActionsInner(project, component, progress, name -> {
-          lastCheckCanceled.set(System.nanoTime());
-          activityName.set(name);
-        });
+      progress.start(); // show progress but avoid the overhead when measuring
+      AppExecutorUtil.getAppExecutorService().execute(noCheckCanceledChecker);
+      updateAllActionsInner(project, component, (name, displayName, runnable) -> {
+        progress.setText("Checking '" + Objects.requireNonNullElse(displayName, name) + "'");
+        progress.interact();
+        return ProgressManager.getInstance().runProcess(() -> {
+          long start = System.nanoTime();
+          try {
+            activityName.set(name);
+            lastCheckCanceled.set(start);
+            runnable.run();
+          }
+          catch (Throwable th) {
+            if (!(th instanceof ControlFlowException)) {
+              LOG.error(th); // KotlinStdlibCacheImpl.findStdlibInModuleDependencies PCE
+            }
+          }
+          finally {
+            activityName.set(null);
+          }
+          return TimeoutUtil.getDurationMillis(start);
+        }, cancellationChecker);
       });
     }
     finally {
-      finished.set(true);
+      progress.stop();
     }
-    if (!missingCheckCanceled.isEmpty()) {
-      LOG.info("---- " + missingCheckCanceled.size() + " no-checkCanceled places detected ----");
-      String[] keys = ArrayUtil.toStringArray(missingCheckCanceled.keySet());
-      Arrays.sort(keys, Comparator.comparing(o -> -missingCheckCanceled.get(o).delta));
+    LOG.info("---- " + noCheckCanceled.size() + " no-checkCanceled places detected ----");
+    if (!noCheckCanceled.isEmpty()) {
+      String[] keys = ArrayUtil.toStringArray(noCheckCanceled.keySet());
+      Arrays.sort(keys, Comparator.comparing(o -> -noCheckCanceled.get(o).delta));
       for (int i = 0; i < keys.length; i++) {
-        TraceData last = Objects.requireNonNull(missingCheckCanceled.get(keys[i]));
+        TraceData last = Objects.requireNonNull(noCheckCanceled.get(keys[i]));
         int traceCount = 0;
         for (TraceData cur = last; cur != null; cur = cur.next) traceCount++;
         LOG.info("no checkCanceled (" + i + ") (" + traceCount + " hits) in " + last.delta + " ms - " + keys[i]);
       }
-      int min = Math.min(missingCheckCanceled.size(), 5);
-      LOG.info("---- top " + min + " of " + missingCheckCanceled.size() + " no-checkCanceled places ----");
+      int min = Math.min(noCheckCanceled.size(), 5);
+      LOG.info("---- top " + min + " of " + noCheckCanceled.size() + " no-checkCanceled places ----");
       for (int i = 0; i < keys.length && i < min; i++) {
-        TraceData last = missingCheckCanceled.get(keys[i]);
+        TraceData last = noCheckCanceled.get(keys[i]);
         int traceCount = 0, traceIdx = 0;
         for (TraceData cur = last; cur != null; cur = cur.next) traceCount++;
         for (TraceData cur = last; cur != null && traceIdx < 3; cur = cur.next, traceIdx++) {
@@ -141,20 +156,17 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
 
   private static void updateAllActionsInner(@NotNull Project project,
                                             @NotNull Component component,
-                                            @NotNull ProgressIndicator progress,
-                                            @NotNull Consumer<String> activityConsumer) {
+                                            @NotNull ActionsUpdateBenchmarkAction.MyRunner activityRunner) {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
     List<Pair<Integer, String>> results = new ArrayList<>();
     List<Pair<String, String>> results2 = new ArrayList<>();
 
     DataContext rawContext = DataManager.getInstance().getDataContext(component);
 
-    progress.setText("Dropping resolve caches");
     PsiManager.getInstance(project).dropPsiCaches();
     PsiManager.getInstance(project).dropResolveCaches();
     ActionToolbarImpl.resetAllToolbars();
 
-    progress.setText("Preparing the data context");
     LOG.info("Benchmarking actions update for component: " + component.getClass().getName());
 
     long startContext = System.nanoTime();
@@ -164,14 +176,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
     long startPrecache = System.nanoTime();
     ReadAction.run(() -> {
       for (DataKey<?> key : DataKey.allKeys()) {
-        progress.setText("Caching '" + key.getName() + "'");
-        try {
-          activityConsumer.accept("DataContext(\"" + key.getName() + "\")");
-          wrappedContext.getData(key);
-        }
-        finally {
-          activityConsumer.accept(null);
-        }
+        activityRunner.run("DataContext(\"" + key.getName() + "\")", null, () -> wrappedContext.getData(key));
       }
     });
     LOG.info(TimeoutUtil.getDurationMillis(startPrecache) + " ms to pre-cache data-context");
@@ -183,7 +188,6 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
       if (action == null) continue;
       if (action.getClass() == DefaultActionGroup.class) continue;
       ProgressManager.checkCanceled();
-      progress.setText("Checking '" + id + "'");
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
       ReadAction.run(() -> {
         HashSet<String> ruleKeys = new HashSet<String>();
@@ -191,13 +195,9 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
         String actionName = action.getClass().getName();
         try {
           ourMissingKeysConsumer = ruleKeys::add;
-          activityConsumer.accept(actionName);
-          long start = System.nanoTime();
-          ActionUtil.performDumbAwareUpdate(action, event, true);
-          elapsed = TimeoutUtil.getDurationMillis(start);
+          elapsed = activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true));
         }
         finally {
-          activityConsumer.accept(null);
           ourMissingKeysConsumer = null;
         }
         if (elapsed > 0) {
@@ -242,87 +242,11 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
     }
   }
 
-  static class DummyProgressIndicator implements ProgressIndicatorEx {
+  private interface MyRunner {
+    long run(String name, String displayName, Runnable runnable);
+  }
 
-    @Override
-    public void start() { }
+  private abstract static class MyProgress extends ProgressIndicatorBase implements PingProgress {
 
-    @Override
-    public void stop() { }
-
-    @Override
-    public boolean isRunning() { return false; }
-
-    @Override
-    public void cancel() { }
-
-    @Override
-    public boolean isCanceled() { return false; }
-
-    @Override
-    public void setText(String text) { }
-
-    @Override
-    public String getText() { return null; }
-
-    @Override
-    public void setText2(String text) { }
-
-    @Override
-    public String getText2() { return null; }
-
-    @Override
-    public double getFraction() { return 0; }
-
-    @Override
-    public void setFraction(double fraction) { }
-
-    @Override
-    public void pushState() { }
-
-    @Override
-    public void popState() { }
-
-    @Override
-    public boolean isModal() { return false; }
-
-    @Override
-    public @NotNull ModalityState getModalityState() { return ModalityState.NON_MODAL; }
-
-    @Override
-    public void setModalityProgress(@Nullable ProgressIndicator modalityProgress) { }
-
-    @Override
-    public boolean isIndeterminate() { return false; }
-
-    @Override
-    public void setIndeterminate(boolean indeterminate) { }
-
-    @Override
-    public void checkCanceled() throws ProcessCanceledException { }
-
-    @Override
-    public boolean isPopupWasShown() { return false; }
-
-    @Override
-    public boolean isShowing() { return false; }
-
-    @Override
-    public void addStateDelegate(@NotNull ProgressIndicatorEx delegate) { }
-
-    @Override
-    public void finish(@NotNull TaskInfo task) { }
-
-    @Override
-    public boolean isFinished(@NotNull TaskInfo task) { return false; }
-
-    @Override
-    public boolean wasStarted() { return false; }
-
-    @Override
-    public void processFinish() { }
-
-    @Override
-    public void initStateFrom(@NotNull ProgressIndicator indicator) { }
   }
 }
