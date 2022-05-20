@@ -1,24 +1,24 @@
 <?xml version='1.0'?>
 <list>
-  <option name="GRAZIE_STYLE_ERROR">
+  <option name="TEXT_STYLE_ERROR">
     <value>
       <option name="EFFECT_COLOR" value="C75450" />
       <option name="EFFECT_TYPE" value="BOLD_DOTTED_LINE" />
     </value>
   </option>
-  <option name="GRAZIE_STYLE_WARNING">
+  <option name="TEXT_STYLE_WARNING">
     <value>
       <option name="EFFECT_COLOR" value="F0A732" />
       <option name="EFFECT_TYPE" value="BOLD_DOTTED_LINE" />
     </value>
   </option>
-  <option name="GRAZIE_STYLE_SUGGESTION">
+  <option name="TEXT_STYLE_SUGGESTION">
     <value>
       <option name="EFFECT_COLOR" value="3592C4" />
       <option name="EFFECT_TYPE" value="BOLD_DOTTED_LINE" />
     </value>
   </option>
-  <option name="GRAZIE_GRAMMAR_ERROR">
+  <option name="GRAMMAR_ERROR">
     <value>
       <option name="EFFECT_COLOR" value="713D40" />
       <option name="EFFECT_TYPE" value="WAVE" />

@@ -320,13 +320,13 @@
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
-    <option name="GRAZIE_STYLE_ERROR">
+    <option name="TEXT_STYLE_ERROR">
       <value>
         <option name="EFFECT_COLOR" value="cf514e" />
         <option name="EFFECT_TYPE" value="5" />
       </value>
     </option>
-    <option name="GRAZIE_STYLE_WARNING">
+    <option name="TEXT_STYLE_WARNING">
       <value>
         <option name="EFFECT_COLOR" value="ba9752" />
         <option name="EFFECT_TYPE" value="5" />

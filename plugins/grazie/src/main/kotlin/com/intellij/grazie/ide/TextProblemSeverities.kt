@@ -80,15 +80,15 @@ class TextProblemSeverities: SeveritiesProvider() {
     )
 
     @JvmField
-    val STYLE_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_ERROR")
+    val STYLE_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_ERROR")
 
     @JvmField
-    val STYLE_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_WARNING")
+    val STYLE_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_WARNING")
 
     @JvmField
-    val STYLE_SUGGESTION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_SUGGESTION")
+    val STYLE_SUGGESTION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_SUGGESTION")
 
     @JvmField
-    val GRAMMAR_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_GRAMMAR_ERROR")
+    val GRAMMAR_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAMMAR_ERROR")
   }
 }
