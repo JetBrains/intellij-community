@@ -28,6 +28,8 @@ import java.util.function.Supplier;
 abstract class SEResultsListFactory {
 
   private static final JBInsets RENDERER_INSETS = new JBInsets(1, 8, 1, 2);
+  private static final JBInsets TOGGLE_BUTTON_RENDERER_INSETS =
+    new JBInsets(0, RENDERER_INSETS.getUnscaled().left, 0, RENDERER_INSETS.getUnscaled().right);
 
   abstract SearchListModel createModel();
 
@@ -91,14 +93,10 @@ abstract class SEResultsListFactory {
     if (component instanceof JComponent) {
       JComponent jComponent = (JComponent)component;
       if (!ExperimentalUI.isNewUI()) {
-        if (jComponent.getBorder() == GotoActionModel.GotoActionListCellRenderer.TOGGLE_BUTTON_BORDER) {
-          //noinspection UseDPIAwareBorders
-          EmptyBorder border = new EmptyBorder(0, RENDERER_INSETS.left, 0, RENDERER_INSETS.right);
-          jComponent.setBorder(border);
-        }
-        else {
-          jComponent.setBorder(new EmptyBorder(RENDERER_INSETS));
-        }
+        jComponent.setBorder(
+          new EmptyBorder(jComponent.getBorder() == GotoActionModel.GotoActionListCellRenderer.TOGGLE_BUTTON_BORDER
+                          ? TOGGLE_BUTTON_RENDERER_INSETS
+                          : RENDERER_INSETS));
       }
     }
 
