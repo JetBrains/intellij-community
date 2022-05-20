@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.openapi.project.DumbService
@@ -49,7 +49,7 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
     @JvmName("getState")
     internal fun getState(psiFile: PsiFile): FileState? {
       if (DumbService.isDumb(psiFile.project)) return null
-      val storedState = FileStateCache.SERVICE.getInstance(psiFile.project).getState(psiFile)
+      val storedState = FileStateCache.getInstance(psiFile.project).getState(psiFile)
       if (storedState != null) return storedState
       val updater = FileStateUpdater(null)
       publicApi(psiFile).forEach { it.accept(updater) }
@@ -90,7 +90,7 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
     @JvmName("setPreviousState")
     internal fun setPreviousState(psiFile: PsiFile) {
       val project = psiFile.project
-      val fileStateCache = FileStateCache.SERVICE.getInstance(project)
+      val fileStateCache = FileStateCache.getInstance(project)
       val (snapshot, changes) = fileStateCache.getState(psiFile) ?: return
       if (changes.isEmpty()) return
       val manager = SmartPointerManager.getInstance(project)
@@ -106,13 +106,13 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
     @JvmStatic
     @JvmName("updateState")
     internal fun updateState(psiFile: PsiFile, fileState: FileState) {
-      FileStateCache.SERVICE.getInstance(psiFile.project).setState(psiFile, fileState.snapshot, fileState.changes)
+      FileStateCache.getInstance(psiFile.project).setState(psiFile, fileState.snapshot, fileState.changes)
     }
 
     @JvmStatic
     @JvmName("removeState")
     internal fun removeState(psiFile: PsiFile) {
-      FileStateCache.SERVICE.getInstance(psiFile.project).removeState(psiFile)
+      FileStateCache.getInstance(psiFile.project).removeState(psiFile)
     }
 
     private fun collectRelatedChanges(
