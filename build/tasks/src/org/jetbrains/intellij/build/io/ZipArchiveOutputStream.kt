@@ -182,16 +182,20 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
           it.put(resourcePackages)
         }
       }
+
+      // write fingerprint count
+      buffer.putInt(entries.size)
     }
 
     // write fingerprints
     // entryCount must be not used here - index contains some dirs, but not zip (see addDirsToIndex)
-    writeData { buffer ->
-      buffer.putInt(entries.size)
-      useAsLongBuffer(buffer) { longBuffer ->
-        // bloom filter is not an option - false positive leads to error like "wrong class name" on class define
-        for (entry in entries) {
-          longBuffer.put(entry.keyHash)
+    for (chunk in entries.asSequence().chunked(16 * 1024)) {
+      writeData { buffer ->
+        useAsLongBuffer(buffer) { longBuffer ->
+          // bloom filter is not an option - false positive leads to error like "wrong class name" on class define
+          for (entry in chunk) {
+            longBuffer.put(entry.keyHash)
+          }
         }
       }
     }
