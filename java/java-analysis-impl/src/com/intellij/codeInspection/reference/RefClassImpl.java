@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,6 @@ import java.util.*;
 public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final Set<RefElement> EMPTY_SET = Collections.emptySet();
   private static final Set<RefClass> EMPTY_CLASS_SET = Collections.emptySet();
-  private static final List<RefMethod> EMPTY_METHOD_LIST = ContainerUtil.emptyList();
   private static final int IS_ANONYMOUS_MASK = 0b1_00000000_00000000; // 17th bit
   private static final int IS_INTERFACE_MASK = 0b10_00000000_00000000; // 18th bit
   private static final int IS_UTILITY_MASK   = 0b100_00000000_00000000; // 19th bit
@@ -40,7 +38,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   private Object myBases; // singleton (to conserve memory) or HashSet. guarded by this
   private Set<RefOverridable> myDerivedReferences; // singleton (to conserve memory) or HashSet. guarded by this
-  private List<RefMethod> myConstructors; // guarded by this
   private RefMethodImpl myDefaultConstructor; // guarded by this
   private Set<RefElement> myInTypeReferences; // guarded by this
   private List<RefJavaElement> myClassExporters; // guarded by this
@@ -49,12 +46,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   RefClassImpl(UClass uClass, PsiElement psi, RefManager manager) {
     super(uClass, psi, manager);
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(psi));
-
-    setInterface(uClass.isInterface());
-    final PsiClass psiClass = uClass.getJavaPsi();
-    setRecord(psiClass.isRecord());
-    setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
-    setAnonymous(uClass.getName() == null);
   }
 
   @Override
@@ -110,6 +101,11 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     if (!myManager.isDeclarationsFound()) return;
 
+    setInterface(uClass.isInterface());
+    final PsiClass psiClass = uClass.getJavaPsi();
+    setRecord(psiClass.isRecord());
+    setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
+    setAnonymous(uClass.getName() == null);
     setIsLocal(!isAnonymous() && parent != null && !(parent instanceof UClass));
 
     initializeSuperReferences(uClass);
@@ -135,7 +131,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
             utilityClass = false;
           }
 
-          addConstructor(refMethod);
           if (parameters.isEmpty()) {
             setDefaultConstructor((RefMethodImpl)refMethod);
           }
@@ -162,7 +157,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
 
     if (!utilityClass) {
-      utilityClass = ClassUtils.isSingleton(uClass.getJavaPsi());
+      utilityClass = ClassUtils.isSingleton(psiClass);
     }
 
     synchronized (this) {
@@ -171,10 +166,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    if (getConstructors().isEmpty() && !isInterface() && !isAnonymous()) {
-      RefImplicitConstructorImpl refImplicitConstructor = new RefImplicitConstructorImpl(this);
-      setDefaultConstructor(refImplicitConstructor);
-      addConstructor(refImplicitConstructor);
+    if (!isInterface() && !isAnonymous() && getConstructors().isEmpty()) {
+      setDefaultConstructor(new RefImplicitConstructorImpl(this));
     }
 
     setUtilityClass(utilityClass);
@@ -182,7 +175,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (!utilityClass) {
       setApplet(getRefJavaManager().getApplet() != null && JvmInheritanceUtil.isInheritor(uClass, getRefJavaManager().getAppletQName()));
       if (!isApplet()) {
-        setServlet(JvmInheritanceUtil.isInheritor(uClass.getJavaPsi(), getRefJavaManager().getServletQName()));
+        setServlet(JvmInheritanceUtil.isInheritor(psiClass, getRefJavaManager().getServletQName()));
       }
       if (!isApplet() && !isServlet()) {
         PsiElement psi = uClass.getSourcePsi();
@@ -292,7 +285,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
 
-      waitForInitialized();
       final RefMethodImpl defaultConstructor = (RefMethodImpl)getDefaultConstructor();
       if (defaultConstructor != null) {
         for (RefClass superClass : getBaseClasses()) {
@@ -386,8 +378,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized @NotNull List<RefMethod> getConstructors() {
-    if (myConstructors == null) return EMPTY_METHOD_LIST;
-    return myConstructors;
+    return StreamEx.of(getChildren()).select(RefMethod.class).filter(RefMethod::isConstructor).toList();
   }
 
   @Override
@@ -414,16 +405,9 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return myDefaultConstructor;
   }
 
-  private synchronized void addConstructor(RefMethod refConstructor) {
-    if (myConstructors == null){
-      myConstructors = new ArrayList<>(1);
-    }
-    myConstructors.add(refConstructor);
-  }
-
   @Override
   public synchronized @NotNull List<RefMethod> getLibraryMethods() {
-    return StreamEx.of(getChildren()).select(RefMethod.class).filter(m -> m.isExternalOverride()).toList();
+    return StreamEx.of(getChildren()).select(RefMethod.class).filter(RefMethod::isExternalOverride).toList();
   }
 
   @Override
@@ -489,8 +473,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   void methodRemoved(RefMethod method) {
-    getConstructors().remove(method);
-
     if (getDefaultConstructor() == method) {
       setDefaultConstructor(null);
     }
