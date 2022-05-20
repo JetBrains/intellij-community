@@ -27,16 +27,16 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
+import com.jetbrains.python.sdk.pathValidation.ValidationRequest
+import com.jetbrains.python.sdk.pathValidation.validateEmptyDir
 import icons.PythonIcons
 import java.awt.Component
-import java.io.File
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -79,17 +79,15 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   companion object {
     @JvmStatic
-    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? {
-      val text = field.text
-      val file = File(text)
-      val message = when {
-        StringUtil.isEmptyOrSpaces(text) -> PySdkBundle.message("python.venv.location.field.empty")
-        file.exists() && !file.isDirectory -> PySdkBundle.message("python.venv.location.field.not.directory")
-        file.isNotEmptyDirectory -> PySdkBundle.message("python.venv.location.directory.not.empty")
-        else -> return null
-      }
-      return ValidationInfo(message, field)
-    }
+    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? =
+      validateEmptyDir(
+        ValidationRequest(
+          path = field.text,
+          fieldIsEmpty = PySdkBundle.message("python.venv.location.field.empty")
+        ),
+        notADirectory = PySdkBundle.message("python.venv.location.field.not.directory"),
+        directoryNotEmpty = PySdkBundle.message("python.venv.location.directory.not.empty")
+      )
 
     /** Should be protected. Please, don't use outside the class. KT-48508 */
     @JvmStatic

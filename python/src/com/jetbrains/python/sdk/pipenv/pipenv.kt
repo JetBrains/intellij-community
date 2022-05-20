@@ -51,6 +51,8 @@ import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.pathValidation.ValidationRequest
+import com.jetbrains.python.sdk.pathValidation.validateExecutableFile
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.TestOnly
@@ -122,21 +124,11 @@ fun detectPipEnvExecutable(): File? {
 fun getPipEnvExecutable(): File? =
   PropertiesComponent.getInstance().pipEnvPath?.let { File(it) } ?: detectPipEnvExecutable()
 
-fun validatePipEnvExecutable(pipEnvExecutable: @SystemDependent String?): ValidationInfo? {
-  val message = if (pipEnvExecutable.isNullOrBlank()) {
-    PyBundle.message("python.sdk.pipenv.executable.not.found")
-  }
-  else {
-    val file = File(pipEnvExecutable)
-    when {
-      !file.exists() -> PyBundle.message("python.sdk.file.not.found", file.absolutePath)
-      !file.canExecute() || !file.isFile -> PyBundle.message("python.sdk.cannot.execute", file.absolutePath)
-      else -> null
-    }
-  }
-
-  return message?.let { ValidationInfo(it) }
-}
+fun validatePipEnvExecutable(pipEnvExecutable: @SystemDependent String?): ValidationInfo? =
+  validateExecutableFile(ValidationRequest(
+    path = pipEnvExecutable,
+    fieldIsEmpty = PyBundle.message("python.sdk.pipenv.executable.not.found"),
+  ))
 
 fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Pipenv (${PathUtil.getFileName(basePath)})"
 
@@ -254,7 +246,8 @@ val Sdk.pipFileLockRequirements: List<PyRequirement>?
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
  */
 class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
-  @IntentionName private val quickFixName = when {
+  @IntentionName
+  private val quickFixName = when {
     sdk != null && sdk.isAssociatedWithAnotherModule(module) -> PyBundle.message("python.sdk.pipenv.quickfix.fix.pipenv.name")
     else -> PyBundle.message("python.sdk.pipenv.quickfix.use.pipenv.name")
   }
@@ -363,7 +356,7 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
         when (event.description) {
           "#lock" -> runPipEnvInBackground(module, listOf("lock"), PyBundle.message("python.sdk.pipenv.pip.file.notification.locking"))
           "#update" -> runPipEnvInBackground(module, listOf("update", "--dev"), PyBundle.message(
-                                    "python.sdk.pipenv.pip.file.notification.updating"))
+            "python.sdk.pipenv.pip.file.notification.updating"))
         }
       })
     module.putUserData(notificationActive, true)
@@ -428,6 +421,7 @@ fun getPipFileLockRequirements(virtualFile: VirtualFile, packageManager: PyPacka
       .filter { (_, pkg) -> pkg.markers == null }
       .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}").asSequence() }
       .toList()
+
   val pipFileLock = parsePipFileLock(virtualFile) ?: return null
   val packages = pipFileLock.packages?.let { toRequirements(it) } ?: emptyList()
   val devPackages = pipFileLock.devPackages?.let { toRequirements(it) } ?: emptyList()
