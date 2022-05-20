@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
@@ -443,7 +444,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET)) {
+    try (
+      AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RESET);
+      AccessToken ignore2 = ThreadContext.resetThreadContext()
+    ) {
       myDialog.show();
     }
     finally {
