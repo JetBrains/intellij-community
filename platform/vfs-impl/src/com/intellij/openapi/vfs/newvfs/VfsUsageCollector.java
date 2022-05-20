@@ -11,9 +11,9 @@ final class VfsUsageCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("vfs", 4);
 
   private static final BooleanEventField RefreshRecursive = EventFields.Boolean("recursive");
-  private static final IntEventField RefreshLocalRoots = EventFields.Int("roots_local");
-  private static final IntEventField RefreshArchiveRoots = EventFields.Int("roots_arc");
-  private static final IntEventField RefreshOtherRoots = EventFields.Int("roots_other");
+  private static final RoundedIntEventField RefreshLocalRoots = EventFields.RoundedInt("roots_local");
+  private static final RoundedIntEventField RefreshArchiveRoots = EventFields.RoundedInt("roots_arc");
+  private static final RoundedIntEventField RefreshOtherRoots = EventFields.RoundedInt("roots_other");
   private static final BooleanEventField RefreshCancelled = EventFields.Boolean("cancelled");
   private static final LongEventField RefreshWaitMs = EventFields.Long("wait_ms");  // -1 for synchronous refresh
   private static final IntEventField RefreshTries = EventFields.Int("tries");
