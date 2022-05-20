@@ -9,20 +9,19 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 @CompileStatic
-class MavenArtifactBuilderHelper {
+final class MavenArtifactBuilderHelper {
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileStatic(TypeCheckingMode.SKIP)
   static void layoutMavenArtifacts(Map<MavenArtifactData, List<JpsModule>> modulesToPublish, String outputDir, BuildContext context) {
     def publishSourcesFilter = context.productProperties.mavenArtifacts.publishSourcesFilter
-    def buildContext = this.buildContext
     Map<MavenArtifactData, String> pomXmlFiles = [:]
     modulesToPublish.each { artifactData, modules ->
-      String filePath = "$buildContext.paths.temp/pom-files/${artifactData.coordinates.getDirectoryPath()}/${artifactData.coordinates.getFileName("", "pom")}"
+      String filePath = "$context.paths.temp/pom-files/${artifactData.coordinates.getDirectoryPath()}/${artifactData.coordinates.getFileName("", "pom")}"
       pomXmlFiles[artifactData] = filePath
-      generatePomXmlFile(filePath, artifactData)
+      MavenArtifactsBuilderKt.generatePomXmlFile(filePath, artifactData)
     }
     AntBuilder ant = LayoutBuilder.ant
-    new LayoutBuilder(buildContext).layout("$buildContext.paths.artifacts/$outputDir") {
+    new LayoutBuilder(context).layout("$context.paths.artifacts/$outputDir") {
       modulesToPublish.each { artifactData, modules ->
         dir(artifactData.coordinates.directoryPath) {
           ant.fileset(file: pomXmlFiles[artifactData])
@@ -37,7 +36,7 @@ class MavenArtifactBuilderHelper {
             }
           }
 
-          List<JpsModule> publishSourcesForModules = modules.findAll { aModule -> publishSourcesFilter.test(aModule, buildContext) }
+          List<JpsModule> publishSourcesForModules = modules.findAll { aModule -> publishSourcesFilter.test(aModule, context) }
           if (!publishSourcesForModules.isEmpty() && !modulesWithSources.isEmpty()) {
             zip(artifactData.coordinates.getFileName("sources", "jar")) {
               publishSourcesForModules.forEach { aModule ->

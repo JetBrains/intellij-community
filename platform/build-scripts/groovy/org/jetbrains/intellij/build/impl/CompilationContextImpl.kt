@@ -3,12 +3,10 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.util.text.Formats
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.CompilationTasks.Companion.create
 import org.jetbrains.intellij.build.ConsoleSpanExporter.Companion.setPathRoot
 import org.jetbrains.intellij.build.TracerProviderManager.flush
 import org.jetbrains.intellij.build.TracerProviderManager.setOutput
@@ -126,7 +124,7 @@ class CompilationContextImpl : CompilationContext {
     /**
      * FIXME should be called lazily, yet it breaks [TestingTasks.runTests], needs investigation
      */
-    create(this).reuseCompiledClassesIfProvided()
+    CompilationTasks.create(this).reuseCompiledClassesIfProvided()
   }
 
   private fun overrideProjectOutputDirectory() {
@@ -298,12 +296,6 @@ class CompilationContextImpl : CompilationContext {
     }
 
     @JvmStatic
-    fun logFreeDiskSpace(buildMessages: BuildMessages, dir: Path, phase: String) {
-      buildMessages.debug(
-        "Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).usableSpace)} (on disk containing $dir)")
-    }
-
-    @JvmStatic
     fun printEnvironmentDebugInfo() {
       // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
       // don't write it to debug log file!
@@ -331,7 +323,7 @@ class CompilationContextImpl : CompilationContext {
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
       printEnvironmentDebugInfo()
-      logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
+      logFreeDiskSpace(buildMessages = messages, dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
       val model = loadProject(projectHome, kotlinBinaries, messages)
       val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)

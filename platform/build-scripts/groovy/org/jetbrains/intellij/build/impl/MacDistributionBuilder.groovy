@@ -33,12 +33,13 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final Path ideaProperties
   @SuppressWarnings('SpellCheckingInspection')
   private final String targetIcnsFileName
+  private final BuildContext context
 
-  MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, Path ideaProperties) {
-    super(buildContext)
+  MacDistributionBuilder(BuildContext context, MacDistributionCustomizer customizer, Path ideaProperties) {
+    this.context = context
     this.ideaProperties = ideaProperties
     this.customizer = customizer
-    targetIcnsFileName = "${buildContext.productProperties.baseFileName}.icns"
+    targetIcnsFileName = "${context.productProperties.baseFileName}.icns"
   }
 
   @Override
@@ -58,7 +59,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         <key>CFBundleTypeIconFile</key>
         <string>${targetIcnsFileName}</string>
         <key>CFBundleTypeName</key>
-        <string>${buildContext.applicationInfo.productName} Project File</string>
+        <string>${context.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>"""
@@ -101,34 +102,34 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       "apple.awt.graphics.UseQuartz=true",
       "apple.awt.fullscreencapturealldisplays=false"
     ))
-    customizer.getCustomIdeaProperties(buildContext.applicationInfo).forEach(new BiConsumer<String, String>() {
+    customizer.getCustomIdeaProperties(context.applicationInfo).forEach(new BiConsumer<String, String>() {
       @Override
       void accept(String k, String v) {
         platformProperties.add(k + '=' + v)
       }
     })
 
-    layoutMacApp(ideaProperties, platformProperties, getDocTypes(), macDistDir, buildContext)
+    layoutMacApp(ideaProperties, platformProperties, getDocTypes(), macDistDir, context)
 
-    DistUtilKt.unpackPty4jNative(buildContext, macDistDir, "darwin")
+    DistUtilKt.unpackPty4jNative(context, macDistDir, "darwin")
 
-    DistUtilKt.generateBuildTxt(buildContext, macDistDir.resolve("Resources"))
+    DistUtilKt.generateBuildTxt(context, macDistDir.resolve("Resources"))
     if (copyDistFiles) {
-      DistUtilKt.copyDistFiles(buildContext, macDistDir)
+      DistUtilKt.copyDistFiles(context, macDistDir)
     }
 
-    customizer.copyAdditionalFiles(buildContext, macDistDir.toString())
+    customizer.copyAdditionalFiles(context, macDistDir.toString())
     if (arch != null) {
-      customizer.copyAdditionalFiles(buildContext, macDistDir, arch)
+      customizer.copyAdditionalFiles(context, macDistDir, arch)
     }
 
-    UnixScriptBuilder.generateScripts(buildContext, Collections.<String>emptyList(), macDistDir.resolve("bin"), OsFamily.MACOS)
+    UnixScriptBuilder.generateScripts(context, Collections.<String>emptyList(), macDistDir.resolve("bin"), OsFamily.MACOS)
   }
 
   @Override
   void buildArtifacts(@NotNull Path osAndArchSpecificDistPath, @NotNull JvmArchitecture arch) {
     doCopyExtraFiles(osAndArchSpecificDistPath, arch, false)
-    buildContext.executeStep(spanBuilder("build macOS artifacts")
+    context.executeStep(spanBuilder("build macOS artifacts")
                                .setAttribute("arch", arch.name()), BuildOptions.MAC_ARTIFACTS_STEP, new Runnable() {
       @Override
       void run() {
@@ -138,16 +139,16 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private void doBuildArtifacts(Path osAndArchSpecificDistPath, JvmArchitecture arch) {
-    String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-    boolean publishArchive = buildContext.proprietaryBuildTools.macHostProperties?.host == null && !SystemInfoRt.isMac
+    String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+    boolean publishArchive = context.proprietaryBuildTools.macHostProperties?.host == null && !SystemInfoRt.isMac
 
-    List<String> binariesToSign = customizer.getBinariesToSign(buildContext, arch)
+    List<String> binariesToSign = customizer.getBinariesToSign(context, arch)
     if (!binariesToSign.isEmpty()) {
-      buildContext.executeStep(spanBuilder("sign binaries for macOS distribution")
+      context.executeStep(spanBuilder("sign binaries for macOS distribution")
                             .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Runnable() {
         @Override
         void run() {
-          buildContext.signFiles(binariesToSign.collect { osAndArchSpecificDistPath.resolve(it) }, Map.of(
+          context.signFiles(binariesToSign.collect { osAndArchSpecificDistPath.resolve(it) }, Map.of(
             "mac_codesign_options", "runtime",
             "mac_codesign_force", "true",
             "mac_codesign_deep", "true",
@@ -156,24 +157,24 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       })
     }
 
-    Path macZip = ((publishArchive || customizer.publishArchive) ? buildContext.paths.artifactDir : buildContext.paths.tempDir)
+    Path macZip = ((publishArchive || customizer.publishArchive) ? context.paths.artifactDir : context.paths.tempDir)
       .resolve(baseName + ".mac.${arch.name()}.zip")
-    String zipRoot = getZipRoot(buildContext, customizer)
+    String zipRoot = getZipRoot(context, customizer)
     MacKt.buildMacZip(
       macZip,
       zipRoot,
-      generateProductJson(buildContext, null),
-      buildContext.paths.distAllDir,
+      generateProductJson(context, null),
+      context.paths.distAllDir,
       osAndArchSpecificDistPath,
-      buildContext.getDistFiles(),
+      context.getDistFiles(),
       getExecutableFilePatterns(customizer),
       publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED,
-      { buildContext.messages.warning(it) })
-    ProductInfoValidator.checkInArchive(buildContext, macZip, "$zipRoot/Resources")
+      { context.messages.warning(it) })
+    ProductInfoValidator.checkInArchive(context, macZip, "$zipRoot/Resources")
 
     if (publishArchive) {
       Span.current().addEvent("skip DMG artifact producing because a macOS build agent isn't configured")
-      buildContext.notifyArtifactBuilt(macZip)
+      context.notifyArtifactBuilt(macZip)
     }
     else {
       buildAndSignDmgFromZip(macZip, arch)
@@ -182,7 +183,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   void buildAndSignDmgFromZip(Path macZip, JvmArchitecture arch) {
     boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
-    createBuildForArchTask(arch, macZip, notarize, customizer, buildContext).invoke()
+    createBuildForArchTask(arch, macZip, notarize, customizer, context).invoke()
     Files.deleteIfExists(macZip)
   }
 

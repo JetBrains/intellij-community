@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
 
@@ -9,7 +9,6 @@ import org.apache.maven.model.Exclusion
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -31,24 +30,24 @@ import java.util.function.BiConsumer
  * @see [org.jetbrains.intellij.build.ProductProperties.mavenArtifacts]
  * @see [org.jetbrains.intellij.build.BuildOptions.MAVEN_ARTIFACTS_STEP]
  */
-open class MavenArtifactsBuilder @JvmOverloads constructor(protected val buildContext: BuildContext,
-                                                           private val skipNothing: Boolean = false) {
+open class MavenArtifactsBuilder(protected val buildContext: BuildContext, private val skipNothing: Boolean = false) {
   companion object {
     @JvmStatic
-    fun generateMavenCoordinatesSquashed(moduleName: String, messages: BuildMessages, version: String): MavenCoordinates {
-      return generateMavenCoordinates("$moduleName.squashed", messages, version)
+    fun generateMavenCoordinatesSquashed(moduleName: String, version: String): MavenCoordinates {
+      return generateMavenCoordinates("$moduleName.squashed", version)
     }
 
     @JvmStatic
-    fun generateMavenCoordinates(moduleName: String, messages: BuildMessages, version: String): MavenCoordinates {
-      val names = moduleName.split("\\.")
+    fun generateMavenCoordinates(moduleName: String, version: String): MavenCoordinates {
+      val names = moduleName.split('.')
       if (names.size < 2) {
-        messages.error("Cannot generate Maven artifacts: incorrect module name '${moduleName}'")
+        throw RuntimeException("Cannot generate Maven artifacts: incorrect module name '${moduleName}'")
       }
+
       val groupId = "com.jetbrains.${names.take(2).joinToString(separator = ".")}"
       val firstMeaningful = if (names.size > 2 && COMMON_GROUP_NAMES.contains(names[1])) 2 else 1
-      val artifactId = names.drop(firstMeaningful).flatMap {
-        splitByCamelHumpsMergingNumbers(it).map { it.lowercase(Locale.US) }
+      val artifactId = names.drop(firstMeaningful).flatMap { s ->
+        splitByCamelHumpsMergingNumbers(s).map { it.lowercase(Locale.US) }
       }.joinToString(separator = "-")
       return MavenCoordinates(groupId, artifactId, version)
     }
@@ -216,11 +215,11 @@ open class MavenArtifactsBuilder @JvmOverloads constructor(protected val buildCo
   }
 
   protected open fun generateMavenCoordinatesForModule(module: JpsModule): MavenCoordinates {
-    return generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber)
+    return generateMavenCoordinates(module.name, buildContext.buildNumber)
   }
 
   private fun generateMavenCoordinatesForSquashedModule(module: JpsModule): MavenCoordinates {
-    return generateMavenCoordinatesSquashed(module.name, buildContext.messages, buildContext.buildNumber)
+    return generateMavenCoordinatesSquashed(module.name, buildContext.buildNumber)
   }
 
   enum class DependencyScope {
@@ -242,19 +241,19 @@ data class MavenCoordinates(
   }
 }
 
-private data class MavenArtifactData(
+internal data class MavenArtifactData(
   val coordinates: MavenCoordinates,
   val dependencies: List<MavenArtifactDependency>
 )
 
-private data class MavenArtifactDependency(
+internal data class MavenArtifactDependency(
    val coordinates: MavenCoordinates,
    val includeTransitiveDeps: Boolean,
    val excludedDependencies: List<String>,
    val scope: MavenArtifactsBuilder.DependencyScope?
 )
 
-private fun generatePomXmlFile(pomXmlPath: String, artifactData: MavenArtifactData) {
+internal fun generatePomXmlFile(pomXmlPath: String, artifactData: MavenArtifactData) {
   val pomModel = Model()
   pomModel.groupId = artifactData.coordinates.groupId
   pomModel.artifactId = artifactData.coordinates.artifactId

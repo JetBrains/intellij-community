@@ -19,11 +19,11 @@ class PluginLayout(val mainModule: String): BaseLayout() {
   private var mainJarName = "${convertModuleNameToFileName(mainModule)}.jar"
 
   lateinit var directoryName: String
+
   var versionEvaluator: VersionEvaluator = object : VersionEvaluator {
-    override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
-      return ideBuildVersion
-    }
+    override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext) = ideBuildVersion
   }
+
   var pluginXmlPatcher: UnaryOperator<String> = UnaryOperator.identity()
   var directoryNameSetExplicitly: Boolean = false
   var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE

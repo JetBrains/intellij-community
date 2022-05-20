@@ -7,6 +7,9 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 
+import java.nio.file.Files
+import java.nio.file.Path
+
 /**
  * Publishes specified nightly versions of Intellij modules as a Maven artifacts using the output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}.
  *
@@ -53,7 +56,7 @@ final class IntellijModulesPublication {
     /**
      * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
      */
-    File outputDir = property('intellij.modules.publication.prebuilt.artifacts.dir')?.with { new File(it) }
+    Path outputDir = property('intellij.modules.publication.prebuilt.artifacts.dir')?.with { Path.of(it).normalize() }
     Collection<String> modulesToPublish = listProperty('intellij.modules.publication.list')
     Collection<String> modulesToExclude = listProperty('intellij.modules.publication.excluded', ['fleet'])
 
@@ -87,18 +90,18 @@ final class IntellijModulesPublication {
     }
     if (modules.isEmpty()) context.messages.warning('Nothing to publish')
     modules.each { JpsModule module ->
-      def coordinates = MavenArtifactsBuilder.generateMavenCoordinates(module.name, context.messages, options.version)
+      def coordinates = MavenArtifactsBuilder.generateMavenCoordinates(module.name, options.version)
       deployModuleArtifact(coordinates)
 
-      def squashedCoordinates = MavenArtifactsBuilder.generateMavenCoordinatesSquashed(module.name, context.messages, options.version)
-      if (new File(options.outputDir, squashedCoordinates.directoryPath).exists()) {
+      def squashedCoordinates = MavenArtifactsBuilder.generateMavenCoordinatesSquashed(module.name, options.version)
+      if (Files.exists(options.outputDir.resolve(squashedCoordinates.directoryPath))) {
         deployModuleArtifact(squashedCoordinates)
       }
     }
   }
 
   private void deployModuleArtifact(MavenCoordinates coordinates) {
-    def dir = new File(options.outputDir, coordinates.directoryPath)
+    def dir = options.outputDir.resolve(coordinates.directoryPath).toFile()
     def pom = new File(dir, coordinates.getFileName('', 'pom'))
     def jar = new File(dir, coordinates.getFileName('', 'jar'))
     def sources = new File(dir, coordinates.getFileName('sources', 'jar'))
