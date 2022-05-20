@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiParameter;
@@ -12,6 +12,8 @@ import org.jetbrains.uast.UParameter;
  * @author anna
  */
 public interface RefParameter extends RefJavaElement {
+
+  RefParameter[] EMPTY_ARRAY = new RefParameter[0];
   Object VALUE_IS_NOT_CONST = ObjectUtils.sentinel("VALUE_IS_NOT_CONST");
   Object VALUE_UNDEFINED = ObjectUtils.sentinel("VALUE_UNDEFINED");
 
