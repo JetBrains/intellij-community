@@ -300,7 +300,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
                                                           .filter(x -> x.getName().equals(name))
                                                           .findFirst();
           laf.ifPresent(info -> setCurrentLookAndFeel(info));
-          RegistryBooleanOptionDescriptor.suggestRestart(null);
+          ApplicationManager.getApplication().invokeLater(() -> RegistryBooleanOptionDescriptor.suggestRestart(null));
         }
       }
     });
