@@ -6,12 +6,16 @@ package com.intellij.concurrency
 
 import com.intellij.openapi.application.AccessToken
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 private val tlCoroutineContext: ThreadLocal<CoroutineContext?> = ThreadLocal()
 
-internal fun checkUninitializedThreadContext() {
+@Internal
+@VisibleForTesting
+fun checkUninitializedThreadContext() {
   check(tlCoroutineContext.get() == null) {
     "Thread context was already set"
   }
@@ -22,6 +26,17 @@ internal fun checkUninitializedThreadContext() {
  */
 fun currentThreadContext(): CoroutineContext {
   return tlCoroutineContext.get() ?: EmptyCoroutineContext
+}
+
+/**
+ * Resets the current thread context to initial value.
+ *
+ * @return handle to restore the previous thread context
+ */
+fun resetThreadContext(): AccessToken {
+  return updateThreadContext {
+    null
+  }
 }
 
 /**
@@ -54,15 +69,20 @@ fun <X> withThreadContext(coroutineContext: CoroutineContext, action: () -> X): 
  */
 fun withThreadContext(coroutineContext: CoroutineContext): AccessToken {
   return updateThreadContext { current ->
-    current + coroutineContext
+    if (current == null) {
+      coroutineContext
+    }
+    else {
+      current + coroutineContext
+    }
   }
 }
 
 private fun updateThreadContext(
-  update: (CoroutineContext) -> CoroutineContext
+  update: (CoroutineContext?) -> CoroutineContext?
 ): AccessToken {
   val previousContext = tlCoroutineContext.get()
-  val newContext = update(previousContext ?: EmptyCoroutineContext)
+  val newContext = update(previousContext)
   tlCoroutineContext.set(newContext)
   return object : AccessToken() {
     override fun finish() {
