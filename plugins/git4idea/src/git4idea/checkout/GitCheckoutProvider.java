@@ -95,9 +95,11 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
         return new CloneTaskInfo(DvcsBundle.message("cloning.repository", sourceRepositoryURL),
                                  DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL),
                                  DvcsBundle.message("clone.repository"),
+                                 DvcsBundle.message("clone.repository.tooltip"),
                                  DvcsBundle.message("clone.repository.failed"),
                                  DvcsBundle.message("clone.repository.canceled"),
-                                 sourceRepositoryURL);
+                                 DvcsBundle.message("clone.stop.message.title"),
+                                 DvcsBundle.message("clone.stop.message.description", sourceRepositoryURL));
       }
 
       @NotNull

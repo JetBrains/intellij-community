@@ -70,9 +70,11 @@ public class HgCheckoutProvider implements CheckoutProvider {
         return new CloneTaskInfo(HgBundle.message("hg4idea.clone.progress", sourceRepositoryURL),
                                  HgBundle.message("hg4idea.clone.progress.failed", sourceRepositoryURL),
                                  DvcsBundle.message("clone.repository"),
+                                 DvcsBundle.message("clone.repository.tooltip"),
                                  DvcsBundle.message("clone.repository.failed"),
                                  DvcsBundle.message("clone.repository.canceled"),
-                                 sourceRepositoryURL);
+                                 DvcsBundle.message("clone.stop.message.title"),
+                                 DvcsBundle.message("clone.stop.message.description", sourceRepositoryURL));
       }
 
       @NotNull
@@ -115,7 +117,9 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
+                                                  @NotNull ModalityState modalityState,
+                                                  @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new HgCloneDialogComponent(project, dialogStateListener);
   }
 }

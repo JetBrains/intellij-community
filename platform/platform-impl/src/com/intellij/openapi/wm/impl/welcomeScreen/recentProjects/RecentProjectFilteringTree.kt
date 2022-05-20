@@ -215,9 +215,10 @@ class RecentProjectFilteringTree(
     }
 
     private fun cancelCloneProject(cloneableProject: CloneableProject) {
+      val taskInfo = cloneableProject.cloneTaskInfo
       val exitCode = Messages.showYesNoDialog(
-        IdeBundle.message("clone.project.stop", cloneableProject.cloneTaskInfo.sourceRepositoryURL),
-        IdeBundle.message("clone.project.stop.title"),
+        taskInfo.stopDescription,
+        taskInfo.stopTitle,
         IdeBundle.message("action.stop"),
         IdeBundle.message("button.cancel"),
         Messages.getQuestionIcon()
@@ -429,16 +430,16 @@ class RecentProjectFilteringTree(
             }
             CloneStatus.FAILURE -> {
               projectCloneStatusPanel.isVisible = false
-              projectPathLabel.text = taskInfo.failureTitle
+              projectPathLabel.text = taskInfo.failedTitle
             }
             CloneStatus.CANCEL -> {
               projectCloneStatusPanel.isVisible = false
-              projectPathLabel.text = taskInfo.cancelTitle
+              projectPathLabel.text = taskInfo.canceledTitle
             }
           }
         }
 
-        toolTipText = IdeBundle.message("clone.project.tooltip")
+        toolTipText = taskInfo.actionTooltipText
 
         return this
       }
