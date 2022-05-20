@@ -462,7 +462,7 @@ final class BuildContextImpl implements BuildContext {
       jvmArgs.add('-Dsplash=true')
     }
 
-    jvmArgs.addAll(OpenedPackages.getCommandLineArguments(this))
+    jvmArgs.addAll(BuildHelperKt.getCommandLineArgumentsForOpenPackages(this))
 
     return jvmArgs
   }

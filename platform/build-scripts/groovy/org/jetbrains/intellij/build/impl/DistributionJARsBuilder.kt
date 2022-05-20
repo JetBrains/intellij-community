@@ -764,7 +764,7 @@ class DistributionJARsBuilder {
       }
 
       bulkZipWithPrefix(commonSourceDir = stageDir, items = dirToJar, compress = compressPluginArchive)
-      BuiltInHelpPlugin.helpPlugin(context, defaultPluginVersion)?.let { helpPlugin ->
+      buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)?.let { helpPlugin ->
         val spec = buildHelpPlugin(helpPlugin = helpPlugin,
                                    pluginsToPublishDir = stageDir,
                                    targetDir = autoUploadingDir,

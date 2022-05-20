@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
-import org.jetbrains.intellij.build.OpenedPackages.getCommandLineArguments
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.intellij.build.io.runProcess
@@ -456,7 +455,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       systemProperties.put("intellij.build.test.patterns", causalProfilingOptions.testClass.replace(".", "\\."))
       jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
     }
-    jvmArgs.addAll(getCommandLineArguments(context))
+    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(context))
     if (suspendDebugProcess) {
       context.messages.info(
         "\n------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------\n" +

@@ -13,7 +13,6 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.OpenedPackages.getCommandLineArguments
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
@@ -91,7 +90,7 @@ fun runJava(context: CompilationContext,
             onError: (() -> Unit)? = null) {
   runJava(mainClass = mainClass,
           args = args,
-          jvmArgs = getCommandLineArguments(context) + jvmArgs,
+          jvmArgs = getCommandLineArgumentsForOpenPackages(context) + jvmArgs,
           classPath = classPath,
           javaExe = context.stableJavaExecutable,
           logger = context.messages,
@@ -118,7 +117,7 @@ fun invokeAllSettled(tasks: List<ForkJoinTask<*>>) {
   joinAllSettled(tasks)
 }
 
-fun joinAllSettled(tasks: List<ForkJoinTask<*>>) {
+private fun joinAllSettled(tasks: List<ForkJoinTask<*>>) {
   if (tasks.isEmpty()) {
     return
   }
@@ -232,4 +231,11 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext,
     Files.createDirectories(configDir)
     Files.writeString(configDir.resolve("disabled_plugins.txt"), java.lang.String.join("\n", toDisable))
   }
+}
+
+/**
+ * @return List of JVM args for opened packages (JBR17+) in a format `--add-opens=PACKAGE=ALL-UNNAMED`
+ */
+fun getCommandLineArgumentsForOpenPackages(context: CompilationContext): List<String> {
+  return Files.readAllLines(context.paths.communityHomeDir.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt"))
 }
