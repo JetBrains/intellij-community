@@ -21,7 +21,7 @@ class ValueSourcesTest {
   void testWithStringValues(String s) { }
 
   @ParameterizedTest
-  @ValueSource(booleans = {<warning descr="No implicit conversion found to convert 'boolean' type to 'int' type">false</warning>})
+  @ValueSource(booleans = {<warning descr="No implicit conversion found to convert 'boolean' to 'int'">false</warning>})
   void testWithBooleanSource(int argument) { }
 
   @ParameterizedTest
@@ -77,7 +77,7 @@ class ParameterizedTestsDemo {
   void testWithParamsNoSource(int i) { }
 
   @ParameterizedTest
-  @EnumSource(<warning descr="No implicit conversion found to convert 'E' type to 'int' type">E.class</warning>)
+  @EnumSource(<warning descr="No implicit conversion found to convert 'E' to 'int'">E.class</warning>)
   void testWithEnumSource(int i) { }
 
   @ParameterizedTest
