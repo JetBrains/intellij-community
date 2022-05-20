@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.caches.resolve.util
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.context.GlobalContextImpl
-import org.jetbrains.kotlin.idea.project.libraryToSourceAnalysisEnabled
-import org.jetbrains.kotlin.idea.project.useCompositeAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.useCompositeAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 import org.jetbrains.kotlin.storage.ExceptionTracker
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
@@ -30,7 +30,7 @@ private fun GlobalContextImpl.contextWithNewLockAndCompositeExceptionTracker(deb
 }
 
 internal fun GlobalContextImpl.contextWithCompositeExceptionTracker(project: Project, debugName: String): GlobalContextImpl =
-    if (project.useCompositeAnalysis || project.libraryToSourceAnalysisEnabled) {
+    if (project.useCompositeAnalysis || project.useLibraryToSourceAnalysis) {
         this.contextWithCompositeExceptionTracker(debugName)
     } else {
         this.contextWithNewLockAndCompositeExceptionTracker(debugName)

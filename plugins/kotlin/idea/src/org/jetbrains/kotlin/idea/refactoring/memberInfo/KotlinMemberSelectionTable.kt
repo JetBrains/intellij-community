@@ -7,7 +7,7 @@ import com.intellij.refactoring.classMembers.MemberInfoModel
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable
 import com.intellij.ui.RowIcon
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinIconProviderBase
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -49,7 +49,7 @@ class KotlinMemberSelectionTable(
     }
 
     override fun setVisibilityIcon(memberInfo: KotlinMemberInfo, icon: RowIcon) {
-        icon.setIcon(KotlinIconProviderBase.getVisibilityIcon(memberInfo.member.modifierList), 1)
+        icon.setIcon(KotlinIconProvider.getVisibilityIcon(memberInfo.member.modifierList), 1)
     }
 
     override fun getOverrideIcon(memberInfo: KotlinMemberInfo): Icon? {

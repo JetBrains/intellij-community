@@ -6,7 +6,7 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
-import org.jetbrains.kotlin.idea.base.facet.platform
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import org.jetbrains.kotlin.platform.isCommon

@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PackageOracle
 import org.jetbrains.kotlin.analyzer.PackageOracleFactory
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.caches.project.projectSourceModules
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isSubpackageOf
@@ -34,7 +34,7 @@ class IdePackageOracleFactory(val project: Project) : PackageOracleFactory {
     }
 
     private class JavaPackagesOracle(moduleInfo: IdeaModuleInfo, project: Project) : PackageOracle {
-        private val scope = moduleInfo.contentScope()
+        private val scope = moduleInfo.contentScope
         private val facade: KotlinJavaPsiFacade = project.service()
 
         override fun packageExists(fqName: FqName) = facade.findPackage(fqName.asString(), scope) != null

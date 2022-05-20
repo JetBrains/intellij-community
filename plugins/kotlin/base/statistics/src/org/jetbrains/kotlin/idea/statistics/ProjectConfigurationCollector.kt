@@ -11,10 +11,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
-import org.jetbrains.kotlin.idea.base.facet.platform
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
+import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.isCommon
@@ -62,7 +62,7 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     }
 
     private fun getBuildSystemType(it: Module): String {
-        val buildSystem = it.getBuildSystemType()
+        val buildSystem = it.buildSystemType
         return when {
             buildSystem == BuildSystemType.JPS -> "JPS"
             buildSystem.toString().toLowerCase().contains("maven") -> "Maven"

@@ -9,7 +9,12 @@ interface KotlinFacetSettingsProvider {
     fun getInitializedSettings(module: Module): KotlinFacetSettings
 
     companion object {
-        fun getInstance(project: Project): KotlinFacetSettingsProvider? = project.takeUnless(Project::isDisposed)
-            ?.getService(KotlinFacetSettingsProvider::class.java)
+        fun getInstance(project: Project): KotlinFacetSettingsProvider? {
+            if (project.isDisposed) {
+                return null
+            }
+
+            return project.getService(KotlinFacetSettingsProvider::class.java)
+        }
     }
 }

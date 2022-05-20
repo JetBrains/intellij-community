@@ -7,9 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleDependencyProviderExtension
-import org.jetbrains.kotlin.idea.project.libraryToSourceAnalysisEnabled
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 
 class ResolutionAnchorModuleDependencyProviderExtension(private val project: Project) : ModuleDependencyProviderExtension {
@@ -35,7 +36,7 @@ class ResolutionAnchorModuleDependencyProviderExtension(private val project: Pro
      * This extension provides missing dependencies from source-dependent library dependencies only to source modules.
      */
     override fun processAdditionalDependencyModules(module: Module, processor: Processor<Module>) {
-        if (!project.libraryToSourceAnalysisEnabled) return
+        if (!project.useLibraryToSourceAnalysis) return
 
         val resolutionAnchorDependencies = HashSet<ModuleSourceInfo>()
         ModuleRootManager.getInstance(module).orderEntries().recursively().forEachLibrary { library ->

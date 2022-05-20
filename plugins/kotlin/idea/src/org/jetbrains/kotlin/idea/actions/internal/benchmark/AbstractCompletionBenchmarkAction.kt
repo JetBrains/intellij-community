@@ -24,8 +24,8 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.completion.CompletionBenchmarkSink
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.util.EDT
@@ -73,7 +73,7 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
             val scope = GlobalSearchScope.allScope(project)
 
             fun KtFile.isUsableForBenchmark(): Boolean {
-                val moduleInfo = this.getNullableModuleInfo() ?: return false
+                val moduleInfo = this.moduleInfoOrNull ?: return false
                 if (this.isCompiled || !this.isWritable || this.isScript()) return false
                 return moduleInfo.moduleOrigin == ModuleOrigin.MODULE
             }

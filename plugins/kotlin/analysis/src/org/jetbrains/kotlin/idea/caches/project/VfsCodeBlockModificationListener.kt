@@ -4,18 +4,16 @@ package org.jetbrains.kotlin.idea.caches.project
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriority
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class VfsCodeBlockModificationListener: StartupActivity.Background {
     override fun runActivity(project: Project) {
@@ -24,9 +22,7 @@ class VfsCodeBlockModificationListener: StartupActivity.Background {
         val vfsEventsListener = AsyncVfsEventsListener { events: List<VFileEvent> ->
             val projectRelatedVfsFileChange = events.any { event ->
                 val file = event.takeIf { it.isFromRefresh || it is VFileContentChangeEvent }?.file ?: return@any false
-                runInReadActionWithWriteActionPriority {
-                    ProjectRootsUtil.isProjectSourceFile(project, file)
-                } ?: true
+                return@any runInReadActionWithWriteActionPriority { RootKindFilter.projectSources.matches(project, file) } ?: true
             }
             if (projectRelatedVfsFileChange) {
                 if (isDispatchThread()) {

@@ -12,9 +12,9 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
-import org.jetbrains.kotlin.idea.project.platform
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil.findFilesWithExactPackage
 import org.jetbrains.kotlin.idea.stubindex.StaticFacadeIndexUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -40,11 +40,11 @@ object DebuggerUtils {
     ): KtFile? {
         return runReadAction {
             findSourceFileForClass(
-                project,
-                listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)),
-                className,
-                fileName,
-                location
+              project,
+              listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)),
+              className,
+              fileName,
+              location
             )
         }
     }

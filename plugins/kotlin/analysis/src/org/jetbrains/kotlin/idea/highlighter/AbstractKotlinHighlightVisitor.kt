@@ -28,11 +28,12 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.diagnostics.rendering.parameters
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -159,10 +160,10 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
     }
 
     private fun annotateDuplicateJvmSignature(file: KtFile, holder: HighlightInfoHolder, otherDiagnostics: Diagnostics) {
-        if (!(ProjectRootsUtil.isInProjectSource(file) && TargetPlatformDetector.getPlatform(file).isJvm())) return
+        if (!RootKindFilter.projectSources.matches(file) || !file.platform.isJvm()) return
 
         val duplicateJvmSignatureAnnotator =
-            DuplicateJvmSignatureAnnotator(file, holder, otherDiagnostics, file.getModuleInfo().contentScope())
+            DuplicateJvmSignatureAnnotator(file, holder, otherDiagnostics, file.moduleInfo.contentScope)
         duplicateJvmSignatureAnnotator.visit()
     }
 

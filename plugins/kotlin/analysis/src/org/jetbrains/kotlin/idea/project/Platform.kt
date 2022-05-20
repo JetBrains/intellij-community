@@ -2,247 +2,40 @@
 
 package org.jetbrains.kotlin.idea.project
 
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootModificationTracker
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.idea.base.facet.platform as platformNew
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
-import org.jetbrains.kotlin.idea.compiler.configuration.*
-import org.jetbrains.kotlin.idea.facet.getLibraryLanguageLevel
-import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.*
-import org.jetbrains.kotlin.platform.impl.isCommon
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.UserDataProperty
-import java.io.File
-
-val KtElement.platform: TargetPlatform get() = TargetPlatformDetector.getPlatform(containingKtFile)
+import org.jetbrains.kotlin.idea.base.facet.platform.platform as platformNew
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings as languageVersionSettingsNew
 
 val KtElement.builtIns: KotlinBuiltIns get() = getResolutionFacade().moduleDescriptor.builtIns
 
-var KtFile.forcedTargetPlatform: TargetPlatform? by UserDataProperty(Key.create("FORCED_TARGET_PLATFORM"))
-
-fun Project.isKotlinLanguageVersionConfigured(): Boolean =
-    KotlinCommonCompilerArgumentsHolder.getInstance(this).isKotlinLanguageVersionConfigured()
-
-private fun KotlinCommonCompilerArgumentsHolder.isKotlinLanguageVersionConfigured(): Boolean = with(settings) {
-    languageVersion != null && apiVersion != null
-}
-
-fun Module.getAndCacheLanguageLevelByDependencies(): LanguageVersion {
-    val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)
-    val languageLevel = getLibraryLanguageLevel(this, null, facetSettings?.targetPlatform?.idePlatformKind)
-
-    // Preserve inferred version in facet/project settings
-    if (facetSettings == null || facetSettings.useProjectSettings) {
-        KotlinCommonCompilerArgumentsHolder.getInstance(project).takeUnless { it.isKotlinLanguageVersionConfigured() }?.update {
-            if (languageVersion == null) {
-                languageVersion = languageLevel.versionString
-            }
-
-            if (apiVersion == null) {
-                apiVersion = languageLevel.versionString
-            }
-        }
-    } else {
-        with(facetSettings) {
-            if (this.languageLevel == null) {
-                this.languageLevel = languageLevel
-            }
-
-            if (this.apiLevel == null) {
-                this.apiLevel = languageLevel
-            }
-        }
-    }
-
-    return languageLevel
-}
-
-/**
- * Returns stable binary name of module from the *Kotlin* point of view.
- * Having correct module name is critical for compiler, e.g. for 'internal'-visibility
- * mangling (see KT-23668).
- *
- * Note that build systems and IDEA have their own module systems and, potentially, their
- * names can be different from Kotlin module name (though this is the rare case).
- */
-fun Module.getStableName(): Name {
-    // Here we check ideal situation: we have a facet, and it has 'moduleName' argument.
-    // This should be the case for the most environments
-    val settingsProvider = KotlinFacetSettingsProvider.getInstance(project)
-    val explicitNameFromArguments = when (val arguments = settingsProvider?.getInitializedSettings(this)?.mergedCompilerArguments) {
-        is K2JVMCompilerArguments -> arguments.moduleName
-        is K2JSCompilerArguments -> arguments.outputFile?.let { FileUtil.getNameWithoutExtension(File(it)) }
-        is K2MetadataCompilerArguments -> arguments.moduleName
-        else -> null // Actually, only 'null' possible here
-    }
-
-    // Here we handle pessimistic case: no facet is found or it declares no 'moduleName'
-    // We heuristically assume that name of Module in IDEA is the same as Kotlin module (which may be not the case)
-    val stableNameApproximation = explicitNameFromArguments ?: name
-
-    return Name.special("<$stableNameApproximation>")
-}
-
-@JvmOverloads
-fun Project.getLanguageVersionSettings(
-    contextModule: Module? = null,
-    javaTypeEnhancementState: JavaTypeEnhancementState? = null,
-    inferredLanguageFeatures: Map<LanguageFeature, LanguageFeature.State> = emptyMap()
-): LanguageVersionSettings {
-    val kotlinFacetSettings = contextModule?.let {
-        KotlinFacetSettingsProvider.getInstance(this)?.getInitializedSettings(it)
-    }
-
-    val arguments = kotlinFacetSettings?.compilerArguments ?: KotlinCommonCompilerArgumentsHolder.getInstance(this).settings
-    val languageVersion = kotlinFacetSettings?.languageLevel
-        ?: LanguageVersion.fromVersionString(arguments.languageVersion)
-        ?: contextModule?.getAndCacheLanguageLevelByDependencies()
-        ?: KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
-
-    val apiVersion = ApiVersion.createByLanguageVersion(LanguageVersion.fromVersionString(arguments.apiVersion) ?: languageVersion)
-    val compilerSettings = KotlinCompilerSettings.getInstance(this).settings
-
-    val additionalArguments: CommonCompilerArguments = parseArguments(
-        DefaultIdeTargetPlatformKindProvider.defaultPlatform,
-        compilerSettings.additionalArgumentsAsList,
-    )
-
-    val extraLanguageFeatures = additionalArguments.configureLanguageFeatures(MessageCollector.NONE) + inferredLanguageFeatures
-
-    val extraAnalysisFlags = additionalArguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion).apply {
-        if (javaTypeEnhancementState != null) put(JvmAnalysisFlags.javaTypeEnhancementState, javaTypeEnhancementState)
-        initIDESpecificAnalysisSettings(this@getLanguageVersionSettings)
-    }
-
-    return LanguageVersionSettingsImpl(
-        languageVersion = languageVersion,
-        apiVersion = apiVersion,
-        analysisFlags = arguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion) + extraAnalysisFlags,
-        specificFeatures = arguments.configureLanguageFeatures(MessageCollector.NONE) + extraLanguageFeatures,
-    )
-}
-
-private val LANGUAGE_VERSION_SETTINGS = Key.create<LanguageVersionSettings>("LANGUAGE_VERSION_SETTINGS")
-
-val Module.languageVersionSettings: LanguageVersionSettings
-    get() = getUserData(LANGUAGE_VERSION_SETTINGS) ?: CachedValuesManager.getManager(project).getCachedValue(this) {
-        CachedValueProvider.Result.create(
-            computeLanguageVersionSettings(),
-            KotlinCompilerSettingsTracker.getInstance(project),
-            ProjectRootModificationTracker.getInstance(project),
-        )
-    }
-
-@TestOnly
-fun <T> Module.withLanguageVersionSettings(value: LanguageVersionSettings, body: () -> T): T = try {
-    putUserData(LANGUAGE_VERSION_SETTINGS, value)
-    body()
-} finally {
-    putUserData(LANGUAGE_VERSION_SETTINGS, null)
-}
-
-private fun Module.shouldUseProjectLanguageVersionSettings(): Boolean {
-    val facetSettingsProvider = KotlinFacetSettingsProvider.getInstance(project) ?: return true
-    return facetSettingsProvider.getSettings(this) == null || facetSettingsProvider.getInitializedSettings(this).useProjectSettings
-}
-
-private fun Module.computeLanguageVersionSettings(): LanguageVersionSettings {
-    if (shouldUseProjectLanguageVersionSettings()) return project.getLanguageVersionSettings()
-
-    val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)
-
-
-    val languageVersion: LanguageVersion
-    val apiVersion: LanguageVersion
-
-    if (facetSettings != null) {
-        languageVersion = facetSettings.languageLevel ?: getAndCacheLanguageLevelByDependencies()
-        apiVersion = facetSettings.apiLevel ?: languageVersion
-    } else {
-        languageVersion = getAndCacheLanguageLevelByDependencies()
-        apiVersion = languageVersion
-    }
-
-    val languageFeatures = facetSettings?.mergedCompilerArguments?.configureLanguageFeatures(MessageCollector.NONE)?.apply {
-        configureMultiplatformSupport(facetSettings.targetPlatform?.idePlatformKind, this@computeLanguageVersionSettings)
-    }.orEmpty()
-
-    val analysisFlags = facetSettings
-        ?.mergedCompilerArguments
-        ?.configureAnalysisFlags(MessageCollector.NONE, languageVersion)
-        ?.apply { initIDESpecificAnalysisSettings(project) }
-        .orEmpty()
-
-    return LanguageVersionSettingsImpl(
-        languageVersion,
-        ApiVersion.createByLanguageVersion(apiVersion),
-        analysisFlags,
-        languageFeatures
-    )
-}
-
-private fun MutableMap<AnalysisFlag<*>, Any>.initIDESpecificAnalysisSettings(project: Project) {
-    if (KotlinLibraryToSourceAnalysisComponent.isEnabled(project)) {
-        put(AnalysisFlags.libraryToSourceAnalysis, true)
-    }
-
-    put(AnalysisFlags.ideMode, true)
-}
-
 @Deprecated(
-    "Use 'import org.jetbrains.kotlin.idea.base.facet.platform' instead.",
+    "Use 'org.jetbrains.kotlin.idea.base.facet.platform.getPlatform' instead.",
     ReplaceWith("platform", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
     level = DeprecationLevel.ERROR
 )
 @Suppress("unused")
-val Module.platform: TargetPlatform?
+val Module.platform: TargetPlatform
     get() = platformNew
 
-val Module.isHMPPEnabled: Boolean
-    get() = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)?.mppVersion?.isHmpp ?: false
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.facet.platform.getPlatform' instead.",
+    ReplaceWith("platform", "org.jetbrains.kotlin.idea.base.facet.platform.getPlatform.platform")
+)
+@Suppress("unused")
+val KtElement.platform: TargetPlatform
+    get() = platformNew
 
-private val Module.implementsCommonModule: Boolean
-    get() = !platformNew.isCommon() // FIXME(dsavvinov): this doesn't seems right, in multilevel-MPP 'common' modules can implement other commons
-            && ModuleRootManager.getInstance(this).dependencies.any { it.platformNew.isCommon() }
-
-private fun parseArguments(
-    platformKind: TargetPlatform,
-    additionalArguments: List<String>
-): CommonCompilerArguments {
-    return platformKind.createArguments { parseCommandLineArguments(additionalArguments, this) }
-}
-
-fun MutableMap<LanguageFeature, LanguageFeature.State>.configureMultiplatformSupport(
-    platformKind: IdePlatformKind?,
-    module: Module?
-) {
-    if (platformKind.isCommon || module?.implementsCommonModule == true) {
-        put(LanguageFeature.MultiPlatformProjects, LanguageFeature.State.ENABLED)
-    }
-}
-
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings' instead",
+    ReplaceWith("languageVersionSettings", "org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings"),
+    level = DeprecationLevel.ERROR
+)
+@Suppress("unused")
 val PsiElement.languageVersionSettings: LanguageVersionSettings
-    get() = if (project.serviceOrNull<ProjectFileIndex>() == null) {
-        LanguageVersionSettingsImpl.DEFAULT
-    } else {
-        IDELanguageSettingsProvider.getLanguageVersionSettings(this.getModuleInfo(), project)
-    }
+    get() = languageVersionSettingsNew

@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.caches.resolve.util
 
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace

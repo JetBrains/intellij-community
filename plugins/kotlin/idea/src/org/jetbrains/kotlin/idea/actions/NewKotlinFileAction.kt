@@ -30,10 +30,10 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.toModuleGroup
-import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -102,7 +102,7 @@ class NewKotlinFileAction : CreateFileFromTemplateAction(
                 "Kotlin Interface"
             )
 
-        if (project.getLanguageVersionSettings().supportsFeature(LanguageFeature.SealedInterfaces)) {
+        if (project.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) {
             builder.addKind(
                 KotlinBundle.message("action.new.file.dialog.sealed.interface.title"),
                 KotlinIcons.INTERFACE,

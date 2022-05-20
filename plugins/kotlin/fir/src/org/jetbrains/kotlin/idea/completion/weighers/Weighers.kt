@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
-import org.jetbrains.kotlin.idea.project.findAnalyzerServices
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -64,7 +64,7 @@ internal class WeighingContext private constructor(
         ): WeighingContext = createWeighingContext(null, null, emptyList(), fakeCompletionFile)
 
         private fun KtFile.getDefaultImportPaths(): Set<ImportPath> {
-            return TargetPlatformDetector.getPlatform(this).findAnalyzerServices(project)
+            return this.platform.findAnalyzerServices(project)
                 .getDefaultImports(languageVersionSettings, true).toSet()
         }
 

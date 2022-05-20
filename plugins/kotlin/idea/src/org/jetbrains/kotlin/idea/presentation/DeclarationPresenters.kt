@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.KotlinIconProviderBase
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -65,7 +65,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
     }
 
     override fun getIcon(unused: Boolean): Icon? {
-        val instance = IconProvider.EXTENSION_POINT_NAME.findFirstSafe { it is KotlinIconProviderBase }
+        val instance = IconProvider.EXTENSION_POINT_NAME.findFirstSafe { it is KotlinIconProvider }
         return instance?.getIcon(declaration, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
     }
 }

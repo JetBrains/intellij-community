@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.analyzer.common.CommonAnalysisParameters
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -15,15 +14,17 @@ import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.context.withModule
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
+import org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.CompositeAnalyzerServices
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
-import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
+import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
-import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
-import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
-import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -110,12 +111,12 @@ class IdeaResolverForProject(
     }
 
     override fun modulesContent(module: IdeaModuleInfo): ModuleContent<IdeaModuleInfo> =
-        ModuleContent(module, syntheticFilesByModule[module] ?: emptyList(), getModuleContentScope(module))
+        ModuleContent(module, syntheticFilesByModule[module] ?: emptyList(), module.moduleContentScope)
 
     override fun builtInsForModule(module: IdeaModuleInfo): KotlinBuiltIns = builtInsCache.getOrCreateIfNeeded(module)
 
     override fun createResolverForModule(descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo): ResolverForModule {
-        val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), getModuleContentScope(moduleInfo))
+        val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), moduleInfo.moduleContentScope)
 
         val languageVersionSettings =
             IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project)
@@ -132,15 +133,6 @@ class IdeaResolverForProject(
         )
     }
 
-    private fun getModuleContentScope(moduleInfo: IdeaModuleInfo): GlobalSearchScope {
-        val baseScope = moduleInfo.contentScope()
-        return when (moduleInfo) {
-            is ScriptModuleInfo -> KotlinScriptSearchScope(moduleInfo.project, baseScope)
-            is ScriptDependenciesInfo -> KotlinScriptSearchScope(moduleInfo.project, baseScope)
-            else -> baseScope
-        }
-    }
-
     private fun getResolverForModuleFactory(moduleInfo: IdeaModuleInfo): ResolverForModuleFactory {
         val platform = moduleInfo.platform
 
@@ -148,7 +140,7 @@ class IdeaResolverForProject(
             packagePartProviderFactory = { IDEPackagePartProvider(it.moduleContentScope) },
             moduleByJavaClass = { javaClass: JavaClass ->
                 val psiClass = (javaClass as JavaClassImpl).psi
-                psiClass.getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform)?.platformModule ?: psiClass.getNullableModuleInfo()
+                psiClass.getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform)?.platformModule ?: psiClass.moduleInfoOrNull
             },
             resolverForReferencedModule = { targetModuleInfo, referencingModuleInfo ->
                 require(targetModuleInfo is IdeaModuleInfo && referencingModuleInfo is IdeaModuleInfo) {

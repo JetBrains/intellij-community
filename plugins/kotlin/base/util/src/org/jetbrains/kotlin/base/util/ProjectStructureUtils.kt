@@ -2,6 +2,7 @@
 @file:JvmName("ProjectStructureUtils")
 package org.jetbrains.kotlin.base.util
 
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
@@ -9,6 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import java.nio.file.Paths
 import org.jetbrains.annotations.ApiStatus
 
 fun Module.isAndroidModule(modelsProvider: IdeModifiableModelsProvider? = null): Boolean {
@@ -29,4 +33,23 @@ fun Project.invalidateProjectRoots() {
 @ApiStatus.Internal
 fun Project.invalidateProjectRoots(info: RootsChangeRescanningInfo) {
     ProjectRootManagerEx.getInstanceEx(this).makeRootsChange(EmptyRunnable.INSTANCE, info)
+}
+
+val VirtualFile.parentsWithSelf: Sequence<VirtualFile>
+    get() = generateSequence(this) { it.parent }
+
+fun getOutsiderFileOrigin(project: Project, file: VirtualFile): VirtualFile? {
+    if (!OutsidersPsiFileSupport.isOutsiderFile(file)) {
+        return null
+    }
+
+    val originalFilePath = OutsidersPsiFileSupport.getOriginalFilePath(file) ?: return null
+    val originalFile = VfsUtil.findFile(Paths.get(originalFilePath), false) ?: return null
+
+    // TODO possibly change to 'GlobalSearchScope.projectScope(project)' check
+    val projectDir = project.baseDir
+
+    return originalFile.parentsWithSelf
+        .takeWhile { it != projectDir }
+        .firstOrNull { it.exists() }
 }

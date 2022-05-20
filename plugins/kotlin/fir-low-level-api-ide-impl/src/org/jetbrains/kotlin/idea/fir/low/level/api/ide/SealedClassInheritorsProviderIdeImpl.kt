@@ -11,12 +11,12 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.base.util.module
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.isSealed
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.idea.util.classIdIfNonLocal
-import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade

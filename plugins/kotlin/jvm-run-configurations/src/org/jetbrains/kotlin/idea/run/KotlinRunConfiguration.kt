@@ -43,9 +43,10 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getStartClassFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -312,7 +313,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             val virtualFileForMainFun = findMainClassFile.virtualFile ?: throw CantRunException(noFunctionFoundMessage(findMainClassFile))
             val fileIndex = ModuleRootManager.getInstance(classModule).fileIndex
             if (fileIndex.isInSourceContent(virtualFileForMainFun)) {
-                return if (fileIndex.isInTestSourceContentKotlinAware(virtualFileForMainFun)) {
+                return if (fileIndex.getKotlinSourceRootType(virtualFileForMainFun) == TestSourceKotlinRootType) {
                     JavaParameters.JDK_AND_CLASSES_AND_TESTS
                 } else {
                     JavaParameters.JDK_AND_CLASSES

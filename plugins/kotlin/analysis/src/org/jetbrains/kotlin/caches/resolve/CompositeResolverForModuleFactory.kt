@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.frontend.di.configureModule
 import org.jetbrains.kotlin.frontend.di.configureStandardResolveComponents
 import org.jetbrains.kotlin.frontend.java.di.configureJavaSpecificComponents
 import org.jetbrains.kotlin.frontend.java.di.initializeJavaSpecificComponents
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.CompositeAnalyzerServices
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolver
 import org.jetbrains.kotlin.load.java.lazy.ModuleClassResolverImpl
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.isJs
@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.resolve.*
-import org.jetbrains.kotlin.resolve.checkers.ExperimentalMarkerDeclarationAnnotationChecker
 import org.jetbrains.kotlin.resolve.jvm.JavaDescriptorResolver
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
 import org.jetbrains.kotlin.resolve.jvm.extensions.PackageFragmentProviderExtension
@@ -242,51 +241,5 @@ class CompositeResolverForModuleFactory(
         if (targetPlatform.has<JvmPlatform>()) {
             initializeJavaSpecificComponents(trace)
         }
-    }
-}
-
-class CompositeAnalyzerServices(val services: List<PlatformDependentAnalyzerServices>) : PlatformDependentAnalyzerServices() {
-    override val platformConfigurator: PlatformConfigurator = CompositePlatformConfigurator(services.map { it.platformConfigurator })
-
-    override fun computePlatformSpecificDefaultImports(storageManager: StorageManager, result: MutableList<ImportPath>) {
-        val intersectionOfDefaultImports = services.map { service ->
-            mutableListOf<ImportPath>()
-                .apply { service.computePlatformSpecificDefaultImports(storageManager, this) }
-                .toSet()
-        }.safeIntersect()
-
-        result.addAll(intersectionOfDefaultImports)
-    }
-
-    override val defaultLowPriorityImports: List<ImportPath> = services.map { it.defaultLowPriorityImports.toSet() }.safeIntersect()
-
-    override val excludedImports: List<FqName> = services.map { it.excludedImports.toSet() }.safeUnion()
-
-    private fun <T> List<Set<T>>.safeUnion(): List<T> =
-        if (isEmpty()) emptyList() else reduce { first, second -> first.union(second) }.toList()
-
-    private fun <T> List<Set<T>>.safeIntersect(): List<T> =
-        if (isEmpty()) emptyList() else reduce { first, second -> first.intersect(second) }.toList()
-}
-
-class CompositePlatformConfigurator(private val componentConfigurators: List<PlatformConfigurator>) : PlatformConfigurator {
-    override val platformSpecificContainer: StorageComponentContainer
-        get() = composeContainer(this::class.java.simpleName) {
-            configureDefaultCheckers()
-            for (configurator in componentConfigurators) {
-                (configurator as PlatformConfiguratorBase).configureExtensionsAndCheckers(this)
-            }
-        }
-
-    override fun configureModuleComponents(container: StorageComponentContainer) {
-        componentConfigurators.forEach { it.configureModuleComponents(container) }
-    }
-
-    override fun configureModuleDependentCheckers(container: StorageComponentContainer) {
-        // We (ab)use the fact that currently, platforms don't use that method, so the only injected compnent will be
-        // ExperimentalMarkerDeclarationAnnotationChecker.
-        // Unfortunately, it is declared in base class, so repeating call to 'configureModuleDependentCheckers' will lead
-        // to multiple registrrations.
-        container.useImpl<ExperimentalMarkerDeclarationAnnotationChecker>()
     }
 }

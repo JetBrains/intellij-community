@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.configuration.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.inspections.migration.DEPRECATED_COROUTINES_LIB
 import org.jetbrains.kotlin.idea.inspections.migration.DeprecatedForKotlinLibInfo
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.migration.MigrationFix
 import org.jetbrains.kotlin.idea.versions.LibInfo
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType

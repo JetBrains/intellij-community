@@ -17,6 +17,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -85,7 +86,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                                     actions.reload()
                                 }
 
-                                createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.enable.auto.reload")) {
+                                createActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
                                     actions.enableAutoReload()
                                 }
 
@@ -149,7 +150,7 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
                             actions.reload()
                         }
 
-                        createActionLabel(KotlinIdeaCoreBundle.message("notification.action.text.enable.auto.reload")) {
+                        createActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
                             actions.enableAutoReload()
                         }
                     } else {

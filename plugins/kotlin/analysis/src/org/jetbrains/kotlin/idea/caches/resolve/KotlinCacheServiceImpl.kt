@@ -28,18 +28,27 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.context.GlobalContext
 import org.jetbrains.kotlin.context.GlobalContextImpl
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.useCompositeAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.util.GlobalFacadeModuleFilters
 import org.jetbrains.kotlin.idea.caches.resolve.util.contextWithCompositeExceptionTracker
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
-import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
-import org.jetbrains.kotlin.idea.project.useCompositeAnalysis
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.hasSuppressAnnotation
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -68,11 +77,13 @@ fun createPlatformAnalysisSettings(
     platform: TargetPlatform,
     sdk: Sdk?,
     isAdditionalBuiltInFeaturesSupported: Boolean
-) = if (project.useCompositeAnalysis)
-    CompositeAnalysisSettings
-else
-    PlatformAnalysisSettingsImpl(platform, sdk, isAdditionalBuiltInFeaturesSupported)
-
+): PlatformAnalysisSettings {
+    return if (project.useCompositeAnalysis) {
+        CompositeAnalysisSettings
+    } else {
+        PlatformAnalysisSettingsImpl(platform, sdk, isAdditionalBuiltInFeaturesSupported)
+    }
+}
 
 class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     override fun getResolutionFacade(element: KtElement): ResolutionFacade {
@@ -80,11 +91,11 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         if (file.isScript()) {
             // Scripts support seem to modify some of the important aspects via file user data without triggering PsiModificationTracker.
             // If in doubt, run ScriptDefinitionsOrderTestGenerated
-            val settings = file.getModuleInfo().platformSettings(TargetPlatformDetector.getPlatform(file))
+            val settings = file.moduleInfo.platformSettings(file.platform)
             return getFacadeToAnalyzeFile(file, settings)
         } else {
             return CachedValuesManager.getCachedValue(file) {
-                val settings = file.getModuleInfo().platformSettings(TargetPlatformDetector.getPlatform(file))
+                val settings = file.moduleInfo.platformSettings(file.platform)
                 CachedValueProvider.Result(
                     getFacadeToAnalyzeFile(file, settings),
                     PsiModificationTracker.MODIFICATION_COUNT
@@ -97,11 +108,11 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val files = getFilesForElements(elements)
 
         if (files.size == 1) return getResolutionFacade(files.single())
-        val platform = TargetPlatformDetector.getPlatform(files.first())
+        val platform = files.first().platform
 
         // it is quite suspicious that we take first().moduleInfo, while there might be multiple files of different kinds (e.g.
         // some might be "special", see case chasing in [getFacadeToAnalyzeFiles] later
-        val settings = files.first().getModuleInfo().platformSettings(platform)
+        val settings = files.first().moduleInfo.platformSettings(platform)
         return getFacadeToAnalyzeFiles(files, settings)
     }
 
@@ -113,7 +124,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     // logged as errors currently and require immediate attention.
     override fun getResolutionFacadeWithForcedPlatform(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade {
         val files = getFilesForElements(elements)
-        val moduleInfo = files.first().getModuleInfo()
+        val moduleInfo = files.first().moduleInfo
         val settings = PlatformAnalysisSettingsImpl(platform, moduleInfo.sdk, moduleInfo.supportsAdditionalBuiltInsMembers(project))
 
         if (!canGetFacadeWithForcedPlatform(elements, files, moduleInfo, platform)) {
@@ -133,10 +144,10 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     private fun canGetFacadeWithForcedPlatform(
-        elements: List<KtElement>,
-        files: List<KtFile>,
-        moduleInfo: IdeaModuleInfo,
-        platform: TargetPlatform
+      elements: List<KtElement>,
+      files: List<KtFile>,
+      moduleInfo: IdeaModuleInfo,
+      platform: TargetPlatform
     ): Boolean {
         val specialFiles = files.filterNotInProjectSource(moduleInfo)
         val scripts = specialFiles.filterScripts()
@@ -305,8 +316,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         explicitSettings: PlatformAnalysisSettings? = null
     ): ProjectResolutionFacade {
         // we assume that all files come from the same module
-        val targetPlatform = files.map { TargetPlatformDetector.getPlatform(it) }.toSet().single()
-        val specialModuleInfo = files.map(KtFile::getModuleInfo).toSet().single()
+        val targetPlatform = files.map { it.platform }.toSet().single()
+        val specialModuleInfo = files.map { it.moduleInfo }.toSet().single()
         val settings = explicitSettings ?: specialModuleInfo.platformSettings(specialModuleInfo.platform)
 
         // Dummy files created e.g. by J2K do not receive events.
@@ -318,11 +329,11 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             "$resolverForSpecialInfoName $specialModuleInfo for files ${files.joinToString { it.name }} for platform $targetPlatform"
 
         fun makeProjectResolutionFacade(
-            debugName: String,
-            globalContext: GlobalContextImpl,
-            reuseDataFrom: ProjectResolutionFacade? = null,
-            moduleFilter: (IdeaModuleInfo) -> Boolean = { true },
-            allModules: Collection<IdeaModuleInfo>? = null
+          debugName: String,
+          globalContext: GlobalContextImpl,
+          reuseDataFrom: ProjectResolutionFacade? = null,
+          moduleFilter: (IdeaModuleInfo) -> Boolean = { true },
+          allModules: Collection<IdeaModuleInfo>? = null
         ): ProjectResolutionFacade {
             return ProjectResolutionFacade(
                 debugName,
@@ -506,7 +517,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         }
 
     private fun getFacadeToAnalyzeFiles(files: Collection<KtFile>, settings: PlatformAnalysisSettings): ResolutionFacade {
-        val moduleInfo = files.first().getModuleInfo()
+        val moduleInfo = files.first().moduleInfo
         val specialFiles = files.filterNotInProjectSource(moduleInfo)
         val scripts = specialFiles.filterScripts()
         if (scripts.isNotEmpty()) {
@@ -523,8 +534,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     private fun getFacadeToAnalyzeFile(file: KtFile, settings: PlatformAnalysisSettings): ResolutionFacade {
-        val moduleInfo = file.getModuleInfo()
-        val specialFile = file.filterNotInProjectSource(moduleInfo)
+        val moduleInfo = file.moduleInfo
+        val specialFile = filterNotInProjectSource(file, moduleInfo)
 
         specialFile?.filterScript()?.let { script ->
             val scripts = setOf(script)
@@ -542,13 +553,13 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     override fun getResolutionFacadeByFile(file: PsiFile, platform: TargetPlatform): ResolutionFacade? {
-        if (!ProjectRootsUtil.isInProjectOrLibraryContent(file)) {
+        if (!RootKindFilter.everything.matches(file)) {
             return null
         }
 
         assert(file !is PsiCodeFragment)
 
-        val moduleInfo = file.getModuleInfo()
+        val moduleInfo = file.moduleInfo
         return getResolutionFacadeByModuleInfo(moduleInfo, platform)
     }
 
@@ -558,8 +569,8 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     private fun getResolutionFacadeByModuleInfoAndSettings(
-        moduleInfo: IdeaModuleInfo,
-        settings: PlatformAnalysisSettings
+      moduleInfo: IdeaModuleInfo,
+      settings: PlatformAnalysisSettings
     ): ResolutionFacade {
         val projectFacade = when (moduleInfo) {
             is ScriptDependenciesInfo.ForProject,
@@ -571,7 +582,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     override fun getResolutionFacadeByModuleInfo(moduleInfo: ModuleInfo, platform: TargetPlatform): ResolutionFacade? =
-        (moduleInfo as? IdeaModuleInfo)?.let { getResolutionFacadeByModuleInfo(it, platform) }
+      (moduleInfo as? IdeaModuleInfo)?.let { getResolutionFacadeByModuleInfo(it, platform) }
 
     override fun getResolutionFacadeByModuleInfo(moduleInfo: ModuleInfo, settings: PlatformAnalysisSettings): ResolutionFacade? {
         val ideaModuleInfo = moduleInfo as? IdeaModuleInfo ?: return null
@@ -579,13 +590,22 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
     }
 
     private fun Collection<KtFile>.filterNotInProjectSource(moduleInfo: IdeaModuleInfo): Set<KtFile> =
-        mapNotNullTo(mutableSetOf()) { it.filterNotInProjectSource(moduleInfo) }
+        mapNotNullTo(mutableSetOf()) { filterNotInProjectSource(it, moduleInfo) }
 
-    private fun KtFile.filterNotInProjectSource(moduleInfo: IdeaModuleInfo): KtFile? {
-        val contextFile = if (this is KtCodeFragment) this.getContextFile() else this
-        return contextFile?.takeIf {
-            !ProjectRootsUtil.isInProjectSource(it) || !moduleInfo.contentScope().contains(it)
+    private fun filterNotInProjectSource(file: KtFile, moduleInfo: IdeaModuleInfo): KtFile? {
+        val fileToAnalyze = when (file) {
+            is KtCodeFragment -> file.getContextFile()
+            else -> file
         }
+
+        if (fileToAnalyze == null) {
+            return null
+        }
+
+        val isInProjectSource = RootKindFilter.projectSources.matches(fileToAnalyze)
+            && moduleInfo.contentScope.contains(fileToAnalyze)
+
+        return if (!isInProjectSource) fileToAnalyze else null
     }
 
     private fun Collection<KtFile>.filterScripts(): Set<KtFile> =

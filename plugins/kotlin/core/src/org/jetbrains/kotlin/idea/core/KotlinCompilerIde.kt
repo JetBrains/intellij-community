@@ -14,17 +14,14 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtCodeFragment
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.*
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -33,7 +30,7 @@ class KotlinCompilerIde(
     private val file: KtFile,
     private val initialConfiguration: CompilerConfiguration = getDefaultCompilerConfiguration(file),
     private val factory: ClassBuilderFactory = ClassBuilderFactories.BINARIES,
-    private val resolutionFacadeProvider: (KtFile) -> ResolutionFacade? = ::getDefaultResolutionFacade,
+    private val resolutionFacadeProvider: (KtFile) -> ResolutionFacade? = { file.getResolutionFacade() },
     private val classFilesOnly: Boolean = false
 ) {
     companion object {
@@ -41,10 +38,6 @@ class KotlinCompilerIde(
             return CompilerConfiguration().apply {
                 languageVersionSettings = file.languageVersionSettings
             }
-        }
-
-        private fun getDefaultResolutionFacade(file: KtFile): ResolutionFacade {
-            return file.getResolutionFacade()
         }
     }
 

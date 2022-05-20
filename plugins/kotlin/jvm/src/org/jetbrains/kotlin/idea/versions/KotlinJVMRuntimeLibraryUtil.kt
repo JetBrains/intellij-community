@@ -12,11 +12,11 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
+import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 
 fun updateLibraries(project: Project, upToMavenVersion: String, libraries: Collection<Library>) {
-    if (project.allModules().any { module -> module.getBuildSystemType() != BuildSystemType.JPS }) {
+    if (project.allModules().any { module -> module.buildSystemType != BuildSystemType.JPS }) {
         Messages.showMessageDialog(
             project,
             KotlinJvmBundle.message("automatic.library.version.update.for.maven.and.gradle.projects.is.currently.unsupported.please.update.your.build.scripts.manually"),

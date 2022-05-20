@@ -3,8 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 
@@ -28,4 +27,8 @@ abstract class RecursiveApplicableConversionBase(context: NewJ2kConverterContext
 }
 
 val RecursiveApplicableConversionBase.moduleApiVersion: ApiVersion
-    get() = (context.converter.targetModule?.languageVersionSettings ?: context.converter.project.getLanguageVersionSettings()).apiVersion
+    get() {
+        val converter = context.converter
+        val languageVersionSettings = converter.targetModule?.languageVersionSettings ?: converter.project.languageVersionSettings
+        return languageVersionSettings.apiVersion
+    }

@@ -20,9 +20,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
-import org.jetbrains.kotlin.idea.base.facet.platform
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.run.forceGradleRunnerInMPP
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -94,7 +95,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
         val element = location.psiElement
         context.module?.takeIf { it.platform.isJvm() } ?: return false
 
-        if (!ProjectRootsUtil.isInProjectOrLibSource(element) || element.containingFile !is KtFile) {
+        if (!RootKindFilter.projectAndLibrarySources.matches(element) || element.containingFile !is KtFile) {
             return false
         }
 

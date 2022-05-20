@@ -4,18 +4,25 @@ package org.jetbrains.kotlin.idea.fir.analysis.project.structure
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.analysis.project.structure.KtBinaryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.*
 
 @OptIn(FE10ApiUsage::class)
 internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
     override fun getKtModuleForKtElement(element: PsiElement): KtModule {
-        val moduleInfo = element.getModuleInfo(createSourceLibraryInfoForLibraryBinaries = false)
+        val config = ModuleInfoProvider.Configuration(createSourceLibraryInfoForLibraryBinaries = false)
+        val moduleInfo = ModuleInfoProvider.getInstance(element.project).firstOrNull(element, config)
+            ?: NotUnderContentRootModuleInfo
+
         return getKtModuleByModuleInfo(moduleInfo)
     }
 

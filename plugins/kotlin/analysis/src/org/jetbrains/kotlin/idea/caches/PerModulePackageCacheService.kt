@@ -24,10 +24,11 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfoByVirtualFile
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
@@ -252,7 +253,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                         }
                     }
                 } else {
-                    val infoByVirtualFile = getModuleInfoByVirtualFile(project, vfile)
+                    val infoByVirtualFile = ModuleInfoProvider.getInstance(project).firstOrNull(vfile)
                     if (infoByVirtualFile == null || infoByVirtualFile !is ModuleSourceInfo) {
                         LOG.debugIfEnabled(project) { "Skip $vfile as it has mismatched ModuleInfo=$infoByVirtualFile" }
                     }
@@ -271,7 +272,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                     }
                     return@processPending
                 }
-                val nullableModuleInfo = file.getNullableModuleInfo()
+                val nullableModuleInfo = file.moduleInfoOrNull
                 (nullableModuleInfo as? ModuleSourceInfo)?.let { invalidateCacheForModuleSourceInfo(it) }
                 if (nullableModuleInfo == null || nullableModuleInfo !is ModuleSourceInfo) {
                     LOG.debugIfEnabled(project) { "Skip $file as it has mismatched ModuleInfo=$nullableModuleInfo" }
@@ -313,7 +314,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         }
 
         return cacheForCurrentModuleInfo.getOrPut(packageFqName) {
-            val packageExists = PackageIndexUtil.packageExists(packageFqName, moduleInfo.contentScope())
+            val packageExists = PackageIndexUtil.packageExists(packageFqName, moduleInfo.contentScope)
             LOG.debugIfEnabled(project) { "Computed cache value for $packageFqName in $moduleInfo is $packageExists" }
             packageExists
         }

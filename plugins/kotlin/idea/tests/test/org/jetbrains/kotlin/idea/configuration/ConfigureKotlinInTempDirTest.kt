@@ -11,6 +11,7 @@ import com.intellij.openapi.util.JDOMUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -19,8 +20,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener
 import org.jetbrains.kotlin.idea.notification.catchNotificationText
-import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -63,7 +62,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
-        Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.getLanguageVersionSettings(null).languageVersion)
+        Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.languageVersionSettings.languageVersion)
         application.saveAll()
         checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
@@ -103,7 +102,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             Assert.assertEquals(LanguageVersion.KOTLIN_1_5, languageVersionSettingsBefore.languageVersion)
             Assert.assertEquals(ApiVersion.KOTLIN_1_5, languageVersionSettingsBefore.apiVersion)
 
-            val projectLanguageVersionSettingsBefore = myProject.getLanguageVersionSettings()
+            val projectLanguageVersionSettingsBefore = myProject.languageVersionSettings
             Assert.assertEquals(LanguageVersion.KOTLIN_1_5, projectLanguageVersionSettingsBefore.languageVersion)
             Assert.assertEquals(ApiVersion.KOTLIN_1_5, projectLanguageVersionSettingsBefore.apiVersion)
 
@@ -118,7 +117,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             Assert.assertEquals(LanguageVersion.KOTLIN_1_6, languageVersionSettingsAfter.languageVersion)
             Assert.assertEquals(ApiVersion.KOTLIN_1_5, languageVersionSettingsAfter.apiVersion)
 
-            val projectLanguageVersionSettingsAfter = myProject.getLanguageVersionSettings()
+            val projectLanguageVersionSettingsAfter = myProject.languageVersionSettings
             Assert.assertEquals(LanguageVersion.KOTLIN_1_6, projectLanguageVersionSettingsAfter.languageVersion)
             Assert.assertEquals(ApiVersion.KOTLIN_1_5, projectLanguageVersionSettingsAfter.apiVersion)
         }
@@ -150,7 +149,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         application.isSaveAllowed = true
         val expectedLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
-        Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
+        Assert.assertEquals(expectedLanguageVersion, myProject.languageVersionSettings.languageVersion)
         application.saveAll()
         checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
@@ -160,7 +159,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         application.isSaveAllowed = true
         val expectedLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
-        Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
+        Assert.assertEquals(expectedLanguageVersion, myProject.languageVersionSettings.languageVersion)
         KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
             autoAdvanceLanguageVersion = false
             autoAdvanceApiVersion = false
@@ -235,7 +234,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
 
     fun testApiVersionWithoutLanguageVersion() {
         KotlinCommonCompilerArgumentsHolder.getInstance(myProject)
-        val settings = myProject.getLanguageVersionSettings()
+        val settings = myProject.languageVersionSettings
         Assert.assertEquals(ApiVersion.KOTLIN_1_1, settings.apiVersion)
     }
 

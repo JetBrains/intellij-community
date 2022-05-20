@@ -7,7 +7,7 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 
 class KotlinMainArgumentsMacro : KotlinMacro() {
     override fun getName() = "kotlinMainArguments"

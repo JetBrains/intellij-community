@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightFieldImpl
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.base.util.module
 import org.jetbrains.kotlin.parcelize.ParcelizeSyntheticComponent
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.util.isAnnotated

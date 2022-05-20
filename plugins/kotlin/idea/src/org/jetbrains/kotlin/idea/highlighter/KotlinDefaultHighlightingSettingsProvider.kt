@@ -7,8 +7,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
@@ -22,7 +23,7 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
 
         return when {
             file.toPsiFile(project) !is KtFile -> null
-            ProjectRootsUtil.isLibraryFile(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
+            RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
             file.isKotlinDecompiledFile -> FileHighlightingSetting.SKIP_HIGHLIGHTING
             else -> null
         }

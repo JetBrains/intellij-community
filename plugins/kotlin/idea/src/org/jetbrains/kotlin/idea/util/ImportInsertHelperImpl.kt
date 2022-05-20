@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
@@ -14,8 +16,6 @@ import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.imports.getImportableTargets
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
-import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.runAction
 import org.jetbrains.kotlin.incremental.components.LookupLocation
@@ -46,8 +46,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         isInDefaultImports(importPath, contextFile)
 
     override fun isImportedWithLowPriorityDefaultImport(importPath: ImportPath, contextFile: KtFile): Boolean {
-        val platform = TargetPlatformDetector.getPlatform(contextFile)
-        val analyzerServices = platform.findAnalyzerServices(contextFile.project)
+        val analyzerServices = contextFile.platform.findAnalyzerServices(contextFile.project)
         return importPath.isImported(analyzerServices.defaultLowPriorityImports, analyzerServices.excludedImports)
     }
 
@@ -459,8 +458,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
         fun computeDefaultAndExcludedImports(contextFile: KtFile): Pair<List<ImportPath>, List<FqName>> {
             val languageVersionSettings = contextFile.getResolutionFacade().languageVersionSettings
-            val platform = TargetPlatformDetector.getPlatform(contextFile)
-            val analyzerServices = platform.findAnalyzerServices(contextFile.project)
+            val analyzerServices = contextFile.platform.findAnalyzerServices(contextFile.project)
             val allDefaultImports = analyzerServices.getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
 
             val scriptExtraImports = contextFile.takeIf { it.isScript() }?.let { ktFile ->

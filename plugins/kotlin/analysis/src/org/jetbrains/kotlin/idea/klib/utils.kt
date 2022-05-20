@@ -14,18 +14,13 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.compatibilityInfo
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.resolve.CompilerDeserializationConfiguration
 import org.jetbrains.kotlin.storage.StorageManager
 import java.io.IOException
-
-fun <T> KotlinLibrary.safeRead(defaultValue: T, action: KotlinLibrary.() -> T) = try {
-    action()
-} catch (_: IOException) {
-    defaultValue
-}
 
 fun createFileStub(project: Project, text: String): PsiFileStub<*> {
     val virtualFile = LightVirtualFile("dummy.kt", KotlinFileType.INSTANCE, text)
@@ -44,7 +39,7 @@ fun KotlinLibrary.createKlibPackageFragmentProvider(
     moduleDescriptor: ModuleDescriptor,
     lookupTracker: LookupTracker
 ): PackageFragmentProvider? {
-    if (!getCompatibilityInfo().isCompatible) return null
+    if (!compatibilityInfo.isCompatible) return null
 
     val packageFragmentNames = CachingIdeKlibMetadataLoader.loadModuleHeader(this).packageFragmentNameList
 

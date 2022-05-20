@@ -2,10 +2,6 @@
 
 package org.jetbrains.kotlin.caches.resolve
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
 import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
@@ -16,9 +12,9 @@ import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.extensions.ApplicationExtensionDescriptor
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
-import org.jetbrains.kotlin.idea.caches.project.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -49,8 +45,6 @@ interface IdePlatformKindResolution {
         languageVersionSettings: LanguageVersionSettings,
         moduleDescriptor: ModuleDescriptor
     ): PackageFragmentProvider? = null
-
-    fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo>
 
     companion object : ApplicationExtensionDescriptor<IdePlatformKindResolution>(
         "org.jetbrains.kotlin.idePlatformKindResolution", IdePlatformKindResolution::class.java

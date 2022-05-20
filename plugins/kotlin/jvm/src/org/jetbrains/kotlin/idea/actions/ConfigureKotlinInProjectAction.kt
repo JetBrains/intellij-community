@@ -59,7 +59,7 @@ class ConfigureKotlinJsInProjectAction : ConfigureKotlinInProjectAction() {
     override fun update(e: AnActionEvent) {
         val project = e.project
         if (!PlatformUtils.isIntelliJ() &&
-            (project == null || project.allModules().all { it.getBuildSystemType() != BuildSystemType.JPS })
+            (project == null || project.allModules().all { it.buildSystemType != BuildSystemType.JPS })
         ) {
             e.presentation.isEnabledAndVisible = false
         }

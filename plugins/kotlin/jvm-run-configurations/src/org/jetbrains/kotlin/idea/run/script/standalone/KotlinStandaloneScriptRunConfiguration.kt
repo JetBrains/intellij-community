@@ -28,10 +28,11 @@ import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil.isProjectSourceFile
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
@@ -206,7 +207,7 @@ private class ScriptCommandLineState(
 }
 
 private fun VirtualFile.module(project: Project): Module? {
-    if (isProjectSourceFile(project, this)) {
+    if (RootKindFilter.projectSources.matches(project, this)) {
         return ModuleUtilCore.findModuleForFile(this, project)
     }
     return null

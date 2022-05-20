@@ -6,8 +6,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import kotlin.reflect.KProperty
 
 fun <T> Module.cacheByClass(classForKey: Class<*>, vararg dependencies: Any, provider: () -> T): T {
     return CachedValuesManager.getManager(project).cache(this, dependencies, classForKey, provider)
@@ -58,3 +60,8 @@ private fun <T> CachedValuesManager.cache(
         false
     )
 }
+
+operator fun <T> CachedValue<T>.getValue(o: Any, property: KProperty<*>): T = value
+
+fun <T> CachedValue(project: Project, trackValue: Boolean = false, provider: () -> CachedValueProvider.Result<T>) =
+    CachedValuesManager.getManager(project).createCachedValue(provider, trackValue)

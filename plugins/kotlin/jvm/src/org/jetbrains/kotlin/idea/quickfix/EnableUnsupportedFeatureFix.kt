@@ -18,18 +18,15 @@ import org.eclipse.aether.version.Version
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.kotlin.base.util.invalidateProjectRoots
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.isStableOrReadyForPreview
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
-import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
+import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -71,7 +68,9 @@ sealed class EnableUnsupportedFeatureFix(
                 else
                     null
             }
-            val forTests = ModuleRootManager.getInstance(module).fileIndex.isInTestSourceContentKotlinAware(file.virtualFile)
+
+            val fileIndex = ModuleRootManager.getInstance(module).fileIndex
+            val forTests = fileIndex.getKotlinSourceRootType(file.virtualFile) == TestSourceKotlinRootType
 
             findApplicableConfigurator(module).updateLanguageVersion(
                 module,
@@ -116,7 +115,7 @@ sealed class EnableUnsupportedFeatureFix(
             }
 
             val module = ModuleUtilCore.findModuleForPsiElement(diagnostic.psiElement) ?: return null
-            if (module.getBuildSystemType() == BuildSystemType.JPS) {
+            if (module.buildSystemType == BuildSystemType.JPS) {
                 val facetSettings = KotlinFacet.get(module)?.configuration?.settings
                 if (facetSettings == null || facetSettings.useProjectSettings) return InProject(
                     diagnostic.psiElement,

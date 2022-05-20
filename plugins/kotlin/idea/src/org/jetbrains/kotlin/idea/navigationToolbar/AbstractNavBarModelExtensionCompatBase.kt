@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.navigationToolbar
 import com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.KotlinIconProviderBase
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -21,7 +21,7 @@ abstract class AbstractNavBarModelExtensionCompatBase : StructureAwareNavBarMode
 
     override fun acceptParentFromModel(psiElement: PsiElement?): Boolean {
         if (psiElement is KtFile) {
-            return KotlinIconProviderBase.getSingleClass(psiElement) == null
+            return KotlinIconProvider.getSingleClass(psiElement) == null
         }
         return true
     }

@@ -14,16 +14,20 @@ import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
-import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.stubindex.*
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -33,7 +37,7 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
 open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
     private val psiManager: PsiManager = PsiManager.getInstance(project)
-    private val languageVersionSettings = project.getLanguageVersionSettings()
+    private val languageVersionSettings = project.languageVersionSettings
 
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
         val facadeFilesInPackage = project.runReadActionInSmartMode {
@@ -62,7 +66,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
             KotlinFullClassNameIndex.get(
                 fqName.asString(),
                 project,
-                KotlinSourceFilterScope.sourceAndClassFiles(searchScope, project)
+                KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project)
             )
         }
     }
@@ -71,7 +75,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         return project.runReadActionInSmartMode {
             PackageIndexUtil.findFilesWithExactPackage(
                 fqName,
-                KotlinSourceFilterScope.sourceAndClassFiles(
+                KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
                     searchScope,
                     project
                 ),
@@ -86,14 +90,14 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     ): Collection<KtClassOrObject> {
         return KotlinTopLevelClassByPackageIndex.get(
             packageFqName.asString(), project,
-            KotlinSourceFilterScope.sourceAndClassFiles(searchScope, project)
+            KotlinSourceFilterScope.projectSourcesAndLibraryClasses(searchScope, project)
         )
     }
 
     override fun packageExists(fqName: FqName, scope: GlobalSearchScope): Boolean {
         return PackageIndexUtil.packageExists(
             fqName,
-            KotlinSourceFilterScope.sourceAndClassFiles(
+            KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
                 scope,
                 project
             )
@@ -103,7 +107,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> {
         return PackageIndexUtil.getSubPackageFqNames(
             fqn,
-            KotlinSourceFilterScope.sourceAndClassFiles(
+            KotlinSourceFilterScope.projectSourcesAndLibraryClasses(
                 scope,
                 project
             ),
@@ -131,25 +135,28 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         val virtualFile = classOrObject.containingFile.virtualFile
         if (virtualFile != null) {
             when {
-                ProjectRootsUtil.isProjectSourceFile(project, virtualFile) ->
-                    return KtLightClassForSourceDeclaration.create(
-                        classOrObject,
-                        languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
-                    )
-                ProjectRootsUtil.isLibraryClassFile(project, virtualFile) ->
+                RootKindFilter.projectSources.matches(project, virtualFile) -> {
+                    val jvmDefaultMode = languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
+                    return KtLightClassForSourceDeclaration.create(classOrObject, jvmDefaultMode)
+                }
+                RootKindFilter.libraryClasses.matches(project, virtualFile) -> {
                     return getLightClassForDecompiledClassOrObject(classOrObject, project)
-                ProjectRootsUtil.isLibrarySourceFile(project, virtualFile) ->
+                }
+                RootKindFilter.librarySources.matches(project, virtualFile) -> {
                     return guardedRun {
                         SourceNavigationHelper.getOriginalClass(classOrObject) as? KtLightClass
                     }
+                }
             }
         }
         if ((classOrObject.containingFile as? KtFile)?.analysisContext != null ||
             classOrObject.containingFile.originalFile.virtualFile != null
         ) {
             // explicit request to create light class from dummy.kt
-            return KtLightClassForSourceDeclaration.create(classOrObject, languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode))
+            val jvmDefaultMode = languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
+            return KtLightClassForSourceDeclaration.create(classOrObject, jvmDefaultMode)
         }
+
         return null
     }
 
@@ -162,7 +169,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     }
 
     override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
-        val filesByModule = findFilesForFacade(facadeFqName, scope).groupBy(PsiElement::getModuleInfoPreferringJvmPlatform)
+        val filesByModule = findFilesForFacade(facadeFqName, scope).groupBy { it.getModuleInfoPreferringJvmPlatform() }
 
         return filesByModule.flatMap {
             createLightClassForFileFacade(facadeFqName, it.value, it.key)
@@ -225,7 +232,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
 
     private fun tryCreateFacadesForSourceFiles(moduleInfo: IdeaModuleInfo, facadeFqName: FqName): PsiClass? {
         if (moduleInfo !is ModuleSourceInfo && moduleInfo !is PlatformModuleInfo) return null
-        return KtLightClassForFacadeImpl.createForFacade(psiManager, facadeFqName, moduleInfo.contentScope())
+        return KtLightClassForFacadeImpl.createForFacade(psiManager, facadeFqName, moduleInfo.contentScope)
     }
 
     override fun findFilesForFacade(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtFile> {
@@ -246,11 +253,9 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     // thus we need to ensure that resolver will be built by the file from platform part of the module
     // (resolver built by a file from the common part will have no knowledge of the platform part)
     // the actual of order of files that resolver receives is controlled by *findFilesForFacade* method
-    private fun Collection<KtFile>.platformSourcesFirst() = sortedByDescending { it.platform.isJvm() }
+    private fun Collection<KtFile>.platformSourcesFirst() =
+        sortedByDescending { it.platform.isJvm() }
 
-
-}
-
-internal fun PsiElement.getModuleInfoPreferringJvmPlatform(): IdeaModuleInfo {
-    return getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform) ?: getModuleInfo()
+    private fun PsiElement.getModuleInfoPreferringJvmPlatform(): IdeaModuleInfo =
+        getPlatformModuleInfo(JvmPlatforms.unspecifiedJvmPlatform) ?: this.moduleInfo
 }

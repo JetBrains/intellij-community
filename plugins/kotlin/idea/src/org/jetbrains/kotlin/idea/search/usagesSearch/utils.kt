@@ -9,7 +9,10 @@ import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -19,9 +22,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMethodDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
-import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
@@ -274,11 +274,10 @@ fun PsiElement.getReceiverTypeSearcherInfo(isDestructionDeclarationSearch: Boole
 }
 
 fun KtFile.getDefaultImports(): List<ImportPath> {
-    val moduleInfo = getNullableModuleInfo() ?: return emptyList()
-    return TargetPlatformDetector.getPlatform(this).findAnalyzerServices(project).getDefaultImports(
-        IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, project),
-        includeLowPriorityImports = true
-    )
+    val moduleInfo = this.moduleInfoOrNull ?: return emptyList()
+    return platform
+        .findAnalyzerServices(project)
+        .getDefaultImports(IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, project), includeLowPriorityImports = true)
 }
 
 fun PsiFile.scriptDefinitionExists(): Boolean = findScriptDefinition() != null

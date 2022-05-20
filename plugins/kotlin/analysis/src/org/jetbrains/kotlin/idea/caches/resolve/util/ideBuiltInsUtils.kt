@@ -6,6 +6,9 @@
 package org.jetbrains.kotlin.idea.caches.resolve.util
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 
@@ -23,10 +26,10 @@ private object ClassLoaderBuiltInsModuleFilters : ModuleFilters {
 
 private class DependencyBuiltinsModuleFilters(private val project: Project) : ModuleFilters {
     override fun sdkFacadeFilter(module: IdeaModuleInfo): Boolean =
-        module is SdkInfo || module is LibraryInfo && module.isCoreKotlinLibrary(project)
+      module is SdkInfo || module is LibraryInfo && module.isCoreKotlinLibrary(project)
 
     override fun libraryFacadeFilter(module: IdeaModuleInfo): Boolean =
-        module is LibraryInfo && !module.isCoreKotlinLibrary(project)
+      module is LibraryInfo && !module.isCoreKotlinLibrary(project)
 
     override fun moduleFacadeFilter(module: IdeaModuleInfo): Boolean = !module.isLibraryClasses()
 }

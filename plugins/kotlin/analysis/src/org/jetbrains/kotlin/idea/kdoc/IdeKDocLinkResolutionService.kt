@@ -8,6 +8,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
@@ -35,7 +36,7 @@ class IdeKDocLinkResolutionService(val project: Project) : KDocLinkResolutionSer
         qualifiedName: List<String>
     ): Collection<DeclarationDescriptor> {
 
-        val scope = KotlinSourceFilterScope.projectAndLibrariesSources(GlobalSearchScope.projectScope(project), project)
+        val scope = KotlinSourceFilterScope.projectAndLibrarySources(GlobalSearchScope.projectScope(project), project)
 
         val shortName = qualifiedName.lastOrNull() ?: return emptyList()
 

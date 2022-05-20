@@ -16,7 +16,7 @@ import com.intellij.util.ui.EmptyClipboardOwner
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.findExternalKotlinCompilerVersions
-import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
+import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.configuration.hasKotlinFilesInSources
 import org.jetbrains.kotlin.idea.configuration.hasKotlinFilesOnlyInTests
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -89,7 +89,7 @@ class CopyKotlinProjectOverviewAction : AnAction() {
 
         return sequence {
             for (module in modules) {
-                yield(module.getBuildSystemType().javaClass.simpleName)
+                yield(module.buildSystemType.javaClass.simpleName)
             }
         }
     }

@@ -5,12 +5,12 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradle.configuration.GradleVersionProviderImpl
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
-import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms

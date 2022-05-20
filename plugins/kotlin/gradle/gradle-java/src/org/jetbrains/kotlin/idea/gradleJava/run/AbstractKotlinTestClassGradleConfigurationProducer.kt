@@ -13,7 +13,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
-import org.jetbrains.kotlin.idea.base.facet.platform
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.gradle.run.KotlinGradleConfigurationProducer
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer

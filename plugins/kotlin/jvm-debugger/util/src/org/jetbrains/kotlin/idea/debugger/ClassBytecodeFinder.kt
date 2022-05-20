@@ -11,7 +11,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.isFile
 import com.intellij.util.io.readBytes
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.name.ClassId
@@ -29,7 +30,7 @@ class ClassBytecodeFinder(private val project: Project, private val jvmName: Jvm
     fun find(): ByteArray? = findInCompilerOutput() ?: findInLibraries()
 
     private fun findInLibraries(): ByteArray? {
-        if (!ProjectRootsUtil.isLibrarySourceFile(project, file)) {
+        if (!RootKindFilter.librarySources.matches(project, file)) {
             return null
         }
 
@@ -95,7 +96,7 @@ class ClassBytecodeFinder(private val project: Project, private val jvmName: Jvm
     }
 
     private fun findInCompilerOutput(): ByteArray? {
-        if (!ProjectRootsUtil.isProjectSourceFile(project, file)) {
+        if (!RootKindFilter.projectSources.matches(project, file)) {
             return null
         }
 

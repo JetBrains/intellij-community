@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.intentions.branches
 import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -140,7 +140,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
 
         if (expectedType.isInterface()) {
             val expressionTypeDeclaration = expressionType.constructor.declarationDescriptor?.let {
-                DescriptorToSourceUtils.descriptorToDeclaration(it)
+                descriptorToDeclaration(it)
             } as? KtClassOrObject
             if (expressionTypeDeclaration != null && expectedType != TypeUtils.makeNotNullable(expressionType)) {
                 actions.add(LetImplementInterfaceFix(expressionTypeDeclaration, expectedType, expressionType))

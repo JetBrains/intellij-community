@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
-import org.jetbrains.kotlin.idea.caches.project.ModuleProductionSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.caches.project.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.compilerPlugin.getSpecialAnnotations
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm

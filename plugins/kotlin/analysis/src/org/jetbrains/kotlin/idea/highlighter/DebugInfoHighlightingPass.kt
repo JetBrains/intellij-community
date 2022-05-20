@@ -14,8 +14,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.checkers.utils.DebugInfoUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -79,7 +80,7 @@ class DebugInfoHighlightingPass(file: KtFile, document: Document) : AbstractBind
         override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
             val useDebugInfoPass = file is KtFile
                     && (isUnitTestMode() || isApplicationInternalMode() && (KotlinIdePlugin.isSnapshot || KotlinIdePlugin.isDev))
-                    && ProjectRootsUtil.isInProjectOrLibSource(file)
+                    && RootKindFilter.projectAndLibrarySources.matches(file)
 
             return if (useDebugInfoPass) DebugInfoHighlightingPass(file as KtFile, editor.document) else null
         }

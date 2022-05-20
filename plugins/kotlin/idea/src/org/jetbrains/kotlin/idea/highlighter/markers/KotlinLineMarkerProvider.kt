@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.toFakeLightClass
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.editor.fixers.startLine
@@ -83,7 +85,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
         if (KotlinLineMarkerOptions.options.none { option -> option.isEnabled }) return
 
         val first = elements.first()
-        if (DumbService.getInstance(first.project).isDumb || !ProjectRootsUtil.isInProjectOrLibSource(first)) return
+        if (DumbService.getInstance(first.project).isDumb || !RootKindFilter.projectAndLibrarySources.matches(first)) return
 
         val functions = hashSetOf<KtNamedFunction>()
         val properties = hashSetOf<KtNamedDeclaration>()

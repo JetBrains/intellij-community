@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
+import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 abstract class AbstractChangeFeatureSupportLevelFix(
@@ -48,7 +48,7 @@ abstract class AbstractChangeFeatureSupportLevelFix(
         protected fun shouldConfigureInProject(module: Module): Boolean {
             val facetSettings = KotlinFacet.get(module)?.configuration?.settings
             return (facetSettings == null || facetSettings.useProjectSettings) &&
-                    module.getBuildSystemType() == BuildSystemType.JPS
+                   module.buildSystemType == BuildSystemType.JPS
         }
 
         protected fun doCreateActions(

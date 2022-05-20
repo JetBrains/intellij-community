@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.goto
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.base.util.module
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.psi.KtNamedDeclaration

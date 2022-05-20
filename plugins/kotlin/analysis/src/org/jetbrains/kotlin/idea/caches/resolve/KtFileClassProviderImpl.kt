@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacadeImpl
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.caches.resolve.util.isInDumbMode
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -21,18 +22,14 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
 
 class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
-
     override fun getFileClasses(file: KtFile): Array<PsiClass> {
-        if (file.project.isInDumbMode()) {
-            return PsiClass.EMPTY_ARRAY
-        }
+        if (file.project.isInDumbMode()) return emptyArray()
 
         // TODO We don't currently support finding light classes for scripts
-        if (file.isCompiled || runReadAction { file.isScript() }) {
-            return PsiClass.EMPTY_ARRAY
-        }
+        if (file.isCompiled || runReadAction { file.isScript() }) return emptyArray()
 
-        val moduleInfo = file.getModuleInfo()
+        val moduleInfo = file.moduleInfoOrNull ?: return emptyArray()
+
         // prohibit obtaining light classes for non-jvm modules trough KtFiles
         // common files might be in fact compiled to jvm and thus correspond to a PsiClass
         // this API does not provide context (like GSS) to be able to determine if this file is in fact seen through a jvm module
@@ -48,7 +45,7 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
         val kotlinAsJavaSupport = KotlinAsJavaSupport.getInstance(project)
         if (file.analysisContext == null) {
             kotlinAsJavaSupport
-                .getFacadeClasses(file.javaFileFacadeFqName, moduleInfo.contentScope())
+                .getFacadeClasses(file.javaFileFacadeFqName, moduleInfo.contentScope)
                 .filterTo(result) { it is KtLightClassForFacade && file in it.files }
         } else {
             result.add(kotlinAsJavaSupport.createFacadeForSyntheticFile(file.javaFileFacadeFqName, file))

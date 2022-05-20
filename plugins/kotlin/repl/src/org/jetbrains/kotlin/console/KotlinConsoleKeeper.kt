@@ -15,8 +15,8 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerClasspathProvider
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.version
@@ -109,7 +109,8 @@ class KotlinConsoleKeeper(val project: Project) {
                         add(compositeValue)
                     }
                 }
-                TargetPlatformDetector.getPlatform(module).subplatformsOfType<JdkPlatform>().firstOrNull()?.targetVersion?.let {
+
+                module.platform.subplatformsOfType<JdkPlatform>().firstOrNull()?.targetVersion?.let {
                     with(javaParameters.programParametersList) {
                         add("-jvm-target")
                         add(it.description)

@@ -35,7 +35,7 @@ fun findExternalKotlinCompilerVersions(project: Project): Set<IdeKotlinVersion> 
 
     runReadAction {
         for (module in ModuleManager.getInstance(project).modules) {
-            if (module.getBuildSystemType() == BuildSystemType.JPS) {
+            if (module.buildSystemType == BuildSystemType.JPS) {
                 if (!hasJpsModules) hasJpsModules = true
             } else {
                 val externalVersion = module.externalCompilerVersion?.let(IdeKotlinVersion::opt)

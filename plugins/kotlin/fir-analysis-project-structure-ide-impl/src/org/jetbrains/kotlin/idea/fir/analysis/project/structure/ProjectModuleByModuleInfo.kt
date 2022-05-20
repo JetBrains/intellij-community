@@ -9,8 +9,14 @@ import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.config.SourceKotlinRootType
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
@@ -31,7 +37,7 @@ internal abstract class KtModuleByModuleInfoBase(
     val directFriendDependencies: List<KtModule>
         get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().map(provider::getKtModuleByModuleInfo)
 
-    val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope()
+    val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
     val platform: TargetPlatform get() = ideaModuleInfo.platform
     val analyzerServices: PlatformDependentAnalyzerServices get() = ideaModuleInfo.analyzerServices
 
@@ -61,12 +67,14 @@ internal class KtSourceModuleByModuleInfo(
 
     override val directRegularDependencies: List<KtModule>
         get() = moduleInfo.module.cacheByClassInvalidatingOnRootModifications(KtSourceModuleByModuleInfo::class.java) {
-            ideaModule
-                .getSourceModuleDependencies(
-                    forProduction = moduleInfo is ModuleProductionSourceInfo,
-                    moduleInfo.platform,
-                    includeTransitiveDependencies = false
-                )
+            val sourceRootType = when (moduleInfo) {
+                is ModuleProductionSourceInfo -> SourceKotlinRootType
+                is ModuleTestSourceInfo -> TestSourceKotlinRootType
+                else -> SourceKotlinRootType
+            }
+
+            ModuleDependencyCollector.getInstance(ideaModule.project)
+                .collectModuleDependencies(ideaModule, moduleInfo.platform, sourceRootType, includeTransitive = false)
                 .asSequence()
                 .filterNot { it == moduleInfo }
                 .map(provider::getKtModuleByModuleInfo)

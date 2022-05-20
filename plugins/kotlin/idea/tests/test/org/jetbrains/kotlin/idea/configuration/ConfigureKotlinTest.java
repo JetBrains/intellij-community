@@ -25,17 +25,17 @@ import org.jetbrains.kotlin.config.JvmTarget;
 import org.jetbrains.kotlin.config.KotlinFacetSettings;
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider;
 import org.jetbrains.kotlin.config.LanguageVersion;
-import org.jetbrains.kotlin.idea.base.facet.KotlinFacetConfigurationUtils;
+import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetectorUtils;
 import org.jetbrains.kotlin.idea.base.platforms.JsStdlibDetectionUtil;
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind;
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider;
+import org.jetbrains.kotlin.idea.base.projectStructure.LanguageVersionSettingsProviderUtils;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.facet.FacetUtilsKt;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector;
-import org.jetbrains.kotlin.idea.project.PlatformKt;
 import org.jetbrains.kotlin.idea.util.Java9StructureUtilKt;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.js.JsPlatforms;
@@ -126,33 +126,33 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     public void testProjectWithoutFacetWithRuntime106WithoutLanguageLevel() {
-        assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
-        assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_0, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_0, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(myProject).getLanguageVersion());
 
         KotlinCommonCompilerArgumentsHolder.Companion.getInstance(myProject).update(settings -> {
             settings.setLanguageVersion(LanguageVersion.KOTLIN_1_6.getVersionString());
             return null;
         });
 
-        assertEquals(LanguageVersion.KOTLIN_1_6, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
-        assertEquals(LanguageVersion.KOTLIN_1_6, PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_6, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_6, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(myProject).getLanguageVersion());
     }
 
     public void testProjectWithoutFacetWithRuntime11WithoutLanguageLevel() {
-        assertEquals(LanguageVersion.KOTLIN_1_1, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
-        assertEquals(LanguageVersion.KOTLIN_1_1, PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_1, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_1, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(myProject).getLanguageVersion());
     }
 
     public void testProjectWithoutFacetWithRuntime11WithLanguageLevel10() {
-        assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
-        assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_0, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_0, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(myProject).getLanguageVersion());
     }
 
     public void testProjectWithFacetWithRuntime11WithLanguageLevel10() {
-        assertEquals(LanguageVersion.KOTLIN_1_0, PlatformKt.getLanguageVersionSettings(getModule()).getLanguageVersion());
+        assertEquals(LanguageVersion.KOTLIN_1_0, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
         assertEquals(
                 KotlinPluginLayout.getInstance().getStandaloneCompilerVersion().getLanguageVersion(),
-                PlatformKt.getLanguageVersionSettings(myProject, null).getLanguageVersion()
+                LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(myProject).getLanguageVersion()
         );
     }
 
@@ -252,7 +252,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
                      settings.getCompilerSettings().getAdditionalArguments());
     }
 
-    @SuppressWarnings("ConstantConditions")
     public void testJvmProjectWithV4FacetConfig() {
         KotlinFacetSettings settings = KotlinFacetSettingsProvider.Companion.getInstance(myProject).getInitializedSettings(getModule());
         K2JVMCompilerArguments arguments = (K2JVMCompilerArguments) settings.getCompilerArguments();
@@ -358,7 +357,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     }
 
     public void testProjectWithoutFacetWithJvmTarget18() {
-        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), KotlinFacetConfigurationUtils.getPlatform(getModule()));
+        assertEquals(JvmPlatforms.INSTANCE.getJvm8(), TargetPlatformDetectorUtils.getPlatform(getModule()));
     }
 
     private static Library getFirstLibrary(@NotNull Project project) {

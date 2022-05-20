@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.idea.search.fileScope
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
 
@@ -44,7 +44,7 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
 
         searchForTypeAliasesRecursively(baseClassName)
 
-        val noLibrarySourceScope = KotlinSourceFilterScope.projectSourceAndClassFiles(scope, project)
+        val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
         names.forEach { name ->
             ProgressManager.checkCanceled()
             KotlinSuperClassIndex

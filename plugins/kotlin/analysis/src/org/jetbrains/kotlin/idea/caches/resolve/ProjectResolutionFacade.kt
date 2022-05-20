@@ -16,8 +16,12 @@ import org.jetbrains.kotlin.context.GlobalContextImpl
 import org.jetbrains.kotlin.context.withProject
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -27,17 +31,17 @@ import org.jetbrains.kotlin.storage.guarded
 import java.util.concurrent.locks.ReentrantLock
 
 internal class ProjectResolutionFacade(
-    private val debugString: String,
-    private val resolverDebugName: String,
-    val project: Project,
-    val globalContext: GlobalContextImpl,
-    val settings: PlatformAnalysisSettings,
-    val reuseDataFrom: ProjectResolutionFacade?,
-    val moduleFilter: (IdeaModuleInfo) -> Boolean,
-    dependencies: List<Any>,
-    private val invalidateOnOOCB: Boolean,
-    val syntheticFiles: Collection<KtFile> = listOf(),
-    val allModules: Collection<IdeaModuleInfo>? = null // null means create resolvers for modules from idea model
+  private val debugString: String,
+  private val resolverDebugName: String,
+  val project: Project,
+  val globalContext: GlobalContextImpl,
+  val settings: PlatformAnalysisSettings,
+  val reuseDataFrom: ProjectResolutionFacade?,
+  val moduleFilter: (IdeaModuleInfo) -> Boolean,
+  dependencies: List<Any>,
+  private val invalidateOnOOCB: Boolean,
+  val syntheticFiles: Collection<KtFile> = listOf(),
+  val allModules: Collection<IdeaModuleInfo>? = null // null means create resolvers for modules from idea model
 ) {
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
@@ -66,7 +70,7 @@ internal class ProjectResolutionFacade(
                 override fun createValue(file: KtFile): PerFileAnalysisCache {
                     return PerFileAnalysisCache(
                         file,
-                        resolverForProject.resolverForModule(file.getModuleInfo()).componentProvider
+                        resolverForProject.resolverForModule(file.moduleInfo).componentProvider
                     )
                 }
 
@@ -112,20 +116,18 @@ internal class ProjectResolutionFacade(
         val allModuleInfos = (allModules ?: getModuleInfosFromIdeaModel(project, (settings as? PlatformAnalysisSettingsImpl)?.platform))
             .toMutableSet()
 
-        val syntheticFilesByModule = syntheticFiles.groupBy(KtFile::getModuleInfo)
+        val syntheticFilesByModule = syntheticFiles.groupBy { it.moduleInfo }
         val syntheticFilesModules = syntheticFilesByModule.keys
         allModuleInfos.addAll(syntheticFilesModules)
 
-        val modulesToCreateResolversFor = allModuleInfos.filter(moduleFilter)
-        val modulesToCreateResolvers =
-            modulesToCreateResolversFor + listOfNotNull(
-                ScriptDependenciesInfo.ForProject.createIfRequired(project, modulesToCreateResolversFor)
-            )
+        val resolvedModules = allModuleInfos.filter(moduleFilter)
+        val resolvedModulesWithDependencies = resolvedModules +
+                listOfNotNull(ScriptDependenciesInfo.ForProject.createIfRequired(project, resolvedModules))
 
         return IdeaResolverForProject(
             resolverDebugName,
             globalContext.withProject(project),
-            modulesToCreateResolvers,
+            resolvedModulesWithDependencies,
             syntheticFilesByModule,
             delegateResolverForProject,
             if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else null,
@@ -136,10 +138,27 @@ internal class ProjectResolutionFacade(
     internal fun resolverForModuleInfo(moduleInfo: IdeaModuleInfo) = cachedResolverForProject.resolverForModule(moduleInfo)
 
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
-        val infos = element.getModuleInfos()
-        return infos.asIterable().firstNotNullOfOrNull { cachedResolverForProject.tryGetResolverForModule(it) }
-            ?: cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo)
-            ?: cachedResolverForProject.diagnoseUnknownModuleInfo(infos.toList())
+        val moduleInfos = mutableListOf<IdeaModuleInfo>()
+
+        for (result in ModuleInfoProvider.getInstance(element.project).collect(element)) {
+            val moduleInfo = result.getOrNull()
+            if (moduleInfo != null) {
+                val resolver = cachedResolverForProject.tryGetResolverForModule(moduleInfo)
+                if (resolver != null) {
+                    return resolver
+                } else {
+                    moduleInfos += moduleInfos
+                }
+            }
+
+            val error = result.exceptionOrNull()
+            if (error != null) {
+                LOG.warn("Could not find correct module information", error)
+            }
+        }
+
+        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo)
+            ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos)
     }
 
     internal fun resolverForDescriptor(moduleDescriptor: ModuleDescriptor) =
@@ -165,7 +184,7 @@ internal class ProjectResolutionFacade(
         }
 
         //TODO: (module refactoring) several elements are passed here in debugger
-        return AnalysisResult.success(bindingContext, findModuleDescriptor(elements.first().getModuleInfo()))
+        return AnalysisResult.success(bindingContext, findModuleDescriptor(elements.first().moduleInfo))
     }
 
     internal fun getAnalysisResultsForElement(
@@ -182,7 +201,7 @@ internal class ProjectResolutionFacade(
         }
 
         //TODO: (module refactoring) several elements are passed here in debugger
-        return AnalysisResult.success(bindingContext, findModuleDescriptor(element.getModuleInfo()))
+        return AnalysisResult.success(bindingContext, findModuleDescriptor(element.moduleInfo))
     }
 
     private fun analysisResultForElement(
@@ -206,18 +225,6 @@ internal class ProjectResolutionFacade(
             }
             throw e
         }
-    }
-
-    internal fun fetchAnalysisResultsForElement(element: KtElement): AnalysisResult? {
-        val slruCache = if (analysisResultsLock.tryLock()) {
-            try {
-                analysisResults.upToDateOrNull?.get()
-            } finally {
-                analysisResultsLock.unlock()
-            }
-        } else null
-
-        return slruCache?.getIfCached(element.containingKtFile)?.fetchAnalysisResults(element)
     }
 
     override fun toString(): String {

@@ -270,7 +270,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
     protected open fun findAndFixBrokenKotlinLibrary(module: Module, collector: NotificationMessageCollector): Library? = null
 
     protected open fun isApplicable(module: Module): Boolean {
-        return module.getBuildSystemType() == BuildSystemType.JPS
+        return module.buildSystemType == BuildSystemType.JPS
     }
 
     override fun changeGeneralFeatureConfiguration(

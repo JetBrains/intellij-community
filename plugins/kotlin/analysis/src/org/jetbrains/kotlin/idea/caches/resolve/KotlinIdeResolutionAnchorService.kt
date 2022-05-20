@@ -2,20 +2,13 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.xmlb.XmlSerializerUtil
-import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.moduleInfo
-import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.project.libraryToSourceAnalysisEnabled
-import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SourceForBinaryModuleInfo
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
 
 /**
@@ -29,7 +22,7 @@ class KotlinIdeResolutionAnchorService(
     val project: Project
 ) : ResolutionAnchorProvider {
     override fun getResolutionAnchor(moduleDescriptor: ModuleDescriptor): ModuleDescriptor? {
-        if (!project.libraryToSourceAnalysisEnabled) return null
+        if (!project.useLibraryToSourceAnalysis) return null
 
         val moduleToAnchor = ResolutionAnchorCacheService.getInstance(project).resolutionAnchorsForLibraries
         val moduleInfo = moduleDescriptor.moduleInfo ?: return null

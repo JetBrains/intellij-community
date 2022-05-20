@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.idea.KotlinIconProviderBase
+import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -34,7 +34,7 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
             val childValue = child.value?.asKtFile()
 
             if (childValue != null) {
-                val mainClass = KotlinIconProviderBase.getSingleClass(childValue)
+                val mainClass = KotlinIconProvider.getSingleClass(childValue)
                 if (mainClass != null) {
                     result.add(KtClassOrObjectTreeNode(childValue.project, mainClass, settings))
                 } else {

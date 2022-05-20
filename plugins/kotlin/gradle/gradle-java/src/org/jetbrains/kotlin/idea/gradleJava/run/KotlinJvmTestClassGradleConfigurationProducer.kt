@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 import com.intellij.execution.Location
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
-import org.jetbrains.kotlin.idea.base.facet.platform
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 class KotlinJvmTestClassGradleConfigurationProducer : AbstractKotlinTestClassGradleConfigurationProducer() {

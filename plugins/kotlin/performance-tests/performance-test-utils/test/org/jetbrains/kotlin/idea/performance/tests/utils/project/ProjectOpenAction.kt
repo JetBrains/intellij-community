@@ -23,12 +23,12 @@ import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.UsefulTestCase.assertTrue
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
+import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.performance.tests.utils.closeProject
 import org.jetbrains.kotlin.idea.performance.tests.utils.dispatchAllInvocationEvents
 import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.performance.tests.utils.runAndMeasure
 import org.jetbrains.kotlin.idea.project.ResolveElementCache
-import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
 import java.io.File
 import java.nio.file.Paths
 import kotlin.test.assertTrue
@@ -171,8 +171,9 @@ enum class ProjectOpenAction {
             ResolveElementCache.forceFullAnalysisModeInTests = true
             DumbService.getInstance(project).waitForSmartMode()
 
+            val checkerService = KotlinConfigurationCheckerService.getInstance(project)
             for (module in getModulesWithKotlinFiles(project)) {
-                module.getAndCacheLanguageLevelByDependencies()
+                checkerService.getAndCacheLanguageLevelByDependencies(module)
             }
         }.get()
 

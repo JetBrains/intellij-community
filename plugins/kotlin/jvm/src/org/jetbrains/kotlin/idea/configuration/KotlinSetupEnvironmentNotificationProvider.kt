@@ -24,8 +24,8 @@ import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.versions.SuppressNotificationState
@@ -53,9 +53,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             return CONST_NULL
         }
 
-        if (ModuleRootManager.getInstance(module).sdk == null &&
-            TargetPlatformDetector.getPlatform(psiFile).isJvm()
-        ) {
+        if (ModuleRootManager.getInstance(module).sdk == null && psiFile.platform.isJvm()) {
             return createSetupSdkPanel(project, psiFile)
         }
 

@@ -7,9 +7,11 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
+import org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.unwrapModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.caches.project.sourceType
-import org.jetbrains.kotlin.idea.core.unwrapModuleSourceInfo
 import org.jetbrains.kotlin.resolve.ModulePath
 import org.jetbrains.kotlin.resolve.ModuleStructureOracle
 import java.util.*
@@ -91,7 +93,8 @@ object DependsOnGraphHelper {
     }
 
     fun ModuleSourceInfo.predecessorsInDependsOnGraph(): List<ModuleSourceInfo> {
-        return this.module.predecessorsInDependsOnGraph().mapNotNull { it.toInfo(sourceType) }
+        val sourceRootType = this.kotlinSourceRootType ?: return emptyList()
+        return this.module.predecessorsInDependsOnGraph().mapNotNull { it.getModuleInfo(sourceRootType) }
     }
 
     fun Module.predecessorsInDependsOnGraph(): List<Module> {
@@ -106,7 +109,10 @@ object DependsOnGraphHelper {
     }
 
     fun ModuleSourceInfo.successorsInDependsOnGraph(): List<ModuleSourceInfo> {
-        return module.successorsInDependsOnGraph().mapNotNull { it.toInfo(sourceType) }
+        return module.successorsInDependsOnGraph().mapNotNull { module ->
+            val sourceRootType = module.kotlinSourceRootType ?: return@mapNotNull null
+            module.getModuleInfo(sourceRootType)
+        }
     }
 
     fun Module.successorsInDependsOnGraph(): List<Module> {

@@ -61,6 +61,9 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -70,7 +73,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
@@ -79,7 +81,6 @@ import org.jetbrains.kotlin.idea.refactoring.rename.canonicalRender
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -497,14 +498,15 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
 
 fun PsiElement.isTrueJavaMethod(): Boolean = this is PsiMethod && this !is KtLightMethod
 
-fun PsiElement.canRefactor(): Boolean = when {
-    !isValid -> false
-    this is PsiPackage -> directories.any { it.canRefactor() }
-    this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory -> ProjectRootsUtil.isInProjectSource(
-        this,
-        includeScriptsOutsideSourceRoots = true
-    )
-    else -> false
+fun PsiElement.canRefactor(): Boolean {
+    return when {
+        !isValid -> false
+        this is PsiPackage ->
+            directories.any { it.canRefactor() }
+        this is KtElement || this is PsiMember && language == JavaLanguage.INSTANCE || this is PsiDirectory ->
+            RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
+        else -> false
+    }
 }
 
 private fun copyModifierListItems(from: PsiModifierList, to: PsiModifierList, withPsiModifiers: Boolean = true) {

@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.compiler
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.resolve.LanguageVersionSettingsProvider
 
 class IdeLanguageVersionSettingsProvider : LanguageVersionSettingsProvider {

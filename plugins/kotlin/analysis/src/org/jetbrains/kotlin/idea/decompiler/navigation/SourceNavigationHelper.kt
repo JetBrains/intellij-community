@@ -18,17 +18,16 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
-import org.jetbrains.kotlin.idea.caches.project.BinaryModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.caches.project.getBinaryLibrariesModuleInfos
-import org.jetbrains.kotlin.idea.caches.project.getLibrarySourcesModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -64,7 +63,10 @@ object SourceNavigationHelper {
 
         return when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> {
-                val binaryModuleInfos = getBinaryLibrariesModuleInfos(declaration.project, vFile)
+                val binaryModuleInfos = ModuleInfoProvider.getInstance(declaration.project)
+                    .collectLibraryBinariesModuleInfos(vFile)
+                    .toList()
+
                 val primaryScope = binaryModuleInfos.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
                 val additionalScope = binaryModuleInfos.flatMap {
                     it.associatedCommonLibraries()
@@ -87,14 +89,18 @@ object SourceNavigationHelper {
                     val psiClass = JavaElementFinder.getInstance(containingFile.project)
                         .findClass(containingFile.javaFileFacadeFqName.asString(), declaration.resolveScope)
                     if (psiClass != null) {
-                        return getBinaryLibrariesModuleInfos(declaration.project, psiClass.containingFile.virtualFile)
-                            .map { it.binariesScope() }.union()
+                        return ModuleInfoProvider.getInstance(declaration.project)
+                            .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
+                            .map { it.binariesScope }
+                            .toList()
+                            .union()
                     }
                 }
-                getLibrarySourcesModuleInfos(
-                    declaration.project,
-                    vFile
-                ).map { it.binariesModuleInfo.binariesScope() }.union()
+                ModuleInfoProvider.getInstance(declaration.project)
+                    .collectLibrarySourcesModuleInfos(vFile)
+                    .map { it.binariesModuleInfo.binariesScope }
+                    .toList()
+                    .union()
             }
         }
     }
@@ -279,15 +285,7 @@ object SourceNavigationHelper {
             NavigationKind.SOURCES_TO_CLASS_FILES -> {
                 val file = from.containingFile
                 if (file is KtFile && file.isCompiled) return from
-                if (!ProjectRootsUtil.isInContent(
-                        from,
-                        includeProjectSource = false,
-                        includeLibrarySource = true,
-                        includeLibraryClasses = false,
-                        includeScriptDependencies = true,
-                        includeScriptsOutsideSourceRoots = false
-                    )
-                ) return from
+                if (!RootKindFilter.librarySources.matches(from)) return from
                 if (KtPsiUtil.isLocal(from)) return from
             }
         }

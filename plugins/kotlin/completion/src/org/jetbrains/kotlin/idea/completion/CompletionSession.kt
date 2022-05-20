@@ -16,8 +16,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
-import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
-import org.jetbrains.kotlin.idea.caches.project.OriginCapability
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapability
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper

@@ -29,16 +29,19 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
+import org.jetbrains.kotlin.base.util.module
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.MutablePackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
-import org.jetbrains.kotlin.idea.caches.project.forcedModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfoByVirtualFile
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
@@ -46,12 +49,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.javaResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.getPackage
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.imports.importableFqName
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
-import org.jetbrains.kotlin.idea.project.forcedTargetPlatform
-import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.getUsageContext
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveUsage
 import org.jetbrains.kotlin.idea.refactoring.pullUp.renderForConflicts
@@ -60,7 +59,6 @@ import org.jetbrains.kotlin.idea.search.and
 import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.projectStructure.getModule
-import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
@@ -109,11 +107,10 @@ class MoveConflictChecker(
         }
     }
 
-    private fun getModuleDescriptor(sourceFile: VirtualFile) =
-        getModuleInfoByVirtualFile(
-            project,
-            sourceFile
-        )?.let { resolutionFacade.findModuleDescriptor(it) }
+    private fun getModuleDescriptor(sourceFile: VirtualFile): ModuleDescriptor? {
+        val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(sourceFile) ?: return null
+        return resolutionFacade.findModuleDescriptor(moduleInfo)
+    }
 
     private fun KotlinMoveTarget.getContainerDescriptor(): DeclarationDescriptor? {
         return when (this) {
@@ -215,7 +212,8 @@ class MoveConflictChecker(
     ) {
         val targetModule = targetScope.getModule(project) ?: return
 
-        val isInTestSources = ModuleRootManager.getInstance(targetModule).fileIndex.isInTestSourceContentKotlinAware(targetScope)
+        val fileIndex = ModuleRootManager.getInstance(targetModule).fileIndex
+        val isInTestSources = fileIndex.getKotlinSourceRootType(targetScope) == TestSourceKotlinRootType
         NextUsage@ for (usage in usages) {
             val element = usage.element ?: continue
             if (PsiTreeUtil.getParentOfType(element, PsiImportStatement::class.java, false) != null) continue
@@ -274,16 +272,17 @@ class MoveConflictChecker(
         }
     }
 
-    private fun Module.getScopeWithPlatformAwareDependencies(): SearchScope {
-        val baseScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(this)
+    private fun getScopeWithPlatformAwareDependencies(module: Module): SearchScope {
+        val baseScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
 
-        val targetPlatform = TargetPlatformDetector.getPlatform(this)
-        if (targetPlatform.isJvm()) return baseScope
+        if (module.platform.isJvm()) {
+            return baseScope
+        }
 
-        return ModuleRootManager.getInstance(this)
+        return ModuleRootManager.getInstance(module)
             .orderEntries
             .filterIsInstance<JdkOrderEntry>()
-            .fold(baseScope as SearchScope) { scope, jdkEntry -> scope and !JdkScope(project, jdkEntry) }
+            .fold(baseScope as SearchScope) { scope, jdkEntry -> scope and !JdkScope(module.project, jdkEntry) }
     }
 
     @OptIn(ExperimentalMultiplatform::class)
@@ -293,7 +292,7 @@ class MoveConflictChecker(
     ) {
         val targetScope = moveTarget.targetFileOrDir ?: return
         val targetModule = targetScope.getModule(project) ?: return
-        val resolveScope = targetModule.getScopeWithPlatformAwareDependencies()
+        val resolveScope = getScopeWithPlatformAwareDependencies(targetModule)
 
         fun isInScope(targetElement: PsiElement, targetDescriptor: DeclarationDescriptor): Boolean {
             if (targetElement in resolveScope) return true
@@ -302,10 +301,9 @@ class MoveConflictChecker(
             val fqName = targetDescriptor.importableFqName ?: return true
             val importableDescriptor = targetDescriptor.getImportableDescriptor()
 
-            val targetModuleInfo = getModuleInfoByVirtualFile(project, targetScope)
             val dummyFile = KtPsiFactory(targetElement.project).createFile("dummy.kt", "").apply {
-                forcedModuleInfo = targetModuleInfo
-                forcedTargetPlatform = TargetPlatformDetector.getPlatform(targetModule)
+                forcedModuleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(targetScope)
+                forcedTargetPlatform = targetModule.platform
             }
 
             val newTargetDescriptors = dummyFile.resolveImportReference(fqName)
@@ -547,7 +545,7 @@ class MoveConflictChecker(
 
     private fun checkSealedClassMove(conflicts: MultiMap<PsiElement, String>) {
         val sealedInheritanceRulesRelaxed =
-            project.getLanguageVersionSettings().supportsFeature(LanguageFeature.AllowSealedInheritorsInDifferentFilesOfSamePackage)
+            project.languageVersionSettings.supportsFeature(LanguageFeature.AllowSealedInheritorsInDifferentFilesOfSamePackage)
 
         if (sealedInheritanceRulesRelaxed)
             checkSealedClassMoveWithinPackageAndModule(conflicts)

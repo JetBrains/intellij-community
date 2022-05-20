@@ -14,8 +14,8 @@ import com.intellij.openapi.vcs.changes.committed.LabeledComboBoxAction
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.isKotlinWorksheet
 import javax.swing.JComponent
@@ -27,7 +27,7 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
         actionGroup.add(ModuleIsNotSelectedAction(KotlinJvmBundle.message("list.item.no.module")))
 
         val modules = ModuleManager.getInstance(scratchFile.project).modules.filter {
-            it.productionSourceInfo() != null || it.testSourceInfo() != null
+            it.productionSourceInfo != null || it.testSourceInfo != null
         }
 
         actionGroup.addAll(modules.map { SelectModuleAction(it) })

@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.base.util.module
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -406,7 +406,7 @@ class GroovyBuildScriptManipulator(
         return addLastExpressionInBlockIfNeeded(snippet)
     }
 
-    private fun GroovyFile.isAndroidModule() = module?.getBuildSystemType() == BuildSystemType.AndroidGradle
+    private fun GroovyFile.isAndroidModule() = module?.buildSystemType == BuildSystemType.AndroidGradle
 
     private fun GrStatementOwner.getBuildScriptBlock() = getBlockOrCreate("buildscript") { newBlock ->
         val pluginsBlock = getBlockByName("plugins") ?: return@getBlockOrCreate false

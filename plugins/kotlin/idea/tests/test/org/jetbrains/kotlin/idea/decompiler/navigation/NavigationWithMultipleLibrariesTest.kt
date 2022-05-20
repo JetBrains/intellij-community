@@ -14,9 +14,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.JavaModuleTestCase
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
-import org.jetbrains.kotlin.idea.caches.project.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.decompiler.navigation.NavigationChecker.Companion.checkAnnotatedCode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
@@ -136,7 +136,7 @@ abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase(
 
 private fun checkLibraryName(referenceTarget: PsiElement, expectedName: String) {
     val navigationFile = referenceTarget.navigationElement.containingFile ?: return
-    val libraryName = when (val libraryInfo = navigationFile.getNullableModuleInfo()) {
+    val libraryName = when (val libraryInfo = navigationFile.moduleInfoOrNull) {
         is LibraryInfo -> libraryInfo.library.name
         is LibrarySourceInfo -> libraryInfo.library.name
         else -> error("Couldn't get library name")

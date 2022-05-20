@@ -17,7 +17,10 @@ interface BuildSystemTypeDetector {
     }
 }
 
-fun Module.getBuildSystemType(): BuildSystemType = BuildSystemTypeDetector.EP_NAME
-    .extensionList
-    .firstNotNullOfOrNull { it.detectBuildSystemType(this) }
-    ?: BuildSystemType.JPS
+val Module.buildSystemType: BuildSystemType
+    get() {
+        return BuildSystemTypeDetector.EP_NAME
+            .extensionList
+            .firstNotNullOfOrNull { it.detectBuildSystemType(this) }
+            ?: BuildSystemType.JPS
+    }

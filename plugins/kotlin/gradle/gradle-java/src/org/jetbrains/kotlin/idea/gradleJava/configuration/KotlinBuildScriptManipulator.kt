@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.base.util.module
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -125,7 +125,7 @@ class KotlinBuildScriptManipulator(
             libraryDescriptor.libraryGroupId,
             libraryDescriptor.libraryArtifactId,
             libraryDescriptor.maxVersion,
-            scope.toGradleCompileScope(scriptFile.module?.getBuildSystemType() == BuildSystemType.AndroidGradle)
+            scope.toGradleCompileScope(scriptFile.module?.buildSystemType == BuildSystemType.AndroidGradle)
         )
 
         if (targetModule != null && usesNewMultiplatform()) {
@@ -570,7 +570,7 @@ class KotlinBuildScriptManipulator(
         }
 
         val kotlinPluginName =
-            if (scriptFile.module?.getBuildSystemType() == BuildSystemType.AndroidGradle) {
+            if (scriptFile.module?.buildSystemType == BuildSystemType.AndroidGradle) {
                 "kotlin-android"
             } else {
                 KotlinGradleModuleConfigurator.KOTLIN

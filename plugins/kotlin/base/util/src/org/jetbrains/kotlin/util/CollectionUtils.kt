@@ -10,3 +10,13 @@ inline fun <T, R> Collection<T>.mapAll(transform: (T) -> R?): List<R>? {
     }
     return result
 }
+
+fun <K, V> merge(vararg maps: Map<K, V>?): Map<K, V> {
+    val result = mutableMapOf<K, V>()
+    for (map in maps) {
+        if (map != null) {
+            result.putAll(map)
+        }
+    }
+    return result
+}

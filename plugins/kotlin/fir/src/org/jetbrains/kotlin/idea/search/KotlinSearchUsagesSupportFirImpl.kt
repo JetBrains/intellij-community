@@ -27,23 +27,19 @@ import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
-import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.usagesSearch.getDefaultImports
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.withResolvedCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.resolve.OverridingUtil
-import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 
 class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSearchUsagesSupport {
     override fun actualsForExpected(declaration: KtDeclaration, module: Module?): Set<KtDeclaration> {
@@ -223,7 +219,7 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
     }
 
     override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean {
-        return ProjectRootsUtil.isInProjectSource(element, includeScriptsOutsideSourceRoots)
+        return RootKindFilter.projectSources.copy(includeProjectSourceFiles = includeScriptsOutsideSourceRoots).matches(element)
     }
 
     override fun isOverridable(declaration: KtDeclaration): Boolean {

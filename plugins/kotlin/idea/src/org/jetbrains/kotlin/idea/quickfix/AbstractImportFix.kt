@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
 import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportActionForConstructor
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
@@ -46,7 +47,6 @@ import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -398,7 +398,7 @@ internal abstract class AbstractImportFix(expression: KtSimpleNameExpression, fa
             processor = processor
         )
 
-        if (TargetPlatformDetector.getPlatform(element.containingKtFile).isJvm()) {
+        if (element.containingKtFile.platform.isJvm()) {
             indicesHelper.processJvmCallablesByName(
                 name,
                 filter = { it.hasModifierProperty(PsiModifier.STATIC) },
@@ -765,7 +765,7 @@ internal object ImportForMissingOperatorFactory : ImportFixBase.Factory() {
 
 
 private fun KotlinIndicesHelper.getClassesByName(expressionForPlatform: KtExpression, name: String): Collection<ClassDescriptor> =
-    if (TargetPlatformDetector.getPlatform(expressionForPlatform.containingKtFile).isJvm()) {
+    if (expressionForPlatform.containingKtFile.platform.isJvm()) {
         getJvmClassesByName(name)
     } else {
         val result = mutableListOf<ClassDescriptor>()

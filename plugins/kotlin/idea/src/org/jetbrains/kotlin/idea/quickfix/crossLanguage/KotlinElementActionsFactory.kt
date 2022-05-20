@@ -27,6 +27,8 @@ import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
@@ -38,7 +40,6 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeIn
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -163,7 +164,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
         val kModifierOwner =
-            target.toKtElement<KtModifierListOwner>()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
+            target.toKtElement<KtModifierListOwner>()?.takeIf { RootKindFilter.projectSources.matches(it) } ?: return emptyList()
 
         val modifier = request.modifier
         val shouldPresent = request.shouldBePresent()
@@ -196,7 +197,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
         val targetKtClass =
-            targetClass.toKtClassOrFile().safeAs<KtClass>()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
+            targetClass.toKtClassOrFile().safeAs<KtClass>()?.takeIf { RootKindFilter.projectSources.matches(it) } ?: return emptyList()
         val modifierBuilder = ModifierBuilder(targetKtClass).apply { addJvmModifiers(request.modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
 
@@ -274,7 +275,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
-        val targetContainer = targetClass.toKtClassOrFile()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
+        val targetContainer = targetClass.toKtClassOrFile()?.takeIf { RootKindFilter.projectSources.matches(it) } ?: return emptyList()
 
         val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
 
@@ -296,7 +297,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
-        val targetContainer = targetClass.toKtClassOrFile()?.takeIf { ProjectRootsUtil.isInProjectSource(it) } ?: return emptyList()
+        val targetContainer = targetClass.toKtClassOrFile()?.takeIf { RootKindFilter.projectSources.matches(it) } ?: return emptyList()
 
         val modifierBuilder = ModifierBuilder(targetContainer).apply { addJvmModifiers(request.modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
@@ -349,7 +350,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
     override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
         val declaration = target.safeAs<KtLightElement<*, *>>()?.kotlinOrigin.safeAs<KtModifierListOwner>()?.takeIf {
-            it.language == KotlinLanguage.INSTANCE && ProjectRootsUtil.isInProjectSource(it)
+            it.language == KotlinLanguage.INSTANCE && RootKindFilter.projectSources.matches(it)
         }  ?: return emptyList()
         val annotationUseSiteTarget = when (target) {
             is JvmField -> AnnotationUseSiteTarget.FIELD

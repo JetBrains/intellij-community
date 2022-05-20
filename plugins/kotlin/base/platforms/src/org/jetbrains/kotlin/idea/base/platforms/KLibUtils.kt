@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.base.platforms
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.platform.konan.isNative
 import java.io.IOException
 import java.util.*
 
+@ApiStatus.Internal
 fun VirtualFile.isKlibLibraryRootForPlatform(targetPlatform: TargetPlatform): Boolean {
     // The virtual file for a library packed in a ZIP file will have path like "/some/path/to/the/file.klib!/",
     // and therefore will be recognized by VFS as a directory (isDirectory == true).

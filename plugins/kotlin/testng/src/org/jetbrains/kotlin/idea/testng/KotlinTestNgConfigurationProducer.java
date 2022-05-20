@@ -22,10 +22,11 @@ import com.theoryinpractice.testng.configuration.TestNGConfigurationProducer;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetectorUtils;
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter;
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher;
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider;
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider.JavaTestEntity;
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector;
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatformKt;
 import org.jetbrains.kotlin.psi.KtFile;
 
@@ -62,7 +63,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
         Project project = context.getProject();
         PsiElement leaf = location.getPsiElement();
 
-        if (!ProjectRootsUtil.isInProjectOrLibSource(leaf, false)) {
+        if (!RootKindMatcher.matches(leaf, RootKindFilter.projectAndLibrarySources)) {
             return false;
         }
 
@@ -72,7 +73,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
 
         KtFile ktFile = (KtFile) leaf.getContainingFile();
 
-        if (!JvmPlatformKt.isJvm(TargetPlatformDetector.getPlatform(ktFile))) {
+        if (!JvmPlatformKt.isJvm(TargetPlatformDetectorUtils.getPlatform(ktFile))) {
             return false;
         }
 

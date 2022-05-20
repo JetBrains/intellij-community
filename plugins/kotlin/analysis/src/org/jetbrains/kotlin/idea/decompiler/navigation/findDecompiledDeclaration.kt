@@ -10,7 +10,9 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
-import org.jetbrains.kotlin.idea.caches.project.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -30,7 +32,7 @@ fun findDecompiledDeclaration(
 
     val binaryInfo = referencedDescriptor.module.getCapability(ModuleInfo.Capability) as? BinaryModuleInfo
 
-    binaryInfo?.binariesScope()?.let {
+    binaryInfo?.binariesScope?.let {
         return findInScope(referencedDescriptor, it)
     }
     if (KotlinBuiltIns.isBuiltIn(referencedDescriptor)) {
@@ -46,7 +48,7 @@ fun findDecompiledDeclaration(
 private fun findInScope(referencedDescriptor: DeclarationDescriptor, scope: GlobalSearchScope): KtDeclaration? {
     val project = scope.project ?: return null
     val decompiledFiles = findCandidateDeclarationsInIndex(
-        referencedDescriptor, KotlinSourceFilterScope.libraryClassFiles(scope, project), project
+      referencedDescriptor, KotlinSourceFilterScope.libraryClasses(scope, project), project
     ).mapNotNullTo(LinkedHashSet()) {
         it?.containingFile as? KtDecompiledFile
     }

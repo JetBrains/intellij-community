@@ -13,10 +13,9 @@ import com.intellij.psi.ResolveScopeEnlarger
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
-import org.jetbrains.kotlin.idea.base.facet.platform
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.util.isInSourceContentWithoutInjected
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
@@ -28,7 +27,8 @@ class CommonModuleResolveScopeEnlarger : ResolveScopeEnlarger() {
         if (!module.platform.isCommon()) return null
 
         val moduleFileIndex = ModuleRootManager.getInstance(module).fileIndex
-        if (!moduleFileIndex.isInSourceContentWithoutInjected(file) && !moduleFileIndex.isInTestSourceContentKotlinAware(file)) {
+
+        if (moduleFileIndex.getKotlinSourceRootType(file) == null) {
             return null
         }
 

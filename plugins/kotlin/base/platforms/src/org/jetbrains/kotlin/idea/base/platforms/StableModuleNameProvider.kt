@@ -18,7 +18,8 @@ interface StableModuleNameProvider {
             }
         }
 
-        fun getInstance(project: Project): StableModuleNameProvider =
-            project.getService(StableModuleNameProvider::class.java) ?: Fallback
+        fun getInstance(project: Project): StableModuleNameProvider {
+            return project.getService(StableModuleNameProvider::class.java) ?: Fallback
+        }
     }
 }

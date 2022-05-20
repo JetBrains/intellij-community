@@ -85,7 +85,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     }
 
     protected open fun isApplicable(module: Module): Boolean =
-        module.getBuildSystemType() == BuildSystemType.Gradle
+        module.buildSystemType == BuildSystemType.Gradle
 
     protected open fun getMinimumSupportedVersion() = "1.0.0"
 

@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
 import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
-import org.jetbrains.kotlin.idea.KotlinIconProviderBase;
+import org.jetbrains.kotlin.idea.KotlinIconProvider;
 import org.jetbrains.kotlin.idea.completion.CompletionUtilsKt;
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester;
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator;
@@ -160,7 +160,7 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof KtNamedDeclaration) {
                     KtNamedDeclaration variable = (KtNamedDeclaration) value;
-                    setIcon(KotlinIconProviderBase.Companion.getBaseIcon(variable));
+                    setIcon(KotlinIconProvider.Companion.getBaseIcon(variable));
                     setText(variable.getName());
                     KotlinType type = MoveKotlinMethodProcessorKt.type(variable);
                     if (type != null) {

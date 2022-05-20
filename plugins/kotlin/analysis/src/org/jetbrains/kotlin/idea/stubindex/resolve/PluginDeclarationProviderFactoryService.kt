@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
@@ -30,11 +30,11 @@ class PluginDeclarationProviderFactoryService : DeclarationProviderFactoryServic
         }
 
         return PluginDeclarationProviderFactory(
-            project,
-            KotlinSourceFilterScope.projectSources(filesScope, project),
-            storageManager,
-            syntheticFiles,
-            moduleInfo
+          project,
+          KotlinSourceFilterScope.projectSources(filesScope, project),
+          storageManager,
+          syntheticFiles,
+          moduleInfo
         )
     }
 }

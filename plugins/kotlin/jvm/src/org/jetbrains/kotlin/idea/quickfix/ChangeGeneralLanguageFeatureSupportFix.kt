@@ -17,9 +17,10 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
-import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.psi.KtFile
 
 sealed class ChangeGeneralLanguageFeatureSupportFix(
@@ -37,7 +38,8 @@ sealed class ChangeGeneralLanguageFeatureSupportFix(
 
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return
-            val forTests = ModuleRootManager.getInstance(module).fileIndex.isInTestSourceContentKotlinAware(file.virtualFile)
+            val fileIndex = ModuleRootManager.getInstance(module).fileIndex
+            val forTests = fileIndex.getKotlinSourceRootType(file.virtualFile) == TestSourceKotlinRootType
 
             findApplicableConfigurator(module).changeGeneralFeatureConfiguration(module, feature, featureSupport, forTests)
         }

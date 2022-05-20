@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.fir.analysis.project.structure
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 
 
 @RequiresOptIn("Transitional API for access FE1.0 compiler-relate stuff which will be removed soon")
@@ -26,6 +26,6 @@ val KtSourceModule.ideaModule: Module
     }
 
 fun Module.getMainKtSourceModule(): KtSourceModule? {
-    val moduleInfo = productionSourceInfo() ?: return null
+    val moduleInfo = productionSourceInfo ?: return null
     return ProjectStructureProviderIdeImpl.getInstance(project).getKtModuleByModuleInfo(moduleInfo) as KtSourceModule
 }

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
+import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
 import org.jetbrains.kotlin.idea.quickfix.ExperimentalFixesFactory.annotationExists
 import org.jetbrains.kotlin.idea.util.projectStructure.module
@@ -70,7 +70,7 @@ open class MakeModuleExperimentalFix(
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         // This fix can be used for JPS only as it changes facet settings,
         // and Gradle and Maven facets are reset when the project is reloaded.
-        return module.getBuildSystemType() == BuildSystemType.JPS
+        return module.buildSystemType == BuildSystemType.JPS
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

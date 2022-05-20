@@ -35,6 +35,16 @@
             qualifiedName="org.jetbrains.kotlin.buildSystemTypeDetector"
             interface="org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.base.platforms.targetPlatformDetector"
+            interface="org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoProviderExtension"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProviderExtension"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -60,6 +70,10 @@
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
 
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.RootKindMatcherImpl"/>
+
     <applicationConfigurable
             groupId="language"
             bundle="messages.KotlinBundle"
@@ -76,7 +90,7 @@
 
     <errorHandler implementation="org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter"/>
 
-    <iconProvider implementation="org.jetbrains.kotlin.idea.KotlinIconProvider"/>
+    <iconProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinIconProvider"/>
 
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
@@ -194,10 +208,10 @@
 
     <pluginUpdateVerifier implementation="org.jetbrains.kotlin.idea.update.GooglePluginUpdateVerifier"/>
 
-    <binaryExtension implementation="org.jetbrains.kotlin.idea.util.JavaClassBinary"/>
-    <binaryExtension implementation="org.jetbrains.kotlin.idea.util.KotlinBuiltInBinary"/>
-    <binaryExtension implementation="org.jetbrains.kotlin.idea.util.KotlinModuleBinary"/>
-    <binaryExtension implementation="org.jetbrains.kotlin.idea.util.KotlinJsMetaBinary"/>
+    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.JavaClassBinary"/>
+    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KotlinBuiltInBinary"/>
+    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KotlinModuleBinary"/>
+    <binaryExtension implementation="org.jetbrains.kotlin.idea.base.projectStructure.KotlinJsMetaBinary"/>
 
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
@@ -478,7 +492,7 @@
                 class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
         <action
                 id="LibraryToSourceDependencySupportToggleAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.LibraryToSourceDependencySupportToggleAction"/>
+                class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
         <action
                 id="CopyAsDiagnosticTest"
                 class="org.jetbrains.kotlin.idea.actions.internal.CopyAsDiagnosticTestAction"/>

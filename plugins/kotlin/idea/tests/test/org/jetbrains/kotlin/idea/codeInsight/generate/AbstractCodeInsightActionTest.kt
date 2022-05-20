@@ -12,7 +12,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestActionEvent
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.project.forcedTargetPlatform
+import org.jetbrains.kotlin.idea.base.platforms.forcedTargetPlatform
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.js.JsPlatforms

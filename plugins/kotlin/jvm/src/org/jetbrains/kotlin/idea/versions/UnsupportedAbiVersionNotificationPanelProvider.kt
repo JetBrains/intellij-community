@@ -28,9 +28,9 @@ import com.intellij.ui.EditorNotificationProvider.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.application.invokeLater
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
@@ -326,7 +326,8 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         }
 
         fun collectBadRoots(module: Module): Collection<BinaryVersionedFile<BinaryVersion>> {
-            val platform = TargetPlatformDetector.getPlatform(module)
+            val platform = module.platform
+
             val badRoots = when {
                 platform.isJvm() -> getLibraryRootsWithAbiIncompatibleKotlinClasses(module)
                 platform.isJs() -> getLibraryRootsWithAbiIncompatibleForKotlinJs(module)

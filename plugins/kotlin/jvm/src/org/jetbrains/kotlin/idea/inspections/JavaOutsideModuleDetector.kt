@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -15,7 +16,6 @@ import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.util.findModule
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import java.util.function.Function
 import javax.swing.JComponent
@@ -26,7 +26,7 @@ class JavaOutsideModuleDetector : EditorNotificationProvider {
         if (file.extension != JavaFileType.DEFAULT_EXTENSION && !FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE)) {
             return CONST_NULL
         }
-        val module = file.findModule(project)?.takeIf(Module::isGradleModule) ?: return CONST_NULL
+        val module = ModuleUtilCore.findModuleForFile(file, project)?.takeIf(Module::isGradleModule) ?: return CONST_NULL
         val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return CONST_NULL
 
         val filePath = file.path

@@ -25,9 +25,15 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.ModuleTestSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
@@ -306,14 +312,14 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         c.addDependency(b)
         c.addDependency(a)
 
-        assertNotNull(a.productionSourceInfo())
-        assertNull(a.testSourceInfo())
+        assertNotNull(a.productionSourceInfo)
+        assertNull(a.testSourceInfo)
 
-        assertNull(empty.productionSourceInfo())
-        assertNull(empty.testSourceInfo())
+        assertNull(empty.productionSourceInfo)
+        assertNull(empty.testSourceInfo)
 
-        assertNull(b.productionSourceInfo())
-        assertNotNull(b.testSourceInfo())
+        assertNull(b.productionSourceInfo)
+        assertNotNull(b.testSourceInfo)
 
         b.test.assertDependenciesEqual(b.test, a.production)
         c.test.assertDependenciesEqual(c.test, c.production, b.test, a.production)
@@ -738,14 +744,14 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
     private val VirtualFile.moduleInfo: IdeaModuleInfo
         get() {
-            return PsiManager.getInstance(project).findFile(this)!!.getModuleInfo()
+            return PsiManager.getInstance(project).findFile(this)!!.moduleInfo
         }
 
     private val Module.production: ModuleProductionSourceInfo
-        get() = productionSourceInfo()!!
+        get() = productionSourceInfo!!
 
     private val Module.test: ModuleTestSourceInfo
-        get() = testSourceInfo()!!
+        get() = testSourceInfo!!
 
     private val LibraryEx.classes: LibraryInfo
         get() = object : LibraryInfo(project!!, this) {

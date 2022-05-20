@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.asJava.defaultImplsChild
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -140,7 +141,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             override fun isSearchInLibraries() = true
             override fun contains(file: VirtualFile) = !FileTypeRegistry.getInstance().isFileOfType(file, KotlinBuiltInFileType)
         }
-        return KotlinSourceFilterScope.sourceAndClassFiles(scope, project).intersectWith(noBuiltInsScope)
+        return KotlinSourceFilterScope.projectSourcesAndLibraryClasses(scope, project).intersectWith(noBuiltInsScope)
     }
     //endregion
 

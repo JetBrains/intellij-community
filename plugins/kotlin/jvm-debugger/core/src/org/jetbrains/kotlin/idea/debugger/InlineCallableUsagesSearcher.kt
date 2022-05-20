@@ -16,12 +16,13 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.DebuggerClassNameProvider.Companion.getRelevantElement
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.ComputedClassNames
 import org.jetbrains.kotlin.idea.search.isImportUsage
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -116,7 +117,7 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
 
     private fun getScopeForInlineDeclarationUsages(inlineDeclaration: KtDeclaration): GlobalSearchScope {
         val virtualFile = runReadAction { inlineDeclaration.containingFile.virtualFile }
-        return if (virtualFile != null && ProjectRootsUtil.isLibraryFile(project, virtualFile)) {
+        return if (virtualFile != null && RootKindFilter.libraryFiles.matches(project, virtualFile)) {
             searchScope.uniteWith(
                 KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)
             )

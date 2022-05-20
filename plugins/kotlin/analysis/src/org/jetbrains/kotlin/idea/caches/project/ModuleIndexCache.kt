@@ -11,14 +11,18 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import java.util.*
 
 //NOTE: this is an approximation that may contain more module infos than the exact solution
 fun ModuleSourceInfo.getDependentModules(): Set<ModuleSourceInfo> {
     val dependents = getDependents(module)
+    @Suppress("DEPRECATION")
     return when (sourceType) {
-        SourceType.TEST -> dependents.mapNotNullTo(HashSet<ModuleSourceInfo>(), Module::testSourceInfo)
-        SourceType.PRODUCTION -> dependents.flatMapTo(HashSet<ModuleSourceInfo>()) { it.correspondingModuleInfos() }
+        SourceType.TEST -> dependents.mapNotNullTo(HashSet<ModuleSourceInfo>()) { it.testSourceInfo }
+        SourceType.PRODUCTION -> dependents.flatMapTo(HashSet<ModuleSourceInfo>()) { it.sourceModuleInfos }
     }
 }
 

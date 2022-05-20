@@ -70,11 +70,7 @@ class KotlinSdkType : SdkType("KotlinSDK") {
 
     override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator) = null
 
-    override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {
+    override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
 
-    }
-
-    override fun allowCreationByUser(): Boolean {
-        return false
-    }
+    override fun allowCreationByUser() = false
 }

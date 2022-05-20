@@ -4,14 +4,13 @@ package org.jetbrains.kotlin.idea.formatter
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 
 fun PsiFile.commitAndUnblockDocument(): Boolean {
     val virtualFile = this.virtualFile ?: return false
@@ -27,6 +26,8 @@ fun PsiFile.adjustLineIndent(startOffset: Int, endOffset: Int) {
     CodeStyleManager.getInstance(project).adjustLineIndent(this, TextRange(startOffset, endOffset))
 }
 
-fun trailingCommaAllowedInModule(source: PsiElement): Boolean = source.module
-    ?.languageVersionSettings
-    ?.supportsFeature(LanguageFeature.TrailingCommas) == true
+fun trailingCommaAllowedInModule(source: PsiElement): Boolean {
+    return source.module
+        ?.languageVersionSettings
+        ?.supportsFeature(LanguageFeature.TrailingCommas) == true
+}

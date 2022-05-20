@@ -11,11 +11,11 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.isSyntheticKotlinClass
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -55,7 +55,7 @@ class AllClassesCompletion(
             kotlinIndicesHelper.processTopLevelTypeAliases(prefixMatcher.asStringNameFilter(), classifierDescriptorCollector)
         }
 
-        if (TargetPlatformDetector.getPlatform(parameters.originalFile as KtFile).isJvm()) {
+        if ((parameters.originalFile as KtFile).platform.isJvm()) {
             addAdaptedJavaCompletion(javaClassCollector)
         }
     }

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.stubs
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
@@ -23,21 +22,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheServiceImpl
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
-import org.jetbrains.kotlin.idea.project.KotlinLibraryToSourceAnalysisComponent
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.util.slashedPath
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
@@ -163,22 +161,18 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         Assert.assertTrue(atLeastOneFile)
     }
 
-    protected fun withResolutionAnchors(
-        anchors: Map<String, String>,
-        block: () -> Unit
-    ) {
+    protected fun withResolutionAnchors(anchors: Map<String, String>, block: () -> Unit) {
         val resolutionAnchorService = ResolutionAnchorCacheService.getInstance(project).safeAs<ResolutionAnchorCacheServiceImpl>()
             ?: error("Anchor service missing")
-        val oldResolutionAnchorMappingState = resolutionAnchorService.state
-        val oldLibraryToSourceAnalysisState = KotlinLibraryToSourceAnalysisComponent.isEnabled(project)
 
-        resolutionAnchorService.setAnchors(anchors)
-        KotlinLibraryToSourceAnalysisComponent.setState(project, isEnabled = true)
+        val oldResolutionAnchorMappingState = resolutionAnchorService.state
 
         try {
-            block()
+            resolutionAnchorService.setAnchors(anchors)
+            project.withLibraryToSourceAnalysis {
+                block()
+            }
         } finally {
-            KotlinLibraryToSourceAnalysisComponent.setState(project, isEnabled = oldLibraryToSourceAnalysisState)
             resolutionAnchorService.loadState(oldResolutionAnchorMappingState)
         }
     }

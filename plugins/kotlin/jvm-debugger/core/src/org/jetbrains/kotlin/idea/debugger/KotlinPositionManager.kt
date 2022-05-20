@@ -37,6 +37,8 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
@@ -49,8 +51,7 @@ import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
-import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
@@ -63,7 +64,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private val stackFrameInterceptor: StackFrameInterceptor = debugProcess.project.service()
 
     private val allKotlinFilesScope = object : DelegatingGlobalSearchScope(
-        KotlinSourceFilterScope.projectAndLibrariesSources(GlobalSearchScope.allScope(debugProcess.project), debugProcess.project)
+        KotlinSourceFilterScope.projectAndLibrarySources(GlobalSearchScope.allScope(debugProcess.project), debugProcess.project)
     ) {
         private val projectIndex = ProjectRootManager.getInstance(debugProcess.project).fileIndex
         private val scopeComparator = Comparator
@@ -374,7 +375,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     override fun getAllClasses(sourcePosition: SourcePosition): List<ReferenceType> {
         val psiFile = sourcePosition.file
         if (psiFile is KtFile) {
-            if (!ProjectRootsUtil.isInProjectOrLibSource(psiFile)) return emptyList()
+            if (!RootKindFilter.projectAndLibrarySources.matches(psiFile)) return emptyList()
 
             val referenceTypesInKtFile = hopelessAware {
                 getReferenceTypesForPositionInKtFile(sourcePosition)

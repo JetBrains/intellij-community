@@ -64,3 +64,12 @@ class KotlinCommonCompilerArgumentsHolder(project: Project) : BaseKotlinCompiler
         fun getInstance(project: Project): KotlinCommonCompilerArgumentsHolder = project.service()
     }
 }
+
+fun isKotlinLanguageVersionConfigured(arguments: KotlinCommonCompilerArgumentsHolder): Boolean {
+    val settings = arguments.settings
+    return settings.languageVersion != null && settings.apiVersion != null
+}
+
+fun isKotlinLanguageVersionConfigured(project: Project): Boolean {
+    return isKotlinLanguageVersionConfigured(KotlinCommonCompilerArgumentsHolder.getInstance(project))
+}

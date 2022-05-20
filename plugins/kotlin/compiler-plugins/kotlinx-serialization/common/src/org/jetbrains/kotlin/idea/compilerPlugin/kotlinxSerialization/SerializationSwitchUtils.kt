@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.idea.core.unwrapModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.unwrapModuleSourceInfo
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 

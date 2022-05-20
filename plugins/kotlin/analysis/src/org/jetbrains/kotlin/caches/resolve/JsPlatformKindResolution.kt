@@ -2,10 +2,6 @@
 
 package org.jetbrains.kotlin.caches.resolve
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.PlatformAnalysisParameters
 import org.jetbrains.kotlin.analyzer.ResolverForModuleFactory
@@ -16,18 +12,16 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.context.ProjectContext
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
-import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
-import org.jetbrains.kotlin.idea.caches.project.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.JsKlibLibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
-import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.klib.createKlibPackageFragmentProvider
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.konan.util.KlibMetadataFactories
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
-import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer
 import org.jetbrains.kotlin.serialization.konan.impl.KlibMetadataModuleDescriptorFactoryImpl
@@ -41,11 +35,11 @@ class JsPlatformKindResolution : IdePlatformKindResolution {
     }
 
     override fun createBuiltIns(
-        moduleInfo: IdeaModuleInfo,
-        projectContext: ProjectContext,
-        resolverForProject: ResolverForProject<IdeaModuleInfo>,
-        sdkDependency: SdkInfo?,
-        stdlibDependency: LibraryInfo?,
+      moduleInfo: IdeaModuleInfo,
+      projectContext: ProjectContext,
+      resolverForProject: ResolverForProject<IdeaModuleInfo>,
+      sdkDependency: SdkInfo?,
+      stdlibDependency: LibraryInfo?,
     ): KotlinBuiltIns {
         return DefaultBuiltIns.Instance
     }
@@ -55,21 +49,6 @@ class JsPlatformKindResolution : IdePlatformKindResolution {
         environment: TargetEnvironment,
         platform: TargetPlatform
     ): ResolverForModuleFactory = JsResolverForModuleFactory(environment)
-
-    override fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> {
-        val klibFiles = library.getFiles(OrderRootType.CLASSES)
-            .filter { it.isKlibLibraryRootForPlatform(JsPlatforms.defaultJsPlatform) }
-
-        return if (klibFiles.isNotEmpty()) {
-            klibFiles.mapNotNull {
-                // TODO report error?
-                val path = PathUtil.getLocalPath(it) ?: return@mapNotNull null
-                JsKlibLibraryInfo(project, library, path)
-            }
-        } else {
-            listOf(JsMetadataLibraryInfo(project, library))
-        }
-    }
 
     override fun createKlibPackageFragmentProvider(
         moduleInfo: ModuleInfo,
@@ -98,14 +77,4 @@ class JsPlatformKindResolution : IdePlatformKindResolution {
             metadataFactories.platformDependentTypeTransformer
         )
     }
-}
-
-class JsKlibLibraryInfo(project: Project, library: Library, libraryRoot: String) : AbstractKlibLibraryInfo(project, library, libraryRoot) {
-    override val platform: TargetPlatform
-        get() = JsPlatforms.defaultJsPlatform
-}
-
-class JsMetadataLibraryInfo(project: Project, library: Library) : LibraryInfo(project, library) {
-    override val platform: TargetPlatform
-        get() = JsPlatforms.defaultJsPlatform
 }

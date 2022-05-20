@@ -9,11 +9,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.references.fe10.base.KtFe10ReferenceResolutionHelper
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
@@ -38,8 +39,11 @@ class KtFe10ReferenceResolutionHelperImpl : KtFe10ReferenceResolutionHelper {
         resolveScope: GlobalSearchScope
     ): Collection<PsiElement> = declaration.findPsiDeclarations(project, resolveScope)
 
-    override fun isInProjectOrLibSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean =
-        ProjectRootsUtil.isInProjectOrLibSource(element, includeScriptsOutsideSourceRoots)
+    override fun isInProjectOrLibSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean {
+        return RootKindFilter.projectAndLibrarySources
+            .copy(includeScriptsOutsideSourceRoots = includeScriptsOutsideSourceRoots)
+            .matches(element)
+    }
 
     override fun partialAnalyze(element: KtElement): BindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
 

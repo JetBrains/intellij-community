@@ -2,17 +2,20 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.util.isInDumbMode
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -24,15 +27,15 @@ object KotlinHighlightingUtil {
         return shouldHighlightFile(ktFile)
     }
 
-    fun shouldHighlightFile(ktFile: KtFile): Boolean {
+    private fun shouldHighlightFile(ktFile: KtFile): Boolean {
         if (ktFile is KtCodeFragment && ktFile.context != null) {
             return true
         }
-        
+
         if (ktFile.isCompiled) return false
 
-        if (OutsidersPsiFileSupportWrapper.isOutsiderFile(ktFile.virtualFile)) {
-            val origin = OutsidersPsiFileSupportUtils.getOutsiderFileOrigin(ktFile.project, ktFile.virtualFile) ?: return false
+        if (OutsidersPsiFileSupport.isOutsiderFile(ktFile.virtualFile)) {
+            val origin = getOutsiderFileOrigin(ktFile.project, ktFile.virtualFile) ?: return false
             val psiFileOrigin = PsiManager.getInstance(ktFile.project).findFile(origin) ?: return false
             return shouldHighlight(psiFileOrigin)
         }
@@ -42,15 +45,11 @@ object KotlinHighlightingUtil {
             return shouldHighlightScript(ktFile)
         }
 
-        return if (shouldCheckScript != null) ProjectRootsUtil.isInProjectOrLibraryContent(ktFile) && ktFile.getModuleInfo() !is NotUnderContentRootModuleInfo
-        else ProjectRootsUtil.isInContent(
-            element = ktFile,
-            includeProjectSource = true,
-            includeLibrarySource = true,
-            includeLibraryClasses = true,
-            includeScriptDependencies = true,
-            includeScriptsOutsideSourceRoots = true,
-        )
+        return if (shouldCheckScript != null) {
+            RootKindFilter.everything.matches(ktFile) && ktFile.moduleInfo !is NotUnderContentRootModuleInfo
+        } else {
+            RootKindFilter.everything.copy(includeScriptsOutsideSourceRoots = true).matches(ktFile)
+        }
     }
 
     fun shouldHighlightErrors(ktFile: KtFile): Boolean {
@@ -67,7 +66,7 @@ object KotlinHighlightingUtil {
             return shouldHighlightScript(ktFile)
         }
 
-        return ProjectRootsUtil.isInProjectSource(ktFile, includeScriptsOutsideSourceRoots = canCheckScript == null)
+        return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = canCheckScript == null).matches(ktFile)
     }
 
     private fun KtFile.shouldCheckScript(): Boolean? = runReadAction {
@@ -92,7 +91,7 @@ object KotlinHighlightingUtil {
 
         if (!ScriptDefinitionsManager.getInstance(ktFile.project).isReady()) return false
 
-        return ProjectRootsUtil.isInProjectSource(ktFile, includeScriptsOutsideSourceRoots = true)
+        return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(ktFile)
     }
 
     fun hasCustomPropertyDeclaration(descriptor: PropertyDescriptor): Boolean {

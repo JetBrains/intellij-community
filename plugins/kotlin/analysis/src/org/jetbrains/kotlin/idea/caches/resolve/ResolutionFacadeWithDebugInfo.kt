@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -217,12 +217,12 @@ private fun StringBuilder.appendElement(element: PsiElement) {
     if (element is PsiFile) {
         info("containingFile.name", element.containingFile.name)
     }
-    val moduleInfoResult = ifIndexReady { element.getNullableModuleInfo() }
+    val moduleInfoResult = ifIndexReady { element.moduleInfoOrNull }
     info("moduleInfo", moduleInfoResult?.let { it.result?.toString() ?: "null" } ?: "<index not ready>")
 
     val moduleInfo = moduleInfoResult?.result
     if (moduleInfo != null) {
-        info("moduleInfo.platform", moduleInfo.platform?.toString())
+        info("moduleInfo.platform", moduleInfo.platform.toString())
     }
 
     val virtualFile = element.containingFile?.virtualFile

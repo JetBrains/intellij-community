@@ -10,12 +10,12 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.KotlinModuleKind
+import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
-import org.jetbrains.kotlin.idea.base.facet.sourceType
-import org.jetbrains.kotlin.idea.caches.project.SourceType
+import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.configuration.toModuleGroup
-import org.jetbrains.kotlin.idea.core.getSourceType
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 class KotlinMultiplatformRunLocationsProvider : MultipleRunLocationsProvider() {
@@ -34,7 +34,8 @@ class KotlinMultiplatformRunLocationsProvider : MultipleRunLocationsProvider() {
         }
 
         val virtualFile = originalLocation.virtualFile ?: return emptyList()
-        val sourceType = ModuleRootManager.getInstance(originalModule).fileIndex.getSourceType(virtualFile) ?: return emptyList()
+        val fileIndex = ModuleRootManager.getInstance(originalModule).fileIndex
+        val sourceType = fileIndex.getKotlinSourceRootType(virtualFile) ?: return emptyList()
         return modulesToRunFrom(originalModule, sourceType).map { PsiLocation(originalLocation.project, it, originalLocation.psiElement) }
     }
 }
@@ -50,12 +51,12 @@ private fun compactedGradleProjectId(module: Module): String {
 
 private fun modulesToRunFrom(
     originalModule: Module,
-    originalSourceType: SourceType
+    originalSourceType: KotlinSourceRootType
 ): List<Module> {
     val modules = originalModule.implementingModules
     if (!originalModule.isNewMultiPlatformModule) return modules
     val compilations = modules.filter {
         KotlinFacet.get(it)?.configuration?.settings?.kind == KotlinModuleKind.COMPILATION_AND_SOURCE_SET_HOLDER
     }
-    return compilations.filter { it.isAndroidModule() || it.sourceType == originalSourceType }
+    return compilations.filter { it.isAndroidModule() || it.kotlinSourceRootType == originalSourceType }
 }
