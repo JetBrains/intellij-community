@@ -16,7 +16,7 @@ import kotlin.Pair
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGeneratorKt
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -378,21 +378,20 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String vmOptionsPath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions"
     String javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
 
-    Path file = targetDir.resolve(ProductInfoGenerator.FILE_NAME)
+    Path file = targetDir.resolve(ProductInfoGeneratorKt.PRODUCT_INFO_FILE_NAME)
     Files.createDirectories(targetDir)
-    Files.write(file, new ProductInfoGenerator(context).generateMultiPlatformProductJson(
+    Files.write(file, ProductInfoGeneratorKt.generateMultiPlatformProductJson(
       "bin",
       context.getBuiltinModule(),
-      [
+      List.of(
         new ProductInfoLaunchData(
-          os: OsFamily.WINDOWS.osName,
-          launcherPath: launcherPath,
-          javaExecutablePath: javaExecutablePath,
-          vmOptionsFilePath: vmOptionsPath,
-          startupWmClass: null,
+          OsFamily.WINDOWS.osName,
+          launcherPath,
+          javaExecutablePath,
+          vmOptionsPath,
+          null,
           )
-      ]
-    ))
+      ), context))
   }
 
   private static @NotNull FileFilter createFileFilter(String... extensions) {

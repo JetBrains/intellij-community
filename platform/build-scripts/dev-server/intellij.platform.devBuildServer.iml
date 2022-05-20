@@ -4,12 +4,12 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xuse-old-backend" />
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions" />
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="11" />
-          <option name="languageVersion" value="1.5" />
-          <option name="apiVersion" value="1.5" />
+          <option name="languageVersion" value="1.6" />
+          <option name="apiVersion" value="1.6" />
           <option name="pluginOptions">
             <array />
           </option>

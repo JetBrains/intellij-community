@@ -25,8 +25,9 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.finish
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getLibraryName
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.impl.productInfo.generateMultiPlatformProductJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.zip
@@ -1005,7 +1006,7 @@ private fun doBuildUpdaterJar(artifactName: String, context: BuildContext) {
 private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
-  val productJson = ProductInfoGenerator(context).generateMultiPlatformProductJson(
+  val productJson = generateMultiPlatformProductJson(
     "bin",
     context.getBuiltinModule(),
     listOf(
@@ -1022,7 +1023,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
                             launcherPath = "MacOS/$executableName",
                             javaExecutablePath = null,
                             vmOptionsFilePath = "bin/mac/${executableName}.vmoptions")
-  ))
+  ), context)
 
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
@@ -1051,11 +1052,3 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   }
   return targetFile
 }
-
-data class ProductInfoLaunchData(
-  val os: String,
-  val launcherPath: String,
-  val javaExecutablePath: String?,
-  val vmOptionsFilePath: String,
-  val startupWmClass: String? = null,
-)

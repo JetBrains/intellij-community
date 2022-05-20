@@ -11,7 +11,7 @@ import kotlin.Unit
 import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGeneratorKt
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.intellij.build.io.FileKt
@@ -413,20 +413,20 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
   }
 
-  static byte[] generateProductJson(BuildContext buildContext, String javaExecutablePath) {
-    String executable = buildContext.productProperties.baseFileName
-    return new ProductInfoGenerator(buildContext).generateMultiPlatformProductJson(
+  static byte[] generateProductJson(BuildContext context, String javaExecutablePath) {
+    String executable = context.productProperties.baseFileName
+    return ProductInfoGeneratorKt.generateMultiPlatformProductJson(
       "../bin",
-      buildContext.builtinModule,
-      [
+      context.builtinModule,
+      List.of(
         new ProductInfoLaunchData(
-          os: OsFamily.MACOS.osName,
-          launcherPath: "../MacOS/${executable}",
-          javaExecutablePath: javaExecutablePath,
-          vmOptionsFilePath: "../bin/${executable}.vmoptions",
-          startupWmClass: null,
+          OsFamily.MACOS.osName,
+          "../MacOS/${executable}",
+          javaExecutablePath,
+          "../bin/${executable}.vmoptions",
+          null,
         )
-      ]
+      ), context
     )
   }
 

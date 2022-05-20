@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -45,7 +45,7 @@ final class ProductInfoValidator {
    * Checks that product-info.json file located in {@code archivePath} archive in {@code pathInArchive} subdirectory is correct
    */
   static void checkInArchive(BuildContext context, Path archiveFile, String pathInArchive) {
-    String productJsonPath = joinPaths(pathInArchive, ProductInfoGenerator.FILE_NAME)
+    String productJsonPath = joinPaths(pathInArchive, ProductInfoGeneratorKt.PRODUCT_INFO_FILE_NAME)
     byte[] entryData = ArchiveUtils.loadEntry(archiveFile, productJsonPath)
     if (entryData == null) {
       context.messages.error("Failed to validate product-info.json: cannot find '$productJsonPath' in $archiveFile")
@@ -61,7 +61,7 @@ final class ProductInfoValidator {
    */
   void validateInDirectory(Path directoryWithProductJson, String relativePathToProductJson, List<Path> installationDirectories,
                            List<Pair<Path, String>> installationArchives) {
-    Path productJsonFile = directoryWithProductJson.resolve(relativePathToProductJson + ProductInfoGenerator.FILE_NAME)
+    Path productJsonFile = directoryWithProductJson.resolve(relativePathToProductJson + ProductInfoGeneratorKt.PRODUCT_INFO_FILE_NAME)
 
     byte[] content
     try {
