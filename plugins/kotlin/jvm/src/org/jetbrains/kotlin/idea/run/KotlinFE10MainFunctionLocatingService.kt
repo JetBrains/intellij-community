@@ -7,17 +7,17 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class KotlinFE10MainFunctionLocatingService : KotlinMainFunctionLocatingService {
-    override fun isMain(function: KtNamedFunction): Boolean =
-        mainFunctionDetector(function).isMain(function)
-
-    private fun mainFunctionDetector(function: KtDeclaration) =
-        MainFunctionDetector(function.languageVersionSettings) {
-            it.resolveToDescriptorIfAny()
-        }
+    override fun isMain(function: KtNamedFunction): Boolean = hasMain(listOf(function))
 
     override fun hasMain(declarations: List<KtDeclaration>): Boolean {
-        val mainFunctionDetector = mainFunctionDetector(declarations.firstOrNull() ?: return false)
+        if (declarations.isEmpty()) return false
+        val mainFunctionDetector = mainFunctionDetector(declarations.first())
 
         return declarations.any { it is KtNamedFunction && mainFunctionDetector.isMain(it) }
     }
+
+    private fun mainFunctionDetector(declaration: KtDeclaration) =
+        MainFunctionDetector(declaration.languageVersionSettings) {
+            it.resolveToDescriptorIfAny()
+        }
 }
