@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -71,7 +71,10 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     myOptions.beforeStartup();
 
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    InspectionApplication.LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() + "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
+    InspectionApplication.LOG.info(
+      "CPU cores: " + Runtime.getRuntime().availableProcessors() + "; " +
+      "ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; " +
+      "factory: " + ForkJoinPool.commonPool().getFactory());
 
     myApplication.startup();
   }

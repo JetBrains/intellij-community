@@ -101,6 +101,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   String myTargets;
   public boolean myErrorCodeRequired = true;
   String myScopePattern;
+
   public void startup() {
     if (myProjectPath == null) {
       reportError("Project to inspect is not defined");
@@ -134,7 +135,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     myPathProfiling = true;
   }
 
-  public void header(){}
+  public void header() { }
 
   public void execute() throws Exception {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -184,12 +185,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       @Override
       public @NotNull Predicate<Path> getFilesFilter() {
-        return __->true;
+        return __ -> true;
       }
 
       @Override
       public @NotNull Predicate<VirtualFile> getVirtualFilesFilter() {
-        return __->true;
+        return __ -> true;
       }
     };
   }
@@ -213,7 +214,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   @Nullable
   protected Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
-    VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
+    VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+      FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
       reportError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
       printHelpAndExit();
@@ -433,7 +435,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
-      configurator.preConfigureProject(project,context);
+      configurator.preConfigureProject(project, context);
     }
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
@@ -446,7 +448,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private static void waitForInvokeLaterActivities() {
-    ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> {
+      },
+      ModalityState.any());
   }
 
   private void runAnalysis(Project project,
@@ -763,7 +768,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
-      reportMessage(1, "Loaded the '" + profileName +"' shared project profile");
+      reportMessage(1, "Loaded the '" + profileName + "' shared project profile");
     }
     else {
       //check if ide profile is used for project
