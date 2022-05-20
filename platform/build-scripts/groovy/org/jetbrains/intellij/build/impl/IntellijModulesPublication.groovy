@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
@@ -16,7 +16,7 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
  */
 @CompileStatic
 @SuppressWarnings("unused")
-class IntellijModulesPublication {
+final class IntellijModulesPublication {
   private final CompilationContext context
   private final File mavenSettings
   private final Options options
@@ -97,7 +97,7 @@ class IntellijModulesPublication {
     }
   }
 
-  private void deployModuleArtifact(MavenArtifactsBuilder.MavenCoordinates coordinates) {
+  private void deployModuleArtifact(MavenCoordinates coordinates) {
     def dir = new File(options.outputDir, coordinates.directoryPath)
     def pom = new File(dir, coordinates.getFileName('', 'pom'))
     def jar = new File(dir, coordinates.getFileName('', 'jar'))
@@ -128,11 +128,11 @@ class IntellijModulesPublication {
       }
   }
 
-  private def deployJar(File jar, File pom, MavenArtifactsBuilder.MavenCoordinates coordinates) {
+  private def deployJar(File jar, File pom, MavenCoordinates coordinates) {
     deployFile(jar, coordinates, "", ["-DpomFile=$pom.absolutePath"])
   }
 
-  private def deploySources(File sources, MavenArtifactsBuilder.MavenCoordinates coordinates) {
+  private def deploySources(File sources, MavenCoordinates coordinates) {
     deployFile(sources, coordinates, "sources", [
       "-DgroupId=$coordinates.groupId",
       "-DartifactId=$coordinates.artifactId",
@@ -142,7 +142,7 @@ class IntellijModulesPublication {
     ])
   }
 
-  private def deployFile(File file, MavenArtifactsBuilder.MavenCoordinates coordinates, String classifier, Collection args) {
+  private def deployFile(File file, MavenCoordinates coordinates, String classifier, Collection args) {
     if (artifactExists(coordinates, classifier, file.name.split('\\.').last())) {
       context.messages.info("Artifact $coordinates was already published.")
     }
@@ -163,7 +163,7 @@ class IntellijModulesPublication {
     }
   }
 
-  private boolean artifactExists(MavenArtifactsBuilder.MavenCoordinates coordinates, String classifier, String packaging) {
+  private boolean artifactExists(MavenCoordinates coordinates, String classifier, String packaging) {
     URL url = new URL("${options.checkArtifactExistsUrl}/$coordinates.directoryPath/${coordinates.getFileName(classifier, packaging)}")
 
     HttpURLConnection connection = (HttpURLConnection)url.openConnection()

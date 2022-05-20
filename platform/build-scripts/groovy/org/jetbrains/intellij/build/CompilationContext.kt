@@ -8,7 +8,6 @@ import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
-import java.io.File
 import java.nio.file.Path
 
 interface CompilationContext {
@@ -37,7 +36,7 @@ interface CompilationContext {
   /**
    * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default
    */
-  val projectOutputDirectory: File
+  val projectOutputDirectory: Path
 
   fun findRequiredModule(name: String): JpsModule
 
@@ -57,9 +56,6 @@ interface CompilationContext {
 
   // "Was" added due to Groovy bug (compilation error - cannot find method with same name but different parameter type)
   fun notifyArtifactWasBuilt(artifactPath: Path)
-
-  @Deprecated("Use notifyArtifactWasBuilt")
-  fun notifyArtifactBuilt(artifactPath: String)
 }
 
 interface CompilationTasks {

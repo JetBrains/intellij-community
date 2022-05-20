@@ -34,10 +34,12 @@ import java.util.function.BiConsumer
 open class MavenArtifactsBuilder @JvmOverloads constructor(protected val buildContext: BuildContext,
                                                            private val skipNothing: Boolean = false) {
   companion object {
+    @JvmStatic
     fun generateMavenCoordinatesSquashed(moduleName: String, messages: BuildMessages, version: String): MavenCoordinates {
       return generateMavenCoordinates("$moduleName.squashed", messages, version)
     }
 
+    @JvmStatic
     fun generateMavenCoordinates(moduleName: String, messages: BuildMessages, version: String): MavenCoordinates {
       val names = moduleName.split("\\.")
       if (names.size < 2) {
@@ -51,6 +53,7 @@ open class MavenArtifactsBuilder @JvmOverloads constructor(protected val buildCo
       return MavenCoordinates(groupId, artifactId, version)
     }
 
+    @JvmStatic
     fun scopedDependencies(module: JpsModule): Map<JpsDependencyElement, DependencyScope> {
       val result = HashMap<JpsDependencyElement, DependencyScope>()
       for (dependency in module.dependenciesList.dependencies) {
@@ -81,6 +84,7 @@ open class MavenArtifactsBuilder @JvmOverloads constructor(protected val buildCo
       return library!!.name == "microba" || library.name == "jshell-frontend"
     }
 
+    @JvmStatic
     fun createDependencyTagByLibrary(descriptor: JpsMavenRepositoryLibraryDescriptor): Dependency {
       return createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
     }

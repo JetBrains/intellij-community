@@ -161,10 +161,10 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val categoriesWithDebugLevel = compilationData.categoriesWithDebugLevel
     val buildLogFile = compilationData.buildLogFile
     try {
-      val factory = Log4jFileLoggerFactory(buildLogFile, categoriesWithDebugLevel)
+      val factory = Log4jFileLoggerFactory(buildLogFile.toFile(), categoriesWithDebugLevel)
       AntLoggerFactory.fileLoggerFactory = factory
       context.messages.info("Build log (${if (categoriesWithDebugLevel.isEmpty()) "info" else "debug level for $categoriesWithDebugLevel"}) " +
-                            "will be written to ${buildLogFile.absolutePath}")
+                            "will be written to ${buildLogFile}")
     }
     catch (t: Throwable) {
       context.messages.warning("Cannot setup additional logging to $buildLogFile.absolutePath: $t.message")
@@ -229,9 +229,9 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                              .setAttribute("modules", modulesSet.joinToString(separator = ", "))
                              .setAttribute("incremental", context.options.incrementalCompilation)
                              .setAttribute("includeTests", includeTests)
-                             .setAttribute("cacheDir", compilationData.dataStorageRoot.path), Supplier {
+                             .setAttribute("cacheDir", compilationData.dataStorageRoot.toString()), Supplier {
       try {
-        Standalone.runBuild({ context.projectModel }, compilationData.dataStorageRoot, messageHandler, scopes, false)
+        Standalone.runBuild({ context.projectModel }, compilationData.dataStorageRoot.toFile(), messageHandler, scopes, false)
       }
       catch (e: Throwable) {
         throw BuildException("Compilation failed unexpectedly", e)

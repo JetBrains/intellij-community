@@ -8,7 +8,8 @@ import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.incremental.storage.ProjectStamps
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 class PortableCompilationCache(private val context: CompilationContext) {
   companion object {
@@ -26,12 +27,12 @@ class PortableCompilationCache(private val context: CompilationContext) {
   class JpsCaches(context: CompilationContext) {
     val skipDownload = bool(SKIP_DOWNLOAD_PROPERTY)
     val skipUpload = bool(SKIP_UPLOAD_PROPERTY)
-    val dir: File by lazy { context.compilationData.dataStorageRoot }
+    val dir: Path by lazy { context.compilationData.dataStorageRoot }
 
     val maybeAvailableLocally: Boolean by lazy {
-      val files = dir.list()
+      val files = dir.toFile().list()
       context.messages.info("$dir.absolutePath: $files")
-      dir.isDirectory && files != null && files.isNotEmpty()
+      Files.isDirectory(dir) && files != null && files.isNotEmpty()
     }
   }
 
@@ -132,7 +133,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
     uploader.updateCommitHistory()
   }
 
-  fun buildJpsCacheZip(): File = uploader.buildJpsCacheZip()
+  fun buildJpsCacheZip(): Path = uploader.buildJpsCacheZip()
 
   /**
    * Publish already uploaded {@link PortableCompilationCache} to {@link RemoteCache} overriding existing {@link CommitsHistory}.
@@ -145,7 +146,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   private fun clean() {
     for (it in listOf(jpsCaches.dir, context.projectOutputDirectory)) {
       context.messages.info("Cleaning $it")
-      NioFiles.deleteRecursively(it.toPath())
+      NioFiles.deleteRecursively(it)
     }
   }
 

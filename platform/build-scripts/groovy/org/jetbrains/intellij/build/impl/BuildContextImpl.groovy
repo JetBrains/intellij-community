@@ -226,7 +226,7 @@ final class BuildContextImpl implements BuildContext {
   }
 
   @Override
-  File getProjectOutputDirectory() {
+  Path getProjectOutputDirectory() {
     return compilationContext.projectOutputDirectory
   }
 
@@ -257,11 +257,6 @@ final class BuildContextImpl implements BuildContext {
   @Override
   List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests) {
     return compilationContext.getModuleRuntimeClasspath(module, forTests)
-  }
-
-  @Override
-  void notifyArtifactBuilt(String artifactPath) {
-    compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
   @Override

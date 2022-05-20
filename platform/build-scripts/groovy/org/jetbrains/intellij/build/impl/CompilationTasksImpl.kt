@@ -127,7 +127,7 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
       CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
-      unpackCompiledClasses(context.projectOutputDirectory.toPath(), context)
+      unpackCompiledClasses(context.projectOutputDirectory, context)
     }
     else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
       jpsCache.downloadCacheAndCompileProject()
@@ -143,7 +143,7 @@ private fun cleanOutput(context: CompilationContext) {
     outputDirectoriesToKeep.add("classes")
   }
   if (context.options.incrementalCompilation) {
-    outputDirectoriesToKeep.add(context.compilationData.dataStorageRoot.name)
+    outputDirectoriesToKeep.add(context.compilationData.dataStorageRoot.fileName.toString())
     outputDirectoriesToKeep.add("classes")
     outputDirectoriesToKeep.add("project-artifacts")
   }

@@ -7,8 +7,6 @@ import com.intellij.openapi.util.text.Formats
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.xml.dom.readXmlAsModel
-import org.codehaus.groovy.runtime.DefaultGroovyMethods
-import org.codehaus.groovy.runtime.StringGroovyMethods
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
 import org.jetbrains.intellij.build.ConsoleSpanExporter.Companion.setPathRoot
@@ -39,6 +37,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiFunction
+import kotlin.io.path.exists
 
 class CompilationContextImpl : CompilationContext {
   private constructor(model: JpsModel,
@@ -57,10 +56,9 @@ class CompilationContextImpl : CompilationContext {
     newToOldModuleName = oldToNewModuleName.entries.associate { it.value to it.key }
     val modules = model.project.modules
     this.nameToModule = modules.associateBy { it.name }
-    val path = options.outputRootPath
-    val buildOutputRoot = path ?: buildOutputRootEvaluator.apply(project, messages)
-    val logDir = options.logPath?.let { Path.of(it) } ?: Path.of(buildOutputRoot, "log")
-    paths = BuildPathsImpl(communityHome, projectHome, buildOutputRoot, logDir)
+    val buildOut = Path.of(options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)).toAbsolutePath().normalize()
+    val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
+    paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
     dependenciesProperties = DependenciesProperties(this)
     bundledRuntime = BundledRuntimeImpl(this)
     stableJdkHome = Jdk11Downloader.getJdkHome(paths.buildDependenciesCommunityRoot)
@@ -98,22 +96,20 @@ class CompilationContextImpl : CompilationContext {
     stableJdkHome = context.stableJdkHome
   }
 
-  fun cloneForContext(messages: BuildMessages): CompilationContextImpl {
-    return CompilationContextImpl(messages, this)
-  }
+  fun cloneForContext(messages: BuildMessages) = CompilationContextImpl(messages, this)
 
   fun prepareForBuild() {
     checkCompilationOptions()
     NioFiles.deleteRecursively(paths.logDir)
     Files.createDirectories(paths.logDir)
     compilationData = JpsCompilationData(
-      dataStorageRoot = File(paths.buildOutputRoot, ".jps-build-data"),
-      buildLogFile = paths.logDir.resolve("compilation.log").toFile(),
+      dataStorageRoot = paths.buildOutputDir.resolve(".jps-build-data"),
+      buildLogFile = paths.logDir.resolve("compilation.log"),
       categoriesWithDebugLevelNullable = System.getProperty("intellij.build.debug.logging.categories", "")
     )
     val projectArtifactsDirName = "project-artifacts"
     overrideProjectOutputDirectory()
-    val baseArtifactsOutput = paths.buildOutputRoot + "/" + projectArtifactsDirName
+    val baseArtifactsOutput = "${paths.buildOutputRoot}/$projectArtifactsDirName"
     JpsArtifactService.getInstance().getArtifacts(project).forEach {
       setOutputPath(it, "$baseArtifactsOutput/${PathUtilRt.getFileName(it.outputPath)}")
     }
@@ -149,15 +145,16 @@ class CompilationContextImpl : CompilationContext {
     }
   }
 
-  override val projectOutputDirectory: File
-    get() = JpsPathUtil.urlToFile(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl)
+  override val projectOutputDirectory: Path
+    get() = JpsPathUtil.urlToFile(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl).toPath()
 
   fun setProjectOutputDirectory(outputDirectory: String) {
     val url = "file://${FileUtilRt.toSystemIndependentName(outputDirectory)}"
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
   }
 
-  fun exportModuleOutputProperties() {
+  @Suppress("SpellCheckingInspection")
+  private fun exportModuleOutputProperties() {
     // defines Ant properties which are used by jetbrains.antlayout.datatypes.IdeaModuleBase class to locate module outputs
     // still used, please get rid of LayoutBuilder usages
     for (module in project.modules) {
@@ -255,38 +252,36 @@ class CompilationContextImpl : CompilationContext {
     return enumerator.classes().roots.map { it.absolutePath }
   }
 
-  override fun notifyArtifactBuilt(artifactPath: String) {
-    notifyArtifactWasBuilt(Path.of(artifactPath).toAbsolutePath().normalize())
-  }
-
   override fun notifyArtifactWasBuilt(artifactPath: Path) {
     if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP)) {
       return
     }
+
     val isRegularFile = Files.isRegularFile(artifactPath)
     var targetDirectoryPath = ""
     if (artifactPath.parent.startsWith(paths.artifactDir)) {
       targetDirectoryPath = FileUtilRt.toSystemIndependentName(paths.artifactDir.relativize(artifactPath.parent).toString())
     }
     if (!isRegularFile) {
-      targetDirectoryPath = (if (StringGroovyMethods.asBoolean(targetDirectoryPath)) "$targetDirectoryPath/" else "") + artifactPath.fileName
+      targetDirectoryPath = (if (!targetDirectoryPath.isEmpty()) "$targetDirectoryPath/" else "") + artifactPath.fileName
     }
     var pathToReport = artifactPath.toString()
-    if (StringGroovyMethods.asBoolean(targetDirectoryPath)) {
+    if (targetDirectoryPath.isNotEmpty()) {
       pathToReport += "=>$targetDirectoryPath"
     }
     messages.artifactBuilt(pathToReport)
   }
 
   override val options: BuildOptions
+  @Suppress("SSBasedInspection")
   override val messages: BuildMessages
   override val paths: BuildPaths
   override val project: JpsProject
   val global: JpsGlobal
   override val projectModel: JpsModel
-  val oldToNewModuleName: Map<String, String>
-  val newToOldModuleName: Map<String, String>
-  val nameToModule: Map<String?, JpsModule>
+  private val oldToNewModuleName: Map<String, String>
+  private val newToOldModuleName: Map<String, String>
+  private val nameToModule: Map<String?, JpsModule>
   override val dependenciesProperties: DependenciesProperties
   override val bundledRuntime: BundledRuntime
   override lateinit var compilationData: JpsCompilationData
@@ -294,6 +289,7 @@ class CompilationContextImpl : CompilationContext {
   override val stableJdkHome: Path
 
   companion object {
+    @JvmStatic
     fun create(communityHome: Path, projectHome: Path, defaultOutputRoot: String): CompilationContextImpl {
       return create(communityHome = communityHome,
                     projectHome = projectHome,
@@ -301,24 +297,28 @@ class CompilationContextImpl : CompilationContext {
                     options = BuildOptions())
     }
 
+    @JvmStatic
     fun logFreeDiskSpace(buildMessages: BuildMessages, dir: Path, phase: String) {
       buildMessages.debug(
         "Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).usableSpace)} (on disk containing $dir)")
     }
 
+    @JvmStatic
     fun printEnvironmentDebugInfo() {
       // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
       // don't write it to debug log file!
       val env = System.getenv()
-      for (key in DefaultGroovyMethods.toSorted(env.keys)) {
-        DefaultGroovyMethods.println(this, "ENV " + key + " = " + env[key])
+      for (key in env.keys.sorted()) {
+        println("ENV $key = ${env[key]}")
       }
+
       val properties = System.getProperties()
-      for (propertyName in DefaultGroovyMethods.toSorted(properties.keys)) {
-        DefaultGroovyMethods.println(this, "PROPERTY " + propertyName + " = " + properties[propertyName].toString())
+      for (propertyName in properties.keys.sortedBy { it as String }) {
+        println("PROPERTY $propertyName = ${properties[propertyName].toString()}")
       }
     }
 
+    @JvmStatic
     fun create(communityHome: Path,
                projectHome: Path,
                buildOutputRootEvaluator: BiFunction<JpsProject, BuildMessages, String>,
@@ -334,10 +334,14 @@ class CompilationContextImpl : CompilationContext {
       logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
       val model = loadProject(projectHome, kotlinBinaries, messages)
-      val oldToNewModuleName = DefaultGroovyMethods.plus(loadModuleRenamingHistory(projectHome, messages),
-                                                         loadModuleRenamingHistory(communityHome, messages))
-      val context = CompilationContextImpl(model, communityHome, projectHome, messages, oldToNewModuleName, buildOutputRootEvaluator,
-                                           options)
+      val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
+      val context = CompilationContextImpl(model = model,
+                                           communityHome = communityHome,
+                                           projectHome = projectHome,
+                                           messages = messages,
+                                           oldToNewModuleName = oldToNewModuleName,
+                                           buildOutputRootEvaluator = buildOutputRootEvaluator,
+                                           options = options)
       defineJavaSdk(context)
       context.prepareForBuild()
 
@@ -377,6 +381,7 @@ private fun suppressWarnings(project: JpsProject) {
   val compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).currentCompilerOptions
   compilerOptions.GENERATE_NO_WARNINGS = true
   compilerOptions.DEPRECATION = false
+  @Suppress("SpellCheckingInspection")
   compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
 }
 
@@ -394,8 +399,8 @@ private fun setProjectOutputDirectory0(propOwner: CompilationContextImpl, output
   return outputDirectory
 }
 
-class BuildPathsImpl(communityHome: Path?, projectHome: Path, buildOutputRoot: String, logDir: Path)
-  : BuildPaths(communityHome!!, Path.of(buildOutputRoot).toAbsolutePath().normalize(), logDir.toAbsolutePath().normalize()) {
+class BuildPathsImpl(communityHome: Path, projectHome: Path, buildOut: Path, logDir: Path)
+  : BuildPaths(communityHomeDir = communityHome, buildOutputDir = buildOut, logDir = logDir) {
   init {
     this.projectHome = FileUtilRt.toSystemIndependentName(projectHome.toString())
     projectHomeDir = projectHome
@@ -411,11 +416,12 @@ private fun defineJavaSdk(context: CompilationContext) {
   defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)
   readModulesFromReleaseFile(context.projectModel, jbrVersionName, jbrHome)
   context.projectModel.project.modules
+    .asSequence()
     .mapNotNull { it.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName }
-    .toSet()
+    .distinct()
     .forEach { sdkName ->
-      val vendorPrefixEnd = sdkName.indexOf("-")
-      val sdkNameWithoutVendor = if (vendorPrefixEnd != -1) sdkName.substring(vendorPrefixEnd + 1) else sdkName
+      val vendorPrefixEnd = sdkName.indexOf('-')
+      val sdkNameWithoutVendor = if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)
       if (sdkNameWithoutVendor != "11") {
         throw IllegalStateException(
           "Project model at $context.paths.projectHomeDir requested SDK $sdkNameWithoutVendor, but only '11' is supported as SDK in intellij project")
@@ -443,10 +449,9 @@ private fun loadModuleRenamingHistory(projectHome: Path, messages: BuildMessages
   if (!Files.exists(modulesXml)) {
     messages.error("Incorrect project home: $modulesXml doesn\'t exist")
   }
-  return Files.newInputStream(modulesXml).use { readXmlAsModel(it) }.children
-           .find { it.name == "component" && it.getAttributeValue("name") == "ModuleRenamingHistory" }
-           ?.getChild("module")
-           ?.children
+  return Files.newInputStream(modulesXml).use { readXmlAsModel(it) }.children("component")
+           .find { it.getAttributeValue("name") == "ModuleRenamingHistory" }
+           ?.children("module")
            ?.associate { it.getAttributeValue("old-name")!! to it.getAttributeValue("new-name")!! }
          ?: emptyMap()
 }
