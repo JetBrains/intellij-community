@@ -414,7 +414,7 @@ class RecentProjectFilteringTree(
           }
         }
 
-        toolTipText = item.progressIndicator.text2
+        toolTipText = IdeBundle.message("clone.project.tooltip")
 
         return this
       }
