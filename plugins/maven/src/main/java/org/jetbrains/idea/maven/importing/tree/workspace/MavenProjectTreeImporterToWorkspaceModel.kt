@@ -29,7 +29,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
   private val project: Project
 ) : MavenProjectImporterBase(mavenProjectsTree, mavenImportingSettings, projectsToImportWithChanges) {
 
-  private val modelsProvider = MavenProjectTreeLegacyImporter.getModelProvider(ideModelsProvider, project)
+  private val modelsProvider = ModifiableModelsProviderProxyWrapper(ideModelsProvider)
   private val createdModulesList = ArrayList<Module>()
   private val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val contextProvider = MavenProjectImportContextProvider(project, mavenProjectsTree,
