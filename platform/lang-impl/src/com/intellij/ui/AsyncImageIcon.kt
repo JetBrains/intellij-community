@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.icons.CopyableIcon
 import com.intellij.ui.scale.ScaleContext
@@ -52,7 +53,14 @@ class AsyncImageIcon(
       repaintScheduler.requestRepaint(c, x, y)
     }
 
-    val image = imageRequest.getNow(null)
+    val image = try {
+      imageRequest.getNow(null)
+    }
+    catch (error: Throwable) {
+      LOG.debug("Image loading failed", error)
+      null
+    }
+
     if (image == null) {
       defaultIcon.paintIcon(c, g, x, y)
     }
@@ -67,6 +75,10 @@ class AsyncImageIcon(
   override fun getScale(): Float = scale
 
   override fun scale(scaleFactor: Float): Icon = AsyncImageIcon(defaultIcon, scaleFactor, imageLoader)
+
+  companion object {
+    private val LOG = logger<AsyncImageIcon>()
+  }
 }
 
 private class RepaintScheduler {
