@@ -19,7 +19,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
-import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProjectProgressIndicator
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.render.RenderingUtil
@@ -175,7 +175,7 @@ class RecentProjectFilteringTree(
 
       if (intersectWithActionIcon(point)) {
         when (item) {
-          is CloneableProjectItem -> cancelCloneProject(item.progressIndicator, item.taskInfo.sourceRepositoryURL)
+          is CloneableProjectItem -> cancelCloneProject(item.cloneableProject)
           else -> invokePopup(mouseEvent.component, point.x, point.y)
         }
       }
@@ -214,9 +214,9 @@ class RecentProjectFilteringTree(
                        icon.iconWidth, icon.iconHeight)
     }
 
-    private fun cancelCloneProject(progressIndicator: CloneableProjectProgressIndicator, sourceRepositoryURL: String) {
+    private fun cancelCloneProject(cloneableProject: CloneableProject) {
       val exitCode = Messages.showYesNoDialog(
-        IdeBundle.message("clone.project.stop", sourceRepositoryURL),
+        IdeBundle.message("clone.project.stop", cloneableProject.cloneTaskInfo.sourceRepositoryURL),
         IdeBundle.message("clone.project.stop.title"),
         IdeBundle.message("action.stop"),
         IdeBundle.message("button.cancel"),
@@ -224,7 +224,7 @@ class RecentProjectFilteringTree(
       )
 
       if (exitCode == Messages.OK) {
-        CloneableProjectsService.getInstance().cancelClone(progressIndicator)
+        CloneableProjectsService.getInstance().cancelClone(cloneableProject)
       }
     }
   }
@@ -411,25 +411,29 @@ class RecentProjectFilteringTree(
       }
 
       fun customizeComponent(item: CloneableProjectItem): JComponent {
+        val cloneableProject = item.cloneableProject
+        val taskInfo = cloneableProject.cloneTaskInfo
+        val progressIndicator = cloneableProject.progressIndicator
+
         projectNameLabel.text = item.displayName() // NON-NLS
         projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
         projectIconLabel.icon = IconUtil.desaturate(recentProjectsManager.getProjectIcon(item.projectPath, true))
-        projectProgressBar.isIndeterminate = item.progressIndicator.isIndeterminate
+        projectProgressBar.isIndeterminate = progressIndicator.isIndeterminate
 
         projectProgressBar.apply {
-          when (item.cloneStatus) {
+          when (cloneableProject.cloneStatus) {
             CloneStatus.PROGRESS -> {
               projectCloneStatusPanel.isVisible = true
-              projectProgressLabel.text = item.taskInfo.actionTitle
-              value = (item.progressIndicator.fraction * 100).toInt()
+              projectProgressLabel.text = taskInfo.actionTitle
+              value = (progressIndicator.fraction * 100).toInt()
             }
             CloneStatus.FAILURE -> {
               projectCloneStatusPanel.isVisible = false
-              projectPathLabel.text = item.taskInfo.failureTitle
+              projectPathLabel.text = taskInfo.failureTitle
             }
             CloneStatus.CANCEL -> {
               projectCloneStatusPanel.isVisible = false
-              projectPathLabel.text = item.taskInfo.cancelTitle
+              projectPathLabel.text = taskInfo.cancelTitle
             }
           }
         }
