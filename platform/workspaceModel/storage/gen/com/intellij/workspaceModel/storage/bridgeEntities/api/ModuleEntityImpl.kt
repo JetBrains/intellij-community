@@ -481,16 +481,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         }
                         is ModuleDependencyItem.Exportable.LibraryDependency ->  {
                             result.add(__item.library)
-                            val ___item_library_tableId = __item.library.tableId
-                            when (___item_library_tableId) {
-                                is LibraryTableId.ModuleLibraryTableId ->  {
-                                    result.add(___item_library_tableId.moduleId)
-                                }
-                                is LibraryTableId.ProjectLibraryTableId ->  {
-                                }
-                                is LibraryTableId.GlobalLibraryTableId ->  {
-                                }
-                            }
                         }
                     }
                 }
@@ -517,16 +507,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         }
                         is ModuleDependencyItem.Exportable.LibraryDependency ->  {
                             index.index(this, __item.library)
-                            val ___item_library_tableId = __item.library.tableId
-                            when (___item_library_tableId) {
-                                is LibraryTableId.ModuleLibraryTableId ->  {
-                                    index.index(this, ___item_library_tableId.moduleId)
-                                }
-                                is LibraryTableId.ProjectLibraryTableId ->  {
-                                }
-                                is LibraryTableId.GlobalLibraryTableId ->  {
-                                }
-                            }
                         }
                     }
                 }
@@ -559,19 +539,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                             val removedItem___item_library = mutablePreviousSet.remove(__item.library)
                             if (!removedItem___item_library) {
                                 index.index(this, __item.library)
-                            }
-                            val ___item_library_tableId = __item.library.tableId
-                            when (___item_library_tableId) {
-                                is LibraryTableId.ModuleLibraryTableId ->  {
-                                    val removedItem____item_library_tableId_moduleId = mutablePreviousSet.remove(___item_library_tableId.moduleId)
-                                    if (!removedItem____item_library_tableId_moduleId) {
-                                        index.index(this, ___item_library_tableId.moduleId)
-                                    }
-                                }
-                                is LibraryTableId.ProjectLibraryTableId ->  {
-                                }
-                                is LibraryTableId.GlobalLibraryTableId ->  {
-                                }
                             }
                         }
                     }

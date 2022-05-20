@@ -140,13 +140,11 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
     override fun getLinks(): Set<PersistentEntityId<*>> {
         val result = HashSet<PersistentEntityId<*>>()
         result.add(link)
-        result.add(link.link)
         return result
     }
 
     override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
         index.index(this, link)
-        index.index(this, link.link)
     }
 
     override fun updateLinksIndex(prev: Set<PersistentEntityId<*>>, index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
@@ -155,10 +153,6 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
         val removedItem_link = mutablePreviousSet.remove(link)
         if (!removedItem_link) {
             index.index(this, link)
-        }
-        val removedItem_link_link = mutablePreviousSet.remove(link.link)
-        if (!removedItem_link_link) {
-            index.index(this, link.link)
         }
         for (removed in mutablePreviousSet) {
             index.remove(this, removed)

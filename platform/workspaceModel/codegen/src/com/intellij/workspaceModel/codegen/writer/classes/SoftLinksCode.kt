@@ -175,14 +175,12 @@ private fun ValueType<*>.operate(
     is TBlob<*> -> {
       if (isPersistentId(simpleTypes)) {
         context.operation(varName)
-      }
-      if (isDataClass(simpleTypes)) {
+      } else if (isDataClass(simpleTypes)) {
         val dataClass = getDataClass(simpleTypes)
         dataClass.structure.declaredFields.filter { it.constructorField }.forEach {
           it.type.operate("$varName.${it.name}", simpleTypes, context, operation)
         }
-      }
-      if (isSealedClass(simpleTypes)) {
+      } else if (isSealedClass(simpleTypes)) {
         val thisClass = simpleTypes.single { it.name == this.javaSimpleName }
         processSealedClass(simpleTypes, thisClass, varName, context, operation)
       }

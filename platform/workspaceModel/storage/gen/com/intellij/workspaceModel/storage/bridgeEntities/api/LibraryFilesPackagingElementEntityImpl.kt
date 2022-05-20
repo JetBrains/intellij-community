@@ -203,16 +203,6 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
         val optionalLink_library = library
         if (optionalLink_library != null) {
             result.add(optionalLink_library)
-            val _optionalLink_library_tableId = optionalLink_library.tableId
-            when (_optionalLink_library_tableId) {
-                is LibraryTableId.ModuleLibraryTableId ->  {
-                    result.add(_optionalLink_library_tableId.moduleId)
-                }
-                is LibraryTableId.ProjectLibraryTableId ->  {
-                }
-                is LibraryTableId.GlobalLibraryTableId ->  {
-                }
-            }
         }
         return result
     }
@@ -221,16 +211,6 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
         val optionalLink_library = library
         if (optionalLink_library != null) {
             index.index(this, optionalLink_library)
-            val _optionalLink_library_tableId = optionalLink_library.tableId
-            when (_optionalLink_library_tableId) {
-                is LibraryTableId.ModuleLibraryTableId ->  {
-                    index.index(this, _optionalLink_library_tableId.moduleId)
-                }
-                is LibraryTableId.ProjectLibraryTableId ->  {
-                }
-                is LibraryTableId.GlobalLibraryTableId ->  {
-                }
-            }
         }
     }
 
@@ -242,19 +222,6 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
             val removedItem_optionalLink_library = mutablePreviousSet.remove(optionalLink_library)
             if (!removedItem_optionalLink_library) {
                 index.index(this, optionalLink_library)
-            }
-            val _optionalLink_library_tableId = optionalLink_library.tableId
-            when (_optionalLink_library_tableId) {
-                is LibraryTableId.ModuleLibraryTableId ->  {
-                    val removedItem__optionalLink_library_tableId_moduleId = mutablePreviousSet.remove(_optionalLink_library_tableId.moduleId)
-                    if (!removedItem__optionalLink_library_tableId_moduleId) {
-                        index.index(this, _optionalLink_library_tableId.moduleId)
-                    }
-                }
-                is LibraryTableId.ProjectLibraryTableId ->  {
-                }
-                is LibraryTableId.GlobalLibraryTableId ->  {
-                }
             }
         }
         for (removed in mutablePreviousSet) {
