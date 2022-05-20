@@ -15,6 +15,7 @@ import org.jetbrains.deft.codegen.utils.fqn
 import org.jetbrains.deft.codegen.utils.lines
 import org.jetbrains.deft.impl.*
 import org.jetbrains.deft.impl.fields.Field
+import java.lang.StringBuilder
 
 internal fun ObjType<*, *>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean, simpleTypes: List<DefType>) {
   context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${PersistentEntityId::class.fqn}<*>>") {
@@ -214,14 +215,17 @@ private fun processSealedClass(simpleTypes: List<DefType>,
   context.line("val $newVarName = $varName")
   context.section("when ($newVarName)") {
     listBuilder(children) { item ->
-      section("is ${item.javaFullName} -> ") label@{
-        if (item.isSealedClass()) {
-          processSealedClass(simpleTypes, item, newVarName, this, operation)
-        }
-        item.structure.declaredFields.filter { it.constructorField }.forEach {
-          it.type.operate("$newVarName.${it.name}", simpleTypes, this@label, operation)
-        }
+      val linesBuilder = LinesBuilder(StringBuilder(), "${context.indent}    ").wrapper()
+      if (item.isSealedClass()) {
+        processSealedClass(simpleTypes, item, newVarName, linesBuilder, operation)
       }
+      item.structure.declaredFields.filter { it.constructorField }.forEach {
+        it.type.operate("$newVarName.${it.name}", simpleTypes, linesBuilder, operation)
+      }
+      if (!linesBuilder.result.isEmpty())
+        section("is ${item.javaFullName} -> ") {
+          result.append(linesBuilder.result)
+        }
     }
   }
 }
@@ -254,8 +258,7 @@ private fun ValueType<*>.processType(
           line("newLink as $javaSimpleName")
         }) { line("null") }
         return name
-      }
-      if (isDataClass(simpleTypes)) {
+      } else if (isDataClass(simpleTypes)) {
 
         val dataClass = getDataClass(simpleTypes)
         val updates = dataClass.structure.declaredFields.filter { it.constructorField }.mapNotNull label@{
@@ -279,8 +282,7 @@ private fun ValueType<*>.processType(
           }
           return name
         }
-      }
-      if (isSealedClass(simpleTypes)) {
+      } else if (isSealedClass(simpleTypes)) {
         val thisClass = simpleTypes.single { it.name == this.javaSimpleName }
         return processSealedClass(simpleTypes, thisClass, varName, context)
       }

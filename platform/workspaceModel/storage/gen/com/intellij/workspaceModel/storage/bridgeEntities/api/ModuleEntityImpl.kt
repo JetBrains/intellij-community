@@ -484,12 +484,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                         }
                     }
                 }
-                is ModuleDependencyItem.SdkDependency ->  {
-                }
-                is ModuleDependencyItem.InheritedSdkDependency ->  {
-                }
-                is ModuleDependencyItem.ModuleSourceDependency ->  {
-                }
             }
         }
         return result
@@ -509,12 +503,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                             index.index(this, __item.library)
                         }
                     }
-                }
-                is ModuleDependencyItem.SdkDependency ->  {
-                }
-                is ModuleDependencyItem.InheritedSdkDependency ->  {
-                }
-                is ModuleDependencyItem.ModuleSourceDependency ->  {
                 }
             }
         }
@@ -542,12 +530,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
                             }
                         }
                     }
-                }
-                is ModuleDependencyItem.SdkDependency ->  {
-                }
-                is ModuleDependencyItem.InheritedSdkDependency ->  {
-                }
-                is ModuleDependencyItem.ModuleSourceDependency ->  {
                 }
             }
         }

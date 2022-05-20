@@ -352,10 +352,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
             is LibraryTableId.ModuleLibraryTableId ->  {
                 result.add(_tableId.moduleId)
             }
-            is LibraryTableId.ProjectLibraryTableId ->  {
-            }
-            is LibraryTableId.GlobalLibraryTableId ->  {
-            }
         }
         for (item in roots) {
         }
@@ -369,10 +365,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
         when (_tableId) {
             is LibraryTableId.ModuleLibraryTableId ->  {
                 index.index(this, _tableId.moduleId)
-            }
-            is LibraryTableId.ProjectLibraryTableId ->  {
-            }
-            is LibraryTableId.GlobalLibraryTableId ->  {
             }
         }
         for (item in roots) {
@@ -391,10 +383,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
                 if (!removedItem__tableId_moduleId) {
                     index.index(this, _tableId.moduleId)
                 }
-            }
-            is LibraryTableId.ProjectLibraryTableId ->  {
-            }
-            is LibraryTableId.GlobalLibraryTableId ->  {
             }
         }
         for (item in roots) {

@@ -436,8 +436,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             is SealedContainer.SmallContainer ->  {
                 result.add(_sealedContainer.notId)
             }
-            is SealedContainer.EmptyContainer ->  {
-            }
             is SealedContainer.ContainerContainer ->  {
                 for (item in _sealedContainer.container) {
                     result.add(item.id)
@@ -452,8 +450,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                 }
                 is SealedContainer.SmallContainer ->  {
                     result.add(_item.notId)
-                }
-                is SealedContainer.EmptyContainer ->  {
                 }
                 is SealedContainer.ContainerContainer ->  {
                     for (item in _item.container) {
@@ -515,8 +511,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             is SealedContainer.SmallContainer ->  {
                 index.index(this, _sealedContainer.notId)
             }
-            is SealedContainer.EmptyContainer ->  {
-            }
             is SealedContainer.ContainerContainer ->  {
                 for (item in _sealedContainer.container) {
                     index.index(this, item.id)
@@ -531,8 +525,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                 }
                 is SealedContainer.SmallContainer ->  {
                     index.index(this, _item.notId)
-                }
-                is SealedContainer.EmptyContainer ->  {
                 }
                 is SealedContainer.ContainerContainer ->  {
                     for (item in _item.container) {
@@ -622,8 +614,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                     index.index(this, _sealedContainer.notId)
                 }
             }
-            is SealedContainer.EmptyContainer ->  {
-            }
             is SealedContainer.ContainerContainer ->  {
                 for (item in _sealedContainer.container) {
                     val removedItem_item_id = mutablePreviousSet.remove(item.id)
@@ -647,8 +637,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
                     if (!removedItem__item_notId) {
                         index.index(this, _item.notId)
                     }
-                }
-                is SealedContainer.EmptyContainer ->  {
                 }
                 is SealedContainer.ContainerContainer ->  {
                     for (item in _item.container) {

@@ -57,3 +57,7 @@ internal fun <T> LinesBuilder.listBuilder(c: Collection<T>, f: LinesBuilder.(ite
     this.f(it)
   }
 }
+
+internal fun LinesBuilder.wrapper(): LinesBuilder {
+  return LinesBuilder(result, "$indent    ")
+}
