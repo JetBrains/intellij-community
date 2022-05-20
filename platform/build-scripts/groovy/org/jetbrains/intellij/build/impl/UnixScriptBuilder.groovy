@@ -99,27 +99,33 @@ final class UnixScriptBuilder {
                                  BuildContext context) {
     String fullName = context.applicationInfo.productName
 
-    if (Files.readString(sourceFile).contains("\r")) {
-      throw new IllegalStateException("File must not contain CR (\\r) separators: $sourceFile")
-    }
+    Path sourceFileLf = Files.createTempFile(context.paths.tempDir, sourceFile.fileName.toString(), "")
+    try {
+      // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
+      // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
+      Files.writeString(sourceFileLf, Files.readString(sourceFile).replace("\r", ""))
 
-    FileKt.substituteTemplatePlaceholders(
-      sourceFile,
-      targetFile,
-      "__",
-      [
-        new Pair<String, String>("product_full", fullName),
-        new Pair<String, String>("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
-        new Pair<String, String>("product_vendor", context.applicationInfo.shortCompanyName),
-        new Pair<String, String>("product_code", context.applicationInfo.productCode),
-        new Pair<String, String>("vm_options", vmOptionsFileName),
-        new Pair<String, String>("system_selector", context.systemSelector),
-        new Pair<String, String>("ide_jvm_args", additionalJvmArgs),
-        new Pair<String, String>("ide_default_xmx", defaultXmxParameter.strip()),
-        new Pair<String, String>("class_path", classPath),
-        new Pair<String, String>("script_name", scriptName),
-      ],
-      false
-    )
+      FileKt.substituteTemplatePlaceholders(
+        sourceFileLf,
+        targetFile,
+        "__",
+        [
+          new Pair<String, String>("product_full", fullName),
+          new Pair<String, String>("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
+          new Pair<String, String>("product_vendor", context.applicationInfo.shortCompanyName),
+          new Pair<String, String>("product_code", context.applicationInfo.productCode),
+          new Pair<String, String>("vm_options", vmOptionsFileName),
+          new Pair<String, String>("system_selector", context.systemSelector),
+          new Pair<String, String>("ide_jvm_args", additionalJvmArgs),
+          new Pair<String, String>("ide_default_xmx", defaultXmxParameter.strip()),
+          new Pair<String, String>("class_path", classPath),
+          new Pair<String, String>("script_name", scriptName),
+        ],
+        false
+      )
+    }
+    finally {
+      Files.delete(sourceFileLf)
+    }
   }
 }

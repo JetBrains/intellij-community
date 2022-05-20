@@ -363,22 +363,28 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
             fileName = "${inspectCommandName}.sh"
           }
 
-          if (Files.readString(file).contains("\r")) {
-            throw new IllegalStateException("File must not contain CR (\\r) separators: $file")
-          }
+          Path sourceFileLf = Files.createTempFile(context.paths.tempDir, file.fileName.toString(), "")
+          try {
+            // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
+            // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
+            Files.writeString(sourceFileLf, Files.readString(file).replace("\r", ""))
 
-          Path target = distBinDir.resolve(fileName)
-          FileKt.substituteTemplatePlaceholders(
-            file,
-            target,
-            "@@",
-            [
-              new Pair<String, String>("product_full", fullName),
-              new Pair<String, String>("script_name", executable),
-              new Pair<String, String>("inspectCommandName", inspectCommandName),
-            ],
-            false,
-          )
+            Path target = distBinDir.resolve(fileName)
+            FileKt.substituteTemplatePlaceholders(
+              sourceFileLf,
+              target,
+              "@@",
+              [
+                new Pair<String, String>("product_full", fullName),
+                new Pair<String, String>("script_name", executable),
+                new Pair<String, String>("inspectCommandName", inspectCommandName),
+              ],
+              false,
+            )
+          }
+          finally {
+            Files.delete(sourceFileLf)
+          }
         }
       }
     }
