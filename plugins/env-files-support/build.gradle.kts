@@ -1,9 +1,9 @@
 plugins {
-    id("org.jetbrains.intellij") version "1.2.0"
+    id("org.jetbrains.intellij") version "1.5.3"
 }
 
 group = "ru.adelf"
-version = "2022.1"
+version = "2022.2"
 
 repositories {
     mavenCentral()
@@ -32,15 +32,15 @@ sourceSets {
 }
 
 intellij {
-    version.set("IU-221.4501.155-EAP-SNAPSHOT")
+    version.set("IU-222.2270.31-EAP-SNAPSHOT")
     plugins.set(
         listOf(
-            "com.jetbrains.php:221.4501.163",
+            "com.jetbrains.php:222.2270.31",
             "yaml",
-            "org.jetbrains.plugins.go:221.4501.155",
+            "org.jetbrains.plugins.go:222.2270.31",
             "Docker",
-            "pythonid:221.4501.155",
-            "org.jetbrains.plugins.ruby:221.4501.155",
+            "pythonid:222.2270.35",
+            "org.jetbrains.plugins.ruby:222.2270.31",
             "Kotlin",
             "coverage",
             "CSS",
@@ -55,7 +55,7 @@ intellij {
 tasks {
     patchPluginXml {
         sinceBuild.set("212")
-        untilBuild.set("221.*")
+        untilBuild.set("222.*")
     }
 
     buildSearchableOptions {
@@ -65,4 +65,8 @@ tasks {
     runPluginVerifier {
         ideVersions.set(listOf("IU-213.3714.440"))
     }
+}
+
+tasks.withType<ProcessResources> {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }

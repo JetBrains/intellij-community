@@ -1,19 +1,20 @@
 package ru.adelf.idea.dotenv.go;
 
-import com.goide.psi.*;
+import com.goide.psi.GoCallExpr;
+import com.goide.psi.GoExpression;
+import com.goide.psi.GoReferenceExpression;
+import com.goide.psi.GoStringLiteral;
 import com.goide.psi.impl.GoPsiUtil;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Map;
 
 class GoPsiHelper {
 
-    private static final Map<String, Integer> ENV_FUNCTIONS = ContainerUtil.newHashMap(
-            Pair.pair("os.getenv", 0),
-            Pair.pair("os.setenv", 0),
-            Pair.pair("os.lookupenv", 0),
-            Pair.pair("os.unsetenv", 0)
+    private static final Map<String, Integer> ENV_FUNCTIONS = Map.of(
+        "os.getenv", 0,
+        "os.setenv", 0,
+        "os.lookupenv", 0,
+        "os.unsetenv", 0
     );
 
     /**
@@ -42,7 +43,7 @@ class GoPsiHelper {
         if (callExpression.getArgumentList().getExpressionList().size() < position + 1) return null;
 
         GoExpression expr = callExpression.getArgumentList().getExpressionList().get(position);
-        if(!(expr instanceof GoStringLiteral)) return null;
+        if (!(expr instanceof GoStringLiteral)) return null;
 
         return (GoStringLiteral) expr;
     }
