@@ -151,6 +151,9 @@ class ActionStepBuilder {
       else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
         icon = LafIconLookup.getIcon("checkmark");
         Color selectionBg = UIManager.getColor("PopupMenu.selectionBackground");
+        if (selectionBg == null) {
+          selectionBg = UIManager.getColor("List.selectionBackground");
+        }
         boolean isLightSelectionInLightTheme = selectionBg != null && JBColor.isBright() && !ColorUtil.isDark(selectionBg);
         selectedIcon = isLightSelectionInLightTheme ?  icon : LafIconLookup.getSelectedIcon("checkmark");
         disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
