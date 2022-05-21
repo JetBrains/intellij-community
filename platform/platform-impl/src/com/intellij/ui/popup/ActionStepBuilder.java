@@ -8,8 +8,6 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.LafIconLookup;
@@ -17,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -150,12 +147,7 @@ class ActionStepBuilder {
       }
       else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
         icon = LafIconLookup.getIcon("checkmark");
-        Color selectionBg = UIManager.getColor("PopupMenu.selectionBackground");
-        if (selectionBg == null) {
-          selectionBg = UIManager.getColor("List.selectionBackground");
-        }
-        boolean isLightSelectionInLightTheme = selectionBg != null && JBColor.isBright() && !ColorUtil.isDark(selectionBg);
-        selectedIcon = isLightSelectionInLightTheme ?  icon : LafIconLookup.getSelectedIcon("checkmark");
+        selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
         disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
       }
     }
