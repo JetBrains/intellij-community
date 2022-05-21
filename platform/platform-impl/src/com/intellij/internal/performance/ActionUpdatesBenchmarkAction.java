@@ -38,9 +38,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
+public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
 
-  private static final Logger LOG = Logger.getInstance(ActionsUpdateBenchmarkAction.class);
+  private static final Logger LOG = Logger.getInstance(ActionUpdatesBenchmarkAction.class);
 
   private static final long MIN_REPORTED_UPDATE_MILLIS = 5;
   private static final long MIN_REPORTED_NO_CHECK_CANCELED_MILLIS = 20;
@@ -148,7 +148,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
           Throwable throwable = new Throwable("no checkCanceled (" + i + ") (" + (traceIdx + 1) + " of " + traceCount + " hits)" +
                                               " in " + cur.delta + " ms - " + keys[i]);
           throwable.setStackTrace(cur.trace);
-          LOG.info(ExceptionUtil.getThrowableText(throwable, ActionsUpdateBenchmarkAction.class.getName()));
+          LOG.info(ExceptionUtil.getThrowableText(throwable, ActionUpdatesBenchmarkAction.class.getName()));
         }
       }
     }
@@ -156,7 +156,7 @@ public class ActionsUpdateBenchmarkAction extends DumbAwareAction {
 
   private static void updateAllActionsInner(@NotNull Project project,
                                             @NotNull Component component,
-                                            @NotNull ActionsUpdateBenchmarkAction.MyRunner activityRunner) {
+                                            @NotNull MyRunner activityRunner) {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
     List<Pair<Integer, String>> results = new ArrayList<>();
     List<Pair<String, String>> results2 = new ArrayList<>();
