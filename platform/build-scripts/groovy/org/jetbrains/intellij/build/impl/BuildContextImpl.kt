@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
@@ -8,7 +9,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
-import io.opentelemetry.api.trace.StatusCode
 import org.codehaus.groovy.runtime.StringGroovyMethods
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.ProprietaryBuildTools.Companion.DUMMY
@@ -26,7 +26,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
 import java.util.stream.Collectors
@@ -274,26 +273,14 @@ class BuildContextImpl : BuildContext {
       spanBuilder.startSpan().addEvent("skip").end()
       return
     }
-    val span = spanBuilder.startSpan()
-    val scope = span.makeCurrent()
+
     // we cannot flush tracing after "throw e" as we have to end the current span before that
     var success = false
     try {
-      step.run()
+      spanBuilder.useWithScope { step.run() }
       success = true
     }
-    catch (e: Throwable) {
-      span.recordException(e)
-      span.setStatus(StatusCode.ERROR, e.message!!)
-      throw e
-    }
     finally {
-      try {
-        scope.close()
-      }
-      finally {
-        span.end()
-      }
       if (!success) {
         // print all pending spans - after current span
         flush()
@@ -302,12 +289,11 @@ class BuildContextImpl : BuildContext {
   }
 
   override fun shouldBuildDistributions(): Boolean {
-    return options.targetOs!!.lowercase(Locale.getDefault()) != BuildOptions.OS_NONE
+    return options.targetOs.lowercase() != BuildOptions.OS_NONE
   }
 
   override fun shouldBuildDistributionForOS(os: String): Boolean {
-    return shouldBuildDistributions() && listOf(BuildOptions.OS_ALL, os)
-      .contains(options.targetOs!!.lowercase(Locale.getDefault()))
+    return shouldBuildDistributions() && listOf(BuildOptions.OS_ALL, os).contains(options.targetOs.lowercase())
   }
 
   override fun forkForParallelTask(taskName: String): BuildContext {

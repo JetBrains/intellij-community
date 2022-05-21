@@ -13,7 +13,7 @@ import java.nio.file.attribute.PosixFilePermission
 
 fun buildMacZip(targetFile: Path,
                 zipRoot: String,
-                productJson: ByteArray,
+                productJson: String,
                 allDist: Path,
                 macDist: Path,
                 extraFiles: Collection<Map.Entry<Path, String>>,
@@ -42,7 +42,7 @@ fun buildMacZip(targetFile: Path,
         NoDuplicateZipArchiveOutputStream(targetFileChannel).use { zipOutStream ->
           zipOutStream.setLevel(compressionLevel)
 
-          zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson)
+          zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
 
           val fileFilter: (Path, Path) -> Boolean = { sourceFile, relativeFile ->
             val path = relativeFile.toString()

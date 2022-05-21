@@ -45,7 +45,7 @@ fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null
   ))
 }
 
-internal inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
+inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
   Files.createDirectories(file.parent)
   FileChannel.open(file, W_CREATE_NEW).use {
     task(it)

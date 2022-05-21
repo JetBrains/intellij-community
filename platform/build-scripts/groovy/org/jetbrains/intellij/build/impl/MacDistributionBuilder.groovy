@@ -10,10 +10,11 @@ import kotlin.Pair
 import kotlin.Unit
 import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGeneratorKt
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidatorKt
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.tasks.MacKt
 
@@ -163,42 +164,43 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     MacKt.buildMacZip(
       macZip,
       zipRoot,
-      generateProductJson(context, null),
+      generateProductJson(context.builtinModule, context, null),
       context.paths.distAllDir,
       osAndArchSpecificDistPath,
       context.getDistFiles(),
       getExecutableFilePatterns(customizer),
       publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED,
       { context.messages.warning(it) })
-    ProductInfoValidator.checkInArchive(context, macZip, "$zipRoot/Resources")
+    ProductInfoValidatorKt.checkInArchive(context, macZip, "$zipRoot/Resources")
 
     if (publishArchive) {
       Span.current().addEvent("skip DMG artifact producing because a macOS build agent isn't configured")
       context.notifyArtifactBuilt(macZip)
     }
     else {
-      buildAndSignDmgFromZip(macZip, arch)
+      buildAndSignDmgFromZip(macZip, arch, context.builtinModule).invoke()
     }
   }
 
-  void buildAndSignDmgFromZip(Path macZip, JvmArchitecture arch) {
-    boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
-    createBuildForArchTask(arch, macZip, notarize, customizer, context).invoke()
-    Files.deleteIfExists(macZip)
+  ForkJoinTask<?> buildAndSignDmgFromZip(Path macZip, JvmArchitecture arch, @Nullable BuiltinModulesFileData builtinModule) {
+    createBuildForArchTask(builtinModule, arch, macZip, customizer, context)
   }
 
-  private static ForkJoinTask<?> createBuildForArchTask(JvmArchitecture arch,
+  private static ForkJoinTask<?> createBuildForArchTask(@Nullable BuiltinModulesFileData builtinModule,
+                                                        JvmArchitecture arch,
                                                         Path macZip,
-                                                        Boolean notarize,
                                                         MacDistributionCustomizer customizer,
                                                         BuildContext context) {
     return TraceKt.createTask(spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name()), {
-      ForkJoinTask.invokeAll(buildForArch(arch, context.bundledRuntime, macZip, notarize, customizer, context)
+      boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
+      ForkJoinTask.invokeAll(buildForArch(builtinModule, arch, context.bundledRuntime, macZip, notarize, customizer, context)
                                .findAll { it != null })
+      Files.deleteIfExists(macZip)
     })
   }
 
-  private static List<ForkJoinTask<?>> buildForArch(JvmArchitecture arch,
+  private static List<ForkJoinTask<?>> buildForArch(@Nullable BuiltinModulesFileData builtinModule,
+                                                    JvmArchitecture arch,
                                                     BundledRuntime jreManager,
                                                     Path macZip,
                                                     boolean notarize,
@@ -217,7 +219,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           @Override
           Unit invoke() {
             Path jreArchive = jreManager.findArchive(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
-            MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
+            MacDmgBuilder.signAndBuildDmg(builtinModule, context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
                                           jreArchive, suffix, notarize)
             return null
           }
@@ -232,7 +234,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         context, new Function0<Unit>() {
         @Override
         Unit invoke() {
-          MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
+          MacDmgBuilder.signAndBuildDmg(builtinModule, context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
                                         null, "-no-jdk$suffix", notarize)
           return null
         }
@@ -413,11 +415,11 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
   }
 
-  static byte[] generateProductJson(BuildContext context, String javaExecutablePath) {
+  static String generateProductJson(@Nullable BuiltinModulesFileData builtinModule, BuildContext context, String javaExecutablePath) {
     String executable = context.productProperties.baseFileName
     return ProductInfoGeneratorKt.generateMultiPlatformProductJson(
       "../bin",
-      context.builtinModule,
+      builtinModule,
       List.of(
         new ProductInfoLaunchData(
           OsFamily.MACOS.osName,

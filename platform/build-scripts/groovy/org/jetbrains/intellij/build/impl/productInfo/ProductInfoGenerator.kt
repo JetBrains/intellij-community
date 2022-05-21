@@ -26,7 +26,7 @@ internal val jsonEncoder by lazy {
 internal fun generateMultiPlatformProductJson(relativePathToBin: String,
                                               builtinModules: BuiltinModulesFileData?,
                                               launch: List<ProductInfoLaunchData>,
-                                              context: BuildContext):ByteArray {
+                                              context: BuildContext): String {
   val appInfo = context.applicationInfo
   val json = ProductInfoData(
     name = appInfo.productName,
@@ -43,7 +43,7 @@ internal fun generateMultiPlatformProductJson(relativePathToBin: String,
     modules = builtinModules?.modules ?: emptyList(),
   )
 
-  return jsonEncoder.encodeToString(serializer(), json).toByteArray()
+  return jsonEncoder.encodeToString(serializer(), json)
 }
 
 /**

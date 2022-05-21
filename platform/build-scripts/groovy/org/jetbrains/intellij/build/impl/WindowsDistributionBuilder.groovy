@@ -4,13 +4,11 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.TraceKt
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileFilters
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtilRt
-import com.intellij.util.Processor
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlin.Pair
 import org.jdom.Element
@@ -18,7 +16,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGeneratorKt
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidatorKt
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
@@ -31,7 +29,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.ForkJoinTask
+import java.util.function.BiPredicate
+
+import static org.jetbrains.intellij.build.TraceManager.spanBuilder
 
 @CompileStatic
 final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
@@ -84,25 +86,33 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     generateVMOptions(distBinDir)
     buildWinLauncher(winDistPath)
     customizer.copyAdditionalFiles(context, winDistPath.toString())
-    FileFilter signFileFilter = createFileFilter("exe", "dll")
+    List<Path> nativeFiles = new ArrayList<>()
     for (Path nativeRoot : List.of(distBinDir, pty4jNativeDir)) {
-      FileUtil.processFilesRecursively(nativeRoot.toFile(), new Processor<File>() {
+      Files.find(nativeRoot, Integer.MAX_VALUE, new BiPredicate<Path, BasicFileAttributes>() {
         @Override
-        boolean process(File file) {
-          if (signFileFilter.accept(file)) {
-            context.executeStep(TraceManager.spanBuilder("sign").setAttribute("file", file.toString()), BuildOptions.WIN_SIGN_STEP) {
-              context.signFiles(List.of(file.toPath()), BuildOptions.WIN_SIGN_OPTIONS)
+        boolean test(Path file, BasicFileAttributes attributes) {
+          if (attributes.isRegularFile()) {
+            def path = file.toString()
+            if (path.endsWith(".exe") || path.endsWith(".dll")) {
+              nativeFiles.add(file)
             }
           }
-          return true
+          return false
         }
       })
     }
-    customizer.getBinariesToSign(context).each {
-      def path = winDistPath.resolve(it)
-      context.executeStep(TraceManager.spanBuilder("sign").setAttribute("file", path.toString()), BuildOptions.WIN_SIGN_STEP) {
-        context.signFiles(List.of(path), BuildOptions.WIN_SIGN_OPTIONS)
-      }
+
+    for (it in customizer.getBinariesToSign(context)) {
+      nativeFiles.add(winDistPath.resolve(it))
+    }
+
+    if (!nativeFiles.isEmpty()) {
+      context.executeStep(spanBuilder("sign").setAttribute(AttributeKey.stringArrayKey("files"), nativeFiles.collect { it.toString() }), BuildOptions.WIN_SIGN_STEP, new Runnable() {
+        @Override
+        void run() {
+          context.signFiles(nativeFiles, BuildOptions.WIN_SIGN_OPTIONS)
+        }
+      })
     }
   }
 
@@ -359,28 +369,29 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
                                                           BuildContext context) {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     Path targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
-    return TraceKt.createTask(TraceManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
+    return TraceKt.createTask(spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
                                 .setAttribute("targetFile", targetFile.toString())) {
       Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
 
       String zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
-      List<Path> dirs = [context.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
+      List<Path> dirs = List.of(context.paths.distAllDir, winDistPath, productJsonDir) + jreDirectoryPaths
       BuildHelperKt.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
-      ProductInfoValidator.checkInArchive(context, targetFile, zipPrefix)
+      ProductInfoValidatorKt.checkInArchive(context, targetFile, zipPrefix)
       context.notifyArtifactWasBuilt(targetFile)
       return targetFile
     }
   }
 
-  private static void generateProductJson(@NotNull Path targetDir, boolean isJreIncluded, BuildContext context) {
+  private static String generateProductJson(@NotNull Path targetDir, boolean isJreIncluded, BuildContext context) {
     String launcherPath = "bin/${context.productProperties.baseFileName}64.exe"
     String vmOptionsPath = "bin/${context.productProperties.baseFileName}64.exe.vmoptions"
     String javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
 
     Path file = targetDir.resolve(ProductInfoGeneratorKt.PRODUCT_INFO_FILE_NAME)
     Files.createDirectories(targetDir)
-    Files.write(file, ProductInfoGeneratorKt.generateMultiPlatformProductJson(
+
+    def json = ProductInfoGeneratorKt.generateMultiPlatformProductJson(
       "bin",
       context.getBuiltinModule(),
       List.of(
@@ -391,16 +402,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           vmOptionsPath,
           null,
           )
-      ), context))
-  }
-
-  private static @NotNull FileFilter createFileFilter(String... extensions) {
-    List<FileFilter> filters = extensions.collect { FileFilters.filesWithExtension(it) }
-    return new FileFilter() {
-      @Override
-      boolean accept(File pathname) {
-        return filters.any { it.accept(pathname) }
-      }
-    }
+      ), context)
+    Files.writeString(file, json)
+    return json
   }
 }

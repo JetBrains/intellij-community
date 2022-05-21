@@ -14,7 +14,7 @@ enum class LibraryPackMode {
   STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
 }
 
-class ProjectLibraryData @JvmOverloads constructor(
+class ProjectLibraryData(
   val libraryName: String,
   val packMode: LibraryPackMode,
   val outPath: String? = null,

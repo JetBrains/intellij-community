@@ -110,7 +110,7 @@ fun runJava(context: CompilationContext,
  *
  * This way we can get valid artifacts for one OS if builds artifacts for another OS failed.
  */
-fun invokeAllSettled(tasks: List<ForkJoinTask<*>>) {
+internal fun invokeAllSettled(tasks: List<ForkJoinTask<*>>) {
   for (task in tasks) {
     task.fork()
   }

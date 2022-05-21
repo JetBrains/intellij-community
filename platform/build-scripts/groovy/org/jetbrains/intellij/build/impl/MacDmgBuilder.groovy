@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
@@ -9,7 +8,7 @@ import kotlin.Pair
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidatorKt
 import org.jetbrains.intellij.build.io.ProcessKt
 import org.jetbrains.intellij.build.tasks.SignKt
 
@@ -22,7 +21,8 @@ import java.util.function.Consumer
 
 @CompileStatic
 final class MacDmgBuilder {
-  static void signAndBuildDmg(BuildContext context,
+  static void signAndBuildDmg(@Nullable BuiltinModulesFileData builtinModule,
+                              BuildContext context,
                               MacDistributionCustomizer customizer,
                               @Nullable MacHostProperties macHostProperties,
                               @Nullable Path macZip,
@@ -35,7 +35,7 @@ final class MacDmgBuilder {
       javaExePath = "../${rootDir}/Contents/Home/bin/java"
     }
 
-    byte[] productJson = MacDistributionBuilder.generateProductJson(context, javaExePath)
+    String productJson = MacDistributionBuilder.generateProductJson(builtinModule, context, javaExePath)
     String zipRoot = MacDistributionBuilder.getZipRoot(context, customizer)
     List<Path> installationDirectories = new ArrayList<>()
     List<Pair<Path, String>> installationArchives = new ArrayList<>(2)
@@ -43,7 +43,7 @@ final class MacDmgBuilder {
     if (jreArchivePath != null) {
       installationArchives.add(new Pair<>(jreArchivePath, ""))
     }
-    ProductInfoValidator.validateInDirectory(productJson, "Resources/", installationDirectories, installationArchives, context)
+    ProductInfoValidatorKt.validateProductJson(productJson, "Resources/", installationDirectories, installationArchives, context)
 
     String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
     Path sitFile = (customizer.publishArchive ? context.paths.artifactDir : context.paths.tempDir).resolve(targetName + ".sit")

@@ -51,7 +51,7 @@ private val random by lazy { SecureRandom() }
 // our zip for JARs, but here we need to support file permissions - that's why apache compress is used
 fun prepareMacZip(macZip: Path,
                   sitFile: Path,
-                  productJson: ByteArray,
+                  productJson: String,
                   zipRoot: String) {
   Files.newByteChannel(macZip, StandardOpenOption.READ).use { sourceFileChannel ->
     ZipFile(sourceFileChannel).use { zipFile ->
@@ -65,7 +65,7 @@ fun prepareMacZip(macZip: Path,
           val productJsonZipPath = "$zipRoot/Resources/product-info.json"
           zipFile.copyRawEntries(out, ZipArchiveEntryPredicate { it.name != productJsonZipPath })
 
-          out.entry(productJsonZipPath, productJson)
+          out.entry(productJsonZipPath, productJson.encodeToByteArray())
         }
       }
     }
