@@ -38,6 +38,8 @@ internal abstract class ToolWindowToolbar : JPanel() {
     remove(getStripeFor(anchor), toolWindow)
   }
 
+  abstract fun hasButtons(): Boolean
+
   abstract fun reset()
 
   fun startDrag() {

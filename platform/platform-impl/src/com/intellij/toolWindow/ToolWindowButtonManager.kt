@@ -45,4 +45,6 @@ internal interface ToolWindowButtonManager {
   fun reset()
 
   fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager
+
+  fun hasButtons(): Boolean
 }

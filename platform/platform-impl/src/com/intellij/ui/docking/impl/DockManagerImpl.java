@@ -20,10 +20,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.toolWindow.ToolWindowButtonManager;
-import com.intellij.toolWindow.ToolWindowPane;
-import com.intellij.toolWindow.ToolWindowPaneNewButtonManager;
-import com.intellij.toolWindow.ToolWindowPaneOldButtonManager;
+import com.intellij.toolWindow.*;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScreenUtil;
@@ -526,6 +523,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     private final NonOpaquePanel myUiContainer;
     private final JPanel myCenterPanel = new JPanel(new BorderLayout(0, 2));
     private final JPanel myDockContentUiContainer;
+    @Nullable private ToolWindowPane myToolWindowPane = null;
 
     private DockWindow(@Nullable String dimensionKey,
                        @Nullable String id,
@@ -573,10 +571,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
           buttonManager = new ToolWindowPaneOldButtonManager(paneId);
         }
 
-        var toolWindowPane = new ToolWindowPane((JFrame)frame, this, paneId, buttonManager);
-        toolWindowPane.setDocumentComponent(myContainer.getContainerComponent());
+        myToolWindowPane = new ToolWindowPane((JFrame)frame, this, paneId, buttonManager);
+        myToolWindowPane.setDocumentComponent(myContainer.getContainerComponent());
 
-        myDockContentUiContainer.add(toolWindowPane, BorderLayout.CENTER);
+        myDockContentUiContainer.add(myToolWindowPane, BorderLayout.CENTER);
       }
       else {
         myDockContentUiContainer.add(myContainer.getContainerComponent(), BorderLayout.CENTER);
@@ -597,7 +595,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
         @Override
         public void contentRemoved(Object key) {
           getReady().doWhenDone(() -> {
-            if (myContainer.isEmpty()) {
+            if (myContainer.isEmpty() && (myToolWindowPane == null || !myToolWindowPane.buttonManager.hasButtons())) {
               close();
               myContainers.remove(myContainer);
             }

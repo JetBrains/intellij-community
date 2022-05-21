@@ -115,4 +115,6 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
   override fun getButtonFor(toolWindowId: String): StripeButtonManager? {
     return topLeftStripe.getButtons().find { it.id == toolWindowId } ?: bottomLeftStripe.getButtons().find { it.id == toolWindowId }
   }
+
+  override fun hasButtons() = topLeftStripe.getButtons().isNotEmpty() || bottomLeftStripe.getButtons().isNotEmpty()
 }

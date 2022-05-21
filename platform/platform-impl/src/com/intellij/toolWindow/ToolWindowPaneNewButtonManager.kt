@@ -153,4 +153,6 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     findToolbar(toolWindow.anchor).getStripeFor(toolWindow.windowInfo.anchor).addButton(manager)
     return manager
   }
+
+  override fun hasButtons() = left.hasButtons() || right.hasButtons()
 }

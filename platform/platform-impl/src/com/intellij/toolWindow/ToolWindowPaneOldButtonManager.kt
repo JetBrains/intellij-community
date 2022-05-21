@@ -202,4 +202,11 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
     stripe.addButton(manager)
     return manager
   }
+
+  override fun hasButtons(): Boolean {
+    return leftStripe.getButtons().isNotEmpty()
+           || rightStripe.getButtons().isNotEmpty()
+           || bottomStripe.getButtons().isNotEmpty()
+           || topStripe.getButtons().isNotEmpty()
+  }
 }
