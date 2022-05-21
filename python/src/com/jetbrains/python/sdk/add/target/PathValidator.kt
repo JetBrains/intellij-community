@@ -1,29 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.pathValidation
+package com.jetbrains.python.sdk.add.target
 
+import com.intellij.execution.target.readableFs.PathInfo
+import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.openapi.ui.ValidationInfo
 import com.jetbrains.python.PyBundle
 import org.jetbrains.annotations.Nls
-import java.nio.file.Path
 import javax.swing.JComponent
 
 /**
- * Converts target path to [PathInfo] much like [PathInfo.forLocalPath] but each target may provide implementation
- */
-typealias PathConverter = (String) -> PathInfo?
-
-/**
  * To be used with [validateExecutableFile] and [validateEmptyDir]
- * [path] is target path. [fieldIsEmpty] is an error message, [pathConverter] is from target (local target assumed if null)
+ * [path] is target path. [fieldIsEmpty] is an error message, [pathInfoProvider] is from target (validation skipped if null, only emptiness checked)
  */
 class ValidationRequest(internal val path: String?,
                         @Nls val fieldIsEmpty: String,
-                        private val pathConverter: PathConverter? = null,
+                        private val pathInfoProvider: TargetConfigurationReadableFs? = null,
                         private val component: JComponent? = null) {
   internal fun validate(getMessage: (PathInfo?) -> @Nls String?): ValidationInfo? {
     val message: @Nls String? = when {
       path.isNullOrBlank() -> fieldIsEmpty
-      else -> getMessage((pathConverter ?: { PathInfo.forLocalPath(Path.of(path)) })(path))
+      else -> pathInfoProvider?.let { getMessage(it.getPathInfo(path)) }
     }
     return message?.let { ValidationInfo(it, component) }
   }

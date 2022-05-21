@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
@@ -50,9 +51,9 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.add.target.ValidationRequest
+import com.jetbrains.python.sdk.add.target.validateExecutableFile
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.pathValidation.ValidationRequest
-import com.jetbrains.python.sdk.pathValidation.validateExecutableFile
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.TestOnly
@@ -128,6 +129,7 @@ fun validatePipEnvExecutable(pipEnvExecutable: @SystemDependent String?): Valida
   validateExecutableFile(ValidationRequest(
     path = pipEnvExecutable,
     fieldIsEmpty = PyBundle.message("python.sdk.pipenv.executable.not.found"),
+    pathInfoProvider = PathInfo.localPathInfoProvider // TODO: pass real converter from targets API when we support pip @ targets
   ))
 
 fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Pipenv (${PathUtil.getFileName(basePath)})"

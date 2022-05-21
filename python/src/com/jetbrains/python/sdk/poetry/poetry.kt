@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
@@ -57,9 +58,9 @@ import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.add.target.ValidationRequest
+import com.jetbrains.python.sdk.add.target.validateExecutableFile
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.pathValidation.ValidationRequest
-import com.jetbrains.python.sdk.pathValidation.validateExecutableFile
 import com.jetbrains.python.statistics.modules
 import icons.PythonIcons
 import org.apache.tuweni.toml.Toml
@@ -146,7 +147,9 @@ fun getPoetryExecutable(): File? =
 fun validatePoetryExecutable(poetryExecutable: @SystemDependent String?): ValidationInfo? =
   validateExecutableFile(ValidationRequest(
     path = poetryExecutable,
-    fieldIsEmpty = PyBundle.message("python.sdk.poetry.executable.not.found")
+    fieldIsEmpty = PyBundle.message("python.sdk.poetry.executable.not.found"),
+    pathInfoProvider = PathInfo.localPathInfoProvider // TODO: pass real converter from targets when we support poetry @ targets
+
   ))
 
 fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Poetry (${PathUtil.getFileName(basePath)})"

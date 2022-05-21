@@ -1,19 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.pathValidation
+package com.intellij.execution.target.readableFs
 
 import java.nio.file.Path
 import kotlin.io.path.*
 
-
 /**
  * Abstraction over target path because target paths (like ssh or wsl) can't always be represented as [Path].
- * To be used by [validateEmptyDir] and [validateExecutableFile]
  */
 sealed class PathInfo {
-  class Directory(val empty: Boolean) : PathInfo()
-  class RegularFile(val executable: Boolean) : PathInfo()
+  data class Directory(val empty: Boolean) : PathInfo()
+  data class RegularFile(val executable: Boolean) : PathInfo()
   companion object {
-    fun forLocalPath(localPath: Path): PathInfo? =
+    val localPathInfoProvider: TargetConfigurationReadableFs = TargetConfigurationReadableFs { getPathInfoForLocalPath(Path.of(it)) }
+    fun getPathInfoForLocalPath(localPath: Path): PathInfo? =
       when {
         (!localPath.exists()) -> null
         localPath.isRegularFile() -> RegularFile(localPath.isExecutable())

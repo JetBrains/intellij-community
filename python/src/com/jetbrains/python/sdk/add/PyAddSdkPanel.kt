@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
+import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -31,10 +32,10 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
+import com.jetbrains.python.sdk.add.target.ValidationRequest
+import com.jetbrains.python.sdk.add.target.validateEmptyDir
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
-import com.jetbrains.python.sdk.pathValidation.ValidationRequest
-import com.jetbrains.python.sdk.pathValidation.validateEmptyDir
 import icons.PythonIcons
 import java.awt.Component
 import javax.swing.Icon
@@ -79,11 +80,12 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   companion object {
     @JvmStatic
-    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? =
+    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton, pathInfoProvider: TargetConfigurationReadableFs? = null): ValidationInfo? =
       validateEmptyDir(
         ValidationRequest(
           path = field.text,
-          fieldIsEmpty = PySdkBundle.message("python.venv.location.field.empty")
+          fieldIsEmpty = PySdkBundle.message("python.venv.location.field.empty"),
+          pathInfoProvider = pathInfoProvider
         ),
         notADirectory = PySdkBundle.message("python.venv.location.field.not.directory"),
         directoryNotEmpty = PySdkBundle.message("python.venv.location.directory.not.empty")
