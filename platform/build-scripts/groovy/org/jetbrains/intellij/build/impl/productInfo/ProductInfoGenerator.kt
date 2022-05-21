@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.impl.BuiltinModulesFileData
 internal const val PRODUCT_INFO_FILE_NAME = "product-info.json"
 
 @OptIn(ExperimentalSerializationApi::class)
-private val jsonEncoder by lazy {
+internal val jsonEncoder by lazy {
   Json {
     prettyPrint = true
     prettyPrintIndent = "  "

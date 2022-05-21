@@ -3,8 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
+import com.fasterxml.jackson.jr.ob.JSON
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -40,7 +39,7 @@ open class TraceFileUploader(serverUrl: String, token: String?) {
     conn.useCaches = false
     conn.instanceFollowRedirects = true
     conn.requestMethod = "POST"
-    val metadataContent = JsonOutput.toJson(metadata)
+    val metadataContent = JSON.std.asString(metadata)
     log("Uploading metadata: $metadataContent")
     val content = metadataContent.toByteArray(StandardCharsets.UTF_8)
     conn.setRequestProperty("User-Agent", "TraceFileUploader")
@@ -113,8 +112,7 @@ private fun readError(connection: HttpURLConnection, code: Int): Exception {
 private fun readPlainMetadata(connection: HttpURLConnection): String {
   val body = readBody(connection).trim()
   if (body.startsWith('{')) {
-    val `object` = JsonSlurper().parseText(body)
-    assert(`object` is Map<*, *>)
+    val `object` = JSON.std.mapFrom(body)
     return (`object` as Map<*, *>).get("id") as String
   }
 

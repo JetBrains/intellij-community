@@ -12,7 +12,7 @@ object CommunityLibraryLicenses {
   @JvmStatic
   @SuppressWarnings("SpellCheckingInspection")
   val LICENSES_LIST: List<LibraryLicense> = java.util.List.of(
-    LibraryLicense(name = "A fast Java JSON schema validator", libraryName = "networknt.json.schema.validator",
+    LibraryLicense(name = "A fast Java JSON schema validator", libraryName = "json-schema-validator",
                    url = "https://github.com/networknt/json-schema-validator").apache(),
     LibraryLicense(name = "aalto-xml", libraryName = "aalto-xml", url = "https://github.com/FasterXML/aalto-xml/").apache(),
     LibraryLicense(name = "AAPT Protos", libraryName = "aapt-proto", url = "https://source.android.com/").apache(),

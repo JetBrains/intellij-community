@@ -4,6 +4,9 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Strings
 import groovy.transform.CompileStatic
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import kotlin.Pair
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -312,10 +315,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       generateProductJson(unixSnapDistPath, "jbr/bin/java")
-      new ProductInfoValidator(context).validateInDirectory(unixSnapDistPath,
-                                                            "",
-                                                            List.of(unixSnapDistPath, Path.of(jreDirectoryPath)),
-                                                            [])
+      ProductInfoValidator.validateInDirectory(unixSnapDistPath,
+                                               "",
+                                               List.of(unixSnapDistPath, Path.of(jreDirectoryPath)),
+                                               [],
+                                               context)
 
       Path resultDir = snapDir.resolve("result")
       Files.createDirectories(resultDir)
@@ -347,8 +351,9 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     }
   }
 
-  private void makeFileExecutable(Path file) {
-    context.messages.debug("Setting file permission of $file to 0755")
+  private static void makeFileExecutable(Path file) {
+    Span.current().addEvent("set file permission to 0755", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
+    //noinspection SpellCheckingInspection
     Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-xr-x"))
   }
 

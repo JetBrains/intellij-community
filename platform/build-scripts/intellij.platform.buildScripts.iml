@@ -58,7 +58,6 @@
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="module" module-name="intellij.groovy.constants.rt" />
     <orderEntry type="module" module-name="intellij.groovy.jps" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy-json" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.config" />
     <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />
     <orderEntry type="library" name="fastutil-min" level="project" />
@@ -72,7 +71,7 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="networknt.json.schema.validator" level="project" />
+    <orderEntry type="library" name="json-schema-validator" level="project" />
     <orderEntry type="library" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />

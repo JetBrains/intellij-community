@@ -1,10 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
+
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
+import kotlin.Pair
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
@@ -42,7 +43,7 @@ final class MacDmgBuilder {
     if (jreArchivePath != null) {
       installationArchives.add(new Pair<>(jreArchivePath, ""))
     }
-    new ProductInfoValidator(context).validateInDirectory(productJson, "Resources/", installationDirectories, installationArchives)
+    ProductInfoValidator.validateInDirectory(productJson, "Resources/", installationDirectories, installationArchives, context)
 
     String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
     Path sitFile = (customizer.publishArchive ? context.paths.artifactDir : context.paths.tempDir).resolve(targetName + ".sit")

@@ -140,7 +140,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       void run() {
         Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.exe")
         generateProductJson(productJsonDir, jreDir != null, context)
-        new ProductInfoValidator(context).validateInDirectory(productJsonDir, "", List.of(winAndArchSpecificDistPath, jreDir), [])
+        ProductInfoValidator.validateInDirectory(productJsonDir, "", List.of(winAndArchSpecificDistPath, jreDir), [], context)
         exePath = new WinExeInstallerBuilder(context, customizer, jreDir).buildInstaller(winAndArchSpecificDistPath, productJsonDir, "", context).toString()
       }
     })
