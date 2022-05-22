@@ -3,13 +3,13 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.AsyncDiffRequestChain;
-import com.intellij.diff.chains.DiffRequestChainBase;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -19,25 +19,31 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoToChangePopupBuilder.Chain {
+public class ChangeDiffRequestChain extends UserDataHolderBase implements GoToChangePopupBuilder.Chain {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestChain.class);
-  @NotNull private final List<? extends Producer> myProducers;
+  @NotNull private final ListSelection<? extends Producer> myProducers;
+
+  public ChangeDiffRequestChain(@NotNull ListSelection<? extends Producer> producers) {
+    myProducers = producers.map(it -> {
+      if (it == null) LOG.error("Producers must not be null");
+      return it;
+    });
+  }
 
   public ChangeDiffRequestChain(@NotNull List<? extends Producer> producers, int index) {
-    super(index);
-    if (ContainerUtil.exists(producers, Objects::isNull)) {
-      producers = ContainerUtil.skipNulls(producers);
-      LOG.error("Producers must not be null");
-    }
-    myProducers = producers;
+    this(ListSelection.createAt(producers, index));
   }
 
   @Override
   @NotNull
   public List<? extends Producer> getRequests() {
-    return myProducers;
+    return myProducers.getList();
+  }
+
+  @Override
+  public int getIndex() {
+    return myProducers.getSelectedIndex();
   }
 
   @NotNull

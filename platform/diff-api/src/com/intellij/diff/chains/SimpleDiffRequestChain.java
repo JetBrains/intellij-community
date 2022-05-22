@@ -16,11 +16,12 @@
 package com.intellij.diff.chains;
 
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,18 +29,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class SimpleDiffRequestChain extends DiffRequestChainBase {
-  @NotNull private final List<? extends DiffRequestProducer> myRequests;
+public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRequestChain {
+  @NotNull private final ListSelection<? extends DiffRequestProducer> myRequests;
 
   public SimpleDiffRequestChain(@NotNull DiffRequest request) {
     this(Collections.singletonList(request));
   }
 
   public SimpleDiffRequestChain(@NotNull List<? extends DiffRequest> requests) {
-    myRequests = ContainerUtil.map(requests, request -> new DiffRequestProducerWrapper(request));
+    myRequests = ListSelection.createAt(requests, 0).map(request -> new DiffRequestProducerWrapper(request));
   }
 
-  private SimpleDiffRequestChain(@NotNull List<? extends DiffRequestProducer> requests, @Nullable Object constructorFlag) {
+  private SimpleDiffRequestChain(@NotNull ListSelection<? extends DiffRequestProducer> requests, @Nullable Object constructorFlag) {
     assert constructorFlag == null;
     myRequests = requests;
   }
@@ -53,15 +54,19 @@ public class SimpleDiffRequestChain extends DiffRequestChainBase {
   }
 
   public static SimpleDiffRequestChain fromProducers(@NotNull List<? extends DiffRequestProducer> producers, int selectedIndex) {
-    SimpleDiffRequestChain chain = new SimpleDiffRequestChain(producers, null);
-    if (selectedIndex > 0) chain.setIndex(selectedIndex);
-    return chain;
+    ListSelection<? extends DiffRequestProducer> listSelection = ListSelection.createAt(producers, selectedIndex);
+    return new SimpleDiffRequestChain(listSelection, null);
   }
 
   @Override
   @NotNull
   public List<? extends DiffRequestProducer> getRequests() {
-    return myRequests;
+    return myRequests.getList();
+  }
+
+  @Override
+  public int getIndex() {
+    return myRequests.getSelectedIndex();
   }
 
   public static class DiffRequestProducerWrapper implements DiffRequestProducer {
