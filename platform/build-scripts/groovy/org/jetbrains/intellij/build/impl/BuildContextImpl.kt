@@ -1,18 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanBuilder
 import org.codehaus.groovy.runtime.StringGroovyMethods
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.ProprietaryBuildTools.Companion.DUMMY
-import org.jetbrains.intellij.build.TracerProviderManager.flush
 import org.jetbrains.intellij.build.impl.CompilationContextImpl.Companion.create
 import org.jetbrains.intellij.build.projector.configure
 import org.jetbrains.jps.model.JpsGlobal
@@ -266,26 +263,6 @@ class BuildContextImpl : BuildContext {
       messages.block(stepMessage, step::run)
     }
     return true
-  }
-
-  override fun executeStep(spanBuilder: SpanBuilder, stepId: String, step: Runnable) {
-    if (options.buildStepsToSkip.contains(stepId)) {
-      spanBuilder.startSpan().addEvent("skip").end()
-      return
-    }
-
-    // we cannot flush tracing after "throw e" as we have to end the current span before that
-    var success = false
-    try {
-      spanBuilder.useWithScope { step.run() }
-      success = true
-    }
-    finally {
-      if (!success) {
-        // print all pending spans - after current span
-        flush()
-      }
-    }
   }
 
   override fun shouldBuildDistributions(): Boolean {

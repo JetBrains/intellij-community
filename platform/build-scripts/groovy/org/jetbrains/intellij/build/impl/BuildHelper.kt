@@ -60,14 +60,6 @@ fun zip(context: CompilationContext, targetFile: Path, dir: Path, compress: Bool
   zipWithPrefixes(context, targetFile, mapOf(dir to ""), compress)
 }
 
-fun zipWithPrefix(context: CompilationContext,
-                  targetFile: Path,
-                  dirs: List<Path>,
-                  prefix: String?,
-                  compress: Boolean) {
-  zipWithPrefixes(context, targetFile, dirs.associateWithTo(LinkedHashMap(dirs.size)) { (prefix ?: "") }, compress)
-}
-
 fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path, String>, compress: Boolean) {
   spanBuilder("pack")
     .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())

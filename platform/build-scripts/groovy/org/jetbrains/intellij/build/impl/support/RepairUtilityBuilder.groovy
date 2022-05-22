@@ -5,8 +5,11 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.system.CpuArch
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
+import kotlin.Unit
+import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildContextKt
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -60,14 +63,14 @@ final class RepairUtilityBuilder {
     }
   }
 
-  static synchronized void bundle(BuildContext buildContext, OsFamily os, JvmArchitecture arch, Path distributionDir) {
-    buildContext.executeStep(spanBuilder("bundle repair-utility")
-                               .setAttribute("os", os.osName), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP, new Runnable() {
+  static synchronized void bundle(BuildContext context, OsFamily os, JvmArchitecture arch, Path distributionDir) {
+    BuildContextKt.executeStep(context, spanBuilder("bundle repair-utility")
+                               .setAttribute("os", os.osName), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP, new Function0<Unit>() {
       @Override
-      void run() {
+      Unit invoke() {
         Map<Binary, Path> cache = BINARIES_CACHE
         if (cache == null) {
-          cache = buildBinaries(buildContext)
+          cache = buildBinaries(context)
           BINARIES_CACHE = cache
         }
 
@@ -75,31 +78,32 @@ final class RepairUtilityBuilder {
           return
         }
 
-        Binary binary = findBinary(buildContext, os, arch)
+        Binary binary = findBinary(context, os, arch)
         Path path = cache.get(binary)
         if (path == null) {
-          buildContext.messages.error("No binary was built for $os and $arch")
+          context.messages.error("No binary was built for $os and $arch")
         }
 
         Path repairUtilityTarget = distributionDir.resolve(binary.relativeTargetPath)
         Span.current().addEvent("copy $path to $repairUtilityTarget")
         Files.createDirectories(repairUtilityTarget.parent)
         Files.copy(path, repairUtilityTarget, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
+        return Unit.INSTANCE
       }
     })
   }
 
-  static synchronized void generateManifest(BuildContext buildContext, Path unpackedDistribution, String manifestFileNamePrefix) {
-    buildContext.executeStep(spanBuilder("generate installation integrity manifest")
-                               .setAttribute("dir", unpackedDistribution.toString()), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP, new Runnable() {
+  static synchronized void generateManifest(BuildContext context, Path unpackedDistribution, String manifestFileNamePrefix) {
+    BuildContextKt.executeStep(context, spanBuilder("generate installation integrity manifest")
+                               .setAttribute("dir", unpackedDistribution.toString()), BuildOptions.REPAIR_UTILITY_BUNDLE_STEP, new Function0<Unit>() {
       @Override
-      void run() {
+      Unit invoke() {
         if (Files.notExists(unpackedDistribution)) {
-          buildContext.messages.error("$unpackedDistribution doesn't exist")
+          context.messages.error("$unpackedDistribution doesn't exist")
         }
 
         if (BINARIES_CACHE == null) {
-          BINARIES_CACHE = buildBinaries(buildContext)
+          BINARIES_CACHE = buildBinaries(context)
         }
         if (BINARIES_CACHE.isEmpty()) {
           return
@@ -107,17 +111,17 @@ final class RepairUtilityBuilder {
         OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
                              SystemInfoRt.isMac ? OsFamily.MACOS :
                              SystemInfoRt.isLinux ? OsFamily.LINUX : null
-        Binary binary = findBinary(buildContext, currentOs, CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64)
-        def binaryPath = repairUtilityProjectHome(buildContext).resolve(binary.relativeSourcePath)
-        def tmpDir = buildContext.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
+        Binary binary = findBinary(context, currentOs, CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64)
+        def binaryPath = repairUtilityProjectHome(context).resolve(binary.relativeSourcePath)
+        def tmpDir = context.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
         Files.createDirectories(tmpDir)
         try {
-          ProcessKt.runProcess([binaryPath.toString(), 'hashes', '-g', '--path', unpackedDistribution.toString()], tmpDir, buildContext.messages)
+          ProcessKt.runProcess([binaryPath.toString(), 'hashes', '-g', '--path', unpackedDistribution.toString()], tmpDir, context.messages)
         }
         catch (Throwable e) {
-          buildContext.messages.warning("Manifest generation failed, listing unpacked distribution content for debug:")
+          context.messages.warning("Manifest generation failed, listing unpacked distribution content for debug:")
           Files.walk(unpackedDistribution).withCloseable { files ->
-            files.forEach({ buildContext.messages.warning(it.toString()) } as Consumer<Path>)
+            files.forEach({ context.messages.warning(it.toString()) } as Consumer<Path>)
           }
           throw e
         }
@@ -125,11 +129,12 @@ final class RepairUtilityBuilder {
         Path manifest = tmpDir.resolve("manifest.json")
         if (Files.notExists(manifest)) {
           Path repairLog = tmpDir.resolve("repair.log")
-          buildContext.messages.error("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
+          context.messages.error("Unable to generate installation integrity manifest: ${Files.readString(repairLog)}")
         }
 
-        Path artifact = buildContext.paths.artifactDir.resolve("${manifestFileNamePrefix}.manifest")
+        Path artifact = context.paths.artifactDir.resolve("${manifestFileNamePrefix}.manifest")
         Files.move(manifest, artifact, StandardCopyOption.REPLACE_EXISTING)
+        return Unit.INSTANCE
       }
     })
   }

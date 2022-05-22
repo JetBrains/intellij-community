@@ -182,7 +182,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
         substituteTemplatePlaceholders(
           inputFile = context.paths.communityHomeDir.resolve("platform/platform-resources/src/entry.desktop"),
           outputFile = snapDir.resolve("$snapName.desktop"),
-          placeholderChar = "\$",
+          placeholderChar = "$",
           values = listOf(
             Pair("NAME", productName),
             Pair("ICON", "\${SNAP}/bin/${context.productProperties.baseFileName}.png"),
@@ -199,7 +199,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
         substituteTemplatePlaceholders(
           inputFile = snapcraftTemplate,
           outputFile = snapDir.resolve("snapcraft.yaml"),
-          placeholderChar = "\$",
+          placeholderChar = "$",
           values = listOf(
             Pair("NAME", snapName),
             Pair("VERSION", version),

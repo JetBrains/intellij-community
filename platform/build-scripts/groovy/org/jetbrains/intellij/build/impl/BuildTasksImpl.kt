@@ -104,7 +104,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     fun createTask(arch: JvmArchitecture, context: BuildContext): ForkJoinTask<*>? {
       val macZip = find(macZipDir, "${arch}.zip", context)
       val builtModule = BuiltinModulesFileUtils.readBuiltinModulesFile(find(macZipDir, "builtinModules.json", context))
-      return (getOsDistributionBuilder(OsFamily.MACOS, context = context) as MacDistributionBuilder)
+      return MacDistributionBuilder(context, context.macDistributionCustomizer, null)
         .buildAndSignDmgFromZip(macZip, arch, builtModule)
     }
     invokeAllSettled(listOfNotNull(createTask(JvmArchitecture.x64, context), createTask(JvmArchitecture.aarch64, context)))
@@ -169,7 +169,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = patchIdeaPropertiesFile(context)
-      val builder = getOsDistributionBuilder(currentOs, propertiesFile, context = context)
+      val builder = getOsDistributionBuilder(os = currentOs, ideaProperties = propertiesFile, context = context)
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       context.bundledRuntime.extractTo(prefix = BundledRuntimeImpl.getProductPrefix(context),
                                        os = currentOs,
@@ -377,7 +377,7 @@ private fun buildOsSpecificDistributions(context: BuildContext): List<Distributi
     }
 
     return BuildTaskRunnable("${os.osId} ${arch.name}") {
-      val builder = getOsDistributionBuilder(os, propertiesFile, context = context)
+      val builder = getOsDistributionBuilder(os = os, ideaProperties = propertiesFile, context = context)
       val osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
       builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
       DistributionForOsTaskResult(os, arch, osAndArchSpecificDistDirectory)
@@ -1004,8 +1004,13 @@ private fun checkClassVersion( targetFile: Path, context: BuildContext) {
 
 fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder {
   return when (os) {
-    OsFamily.WINDOWS -> WindowsDistributionBuilder(context, context.windowsDistributionCustomizer, ideaProperties, context.applicationInfo.toString())
-    OsFamily.LINUX -> LinuxDistributionBuilder(context, context.linuxDistributionCustomizer!!, ideaProperties)
+    OsFamily.WINDOWS -> WindowsDistributionBuilder(context = context,
+                                                   customizer = context.windowsDistributionCustomizer!!,
+                                                   ideaProperties = ideaProperties,
+                                                   patchedApplicationInfo = context.applicationInfo.toString())
+    OsFamily.LINUX -> LinuxDistributionBuilder(context = context,
+                                               customizer = context.linuxDistributionCustomizer!!,
+                                               ideaProperties = ideaProperties)
     OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer, ideaProperties)
   }
 }

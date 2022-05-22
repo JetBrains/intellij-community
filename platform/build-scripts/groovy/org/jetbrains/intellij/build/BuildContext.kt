@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.diagnostic.telemetry.useWithScope
 import io.opentelemetry.api.trace.SpanBuilder
 import org.jetbrains.intellij.build.impl.BuiltinModulesFileData
 import org.jetbrains.jps.model.module.JpsModule
@@ -77,8 +78,6 @@ interface BuildContext: CompilationContext {
    */
   fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean
 
-  fun executeStep(spanBuilder: SpanBuilder, stepId: String, step: Runnable)
-
   fun shouldBuildDistributions(): Boolean
 
   fun shouldBuildDistributionForOS(os: String): Boolean
@@ -96,4 +95,13 @@ interface BuildContext: CompilationContext {
    * see BuildTasksImpl.buildProvidedModuleList
    */
   fun getBuiltinModule(): BuiltinModulesFileData?
+}
+
+inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, step: () -> Unit) {
+  if (options.buildStepsToSkip.contains(stepId)) {
+    spanBuilder.startSpan().addEvent("skip").end()
+    return
+  }
+  // we cannot flush tracing after "throw e" as we have to end the current span before that
+  spanBuilder.useWithScope { step() }
 }

@@ -130,11 +130,12 @@ final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
   @Override
   void buildArtifacts(@NotNull Path osAndArchSpecificDistPath, @NotNull JvmArchitecture arch) {
     doCopyExtraFiles(osAndArchSpecificDistPath, arch, false)
-    context.executeStep(spanBuilder("build macOS artifacts")
-                               .setAttribute("arch", arch.name()), BuildOptions.MAC_ARTIFACTS_STEP, new Runnable() {
+    BuildContextKt.executeStep(context, spanBuilder("build macOS artifacts")
+                               .setAttribute("arch", arch.name()), BuildOptions.MAC_ARTIFACTS_STEP, new Function0<Unit>() {
       @Override
-      void run() {
+      Unit invoke() {
         doBuildArtifacts(osAndArchSpecificDistPath, arch)
+        return Unit.INSTANCE
       }
     })
   }
@@ -145,15 +146,16 @@ final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
 
     List<String> binariesToSign = customizer.getBinariesToSign(context, arch)
     if (!binariesToSign.isEmpty()) {
-      context.executeStep(spanBuilder("sign binaries for macOS distribution")
-                            .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Runnable() {
+      BuildContextKt.executeStep(context, spanBuilder("sign binaries for macOS distribution")
+                            .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Function0<Unit>() {
         @Override
-        void run() {
+        Unit invoke() {
           context.signFiles(binariesToSign.collect { osAndArchSpecificDistPath.resolve(it) }, Map.of(
             "mac_codesign_options", "runtime",
             "mac_codesign_force", "true",
             "mac_codesign_deep", "true",
             ))
+          return Unit.INSTANCE
         }
       })
     }
