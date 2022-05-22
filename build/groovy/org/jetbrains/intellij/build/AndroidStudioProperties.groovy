@@ -236,8 +236,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux"))
           .includeAll()
           .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/linux"))
-        extraExecutables.add("plugins/c-clangd/bin/clang/linux/clangd")
-        extraExecutables.add("plugins/c-clangd/bin/clang/linux/clang-tidy")
+        extraExecutables = List.of("plugins/c-clangd/bin/clang/linux/clangd", "plugins/c-clangd/bin/clang/linux/clang-tidy")
       }
     }
   }
@@ -266,8 +265,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
         .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/mac"))
-      extraExecutables.add("plugins/c-clangd/bin/clang/mac/clangd")
-      extraExecutables.add("plugins/c-clangd/bin/clang/mac/clang-tidy")
+      extraExecutables = List.of("plugins/c-clangd/bin/clang/mac/clangd", "plugins/c-clangd/bin/clang/mac/clang-tidy")
     }
   }
 
