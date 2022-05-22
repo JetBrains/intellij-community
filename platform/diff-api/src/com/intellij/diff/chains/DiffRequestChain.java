@@ -34,5 +34,6 @@ public interface DiffRequestChain extends UserDataHolder {
    */
   @Deprecated(forRemoval = true)
   @RequiresEdt
-  void setIndex(int index);
+  default void setIndex(int index) {
+  }
 }
