@@ -16,7 +16,7 @@ import java.util.List;
  * Use {@link AsyncDiffRequestChain} to load requests asynchronously after showing UI
  * Use {@link com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain} for chains with common "Go to change" navigation popup.
  *
- * @see DiffRequestChainBase
+ * @see DiffRequestSelectionChain
  * @see com.intellij.diff.DiffManager#showDiff(Project, DiffRequestChain, DiffDialogHints)
  * @see com.intellij.diff.impl.CacheDiffRequestChainProcessor
  */

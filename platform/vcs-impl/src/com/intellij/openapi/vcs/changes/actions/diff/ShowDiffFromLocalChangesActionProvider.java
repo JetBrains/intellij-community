@@ -109,7 +109,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     else {
       ListSelection<Producer> producers = collectRequestProducers(project, changes, unversioned, view);
       if (producers.isEmpty()) return;
-      chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
+      chain = new ChangeDiffRequestChain(producers);
     }
 
     chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);

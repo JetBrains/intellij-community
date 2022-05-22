@@ -321,7 +321,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
                                             @NotNull ListSelection<T> selection,
                                             @NotNull NullableFunction<? super T, ? extends ChangeDiffRequestChain.Producer> getDiffRequestProducer) {
     ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(getDiffRequestProducer);
-    DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
+    DiffRequestChain chain = new ChangeDiffRequestChain(producers);
     changesBrowser.updateDiffContext(chain);
     DiffManager.getInstance().showDiff(project, chain, new DiffDialogHints(null, changesBrowser));
   }
