@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions.history;
 
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -58,7 +59,9 @@ abstract public class CompareRevisionsFromFileHistoryActionProvider implements A
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     if (changes == null || changes.length != 1 || changes[0] == null) return;
 
-    ShowDiffAction.showDiffForChange(project, Arrays.asList(changes));
+    ListSelection<Change> selection = ListSelection.createAt(Arrays.asList(changes), 0)
+      .asExplicitSelection();
+    ShowDiffAction.showDiffForChange(project, selection);
   }
 
   public static void setTextAndDescription(@NotNull AnActionEvent e, @NotNull VcsLog log) {
