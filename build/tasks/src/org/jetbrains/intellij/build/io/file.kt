@@ -136,7 +136,11 @@ private fun deleteFile(file: Path) {
 }
 
 @JvmOverloads
-fun substituteTemplatePlaceholders(inputFile: Path, outputFile: Path, placeholderChar: String, values: List<Pair<String, String>>, mustUseAllPlaceholders: Boolean = true) {
+fun substituteTemplatePlaceholders(inputFile: Path,
+                                   outputFile: Path,
+                                   placeholderChar: String,
+                                   values: List<Pair<String, String>>,
+                                   mustUseAllPlaceholders: Boolean = true) {
   var result = Files.readString(inputFile)
 
   val missingPlaceholders = mutableListOf<String>()

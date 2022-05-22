@@ -26,8 +26,8 @@ import kotlin.streams.toList
 class BundledRuntimeImpl(private val context: CompilationContext) : BundledRuntime {
   companion object {
     @JvmStatic
-    fun getProductPrefix(buildContext: BuildContext): String {
-      return buildContext.options.bundledRuntimePrefix ?: buildContext.productProperties.runtimeDistribution.artifactPrefix
+    fun getProductPrefix(context: BuildContext): String {
+      return context.options.bundledRuntimePrefix ?: context.productProperties.runtimeDistribution.artifactPrefix
     }
   }
 

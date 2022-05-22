@@ -1005,7 +1005,7 @@ private fun checkClassVersion( targetFile: Path, context: BuildContext) {
 fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder {
   return when (os) {
     OsFamily.WINDOWS -> WindowsDistributionBuilder(context, context.windowsDistributionCustomizer, ideaProperties, context.applicationInfo.toString())
-    OsFamily.LINUX -> LinuxDistributionBuilder(context, context.linuxDistributionCustomizer, ideaProperties)
+    OsFamily.LINUX -> LinuxDistributionBuilder(context, context.linuxDistributionCustomizer!!, ideaProperties)
     OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer, ideaProperties)
   }
 }

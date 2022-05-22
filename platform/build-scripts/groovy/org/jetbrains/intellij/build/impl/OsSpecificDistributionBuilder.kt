@@ -6,14 +6,14 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import java.nio.file.Path
 
-abstract class OsSpecificDistributionBuilder {
-  abstract val targetOs: OsFamily
+interface OsSpecificDistributionBuilder {
+  val targetOs: OsFamily
 
-  abstract fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture?)
+  fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture)
 
-  abstract fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
+  fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 
-  open fun generateExecutableFilesPatterns(includeJre: Boolean): List<String> = emptyList()
+  fun generateExecutableFilesPatterns(includeJre: Boolean): List<String> = emptyList()
 
-  open fun getArtifactNames(context: BuildContext): List<String> = emptyList()
+  fun getArtifactNames(context: BuildContext): List<String> = emptyList()
 }

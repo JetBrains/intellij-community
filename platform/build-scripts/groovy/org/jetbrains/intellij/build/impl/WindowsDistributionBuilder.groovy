@@ -36,7 +36,7 @@ import java.util.function.BiPredicate
 import static org.jetbrains.intellij.build.TraceManager.spanBuilder
 
 @CompileStatic
-final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
+final class WindowsDistributionBuilder implements OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
   private final Path ideaProperties
   private final String patchedApplicationInfo
@@ -149,8 +149,12 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       @Override
       void run() {
         Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.exe")
-        generateProductJson(productJsonDir, jreDir != null, context)
-        ProductInfoValidator.validateInDirectory(productJsonDir, "", List.of(winAndArchSpecificDistPath, jreDir), [], context)
+        ProductInfoValidatorKt.validateProductJson(generateProductJson(productJsonDir, jreDir != null, context),
+                                                   "",
+                                                   List.of(context.paths.distAllDir, winAndArchSpecificDistPath, jreDir),
+                                                   List.of(),
+                                                   context)
+
         exePath = new WinExeInstallerBuilder(context, customizer, jreDir).buildInstaller(winAndArchSpecificDistPath, productJsonDir, "", context).toString()
       }
     })
@@ -405,5 +409,15 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       ), context)
     Files.writeString(file, json)
     return json
+  }
+
+  @Override
+  List<String> generateExecutableFilesPatterns(boolean includeJre) {
+    return List.of()
+  }
+
+  @Override
+  List<String> getArtifactNames(@NotNull BuildContext context) {
+    return List.of()
   }
 }

@@ -107,19 +107,18 @@ object BuildUtils {
   }
 
   @JvmStatic
-  fun convertLineSeparators(file: Path, newLineSeparator: String) {
-    val data = Files.readString(file)
-    val convertedData = StringUtilRt.convertLineSeparators(data, newLineSeparator)
-    if (data != convertedData) {
-      Files.writeString(file, convertedData)
-    }
-  }
-
-  @JvmStatic
   fun getPluginJars(pluginPath: Path): List<Path> {
     return Files.newDirectoryStream(pluginPath.resolve("lib"), "*.jar").use { it.toList() }
   }
 
   val isUnderJpsBootstrap: Boolean
     get() = System.getenv("JPS_BOOTSTRAP_COMMUNITY_HOME") != null
+}
+
+fun convertLineSeparators(file: Path, newLineSeparator: String) {
+  val data = Files.readString(file)
+  val convertedData = StringUtilRt.convertLineSeparators(data, newLineSeparator)
+  if (data != convertedData) {
+    Files.writeString(file, convertedData)
+  }
 }

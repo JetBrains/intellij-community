@@ -108,13 +108,13 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
           "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
-        extraExecutables = [
+        extraExecutables = List.of(
           "plugins/Kotlin/kotlinc/bin/kotlin",
           "plugins/Kotlin/kotlinc/bin/kotlinc",
           "plugins/Kotlin/kotlinc/bin/kotlinc-js",
           "plugins/Kotlin/kotlinc/bin/kotlinc-jvm",
           "plugins/Kotlin/kotlinc/bin/kotlin-dce-js"
-        ]
+        )
       }
 
       @Override

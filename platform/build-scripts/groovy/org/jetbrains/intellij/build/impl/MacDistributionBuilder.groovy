@@ -29,7 +29,7 @@ import java.util.zip.Deflater
 import static org.jetbrains.intellij.build.TraceManager.spanBuilder
 
 @CompileStatic
-final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
+final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final Path ideaProperties
   @SuppressWarnings('SpellCheckingInspection')
@@ -452,5 +452,10 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       buff.append('        <string>').append(value).append('</string>\n')
     }
     return buff.toString().trim()
+  }
+
+  @Override
+  List<String> getArtifactNames(@NotNull BuildContext context) {
+    return List.of()
   }
 }

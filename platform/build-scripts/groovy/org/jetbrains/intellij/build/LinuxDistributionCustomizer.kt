@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import java.nio.file.Path
@@ -17,7 +17,7 @@ abstract class LinuxDistributionCustomizer {
   /**
    * Relative paths to files in Linux distribution which should take 'executable' permissions
    */
-  var extraExecutables: MutableList<String> = mutableListOf()
+  var extraExecutables: List<String> = emptyList()
 
   /**
    * If {@code true} a separate *-no-jdk.tar.gz artifact without runtime will be produced.
