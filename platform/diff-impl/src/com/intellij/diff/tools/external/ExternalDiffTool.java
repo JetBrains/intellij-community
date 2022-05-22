@@ -61,33 +61,35 @@ public final class ExternalDiffTool {
       .anyMatch(fileType -> ExternalDiffSettings.findDiffTool(fileType) != null);
   }
 
-  public static void show(@Nullable Project project,
-                          @NotNull DiffRequestChain chain,
-                          @NotNull DiffDialogHints hints) {
-    show(project, hints, indicator -> {
-      List<DiffRequestProducer> producers = loadProducersFromChain(project, chain);
+  public static boolean showIfNeeded(@Nullable Project project,
+                                     @NotNull DiffRequestChain chain,
+                                     @NotNull DiffDialogHints hints) {
+    return show(project, hints, indicator -> {
+      List<DiffRequestProducer> producers = loadProducersFromChain(chain);
+      if (!wantShowExternalToolFor(producers)) return null;
       return collectRequests(project, producers, indicator);
     });
   }
 
   public static void show(@Nullable Project project,
-                          @NotNull List<DiffRequestProducer> requestProducers,
+                          @NotNull List<? extends DiffRequestProducer> requestProducers,
                           @NotNull DiffDialogHints hints) {
     show(project, hints, indicator -> {
       return collectRequests(project, requestProducers, indicator);
     });
   }
 
-  private static void show(@Nullable Project project,
-                           @NotNull DiffDialogHints hints,
-                           @NotNull ThrowableConvertor<? super ProgressIndicator, List<DiffRequest>, ? extends Exception> requestsProducer) {
+  private static boolean show(@Nullable Project project,
+                              @NotNull DiffDialogHints hints,
+                              @NotNull ThrowableConvertor<? super ProgressIndicator, List<DiffRequest>, ? extends Exception> requestsProducer) {
     try {
       List<DiffRequest> requests = computeWithModalProgress(project,
                                                             DiffBundle.message("progress.title.loading.requests"),
                                                             requestsProducer);
-      if (requests == null) return;
+      if (requests == null) return false;
 
       showRequests(project, requests, hints);
+      return true;
     }
     catch (ProcessCanceledException ignore) {
     }
@@ -95,6 +97,7 @@ public final class ExternalDiffTool {
       LOG.warn(e);
       Messages.showErrorDialog(project, e.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
     }
+    return false;
   }
 
   @RequiresEdt
@@ -133,7 +136,7 @@ public final class ExternalDiffTool {
 
   @NotNull
   @RequiresBackgroundThread
-  private static List<DiffRequestProducer> loadProducersFromChain(@Nullable Project project, @NotNull DiffRequestChain chain) {
+  private static List<DiffRequestProducer> loadProducersFromChain(@NotNull DiffRequestChain chain) {
     ListSelection<? extends DiffRequestProducer> listSelection;
     if (chain instanceof AsyncDiffRequestChain) {
       listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
