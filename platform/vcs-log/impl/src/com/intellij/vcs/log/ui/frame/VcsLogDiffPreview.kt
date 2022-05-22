@@ -168,7 +168,7 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
     val producers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer).map {
       changesBrowser.getDiffRequestProducer(it, false)
     }
-    return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
+    return SimpleDiffRequestChain.fromProducers(producers)
   }
 
   override fun performDiffAction(): Boolean {
