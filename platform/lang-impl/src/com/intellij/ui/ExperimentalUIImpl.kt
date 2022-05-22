@@ -2,6 +2,10 @@
 package com.intellij.ui
 
 import com.fasterxml.jackson.jr.ob.JSON
+import com.intellij.ide.projectView.impl.ProjectViewState
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.registry.Registry
 import java.io.IOException
 import java.util.*
 
@@ -10,6 +14,22 @@ import java.util.*
  */
 class ExperimentalUIImpl : ExperimentalUI() {
   override fun loadIconMappings() = loadIconMappingsImpl()
+
+  override fun onExpUIEnabled() {
+    Registry.get("ide.experimental.ui").setValue(true)
+    Registry.get("debugger.new.tool.window.layout").setValue(true)
+    UISettings.getInstance().openInPreviewTabIfPossible = true
+    ProjectViewState.getDefaultInstance().autoscrollFromSource = true
+    ProjectManager.getInstance().openProjects.forEach {
+      ProjectViewState.getInstance(it).autoscrollFromSource = true
+    }
+  }
+
+  override fun onExpUIDisabled() {
+    Registry.get("ide.experimental.ui").setValue(false)
+    Registry.get("debugger.new.tool.window.layout").setValue(false)
+    //ProjectViewState.getDefaultInstance().autoscrollFromSource = false
+  }
 
   companion object {
     @JvmStatic

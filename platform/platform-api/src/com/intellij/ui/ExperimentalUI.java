@@ -101,6 +101,9 @@ public abstract class ExperimentalUI {
 
   public abstract Map<String, String> loadIconMappings();
 
+  public abstract void onExpUIEnabled();
+  public abstract void onExpUIDisabled();
+
   private static void patchUIDefaults(boolean isNewUiEnabled) {
     if (!isNewUiEnabled) {
       return;
