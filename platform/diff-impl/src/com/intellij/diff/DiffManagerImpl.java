@@ -2,7 +2,6 @@
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.editor.ChainDiffVirtualFile;
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +52,7 @@ public class DiffManagerImpl extends DiffManagerEx {
   @Override
   public void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints) {
     if (ExternalDiffTool.isEnabled()) {
-      if (ExternalDiffTool.wantShowExternalToolFor(requests.getRequests())) {
-        ExternalDiffTool.show(project, requests, hints);
+      if (ExternalDiffTool.showIfNeeded(project, requests, hints)) {
         return;
       }
     }
