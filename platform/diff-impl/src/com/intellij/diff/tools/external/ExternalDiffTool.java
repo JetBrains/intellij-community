@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class ExternalDiffTool {
@@ -65,7 +64,7 @@ public final class ExternalDiffTool {
                                      @NotNull DiffRequestChain chain,
                                      @NotNull DiffDialogHints hints) {
     return show(project, hints, indicator -> {
-      List<DiffRequestProducer> producers = loadProducersFromChain(chain);
+      List<? extends DiffRequestProducer> producers = loadProducersFromChain(chain);
       if (!wantShowExternalToolFor(producers)) return null;
       return collectRequests(project, producers, indicator);
     });
@@ -136,21 +135,18 @@ public final class ExternalDiffTool {
 
   @NotNull
   @RequiresBackgroundThread
-  private static List<DiffRequestProducer> loadProducersFromChain(@NotNull DiffRequestChain chain) {
+  private static List<? extends DiffRequestProducer> loadProducersFromChain(@NotNull DiffRequestChain chain) {
     ListSelection<? extends DiffRequestProducer> listSelection;
     if (chain instanceof AsyncDiffRequestChain) {
       listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
     }
+    else if (chain instanceof DiffRequestSelectionChain) {
+      listSelection = ((DiffRequestSelectionChain)chain).getListSelection();
+    }
     else {
       listSelection = ListSelection.createAt(chain.getRequests(), chain.getIndex());
     }
-
-    if (listSelection.isEmpty()) return Collections.emptyList();
-
-    // We do not show all changes, as it might be an 'implicit selection' from 'getSelectedOrAll()' calls.
-    // TODO: introduce key in DiffUserDataKeys to differentiate these use cases
-    DiffRequestProducer producerToShow = listSelection.getList().get(listSelection.getSelectedIndex());
-    return Collections.singletonList(producerToShow);
+    return listSelection.getExplicitSelection();
   }
 
   @NotNull

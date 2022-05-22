@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
-import java.util.List;
 
-public abstract class AsyncDiffRequestChain extends UserDataHolderBase implements DiffRequestChain {
+public abstract class AsyncDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
   private volatile ListSelection<? extends DiffRequestProducer> myRequests = null;
@@ -34,23 +33,13 @@ public abstract class AsyncDiffRequestChain extends UserDataHolderBase implement
     myDispatcher.removeListener(listener);
   }
 
+  @Override
   public @NotNull ListSelection<? extends DiffRequestProducer> getListSelection() {
     ListSelection<? extends DiffRequestProducer> requests = myRequests;
     if (requests == null) {
       return ListSelection.createSingleton(new DiffRequestProducerWrapper(new LoadingDiffRequest()));
     }
     return requests;
-  }
-
-  @NotNull
-  @Override
-  public List<? extends DiffRequestProducer> getRequests() {
-    return getListSelection().getList();
-  }
-
-  @Override
-  public int getIndex() {
-    return getListSelection().getSelectedIndex();
   }
 
   @NotNull
