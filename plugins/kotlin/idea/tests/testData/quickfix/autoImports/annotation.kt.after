@@ -1,0 +1,6 @@
+import org.jetbrains.annotations.TestOnly
+
+// "Import" "true"
+
+@TestOnly
+fun foo() {}

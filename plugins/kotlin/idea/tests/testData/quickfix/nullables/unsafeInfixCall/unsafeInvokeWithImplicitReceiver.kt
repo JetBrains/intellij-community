@@ -1,7 +1,6 @@
 // "Replace with safe (?.) call" "false"
 // ACTION: Add non-null asserted (!!) call
 // ACTION: Convert to block body
-// ACTION: Do not show return expression hints
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with safe (this?.) call
 // ACTION: Wrap with '?.let { ... }' call

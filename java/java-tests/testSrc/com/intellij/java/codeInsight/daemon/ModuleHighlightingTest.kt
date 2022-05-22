@@ -12,6 +12,7 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
@@ -343,6 +344,30 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M.test'">pkg.m2.impl</error>.*;
         """.trimIndent()
     highlight("test.java", highlightText, M_TEST, isTest = true)
+  }
+
+  fun testPatchingJavaBase() {
+    highlight("Main.java", """
+      package <error descr="Package exists in another module 'java.base'">java.lang</error>;
+      public class Main {}
+    """.trimIndent())
+    try {
+      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, listOf("--patch-module=java.base=/src"))
+      highlight("Main.java", """
+       package java.lang;
+       public class Main {}
+     """.trimIndent())
+    }
+    finally {
+      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, listOf())
+    }
+  }
+  
+  fun testNoModuleInfoSamePackageAsInAttachedLibraryWithModuleInfo() {
+    highlight("Main.java", """
+      package lib.named;
+      public class Main {}
+    """.trimIndent())
   }
 
   fun testPrivateJdkPackage() {

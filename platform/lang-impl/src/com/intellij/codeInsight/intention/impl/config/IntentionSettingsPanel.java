@@ -1,17 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,9 +32,6 @@ public final class IntentionSettingsPanel implements MasterDetails {
   private final Alarm myResetAlarm = new Alarm();
 
   public IntentionSettingsPanel() {
-    myDescriptionPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      CodeInsightBundle.message("dialog.intention.settings.description.panel.title"), false, JBUI.insetsTop(8)).setShowLine(false));
-
     myIntentionSettingsTree = new IntentionSettingsTree() {
       @Override
       protected void selectionChanged(Object selected) {
@@ -104,7 +98,6 @@ public final class IntentionSettingsPanel implements MasterDetails {
 
   public void reset() {
     myIntentionSettingsTree.reset();
-    SwingUtilities.invokeLater(() -> myIntentionDescriptionPanel.init(myPanel.getWidth() / 2));
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.system.CpuArch;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -53,6 +54,11 @@ final class FilePageCache {
     assert mySegmentsAllocationLock.isHeldByCurrentThread();
   }
 
+  @SuppressWarnings("NonAtomicOperationOnVolatileField") // expected, we don't need 100% precision
+  public void incrementUncachedFileAccess() {
+    myUncachedFileAccess++;
+  }
+
   private static long maxDirectMemory() {
     try {
       Class<?> aClass = Class.forName("jdk.internal.misc.VM");
@@ -87,6 +93,28 @@ final class FilePageCache {
     return Runtime.getRuntime().maxMemory();
   }
 
+  @NotNull FilePageCacheStatistics getStatistics() {
+    mySegmentsAllocationLock.lock();
+    try {
+      mySegmentsAccessLock.lock();
+      try {
+        return new FilePageCacheStatistics(PagedFileStorage.CHANNELS_CACHE.getStatistics(),
+                                           myUncachedFileAccess,
+                                           myMaxRegisteredFiles,
+                                           myHits,
+                                           myMisses,
+                                           myLoad,
+                                           mySizeLimit);
+      }
+      finally {
+        mySegmentsAccessLock.unlock();
+      }
+    }
+    finally {
+      mySegmentsAllocationLock.unlock();
+    }
+  }
+
   private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
 
   private final LinkedHashMap<Long, DirectBufferWrapper> mySegments;
@@ -98,6 +126,11 @@ final class FilePageCache {
 
   private final long mySizeLimit;
   private long mySize;
+  private volatile int myUncachedFileAccess;
+  private int myHits;
+  private int myMisses;
+  private int myLoad;
+  private volatile int myMaxRegisteredFiles;
   private volatile int myMappingChangeCount;
 
   FilePageCache() {
@@ -145,6 +178,7 @@ final class FilePageCache {
         value = registered << 16;
       }
       myIndex2Storage.put(value, storage);
+      myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, myIndex2Storage.size());
       return (long)value << 32;
     }
   }
@@ -160,6 +194,7 @@ final class FilePageCache {
     try {         // fast path
       mySegmentsAccessLock.lock();
       wrapper = mySegments.get(key);
+      myHits++;
       if (wrapper != null) return wrapper;
     }
     finally {
@@ -180,6 +215,7 @@ final class FilePageCache {
         }
 
         disposeRemovedSegments(null);
+        myHits++;
         return notYetRemoved;
       }
 
@@ -209,6 +245,12 @@ final class FilePageCache {
 
       mySegmentsAccessLock.lock();
       try {
+        if (mySegments.size() < mySizeLimit) {
+          myLoad++;
+        }
+        else {
+          myMisses++;
+        }
         mySegments.put(key, wrapper);
       }
       finally {

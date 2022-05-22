@@ -28,6 +28,11 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         runTest("testData/outOfBlockProjectWide/funInCompanionObject.kt");
     }
 
+    @TestMetadata("inJavaFile.java")
+    public void testInJavaFile() throws Exception {
+        runTest("testData/outOfBlockProjectWide/inJavaFile.java");
+    }
+
     @TestMetadata("localFun.kt")
     public void testLocalFun() throws Exception {
         runTest("testData/outOfBlockProjectWide/localFun.kt");

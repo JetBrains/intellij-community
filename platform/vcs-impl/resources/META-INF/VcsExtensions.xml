@@ -198,8 +198,10 @@
     <completion.preselectionBehaviourProvider implementation="com.intellij.openapi.vcs.CommitCompletionPreselectionBehaviourProvider"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.RecentMessagesCommitCompletionContributor" id="commitCompletion"
                             order="first, before liveTemplates"/>
-    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.ChangedFilesCommitCompletionContributor" 
-                            order="first, before liveTemplates, after commitCompletion"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CoAuthoredByCommitCompletionContributor" id="coAuthoredCompletion"
+                            order="first, before liveTemplates"/>
+    <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.ChangedFilesCommitCompletionContributor"
+                            order="first, before liveTemplates, after commitCompletion, after coAuthoredCompletion"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.changes.ChangeListCompletionContributor"
                             order="first"/>
 
@@ -233,7 +235,7 @@
     <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
 
-    <getDataRule key="VCS_VIRTUAL_FILES" implementationClass="com.intellij.openapi.vcs.VcsVirtualFilesRule" type="fast"/>
+    <getDataRule key="VCS_VIRTUAL_FILES" implementationClass="com.intellij.openapi.vcs.VcsVirtualFilesRule"/>
     <getDataRule key="VCS_REVISION_NUMBERS" implementationClass="com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule"/>
     <getDataRule key="vcs.ChangesSelection" implementationClass="com.intellij.openapi.vcs.changes.VcsChangesSelectionRule" type="fast"/>
     <jbProtocolCommand implementation="com.intellij.openapi.vcs.checkout.JBProtocolCheckoutCommand"/>

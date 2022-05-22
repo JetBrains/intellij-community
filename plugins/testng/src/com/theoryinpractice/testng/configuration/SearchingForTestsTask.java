@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -184,7 +184,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   private static String getVersion(PsiClass classFromCommon) {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(classFromCommon);
     if (virtualFile != null) {
-      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(classFromCommon.getProject());
+      ProjectFileIndex index = ProjectFileIndex.getInstance(classFromCommon.getProject());
       VirtualFile root = index.getClassRootForFile(virtualFile);
       if (root != null) {
         VirtualFileSystem fileSystem = root.getFileSystem();

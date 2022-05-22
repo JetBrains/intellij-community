@@ -66,7 +66,6 @@ open class IntellijPlatformDefaultToolWindowLayoutProvider : DefaultToolWindowLa
     return builder.build()
   }
 
-  @Suppress("DuplicatedCode")
   override fun createV2Layout(): List<ToolWindowDescriptor> {
     val builder = DefaultToolWindowLayoutBuilder()
 

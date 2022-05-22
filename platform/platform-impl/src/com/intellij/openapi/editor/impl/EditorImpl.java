@@ -1264,7 +1264,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public int getFontSize() {
     return myScheme.getEditorFontSize();
   }
-
+  
   public float getFontSize2D() {
     return myScheme.getEditorFontSize2D();
   }
@@ -2109,13 +2109,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable
   public TextRange getComposedTextRange() {
-    return myInputMethodRequestsHandler == null || myInputMethodRequestsHandler.composedText == null ?
-           null : myInputMethodRequestsHandler.composedTextRange;
+    return myInputMethodRequestsHandler == null ? null : myInputMethodRequestsHandler.getRange();
   }
 
   private boolean composedTextExists() {
     return myInputMethodRequestsHandler != null &&
-           myInputMethodRequestsHandler.composedText != null;
+           myInputMethodRequestsHandler.composedRangeMarker != null;
   }
 
   @Override
@@ -3596,8 +3595,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyInputMethodHandler implements InputMethodRequests {
-    private String composedText;
-    private ProperTextRange composedTextRange;
+    private RangeMarker composedRangeMarker;
+
+    @Nullable
+    private ProperTextRange getRange() {
+      if (composedRangeMarker == null) return null;
+      return new ProperTextRange(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
+    }
 
     @NotNull
     @Override
@@ -3613,13 +3617,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     @Nullable
     public TextHitInfo getLocationOffset(int x, int y) {
-      if (composedText != null) {
+      if (composedRangeMarker != null) {
         Point p = getLocationOnScreen(getContentComponent());
         p.x = x - p.x;
         p.y = y - p.y;
         int pos = logicalPositionToOffset(xyToLogicalPosition(p));
-        if (composedTextRange.containsOffset(pos)) {
-          return TextHitInfo.leading(pos - composedTextRange.getStartOffset());
+        if (composedRangeMarker.getStartOffset() <= pos && pos <= composedRangeMarker.getEndOffset()) {
+          return TextHitInfo.leading(pos - composedRangeMarker.getStartOffset());
         }
       }
       return null;
@@ -3646,9 +3650,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public int getInsertPositionOffset() {
       int composedStartIndex = 0;
       int composedEndIndex = 0;
-      if (composedText != null) {
-        composedStartIndex = composedTextRange.getStartOffset();
-        composedEndIndex = composedTextRange.getEndOffset();
+      if (composedRangeMarker != null) {
+        composedStartIndex = composedRangeMarker.getStartOffset();
+        composedEndIndex = composedRangeMarker.getEndOffset();
       }
 
       int caretIndex = getCaretModel().getOffset();
@@ -3677,9 +3681,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
       int composedStartIndex = 0;
       int composedEndIndex = 0;
-      if (composedText != null) {
-        composedStartIndex = composedTextRange.getStartOffset();
-        composedEndIndex = composedTextRange.getEndOffset();
+      if (composedRangeMarker != null) {
+        composedStartIndex = composedRangeMarker.getStartOffset();
+        composedEndIndex = composedRangeMarker.getEndOffset();
       }
 
       String committed;
@@ -3702,8 +3706,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public int getCommittedTextLength() {
       int length = getDocument().getTextLength();
-      if (composedText != null) {
-        length -= composedText.length();
+      if (composedRangeMarker != null) {
+        length -= composedRangeMarker.getEndOffset() - composedRangeMarker.getStartOffset();
       }
       return length;
     }
@@ -3736,8 +3740,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {
-      if (composedText != null) {
-        int dot = composedTextRange.getStartOffset();
+      if (composedRangeMarker != null) {
+        int dot = composedRangeMarker.getStartOffset();
 
         TextHitInfo caretPos = e.getCaret();
         if (caretPos != null) {
@@ -3787,26 +3791,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // old composed text deletion
       final Document doc = getDocument();
 
-      if (composedText != null) {
+      if (composedRangeMarker != null) {
         if (!isViewer() && doc.isWritable()) {
+          int composedStartIndex = composedRangeMarker.getStartOffset();
           runUndoTransparent(() -> {
-            int docLength = doc.getTextLength();
-            ProperTextRange range = composedTextRange.intersection(new TextRange(0, docLength));
-            if (range != null) {
-              doc.deleteString(range.getStartOffset(), range.getEndOffset());
+            if (composedRangeMarker.isValid()) {
+              doc.deleteString(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
             }
           });
-          isCaretMoved = getCaretModel().getOffset() != composedTextRange.getStartOffset();
+          isCaretMoved = getCaretModel().getOffset() != composedStartIndex;
           if (isCaretMoved) {
             caretPositionToRestore = getCaretModel().getCurrentCaret().getOffset();
-            // if caret set furter in the doc, we should add commitCount
-            if (caretPositionToRestore > composedTextRange.getStartOffset()) {
+            // if caret set further in the doc, we should add commitCount
+            if (caretPositionToRestore > composedStartIndex) {
               caretPositionToRestore += commitCount;
             }
-            getCaretModel().moveToOffset(composedTextRange.getStartOffset());
+            getCaretModel().moveToOffset(composedStartIndex);
           }
         }
-        composedText = null;
+        composedRangeMarker.dispose();
+        composedRangeMarker = null;
       }
 
       if (text != null) {
@@ -3829,8 +3833,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
             runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedString, false, false));
 
-            composedText = composedString;
-            composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedString.length());
+            composedRangeMarker = myDocument.createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
           }
         }
       }
@@ -5096,11 +5099,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (size >= MIN_FONT_SIZE) {
             setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
             if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
-              EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
-              if (myScheme instanceof MyColorSchemeDelegate) {
-                ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
-              }
-              ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+              adjustGlobalFontSize(size);
             }
           }
           return;
@@ -5127,6 +5126,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super.setupCorners();
       setBorder(new TablessBorder());
     }
+  }
+
+  public void adjustGlobalFontSize(float size) {
+    EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
+    if (myScheme instanceof MyColorSchemeDelegate) {
+      ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
+    }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {

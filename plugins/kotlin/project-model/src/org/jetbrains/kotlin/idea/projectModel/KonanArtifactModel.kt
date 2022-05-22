@@ -15,4 +15,5 @@ interface KonanArtifactModel : Serializable {
     val isTests: Boolean
     val freeCompilerArgs: Array<String>?
     val exportDependencies: Array<KotlinDependencyId>?
+    val binaryOptions: Array<String>?
 }

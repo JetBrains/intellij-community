@@ -17,7 +17,7 @@ internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementF
     internal val STATISTICIAN_IS_MOST_RECENT_DATA_KEY = EventFields.Boolean("statIsMostRecent")
   }
 
-  override val isApplicableToEveryContributor: Boolean = true
+  override fun isContributorSupported(contributorId: String): Boolean = true
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return listOf(

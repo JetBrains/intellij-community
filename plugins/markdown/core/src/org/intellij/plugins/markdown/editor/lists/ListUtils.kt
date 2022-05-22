@@ -17,8 +17,9 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 internal object ListUtils {
   /** [offset] may be located inside the indent of the returned item, but not on a blank line */
-  fun MarkdownFile.getListItemAt(offset: Int, document: Document) =
-    getListItemAtLine(document.getLineNumber(offset), document)
+  fun MarkdownFile.getListItemAt(offset: Int, document: Document): MarkdownListItem? {
+    return getListItemAtLine(document.getLineNumber(offset), document)
+  }
 
   /** [lineNumber] should belong to a list item and not represent a blank line, otherwise returns `null` */
   fun MarkdownFile.getListItemAtLine(lineNumber: Int, document: Document): MarkdownListItem? {

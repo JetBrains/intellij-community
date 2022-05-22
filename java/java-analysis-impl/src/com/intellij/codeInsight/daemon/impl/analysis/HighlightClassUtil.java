@@ -213,14 +213,32 @@ public final class HighlightClassUtil {
   }
 
   static HighlightInfo checkDuplicateNestedClass(@NotNull PsiClass aClass) {
-    PsiElement parent = aClass;
-    if (aClass.getParent() instanceof PsiDeclarationStatement) {
-      parent = aClass.getParent();
-    }
     String name = aClass.getName();
-    if (name == null) return null;
-    boolean duplicateFound = false;
-    boolean checkSiblings = true;
+    if (name == null) {
+      return null;
+    }
+    PsiElement parent = aClass.getParent();
+    boolean checkSiblings;
+    if (parent instanceof PsiClass && !PsiUtil.isLocalOrAnonymousClass((PsiClass)parent) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
+      // optimization: instead of iterating PsiClass children manually we can get'em all from caches
+      PsiClass innerClass = ((PsiClass)parent).findInnerClassByName(name, false);
+      if (innerClass != null && innerClass != aClass) {
+        if (innerClass.getTextOffset() > aClass.getTextOffset()) {
+          // report duplicate lower in text
+          PsiClass c = innerClass;innerClass=aClass;aClass=c;
+        }
+        HighlightInfo info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix(innerClass));
+        return info;
+      }
+      checkSiblings = false; // there still might be duplicates in parents
+    }
+    else {
+      checkSiblings = true;
+    }
+    if (!(parent instanceof PsiDeclarationStatement)) {
+      parent = aClass;
+    }
     PsiElement element = null;
     while (parent != null) {
       if (parent instanceof PsiFile) break;
@@ -229,11 +247,11 @@ public final class HighlightClassUtil {
         element = parent.getParent();
         // JLS 14.3:
         // The name of a local class C may not be redeclared
-        //  as a local class of the directly enclosing method, constructor, or initializer block within the scope of C
-        // , or a compile-time error occurs.
-        //  However, a local class declaration may be shadowed (?6.3.1)
-        //  anywhere inside a class declaration nested within the local class declaration's scope.
-        if (element instanceof PsiMethod || element instanceof PsiClass ||
+        // as a local class of the directly enclosing method, constructor, or initializer block within the scope of C, or a compile-time
+        // error occurs. However, a local class declaration may be shadowed (6.3.1)
+        // anywhere inside a class declaration nested within the local class declaration's scope.
+        if (element instanceof PsiMethod ||
+            element instanceof PsiClass ||
             element instanceof PsiCodeBlock && element.getParent() instanceof PsiClassInitializer) {
           checkSiblings = false;
         }
@@ -242,16 +260,12 @@ public final class HighlightClassUtil {
 
       if (element instanceof PsiDeclarationStatement) element = PsiTreeUtil.getChildOfType(element, PsiClass.class);
       if (element instanceof PsiClass && name.equals(((PsiClass)element).getName())) {
-        duplicateFound = true;
-        break;
+        HighlightInfo info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix((PsiClass)element));
+        return info;
       }
     }
 
-    if (duplicateFound) {
-      HighlightInfo info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createNavigateToDuplicateElementFix((PsiClass)element));
-      return info;
-    }
     return null;
   }
 

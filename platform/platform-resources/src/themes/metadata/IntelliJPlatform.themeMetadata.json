@@ -19,11 +19,11 @@
       "description": "The border color of the bookmark icon with mnemonic."
     },
     {
-      "key": "BookmarkMnemonicAvailable.foreground",
+      "key": "BookmarkMnemonicAvailable.buttonForeground",
       "description": "The button text color for the not assigned bookmark mnemonic."
     },
     {
-      "key": "BookmarkMnemonicAvailable.background",
+      "key": "BookmarkMnemonicAvailable.buttonBackground",
       "description": "The button background for the not assigned bookmark mnemonic."
     },
     {
@@ -31,11 +31,11 @@
       "description": "The button border color for the not assigned bookmark mnemonic."
     },
     {
-      "key": "BookmarkMnemonicAssigned.foreground",
+      "key": "BookmarkMnemonicAssigned.buttonForeground",
       "description": "The button text color for the already assigned bookmark mnemonic."
     },
     {
-      "key": "BookmarkMnemonicAssigned.background",
+      "key": "BookmarkMnemonicAssigned.buttonBackground",
       "description": "The button background for the already assigned bookmark mnemonic."
     },
     {
@@ -43,11 +43,11 @@
       "description": "The button border color for the already assigned bookmark mnemonic."
     },
     {
-      "key": "BookmarkMnemonicCurrent.foreground",
+      "key": "BookmarkMnemonicCurrent.buttonForeground",
       "description": "The button text color for the currently selected bookmark mnemonic."
     },
     {
-      "key": "BookmarkMnemonicCurrent.background",
+      "key": "BookmarkMnemonicCurrent.buttonBackground",
       "description": "The button background for the currently selected bookmark mnemonic."
     },
     {
@@ -813,6 +813,10 @@
       "description": "A background of a hovered plugin row."
     },
     {
+      "key": "Plugins.borderColor",
+      "description": "Use it to set the border for the search field and the border between the left and right sides."
+    },
+    {
       "key": "Plugins.SearchField.background"
     },
     {
@@ -938,7 +942,7 @@
     },
     {
       "key": "Popup.Selection.innerInsets",
-      "description": "Inner insets in selection line (experimental UI only)",
+      "description": "Inner insets in selection line (experimental UI only). Top and bottom values are ignored",
       "since": "2022.2"
     },
     {

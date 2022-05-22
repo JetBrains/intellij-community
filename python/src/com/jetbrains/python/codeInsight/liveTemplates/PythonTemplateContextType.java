@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.template.EverywhereContextType;
+import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.PsiElementPattern;
@@ -31,19 +32,19 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
   }
 
   @Override
-  public boolean isInContext(@NotNull PsiFile file, int offset) {
-    if (isPythonLanguage(file, offset)) {
-      final PsiElement element = file.findElementAt(offset);
-
+  public boolean isInContext(@NotNull TemplateActionContext templateActionContext) {
+    PsiFile file = templateActionContext.getFile();
+    if (isPythonLanguage(file, templateActionContext.getStartOffset())) {
+      final PsiElement element = file.findElementAt(templateActionContext.getStartOffset());
       if (element != null) {
-        if (isAfterDot(element) || element instanceof PsiComment || isInsideStringLiteral(element) || isInsideParameterList(element)) {
-          return false;
+        if (!templateActionContext.isSurrounding()) {
+          if (isAfterDot(element) || element instanceof PsiComment || isInsideStringLiteral(element) || isInsideParameterList(element)) {
+            return false;
+          }
         }
-
         return isInContext(element);
       }
     }
-
     return false;
   }
 

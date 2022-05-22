@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -65,6 +66,16 @@ public class SwitchBlockHighlightingModel {
       return new PatternsInSwitchBlockHighlightingModel(languageLevel, switchBlock, psiFile);
     }
     return new SwitchBlockHighlightingModel(languageLevel, switchBlock, psiFile);
+  }
+
+  public static IntentionAction createAddDefaultFixIfNecessary(@NotNull PsiSwitchBlock block) {
+    PsiFile file = block.getContainingFile();
+    SwitchBlockHighlightingModel model = createInstance(PsiUtil.getLanguageLevel(file), block, file);
+    if (model == null) return null;
+    List<HighlightInfo> infos = model.checkSwitchLabelValues();
+    if (infos.isEmpty()) return null;
+    var templateFix = (IntentionActionWithFixAllOption)QuickFixFactory.getInstance().createAddSwitchDefaultFix(block, null);
+    return StreamEx.of(infos).map(info -> info.getSameFamilyFix(templateFix)).nonNull().findFirst().orElse(null);
   }
 
   @NotNull

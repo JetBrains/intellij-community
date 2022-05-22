@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.*
@@ -44,7 +43,6 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
             !KtPsiUtil.isLocal(it)
         } ?: return emptyList()
 
-        val containingDeclarationIsConstructor = containingDeclaration is KtConstructor<*>
         val annotationFqName = when (diagnostic.factory) {
             OPT_IN_USAGE -> OPT_IN_USAGE.cast(diagnostic).a
             OPT_IN_USAGE_ERROR -> OPT_IN_USAGE_ERROR.cast(diagnostic).a
@@ -52,35 +50,38 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
             OPT_IN_OVERRIDE_ERROR -> OPT_IN_OVERRIDE_ERROR.cast(diagnostic).a
             else -> null
         } ?: return emptyList()
-
-        val isOverrideError = diagnostic.factory == OPT_IN_OVERRIDE_ERROR || diagnostic.factory == OPT_IN_OVERRIDE
-
         val moduleDescriptor = containingDeclaration.resolveToDescriptorIfAny()?.module ?: return emptyList()
         val annotationClassDescriptor = moduleDescriptor.resolveClassByFqName(
             annotationFqName, NoLookupLocation.FROM_IDE
         ) ?: return emptyList()
-        val applicableTargets = AnnotationChecker.applicableTargetSet(annotationClassDescriptor) ?: KotlinTarget.DEFAULT_TARGET_SET
 
+        val applicableTargets = AnnotationChecker.applicableTargetSet(annotationClassDescriptor)
         val context = when (element) {
             is KtElement -> element.analyze()
             else -> containingDeclaration.analyze()
         }
 
-        fun isApplicableTo(declaration: KtDeclaration, applicableTargets: Set<KotlinTarget>): Boolean {
+        fun isApplicableTo(declaration: KtDeclaration): Boolean {
             val actualTargetList = AnnotationChecker.getDeclarationSiteActualTargetList(
                 declaration, declaration.toDescriptor() as? ClassDescriptor, context
             )
             return actualTargetList.any { it in applicableTargets }
         }
 
+        val isOverrideError = diagnostic.factory == OPT_IN_OVERRIDE_ERROR || diagnostic.factory == OPT_IN_OVERRIDE
+        val optInFqName = OptInNames.OPT_IN_FQ_NAME.takeIf { moduleDescriptor.annotationExists(it) }
+            ?: OptInNames.OLD_USE_EXPERIMENTAL_FQ_NAME
+
         val result = mutableListOf<IntentionAction>()
+
+        // just to avoid local variable name shadowing
         run {
-            val kind = if (containingDeclarationIsConstructor)
+            val kind = if (containingDeclaration is KtConstructor<*>)
                 AddAnnotationFix.Kind.Constructor
             else
                 AddAnnotationFix.Kind.Declaration(containingDeclaration.name)
 
-            if (isApplicableTo(containingDeclaration, applicableTargets)) {
+            if (isApplicableTo(containingDeclaration)) {
                 // When we are fixing a missing annotation on an overridden function, we should
                 // propose to add a propagating annotation first, and in all other cases
                 // the non-propagating opt-in annotation should be default.
@@ -92,25 +93,21 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
                         PropagateOptInAnnotationFix(containingDeclaration, annotationFqName, kind)
                 )
             }
+            val existingAnnotationEntry = containingDeclaration.findAnnotation(optInFqName)?.createSmartPointer()
             result.add(
                 if (isOverrideError)
-                    UseOptInAnnotationFix(
-                        containingDeclaration, moduleDescriptor, kind, annotationFqName,
-                        containingDeclaration.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
-                    )
+                    UseOptInAnnotationFix(containingDeclaration, optInFqName, kind, annotationFqName, existingAnnotationEntry)
                 else
-                    HighPriorityUseOptInAnnotationFix(
-                        containingDeclaration, moduleDescriptor, kind, annotationFqName,
-                        containingDeclaration.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
-                    )
+                    HighPriorityUseOptInAnnotationFix(containingDeclaration, optInFqName, kind, annotationFqName, existingAnnotationEntry)
             )
         }
+
         if (containingDeclaration is KtCallableDeclaration) {
             val containingClassOrObject = containingDeclaration.containingClassOrObject
             if (containingClassOrObject != null) {
                 val kind = AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name)
-                val applicableToContainingClassOrObject = isApplicableTo(containingClassOrObject, applicableTargets)
-                if (applicableToContainingClassOrObject) {
+                val isApplicableToContainingClassOrObject = isApplicableTo(containingClassOrObject)
+                if (isApplicableToContainingClassOrObject) {
                     result.add(
                         if (isOverrideError)
                             HighPriorityPropagateOptInAnnotationFix(containingClassOrObject, annotationFqName, kind)
@@ -119,41 +116,33 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
                     )
                 }
 
+                val existingAnnotationEntry = containingClassOrObject.findAnnotation(optInFqName)?.createSmartPointer()
                 result.add(
                     if (isOverrideError)
-                        UseOptInAnnotationFix(
-                            containingClassOrObject, moduleDescriptor, kind, annotationFqName,
-                            containingDeclaration.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
-                        )
+                        UseOptInAnnotationFix(containingClassOrObject, optInFqName, kind, annotationFqName, existingAnnotationEntry)
                     else
                         HighPriorityUseOptInAnnotationFix(
-                            containingClassOrObject, moduleDescriptor, kind, annotationFqName,
-                            containingDeclaration.findAnnotation(moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
+                            containingClassOrObject, optInFqName, kind, annotationFqName, existingAnnotationEntry
                         )
                 )
             }
         }
+
         val containingFile = containingDeclaration.containingKtFile
         val module = containingFile.module
         if (module != null) {
-            result.add(
-                LowPriorityMakeModuleExperimentalFix(containingFile, module, annotationFqName)
-            )
+            result.add(LowPriorityMakeModuleExperimentalFix(containingFile, module, annotationFqName))
         }
 
         // Add the file-level annotation `@file:OptIn(...)`
         result.add(
             UseOptInFileAnnotationFix(
-                containingFile, moduleDescriptor, annotationFqName,
-                findFileAnnotation(containingFile, moduleDescriptor.OPT_IN_FQ_NAME)?.createSmartPointer()
+                containingFile, optInFqName, annotationFqName,
+                findFileAnnotation(containingFile, optInFqName)?.createSmartPointer()
             )
         )
         return result
     }
-
-    private val ModuleDescriptor.OPT_IN_FQ_NAME: FqName
-        get() = OptInNames.OPT_IN_FQ_NAME.takeIf { fqNameIsExisting(it) }
-            ?: OptInNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 
     // Find the existing file-level annotation of the specified class if it exists
     private fun findFileAnnotation(file: KtFile, annotationFqName: FqName): KtAnnotationEntry? {
@@ -163,7 +152,8 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
         }
     }
 
-    fun ModuleDescriptor.fqNameIsExisting(fqName: FqName): Boolean = resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE) != null
+    fun ModuleDescriptor.annotationExists(fqName: FqName): Boolean =
+        resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE) != null
 
     /**
      * A specialized subclass of [AddAnnotationFix] that adds @OptIn(...) annotations to declarations,
@@ -173,7 +163,7 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
      * more descriptive opt-in-specific messages.
      *
      * @param element a declaration to annotate
-     * @param moduleDescriptor the module descriptor corresponding to the element
+     * @param optInFqName name of OptIn annotation
      * @param kind the annotation kind (desired scope)
      * @param argumentClassFqName the fully qualified name of the annotation to opt-in
      * @param existingAnnotationEntry the already existing annotation entry (if any)
@@ -181,11 +171,11 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
      */
     private open class UseOptInAnnotationFix(
         element: KtDeclaration,
-        moduleDescriptor: ModuleDescriptor,
+        optInFqName: FqName,
         private val kind: Kind,
         private val argumentClassFqName: FqName,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : AddAnnotationFix(element, moduleDescriptor.OPT_IN_FQ_NAME, kind, argumentClassFqName, existingAnnotationEntry) {
+    ) : AddAnnotationFix(element, optInFqName, kind, argumentClassFqName, existingAnnotationEntry) {
 
         private val elementName = element.name ?: "?"
 
@@ -204,11 +194,11 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
 
     private class HighPriorityUseOptInAnnotationFix(
         element: KtDeclaration,
-        moduleDescriptor: ModuleDescriptor,
-        kind: AddAnnotationFix.Kind,
+        optInFqName: FqName,
+        kind: Kind,
         argumentClassFqName: FqName,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : UseOptInAnnotationFix(element, moduleDescriptor, kind, argumentClassFqName, existingAnnotationEntry),
+    ) : UseOptInAnnotationFix(element, optInFqName, kind, argumentClassFqName, existingAnnotationEntry),
         HighPriorityAction
 
     /**
@@ -218,16 +208,16 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
      * more descriptive opt-in related messages.
      *
      * @param file the file there the annotation should be added
-     * @param moduleDescriptor the module descriptor corresponding to the file
+     * @param optInFqName name of OptIn annotation
      * @param argumentClassFqName the fully qualified name of the annotation to opt-in
      * @param existingAnnotationEntry the already existing annotation entry (if any)
      */
     private open class UseOptInFileAnnotationFix(
         file: KtFile,
-        moduleDescriptor: ModuleDescriptor,
+        optInFqName: FqName,
         private val argumentClassFqName: FqName,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>?
-    ) : AddFileAnnotationFix(file, moduleDescriptor.OPT_IN_FQ_NAME, argumentClassFqName, existingAnnotationEntry) {
+    ) : AddFileAnnotationFix(file, optInFqName, argumentClassFqName, existingAnnotationEntry) {
         private val fileName = file.name
 
         override fun getText(): String {
@@ -237,14 +227,6 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
 
         override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
     }
-
-    private open class HighPriorityUseOptInFileAnnotationFix(
-        file: KtFile,
-        moduleDescriptor: ModuleDescriptor,
-        argumentClassFqName: FqName,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>?
-    ) : UseOptInFileAnnotationFix(file, moduleDescriptor, argumentClassFqName, existingAnnotationEntry),
-        HighPriorityAction
 
     /**
      * A specialized subclass of [AddAnnotationFix] that adds propagating opted-in annotations
@@ -270,8 +252,12 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
             return when (kind) {
                 Kind.Self -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, "?")
                 Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
-                is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration",argumentText, kind.name ?: "?")
-                is Kind.ContainingClass -> KotlinBundle.message("fix.opt_in.text.propagate.containing.class", argumentText, kind.name ?: "?")
+                is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
+                is Kind.ContainingClass -> KotlinBundle.message(
+                    "fix.opt_in.text.propagate.containing.class",
+                    argumentText,
+                    kind.name ?: "?"
+                )
             }
         }
 
@@ -289,14 +275,14 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
     private class HighPriorityPropagateOptInAnnotationFix(
         element: KtDeclaration,
         annotationFqName: FqName,
-        kind: AddAnnotationFix.Kind,
+        kind: Kind,
         existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
     ) : PropagateOptInAnnotationFix(element, annotationFqName, kind, existingAnnotationEntry),
         HighPriorityAction
 
     private class LowPriorityMakeModuleExperimentalFix(
-            file: KtFile,
-            module: Module,
-            annotationFqName: FqName
+        file: KtFile,
+        module: Module,
+        annotationFqName: FqName
     ) : MakeModuleExperimentalFix(file, module, annotationFqName), LowPriorityAction
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.openapi.project.Project
@@ -62,7 +62,6 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     myCodeClass.annotations.toMutableList()
   }
 
-  @Suppress("ClassName")
   // Modifiers should be processed with care in transformation context to avoid recursion issues.
   // This code re-creates erasures computation to properly handle modifier querying
   private val AST_TRANSFORMATION_AWARE_METHOD_PARAMETERS_ERASURE_EQUALITY: Hash.Strategy<MethodSignature> = object : Hash.Strategy<MethodSignature> {

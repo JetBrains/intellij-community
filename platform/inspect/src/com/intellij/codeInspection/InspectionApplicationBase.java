@@ -104,12 +104,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   public void startup() {
     if (myProjectPath == null) {
       reportError("Project to inspect is not defined");
-      printHelp();
+      printHelpAndExit();
     }
 
     if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
       reportError("Profile to inspect with is not defined");
-      printHelp();
+      printHelpAndExit();
     }
 
     ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
@@ -154,9 +154,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
   }
 
-  private void printHelp() {
-    assert myHelpProvider != null;
-
+  private void printHelpAndExit() {
     myHelpProvider.printHelpAndExit();
   }
 
@@ -218,7 +216,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
       reportError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
-      printHelp();
+      printHelpAndExit();
     }
 
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.opening.project"));
@@ -308,7 +306,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
         if (vfsDir == null) {
           reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
-          printHelp();
+          printHelpAndExit();
         }
         scope = GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
       }
@@ -495,7 +493,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
       catch (InspectionsReportConverter.ConversionException e) {
         reportError("\n" + e.getMessage());
-        printHelp();
+        printHelpAndExit();
       }
     }
   }

@@ -1,14 +1,13 @@
 package com.intellij.ide.starter.models
 
 import com.intellij.ide.starter.system.SystemInfo
-import com.intellij.ide.starter.teamcity.TeamCityCIServer
 
 data class IdeInfo(
   val productCode: String,
   val platformPrefix: String,
   val executableFileName: String,
   val buildType: String,
-  val buildNumber: String? = null,
+  val buildNumber: String,
   val tag: String? = null
 ) {
   companion object {
@@ -16,24 +15,21 @@ data class IdeInfo(
       productCode: String,
       platformPrefix: String,
       executableFileName: String,
-      jetBrainsCIBuildType: String,
-      buildNumber: String? = null,
-      tag: String? = null
+      jetBrainsCIBuildType: String? = null,
+      buildNumber: String = ""
     ): IdeInfo {
-      // TODO: deal later with custom build number on CI (shouldn't affect anyone outside JB for now)
-      if (TeamCityCIServer.isBuildRunningOnCI && tag == null) {
-        val paramBuildType = TeamCityCIServer.buildParams["intellij.installer.build.type"]
-        val paramBuildNumber = TeamCityCIServer.buildParams["intellij.installer.build.number"]
-        if (paramBuildType != null && paramBuildNumber != null) {
-          return IdeInfo(productCode, platformPrefix, executableFileName, paramBuildType, paramBuildNumber, null)
-        }
-      }
-
-      return IdeInfo(productCode, platformPrefix, executableFileName, jetBrainsCIBuildType, buildNumber, tag)
+      return IdeInfo(
+        productCode = productCode,
+        platformPrefix = platformPrefix,
+        executableFileName = executableFileName,
+        buildNumber = buildNumber,
+        buildType = if (!jetBrainsCIBuildType.isNullOrBlank()) jetBrainsCIBuildType else ""
+      )
     }
+
   }
 
-  internal val installerFilePrefix
+  val installerFilePrefix
     get() = when (productCode) {
       "IU" -> "ideaIU"
       "IC" -> "ideaIC"
@@ -46,7 +42,7 @@ data class IdeInfo(
       else -> error("Unknown product code: $productCode")
     }
 
-  internal val installerProductName
+  val installerProductName
     get() = when (productCode) {
       "IU" -> "intellij"
       "IC" -> "intellij.ce"
@@ -55,7 +51,7 @@ data class IdeInfo(
       else -> installerFilePrefix
     }
 
-  internal val installerFileExt
+  val installerFileExt
     get() = when {
       SystemInfo.isWindows -> ".win.zip"
       SystemInfo.isLinux -> ".tar.gz"

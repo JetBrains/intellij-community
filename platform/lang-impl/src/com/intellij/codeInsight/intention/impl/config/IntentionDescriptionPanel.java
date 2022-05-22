@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
@@ -21,14 +20,15 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.HintHint;
+import com.intellij.profile.codeInspection.ui.DescriptionEditorPane;
+import com.intellij.profile.codeInspection.ui.DescriptionEditorPaneKt;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SearchTextField;
+import com.intellij.util.ui.GridBagConstraintBuilder;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UI.PanelFactory;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -49,19 +48,47 @@ public class IntentionDescriptionPanel {
 
   private JPanel myAfterPanel;
   private JPanel myBeforePanel;
-  private JEditorPane myDescriptionBrowser;
+  private DescriptionEditorPane myDescriptionBrowser;
   private JPanel myPoweredByPanel;
-  private JPanel myDescriptionPanel;
+  private JPanel myPoweredByWrapper;
   private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<>();
   private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<>();
   @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
   @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
 
   public IntentionDescriptionPanel() {
-    myBeforePanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("border.title.before"), false, JBUI.insetsTop(8)).setShowLine(false));
-    myAfterPanel.setBorder(IdeBorderFactory.createTitledBorder(CodeInsightBundle.message("border.title.after"), false, JBUI.insetsTop(8)).setShowLine(false));
-    myPoweredByPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      CodeInsightBundle.message("powered.by"), false, JBUI.insetsTop(8)).setShowLine(false));
+    myPanel = new JPanel(new GridBagLayout());
+    final var constraint = new GridBagConstraintBuilder();
+
+    myDescriptionBrowser = new DescriptionEditorPane();
+    myPanel.add(myDescriptionBrowser, constraint.growXY().fillXY().get());
+
+    myBeforePanel = new JPanel();
+    myPanel.add(PanelFactory.panel(myBeforePanel)
+                  .withLabel(CodeInsightBundle.message("border.title.before"))
+                  .moveLabelOnTop()
+                  .resizeX(true)
+                  .resizeY(true)
+                  .createPanel(),
+                constraint.newLine().insets(UIUtil.LARGE_VGAP, 0, 0, 0).get()
+    );
+
+    myAfterPanel = new JPanel();
+    myPanel.add(PanelFactory.panel(myAfterPanel)
+                  .withLabel(CodeInsightBundle.message("border.title.after"))
+                  .moveLabelOnTop()
+                  .resizeX(true)
+                  .resizeY(true)
+                  .createPanel(),
+                constraint.newLine().get()
+    );
+
+    myPoweredByPanel = new JPanel(new BorderLayout());
+    myPoweredByWrapper = PanelFactory.panel(myPoweredByPanel)
+      .withLabel(CodeInsightBundle.message("powered.by"))
+      .resizeX(true)
+      .createPanel();
+    myPanel.add(myPoweredByWrapper, constraint.newLine().growX().fillXY().get());
 
     myDescriptionBrowser.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -97,38 +124,19 @@ public class IntentionDescriptionPanel {
     });
   }
 
-  // TODO 134099: see SingleInspectionProfilePanel#readHTML and and PostfixDescriptionPanel#readHtml
-  private boolean readHTML(String text) {
-    try {
-      myDescriptionBrowser.read(new StringReader(text), null);
-      return true;
-    }
-    catch (IOException ignored) {
-      return false;
-    }
-  }
-
-  // TODO 134099: see SingleInspectionProfilePanel#setHTML and PostfixDescriptionPanel#readHtml
-  private String toHTML(@NlsContexts.HintText String text) {
-    final HintHint hintHint = new HintHint(myDescriptionBrowser, new Point(0, 0));
-    hintHint.setFont(StartupUiUtil.getLabelFont());
-    return HintUtil.prepareHintText(text, hintHint);
-  }
-
   public void reset(IntentionActionMetaData actionMetaData, String filter)  {
     try {
       final TextDescriptor url = actionMetaData.getDescription();
       final String description = StringUtil.isEmpty(url.getText()) ?
-                                 toHTML(CodeInsightBundle.message("under.construction.string")) :
-                                 SearchUtil.markup(toHTML(url.getText()), filter);
-      readHTML(description);
+                                 CodeInsightBundle.message("under.construction.string") :
+                                 SearchUtil.markup(url.getText(), filter);
+      DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, description);
       setupPoweredByPanel(actionMetaData);
 
       showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
       showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());
-
     }
     catch (IOException e) {
       LOG.error(e);
@@ -147,13 +155,13 @@ public class IntentionDescriptionPanel {
                                                                                         List.of(pluginId)));
       myPoweredByPanel.add(label, BorderLayout.CENTER);
     }
-    myPoweredByPanel.setVisible(isCustomPlugin);
+    myPoweredByWrapper.setVisible(isCustomPlugin);
   }
 
 
   public void reset(String intentionCategory)  {
     try {
-      readHTML(toHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory)));
+      DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, CodeInsightBundle.message("intention.settings.category.text", intentionCategory));
       setupPoweredByPanel(null);
 
       TextDescriptor beforeTemplate = new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE);
@@ -184,7 +192,7 @@ public class IntentionDescriptionPanel {
       gb.gridwidth = 1;
       gb.gridx = 0;
       gb.gridy = 0;
-      gb.insets = new Insets(0,0,0,0);
+      gb.insets = JBUI.emptyInsets();
       gb.ipadx = 5;
       gb.ipady = 5;
       gb.weightx = 1;
@@ -236,22 +244,5 @@ public class IntentionDescriptionPanel {
   }
 
   public void init(final int preferredWidth) {
-    //adjust vertical dimension to be equal for all three panels
-    double height = (myDescriptionPanel.getSize().getHeight() + myBeforePanel.getSize().getHeight() + myAfterPanel.getSize().getHeight()) / 3;
-    final Dimension newd = new Dimension(preferredWidth, (int)height);
-    myDescriptionPanel.setSize(newd);
-    myDescriptionPanel.setPreferredSize(newd);
-    myDescriptionPanel.setMaximumSize(newd);
-    myDescriptionPanel.setMinimumSize(newd);
-
-    myBeforePanel.setSize(newd);
-    myBeforePanel.setPreferredSize(newd);
-    myBeforePanel.setMaximumSize(newd);
-    myBeforePanel.setMinimumSize(newd);
-
-    myAfterPanel.setSize(newd);
-    myAfterPanel.setPreferredSize(newd);
-    myAfterPanel.setMaximumSize(newd);
-    myAfterPanel.setMinimumSize(newd);
   }
 }

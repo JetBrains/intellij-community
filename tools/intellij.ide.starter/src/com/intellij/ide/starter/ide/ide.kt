@@ -20,7 +20,7 @@ import kotlin.io.path.*
 import kotlin.time.Duration
 
 
-fun resolveInstalledIDE(unpackDir: File, executableFileName: String): InstalledIDE = when {
+fun installIDE(unpackDir: File, executableFileName: String): InstalledIDE = when {
   SystemInfo.isMac -> resolveMacOSIDE(unpackDir)
   SystemInfo.isWindows -> resolveWindowsIDE(unpackDir.toPath(), executableFileName)
   SystemInfo.isLinux -> resolveLinuxIDE(unpackDir, executableFileName)
@@ -82,7 +82,7 @@ private fun resolveLinuxIDE(unpackDir: File, executableFileName: String): Instal
   val binDir = appHome / "bin"
   val allBinFiles = binDir.listDirectoryEntries()
   val executablePath = allBinFiles.singleOrNull { file ->
-    file.fileName.toString().equals("$executableFileName.sh")
+    file.fileName.toString() == "$executableFileName.sh"
   } ?: error("Failed to detect IDE executable .sh in:\n${allBinFiles.joinToString("\n")}")
 
   return object : InstalledIDE {
@@ -241,7 +241,6 @@ private fun resolveMacOSIDE(unpackDir: File): InstalledIDE {
   val executablePath = appHome / "MacOS" / executableName
   require(executablePath.isRegularFile()) { "Cannot find macOS IDE executable file in $executablePath" }
 
-  @Suppress("SpellCheckingInspection")
   val originalVMOptions = appHome / "bin" / "$executableName.vmoptions"
   require(originalVMOptions.isRegularFile()) { "Cannot find macOS IDE vmoptions file in $executablePath" }
 
@@ -301,7 +300,7 @@ fun resolveWindowsIDE(unpackDir: Path, executableFileName: String): InstalledIDE
   val allBinFiles = binDir.listDirectoryEntries()
 
   val executablePath = allBinFiles.singleOrNull { file ->
-    file.fileName.toString().equals("${executableFileName}64.exe")
+    file.fileName.toString() == "${executableFileName}64.exe"
   } ?: error("Failed to detect executable name, ending with 64.exe in:\n${allBinFiles.joinToString("\n")}")
 
   val originalVMOptionsFile = executablePath.parent.resolve("${executablePath.fileName}.vmoptions")
@@ -340,7 +339,7 @@ fun resolveWindowsIDE(unpackDir: Path, executableFileName: String): InstalledIDE
   }
 }
 
-fun extractIDEIfNeeded(ideInstallerFile: File, unpackDir: File) {
+fun unpackIDEIfNeeded(ideInstallerFile: File, unpackDir: File) {
   if (unpackDir.isDirectory && unpackDir.listFiles()?.isNotEmpty() == true) {
     logOutput("Build directory $unpackDir already exists for the binary $ideInstallerFile")
     return

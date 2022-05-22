@@ -173,8 +173,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
-    PsiElement element = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
-    myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
+    TextRange rangeInElement = getRangeInElement();
+    PsiElement element = manipulator.handleContentChange(getElement(), rangeInElement, newElementName);
+    myRange = new TextRange(rangeInElement.getStartOffset(), rangeInElement.getStartOffset() + newElementName.length());
     return element;
   }
 
@@ -349,7 +350,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return (JavaResolveResult) resolveCache.resolveWithCaching(this, MyResolver.INSTANCE, false, false,file)[0];
   }
 
-  private PsiFile getJavaContextFile() {
+  private @NotNull PsiFile getJavaContextFile() {
     return myJavaClassReferenceSet.getProvider().getContextFile(getElement());
   }
 
@@ -376,8 +377,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
     }
 
-    int endOffset = getRangeInElement().getEndOffset();
-    LOG.assertTrue(endOffset <= elementText.length(), elementText);
+    TextRange rangeInElement = getRangeInElement();
+    int endOffset = rangeInElement.getEndOffset();
+    if (endOffset > elementText.length()) {
+      LOG.error(elementText+": rangeInElement="+rangeInElement+"; "+getClass());
+    }
     int startOffset = myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset();
     String qName = elementText.substring(startOffset, endOffset);
     if (!qName.contains(".")) {

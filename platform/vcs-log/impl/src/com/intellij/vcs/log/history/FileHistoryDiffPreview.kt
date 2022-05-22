@@ -53,7 +53,7 @@ class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPane
     return SimpleDiffRequestChain.fromProducer(producer)
   }
 
-  override fun updateAvailability(event: AnActionEvent) {
+  override fun updateDiffAction(event: AnActionEvent) {
     val log = event.getData(VcsLogDataKeys.VCS_LOG) ?: return
     CompareRevisionsFromFileHistoryActionProvider.setTextAndDescription(event, log)
   }

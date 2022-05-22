@@ -1,24 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api
 
+import com.intellij.collaboration.api.graphql.CachingGraphQLQueryLoader
+import com.intellij.collaboration.api.graphql.GraphQLApiClient
+import com.intellij.collaboration.api.graphql.GraphQLDataSerializer
 import com.intellij.collaboration.api.httpclient.HttpClientFactory
 import com.intellij.collaboration.api.httpclient.HttpRequestConfigurer
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 
-class GitLabApi(private val clientFactory: HttpClientFactory,
-                private val requestConfigurer: HttpRequestConfigurer) {
+class GitLabApi(override val clientFactory: HttpClientFactory,
+                override val requestConfigurer: HttpRequestConfigurer) : GraphQLApiClient() {
 
-  val client: HttpClient
-    get() = clientFactory.createClient()
+  @Suppress("SSBasedInspection")
+  override val logger: Logger = LOG
 
-  fun request(server: GitLabServerPath): HttpRequest.Builder =
-    request(server.gqlApiUri)
+  override val gqlQueryLoader: CachingGraphQLQueryLoader = GitLabGQLQueryLoader
 
-  fun request(uri: String): HttpRequest.Builder =
-    request(URI.create(uri))
+  override val gqlSerializer: GraphQLDataSerializer = GitLabGQLDataSerializer
 
-  fun request(uri: URI): HttpRequest.Builder =
-    HttpRequest.newBuilder(uri).apply(requestConfigurer::configure)
+  companion object {
+    private val LOG = logger<GitLabApi>()
+  }
 }

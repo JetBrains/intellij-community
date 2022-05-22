@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.stream.IntStream;
 
 class JavaStringLiteralLexer extends StringLiteralLexer {
 
@@ -15,9 +13,9 @@ class JavaStringLiteralLexer extends StringLiteralLexer {
   }
 
   JavaStringLiteralLexer(char quoteChar,
-                                IElementType originalLiteralToken,
-                                boolean canEscapeEolOrFramingSpaces,
-                                String additionalValidEscapes) {
+                         IElementType originalLiteralToken,
+                         boolean canEscapeEolOrFramingSpaces,
+                         String additionalValidEscapes) {
     super(quoteChar, originalLiteralToken, canEscapeEolOrFramingSpaces, additionalValidEscapes);
   }
 
@@ -26,7 +24,10 @@ class JavaStringLiteralLexer extends StringLiteralLexer {
     int start = myStart + 2;
     while (start < myEnd && myBuffer.charAt(start) == 'u') start++;
     if (start + 3 >= myEnd) return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
-    if (IntStream.range(start, start + 4).anyMatch(i -> !StringUtil.isHexDigit(myBuffer.charAt(i)))) {
+    if (!StringUtil.isHexDigit(myBuffer.charAt(start)) ||
+        !StringUtil.isHexDigit(myBuffer.charAt(start + 1)) ||
+        !StringUtil.isHexDigit(myBuffer.charAt(start + 2)) ||
+        !StringUtil.isHexDigit(myBuffer.charAt(start + 3))) {
       return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
     }
     return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;

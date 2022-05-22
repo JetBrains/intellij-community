@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.unwrap
 
 import com.intellij.codeInsight.unwrap.Unwrapper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
 
 abstract class AbstractUnwrapRemoveTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -23,7 +23,7 @@ abstract class AbstractUnwrapRemoveTest : KotlinLightCodeInsightFixtureTestCase(
     fun doTestFunctionParameterUnwrapper(unused: String) = doTest(KotlinFunctionParameterUnwrapper::class.java)
 
     private fun doTest(unwrapperClass: Class<out Unwrapper>) {
-        val testFile = testDataFile()
+        val testFile = dataFile()
 
         myFixture.configureByFile(testFile)
 

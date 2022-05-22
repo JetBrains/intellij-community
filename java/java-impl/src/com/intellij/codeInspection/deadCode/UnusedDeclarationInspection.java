@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -331,7 +332,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
     private ProblemDescriptor createProblemDescriptor(PsiVariable psiVariable) {
       PsiElement toHighlight = ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable);
       return myInspectionManager.createProblemDescriptor(
-        toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), (LocalQuickFix)null,
+        toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), new SafeDeleteFix(psiVariable),
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
     }
   }

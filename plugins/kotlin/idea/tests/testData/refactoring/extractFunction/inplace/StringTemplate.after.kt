@@ -1,3 +1,3 @@
-val example = "STRING_${extracted<caret>()}_BIG"
+val example = "STRING_${s()}_BIG"
 
-private fun extracted() = "SAMPLE"
+private fun s() = "SAMPLE"

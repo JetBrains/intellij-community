@@ -20,12 +20,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 
-import java.nio.file.FileSystems
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.PathMatcher
-import java.nio.file.SimpleFileVisitor
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
@@ -222,7 +217,7 @@ final class BundledRuntimeImpl implements BundledRuntime {
     if (!context.options.runtimeDebug) {
       return ''
     }
-    if (!context.options.isTestBuild && !context.options.isInDevelopmentMode) {
+    if (!context.options.isTestBuild() && !context.options.isInDevelopmentMode()) {
       context.messages.error("Either test or development mode is required to use fastdebug runtime build")
     }
     context.messages.info("Fastdebug runtime build is requested")

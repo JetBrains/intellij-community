@@ -146,7 +146,7 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
     val extProjectDir = if (f.isDirectory()) { f } else { f.parent }
 
     val dotIdeaDirPath = project.stateStore.projectFilePath.parent.systemIndependentPath
-    val projectNode = ExternalSystemApiUtil.findProjectData(project, projectData.owner, projectData.linkedExternalProjectPath) ?: return
+    val projectNode = ExternalSystemApiUtil.findProjectNode(project, projectData.owner, projectData.linkedExternalProjectPath) ?: return
 
     val moduleNodes = ExternalSystemApiUtil.getChildren(projectNode, ProjectKeys.MODULE)
     val sourceSetNodes = moduleNodes.flatMap { ExternalSystemApiUtil.getChildren(it, GradleSourceSetData.KEY) }

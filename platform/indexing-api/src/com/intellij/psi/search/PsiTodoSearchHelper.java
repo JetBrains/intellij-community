@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
@@ -10,13 +10,22 @@ import org.jetbrains.annotations.NotNull;
  * @author irengrig
  */
 public interface PsiTodoSearchHelper {
+
+  /**
+   * @deprecated use {@link PsiTodoSearchHelper#getInstance(Project)} instead
+   */
+  @Deprecated(forRemoval = true)
   final class SERVICE {
     private SERVICE() {
     }
 
     public static PsiTodoSearchHelper getInstance(Project project) {
-      return project.getService(PsiTodoSearchHelper.class);
+      return PsiTodoSearchHelper.getInstance(project);
     }
+  }
+
+  static PsiTodoSearchHelper getInstance(Project project) {
+    return project.getService(PsiTodoSearchHelper.class);
   }
 
   /**

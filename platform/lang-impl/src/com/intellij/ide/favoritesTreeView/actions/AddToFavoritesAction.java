@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView.actions;
 
@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-public class AddToFavoritesAction extends AnAction implements DumbAware {
+public class AddToFavoritesAction extends AnAction implements DumbAware, UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(AddToFavoritesAction.class);
 
   private final String myFavoritesListName;

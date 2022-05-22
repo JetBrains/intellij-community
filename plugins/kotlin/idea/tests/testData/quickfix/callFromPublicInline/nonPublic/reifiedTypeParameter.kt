@@ -1,5 +1,4 @@
 // "Remove 'inline' modifier" "false"
-// ACTION: Do not show return expression hints
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Make 'bar' private
 // ACTION: Make 'foo' public

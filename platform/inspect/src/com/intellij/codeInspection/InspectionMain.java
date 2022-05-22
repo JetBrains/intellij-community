@@ -102,7 +102,7 @@ public class InspectionMain implements ApplicationStarter {
         }
       }
     }
-    catch (ArrayIndexOutOfBoundsException e) {
+    catch (IndexOutOfBoundsException e) {
       e.printStackTrace();
       printHelp();
     }

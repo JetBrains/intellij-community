@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
@@ -115,7 +115,7 @@ public class DebuggerDfaRunner {
       DfaValueFactory factory = new DfaValueFactory(project);
       ControlFlow flow = DataFlowIRProvider.forElement(body, factory);
       if (flow == null) return null;
-      long modificationStamp = PsiModificationTracker.SERVICE.getInstance(project).getModificationCount();
+      long modificationStamp = PsiModificationTracker.getInstance(project).getModificationCount();
       int offset = flow.getStartOffset(anchor).getInstructionOffset();
       if (offset < 0) return null;
       Map<Value, List<DfaVariableValue>> jdiToDfa = createPreliminaryJdiMap(provider, anchor, factory, proxy);
@@ -178,7 +178,7 @@ public class DebuggerDfaRunner {
      */
     @RequiresReadLock
     @Nullable DebuggerDfaRunner transform() {
-      if (PsiModificationTracker.SERVICE.getInstance(myLarva.myProject).getModificationCount() != myLarva.myStamp) {
+      if (PsiModificationTracker.getInstance(myLarva.myProject).getModificationCount() != myLarva.myStamp) {
         return null;
       }
       return new DebuggerDfaRunner(myLarva, myInfoMap);
@@ -230,7 +230,7 @@ public class DebuggerDfaRunner {
 
   @Nullable
   public DebuggerDfaListener interpret() {
-    if (PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) return null;
+    if (PsiModificationTracker.getInstance(myProject).getModificationCount() != myModificationStamp) return null;
     var interceptor = myProvider.createListener();
     // interpret() could be called several times in case if ReadAction is cancelled
     // So we need to copy the mutable myStartingState. Otherwise, restarted analysis will start from the wrong memory state

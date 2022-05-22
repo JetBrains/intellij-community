@@ -827,7 +827,7 @@ public final class PyUtil {
   }
 
   public static boolean isRoot(@NotNull VirtualFile directory, @NotNull Project project) {
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     return Comparing.equal(fileIndex.getClassRootForFile(directory), directory) ||
            Comparing.equal(fileIndex.getContentRootForFile(directory), directory) ||
            Comparing.equal(fileIndex.getSourceRootForFile(directory), directory);

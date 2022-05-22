@@ -48,14 +48,6 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       RunnerAndConfigurationSettings snapshot = getSnapshot();
       Element originalXml = ((SerializableScheme)original).writeScheme();
       Element snapshotXml = ((SerializableScheme)snapshot).writeScheme();
-
-      if (original.isTemplate()) {
-        // There's no API to force snapshot.isTemplate() return true (and not sure it's needed), let's just remove what we don't want to compare.
-        originalXml.removeAttribute(RunnerAndConfigurationSettingsImplKt.TEMPLATE_FLAG_ATTRIBUTE);
-        snapshotXml.removeAttribute(RunnerAndConfigurationSettingsImplKt.TEMPLATE_FLAG_ATTRIBUTE);
-        snapshotXml.removeAttribute(RunnerAndConfigurationSettingsImplKt.NAME_ATTR);
-      }
-
       return !JDOMUtil.areElementsEqual(originalXml, snapshotXml);
     }
     catch (ConfigurationException e) {

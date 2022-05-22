@@ -42,8 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author oleg
  */
 public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {

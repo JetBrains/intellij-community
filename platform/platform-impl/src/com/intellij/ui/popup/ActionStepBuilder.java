@@ -5,30 +5,21 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.TextWithMnemonic;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SizedIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 class ActionStepBuilder {
-  private static final Logger LOG = Logger.getInstance(ActionStepBuilder.class);
-
   private final List<PopupFactoryImpl.ActionItem> myListModel;
   private final DataContext myDataContext;
   private final boolean                         myShowNumbers;
@@ -40,7 +31,6 @@ class ActionStepBuilder {
   private @NlsContexts.Separator String mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
   private final String                          myActionPlace;
-  private Icon myEmptyIcon;
   private int myMaxIconWidth  = -1;
   private int myMaxIconHeight = -1;
 
@@ -78,8 +68,8 @@ class ActionStepBuilder {
     appendActionsFromGroup(actionGroup);
     if (myListModel.isEmpty()) {
       myListModel.add(new PopupFactoryImpl.ActionItem(
-        Utils.EMPTY_MENU_FILLER, Objects.requireNonNull(Utils.EMPTY_MENU_FILLER.getTemplateText()), null, myShowNumbers, null, null,
-        false, false, false, null, null, false, null, null));
+        Utils.EMPTY_MENU_FILLER,
+        Objects.requireNonNull(Utils.EMPTY_MENU_FILLER.getTemplateText())));
     }
   }
 
@@ -107,7 +97,6 @@ class ActionStepBuilder {
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
       newVisibleActions, o -> o instanceof Separator || myPresentationFactory.getPresentation(o).isEnabled());
     calcMaxIconSize(filtered);
-    myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? EmptyIcon.create(myMaxIconWidth, myMaxIconHeight) : null;
     for (AnAction action : filtered) {
       if (action instanceof Separator) {
         myPrependWithSeparator = true;
@@ -121,7 +110,6 @@ class ActionStepBuilder {
 
   private void appendAction(@NotNull AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
-    String text = presentation.getText();
     Character mnemonic = null;
     if (myShowNumbers) {
       if (myCurrentNumber < 9) {
@@ -135,36 +123,18 @@ class ActionStepBuilder {
       }
       myCurrentNumber++;
     }
-    else if (myHonorActionMnemonics) {
-      if (text != null) {
-        text = TextWithMnemonic.fromPlainText(text, (char)action.getTemplatePresentation().getMnemonic()).toString();
-      }
-    }
 
-    Couple<Icon> icons = calcRawIcons(action, presentation);
-    Icon icon = icons.first;
-    Icon selectedIcon = icons.second;
-
-    if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {
-      if (icon != null) icon = new SizedIcon(icon, myMaxIconWidth, myMaxIconHeight);
-      if (selectedIcon != null) selectedIcon = new SizedIcon(selectedIcon, myMaxIconWidth, myMaxIconHeight);
-    }
-
-    if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
     boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
-    LOG.assertTrue(text != null, "Action in `" + myActionPlace + "` has no presentation: " + action.getClass().getName());
-    boolean suppressSubstep = action instanceof ActionGroup && Utils.isSubmenuSuppressed(presentation);
-    myListModel.add(new PopupFactoryImpl.ActionItem(
-      action, text, mnemonic, myShowNumbers, presentation.getDescription(),
-      (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
-      presentation.isEnabled(), action instanceof ActionGroup && presentation.isPerformGroup(), suppressSubstep,
-      icon, selectedIcon, prependSeparator, mySeparatorText,
-      presentation.getClientProperty(Presentation.PROP_VALUE)));
+    PopupFactoryImpl.ActionItem actionItem = new PopupFactoryImpl.ActionItem(
+      action, mnemonic, myShowNumbers, myHonorActionMnemonics,
+      myMaxIconWidth, myMaxIconHeight, prependSeparator, mySeparatorText);
+    actionItem.updateFromPresentation(presentation, myActionPlace);
+    myListModel.add(actionItem);
     myPrependWithSeparator = false;
     mySeparatorText = null;
   }
 
-  private static @NotNull Couple<Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation) {
+  static @NotNull Couple<Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation) {
     boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
     Icon icon = hideIcon ? null : presentation.getIcon();
     Icon selectedIcon = hideIcon ? null : presentation.getSelectedIcon();
@@ -177,9 +147,7 @@ class ActionStepBuilder {
       }
       else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
         icon = LafIconLookup.getIcon("checkmark");
-        Color selectionBg = UIManager.getColor("PopupMenu.selectionBackground");
-        boolean isLightSelectionInLightTheme = selectionBg != null && JBColor.isBright() && !ColorUtil.isDark(selectionBg);
-        selectedIcon = isLightSelectionInLightTheme ?  icon : LafIconLookup.getSelectedIcon("checkmark");
+        selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
         disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
       }
     }

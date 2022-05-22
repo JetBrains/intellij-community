@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache;
 
@@ -26,14 +26,14 @@ import java.util.Collection;
  */
 public interface CacheManager {
 
+  /**
+   * @deprecated use {@link CacheManager#getInstance(Project)}
+   */
+  @Deprecated(forRemoval = true)
   final class SERVICE {
     private SERVICE() {
     }
 
-    /**
-     * @deprecated use {@link CacheManager#getInstance(Project)}
-     */
-    @Deprecated(forRemoval = true)
     public static CacheManager getInstance(Project project) {
       return project.getService(CacheManager.class);
     }

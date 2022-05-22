@@ -62,11 +62,6 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     myInitialised = true;
   }
 
-  public final void uninstallTheme() {
-    myInitialised = false;
-    myTheme.setProviderClassLoader(null);
-  }
-
   public final boolean isInitialised() {
     return myInitialised;
   }
@@ -155,6 +150,9 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
 
     unsetBackgroundProperties(IdeBackgroundUtil.EDITOR_PROP);
     unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);
+
+    myInitialised = false;
+    myTheme.setProviderClassLoader(null);
   }
 
   private void unsetBackgroundProperties(String backgroundPropertyKey) {

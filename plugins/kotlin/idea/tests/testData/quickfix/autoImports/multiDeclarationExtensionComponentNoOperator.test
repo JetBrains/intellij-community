@@ -4,7 +4,6 @@
 // ACTION: Add full qualifier
 // ACTION: Create extension function 'Some.component1'
 // ACTION: Create member function 'Some.component1'
-// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce import alias
 

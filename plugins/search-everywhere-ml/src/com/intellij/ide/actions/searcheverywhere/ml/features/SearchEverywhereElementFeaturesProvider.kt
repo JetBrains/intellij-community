@@ -20,8 +20,10 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
     }
 
     fun getFeatureProvidersForContributor(contributorId: String): List<SearchEverywhereElementFeaturesProvider> {
-      return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) || it.isApplicableToEveryContributor }
+      return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) }
     }
+
+    internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
 
     internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
@@ -38,19 +40,19 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
       "prefix_exact" to EventFields.Boolean("${PrefixMatchingUtil.baseName}Exact"),
       "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
     )
+
+    internal fun roundDouble(value: Double): Double {
+      if (!value.isFinite()) return -1.0
+      return round(value * 100000) / 100000
+    }
   }
 
   /**
-   * If a feature provider is applicable to every contributor of Search Everywhere,
-   * instead of specifying each one in the constructor, this value can be overriden
-   * and set to true.
-   */
-  open val isApplicableToEveryContributor: Boolean = false
-
-  /**
    * Returns true if the Search Everywhere contributor is supported by the feature provider.
+   *
+   * By default, every feature provider has a list of supported contributors, but it's possible to override this logic.
    */
-  fun isContributorSupported(contributorId: String): Boolean {
+  open fun isContributorSupported(contributorId: String): Boolean {
     return supportedContributorIds.contains(contributorId)
   }
 
@@ -73,11 +75,6 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
     return value
   }
 
-  internal fun roundDouble(value: Double): Double {
-    if (!value.isFinite()) return -1.0
-    return round(value * 100000) / 100000
-  }
-
   /**
    * Associates the specified key with the value, only if the value is not null.
    */
@@ -90,21 +87,23 @@ internal abstract class SearchEverywhereElementFeaturesProvider(private val supp
   protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Collection<EventPair<*>> {
     val features = mutableMapOf<String, Any>()
     PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
-    val result = features.mapNotNull { (key, value) ->
+    val result = arrayListOf<EventPair<*>>(
+      NAME_LENGTH.with(nameOfFoundElement.length)
+    )
+    features.forEach { (key, value) ->
       val field = nameFeatureToField[key]
       if (value is Boolean && field is BooleanEventField) {
-        return@mapNotNull field.with(value)
+        result.add(field.with(value))
       }
       else if (value is Double && field is DoubleEventField) {
-        return@mapNotNull field.with(roundDouble(value))
+        result.add(field.with(roundDouble(value)))
       }
       else if (value is Int && field is IntEventField) {
-        return@mapNotNull field.with(value)
+        result.add(field.with(value))
       }
       else if (value is Enum<*> && field is StringEventField) {
-        return@mapNotNull field.with(value.toString())
+        result.add(field.with(value.toString()))
       }
-      return@mapNotNull null
     }
     return result
   }

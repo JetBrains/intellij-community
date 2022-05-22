@@ -32,4 +32,4 @@
 </project>
 
 <!-- inspection: org.jetbrains.kotlin.idea.maven.inspections.DifferentKotlinMavenVersionInspection -->
-<!-- problem: on ${kotlin.version}, title Kotlin version that is used for building with Maven (1.0.0) differs from the one bundled into the IDE plugin ($PLUGIN_VERSION) -->
+<!-- problem: on ${kotlin.version}, title Kotlin version that is used for building with Maven (1.0.0) is not properly supported in the IDE plugin ($PLUGIN_VERSION) -->

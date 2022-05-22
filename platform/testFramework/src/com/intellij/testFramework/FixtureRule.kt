@@ -483,7 +483,7 @@ suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
  * Copy files from [projectPaths] directories to a temp directory, load project from it and pass it to [checkProject].
  */
 fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
-  @Suppress("RedundantSuspendModifier", "BlockingMethodInNonBlockingContext")
+  @Suppress("RedundantSuspendModifier")
   suspend fun copyProjectFiles(targetDir: VirtualFile): Path {
     val projectDir = VfsUtil.virtualToIoFile(targetDir)
     var projectFileName: String? = null

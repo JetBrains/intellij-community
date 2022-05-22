@@ -59,15 +59,25 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
       if (anchor != null) {
         final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
-        final LocalQuickFix[] fixes = {
-          new AcceptSuggested(refParameter.getName()),
-          quickFixFactory.createRenameToIgnoredFix((PsiNamedElement)anchor.getParent(), true)
-        };
+        final List<LocalQuickFix> fixes = new ArrayList<>(2);
+        fixes.add(new AcceptSuggested(refParameter.getName()));
+        PsiElement parent = anchor.getParent();
+        if (parent instanceof PsiNamedElement) {
+          fixes.add(quickFixFactory.createRenameToIgnoredFix((PsiNamedElement)parent, true));
+        }
+        String message;
+        if (refMethod.isAbstract()) {
+          message = JavaBundle.message("inspection.unused.parameter.composer");
+        }
+        else if (refMethod.getDerivedMethods().isEmpty()) {
+          message = JavaBundle.message("inspection.unused.parameter.problem.descriptor");
+        }
+        else {
+          message = JavaBundle.message("inspection.unused.parameter.composer1");
+        }
         result.add(manager.createProblemDescriptor(anchor,
-                                                   JavaBundle.message(refMethod.isAbstract()
-                                                                      ? "inspection.unused.parameter.composer"
-                                                                      : "inspection.unused.parameter.composer1"),
-                                                   fixes,
+                                                   message,
+                                                   fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
       }
     }

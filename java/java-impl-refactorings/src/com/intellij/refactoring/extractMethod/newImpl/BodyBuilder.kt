@@ -108,7 +108,7 @@ class BodyBuilder(private val factory: PsiElementFactory) {
 
   fun copyOf(elements: List<PsiElement>): List<PsiElement> {
     val block = factory.createCodeBlockFromText("{}", elements.first().context)
-    block.add(PsiParserFacade.SERVICE.getInstance(elements.first().project).createWhiteSpaceFromText("\n    "))
+    block.add(PsiParserFacade.getInstance(elements.first().project).createWhiteSpaceFromText("\n    "))
     val first = block.addRange(elements.first(), elements.last())
     val last = block.lastBodyElement!!
     return PsiTreeUtil.getElementsOfRange(first, last)
@@ -174,7 +174,7 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     val disabledDeclarations = disabledParameters.map { createDeclarationForDisabledParameter(it) }
     disabledDeclarations.reversed().forEach { declaration ->
       block.addBefore(declaration, copy.first())
-      val newLine = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
+      val newLine = PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n")
       block.addBefore(newLine, copy.first())
     }
     requiredDeclarations.forEach { declaration -> block.addBefore(declaration, copy.first()) }

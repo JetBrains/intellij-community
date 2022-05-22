@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.util.io.jackson.array
@@ -60,6 +61,10 @@ internal class BundledPluginsLister : ApplicationStarter {
       }
     }
     catch (e: Exception) {
+      try {
+        Logger.getInstance(javaClass).error("Bundled plugins list builder failed", e)
+      }
+      catch (ignored: Throwable) { }
       e.printStackTrace(System.err)
       exitProcess(1)
     }

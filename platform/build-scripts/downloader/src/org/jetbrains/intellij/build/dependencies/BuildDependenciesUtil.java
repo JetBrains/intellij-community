@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies;
 
 import com.google.common.io.MoreFiles;
@@ -33,10 +33,10 @@ import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class BuildDependenciesUtil {
-  static boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+  private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
 
   @SuppressWarnings("HttpUrlsUsage")
-  static DocumentBuilder createDocumentBuilder() {
+  private static DocumentBuilder createDocumentBuilder() {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
 
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newDefaultInstance();
@@ -84,7 +84,7 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  static Element getSingleChildElement(Element parent, String tagName) {
+  private static Element getSingleChildElement(Element parent, String tagName) {
     NodeList childNodes = parent.getChildNodes();
 
     ArrayList<Element> result = new ArrayList<>();
@@ -152,7 +152,7 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  public static void extractTarBz2(Path archiveFile, Path target, boolean stripRoot) throws Exception {
+  static void extractTarBz2(Path archiveFile, Path target, boolean stripRoot) throws Exception {
     extractTarBasedArchive(archiveFile, target, stripRoot, is -> {
       try {
         return new BZip2CompressorInputStream(is);
@@ -203,21 +203,21 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  private static class EntryNameConverter {
+  private static final class EntryNameConverter {
     private final Path target;
     private final Path archiveFile;
     private final boolean stripRoot;
 
     private String leadingComponentPrefix = null;
 
-    EntryNameConverter(Path archiveFile, Path target, boolean stripRoot) {
+    private EntryNameConverter(Path archiveFile, Path target, boolean stripRoot) {
       this.archiveFile = archiveFile;
       this.stripRoot = stripRoot;
       this.target = target;
     }
 
     @Nullable
-    Path getOutputPath(String entryName, boolean isDirectory) {
+    private Path getOutputPath(String entryName, boolean isDirectory) {
       String normalizedName = normalizeEntryName(entryName);
       if (!stripRoot) {
         return target.resolve(normalizedName);

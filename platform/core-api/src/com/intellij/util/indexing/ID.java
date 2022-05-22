@@ -12,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -152,6 +149,11 @@ public class ID<K, V> extends IndexId<K,V> {
            " but registered for " + actualPluginIdStr + " plugin. " +
            "Please use an instance field to access corresponding ID." +
            (registrationStackTrace == null ? " Registration stack trace: " : "");
+  }
+
+  @ApiStatus.Internal
+  public static synchronized Collection<ID<?, ?>> getRegisteredIds() {
+    return Collections.unmodifiableSet(new HashSet<>(ourIdToPluginId.keySet()));
   }
 
   @ApiStatus.Internal

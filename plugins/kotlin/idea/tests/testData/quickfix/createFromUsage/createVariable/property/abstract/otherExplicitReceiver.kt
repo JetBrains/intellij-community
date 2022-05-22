@@ -3,7 +3,6 @@
 // ACTION: Create extension property 'B.foo'
 // ACTION: Create member property 'B.foo'
 // ACTION: Create property 'foo' as constructor parameter
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
 abstract class A {

@@ -107,6 +107,10 @@ object JavadocUIUtil {
       checkBox(JavaBundle.message("inspection.javadoc.option.ignore.self.ref"))
         .bindCheckbox(settings::IGNORE_SELF_REFS)
     }
+    row {
+      checkBox(JavaBundle.message("inspection.javadoc.option.ignore.deprecated"))
+        .bindCheckbox(settings::IGNORE_DEPRECATED_ELEMENTS)
+    }
   }
 
   fun missingJavadocOptions(settings: MissingJavadocInspection): JComponent {
@@ -145,7 +149,7 @@ object JavadocUIUtil {
             settings.TOP_LEVEL_CLASS_SETTINGS::ENABLED,
             createOptions(
               settings.TOP_LEVEL_CLASS_SETTINGS,
-              listOf(JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PACKAGE_LOCAL),
+              listOf(MissingJavadocInspection.PUBLIC, MissingJavadocInspection.PACKAGE_LOCAL),
               listOf("@author", "@version", "@since", "@param")
             )
           ),
@@ -154,8 +158,8 @@ object JavadocUIUtil {
             settings.METHOD_SETTINGS::ENABLED,
             createOptions(
               settings.METHOD_SETTINGS,
-              listOf(JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED,
-                     JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE),
+              listOf(MissingJavadocInspection.PUBLIC, MissingJavadocInspection.PROTECTED,
+                     MissingJavadocInspection.PACKAGE_LOCAL, MissingJavadocInspection.PRIVATE),
               listOf("@return", "@param", JavaBundle.message("inspection.javadoc.throws.or.exception.option"))
             )
           ),
@@ -164,8 +168,8 @@ object JavadocUIUtil {
             settings.FIELD_SETTINGS::ENABLED,
             createOptions(
               settings.FIELD_SETTINGS,
-              listOf(JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED,
-                     JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE),
+              listOf(MissingJavadocInspection.PUBLIC, MissingJavadocInspection.PROTECTED,
+                     MissingJavadocInspection.PACKAGE_LOCAL, MissingJavadocInspection.PRIVATE),
               emptyList()
             )
           ),
@@ -174,8 +178,8 @@ object JavadocUIUtil {
             settings.INNER_CLASS_SETTINGS::ENABLED,
             createOptions(
               settings.INNER_CLASS_SETTINGS,
-              listOf(JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PROTECTED,
-                     JavaDocLocalInspection.PACKAGE_LOCAL, JavaDocLocalInspection.PRIVATE),
+              listOf(MissingJavadocInspection.PUBLIC, MissingJavadocInspection.PROTECTED,
+                     MissingJavadocInspection.PACKAGE_LOCAL, MissingJavadocInspection.PRIVATE),
               emptyList()
             )
           )

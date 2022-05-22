@@ -12,12 +12,14 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory;
-import com.intellij.openapi.wm.impl.welcomeScreen.NewRecentProjectPanel;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,12 +31,15 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
     RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(disposable);
-    JComponent recentProjectTree = recentProjectFilteringTree.getComponent();
+    Tree recentProjectTree = recentProjectFilteringTree.getTree();
     SearchTextField searchTextField = recentProjectFilteringTree.installSearchField();
 
-    PopupUtil.applyNewUIBackground(recentProjectTree);
-    PopupUtil.applyNewUIBackground(searchTextField);
-    JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(recentProjectTree, recentProjectTree)
+    JPanel panel = JBUI.Panels.simplePanel();
+    panel.add(searchTextField, BorderLayout.NORTH);
+    panel.add(recentProjectTree, BorderLayout.CENTER);
+
+    PopupUtil.applyNewUIBackground(panel);
+    JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, searchTextField)
       .setTitle(IdeUICustomization.getInstance().projectMessage("popup.title.recent.projects"))
       .setFocusable(true)
       .setRequestFocus(true)

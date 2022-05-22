@@ -30,10 +30,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
+import org.intellij.plugins.markdown.extensions.*
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
@@ -50,33 +47,47 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
 
   private var customStylesheetEditor: Editor? = null
 
-  override fun createPanel(): DialogPanel {
-    if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
-      return panel {
-        row {
-          label(MarkdownBundle.message("markdown.settings.no.providers"))
-        }
+  private fun isPreviewAvailable(): Boolean {
+    return MarkdownHtmlPanelProvider.hasAvailableProviders()
+  }
+
+  private fun previewDependentOptionsBlock(block: () -> Unit) {
+    if (isPreviewAvailable()) {
+      block.invoke()
+    }
+  }
+
+  private fun Panel.showPreviewUnavailableWarningIfNeeded() {
+    if (!isPreviewAvailable()) {
+      row {
+        label(MarkdownBundle.message("markdown.settings.no.providers"))
       }
     }
+  }
+
+  override fun createPanel(): DialogPanel {
     return panel {
-      if (MarkdownHtmlPanelProvider.getAvailableProviders().size > 1) {
-        htmlPanelProvidersRow()
-      }
-      row(MarkdownBundle.message("markdown.settings.default.layout")) {
-        comboBox(
-          model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
-          renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
-        ).bindItem(settings::splitLayout.toNullableProperty())
-      }
-      row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
-        comboBox(
-          model = DefaultComboBoxModel(arrayOf(false, true)),
-          renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
-        ).bindItem(settings::isVerticalSplit.toNullableProperty())
-      }.bottomGap(BottomGap.SMALL)
-      row {
-        checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
-          .bindSelected(settings::isAutoScrollEnabled)
+      showPreviewUnavailableWarningIfNeeded()
+      previewDependentOptionsBlock {
+        if (MarkdownHtmlPanelProvider.getAvailableProviders().size > 1) {
+          htmlPanelProvidersRow()
+        }
+        row(MarkdownBundle.message("markdown.settings.default.layout")) {
+          comboBox(
+            model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
+            renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
+          ).bindItem(settings::splitLayout.toNullableProperty())
+        }
+        row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
+          comboBox(
+            model = DefaultComboBoxModel(arrayOf(false, true)),
+            renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
+          ).bindItem(settings::isVerticalSplit.toNullableProperty())
+        }.bottomGap(BottomGap.SMALL)
+        row {
+          checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
+            .bindSelected(settings::isAutoScrollEnabled)
+        }
       }
       row {
         checkBox(MarkdownBundle.message("markdown.settings.enable.injections"))
@@ -102,7 +113,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       extensionsListRow().apply {
         onApply { notifyExtensionsChanged() }
       }
-      customCssRow()
+      previewDependentOptionsBlock {
+        customCssRow()
+      }
       pandocSettingsRow()
     }
   }
@@ -204,10 +217,17 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
     super.disposeUIResources()
   }
 
-  private fun Panel.extensionsListRow(): ButtonsGroup {
+  private fun Panel.extensionsListRow(): ButtonsGroup? {
+    val extensions = MarkdownExtensionsUtil.collectConfigurableExtensions()
+    val actualExtensions = when {
+      isPreviewAvailable() -> extensions
+      else -> extensions.filterNot { it is MarkdownBrowserPreviewExtension.Provider }
+    }
+    if (actualExtensions.none()) {
+      return null
+    }
     return buttonsGroup(MarkdownBundle.message("markdown.settings.preview.extensions.name")) {
-      val extensions = MarkdownExtensionsUtil.collectConfigurableExtensions()
-      for (extension in extensions) {
+      for (extension in actualExtensions) {
         createExtensionEntry(extension)
       }
     }

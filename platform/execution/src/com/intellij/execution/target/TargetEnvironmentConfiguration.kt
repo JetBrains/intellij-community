@@ -32,7 +32,7 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
 
   fun removeLanguageRuntime(runtime: LanguageRuntimeConfiguration) = runtimes.removeConfig(runtime)
 
-  fun createEnvironmentRequest(project: Project): TargetEnvironmentRequest = getTargetType().createEnvironmentRequest(project, this)
+  fun createEnvironmentRequest(project: Project?): TargetEnvironmentRequest = getTargetType().createEnvironmentRequest(project, this)
 
   abstract var projectRootOnTarget: String
 

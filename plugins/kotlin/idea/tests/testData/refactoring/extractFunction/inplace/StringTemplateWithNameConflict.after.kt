@@ -1,5 +1,5 @@
-val example = "STRING_${substring<caret>()}_BIG"
+val example = "STRING_${substring()}_BIG"
 
 private fun substring() = "SAMPLE"
 
-fun extracted(): String = "42"
+fun s(): String = "42"

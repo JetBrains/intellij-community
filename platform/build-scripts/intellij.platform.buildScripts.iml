@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xextended-compiler-checks" />
+        </compilerSettings>
+        <compilerArguments>
+          <option name="jvmTarget" value="11" />
+          <option name="languageVersion" value="1.5" />
+          <option name="apiVersion" value="1.5" />
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -11,7 +25,6 @@
     <orderEntry type="library" exported="" name="Ant" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="commons-cli" level="project" />
-    <orderEntry type="library" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" exported="" />
     <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="fixed.kotlin-jps-plugin-classpath" level="project" />
@@ -48,5 +61,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="networknt.json.schema.validator" level="project" />
+    <orderEntry type="library" name="decentxml" level="project" />
   </component>
 </module>

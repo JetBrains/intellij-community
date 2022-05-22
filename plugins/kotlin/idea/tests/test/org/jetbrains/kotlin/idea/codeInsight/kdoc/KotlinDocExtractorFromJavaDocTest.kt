@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.kdoc
 
 import com.intellij.rt.execution.junit.FileComparisonFailure
@@ -21,8 +21,8 @@ class KotlinDocExtractorFromJavaDocTest : KotlinLightCodeInsightFixtureTestCase(
         get() = IDEA_TEST_DATA_DIR.resolve("codeInsight/kdoc")
 
     private fun doTest(docUrl: String, javaDocPagePath: String, expectedResultPath: String) {
-        val javaDocPage = testDataFile(javaDocPagePath).readText()
-        val expectedResultFile = testDataFile(expectedResultPath)
+        val javaDocPage = dataFile(javaDocPagePath).readText()
+        val expectedResultFile = dataFile(expectedResultPath)
         val expectedResult = expectedResultFile.bufferedReader().use { it.readText() }
 
         val extractor = KotlinDocExtractorFromJavaDoc(project)

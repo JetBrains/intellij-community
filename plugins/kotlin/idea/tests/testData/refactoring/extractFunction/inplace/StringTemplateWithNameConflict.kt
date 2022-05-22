@@ -1,3 +1,3 @@
 val example = "STRING_<selection>SAMPLE</selection>_BIG"
 
-fun extracted(): String = "42"
+fun s(): String = "42"

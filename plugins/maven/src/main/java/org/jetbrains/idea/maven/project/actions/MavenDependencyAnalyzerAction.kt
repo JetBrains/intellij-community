@@ -2,14 +2,12 @@
 package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.module.Module
 import com.intellij.ui.treeStructure.SimpleTree
 import org.jetbrains.idea.maven.navigator.MavenProjectsStructure.*
-import org.jetbrains.idea.maven.project.MavenDependencyAnalyzerContributor
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
@@ -23,30 +21,32 @@ class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<MavenSimpl
     return (data as? SimpleTree)?.selectedNode as? MavenSimpleNode
   }
 
-  override fun getExternalProjectPath(e: AnActionEvent, selectedData: MavenSimpleNode): String? {
-    if (selectedData is ProjectNode) {
-      return selectedData.mavenProject.path
-    }
-    val projectNode = selectedData.findParent(ProjectNode::class.java)
-    return projectNode?.mavenProject?.path
+  override fun getModule(e: AnActionEvent, selectedData: MavenSimpleNode): Module? {
+    val project = e.project ?: return null
+    val projectNode = selectedData.findNode(ProjectNode::class.java) ?: return null
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+    return mavenProjectsManager.findModule(projectNode.mavenProject)
   }
 
   override fun getDependencyData(e: AnActionEvent, selectedData: MavenSimpleNode): DependencyAnalyzerDependency.Data? {
-    if (selectedData is DependencyNode) {
-      return DAArtifact(
-        selectedData.artifact.groupId,
-        selectedData.artifact.artifactId,
-        selectedData.artifact.version
-      )
+    return when (selectedData) {
+      is DependencyNode -> {
+        DAArtifact(
+          selectedData.artifact.groupId,
+          selectedData.artifact.artifactId,
+          selectedData.artifact.version
+        )
+      }
+      is ProjectNode -> {
+        DAModule(selectedData.mavenProject.displayName)
+      }
+      else -> null
     }
-    return null
   }
 
-  override fun getDependencyScope(e: AnActionEvent, selectedData: MavenSimpleNode): DependencyAnalyzerDependency.Scope? {
+  override fun getDependencyScope(e: AnActionEvent, selectedData: MavenSimpleNode): String? {
     if (selectedData is DependencyNode) {
-      return MavenDependencyAnalyzerContributor.scope(
-        selectedData.artifact.scope
-      )
+      return selectedData.artifact.scope
     }
     return null
   }
@@ -65,24 +65,26 @@ class NavigatorDependencyAnalyzerAction : DependencyAnalyzerAction() {
   }
 }
 
-class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<MavenProject>() {
+class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Module>() {
 
   override fun getSystemId(e: AnActionEvent): ProjectSystemId = MavenUtil.SYSTEM_ID
 
-  override fun getSelectedData(e: AnActionEvent): MavenProject? {
+  override fun getSelectedData(e: AnActionEvent): Module? {
     val project = e.project ?: return null
-    val modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) ?: return null
-    val projectsManager = MavenProjectsManager.getInstanceIfCreated(project) ?: return null
-    return modules.asSequence()
-      .mapNotNull { projectsManager.findProject(it) }
-      .firstOrNull()
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return null
+    if (MavenProjectsManager.getInstance(project).isMavenizedModule(module)) {
+      return module
+    }
+    return null
   }
 
-  override fun getExternalProjectPath(e: AnActionEvent, selectedData: MavenProject): String {
-    return selectedData.path
+  override fun getModule(e: AnActionEvent, selectedData: Module): Module {
+    return selectedData
   }
 
-  override fun getDependencyData(e: AnActionEvent, selectedData: MavenProject) = null
+  override fun getDependencyData(e: AnActionEvent, selectedData: Module): DependencyAnalyzerDependency.Data {
+    return DAModule(selectedData.name)
+  }
 
-  override fun getDependencyScope(e: AnActionEvent, selectedData: MavenProject) = null
+  override fun getDependencyScope(e: AnActionEvent, selectedData: Module) = null
 }

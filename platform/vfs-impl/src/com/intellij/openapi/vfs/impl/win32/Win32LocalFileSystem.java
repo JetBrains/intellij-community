@@ -40,7 +40,7 @@ public final class Win32LocalFileSystem extends LocalFileSystemBase {
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    return myFsCache.getAttributes(file);
+    return copyWithCustomTimestamp(file, myFsCache.getAttributes(file));
   }
 
   @NotNull

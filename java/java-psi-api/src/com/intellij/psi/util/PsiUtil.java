@@ -165,7 +165,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static void addException(@NotNull PsiMethod method, @NotNull PsiClass exceptionClass) throws IncorrectOperationException {
-    addException(method, exceptionClass, exceptionClass.getQualifiedName());
+    addException(method, exceptionClass, exceptionClass instanceof PsiTypeParameter ? exceptionClass.getName() : exceptionClass.getQualifiedName());
   }
 
   private static void addException(@NotNull PsiMethod method,

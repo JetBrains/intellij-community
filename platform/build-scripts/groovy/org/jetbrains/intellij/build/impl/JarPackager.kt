@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
 
@@ -27,7 +27,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
-import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Path
 import java.util.*
@@ -98,7 +97,7 @@ class JarPackager private constructor(private val context: BuildContext) {
     fun pack(actualModuleJars: Map<String, List<String>>, outputDir: Path, context: BuildContext) {
       pack(actualModuleJars = actualModuleJars,
            outputDir = outputDir,
-           layout = object : BaseLayout() {},
+           layout = BaseLayout(),
            moduleOutputPatcher = ModuleOutputPatcher(),
            dryRun = false,
            context = context)
@@ -455,15 +454,9 @@ private fun removeVersionFromJar(fileName: String): String {
 }
 
 private fun getLibraryFiles(library: JpsLibrary, copiedFiles: MutableMap<Path, JpsLibrary>, isModuleLevel: Boolean): MutableList<Path> {
-  val urls = library.getRootUrls(JpsOrderRootType.COMPILED)
-  val result = ArrayList<Path>(urls.size)
+  val files = library.getPaths(JpsOrderRootType.COMPILED)
   val libName = library.name
-  for (url in urls) {
-    if (JpsPathUtil.isJrtUrl(url)) {
-      continue
-    }
-
-    val file = Path.of(JpsPathUtil.urlToPath(url))
+  for (file in files) {
     val alreadyCopiedFor = copiedFiles.putIfAbsent(file, library)
     if (alreadyCopiedFor != null) {
       // check name - we allow to have same named module level library name
@@ -473,9 +466,8 @@ private fun getLibraryFiles(library: JpsLibrary, copiedFiles: MutableMap<Path, J
 
       throw IllegalStateException("File $file from $libName is already provided by ${alreadyCopiedFor.name} library")
     }
-    result.add(file)
   }
-  return result
+  return files
 }
 
 private fun libNameToMergedJarFileName(libName: String): String {

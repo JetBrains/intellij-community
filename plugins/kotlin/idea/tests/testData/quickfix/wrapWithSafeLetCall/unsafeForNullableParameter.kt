@@ -3,7 +3,6 @@
 // ACTION: Add non-null asserted (!!) call
 // ACTION: Convert to run
 // ACTION: Convert to with
-// ACTION: Do not show return expression hints
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
 // DISABLE-ERRORS

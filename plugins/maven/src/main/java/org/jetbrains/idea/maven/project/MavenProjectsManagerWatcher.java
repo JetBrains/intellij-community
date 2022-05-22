@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -57,7 +58,7 @@ public class MavenProjectsManagerWatcher {
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    myProjectsAware = new MavenProjectsAware(project, projectsTree, projectsManager, this, myBackgroundExecutor);
+    myProjectsAware = new MavenProjectsAware(project, projectsManager, this, myBackgroundExecutor);
     myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());
   }
 
@@ -113,7 +114,7 @@ public class MavenProjectsManagerWatcher {
    */
   public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
     if (MavenUtil.isLinearImportEnabled()) {
-      return Promises.resolvedPromise();
+      return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
     }
 
     final AsyncPromise<Void> promise = new AsyncPromise<>();
@@ -136,7 +137,7 @@ public class MavenProjectsManagerWatcher {
                                       MavenImportSpec spec) {
 
     if (MavenUtil.isLinearImportEnabled()) {
-      return Promises.resolvedPromise();
+      return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise().then(it -> null);
     }
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress

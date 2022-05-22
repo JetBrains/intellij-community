@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.openapi.diagnostic.Logger
@@ -189,7 +189,6 @@ object CachedArgumentsRestoring {
 object CachedCompilerArgumentsRestoringManager {
     private val LOGGER = Logger.getInstance(CachedCompilerArgumentsRestoringManager.javaClass)
 
-    @Suppress("UNCHECKED_CAST")
     fun <TCache> restoreCompilerArgument(
         argument: TCache,
         cacheAware: CompilerArgumentsCacheAware

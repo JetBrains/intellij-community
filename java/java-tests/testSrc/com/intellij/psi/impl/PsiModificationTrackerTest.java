@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ModificationTracker;
@@ -141,7 +142,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void doTest(@NonNls String text, Processor<? super PsiFile> run) {
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
-    PsiModificationTracker tracker = PsiModificationTracker.SERVICE.getInstance(getProject());
+    PsiModificationTracker tracker = PsiModificationTracker.getInstance(getProject());
     long count = tracker.getModificationCount();
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       run.process(file);
@@ -408,7 +409,8 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     long js = getJavaTracker().getModificationCount();
     long ocb = tracker.getModificationCount();
 
-    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.INSTANCE, false, true));
+    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.INSTANCE,
+                                                                                           RootsChangeRescanningInfo.NO_RESCAN_NEEDED));
 
     assertTrue(mc != tracker.getModificationCount());
     assertTrue(js != getJavaTracker().getModificationCount());
@@ -512,19 +514,19 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   @NotNull
   private ModificationTracker getTracker() {
-    return PsiModificationTracker.SERVICE.getInstance(getProject());
+    return PsiModificationTracker.getInstance(getProject());
   }
 
   @NotNull
   ModificationTracker getJavaTracker() {
-    return PsiModificationTracker.SERVICE.getInstance(getProject());
+    return PsiModificationTracker.getInstance(getProject());
   }
 
   public static class JavaLanguageTrackerTest extends PsiModificationTrackerTest {
     @Override
     @NotNull
     ModificationTracker getJavaTracker() {
-      return PsiModificationTracker.SERVICE.getInstance(getProject())
+      return PsiModificationTracker.getInstance(getProject())
         .forLanguage(JavaLanguage.INSTANCE);
     }
   }

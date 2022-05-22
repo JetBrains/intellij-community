@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -46,7 +46,7 @@ public class PsiDocTagValueImpl extends CompositePsiElement implements PsiDocTag
     PsiDocTag docTag = PsiTreeUtil.getParentOfType(this, PsiDocTag.class);
     if (docTag == null) return null;
 
-    JavadocTagInfo info = JavadocManager.SERVICE.getInstance(getProject()).getTagInfo(docTag.getName());
+    JavadocTagInfo info = JavadocManager.getInstance(getProject()).getTagInfo(docTag.getName());
     if (info == null) return null;
 
     return info.getReference(this);

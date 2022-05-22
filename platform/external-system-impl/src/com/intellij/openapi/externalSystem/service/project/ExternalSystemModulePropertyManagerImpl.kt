@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -23,7 +23,6 @@ val EMPTY_STATE: ExternalStateComponent = ExternalStateComponent()
  * This class isn't used in the new implementation of project model, which is based on [Workspace Model][com.intellij.workspaceModel.ide].
  * It shouldn't be used directly, its interface [ExternalSystemModulePropertyManager] should be used instead.
  */
-@Suppress("DEPRECATION")
 @State(name = "ExternalSystem")
 class ExternalSystemModulePropertyManagerImpl(private val module: Module) : ExternalSystemModulePropertyManager(),
                                                                             PersistentStateComponent<ExternalStateComponent>, ProjectModelElement {
@@ -39,7 +38,6 @@ class ExternalSystemModulePropertyManagerImpl(private val module: Module) : Exte
     store = state
   }
 
-  @Suppress("DEPRECATION")
   override fun getExternalSystemId(): String? = store.externalSystem
 
   override fun getExternalModuleType(): String? = store.externalSystemModuleType
@@ -54,10 +52,8 @@ class ExternalSystemModulePropertyManagerImpl(private val module: Module) : Exte
 
   override fun getLinkedProjectPath(): String? = store.linkedProjectPath
 
-  @Suppress("DEPRECATION")
   override fun isMavenized(): Boolean = store.isMavenized
 
-  @Suppress("DEPRECATION")
   override fun setMavenized(mavenized: Boolean) {
     if (mavenized) {
       // clear external system API options

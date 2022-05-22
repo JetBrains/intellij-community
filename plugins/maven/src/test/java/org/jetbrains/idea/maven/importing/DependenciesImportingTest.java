@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
@@ -153,6 +153,42 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     assertModules("project");
     assertModuleLibDeps("project", "Maven: B:B:2", "Maven: A:A:1");
+  }
+
+  @Test
+  public void testPreservingDependenciesOrderWithTestDependencies() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>a</groupId>" +
+                  "    <artifactId>compile</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>a</groupId>" +
+                  "    <artifactId>test</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <scope>test</scope>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>a</groupId>" +
+                  "    <artifactId>runtime</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <scope>runtime</scope>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>a</groupId>" +
+                  "    <artifactId>compile-2</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModules("project");
+    assertModuleLibDeps("project",
+                        "Maven: a:compile:1", "Maven: a:test:1", "Maven: a:runtime:1", "Maven: a:compile-2:1");
   }
 
   @Test
@@ -1136,8 +1172,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModuleLibDeps("m");
 
 
-    MavenProject root = myProjectsTree.getRootProjects().get(0);
-    List<MavenProject> modules = myProjectsTree.getModules(root);
+    MavenProject root = getProjectsTree().getRootProjects().get(0);
+    List<MavenProject> modules = getProjectsTree().getModules(root);
 
     assertOrderedElementsAreEqual(root.getProblems());
     assertTrue(modules.get(0).getProblems().get(0).getDescription().contains("Unresolved dependency: 'xxx:yyy:pom:1'"));
@@ -1201,7 +1237,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertTrue(myProjectsTree.findProject(myProjectPom).hasUnresolvedArtifacts());
+    assertTrue(getProjectsTree().findProject(myProjectPom).hasUnresolvedArtifacts());
   }
 
   @Test

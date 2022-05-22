@@ -1218,6 +1218,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-52930
+  public void testSpaceAfterStarredExcept() {
+    doTest();
+  }
+
   // PY-42200
   public void testParenthesizedWithItems() {
     doTest();
@@ -1237,6 +1242,20 @@ public class PyFormatterTest extends PyTestCase {
   // PY-42200
   public void testParenthesizedWithItemsWrapping() {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
+    doTest();
+  }
+
+  // PY-28496
+  public void testHangingIndentsInMultilineCallChainInParenthesis() {
+    doTest();
+  }
+
+  // PY-27660
+  public void testHangingIndentsInMultilineCallChainInSquareBrackets() {
+    doTest();
+  }
+
+  public void testMultiLineCallChainSplitByBackslashes() {
     doTest();
   }
 }

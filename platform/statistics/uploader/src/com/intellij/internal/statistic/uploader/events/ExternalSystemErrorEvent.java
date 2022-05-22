@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.uploader.events;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -9,12 +10,12 @@ public class ExternalSystemErrorEvent extends ExternalSystemEvent {
   private final String myEvent;
   private final String myErrorClass;
 
-  public ExternalSystemErrorEvent(long timestamp, @NotNull String event, @NotNull Throwable th) {
-    this(timestamp, event, th.getClass().getName());
+  public ExternalSystemErrorEvent(long timestamp, @NotNull String event, @NotNull Throwable th, @Nullable String recorder) {
+    this(timestamp, event, th.getClass().getName(), recorder);
   }
 
-  public ExternalSystemErrorEvent(long timestamp, @NotNull String event, @NotNull String errorClass) {
-    super(ExternalSystemEventType.ERROR, timestamp);
+  public ExternalSystemErrorEvent(long timestamp, @NotNull String event, @NotNull String errorClass, @Nullable String recorder) {
+    super(ExternalSystemEventType.ERROR, timestamp, recorder);
     myEvent = event;
     myErrorClass = errorClass;
   }

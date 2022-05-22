@@ -6,10 +6,7 @@ import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -24,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class JBCefProxyTest {
-  private static final String TEST_HOST = "www.jetbrains.com";
+  private static final String TEST_HOST = "captive.apple.com";
 
   static {
     TestScaleHelper.setSystemProperty("java.awt.headless", "false");
@@ -32,8 +29,8 @@ public class JBCefProxyTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
-  @BeforeClass
-  public static void before() {
+  @Before
+  public void before() {
     TestScaleHelper.assumeStandalone();
 
     var proxySettings = System.getProperty("idea.test.proxy.settings");
@@ -46,15 +43,14 @@ public class JBCefProxyTest {
     JBCefProxySettings.setTestInstance(true, false, false, null, matcher.group(3), proxyPort, true, matcher.group(1), matcher.group(2));
   }
 
-  @AfterClass
-  public static void after() {
+  @After
+  public void after() {
     TestScaleHelper.restoreSystemProperties();
   }
 
   @Test
   public void test() throws IOException {
     var latch = new CountDownLatch(1);
-    var diagnostics = new StringBuffer("Diagnostics:\n");
     var statusCode = new AtomicInteger(-1);
 
     var browser = new JBCefBrowser("https://" + TEST_HOST);
@@ -62,7 +58,7 @@ public class JBCefProxyTest {
     browser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
       @Override
       public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
-        diagnostics.append("onLoadEnd: ").append(browser.getURL()).append(", status: ").append(httpStatusCode).append('\n');
+        System.out.println("JBCefProxyTest.onLoadEnd: " + browser.getURL() + ", status: " + httpStatusCode);
         if (frame.getURL().contains(TEST_HOST)) {
           statusCode.set(httpStatusCode);
           latch.countDown();
@@ -71,7 +67,7 @@ public class JBCefProxyTest {
 
       @Override
       public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-        diagnostics.append("onLoadError: ").append(failedUrl).append(", error: ").append(errorText).append('\n');
+        System.out.println("JBCefProxyTest.onLoadError: " + failedUrl + ", error: " + errorText);
       }
     }, browser.getCefBrowser());
 
@@ -83,8 +79,8 @@ public class JBCefProxyTest {
       frame.setVisible(true);
     });
 
-    assertTrue(await(latch));
+    await(latch);
 
-    assertEquals(diagnostics.toString(), 200, statusCode.get());
+    assertEquals(200, statusCode.get());
   }
 }

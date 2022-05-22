@@ -58,12 +58,24 @@ public class JpsBootstrapMain {
   }
 
   public static void main(String[] args) {
+    Path jpsBootstrapWorkDir = null;
+
     try {
-      new JpsBootstrapMain(args).main();
+      JpsBootstrapMain mainInstance = new JpsBootstrapMain(args);
+      jpsBootstrapWorkDir = mainInstance.jpsBootstrapWorkDir;
+      mainInstance.main();
       System.exit(0);
     }
     catch (Throwable t) {
       fatal(ExceptionUtil.getThrowableText(t));
+
+      // Better diagnostics for local users
+      if (!underTeamCity) {
+        System.err.println("\n###### ERROR EXIT due to FATAL error: " + t.getMessage() + "\n");
+        String work = jpsBootstrapWorkDir == null ? "PROJECT_HOME/build/jps-bootstrap-work" : jpsBootstrapWorkDir.toString();
+        System.err.println("###### If it looks like a Kotlin incremental compilation bug, please delete " + work + " folder and retry");
+      }
+
       System.exit(1);
     }
   }

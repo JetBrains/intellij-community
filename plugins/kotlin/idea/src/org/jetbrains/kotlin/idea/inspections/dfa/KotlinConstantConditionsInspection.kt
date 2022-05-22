@@ -343,11 +343,42 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         // Non-JVM is not supported now
         if (holder.file.module?.platform?.isJvm() != true) return PsiElementVisitor.EMPTY_VISITOR
-        return namedFunctionVisitor(fun(function) {
-            val body = function.bodyExpression ?: function.bodyBlockExpression ?: return
-            val factory = DfaValueFactory(holder.project)
-            processDataflowAnalysis(factory, body, holder, listOf(JvmDfaMemoryStateImpl(factory)))
-        })
+        return object : KtVisitorVoid() {
+            override fun visitProperty(property: KtProperty) {
+                if (shouldAnalyzeProperty(property)) {
+                    val initializer = property.delegateExpressionOrInitializer ?: return
+                    analyze(initializer)
+                }
+            }
+
+            override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
+                if (shouldAnalyzeProperty(accessor.property)) {
+                    val bodyExpression = accessor.bodyExpression ?: accessor.bodyBlockExpression ?: return
+                    analyze(bodyExpression)
+                }
+            }
+
+            override fun visitParameter(parameter: KtParameter) {
+                analyze(parameter.defaultValue ?: return)
+            }
+
+            private fun shouldAnalyzeProperty(property: KtProperty) =
+                property.isTopLevel || property.parent is KtClassBody
+
+            override fun visitClassInitializer(initializer: KtClassInitializer) {
+                analyze(initializer.body ?: return)
+            }
+
+            override fun visitNamedFunction(function: KtNamedFunction) {
+                val body = function.bodyExpression ?: function.bodyBlockExpression ?: return
+                analyze(body)
+            }
+
+            private fun analyze(body: KtExpression) {
+                val factory = DfaValueFactory(holder.project)
+                processDataflowAnalysis(factory, body, holder, listOf(JvmDfaMemoryStateImpl(factory)))
+            }
+        }
     }
 
     private fun processDataflowAnalysis(

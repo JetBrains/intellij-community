@@ -72,15 +72,6 @@ abstract class JsClientTemplate : Template() {
                 }
             }
 
-            interceptAtPoint(template.imports) { value ->
-                if (value.isNotEmpty()) return@interceptAtPoint value
-                buildList {
-                    +value
-                    +"io.ktor.http.content.resources"
-                    +"io.ktor.http.content.static"
-                }
-            }
-
             interceptAtPoint(template.elements) { value ->
                 if (value.isNotEmpty()) return@interceptAtPoint value
                 buildList {

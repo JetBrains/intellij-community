@@ -128,7 +128,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
             final PsiElement classParent = containingClass.getParent();
             final String referenceText = referenceExpression.getReferenceName();
             if (referenceText != null) {
-              PsiVariable variable = PsiResolveHelper.SERVICE.getInstance(expression.getProject())
+              PsiVariable variable = PsiResolveHelper.getInstance(expression.getProject())
                 .resolveAccessibleReferencedVariable(referenceText, classParent);
               if (variable != null && variable != referenceExpression.resolve()) {
                 return;

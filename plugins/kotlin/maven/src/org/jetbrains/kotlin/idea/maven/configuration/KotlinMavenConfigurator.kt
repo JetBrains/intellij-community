@@ -144,7 +144,7 @@ protected constructor(
         }
 
         val pom = PomFile.forFileOrNull(file as XmlFile) ?: return false
-        pom.addProperty(KOTLIN_VERSION_PROPERTY, version.rawVersion)
+        pom.addProperty(KOTLIN_VERSION_PROPERTY, version.artifactVersion)
 
         pom.addDependency(
             MavenId(GROUP_ID, getStdlibArtifactId(module, version), "\${$KOTLIN_VERSION_PROPERTY}"),

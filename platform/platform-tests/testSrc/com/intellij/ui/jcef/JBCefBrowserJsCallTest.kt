@@ -3,24 +3,20 @@ package com.intellij.ui.jcef
 
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.ui.scale.TestScaleHelper
-import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 
-
 /**
  * Tests the [JBCefBrowserJsCall] class and [executeJavaScriptAsync] method.
  */
 class JBCefBrowserJsCallTest {
-
   companion object {
-    @ClassRule
-    @JvmStatic
-    public fun getAppRule() = ApplicationRule()
+    @ClassRule @JvmStatic fun getAppRule() = ApplicationRule()
   }
 
   @Before
@@ -108,8 +104,8 @@ class JBCefBrowserJsCallTest {
       jsCall().onProcessed { latch.countDown() }.onSuccess { r2 = it }
     }
 
-    TestCase.assertEquals("4", r1)
-    TestCase.assertEquals("4", r2)
+    assertEquals("4", r1)
+    assertEquals("4", r2)
   }
 
   private fun doTest(@Language("JavaScript") javaScript: String,
@@ -135,13 +131,12 @@ class JBCefBrowserJsCallTest {
         }
     }
 
-    TestCase.assertEquals(isExpectedToSucceed, isSucceeded)
+    assertEquals(isExpectedToSucceed, isSucceeded)
 
     if (isExpectedToSucceed) {
-      TestCase.assertEquals(expectedResult, actualResult)
+      assertEquals(expectedResult, actualResult)
     }
   }
-
 
   private fun prepareBrowser(): JBCefBrowser {
     val browser = JBCefApp.getInstance().createClient().also {
@@ -155,8 +150,8 @@ class JBCefBrowserJsCallTest {
 
     JBCefTestHelper.showAndWaitForLoad(browser, "DISPATCH")
 
-    TestCase.assertNotNull(browser.component)
-    TestCase.assertTrue(browser.isCefBrowserCreated)
+    assertNotNull(browser.component)
+    assertTrue(browser.isCefBrowserCreated)
 
     return browser
   }

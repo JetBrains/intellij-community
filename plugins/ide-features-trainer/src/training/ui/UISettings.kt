@@ -10,7 +10,6 @@ import java.awt.Font
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
-@Suppress("MemberVisibilityCanBePrivate")
 internal class UISettings {
   //GENERAL UI SETTINGS
   val panelWidth: Int by lazy { JBUI.scale(460) }

@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -44,7 +45,6 @@ class ImlReplaceBySourceTest {
     replaceBySourceFullReplace(projectDir)
   }
 
-  @Suppress("UNCHECKED_CAST")
   @Test
   fun addSourceRootToModule() {
     val moduleFile = temp.newFile("a.iml")

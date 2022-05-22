@@ -1,6 +1,5 @@
 package com.intellij.settingsSync.config
 
-import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
@@ -9,7 +8,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
@@ -21,7 +19,6 @@ import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JButton
 import javax.swing.JCheckBox
-import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")),
@@ -139,7 +136,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       ServerState.UpToDate, ServerState.UpdateNeeded -> showEnableSyncDialog(true)
       is ServerState.Error -> {
         if (state != SettingsSyncEnabler.State.CANCELLED) {
-          showError(enableButton.component, message("notification.title.update.error"), state.message)
+          showError(message("notification.title.update.error"), state.message)
         }
       }
     }
@@ -151,10 +148,10 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         SettingsSyncSettings.getInstance().syncEnabled = true
       }
       UpdateResult.NoFileOnServer -> {
-        showError(enableButton.component, message("notification.title.update.error"), message("notification.title.update.no.such.file"))
+        showError(message("notification.title.update.error"), message("notification.title.update.no.such.file"))
       }
       is UpdateResult.Error -> {
-        showError(enableButton.component, message("notification.title.update.error"), result.message)
+        showError(message("notification.title.update.error"), result.message)
       }
     }
     updateStatusInfo()
@@ -200,10 +197,12 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     }
 
     when (result) {
-      RESULT_DISABLE -> SettingsSyncSettings.getInstance().syncEnabled = false
+      RESULT_DISABLE -> {
+        SettingsSyncSettings.getInstance().syncEnabled = false
+        updateStatusInfo()
+      }
       RESULT_REMOVE_DATA_AND_DISABLE -> disableAndRemoveData()
     }
-    updateStatusInfo()
   }
 
   private fun disableAndRemoveData() {
@@ -216,18 +215,22 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       }
 
       override fun onThrowable(error: Throwable) {
-        showError(statusLabel, message("disable.remove.data.failure"), error.localizedMessage)
+        showError(message("disable.remove.data.failure"), error.localizedMessage)
+      }
+
+      override fun onSuccess() {
+        updateStatusInfo()
       }
     }.queue()
   }
 
-  private fun showError(component: JComponent, message: @Nls String, details: @Nls String) {
-    val builder = JBPopupFactory.getInstance().createBalloonBuilder(JLabel(details))
-    val balloon = builder.setTitle(message)
-      .setFillColor(HintUtil.getErrorColor())
-      .setDisposable(disposable!!)
-      .createBalloon()
-    balloon.showInCenterOf(component)
+  private fun showError(message: @Nls String, details: @Nls String) {
+    val messageBuilder = StringBuilder()
+    messageBuilder.append(message("sync.status.failed"))
+    statusLabel.icon = AllIcons.General.Error
+    messageBuilder.append(' ').append("$message: $details")
+    @Suppress("HardCodedStringLiteral")
+    statusLabel.text = messageBuilder.toString()
   }
 
   private fun updateStatusInfo() {

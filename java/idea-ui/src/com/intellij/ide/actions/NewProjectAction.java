@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.projectWizard.NewProjectWizard;
@@ -12,6 +13,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
 
 public class NewProjectAction extends AnAction implements DumbAware, NewProjectOrModuleAction {
@@ -23,8 +26,17 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-   NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e);
+    updateActionIcon(e);
     updateActionText(this, e);
+  }
+
+  private static void updateActionIcon(@NotNull AnActionEvent e) {
+    if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
+      NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e);
+    }
+    else if (ExperimentalUI.isNewUI()) {
+      e.getPresentation().setIcon(IconManager.getInstance().getIcon("expui/general/add.svg", AllIcons.class));
+    }
   }
 
   @NotNull

@@ -4,7 +4,6 @@ package com.jetbrains.python.console;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
@@ -12,13 +11,11 @@ import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
@@ -271,7 +268,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   @Override
   public void run(boolean requestEditorFocus) {
-    TransactionGuard.submitTransaction(PythonPluginDisposable.getInstance(myProject), () -> FileDocumentManager.getInstance().saveAllDocuments());
+    TransactionGuard.submitTransaction(PythonPluginDisposable.getInstance(myProject),
+                                       () -> FileDocumentManager.getInstance().saveAllDocuments());
 
     ApplicationManager.getApplication().executeOnPooledThread(
       () -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
@@ -328,17 +326,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
     ToolWindow toolwindow = PythonConsoleToolWindow.getToolWindow(myProject);
-    if (toolwindow != null) {
-      toolwindow.getComponent().putClientProperty(STARTED_BY_RUNNER, "true");
-      PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
-    }
-    else {
-      RunContentManager.getInstance(myProject).showRunContent(getExecutor(), contentDescriptor);
-    }
-  }
-
-  private static Executor getExecutor() {
-    return DefaultRunExecutor.getRunExecutorInstance();
+    toolwindow.getComponent().putClientProperty(STARTED_BY_RUNNER, "true");
+    PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
   }
 
   public static int findAvailablePort(@NotNull Project project, PyConsoleType consoleType) throws ExecutionException {
@@ -421,7 +410,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = getRemoteAdditionalData(mySdk);
     PyRemotePathMapper pathMapper = remoteSdkAdditionalData != null
-                                    ? PydevConsoleRunner.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
+                                    ? PydevConsoleRunnerUtil.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData)
                                     : null;
     PythonCommandLineState.initEnvironment(myProject, pythonConsoleScriptExecution, runParams, helpersAwareTargetRequest, pathMapper);
 
@@ -455,7 +444,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     if (remoteSdkAdditionalData != null) {
       GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, 0);
 
-      PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData);
+      PyRemotePathMapper pathMapper = PydevConsoleRunnerUtil.getPathMapper(myProject, myConsoleSettings, remoteSdkAdditionalData);
       RemoteConsoleProcessData remoteConsoleProcessData =
         PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
                                                                        pathMapper,
@@ -656,7 +645,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         String error;
         try {
           error = PyBundle.message("pydev.console.console.process.terminated.with.error",
-                                   StreamUtil.readText(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)), sb.toString());
+                                   StreamUtil.readText(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)),
+                                   sb.toString());
         }
         catch (Exception ignored) {
           error = PyBundle.message("pydev.console.console.process.terminated.with.exit.code", process.exitValue(), sb.toString());
@@ -777,7 +767,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         @Override
         protected List<String> getActiveConsoles(@NotNull String consoleTitle) {
           PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-          if (toolWindow != null && toolWindow.isInitialized() && toolWindow.getToolWindow() != null) {
+          if (toolWindow != null && toolWindow.isInitialized()) {
             return Arrays.stream(toolWindow.getToolWindow().getContentManager().getContents()).map(c -> c.getDisplayName())
               .filter(s -> s.startsWith(myTitle)).collect(Collectors.toList());
           }
@@ -1021,7 +1011,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private static String getConsoleDisplayName(@NotNull Project project) {
     PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
     ToolWindow window = toolWindow.getToolWindow();
-    if (window == null) return null;
     final Content content = window.getContentManager().getSelectedContent();
     if (content == null) return null;
     return content.getDisplayName();

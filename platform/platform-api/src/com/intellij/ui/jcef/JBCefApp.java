@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -30,6 +31,7 @@ import org.cef.CefSettings.LogSeverity;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +69,8 @@ public final class JBCefApp {
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 7;
 
   @NotNull private final CefApp myCefApp;
+
+  @NotNull private final CefSettings myCefSettings;
 
   @NotNull private final Disposable myDisposable = new Disposable() {
     @Override
@@ -147,6 +151,8 @@ public final class JBCefApp {
       settings.remote_debugging_port = port;
     }
 
+    settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
+
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()
@@ -194,6 +200,7 @@ public final class JBCefApp {
     }
 
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes));
+    myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
@@ -356,6 +363,11 @@ public final class JBCefApp {
     return getInstance() != null;
   }
 
+  @Contract(pure = true)
+  @NotNull String getCachePath() {
+    return myCefSettings.cache_path;
+  }
+
   @NotNull
   public JBCefClient createClient() {
     return createClient(false);
@@ -426,7 +438,7 @@ public final class JBCefApp {
     private int myGPUCrashCounter = 0;
     private boolean myNotificationShown = false;
 
-    MyCefAppHandler(String @Nullable[] args, boolean trackGPUCrashes) {
+    MyCefAppHandler(String @Nullable [] args, boolean trackGPUCrashes) {
       super(args);
       myGPUCrashLimit = trackGPUCrashes ? Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10) : -1;
     }

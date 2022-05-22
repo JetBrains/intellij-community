@@ -1,7 +1,6 @@
 // "Specify override for 'foo(): Unit' explicitly" "false"
 // ACTION: Compiler warning 'DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE' options
 // ACTION: Create test
-// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Extract 'C' from current file
 // ACTION: Make primary constructor internal

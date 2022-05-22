@@ -1,15 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,13 +52,10 @@ public abstract class InspectionViewActionBase extends AnAction {
       ToolWindowManager twManager = ToolWindowManager.getInstance(project);
       ToolWindow window = twManager.getToolWindow(ProblemsView.ID);
       if (window == null) {
-        // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
-        // see RIDER-59000
-        //noinspection deprecation
-        window = twManager.getToolWindow(ToolWindowId.INSPECTION);
         return null;
       }
-      Content selectedContent = window.getContentManager().getSelectedContent();
+      ContentManager contentManager = window.getContentManagerIfCreated();
+      Content selectedContent = contentManager != null ? contentManager.getSelectedContent() : null;
       if (selectedContent == null) return null;
       DataContext twContext = DataManager.getInstance().getDataContext(selectedContent.getComponent());
       view = InspectionResultsView.DATA_KEY.getData(twContext);

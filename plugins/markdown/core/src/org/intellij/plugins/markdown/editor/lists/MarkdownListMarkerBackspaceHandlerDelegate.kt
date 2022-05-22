@@ -5,6 +5,7 @@ import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.descendantsOfType
@@ -70,29 +71,28 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDele
     }
 
     if (nextItemFirstLine != null && !createsNewList) {
-      PsiDocumentManager.getInstance(file.project).commitDocument(document)
-
-      (file as MarkdownFile).getListItemAtLine(nextItemFirstLine, document)
-        ?.list?.renumberInBulk(document, recursive = false, restart = false)
+      if (Registry.`is`("markdown.lists.renumber.on.type.enable")) {
+        PsiDocumentManager.getInstance(file.project).commitDocument(document)
+        val updatedItem = (file as MarkdownFile).getListItemAtLine(nextItemFirstLine, document)
+        updatedItem?.list?.renumberInBulk(document, recursive = false, restart = false)
+      }
     }
-
     return true
   }
 
-  /*
-  Consider an example:
-  ```
-  1. first
-     1.
-
-     2. second sub-item
-  2. second
-  ```
-
-  If the first sub-item is deleted, then the second part (items, starting with "2.")
-  becomes a separate list, recognized as a flat list with no nesting. Applying a renumbering
-  to it will increase the indent of the "second" item. Such behaviour is unwanted.
-  */
+  /**
+   * Consider an example:
+   * ```
+   * 1. first
+   *   1.
+   *
+   *   2. second sub-item
+   * 2. second
+   * ```
+   * If the first sub-item is deleted, then the second part (items, starting with "2.")
+   * becomes a separate list, recognized as a flat list with no nesting. Applying a renumbering
+   * to it will increase the indent of the "second" item. Such behaviour is unwanted.
+   */
   private fun listWillBeSplitToTwoLists(item: MarkdownListItem, document: Document): Boolean {
     val itemFirstLine = document.getLineNumber(item.startOffset)
     val itemLastLine = document.getLineNumber(minOf(item.endOffset - 1, document.textLength))

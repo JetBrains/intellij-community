@@ -5,7 +5,7 @@ import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class EmmetPreviewTestBase extends BasePlatformTestCase {
+public abstract class EmmetPreviewTestBase extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();

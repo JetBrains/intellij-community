@@ -145,7 +145,7 @@ public final class CompilerMessagesService implements BuildViewService {
   }
 
   public static boolean showCompilerContent(final Project project, final Object contentId) {
-    final MessageView messageView = MessageView.SERVICE.getInstance(project);
+    final MessageView messageView = MessageView.getInstance(project);
     for (Content content : messageView.getContentManager().getContents()) {
       if (CONTENT_ID_KEY.get(content) == contentId) {
         messageView.getContentManager().setSelectedContent(content);
@@ -233,7 +233,7 @@ public final class CompilerMessagesService implements BuildViewService {
     if (project.isDisposed()) {
       return;
     }
-    final ContentManager contentManager = MessageView.SERVICE.getInstance(project).getContentManager();
+    final ContentManager contentManager = MessageView.getInstance(project).getContentManager();
     for (Content content : contentManager.getContents()) {
       if (!content.isPinned()) {
         if (CONTENT_ID_KEY.get(content) == myContentId || SESSION_ID_KEY.get(content) == sessionId) {
@@ -270,9 +270,9 @@ public final class CompilerMessagesService implements BuildViewService {
       component = myErrorTreeView.getComponent();
     }
 
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    MessageView messageView = MessageView.getInstance(myProject);
     messageView.runWhenInitialized(() -> {
-      Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
+      Content content = ContentFactory.getInstance().createContent(component, myContentName, true);
       content.setHelpId(HelpID.COMPILER);
       CONTENT_ID_KEY.set(content, myContentId);
       SESSION_ID_KEY.set(content, sessionId);
@@ -287,7 +287,7 @@ public final class CompilerMessagesService implements BuildViewService {
     if (project.isDisposed()) {
       return;
     }
-    final ContentManager contentManager = MessageView.SERVICE.getInstance(project).getContentManager();
+    final ContentManager contentManager = MessageView.getInstance(project).getContentManager();
     for (Content content : contentManager.getContents()) {
       if (content.isPinned() || content == notRemove) {
         continue;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.ActivityTracker;
@@ -421,7 +421,7 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     }
 
     for (int i = 0; i < myPanels.length; i++) {
-      final Content content = ContentFactory.SERVICE.getInstance().createContent(myPanels[i], names[i], false);
+      final Content content = ContentFactory.getInstance().createContent(myPanels[i], names[i], false);
       contentManager.addContent(content);
       if (i == 0 && myStructureView != null) {
         Disposer.register(content, myStructureView);

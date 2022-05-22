@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -40,7 +40,7 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
     fun getExtensionsFor(psiElement: PsiElement): GradleExtensionsData? {
       val project = psiElement.project
       val virtualFile = psiElement.containingFile?.originalFile?.virtualFile ?: return null
-      val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile)
+      val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
       return GradleExtensionsSettings.getInstance(project).getExtensionsFor(module) ?: return null
     }
   }

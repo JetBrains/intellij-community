@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@Suppress("UnstableApiUsage")
 enum class HintType(
     @Nls private val description: String,
     @Nls @IntentionName val showDescription: String,
@@ -113,8 +112,12 @@ enum class HintType(
         KotlinBundle.message("hints.settings.dont.show.lambda.return"),
         true
     ) {
-        override fun isApplicable(e: PsiElement) =
-            e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall()
+        override fun isApplicable(e: PsiElement): Boolean {
+            return e is KtExpression &&
+                    e !is KtFunctionLiteral &&
+                    !e.isNameReferenceInCall() &&
+                    e.isLambdaReturnValueHintsApplicable()
+        }
 
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
             e.safeAs<KtExpression>()?.let { expression ->
@@ -190,18 +193,17 @@ enum class HintType(
     };
 
     companion object {
-        fun resolve(e: PsiElement): List<HintType> =
-            values().filter { it.isApplicable(e) }
+        private val values = values()
 
-        fun resolveToEnabled(e: PsiElement?): HintType? =
-            e?.let { resolve(it) }?.firstOrNull { it.enabled }
+        fun resolve(e: PsiElement): List<HintType> =
+            values.filter { it.isApplicable(e) }
+
     }
 
     abstract fun isApplicable(e: PsiElement): Boolean
     open fun provideHints(e: PsiElement): List<InlayInfo> = emptyList()
-    open fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
-        return provideHints(e).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text))) }
-    }
+    open fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> =
+        provideHints(e).map { InlayInfoDetails(it, listOf(TextInlayInfoDetail(it.text))) }
 
     val option = Option("SHOW_${this.name}", { this.description }, defaultEnabled)
     val enabled

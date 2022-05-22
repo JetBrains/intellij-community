@@ -142,7 +142,6 @@ private fun installScrollIfChangedController(
   })
 }
 
-@Suppress("DialogTitleCapitalization")
 private fun createSubmitButton(
   model: CommentTextFieldModel,
   actionConfig: SubmitActionConfig

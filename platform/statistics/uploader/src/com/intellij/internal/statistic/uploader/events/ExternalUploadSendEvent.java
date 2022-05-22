@@ -15,8 +15,8 @@ public class ExternalUploadSendEvent extends ExternalSystemEvent {
 
   public ExternalUploadSendEvent(long timestamp, int succeed, int failed, int total,
                                  @NotNull List<String> successfullySentFiles,
-                                 @NotNull List<Integer> errors) {
-    super(ExternalSystemEventType.SEND, timestamp);
+                                 @NotNull List<Integer> errors, @NotNull String recorder) {
+    super(ExternalSystemEventType.SEND, timestamp, recorder);
     mySucceed = succeed;
     myFailed = failed;
     myTotal = total;

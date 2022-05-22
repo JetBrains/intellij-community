@@ -265,7 +265,6 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
         inlays.remove(inlay)
       }
       if (Disposer.isDisposed(inlay)) {
-        @Suppress("SSBasedInspection")
         disposable.dispose()
       } else {
         Disposer.register(inlay, disposable)

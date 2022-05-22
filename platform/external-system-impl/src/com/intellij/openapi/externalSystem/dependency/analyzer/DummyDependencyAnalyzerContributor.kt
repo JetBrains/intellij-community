@@ -4,28 +4,21 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LocalTimeCounter
-import com.intellij.util.PathUtil
 
 @Suppress("HardCodedStringLiteral", "unused")
 abstract class DummyDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
 
-  private fun externalProject(externalProjectPath: String) =
-    DAProject(externalProjectPath, PathUtil.getFileName(externalProjectPath))
-
   private fun scope(name: @NlsSafe String) =
     DAScope(name, StringUtil.toTitleCase(name))
 
-  override fun getProjects() = listOf(
-    externalProject(project.basePath!! + "/parent1"),
-    externalProject(project.basePath!! + "/parent2"),
-    externalProject(project.basePath!! + "/module"),
-    externalProject(project.basePath!! + "/module" + LocalTimeCounter.currentTime())
-  )
+  override fun getProjects() =
+    project.modules.map { DAProject(it, it.name) }
 
-  override fun getDependencyScopes(externalProjectPath: String) = listOf(
+  override fun getDependencyScopes(externalProject: DependencyAnalyzerProject) = listOf(
     scope("compile"),
     scope("runtime"),
     scope("provided"),
@@ -35,8 +28,8 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
     scope("scope" + LocalTimeCounter.currentTime())
   )
 
-  private fun getRoot(externalProjectPath: String): Dependency {
-    return createDependency(DAModule(PathUtil.getFileName(externalProjectPath)), scope("compile"), null)
+  private fun getRoot(externalProject: DependencyAnalyzerProject): Dependency {
+    return createDependency(DAModule(externalProject.module.name), scope("compile"), null)
   }
 
   private fun getDependencies(dependency: Dependency): List<Dependency> {
@@ -84,10 +77,10 @@ abstract class DummyDependencyAnalyzerContributor(private val project: Project) 
     }
   }
 
-  override fun getDependencies(externalProjectPath: String): List<Dependency> {
+  override fun getDependencies(externalProject: DependencyAnalyzerProject): List<Dependency> {
     val dependencies = ArrayList<Dependency>()
     val queue = ArrayDeque<Dependency>()
-    queue.add(getRoot(externalProjectPath))
+    queue.add(getRoot(externalProject))
     while (queue.isNotEmpty()) {
       val dependency = queue.removeFirst()
       dependencies.add(dependency)

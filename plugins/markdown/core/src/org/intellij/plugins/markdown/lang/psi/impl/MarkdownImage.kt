@@ -10,32 +10,33 @@ import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.children
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
-class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement {
+class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement, MarkdownLink {
   val exclamationMark: PsiElement?
     get() = firstChild
 
-  val wholeLink: PsiElement?
+  val link: MarkdownInlineLink?
     get() = findChildByType(MarkdownElementTypes.INLINE_LINK)
 
-  val wholeLinkText: PsiElement?
-    get() = wholeLink?.children?.find { it.hasType(MarkdownElementTypes.LINK_TEXT) }
+  override val linkText: MarkdownLinkText?
+    get() = link?.children()?.filterIsInstance<MarkdownLinkText>()?.firstOrNull()
 
-  val wholeLinkTitle: PsiElement?
-    get() = wholeLink?.children?.find { it.hasType(MarkdownElementTypes.LINK_TITLE) }
+  override val linkDestination: MarkdownLinkDestination?
+    get() = link?.children()?.filterIsInstance<MarkdownLinkDestination>()?.firstOrNull()
 
-  val linkDestination: MarkdownLinkDestination?
-    get() = wholeLink?.children?.find { it.hasType(MarkdownElementTypes.LINK_DESTINATION) } as? MarkdownLinkDestination
+  val linkTitle: PsiElement?
+    get() = link?.children()?.find { it.hasType(MarkdownElementTypes.LINK_TITLE) }
 
   fun collectLinkDescriptionText(): String? {
-    return wholeLinkText?.let {
+    return linkText?.let {
       collectTextFromWrappedBlock(it, MarkdownTokenTypes.LBRACKET, MarkdownTokenTypes.RBRACKET)
     }
   }
 
   fun collectLinkTitleText(): String? {
-    return wholeLinkTitle?.let {
+    return linkTitle?.let {
       collectTextFromWrappedBlock(it, MarkdownTokenTypes.DOUBLE_QUOTE, MarkdownTokenTypes.DOUBLE_QUOTE)
     }
   }

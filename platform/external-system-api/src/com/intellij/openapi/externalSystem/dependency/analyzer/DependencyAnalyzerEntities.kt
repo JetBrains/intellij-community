@@ -3,16 +3,17 @@
 
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import org.jetbrains.annotations.Nls
 
 class DAProject(
-  override val path: String,
+  override val module: Module,
   override val title: @Nls String
 ) : UserDataHolderBase(), DependencyAnalyzerProject {
-  override fun equals(other: Any?) = other is DependencyAnalyzerProject && path == other.path
-  override fun hashCode() = path.hashCode()
+  override fun equals(other: Any?) = other is DependencyAnalyzerProject && module == other.module
+  override fun hashCode() = module.hashCode()
   override fun toString() = title
 }
 

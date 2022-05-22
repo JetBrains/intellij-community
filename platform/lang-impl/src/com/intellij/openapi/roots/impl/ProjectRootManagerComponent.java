@@ -17,14 +17,17 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.RootsChangeIndexingInfo;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -35,16 +38,21 @@ import com.intellij.project.ProjectKt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.EntityIndexingService;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -174,14 +182,28 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   }
 
   @Override
-  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
+  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
     isFiringEvent = true;
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       if (directoryIndex instanceof DirectoryIndexImpl) {
         ((DirectoryIndexImpl)directoryIndex).reset();
       }
-      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, fileTypes, indexingInfos));
+      ThreeState isFromWorkspaceOnly = ThreeState.UNSURE;
+      for (RootsChangeRescanningInfo info : indexingInfos) {
+        if (info instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo
+            && ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)info).isFromWorkspaceModelEvent()) {
+          if (isFromWorkspaceOnly == ThreeState.UNSURE) {
+            isFromWorkspaceOnly = ThreeState.YES;
+          }
+        }
+        else {
+          isFromWorkspaceOnly = ThreeState.NO;
+          break;
+        }
+      }
+      myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(
+        new ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly == ThreeState.YES));
     }
     finally {
       isFiringEvent = false;
@@ -272,7 +294,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   }
 
-  private void synchronizeRoots(@NotNull List<? extends RootsChangeIndexingInfo> indexingInfos) {
+  private void synchronizeRoots(@NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
     if (!myStartupActivityPerformed) return;
     EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos);
   }
@@ -333,19 +355,19 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private final VirtualFilePointerListener myRootsChangedListener = new VirtualFilePointerListener() {
     @NotNull
-    private RootsChangeIndexingInfo getPointersChanges(VirtualFilePointer @NotNull [] pointers) {
-      RootsChangeIndexingInfo result = null;
+    private RootsChangeRescanningInfo getPointersChanges(VirtualFilePointer @NotNull [] pointers) {
+      RootsChangeRescanningInfo result = null;
       for (VirtualFilePointer pointer : pointers) {
         if (pointer.isValid()) {
-          return RootsChangeIndexingInfo.TOTAL_REINDEX;
+          return RootsChangeRescanningInfo.TOTAL_RESCAN;
         }
         else {
           if (result == null) {
-            result = RootsChangeIndexingInfo.NO_INDEXING_NEEDED;
+            result = RootsChangeRescanningInfo.NO_RESCAN_NEEDED;
           }
         }
       }
-      return ObjectUtils.notNull(result, RootsChangeIndexingInfo.TOTAL_REINDEX);
+      return ObjectUtils.notNull(result, RootsChangeRescanningInfo.TOTAL_RESCAN);
     }
 
     @Override
@@ -368,7 +390,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     @Override
     public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
-      RootsChangeIndexingInfo changeInfo = getPointersChanges(pointers);
+      RootsChangeRescanningInfo changeInfo = getPointersChanges(pointers);
 
       if (myProject.isDisposed()) {
         return;

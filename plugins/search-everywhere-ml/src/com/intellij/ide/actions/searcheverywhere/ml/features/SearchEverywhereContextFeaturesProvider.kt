@@ -18,42 +18,32 @@ internal class SearchEverywhereContextFeaturesProvider {
     internal val LOCAL_MAX_USAGE_SE_COUNT_KEY = EventFields.Int("maxUsageSE")
     internal val LOCAL_MIN_USAGE_SE_COUNT_KEY = EventFields.Int("minUsageSE")
 
-    internal val GLOBAL_MAX_USAGE_COUNT_KEY = EventFields.Long("globalMaxUsage")
-    internal val GLOBAL_MIN_USAGE_COUNT_KEY = EventFields.Long("globalMinUsage")
-    private val versionPattern = "V${ActionsGlobalSummaryManager.getUpdatedStatisticsVersion()}"
-    internal val GLOBAL_MAX_USAGE_COUNT_KEY_VERSIONED = EventFields.Long("globalMaxUsage$versionPattern")
-    internal val GLOBAL_MIN_USAGE_COUNT_KEY_VERSIONED = EventFields.Long("globalMinUsage$versionPattern")
+    private val GLOBAL_STATISTICS_CONTEXT_DEFAULT = GlobalStatisticsContextFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
 
     internal val OPEN_FILE_TYPES_KEY = EventFields.StringListValidatedByCustomRule("openFileTypes", "file_type")
     internal val NUMBER_OF_OPEN_EDITORS_KEY = EventFields.Int("numberOfOpenEditors")
     internal val IS_SINGLE_MODULE_PROJECT = EventFields.Boolean("isSingleModuleProject")
 
     internal fun getContextFields(): List<EventField<*>> {
-      return arrayListOf(
+      val fields = arrayListOf<EventField<*>>(
         LOCAL_MAX_USAGE_COUNT_KEY, LOCAL_MIN_USAGE_COUNT_KEY, LOCAL_MAX_USAGE_SE_COUNT_KEY, LOCAL_MIN_USAGE_SE_COUNT_KEY,
-        GLOBAL_MAX_USAGE_COUNT_KEY, GLOBAL_MIN_USAGE_COUNT_KEY, GLOBAL_MAX_USAGE_COUNT_KEY_VERSIONED, GLOBAL_MIN_USAGE_COUNT_KEY_VERSIONED,
         OPEN_FILE_TYPES_KEY, NUMBER_OF_OPEN_EDITORS_KEY, IS_SINGLE_MODULE_PROJECT
       )
+      fields.addAll(GLOBAL_STATISTICS_CONTEXT_DEFAULT.getFieldsDeclaration())
+      return fields
     }
   }
 
   fun getContextFeatures(project: Project?): List<EventPair<*>> {
     val data = arrayListOf<EventPair<*>>()
     val localTotalStats = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java).getTotalStats()
-    
-    val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
-
-    val globalTotalStats = globalSummary.totalSummary
-    val updatedGlobalTotalStats = globalSummary.updatedTotalSummary
-
     data.add(LOCAL_MAX_USAGE_COUNT_KEY.with(localTotalStats.maxUsageCount))
     data.add(LOCAL_MIN_USAGE_COUNT_KEY.with(localTotalStats.minUsageCount))
     data.add(LOCAL_MAX_USAGE_SE_COUNT_KEY.with(localTotalStats.maxUsageFromSearchEverywhere))
     data.add(LOCAL_MIN_USAGE_SE_COUNT_KEY.with(localTotalStats.minUsageFromSearchEverywhere))
-    data.add(GLOBAL_MAX_USAGE_COUNT_KEY.with(globalTotalStats.maxUsageCount))
-    data.add(GLOBAL_MIN_USAGE_COUNT_KEY.with(globalTotalStats.minUsageCount))
-    data.add(GLOBAL_MAX_USAGE_COUNT_KEY_VERSIONED.with(updatedGlobalTotalStats.maxUsageCount))
-    data.add(GLOBAL_MIN_USAGE_COUNT_KEY_VERSIONED.with(updatedGlobalTotalStats.minUsageCount))
+
+    val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
+    data.addAll(GLOBAL_STATISTICS_CONTEXT_DEFAULT.getGlobalUsageStatistics(globalSummary.totalSummary))
 
     project?.let {
       if (project.isDisposed) {
@@ -67,5 +57,19 @@ internal class SearchEverywhereContextFeaturesProvider {
     }
 
     return data
+  }
+
+  internal class GlobalStatisticsContextFields(version: Int) {
+    private val globalMaxUsage = EventFields.Long("globalMaxUsageV${version}")
+    private val globalMinUsage = EventFields.Long("globalMinUsageV${version}")
+
+    fun getFieldsDeclaration(): List<EventField<*>> = arrayListOf(globalMaxUsage, globalMinUsage)
+
+    fun getGlobalUsageStatistics(stats: ActionsGlobalSummaryManager.ActionsGlobalTotalSummary) : List<EventPair<*>> {
+      return arrayListOf<EventPair<*>>(
+        globalMaxUsage.with(stats.maxUsageCount),
+        globalMinUsage.with(stats.minUsageCount)
+      )
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -476,7 +476,7 @@ class Foo {
     assert !lookup
   }
 
-  void testArrows(String toType, LookupFocusDegree focusDegree, int indexDown, int indexUp) {
+  void doTestArrows(String toType, LookupFocusDegree focusDegree, int indexDown, int indexUp) {
     Closure checkArrow = { String action, int expectedIndex ->
       myFixture.configureByText("a.java", """
       class A {
@@ -509,10 +509,10 @@ class Foo {
 
   void "test vertical arrows in non-focused lookup"() {
     String toType = "ArrayIndexOutOfBoundsException ind"
-    testArrows toType, LookupFocusDegree.UNFOCUSED, 0, 2
+    doTestArrows toType, LookupFocusDegree.UNFOCUSED, 0, 2
 
     ((AdvancedSettingsImpl) AdvancedSettings.getInstance()).setSetting("ide.cycle.scrolling", false, getTestRootDisposable())
-    testArrows toType, LookupFocusDegree.UNFOCUSED, 0, -1
+    doTestArrows toType, LookupFocusDegree.UNFOCUSED, 0, -1
   }
 
   void "test vertical arrows in semi-focused lookup"() {
@@ -520,10 +520,10 @@ class Foo {
     UISettings.getInstance()setSortLookupElementsLexicographically(true)
 
     String toType = "fo"
-    testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
+    doTestArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
 
     ((AdvancedSettingsImpl) AdvancedSettings.getInstance()).setSetting("ide.cycle.scrolling", false, getTestRootDisposable())
-    testArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
+    doTestArrows toType, LookupFocusDegree.SEMI_FOCUSED, 2, 0
   }
 
   void testHideOnOnePrefixVariant() {

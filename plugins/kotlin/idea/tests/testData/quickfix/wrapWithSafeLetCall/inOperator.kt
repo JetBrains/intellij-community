@@ -1,6 +1,5 @@
 // "Wrap with '?.let { ... }' call" "false"
 // ACTION: Add non-null asserted (!!) call
-// ACTION: Do not show return expression hints
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check

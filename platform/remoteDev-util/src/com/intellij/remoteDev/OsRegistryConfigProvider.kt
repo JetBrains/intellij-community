@@ -13,6 +13,7 @@ import java.io.File
 class OsRegistryConfigProvider(private val configName: String) {
   companion object {
     private val logger = logger<OsRegistryConfigProvider>()
+    private const val configJsonFilename = "config.json"
   }
 
   init {
@@ -23,7 +24,10 @@ class OsRegistryConfigProvider(private val configName: String) {
     val isSetFromOs = osOriginLocation != null
   }
 
+  private val keyRegex = Regex("^\\w+$")
   fun get(key: String): OsRegistrySystemSetting<String>? {
+    require(key.matches(keyRegex)) { "Key '$key' does not match regex '${keyRegex.pattern}'" }
+
     val systemValue = when {
       SystemInfo.isWindows -> getFromRegistry(key)
       SystemInfo.isLinux -> getFromXdgConfig(key)
@@ -86,7 +90,7 @@ class OsRegistryConfigProvider(private val configName: String) {
   // https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.6.html
   private fun getFromXdgConfig(key: String): OsRegistrySystemSetting<String>? {
 
-    val configPath = "JetBrains/$configName/config.json"
+    val configDirectoryPath = "JetBrains/$configName"
     val env = EnvironmentUtil.getEnvironmentMap()
     val home = System.getProperty("user.home")
 
@@ -98,14 +102,38 @@ class OsRegistryConfigProvider(private val configName: String) {
     val xdgConfigDirs = (env["XDG_CONFIG_DIRS"] ?: "").split(":").filter { it.isNotEmpty() }
     configLookupDirs.addAll(xdgConfigDirs)
 
-    return getFromDirectories(key, configLookupDirs.map { File(it) }, configPath)
+    return getFromDirectories(key, configLookupDirs.map { File(it) }, configDirectoryPath)
   }
 
-  private fun getFromDirectories(key: String, dirs: List<File>, configPath: String): OsRegistrySystemSetting<String>? =
+  private fun getFromDirectories(key: String, dirs: List<File>, configDirectoryPath: String): OsRegistrySystemSetting<String>? =
     dirs.mapNotNull {
-      val file = File(it, configPath)
-      getFromJsonFile(key, file)
+      // get from file with name $key
+      val valueFromKeyFile = getFromKeyFile(it, configDirectoryPath, key)
+      if (valueFromKeyFile != null)
+        return@mapNotNull valueFromKeyFile
+
+      // fallback to config.json
+      val configJsonFile = File(File(it, configDirectoryPath), configJsonFilename)
+      return@mapNotNull getFromJsonFile(key, configJsonFile)
     }.firstOrNull()
+
+  private fun getFromKeyFile(it: File, configDirectoryPath: String, key: String): OsRegistrySystemSetting<String>? {
+    val keyFile = File(File(it, configDirectoryPath), key)
+    logger.debug("Trying to get $key from file=${keyFile.canonicalPath}")
+    if (!keyFile.exists()) {
+      logger.debug("File=${keyFile.canonicalPath} does not exist.")
+      return null
+    }
+    try {
+      // todo: think about it: should we trim the value?
+      val keyFileContents = keyFile.readText().trim()
+      logger.info("Found $key in file=${keyFile.canonicalPath}, value=$keyFileContents")
+      return OsRegistrySystemSetting(keyFileContents, keyFile.canonicalPath)
+    } catch (e: Throwable) {
+      logger.warn("Failed to read setting $key from ${keyFile.canonicalPath}")
+      return null
+    }
+  }
 
   private fun getFromJsonFile(key: String, file: File): OsRegistrySystemSetting<String>? {
     logger.debug("Trying to get $key from file=${file.canonicalPath}")
@@ -116,10 +144,10 @@ class OsRegistryConfigProvider(private val configName: String) {
     }
     return try {
       val root = Json.Default.parseToJsonElement(file.readText()) as? JsonObject
-      val uri = (root?.get(key) as? JsonPrimitive)?.content
-      if (uri != null) {
-        logger.info("Found $key in file=${file.canonicalPath}, value=$uri")
-        OsRegistrySystemSetting(uri, file.canonicalPath)
+      val resultValue = (root?.get(key) as? JsonPrimitive)?.content
+      if (resultValue != null) {
+        logger.info("Found $key in file=${file.canonicalPath}, value=$resultValue")
+        OsRegistrySystemSetting(resultValue, file.canonicalPath)
       }
       else null
     }
@@ -132,7 +160,7 @@ class OsRegistryConfigProvider(private val configName: String) {
   private fun getFromLibraryApplicationSupport(key: String): OsRegistrySystemSetting<String>? {
     val home = System.getProperty("user.home")
     val dirs = listOf("/", "$home/")
-    val configPath = "Library/Application Support/JetBrains/$configName/config.json"
-    return getFromDirectories(key, dirs.map { File(it) }, configPath)
+    val configDirectoryPath = "Library/Application Support/JetBrains/$configName"
+    return getFromDirectories(key, dirs.map { File(it) }, configDirectoryPath)
   }
 }

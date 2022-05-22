@@ -1,7 +1,6 @@
 // "Change type to MutableSet" "false"
 // DISABLE-ERRORS
 // ACTION: Converts the assignment statement to an expression
-// ACTION: Do not show return expression hints
 // ACTION: Replace overloaded operator with function call
 // WITH_STDLIB
 fun main() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge
 
 import com.intellij.dvcs.DvcsUtil
@@ -59,7 +59,6 @@ internal fun createRepositoryField(repositories: List<GitRepository>,
                                    defaultRoot: VirtualFile? = null) = ComboBox(CollectionComboBoxModel(repositories)).apply {
   item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
   renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
-  @Suppress("UsePropertyAccessSyntax")
   setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
 }
 
@@ -362,7 +361,6 @@ class GitMergeDialog(private val project: Project,
                                                                project).apply {
     prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setPlaceholder(GitBundle.message("merge.branch.field.placeholder"))
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
       popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))

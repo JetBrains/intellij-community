@@ -3,7 +3,6 @@
 // ERROR: JvmField has no effect on a private property
 // ACTION: Add use-site target 'field'
 // ACTION: Convert to lazy property
-// ACTION: Do not show return expression hints
 // ACTION: Make internal
 // ACTION: Make public
 // ACTION: Remove @JvmField annotation

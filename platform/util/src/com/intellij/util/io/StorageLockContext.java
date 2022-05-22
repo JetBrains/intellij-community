@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.io.stats.FilePageCacheStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,5 +109,10 @@ public final class StorageLockContext {
   @ApiStatus.Internal
   public static void forceDirectMemoryCache() {
     ourDefaultCache.flushBuffers();
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull FilePageCacheStatistics getStatistics() {
+    return ourDefaultCache.getStatistics();
   }
 }

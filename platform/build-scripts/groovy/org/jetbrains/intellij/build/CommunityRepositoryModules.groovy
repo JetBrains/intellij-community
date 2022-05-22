@@ -14,6 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
 
+import static org.jetbrains.intellij.build.impl.PluginLayout.simplePlugin
 import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
@@ -47,7 +48,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.properties.psi", "properties.jar")
       withModule("intellij.properties.psi.impl", "properties.jar")
     },
-    plugin("intellij.properties.resource.bundle.editor"),
+    simplePlugin("intellij.properties.resource.bundle.editor"),
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
@@ -76,7 +77,7 @@ final class CommunityRepositoryModules {
       withModuleLibrary("Saxon-9HE", "intellij.xslt.debugger.impl.rt", "rt")
       withModuleLibrary("Xalan-2.7.2", "intellij.xslt.debugger.impl.rt", "rt")
     },
-    plugin("intellij.platform.tracing.ide"),
+    simplePlugin("intellij.platform.tracing.ide"),
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
       withModule("intellij.maven.server", "maven-server-api.jar")
@@ -131,14 +132,14 @@ final class CommunityRepositoryModules {
       withModule("intellij.packageSearch.maven")
       withModule("intellij.packageSearch.kotlin")
     },
-    plugin("intellij.gradle.dependencyUpdater"),
+    simplePlugin("intellij.gradle.dependencyUpdater"),
     plugin("intellij.android.gradle.dsl") {
       withModule("intellij.android.gradle.dsl.kotlin")
     },
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
     },
-    plugin("intellij.gradle.java.maven"),
+    simplePlugin("intellij.gradle.java.maven"),
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"
       withModule("intellij.junit.rt", "junit-rt.jar")
@@ -196,9 +197,9 @@ final class CommunityRepositoryModules {
       withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
-    plugin("intellij.android.smali"),
+    simplePlugin("intellij.android.smali"),
     androidDesignPlugin(),
-    plugin("intellij.completionMlRanking"),
+    simplePlugin("intellij.completionMlRanking"),
     plugin("intellij.completionMlRankingModels") {
       bundlingRestrictions.includeInEapOnly = true
     },
@@ -209,7 +210,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.ml.models.local.java")
       bundlingRestrictions.includeInEapOnly = true
     },
-    plugin("intellij.jps.cache"),
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     },
@@ -222,7 +222,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.grazie.xml")
       withModule("intellij.grazie.yaml")
     },
-    plugin("intellij.java.rareRefactorings"),
+    simplePlugin("intellij.java.rareRefactorings"),
     plugin("intellij.toml") {
       withModule("intellij.toml.core")
       withModule("intellij.toml.json")
@@ -246,7 +246,7 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.cucumber.groovy") {
     },
-    plugin("intellij.gauge"),
+    simplePlugin("intellij.gauge"),
     plugin("intellij.protoeditor") {
       withModule("intellij.protoeditor.core")
       withModule("intellij.protoeditor.go")

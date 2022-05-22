@@ -145,6 +145,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     add(progress!!.component)
     // we assume `isShowing == true` here - so we do not need to add progress to status bar
     failuresPanel.clearFailures()
+    revalidate()
   }
 
   private fun progressStopped() {
@@ -156,6 +157,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     progress = null
 
     failuresPanel.endProgress()
+    revalidate()
   }
 
   private fun addToStatusBar(progress: CommitChecksProgressIndicator) {
@@ -169,7 +171,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     // `finish` tracks list of finished `TaskInfo`-s - so we pass new instance to remove from status bar
     progress.finish(CommitChecksTaskInfo())
 
-  override fun addCommitCheckFailure(text: String, detailsViewer: () -> Unit) {
+  override fun addCommitCheckFailure(text: String, detailsViewer: (() -> Unit)?) {
     progress?.component?.isVisible = false
     failuresPanel.addFailure(CommitCheckFailure(text, detailsViewer))
   }
@@ -204,7 +206,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
 }
 
-private class CommitCheckFailure(@Nls val text: String, val detailsViewer: () -> Unit)
+private class CommitCheckFailure(@Nls val text: String, val detailsViewer: (() -> Unit)?)
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
   private var nextFailureId = 0
@@ -270,15 +272,22 @@ private class FailuresDescriptionPanel : HtmlPanel() {
   private fun buildDescription(): HtmlChunk {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
-    val failuresLinks = formatNarrowAndList(failures.map { HtmlChunk.link(it.key.toString(), it.value.text) })
-    return HtmlChunk.raw(message("label.commit.checks.failed", failuresLinks))
+    val failureLinks = formatNarrowAndList(failures.map {
+      if (it.value.detailsViewer != null) {
+        HtmlChunk.link(it.key.toString(), it.value.text)
+      }
+      else {
+        HtmlChunk.text(it.value.text)
+      }
+    })
+    return HtmlChunk.raw(message("label.commit.checks.failed", failureLinks))
   }
 
   private fun showDetails(event: HyperlinkEvent) {
     if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return
 
     val failure = failures[event.description.toInt()] ?: return
-    failure.detailsViewer()
+    failure.detailsViewer!!.invoke()
   }
 }
 

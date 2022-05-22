@@ -6,6 +6,8 @@ import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import kotlin.Pair
+import kotlin.Unit
+import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
@@ -21,7 +23,6 @@ import java.nio.file.Path
 import java.time.LocalDate
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiConsumer
-import java.util.function.Supplier
 import java.util.zip.Deflater
 
 import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
@@ -109,11 +110,11 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     layoutMacApp(ideaProperties, platformProperties, getDocTypes(), macDistDir, buildContext)
 
-    BuildTasksImpl.unpackPty4jNative(buildContext, macDistDir, "darwin")
+    DistUtilKt.unpackPty4jNative(buildContext, macDistDir, "darwin")
 
-    BuildTasksImpl.generateBuildTxt(buildContext, macDistDir.resolve("Resources"))
+    DistUtilKt.generateBuildTxt(buildContext, macDistDir.resolve("Resources"))
     if (copyDistFiles) {
-      BuildTasksImpl.copyDistFiles(buildContext, macDistDir)
+      DistUtilKt.copyDistFiles(buildContext, macDistDir)
     }
 
     customizer.copyAdditionalFiles(buildContext, macDistDir.toString())
@@ -190,15 +191,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                                         Boolean notarize,
                                                         MacDistributionCustomizer customizer,
                                                         BuildContext context) {
-    return TraceKt.createTask(spanBuilder("build macOS artifacts for specific arch")
-                                                         .setAttribute("arch", arch.name()), new Supplier<Void>() {
-      @Override
-      Void get() {
-        ForkJoinTask.invokeAll(buildForArch(arch, context.bundledRuntime, macZip, notarize, customizer, context)
-                                 .findAll { it != null })
-
-        return null
-      }
+    return TraceKt.createTask(spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name()), {
+      ForkJoinTask.invokeAll(buildForArch(arch, context.bundledRuntime, macZip, notarize, customizer, context)
+                               .findAll { it != null })
     })
   }
 
@@ -213,30 +208,32 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String archStr = arch.name()
     // with JRE
     if (context.options.buildDmgWithBundledJre) {
-      tasks.add(BuildHelper.createSkippableTask(
+      tasks.add(BuildHelperKt.createSkippableTask(
         spanBuilder("build DMG with JRE").setAttribute("arch", archStr),
         "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr",
         context,
-        new Runnable() {
+        new Function0<Unit>() {
           @Override
-          void run() {
+          Unit invoke() {
             Path jreArchive = jreManager.findArchive(BundledRuntimeImpl.getProductPrefix(context), OsFamily.MACOS, arch)
             MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
                                           jreArchive, suffix, notarize)
+            return null
           }
         }))
     }
 
     // without JRE
     if (context.options.buildDmgWithoutBundledJre) {
-      tasks.add(BuildHelper.createSkippableTask(
+      tasks.add(BuildHelperKt.createSkippableTask(
         spanBuilder("build DMG without JRE").setAttribute("arch", archStr),
         "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_$archStr",
-        context, new Runnable() {
+        context, new Function0<Unit>() {
         @Override
-        void run() {
+        Unit invoke() {
           MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
                                         null, "-no-jdk$suffix", notarize)
+          return null
         }
       }))
     }
@@ -249,10 +246,10 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                             Path macDistDir,
                             BuildContext context) {
     MacDistributionCustomizer macCustomizer = customizer
-    BuildHelper.copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"),
+    BuildHelperKt.copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"),
                                       macDistDir.resolve("bin"),
                                       customizer.binFilesFilter)
-    BuildHelper.copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
+    FileKt.copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     String executable = context.productProperties.baseFileName
     Files.move(macDistDir.resolve("MacOS/executable"), macDistDir.resolve("MacOS/$executable"))
@@ -260,14 +257,14 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     //noinspection SpellCheckingInspection
     Path icnsPath = Path.of((context.applicationInfo.isEAP() ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath)
     Path resourcesDistDir = macDistDir.resolve("Resources")
-    BuildHelper.copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
+    FileKt.copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
 
     for (FileAssociation fileAssociation in customizer.fileAssociations) {
       if (!fileAssociation.iconPath.empty) {
         Path source = Path.of(fileAssociation.iconPath)
         Path dest = resourcesDistDir.resolve(source.fileName)
         Files.deleteIfExists(dest)
-        BuildHelper.copyFile(source, dest)
+        FileKt.copyFile(source, dest)
       }
     }
 
@@ -366,22 +363,28 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
             fileName = "${inspectCommandName}.sh"
           }
 
-          if (Files.readString(file).contains("\r")) {
-            throw new IllegalStateException("File must not contain CR (\\r) separators: $file")
-          }
+          Path sourceFileLf = Files.createTempFile(context.paths.tempDir, file.fileName.toString(), "")
+          try {
+            // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
+            // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
+            Files.writeString(sourceFileLf, Files.readString(file).replace("\r", ""))
 
-          Path target = distBinDir.resolve(fileName)
-          FileKt.substituteTemplatePlaceholders(
-            file,
-            target,
-            "@@",
-            [
-              new Pair<String, String>("product_full", fullName),
-              new Pair<String, String>("script_name", executable),
-              new Pair<String, String>("inspectCommandName", inspectCommandName),
-            ],
-            false,
-          )
+            Path target = distBinDir.resolve(fileName)
+            FileKt.substituteTemplatePlaceholders(
+              sourceFileLf,
+              target,
+              "@@",
+              [
+                new Pair<String, String>("product_full", fullName),
+                new Pair<String, String>("script_name", executable),
+                new Pair<String, String>("inspectCommandName", inspectCommandName),
+              ],
+              false,
+            )
+          }
+          finally {
+            Files.delete(sourceFileLf)
+          }
         }
       }
     }

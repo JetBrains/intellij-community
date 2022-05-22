@@ -4,8 +4,8 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.combined.CombinedDiffRequest
-import com.intellij.diff.tools.combined.CombinedDiffViewer
+import com.intellij.diff.tools.combined.COMBINED_DIFF_MODEL
+import com.intellij.diff.tools.combined.COMBINED_DIFF_VIEWER_KEY
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -21,13 +21,12 @@ class SemanticDiffRefactoringProcessor : DiffExtension() {
     if (!Registry.`is`("enable.semantic.inlays.in.combined.diff")) return
 
     val project = context.project ?: return
-    val combinedDiffViewer = viewer as? CombinedDiffViewer ?: return
-    val combinedDiffRequest = request as? CombinedDiffRequest ?: return
+    val combinedDiffViewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
+    val combinedDiffModel = context.getUserData(COMBINED_DIFF_MODEL) ?: return
 
     val changes =
-      combinedDiffRequest.getChildRequests()
+      combinedDiffModel.requests.values
         .asSequence()
-        .map(CombinedDiffRequest.ChildDiffRequest::producer)
         .filterIsInstance<ChangeDiffRequestProducer>()
         .map(ChangeDiffRequestProducer::getChange)
         .toList()

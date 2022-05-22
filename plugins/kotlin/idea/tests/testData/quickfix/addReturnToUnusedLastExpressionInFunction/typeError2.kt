@@ -9,7 +9,6 @@
 // ACTION: Create object 'FunctionReference'
 // ACTION: Create parameter 'FunctionReference'
 // ACTION: Create property 'FunctionReference'
-// ACTION: Do not show return expression hints
 // ACTION: Introduce local variable
 // ACTION: Rename reference
 // ERROR: Unresolved reference: FunctionReference

@@ -18,11 +18,13 @@ import javax.swing.UIManager.LookAndFeelInfo
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
 @Service(Service.Level.APP)
 internal class UiThemeProviderListManager {
+
   companion object {
+
     @JvmStatic
     fun getInstance(): UiThemeProviderListManager = service()
 
-    const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
+    private const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
 
     var lafNameOrder: Map<String, Int> = if (ExperimentalUI.isNewUI()) {
       java.util.Map.of(
@@ -50,6 +52,8 @@ internal class UiThemeProviderListManager {
       )
     }
 
+    val excludedThemes = if (!ExperimentalUI.isNewUI()) listOf("Light", "Dark") else emptyList()
+
     fun sortThemes(list: MutableList<out LookAndFeelInfo>) {
       list.sortWith { t1: LookAndFeelInfo, t2: LookAndFeelInfo ->
         val n1 = t1.name
@@ -68,6 +72,8 @@ internal class UiThemeProviderListManager {
         }
       }
     }
+
+    private fun editorColorsManager() = EditorColorsManager.getInstance() as EditorColorsManagerImpl
   }
 
   @Volatile
@@ -75,30 +81,48 @@ internal class UiThemeProviderListManager {
 
   fun getLaFs(): List<UIThemeBasedLookAndFeelInfo> = lafList
 
-  fun findJetBrainsLightTheme(): UIThemeBasedLookAndFeelInfo? {
-    return lafList.find { it.theme.id == DEFAULT_LIGHT_THEME_ID }
-  }
+  fun findJetBrainsLightTheme(): UIThemeBasedLookAndFeelInfo? = findLaFById(DEFAULT_LIGHT_THEME_ID)
 
-  fun themeAdded(provider: UIThemeProvider): UIThemeBasedLookAndFeelInfo? {
-    if (lafList.any { it.theme.id == provider.id }) {
+  fun themeProviderAdded(provider: UIThemeProvider): UIThemeBasedLookAndFeelInfo? {
+    if (findLaFByProviderId(provider) != null) {
       // provider is already registered
       return null
     }
 
     val theme = provider.createTheme() ?: return null
-    (EditorColorsManager.getInstance() as EditorColorsManagerImpl).handleThemeAdded(theme)
+    editorColorsManager().handleThemeAdded(theme)
     val newLaF = UIThemeBasedLookAndFeelInfo(theme)
     lafList = lafList + newLaF
     return newLaF
   }
+
+  fun themeProviderRemoved(provider: UIThemeProvider): UIThemeBasedLookAndFeelInfo? {
+    val oldLaF = findLaFByProviderId(provider)
+    if (oldLaF == null) {
+      return null
+    }
+
+    lafList = lafList - oldLaF
+    editorColorsManager().handleThemeRemoved(oldLaF.theme)
+    return oldLaF
+  }
+
+  private fun findLaFById(id: String) = lafList.find { it.theme.id == id }
+
+  private fun findLaFByProviderId(provider: UIThemeProvider) = findLaFById(provider.id)
 }
 
 private fun computeList(): List<UIThemeBasedLookAndFeelInfo> {
-  val point = UIThemeProvider.EP_NAME.point as ExtensionPointImpl<UIThemeProvider>
+  val point = UIThemeProvider.EP_NAME
+    .point as ExtensionPointImpl<UIThemeProvider>
+
   val themes = ArrayList<UIThemeBasedLookAndFeelInfo>(point.size())
+  val application = ApplicationManager.getApplication()
   for (adapter in point.sortedAdapters) {
-    val provider = adapter.createInstance<UIThemeProvider>(ApplicationManager.getApplication()) ?: continue
-    themes.add(UIThemeBasedLookAndFeelInfo(provider.createTheme() ?: continue))
+    adapter.createInstance<UIThemeProvider>(application)
+      ?.createTheme()
+      ?.let { UIThemeBasedLookAndFeelInfo(it) }
+      ?.let { themes.add(it) }
   }
   sortThemes(themes)
   return themes

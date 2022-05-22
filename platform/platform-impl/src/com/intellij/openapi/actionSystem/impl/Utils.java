@@ -118,6 +118,7 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
+    assert isAsyncDataContext(context);
     return new ActionUpdater(presentationFactory, context, place, false, false)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
@@ -128,6 +129,7 @@ public final class Utils {
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction) {
+    assert isAsyncDataContext(context);
     return new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }

@@ -20,6 +20,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MissingLoopBodyFixer implements Fixer {
   @Override
@@ -29,7 +32,7 @@ public class MissingLoopBodyFixer implements Fixer {
 
     final Document doc = editor.getDocument();
 
-    PsiElement body = loopStatement.getBody();
+    PsiStatement body = loopStatement.getBody();
     if (body instanceof PsiBlockStatement) return;
     if (body != null && startLine(doc, body) == startLine(doc, loopStatement)) return;
 
@@ -94,31 +97,46 @@ public class MissingLoopBodyFixer implements Fixer {
     return doc.getLineNumber(psiElement.getTextRange().getStartOffset());
   }
 
-  static void fixLoopBody(Editor editor,
-                          JavaSmartEnterProcessor processor,
-                          PsiLoopStatement loop,
-                          Document doc,
-                          PsiElement body,
-                          PsiElement eltToInsertAfter) {
+  static void fixLoopBody(@NotNull Editor editor,
+                          @NotNull JavaSmartEnterProcessor processor,
+                          @NotNull PsiLoopStatement loop,
+                          @NotNull Document doc,
+                          @Nullable PsiStatement body,
+                          @Nullable PsiElement eltToInsertAfter) {
     if (body != null && eltToInsertAfter != null) {
-      int endOffset = body.getTextRange().getEndOffset();
-      doc.insertString(endOffset, "\n}");
-      int offset = eltToInsertAfter.getTextRange().getEndOffset();
-      doc.insertString(offset, "{");
-      editor.getCaretModel().moveToOffset(endOffset + "{".length());
-      processor.setSkipEnter(true);
-      processor.reformat(loop);
-    }
-    else {
-      String prefix = "{}";
-      String text = prefix;
-      if (eltToInsertAfter == null) {
-        eltToInsertAfter = loop;
-        text = ")" + text;
+      if (bodyIsIndented(loop, body)) {
+        int endOffset = body.getTextRange().getEndOffset();
+        doc.insertString(endOffset, "\n}");
+        int offset = eltToInsertAfter.getTextRange().getEndOffset();
+        doc.insertString(offset, "{");
+        editor.getCaretModel().moveToOffset(endOffset + "{".length());
+        processor.setSkipEnter(true);
+        processor.reformat(loop);
+        return;
       }
-      int offset = eltToInsertAfter.getTextRange().getEndOffset();
-      doc.insertString(offset, text);
-      editor.getCaretModel().moveToOffset(offset + text.length() - prefix.length());
     }
+    String prefix = "{}";
+    String text = prefix;
+    if (eltToInsertAfter == null) {
+      eltToInsertAfter = loop;
+      text = ")" + text;
+    }
+    int offset = eltToInsertAfter.getTextRange().getEndOffset();
+    doc.insertString(offset, text);
+    editor.getCaretModel().moveToOffset(offset + text.length() - prefix.length());
+  }
+
+  private static boolean bodyIsIndented(@NotNull PsiLoopStatement loop, @NotNull PsiElement body) {
+    PsiWhiteSpace beforeBody = ObjectUtils.tryCast(body.getPrevSibling(), PsiWhiteSpace.class);
+    if (beforeBody == null) return false;
+    PsiWhiteSpace beforeLoop = ObjectUtils.tryCast(loop.getPrevSibling(), PsiWhiteSpace.class);
+    if (beforeLoop == null) return false;
+    String beforeBodyText = beforeBody.getText();
+    String beforeLoopText = beforeLoop.getText();
+    int beforeBodyLineBreak = beforeBodyText.lastIndexOf('\n');
+    if (beforeBodyLineBreak == -1) return false;
+    int beforeLoopLineBreak = beforeLoopText.lastIndexOf('\n');
+    if (beforeLoopLineBreak == -1) return false;
+    return beforeBodyText.length() - beforeBodyLineBreak > beforeLoopText.length() - beforeLoopLineBreak;
   }
 }

@@ -199,14 +199,14 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-      val service = ClientIdService.tryGetInstance() ?: return action()
+      val service = getCachedService() ?: return action()
 
-      val newClientIdValue = if (!service.isValid(clientId)) {
-        getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
-        null
+      val newClientIdValue = if (service.isValid(clientId)) {
+        clientId?.value
       }
       else {
-        clientId?.value
+        getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
+        null
       }
 
       val oldClientIdValue = service.clientIdValue
@@ -234,8 +234,11 @@ data class ClientId(val value: String) {
     @JvmStatic
     fun withClientId(clientIdValue: String): AccessToken {
       val service = getCachedService()
-      val oldClientIdValue = service?.clientIdValue
-      if (service == null || clientIdValue == oldClientIdValue) {
+      if (service == null) {
+        return AccessToken.EMPTY_ACCESS_TOKEN
+      }
+      val oldClientIdValue = service.clientIdValue ?: localId.value
+      if (clientIdValue == oldClientIdValue) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
 
@@ -253,7 +256,7 @@ data class ClientId(val value: String) {
 
     private var service:ClientIdService? = null
 
-    private fun getCachedService(): ClientIdService? {
+    fun getCachedService(): ClientIdService? {
       var cached = service
       if (cached != null) return cached
       cached = ClientIdService.tryGetInstance()

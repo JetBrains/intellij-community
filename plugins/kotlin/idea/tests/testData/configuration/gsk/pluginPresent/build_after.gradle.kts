@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
-    kotlin("jvm") version "$VERSION$"
+    kotlin("jvm") version "1.6.20"
 }
 
 apply {
@@ -22,6 +22,8 @@ dependencies {
     testCompile("junit:junit:4.12")
     implementation(kotlin("stdlib-jdk8"))
 }
+
+// VERSION: 1.6.20
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
     jvmTarget = "1.8"

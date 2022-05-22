@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
@@ -29,20 +30,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
-  private static final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
-  private static final IconPathPatcher iconPathPatcher = createPathPatcher();
+  private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
+  private final IconPathPatcher iconPathPatcher = createPathPatcher();
   private static final String KEY = "ide.experimental.ui";
 
   public static boolean isNewUI() {
     return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
   }
 
-  private static ExperimentalUI getInstance() {
+  public static boolean isNewNavbar() {
+    return isNewUI() && Registry.is("ide.experimental.ui.navbar.scroll");
+  }
+
+  public static ExperimentalUI getInstance() {
     return ApplicationManager.getApplication().getService(ExperimentalUI.class);
   }
 
   @SuppressWarnings("unused")
-  private static final class NewUiRegistryListener implements RegistryValueListener {
+  private final static class NewUiRegistryListener implements RegistryValueListener {
     @Override
     public void afterValueChanged(@NotNull RegistryValue value) {
       if (!value.getKey().equals(KEY)) {
@@ -60,17 +65,17 @@ public abstract class ExperimentalUI {
           UISettings.getInstance().setEditorTabPlacement(SwingConstants.TOP);
         }
 
-        if (isIconPatcherSet.compareAndSet(false, true)) {
-          IconLoader.installPathPatcher(iconPathPatcher);
+        if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
+          IconLoader.installPathPatcher(getInstance().iconPathPatcher);
         }
       }
-      else if (isIconPatcherSet.compareAndSet(true, false)) {
-        IconLoader.removePathPatcher(iconPathPatcher);
+      else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
+        IconLoader.removePathPatcher(getInstance().iconPathPatcher);
       }
     }
   }
 
-  public static void lookAndFeelChanged() {
+  public void lookAndFeelChanged() {
     if (isNewUI()) {
       if (isIconPatcherSet.compareAndSet(false, true)) {
         IconLoader.installPathPatcher(iconPathPatcher);
@@ -79,8 +84,8 @@ public abstract class ExperimentalUI {
     }
   }
 
-  private static IconPathPatcher createPathPatcher() {
-    Map<String, String> paths = getInstance().loadIconMappings();
+  private IconPathPatcher createPathPatcher() {
+    Map<String, String> paths = loadIconMappings();
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {

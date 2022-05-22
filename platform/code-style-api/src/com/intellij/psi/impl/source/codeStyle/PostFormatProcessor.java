@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * The processor is run after core formatter primarily to handle non-whitespace changes, for example to add code block braces and other
- * elements. If only whitespace changes are allowed, for example when ad hoc formatting of changed PSI elements is performed, the
- * processor is not called.
+ * elements.
  */
 public interface PostFormatProcessor {
   ExtensionPointName<PostFormatProcessor> EP_NAME = ExtensionPointName.create("com.intellij.postFormatProcessor");
@@ -40,4 +39,12 @@ public interface PostFormatProcessor {
    */
   @NotNull
   TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings);
+
+  /**
+   * @return {@code true} if the processor modifies only whitespace, for example, adjusts indentation. The default implementation
+   * returns {@code false}
+   */
+  default boolean isWhitespaceOnly() {
+    return false;
+  }
 }

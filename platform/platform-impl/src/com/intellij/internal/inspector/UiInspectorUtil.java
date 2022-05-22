@@ -1,20 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.inspector;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -101,5 +111,73 @@ public final class UiInspectorUtil {
         recursiveCollectGroupIds(child, result);
       }
     }
+  }
+
+  public static @NotNull String getComponentName(@NotNull Component component) {
+    String name = getClassName(component);
+
+    String componentName = component.getName();
+    if (StringUtil.isNotEmpty(componentName)) {
+      name += " \"" + componentName + "\"";
+    }
+    return name;
+  }
+
+  public static @NotNull String getClassName(@NotNull Object value) {
+    Class<?> clazz0 = value.getClass();
+    Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
+    return clazz.getSimpleName();
+  }
+
+  public static void openClassByFqn(@Nullable Project project, @NotNull String jvmFqn, boolean requestFocus) {
+    PsiElement classElement = findClassByFqn(project, jvmFqn);
+    if (classElement != null) {
+      PsiElement navigationElement = classElement.getNavigationElement();
+      if (navigationElement instanceof Navigatable) {
+        ((Navigatable)navigationElement).navigate(requestFocus);
+      }
+      else {
+        PsiNavigateUtil.navigate(classElement, requestFocus);
+      }
+    }
+  }
+
+  @Nullable
+  public static PsiElement findClassByFqn(@Nullable Project project, @NotNull String jvmFqn) {
+    if (project == null) return null;
+
+    try {
+      String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
+      PluginId pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(javaPsiFacadeFqn);
+      Class<?> facade = null;
+      if (pluginId != null) {
+        IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
+        if (plugin != null) {
+          facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
+        }
+      }
+      else {
+        facade = Class.forName(javaPsiFacadeFqn);
+      }
+      if (facade != null) {
+        Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
+        Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
+        String ourFqn = jvmFqn.replace('$', '.');
+        Object result = findClass.invoke(getInstance.invoke(null, project), ourFqn, GlobalSearchScope.allScope(project));
+        if (result == null) {
+          // if provided jvmFqn is anonymous class, try to find containing class
+          String[] parts = jvmFqn.split("\\$\\d+");
+          String containingClassJvmFqn = parts[0];
+          String containingClassOurFqn = containingClassJvmFqn.replace('$', '.');
+          result = findClass.invoke(getInstance.invoke(null, project), containingClassOurFqn, GlobalSearchScope.allScope(project));
+        }
+        if (result instanceof PsiElement) {
+          return (PsiElement)result;
+        }
+      }
+    }
+    catch (Exception ignore) {
+    }
+    return null;
   }
 }

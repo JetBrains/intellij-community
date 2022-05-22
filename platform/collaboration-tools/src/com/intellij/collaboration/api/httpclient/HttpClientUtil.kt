@@ -1,18 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.api.httpclient
 
-import com.intellij.collaboration.api.HttpStatusErrorException
-import com.intellij.collaboration.api.httpclient.response.CancellableWrappingBodyHandler
-import com.intellij.collaboration.api.httpclient.response.InflatingInputStreamBodyHandler
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.text.nullize
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.future.await
+import com.intellij.collaboration.api.HttpApiClient
+import com.intellij.collaboration.api.HttpApiClient.Companion.logName
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.imageBodyHandler
+import com.intellij.openapi.diagnostic.Logger
+import java.awt.Image
 import java.io.InputStream
-import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodyHandler
+import java.util.zip.GZIPInputStream
 
 object HttpClientUtil {
 
@@ -22,32 +20,37 @@ object HttpClientUtil {
   const val CONTENT_TYPE_HEADER = "Content-Type"
   const val CONTENT_TYPE_JSON = "application/json"
 
-  private val LOG = thisLogger()
+  fun gzipInflatingBodySubscriber(responseInfo: HttpResponse.ResponseInfo): HttpResponse.BodySubscriber<InputStream> {
+    val inputStreamSubscriber = HttpResponse.BodySubscribers.ofInputStream()
 
-  fun checkResponse(response: HttpResponse<InputStream>) {
-    val request = response.request()
-    val statusCode = response.statusCode()
-    if (statusCode < 400) {
-      LOG.debug("Request: ${request.method()} ${request.uri()} : Success ${statusCode}")
-      return
+    val gzipContent = responseInfo.headers()
+      .allValues(CONTENT_ENCODING_HEADER)
+      .contains(CONTENT_ENCODING_GZIP)
+
+    return if (gzipContent) {
+      HttpResponse.BodySubscribers.mapping(inputStreamSubscriber, ::GZIPInputStream)
+    }
+    else {
+      inputStreamSubscriber
+    }
+  }
+
+  fun imageBodyHandler(logger: Logger, request: HttpRequest): BodyHandler<Image> = object : ImageBodyHandler(request) {
+
+    override fun read(bodyStream: InputStream): Image {
+      logger.debug("${request.logName()} : Success")
+      return super.read(bodyStream)
     }
 
-    val errorText = response.body().reader().readText().nullize()
-    LOG.debug("Request: ${request.method()} ${request.uri()} : Error ${statusCode} body:\n${errorText}")
-
-    throw HttpStatusErrorException(request.method(), request.uri().toString(), statusCode, errorText)
-  }
-
-  fun inflatedInputStreamBodyHandler(): BodyHandler<InputStream> = InflatingInputStreamBodyHandler()
-}
-
-suspend fun <T> HttpClient.sendAndAwaitCancellable(request: HttpRequest, bodyHandler: BodyHandler<T>): HttpResponse<T> {
-  val cancellableBodyHandler = CancellableWrappingBodyHandler(bodyHandler)
-  return try {
-    sendAsync(request, cancellableBodyHandler).await()
-  }
-  catch (ce: CancellationException) {
-    cancellableBodyHandler.cancel()
-    throw ce
+    override fun handleError(statusCode: Int, errorBody: String): Nothing {
+      logger.debug("${request.logName()} : Error ${statusCode}")
+      if (logger.isTraceEnabled) {
+        logger.trace("${request.logName()} : Response body: $errorBody")
+      }
+      super.handleError(statusCode, errorBody)
+    }
   }
 }
+
+suspend fun HttpApiClient.loadImage(request: HttpRequest): HttpResponse<Image> =
+  sendAndAwaitCancellable(request, imageBodyHandler(logger, request))

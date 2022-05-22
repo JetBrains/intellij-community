@@ -44,18 +44,18 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void copyFilesForOsDistribution(@NotNull Path unixDistPath, JvmArchitecture arch) {
-    BuildHelper.span(spanBuilder("copy files for os distribution")
+    BuildHelperKt.span(spanBuilder("copy files for os distribution")
                        .setAttribute("os", targetOs.osName)
                        .setAttribute("arch", arch?.name()), new Runnable() {
       @Override
       void run() {
         Path distBinDir = unixDistPath.resolve("bin")
 
-        BuildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
-        BuildTasksImpl.unpackPty4jNative(buildContext, unixDistPath, "linux")
-        BuildTasksImpl.generateBuildTxt(buildContext, unixDistPath)
-        BuildTasksImpl.copyDistFiles(buildContext, unixDistPath)
-        List<String> extraJarNames = BuildTasksImpl.addDbusJava(buildContext, unixDistPath.resolve("lib"))
+        FileKt.copyDir(buildContext.paths.communityHomeDir.resolve("bin/linux"), distBinDir)
+        DistUtilKt.unpackPty4jNative(buildContext, unixDistPath, "linux")
+        DistUtilKt.generateBuildTxt(buildContext, unixDistPath)
+        DistUtilKt.copyDistFiles(buildContext, unixDistPath)
+        List<String> extraJarNames = DistUtilKt.addDbusJava(buildContext, unixDistPath.resolve("lib"))
         Files.copy(ideaProperties, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
         //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
         // for real installers we need to checkout all text files with 'lf' separators anyway
@@ -207,7 +207,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.block("Build Linux tar.gz $description") {
       buildContext.messages.progress("Building Linux tar.gz $description")
       paths.each {
-        BuildTasksImpl.updateExecutablePermissions(Paths.get(it), executableFilesPatterns)
+        BuildTasksImplKt.updateExecutablePermissions(Path.of(it), executableFilesPatterns)
       }
       ArchiveUtils.tar(tarPath, tarRoot, paths, buildContext.options.buildDateInSeconds)
       ProductInfoValidator.checkInArchive(buildContext, tarPath, tarRoot)
@@ -253,7 +253,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.messages.progress("Preparing files")
 
       Path unixSnapDistPath = buildContext.paths.buildOutputDir.resolve("dist.unix.snap")
-      BuildHelper.copyDir(unixDistPath, unixSnapDistPath)
+      FileKt.copyDir(unixDistPath, unixSnapDistPath)
 
       String productName = buildContext.applicationInfo.productNameWithEdition
 
@@ -270,7 +270,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         ]
       )
 
-      BuildHelper.moveFile(iconPngPath, snapDir.resolve(customizer.snapName + ".png"))
+      FileKt.moveFile(iconPngPath, snapDir.resolve(customizer.snapName + ".png"))
 
       Path snapcraftTemplate = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
       String versionSuffix = buildContext.applicationInfo.versionSuffix?.replace(' ', '-') ?: ""
@@ -300,12 +300,14 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         .include("jbr/bin/*")
         .enumerate().each {makeFileExecutable(it) }
 
-      for (Path distPath: [unixSnapDistPath, buildContext.paths.distAllDir]) {
-        new FileSet(distPath)
-          .tap {
-            customizer.extraExecutables.each { include(it) }
-          }
-          .enumerateNoAssertUnusedPatterns().each {makeFileExecutable(it) }
+      if (!customizer.extraExecutables.isEmpty()) {
+        for (Path distPath : [unixSnapDistPath, buildContext.paths.distAllDir]) {
+          new FileSet(distPath)
+            .tap {
+              customizer.extraExecutables.each { include(it) }
+            }
+            .enumerateNoAssertUnusedPatterns().each { makeFileExecutable(it) }
+        }
       }
 
       generateProductJson(unixSnapDistPath, "jbr/bin/java")
@@ -339,7 +341,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
                              "result/$snapArtifact".toString(),
                            ], snapDir, buildContext.messages)
 
-      BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
+      FileKt.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
       buildContext.notifyArtifactWasBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))
     }
   }

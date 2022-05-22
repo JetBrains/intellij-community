@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test
 class IdeaCommunityBuildTest {
   @Test
   fun testBuild() {
-    val homePath = PathManager.getHomePathFor(javaClass)!!
-    val communityHomePath = "$homePath/community"
+    val homePath = PathManager.getHomeDirFor(javaClass)!!
+    val communityHomePath = homePath.resolve("community")
     runTestBuild(
       homePath = communityHomePath,
       communityHomePath = communityHomePath,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import groovy.transform.CompileStatic
@@ -12,7 +12,7 @@ import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloa
 import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getUriForMavenArtifact
 
 @CompileStatic
-class KotlinCompilerDependencyDownloader {
+final class KotlinCompilerDependencyDownloader {
   private static final String MAVEN_REPOSITORY_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
   private static final String ARTIFACT_GROUP_ID = "org.jetbrains.kotlin"
 

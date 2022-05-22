@@ -15,13 +15,14 @@
  */
 package com.jetbrains.python.codeInsight.liveTemplates;
 
-import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PyLiveTemplatesContextTest extends PyTestCase {
@@ -32,7 +33,7 @@ public class PyLiveTemplatesContextTest extends PyTestCase {
   }
 
   public void testNotPython() {
-    doTest("html");
+    doTest(false, "html");
   }
 
   // PY-12212
@@ -64,22 +65,48 @@ public class PyLiveTemplatesContextTest extends PyTestCase {
     doTest(PythonTemplateContextType.Class.class, PythonTemplateContextType.General.class);
   }
 
-  private void doTest(Class<? extends PythonTemplateContextType> @NotNull ... expectedContextTypes) {
-    doTest("py", expectedContextTypes);
+  // PY-52162
+  public void testSurroundStringLiteral() {
+    doTest(true, "py", PythonTemplateContextType.General.class, PythonTemplateContextType.TopLevel.class);
   }
 
-  private void doTest(@NotNull String extension, Class<? extends PythonTemplateContextType> @NotNull ... expectedContextTypes) {
+  // PY-52162
+  public void testSurroundTemplateWithStringLiterals() {
+    final TemplateManager templateManager = TemplateManager.getInstance(myFixture.getProject());
+    final Template template = templateManager.createTemplate("pri", "Python", "print($SELECTION$)$END$");
+
+    TemplateContextType context = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), PythonTemplateContextType.General.class);
+    assertNotNull(context);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(context, true);
+
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
+
+    myFixture.configureByText("abc.py", "'test'<caret>");
+    myFixture.getEditor().getSelectionModel().setSelection(0, 6);
+    new InvokeTemplateAction((TemplateImpl)template, myFixture.getEditor(), myFixture.getProject(), new HashSet<>()).perform();
+    myFixture.checkResult("print('test')");
+  }
+
+  private void doTest(Class<? extends PythonTemplateContextType> @NotNull ... expectedContextTypes) {
+    doTest(false, "py", expectedContextTypes);
+  }
+
+  private void doTest(boolean isSurrounding,
+                      @NotNull String extension,
+                      Class<? extends PythonTemplateContextType> @NotNull ... expectedContextTypes) {
     myFixture.configureByFile(getTestName(true) + "." + extension);
 
-    final List<Class<? extends PythonTemplateContextType>> actualContextTypes = calculateEnabledContextTypes(getRegisteredContextTypes());
+    final List<Class<? extends PythonTemplateContextType>> actualContextTypes =
+      calculateEnabledContextTypes(isSurrounding, getRegisteredContextTypes());
     assertSameElements(actualContextTypes, expectedContextTypes);
   }
 
   @NotNull
-  private List<Class<? extends PythonTemplateContextType>> calculateEnabledContextTypes(@NotNull List<PythonTemplateContextType> registeredContextTypes) {
+  private List<Class<? extends PythonTemplateContextType>> calculateEnabledContextTypes(boolean isSurrounding, @NotNull List<PythonTemplateContextType> registeredContextTypes) {
+    TemplateActionContext context = TemplateActionContext.create(myFixture.getFile(), null, myFixture.getCaretOffset(), myFixture.getCaretOffset(), isSurrounding);
     return registeredContextTypes
       .stream()
-      .filter(type -> type.isInContext(myFixture.getFile(), myFixture.getCaretOffset()))
+      .filter(type -> type.isInContext(context))
       .map(PythonTemplateContextType::getClass)
       .sorted(Comparator.comparing(Class::getSimpleName))
       .collect(Collectors.toList());

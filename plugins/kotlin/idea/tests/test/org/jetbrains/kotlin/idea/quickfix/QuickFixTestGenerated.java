@@ -2249,6 +2249,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/quickfix/autoImports/annotation.kt");
+            }
+
+            @TestMetadata("annotationWithAnotherUnresolvedAnnotation.kt")
+            public void testAnnotationWithAnotherUnresolvedAnnotation() throws Exception {
+                runTest("testData/quickfix/autoImports/annotationWithAnotherUnresolvedAnnotation.kt");
+            }
+
             @TestMetadata("builtInFunction.kt")
             public void testBuiltInFunction() throws Exception {
                 runTest("testData/quickfix/autoImports/builtInFunction.kt");
@@ -2332,6 +2342,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("importFunctionWithMultipleReceivers.kt")
             public void testImportFunctionWithMultipleReceivers() throws Exception {
                 runTest("testData/quickfix/autoImports/importFunctionWithMultipleReceivers.kt");
+            }
+
+            @TestMetadata("importKClass.kt")
+            public void testImportKClass() throws Exception {
+                runTest("testData/quickfix/autoImports/importKClass.kt");
+            }
+
+            @TestMetadata("importKProperty.kt")
+            public void testImportKProperty() throws Exception {
+                runTest("testData/quickfix/autoImports/importKProperty.kt");
+            }
+
+            @TestMetadata("importKType.kt")
+            public void testImportKType() throws Exception {
+                runTest("testData/quickfix/autoImports/importKType.kt");
             }
 
             @TestMetadata("importTypeOf.kt")
@@ -7659,6 +7684,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/dropReceiver.kt");
             }
 
+            @TestMetadata("enum.kt")
+            public void testEnum() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/enum.kt");
+            }
+
             @TestMetadata("extensionForGenericClass.kt")
             public void testExtensionForGenericClass() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/extensionForGenericClass.kt");
@@ -8119,6 +8149,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("hasOptInAnnotation3.kt")
         public void testHasOptInAnnotation3() throws Exception {
             runTest("testData/quickfix/experimental/hasOptInAnnotation3.kt");
+        }
+
+        @TestMetadata("hasOptInAnnotationForClass.kt")
+        public void testHasOptInAnnotationForClass() throws Exception {
+            runTest("testData/quickfix/experimental/hasOptInAnnotationForClass.kt");
+        }
+
+        @TestMetadata("hasOptInAnnotationForClass2.kt")
+        public void testHasOptInAnnotationForClass2() throws Exception {
+            runTest("testData/quickfix/experimental/hasOptInAnnotationForClass2.kt");
         }
 
         @TestMetadata("localFunction.kt")
@@ -13603,6 +13643,29 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("unusedImports.kt")
             public void testUnusedImports() throws Exception {
                 runTest("testData/quickfix/suppress/inspections/unusedImports.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/suppress/redundant")
+        public static class Redundant extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("RemoveAnnotation.kt")
+            public void testRemoveAnnotation() throws Exception {
+                runTest("testData/quickfix/suppress/redundant/RemoveAnnotation.kt");
+            }
+
+            @TestMetadata("RemoveAnnotationEntry.kt")
+            public void testRemoveAnnotationEntry() throws Exception {
+                runTest("testData/quickfix/suppress/redundant/RemoveAnnotationEntry.kt");
+            }
+
+            @TestMetadata("Suppressed.kt")
+            public void testSuppressed() throws Exception {
+                runTest("testData/quickfix/suppress/redundant/Suppressed.kt");
             }
         }
     }

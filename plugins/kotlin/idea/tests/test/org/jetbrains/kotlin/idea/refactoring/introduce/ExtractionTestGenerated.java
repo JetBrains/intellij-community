@@ -1944,6 +1944,64 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/extractFunction/inplace")
+        public static class Inplace extends AbstractExtractionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ConflictNameNotAccepted.kt")
+            public void testConflictNameNotAccepted() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/ConflictNameNotAccepted.kt");
+            }
+
+            @TestMetadata("ConflictNameNotAccepted.after.kt")
+            public void testConflictNameNotAccepted_after() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/ConflictNameNotAccepted.after.kt");
+            }
+
+            @TestMetadata("ConsecutiveDuplicates.kt")
+            public void testConsecutiveDuplicates() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/ConsecutiveDuplicates.kt");
+            }
+
+            @TestMetadata("ConsecutiveDuplicates.after.kt")
+            public void testConsecutiveDuplicates_after() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/ConsecutiveDuplicates.after.kt");
+            }
+
+            @TestMetadata("ExposedAssignment.kt")
+            public void testExposedAssignment() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/ExposedAssignment.kt");
+            }
+
+            @TestMetadata("ExposedAssignment.after.kt")
+            public void testExposedAssignment_after() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/ExposedAssignment.after.kt");
+            }
+
+            @TestMetadata("StringTemplate.kt")
+            public void testStringTemplate() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/StringTemplate.kt");
+            }
+
+            @TestMetadata("StringTemplateWithNameConflict.kt")
+            public void testStringTemplateWithNameConflict() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/StringTemplateWithNameConflict.kt");
+            }
+
+            @TestMetadata("StringTemplateWithNameConflict.after.kt")
+            public void testStringTemplateWithNameConflict_after() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/StringTemplateWithNameConflict.after.kt");
+            }
+
+            @TestMetadata("StringTemplate.after.kt")
+            public void testStringTemplate_after() throws Exception {
+                runTest("testData/refactoring/extractFunction/inplace/StringTemplate.after.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/multiline")
         public static class Multiline extends AbstractExtractionTest {
             private void runTest(String testDataFilePath) throws Exception {

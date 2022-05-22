@@ -25,11 +25,6 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             KotlinTestUtils.runTest(this::doTestGradle, this, testDataFilePath);
         }
 
-        @TestMetadata("default")
-        public void testDefault() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/default/");
-        }
-
         @TestMetadata("jreLib")
         public void testJreLib() throws Exception {
             runTest("../../../idea/tests/testData/configuration/gradle/jreLib/");
@@ -40,24 +35,44 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             runTest("../../../idea/tests/testData/configuration/gradle/js/");
         }
 
-        @TestMetadata("milestoneVersion")
-        public void testMilestoneVersion() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/milestoneVersion/");
+        @TestMetadata("libraryMissing")
+        public void testLibraryMissing() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/libraryMissing/");
         }
 
-        @TestMetadata("missedLibrary")
-        public void testMissedLibrary() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/missedLibrary/");
+        @TestMetadata("pluginPresent")
+        public void testPluginPresent() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/pluginPresent/");
         }
 
-        @TestMetadata("plugin_present")
-        public void testPlugin_present() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/plugin_present/");
+        @TestMetadata("simpleProject")
+        public void testSimpleProject() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/simpleProject/");
         }
 
-        @TestMetadata("rcVersion")
-        public void testRcVersion() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gradle/rcVersion/");
+        @TestMetadata("simpleProjectBeta")
+        public void testSimpleProjectBeta() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/simpleProjectBeta/");
+        }
+
+        @TestMetadata("simpleProjectDev")
+        public void testSimpleProjectDev() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/simpleProjectDev/");
+        }
+
+        @TestMetadata("simpleProjectMilestone")
+        public void testSimpleProjectMilestone() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/simpleProjectMilestone/");
+        }
+
+        @TestMetadata("simpleProjectReleaseCandidate")
+        public void testSimpleProjectReleaseCandidate() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/simpleProjectReleaseCandidate/");
+        }
+
+        @TestMetadata("simpleProjectSnapshot")
+        public void testSimpleProjectSnapshot() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gradle/simpleProjectSnapshot/");
         }
 
         @TestMetadata("withJava9ModuleInfo")
@@ -73,24 +88,44 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
             KotlinTestUtils.runTest(this::doTestGradle, this, testDataFilePath);
         }
 
-        @TestMetadata("helloWorld")
-        public void testHelloWorld() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gsk/helloWorld/");
-        }
-
-        @TestMetadata("milestoneVersion")
-        public void testMilestoneVersion() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gsk/milestoneVersion/");
-        }
-
-        @TestMetadata("missedLibrary")
-        public void testMissedLibrary() throws Exception {
-            runTest("../../../idea/tests/testData/configuration/gsk/missedLibrary/");
+        @TestMetadata("libraryMissing")
+        public void testLibraryMissing() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/libraryMissing/");
         }
 
         @TestMetadata("pluginPresent")
         public void testPluginPresent() throws Exception {
             runTest("../../../idea/tests/testData/configuration/gsk/pluginPresent/");
+        }
+
+        @TestMetadata("simpleProject")
+        public void testSimpleProject() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/simpleProject/");
+        }
+
+        @TestMetadata("simpleProjectBeta")
+        public void testSimpleProjectBeta() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/simpleProjectBeta/");
+        }
+
+        @TestMetadata("simpleProjectDev")
+        public void testSimpleProjectDev() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/simpleProjectDev/");
+        }
+
+        @TestMetadata("simpleProjectMilestone")
+        public void testSimpleProjectMilestone() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/simpleProjectMilestone/");
+        }
+
+        @TestMetadata("simpleProjectReleaseCandidate")
+        public void testSimpleProjectReleaseCandidate() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/simpleProjectReleaseCandidate/");
+        }
+
+        @TestMetadata("simpleProjectSnapshot")
+        public void testSimpleProjectSnapshot() throws Exception {
+            runTest("../../../idea/tests/testData/configuration/gsk/simpleProjectSnapshot/");
         }
     }
 }

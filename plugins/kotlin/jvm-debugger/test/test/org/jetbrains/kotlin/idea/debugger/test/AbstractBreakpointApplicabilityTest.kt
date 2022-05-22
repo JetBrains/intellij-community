@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -7,11 +7,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.core.util.getLineCount
 import org.jetbrains.kotlin.idea.core.util.getLineEndOffset
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
-import org.jetbrains.kotlin.idea.debugger.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.breakpoints.BreakpointChecker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
 abstract class AbstractBreakpointApplicabilityTest : KotlinLightCodeInsightFixtureTestCase() {
     private companion object {
@@ -26,7 +26,7 @@ abstract class AbstractBreakpointApplicabilityTest : KotlinLightCodeInsightFixtu
         val ktFile = myFixture.configureByFile(fileName()) as KtFile
 
         val actualContents = checkBreakpoints(ktFile, BreakpointChecker())
-        KotlinTestUtils.assertEqualsToFile(testDataFile(), actualContents)
+        KotlinTestUtils.assertEqualsToFile(dataFile(), actualContents)
     }
 
     private fun checkBreakpoints(file: KtFile, checker: BreakpointChecker): String {

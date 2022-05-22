@@ -87,6 +87,12 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.test.method.is.public.void.no.arg.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitMalformedTestInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="MalformedSetUpTearDown"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.malformed.set.up.tear.down.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnitMalformedSetupTearDownInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.test.junit.MalformedSetUpTearDownInspectionMerger"/>
 
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"

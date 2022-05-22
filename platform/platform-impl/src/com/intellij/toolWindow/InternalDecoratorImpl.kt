@@ -2,10 +2,11 @@
 package com.intellij.toolWindow
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.CheckedDisposable
@@ -38,7 +39,6 @@ import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.*
-import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.accessibility.AccessibleContext
@@ -420,17 +420,6 @@ class InternalDecoratorImpl internal constructor(
 
   override fun getData(dataId: @NonNls String): Any? {
     return if (PlatformDataKeys.TOOL_WINDOW.`is`(dataId)) toolWindow else null
-  }
-
-  public override fun processKeyBinding(ks: KeyStroke, e: KeyEvent, condition: Int, pressed: Boolean): Boolean {
-    if (condition == WHEN_ANCESTOR_OF_FOCUSED_COMPONENT && pressed) {
-      val keyStrokes = KeymapUtil.getKeyStrokes(ActionManager.getInstance().getAction(IdeActions.ACTION_FOCUS_EDITOR).shortcutSet)
-      if (keyStrokes.contains(ks)) {
-        toolWindow.toolWindowManager.activateEditorComponent()
-        return true
-      }
-    }
-    return super.processKeyBinding(ks, e, condition, pressed)
   }
 
   fun setTitleActions(actions: List<AnAction>) {

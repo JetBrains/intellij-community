@@ -38,7 +38,8 @@ import com.intellij.ide.RecentProjectsManagerBase.Companion.instanceEx as Projec
  */
 class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   override fun actionPerformed(event: AnActionEvent) {
-    val projectPath = (getSelectedItem(event) as RecentProjectItem).projectPath
+    val reopenProjectAction = getSelectedItem(event) as RecentProjectItem
+    val projectPath = reopenProjectAction.projectPath
     val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return
 
     val ui = ProjectIconUI(projectPath)
@@ -79,7 +80,7 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   }
 
   override fun update(event: AnActionEvent) {
-    val item = getSelectedItem(event) ?: return
+    val item = getSelectedItem(event)
     event.presentation.isEnabled = item is RecentProjectItem
   }
 }

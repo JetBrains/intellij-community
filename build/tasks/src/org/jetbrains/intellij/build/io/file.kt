@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import java.io.IOException
@@ -8,8 +8,33 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.function.Predicate
 
+@PublishedApi
 internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
+fun copyFileToDir(file: Path, targetDir: Path) {
+  doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
+}
+
+fun moveFile(source: Path, target: Path) {
+  Files.createDirectories(target.parent)
+  Files.move(source, target)
+}
+
+fun moveFileToDir(file: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.move(file, targetDir.resolve(file.fileName))
+}
+
+fun copyFile(file: Path, target: Path) {
+  doCopyFile(file, target, target.parent)
+}
+
+private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+}
+
+@JvmOverloads
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
   Files.walkFileTree(sourceDir, CopyDirectoryVisitor(

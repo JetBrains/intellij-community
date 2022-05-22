@@ -68,7 +68,7 @@ public final class NavBarItem extends SimpleColoredComponent implements DataProv
       myText = presentation.getPresentableText(object, inPopup);
       myAttributes = presentation.getTextAttributes(object, false);
       myIsModule = presentation.isModule(object);
-      myIcon = ExperimentalUI.isNewUI() && myIsModule ? MODULE_ICON : presentation.getIcon(object);
+      myIcon = ExperimentalUI.isNewUI() && myIsModule && !inPopup ? MODULE_ICON : presentation.getIcon(object);
     }
     else {
       myText = IdeBundle.message("navigation.bar.item.sample");

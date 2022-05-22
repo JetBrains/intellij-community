@@ -4,7 +4,6 @@
 // ACTION: Create enum 'SomeTest'
 // ACTION: Create interface 'SomeTest'
 // ACTION: Create object 'SomeTest'
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: SomeTest
 

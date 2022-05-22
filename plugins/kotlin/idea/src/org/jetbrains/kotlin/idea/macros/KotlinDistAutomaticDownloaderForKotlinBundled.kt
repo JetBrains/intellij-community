@@ -9,9 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
@@ -29,42 +26,34 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
  * 2. User started using KOTLIN_BUNDLED in libraries. Then if current kotlinc-dist of current Kotlin JPS version isn't yet downloaded,
  *    we should download it.
  */
-class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware {
-    override fun runActivity(project: Project) {
-        project.messageBus.connect().subscribe(KotlinCompilerSettingsListener.TOPIC, object : KotlinCompilerSettingsListener {
-            override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
-                if (newSettings !is JpsPluginSettings) {
-                    return
-                }
-                downloadKotlinDistIfNeeded(
-                    KotlinBundledUsageDetector.getInstance(project).isKotlinBundledPotentiallyUsedInLibraries.value,
-                    newSettings.version,
-                    project
-                )
-            }
-        })
-        val detector = KotlinBundledUsageDetector.getInstance(project)
-        detector.coroutineScope.launch {
-            detector.isKotlinBundledPotentiallyUsedInLibraries.collect {
-                downloadKotlinDistIfNeeded(it, KotlinJpsPluginSettings.jpsVersion(project) ?: return@collect, project)
-            }
-        }
-
-        KotlinJpsPluginSettings.getInstance(project)?.settings?.let { settings ->
-            downloadKotlinDistIfNeeded(
-                KotlinBundledUsageDetector.getInstance(project).isKotlinBundledPotentiallyUsedInLibraries.value,
-                settings.version,
-                project
-            )
-        }
+internal class KotlinDistAutomaticDownloaderForKotlinBundled(
+    private val project: Project
+) : KotlinCompilerSettingsListener, KotlinBundledUsageDetectorListener {
+    override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
+        if (newSettings !is JpsPluginSettings) return
+        downloadKotlinDistIfNeeded(
+            KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project),
+            newSettings.version,
+            project,
+        )
     }
 
-    private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries: Boolean, version: String, project: Project) {
-        if (version.isNotBlank() && isKotlinBundledPotentiallyUsedInLibraries && !KotlinArtifactsDownloader.isKotlinDistInitialized(version)) {
-            ProgressManager.getInstance()
-                .run(object : Task.Backgroundable(project, KotlinBasePluginBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
-                    override fun run(indicator: ProgressIndicator) {
-                        KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist(project, version, indicator, onError = { errorMsg ->
+    override fun kotlinBundledDetected() {
+        val jpsVersion = KotlinJpsPluginSettings.jpsVersion(project) ?: return
+        downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries = true, jpsVersion, project)
+    }
+}
+
+private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries: Boolean, version: String, project: Project) {
+    if (version.isNotBlank() && isKotlinBundledPotentiallyUsedInLibraries && !KotlinArtifactsDownloader.isKotlinDistInitialized(version)) {
+        ProgressManager.getInstance().run(
+            object : Task.Backgroundable(project, KotlinBasePluginBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
+                override fun run(indicator: ProgressIndicator) {
+                    KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist(
+                        project = project,
+                        version = version,
+                        indicator = indicator,
+                        onError = { errorMsg ->
                             NotificationGroupManager.getInstance()
                                 .getNotificationGroup("Kotlin dist downloading failed")
                                 .createNotification(
@@ -75,12 +64,13 @@ class KotlinDistAutomaticDownloaderForKotlinBundled : StartupActivity.DumbAware 
                                 .setImportant(true)
                                 .setIcon(AllIcons.Ide.FatalError)
                                 .notify(project)
-                        })?.let { path ->
-                            // Since this dist is used as library we should refresh it
-                            KotlinBundledRefresher.requestKotlinDistRefresh(path.toPath())
-                        }
+                        },
+                    )?.let { path ->
+                        // Since this dist is used as library we should refresh it
+                        KotlinBundledRefresher.requestKotlinDistRefresh(path.toPath())
                     }
-                })
-        }
+                }
+            }
+        )
     }
 }

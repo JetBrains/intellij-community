@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -19,7 +20,6 @@ import java.util.concurrent.ExecutorService
 
 class MavenProjectsAware(
   project: Project,
-  private val projectsTree: MavenProjectsTree,
   private val manager: MavenProjectsManager,
   private val watcher: MavenProjectsManagerWatcher,
   private val backgroundExecutor: ExecutorService
@@ -69,7 +69,7 @@ class MavenProjectsAware(
   private fun partitionSettingsFiles(context: ExternalSystemSettingsFilesReloadContext): Pair<List<VirtualFile>, List<VirtualFile>> {
     val updated = mutableListOf<VirtualFile>()
     val deleted = mutableListOf<VirtualFile>()
-    for (projectsFile in projectsTree.projectsFiles) {
+    for (projectsFile in manager.projectsTree.projectsFiles) {
       val path = projectsFile.path
       if (path in context.created) updated.add(projectsFile)
       if (path in context.updated) updated.add(projectsFile)
@@ -81,13 +81,14 @@ class MavenProjectsAware(
   private fun hasPomFile(rootDirectory: String): Boolean {
     return MavenConstants.POM_NAMES.asSequence()
       .map { join(rootDirectory, it) }
-      .any { projectsTree.isPotentialProject(it) }
+      .any { manager.projectsTree.isPotentialProject(it) }
   }
 
+
   private fun collectSettingsFiles() = sequence {
-    yieldAll(projectsTree.managedFilesPaths)
-    yieldAll(projectsTree.projectsFiles.map { it.path })
-    for (mavenProject in projectsTree.projects) {
+    yieldAll( manager.projectsTree.managedFilesPaths)
+    yieldAll( manager.projectsTree.projectsFiles.map { it.path })
+    for (mavenProject in manager.projectsTree.projects) {
       ProgressManager.checkCanceled()
 
       val rootDirectory = mavenProject.directory
@@ -104,9 +105,15 @@ class MavenProjectsAware(
   private fun join(parentPath: String, relativePath: String) = File(parentPath, relativePath).path
 
   init {
-    manager.addManagerListener(object : MavenProjectsManager.Listener {
-      override fun importAndResolveScheduled() = isImportCompleted.set(false)
-      override fun projectImportCompleted() = isImportCompleted.set(true)
-    })
+    project.messageBus.connect(manager)
+      .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+        override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
+          isImportCompleted.set(true)
+        }
+
+        override fun importStarted(spec: MavenImportSpec?) {
+          isImportCompleted.set(false)
+        }
+      })
   }
 }

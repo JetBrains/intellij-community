@@ -32,7 +32,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
-import java.util.function.Supplier
 
 @CompileStatic
 final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
@@ -69,9 +68,9 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     binWin.copyToDir(distBinDir)
 
-    def pty4jNativeDir = BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
-    BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
-    BuildTasksImpl.copyDistFiles(buildContext, winDistPath)
+    def pty4jNativeDir = DistUtilKt.unpackPty4jNative(buildContext, winDistPath, "win")
+    DistUtilKt.generateBuildTxt(buildContext, winDistPath)
+    DistUtilKt.copyDistFiles(buildContext, winDistPath)
 
     Files.writeString(distBinDir.resolve(ideaProperties.fileName), StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
 
@@ -91,7 +90,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         boolean process(File file) {
           if (signFileFilter.accept(file)) {
             buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", file.toString()), BuildOptions.WIN_SIGN_STEP) {
-              buildContext.signFile(file.toPath(), BuildOptions.WIN_SIGN_OPTIONS)
+              buildContext.signFiles(List.of(file.toPath()), BuildOptions.WIN_SIGN_OPTIONS)
             }
           }
           return true
@@ -101,7 +100,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     customizer.getBinariesToSign(buildContext).each {
       def path = winDistPath.resolve(it)
       buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", path.toString()), BuildOptions.WIN_SIGN_STEP) {
-        buildContext.signFile(path, BuildOptions.WIN_SIGN_OPTIONS)
+        buildContext.signFiles(List.of(path), BuildOptions.WIN_SIGN_OPTIONS)
       }
     }
   }
@@ -122,7 +121,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         "If DLL was relocated to another place, please correct the path in this code.")
     }
 
-    BuildHelper.copyFileToDir(vcRtDll, winAndArchSpecificDistPath.resolve("bin"))
+    FileKt.copyFileToDir(vcRtDll, winAndArchSpecificDistPath.resolve("bin"))
 
     if (customizer.buildZipArchive) {
       List<Path> jreDirectoryPaths
@@ -146,7 +145,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     })
 
     Path zipPath = zipPathTask == null ? null : zipPathTask.join()
-    if (buildContext.options.isInDevelopmentMode || zipPathTask == null || exePath == null) {
+    if (buildContext.options.isInDevelopmentMode() || zipPathTask == null || exePath == null) {
       return
     }
 
@@ -267,8 +266,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
       List<String> vmOptions = buildContext.additionalJvmArguments + ['-Dide.native.launcher=true']
       def productName = buildContext.applicationInfo.shortProductName
-      String classPath = buildContext.bootClassPathJarNames.join(";")
-      String bootClassPath = buildContext.XBootClassPathJarNames.join(";")
+      String classPath = String.join(";", buildContext.bootClassPathJarNames)
+      String bootClassPath = String.join(";", buildContext.XBootClassPathJarNames)
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
       Path icoFilesDirectory = buildContext.paths.tempDir.resolve("win-launcher-ico")
       Path appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
@@ -305,13 +304,13 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       resourceModules.collectMany { it.sourceRoots }.each { JpsModuleSourceRoot root ->
         classpath.add(root.file.absolutePath)
       }
-      buildContext.productProperties.brandingResourcePaths.each {
-        classpath.add(it)
+      for (String p in buildContext.productProperties.brandingResourcePaths) {
+        classpath.add(p.toString())
       }
       classpath.add(icoFilesDirectory.toString())
       classpath.add(buildContext.getModuleOutputDir(buildContext.findRequiredModule("intellij.platform.util.jdom")).toString())
 
-      BuildHelper.runJava(
+      BuildHelperKt.runJava(
         buildContext,
         "com.pme.launcher.LauncherGeneratorMain",
         [
@@ -360,20 +359,17 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     Path targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
     return TraceKt.createTask(TracerManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
-                                                         .setAttribute("targetFile", targetFile.toString()), new Supplier<Path>() {
-      @Override
-      Path get() {
-        Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
-        generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
+                                .setAttribute("targetFile", targetFile.toString())) {
+      Path productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
+      generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
 
-        String zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
-        List<Path> dirs = [context.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
-        BuildHelper.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
-        ProductInfoValidator.checkInArchive(context, targetFile, zipPrefix)
-        context.notifyArtifactWasBuilt(targetFile)
-        return targetFile
-      }
-    })
+      String zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
+      List<Path> dirs = [context.paths.distAllDir, winDistPath, productJsonDir] + jreDirectoryPaths
+      BuildHelperKt.zipWithPrefix(context, targetFile, dirs, zipPrefix, true)
+      ProductInfoValidator.checkInArchive(context, targetFile, zipPrefix)
+      context.notifyArtifactWasBuilt(targetFile)
+      return targetFile
+    }
   }
 
   private static void generateProductJson(@NotNull Path targetDir, boolean isJreIncluded, BuildContext context) {

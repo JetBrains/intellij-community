@@ -2,9 +2,10 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
 
 import java.util.function.Supplier
 
@@ -15,14 +16,17 @@ final class GradleRunner {
   private final BuildMessages messages
   private final List<String> additionalParams
   private final BuildOptions options
+  private final BuildDependenciesCommunityRoot communityRoot
 
   GradleRunner(
     File gradleProjectDir,
     String projectDir,
     BuildMessages messages,
     BuildOptions options,
+    BuildDependenciesCommunityRoot communityRoot,
     List<String> additionalParams = []
   ) {
+    this.communityRoot = communityRoot
     this.messages = messages
     this.options = options
     this.projectDir = projectDir
@@ -98,7 +102,7 @@ final class GradleRunner {
     command.addAll(additionalParams)
     command.addAll(tasks)
     def processBuilder = new ProcessBuilder(command).directory(gradleProjectDir)
-    processBuilder.environment().put("JAVA_HOME", SystemProperties.javaHome)
+    processBuilder.environment().put("JAVA_HOME", Jdk11Downloader.getJdkHome(communityRoot).toString())
     def process = processBuilder.start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)

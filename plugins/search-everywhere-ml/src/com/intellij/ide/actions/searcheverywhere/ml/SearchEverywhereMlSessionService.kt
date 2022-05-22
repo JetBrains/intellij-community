@@ -23,18 +23,9 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
   private val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
 
-  override fun shouldOrderByMl(tabId: String): Boolean {
-    val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false // Tab does not support ML ordering
-    val settings = service<SearchEverywhereMlSettings>()
-
-    if (settings.isSortingByMlEnabledByDefault(tab)) {
-      return settings.isSortingByMlEnabled(tab)
-             && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML
-    }
-    else {
-      return settings.isSortingByMlEnabled(tab)
-             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
-    }
+  override fun shouldOrderByMl(): Boolean {
+    val state = getCurrentSession()?.getCurrentSearchState()
+    return state?.orderByMl ?: false
   }
 
   internal fun shouldUseExperimentalModel(tabId: String): Boolean {
@@ -68,9 +59,24 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
                                searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
+      val orderByMl = shouldOrderByMlInTab(tabId)
       getCurrentSession()?.onSearchRestart(
-        project, experiment, reason, tabId, keysTyped, backspacesTyped, searchQuery, previousElementsProvider
+        project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, previousElementsProvider
       )
+    }
+  }
+
+  private fun shouldOrderByMlInTab(tabId: String): Boolean {
+    val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false // Tab does not support ML ordering
+    val settings = service<SearchEverywhereMlSettings>()
+
+    if (settings.isSortingByMlEnabledByDefault(tab)) {
+      return settings.isSortingByMlEnabled(tab)
+             && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML
+    }
+    else {
+      return settings.isSortingByMlEnabled(tab)
+             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
     }
   }
 

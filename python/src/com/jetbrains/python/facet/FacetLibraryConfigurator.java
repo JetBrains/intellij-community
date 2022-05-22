@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.facet;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -31,7 +31,7 @@ public final class FacetLibraryConfigurator {
                                          @Nullable final ModifiableRootModel existingModel,
                                          final String libraryName,
                                          final List<String> paths) {
-    final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
+    final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.getInstance();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -99,7 +99,7 @@ public final class FacetLibraryConfigurator {
   }
 
   public static void detachPythonLibrary(final Module module, final String libraryName) {
-    final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
+    final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.getInstance();
     ApplicationManager.getApplication().runWriteAction(() -> {
       // remove the library
       final ModifiableRootModel model = modelsProvider.getModuleModifiableModel(module);

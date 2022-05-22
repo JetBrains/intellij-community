@@ -63,6 +63,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
+import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
 import com.intellij.util.indexing.events.ChangedFilesCollector;
 import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.VfsEventsMerger;
@@ -225,6 +226,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }, null);
 
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      StorageDiagnosticData.INSTANCE.dumpPeriodically();
+    }
   }
 
   void scheduleFullIndexesRescan(@NotNull String reason) {
@@ -1583,8 +1588,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  @ApiStatus.Internal
   @Nullable("null in case index update is not necessary or the update has failed")
-  private <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(@NotNull ID<?, ?> indexId,
+  <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(@NotNull ID<?, ?> indexId,
                                                                                                        @NotNull VirtualFile file,
                                                                                                        int inputId,
                                                                                                        @NotNull FileContent currentFC,
@@ -2141,9 +2147,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return ourWritingIndexValuesSeparatedFromCounting;
   }
 
+  static boolean isWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes() {
+    return ourWritingIndexValuesSeparatedFromCounting && ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes;
+  }
+
   static void setupWritingIndexValuesSeparatedFromCounting() {
     ourWritingIndexValuesSeparatedFromCounting = Registry.is("indexing.separate.applying.values.from.counting");
   }
 
+  static void setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes() {
+    ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes = Registry.is("indexing.separate.applying.values.from.counting.for.content.independent.indexes");
+  }
+
   private static volatile boolean ourWritingIndexValuesSeparatedFromCounting;
+  private static volatile boolean ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes;
 }

@@ -57,7 +57,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -784,18 +783,13 @@ public final class ConfigImportHelper {
       log.info("non-empty plugins directory: " + newPluginsDir);
     }
     else {
-      migratePlugins(oldPluginsDir,
-                     newPluginsDir,
+      Predicate<? super IdeaPluginDescriptor> hasPendingUpdate = Files.isDirectory(oldPluginsDir) ?
+                                                                 collectPendingPluginUpdates(actionCommands, options.log) :
+                                                                 __ -> false;
+      migratePlugins(oldPluginsDir, oldConfigDir,
+                     newPluginsDir, newConfigDir,
                      options,
-                     Files.isDirectory(oldPluginsDir) ? collectPendingPluginUpdates(actionCommands, options.log) : __ -> false,
-                     (pluginsToMigrate, pluginsToDownload) -> {
-                       if (options.importSettings != null) {
-                         options.importSettings.processPluginsToMigrate(newConfigDir,
-                                                                        oldConfigDir,
-                                                                        pluginsToMigrate,
-                                                                        pluginsToDownload);
-                       }
-                     });
+                     hasPendingUpdate);
     }
 
     if (SystemInfoRt.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
@@ -829,10 +823,11 @@ public final class ConfigImportHelper {
   }
 
   private static void migratePlugins(@NotNull Path oldPluginsDir,
+                                     @NotNull Path oldConfigDir,
                                      @NotNull Path newPluginsDir,
+                                     @NotNull Path newConfigDir,
                                      @NotNull ConfigImportOptions options,
-                                     @NotNull Predicate<? super IdeaPluginDescriptor> hasPendingUpdate,
-                                     @NotNull BiConsumer<List<IdeaPluginDescriptor>, List<IdeaPluginDescriptor>> consumer)
+                                     @NotNull Predicate<? super IdeaPluginDescriptor> hasPendingUpdate)
     throws IOException {
     Logger log = options.log;
 
@@ -856,7 +851,12 @@ public final class ConfigImportHelper {
       log.info("Non-existing plugins directory: " + oldPluginsDir);
     }
 
-    consumer.accept(pluginsToMigrate, pluginsToDownload);
+    if (options.importSettings != null) {
+      options.importSettings.processPluginsToMigrate(newConfigDir,
+                                                     oldConfigDir,
+                                                     pluginsToMigrate,
+                                                     pluginsToDownload);
+    }
 
     pluginsToMigrate.removeIf(hasPendingUpdate);
     if (!pluginsToMigrate.isEmpty()) {

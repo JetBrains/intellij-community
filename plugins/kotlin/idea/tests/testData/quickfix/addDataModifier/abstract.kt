@@ -3,7 +3,6 @@
 // ACTION: Create extension function 'Foo.component2'
 // ACTION: Create member function 'Foo.component1'
 // ACTION: Create member function 'Foo.component2'
-// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Put arguments on separate lines
 // ERROR: Cannot create an instance of an abstract class

@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
@@ -17,6 +18,7 @@ import java.util.List;
  * @author dcheryasov
  */
 public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implements PyExceptPart {
+
   public PyExceptPartImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -40,6 +42,11 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
   @Nullable
   public PyExpression getTarget() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
+  }
+
+  @Override
+  public boolean isStar() {
+    return getNode().findChildByType(PyTokenTypes.MULT) != null;
   }
 
   @Override

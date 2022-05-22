@@ -65,7 +65,6 @@ class MavenProjectImporterToWorkspaceModel(
         }
       }
     }
-    configureMavenProjectsInBackground(project, moduleToMavenProject)
   }
 
   override fun createdModules(): List<Module> = createdModulesList

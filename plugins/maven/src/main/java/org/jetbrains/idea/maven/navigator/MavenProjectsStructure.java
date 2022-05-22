@@ -375,14 +375,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public <T extends MavenSimpleNode> T findParent(Class<T> parentClass) {
+      return ObjectUtils.doIfNotNull(myParent, it -> it.findNode(parentClass));
+    }
+
+    public <T extends MavenSimpleNode> T findNode(Class<T> parentClass) {
       MavenSimpleNode node = this;
-      while (true) {
+      while (node != null && !parentClass.isInstance(node)) {
         node = node.myParent;
-        if (node == null || parentClass.isInstance(node)) {
-          //noinspection unchecked
-          return (T)node;
-        }
       }
+      //noinspection unchecked
+      return (T)node;
     }
 
     public boolean isVisible() {

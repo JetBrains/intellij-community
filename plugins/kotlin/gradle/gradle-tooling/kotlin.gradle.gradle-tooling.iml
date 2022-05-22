@@ -32,5 +32,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
     <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
+    <orderEntry type="library" name="kotlin-tooling-core" level="project" />
   </component>
 </module>

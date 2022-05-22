@@ -42,7 +42,7 @@ public final class AddMethodsDialog extends DialogWrapper {
   @NotNull private final Project myProject;
 
   private JPanel myPanel;
-  private ComboBox myTemplatesCombo;
+  private ComboBox<PseudoLambdaReplaceTemplate> myTemplatesCombo;
   private ClassNameReferenceEditor myClassNameEditor;
   private ComboBox<Collection<PsiMethod>> myMethodNameCombo;
   private ActionUsagePanel myBeforeActionPanel;
@@ -118,7 +118,7 @@ public final class AddMethodsDialog extends DialogWrapper {
         }
         LOG.assertTrue(!suitableTemplates.isEmpty());
         final List<PseudoLambdaReplaceTemplate> templatesAsList = new ArrayList<>(suitableTemplates);
-        myTemplatesCombo.setModel(new CollectionComboBoxModel(templatesAsList));
+        myTemplatesCombo.setModel(new CollectionComboBoxModel<>(templatesAsList));
         myTemplatesCombo.setSelectedItem(templatesAsList.get(0));
       }
     });
@@ -128,7 +128,7 @@ public final class AddMethodsDialog extends DialogWrapper {
       public void documentChanged(@NotNull DocumentEvent e) {
         final String classFqn = e.getDocument().getText();
         final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(classFqn, GlobalSearchScope.allScope(project));
-        final DefaultComboBoxModel comboBoxModel = (DefaultComboBoxModel)myMethodNameCombo.getModel();
+        final var comboBoxModel = (DefaultComboBoxModel<Collection<PsiMethod>>)myMethodNameCombo.getModel();
         comboBoxModel.removeAllElements();
         if (aClass == null) {
           enable(false);
@@ -209,8 +209,8 @@ public final class AddMethodsDialog extends DialogWrapper {
 
   public StaticPseudoFunctionalStyleMethodOptions.PipelineElement getSelectedElement() {
     return new StaticPseudoFunctionalStyleMethodOptions.PipelineElement(myClassNameEditor.getText(),
-                                                                        ContainerUtil.getFirstItem((Collection < PsiMethod >)myMethodNameCombo.getSelectedItem()).getName(),
-                                                                        (PseudoLambdaReplaceTemplate)myTemplatesCombo.getSelectedItem());
+                                                                        ContainerUtil.getFirstItem(myMethodNameCombo.getItem()).getName(),
+                                                                        myTemplatesCombo.getItem());
   }
 
   @Nullable

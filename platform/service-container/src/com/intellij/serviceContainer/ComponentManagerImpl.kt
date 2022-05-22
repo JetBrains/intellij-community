@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.*
@@ -116,7 +116,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   protected val containerStateName: String
     get() = containerState.get().name
 
-  @Suppress("LeakingThis")
   private val _extensionArea by lazy { ExtensionsAreaImpl(this) }
 
   private var messageBus: MessageBusImpl? = null
@@ -1357,7 +1356,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         }
       }
     }
-    @Suppress("DEPRECATION")
     return ArrayUtil.toObjectArray(result, baseClass)
   }
 

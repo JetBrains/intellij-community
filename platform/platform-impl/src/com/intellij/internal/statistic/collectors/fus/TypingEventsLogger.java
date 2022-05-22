@@ -112,12 +112,13 @@ public class TypingEventsLogger extends CounterUsagesCollector {
     public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       if (file.equals(myCurrentFile)) {
         logCurrentLatency();
+        myCurrentEditor = null;
         myLatencyRecord = null;
       }
     }
 
     @Override
-    public void recordTypingLatency(Editor editor, String action, long latencyMs) {
+    public void recordTypingLatency(@NotNull Editor editor, String action, long latencyMs) {
       if (editor == myCurrentEditor) {
         myLatencyRecord.update(action, (int) latencyMs);
       }

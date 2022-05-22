@@ -1,10 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-@file:Suppress("DeprecatedCallableAddReplaceWith")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.AbstractCompilerArgumentsCacheAware
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.ModelFactory

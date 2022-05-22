@@ -3,7 +3,6 @@ package com.intellij.ide.gdpr;
 
 /**
  * Data structure describing all possible Consent JSON attributes
- * Date: 06-Dec-17
  */
 final class ConsentAttributes {
   public String consentId;

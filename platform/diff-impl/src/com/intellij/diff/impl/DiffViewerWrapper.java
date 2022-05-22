@@ -19,6 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * Please, consider using {@link com.intellij.diff.DiffTool}, {@link com.intellij.diff.DiffExtension} or introducing a better extension point into platform,
  * rather than adding second usage of this one.
  */
+@ApiStatus.Internal
 public interface DiffViewerWrapper {
   Key<DiffViewerWrapper> KEY = Key.create("Diff.DiffViewerWrapper");
 

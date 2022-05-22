@@ -1,7 +1,6 @@
 // "Wrap with '?.let { ... }' call" "false"
 // WITH_STDLIB
 // ACTION: Add non-null asserted (!!) call
-// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable
 // ACTION: Replace with safe (this?.) call

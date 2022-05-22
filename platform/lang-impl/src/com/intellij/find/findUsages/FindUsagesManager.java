@@ -669,7 +669,7 @@ public final class FindUsagesManager {
     PsiElement element = handler.getPsiElement();
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();
-    if (file != null && ProjectFileIndex.SERVICE.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
+    if (file != null && ProjectFileIndex.getInstance(project).isInContent(file.getViewProvider().getVirtualFile())) {
       return GlobalSearchScope.projectScope(project);
     }
     return GlobalSearchScope.allScope(project);

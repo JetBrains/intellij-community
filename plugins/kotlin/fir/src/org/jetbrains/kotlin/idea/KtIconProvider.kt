@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
@@ -7,14 +7,13 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiClass
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import javax.swing.Icon
@@ -23,7 +22,7 @@ object KtIconProvider {
     private val LOG = Logger.getInstance(KtIconProvider::class.java)
 
     // KtAnalysisSession is unused, but we want to keep it here to force all access to this method has a KtAnalysisSession
-    @Suppress("unused")
+    @Suppress("UnusedReceiverParameter")
     fun KtAnalysisSession.getIcon(ktSymbol: KtSymbol): Icon? {
         // logic copied from org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
         val declaration = ktSymbol.psi
@@ -61,7 +60,7 @@ object KtIconProvider {
             is KtPackageSymbol -> PlatformIcons.PACKAGE_ICON
             is KtFunctionLikeSymbol -> {
                 val isExtension = symbol.isExtension
-                val isMember = symbol is KtPossibleMemberSymbol && symbol.symbolKind == KtSymbolKind.CLASS_MEMBER
+                val isMember = symbol.symbolKind == KtSymbolKind.CLASS_MEMBER
                 when {
                     isExtension && isAbstract -> KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
                     isExtension && !isAbstract -> KotlinIcons.EXTENSION_FUNCTION

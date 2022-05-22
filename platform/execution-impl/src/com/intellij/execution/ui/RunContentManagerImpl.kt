@@ -672,7 +672,7 @@ private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentD
 }
 
 private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {
-  val content = ContentFactory.SERVICE.getInstance().createContent(descriptor.component, descriptor.displayName, true)
+  val content = ContentFactory.getInstance().createContent(descriptor.component, descriptor.displayName, true)
   content.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
   if (AdvancedSettings.getBoolean("start.run.configurations.pinned")) content.isPinned = true
   content.icon = descriptor.icon ?: executor.toolWindowIcon

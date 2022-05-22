@@ -9,7 +9,7 @@ import java.awt.Dimension
 @ApiStatus.Internal
 internal class TabbedPaneHeader : JBTabbedPane() {
 
-  init {
+  override fun updateUI() {
     setUI(HeaderTabbedPaneUI())
   }
 

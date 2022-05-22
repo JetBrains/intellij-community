@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -8,6 +9,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Implementation of the {@link Collection} interface which:
@@ -34,6 +36,11 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
     private MyReference(int index, T referent, ReferenceQueue<? super T> queue) {
       super(referent, queue);
       this.index = index;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || obj != null && Objects.equals(get(), ((Reference<?>)obj).get());
     }
   }
 
@@ -155,7 +162,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
       curElement = nextElement;
       nextElement = null;
       nextIndex = -1;
-      for (int i= curIndex +1; i<myList.size();i++) {
+      for (int i = curIndex + 1; i < myList.size(); i++) {
         Reference<T> ref = myList.get(i);
         T t = ref == null ? null : ref.get();
         if (t != null) {
@@ -270,5 +277,25 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   public T get(int index) {
     throwNotAllowedException();
     return null;
+  }
+
+  /**
+   * @return true if all elements (allowed by {@code allowEntity} predicate) from the {@code other} list are contained in this list
+   */
+  public boolean containsAll(@NotNull UnsafeWeakList<T> other, @NotNull Predicate<? super T> allowEntity) {
+    List<MyReference<T>> myList = this.myList;
+    List<MyReference<T>> otherList = other.myList;
+    if (otherList.isEmpty()) {
+      return true;
+    }
+    for (MyReference<T> otherReference : otherList) {
+      T t = SoftReference.dereference(otherReference);
+      if (t != null
+          && allowEntity.test(t)
+          && !myList.contains(otherReference)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

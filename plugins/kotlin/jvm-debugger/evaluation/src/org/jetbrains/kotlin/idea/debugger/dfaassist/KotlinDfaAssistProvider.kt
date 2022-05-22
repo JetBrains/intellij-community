@@ -150,6 +150,10 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
                             hint = DfaHint.NPE
                             psi = parent.operationReference
                         }
+                    } else if (parent is KtBinaryExpression && parent.operationToken == KtTokens.ELVIS) {
+                        hint = DfaHint.NULL
+                    } else if (psi is KtBinaryExpressionWithTypeRHS && psi.operationReference.textMatches("as?")) {
+                        hint = DfaHint.NULL
                     }
                 }
                 hints.merge(psi, hint, DfaHint::merge)

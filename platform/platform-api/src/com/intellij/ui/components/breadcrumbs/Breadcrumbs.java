@@ -19,6 +19,7 @@ import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,6 +28,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -126,6 +128,12 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
   @Override
   public @NlsContexts.Tooltip String getToolTipText(MouseEvent event) {
     return hovered == null ? null : hovered.getTooltip();
+  }
+
+  @Nullable
+  protected Rectangle getCrumbBounds(@NotNull Crumb crumb) {
+    Optional<CrumbView> viewOpt = views.stream().filter(v -> v.crumb == crumb).findFirst();
+    return viewOpt.map(view -> view.bounds).orElse(null);
   }
 
   @Override

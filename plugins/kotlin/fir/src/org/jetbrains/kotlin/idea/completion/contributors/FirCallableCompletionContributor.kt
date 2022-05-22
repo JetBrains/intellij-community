@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.checkers.ExtensionApplicabilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.canDefinitelyNotBeSeenFromOtherFile
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensions
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbolAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -139,6 +140,7 @@ internal open class FirCallableCompletionContributor(
         if (shouldCompleteTopLevelCallablesFromIndex) {
             val topLevelCallables = indexHelper.getTopLevelCallables(scopeNameFilter)
             topLevelCallables.asSequence()
+                .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
                 .map { it.getSymbol() as KtCallableSymbol }
                 .filter { it !in extensionMembers && with(visibilityChecker) { isVisible(it) } }
                 .forEach { addCallableSymbolToCompletion(context, it, getOptions(it)) }
@@ -287,6 +289,7 @@ internal open class FirCallableCompletionContributor(
         val topLevelExtensions = indexHelper.getTopLevelExtensions(scopeNameFilter, implicitReceiverNames)
 
         return topLevelExtensions.asSequence()
+            .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
             .map { it.getSymbol() as KtCallableSymbol }
             .filter { filter(it) }
             .filter { with(visibilityChecker) { isVisible(it) } }

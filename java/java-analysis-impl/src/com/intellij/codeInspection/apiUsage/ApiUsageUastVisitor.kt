@@ -309,7 +309,7 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
     }
   }
 
-  private fun checkImplicitCallOfSuperEmptyConstructor(constructor: UMethod) {
+  protected fun checkImplicitCallOfSuperEmptyConstructor(constructor: UMethod) {
     val containingUClass = constructor.getContainingUClass() ?: return
     val superClass = containingUClass.javaPsi.superClass ?: return
     val uastBody = constructor.uastBody

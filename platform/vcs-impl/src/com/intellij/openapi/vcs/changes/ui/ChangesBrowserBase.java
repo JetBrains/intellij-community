@@ -304,7 +304,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     EditorTabDiffPreviewManager previewManager = EditorTabDiffPreviewManager.getInstance(myProject);
     DiffPreview diffPreview = getShowDiffActionPreview();
     if (diffPreview != null && previewManager.isEditorDiffPreviewAvailable()) {
-      previewManager.showDiffPreview(diffPreview);
+      diffPreview.performDiffAction();
     }
     else {
       showStandaloneDiff(myProject, this);

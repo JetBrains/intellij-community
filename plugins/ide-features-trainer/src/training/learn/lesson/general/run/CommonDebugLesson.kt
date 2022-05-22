@@ -26,7 +26,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
@@ -79,8 +78,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     startDebugTask()
 
-    returnToEditorTask()
-
     waitBeforeContinue(500)
 
     evaluateExpressionTasks()
@@ -121,6 +118,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   private fun LessonContext.prepareTask() {
     var needToRun = false
     prepareRuntimeTask {
+      (this@CommonDebugLesson).debugSession = null
       val stopAction = getActionById("Stop")
       invokeActionForFocusContext(stopAction)
       runWriteAction {
@@ -178,29 +176,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       }
       proposeModificationRestore(sample.text, checkDebugSession = false)
       test { actions(it) }
-    }
-
-    task {
-      stateCheck {
-        focusOwner is XDebuggerFramesList
-      }
-    }
-  }
-
-  private fun LessonContext.returnToEditorTask() {
-    task("EditorEscape") {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
-      }
-      text(LessonsBundle.message("debug.workflow.return.to.editor", action(it)))
-      stateCheck {
-        focusOwner is EditorComponentImpl
-      }
-      proposeModificationRestore(sample.text)
-      test {
-        Thread.sleep(500)
-        invokeActionViaShortcut("ESCAPE")
-      }
     }
   }
 

@@ -843,14 +843,19 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public void setProjectsTree(MavenProjectsTree newTree) {
+    if (!isInitialized()) {
+      initNew(Collections.emptyList(), MavenExplicitProfiles.NONE);
+    }
     myProjectsTree = newTree;
     myWatcher.setProjectsTree(newTree);
   }
 
   @ApiStatus.Internal
-  @Nullable
+  @NotNull
   public MavenProjectsTree getProjectsTree() {
-    return myProjectsTree;
+    MavenProjectsTree tree = myProjectsTree;
+    if (tree == null) return new MavenProjectsTree(myProject);
+    return tree;
   }
 
   private void scheduleUpdateAllProjects(MavenImportSpec spec) {
@@ -919,7 +924,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenSyncConsole console = getSyncConsole();
     console.startImport(myProgressListener, spec);
     StructuredIdeActivity activity = MavenImportStats.startImportActivity(myProject);
-    fireImportAndResolveScheduled();
+    fireImportAndResolveScheduled(spec);
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
       completeMavenSyncOnImportCompletion(activity);
@@ -1412,7 +1417,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  private void fireImportAndResolveScheduled() {
+  private void fireImportAndResolveScheduled(MavenImportSpec spec) {
+
+    myProject.getMessageBus()
+      .syncPublisher(MavenImportListener.TOPIC)
+      .importStarted(spec);
+
     for (Listener each : myManagerListeners) {
       each.importAndResolveScheduled();
     }

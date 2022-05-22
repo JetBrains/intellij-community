@@ -166,7 +166,6 @@ fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = fals
       if (ignoreErrors) {
         list.removeIf { it == null }
       }
-      @Suppress("UNCHECKED_CAST")
       result.setResult(list as List<T>)
     }
   }

@@ -3,7 +3,6 @@
 // ACTION: Create extension function 'Test.Foo.component2'
 // ACTION: Create member function 'Test.Foo.component1'
 // ACTION: Create member function 'Test.Foo.component2'
-// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Put arguments on separate lines
 // ERROR: Destructuring declaration initializer of type Test.Foo must have a 'component1()' function

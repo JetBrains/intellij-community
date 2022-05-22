@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ActionsEventLogGroup : CounterUsagesCollector() {
@@ -13,7 +16,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_FINISHED_EVENT_ID = "action.finished"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 67)
+    val GROUP = EventLogGroup("actions", 68)
 
     @JvmField
     val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
@@ -52,6 +55,11 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val ACTION_FINISHED = registerActionEvent(
       GROUP, ACTION_FINISHED_EVENT_ID, EventFields.StartTime, ADDITIONAL, EventFields.Language, EventFields.DurationMs, DUMB_START, RESULT
     )
+
+    @JvmField
+    val ACTION_UPDATED = GROUP.registerVarargEvent("action.updated", EventFields.PluginInfo,
+                                                   ACTION_ID, ACTION_CLASS, ACTION_PARENT,
+                                                   EventFields.Language, EventFields.DurationMs)
 
     @JvmStatic
     fun registerActionEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {

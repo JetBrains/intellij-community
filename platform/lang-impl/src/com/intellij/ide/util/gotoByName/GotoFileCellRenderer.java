@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -76,7 +76,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
 
   @Nullable
   public static VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     VirtualFile root = index.getContentRootForFile(virtualFile);
     if (root == null) root = index.getClassRootForFile(virtualFile);
     if (root == null) root = index.getSourceRootForFile(virtualFile);

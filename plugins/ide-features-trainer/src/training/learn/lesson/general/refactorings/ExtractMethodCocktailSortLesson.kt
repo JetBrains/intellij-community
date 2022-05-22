@@ -61,7 +61,7 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
           !insideRefactoring()
         }
         test(waitEditorToBeReady = false) {
-          dialog(extractMethodDialogTitle) {
+          dialog {
             button(yesButtonText).click()
           }
         }

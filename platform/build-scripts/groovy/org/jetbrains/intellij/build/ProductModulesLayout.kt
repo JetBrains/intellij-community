@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -9,8 +11,8 @@ import java.util.function.BiConsumer
 
 class ProductModulesLayout {
   companion object {
-    @JvmStatic
-    val DEFAULT_BUNDLED_PLUGINS: List<String> = listOf(
+    @JvmField
+    val DEFAULT_BUNDLED_PLUGINS: List<String> = java.util.List.of(
       "intellij.platform.images",
       "intellij.dev",
     )
@@ -24,18 +26,18 @@ class ProductModulesLayout {
   /**
    * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
    */
-  var productApiModules: MutableList<String> = mutableListOf()
+  var productApiModules: List<String> = emptyList()
 
   /**
    * Names of the additional product-specific modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
    */
-  var productImplementationModules: MutableList<String> = mutableListOf()
+  var productImplementationModules: List<String> = emptyList()
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
    * bundled plugins are specified in {@link #allNonTrivialPlugins} list.
    */
-  var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
+  val bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
 
   private var pluginsToPublish: LinkedHashSet<String> = LinkedHashSet()
 
@@ -56,7 +58,7 @@ class ProductModulesLayout {
    * @see #setPluginModulesToPublish
    */
   fun getPluginModulesToPublish(): List<String> {
-    return pluginsToPublish.toList()
+    return java.util.List.copyOf(pluginsToPublish)
   }
 
   /**
@@ -71,38 +73,34 @@ class ProductModulesLayout {
   /**
    * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
    */
-  var projectLibrariesToUnpackIntoMainJar: MutableList<String> = mutableListOf()
+  var projectLibrariesToUnpackIntoMainJar: List<String> = emptyList()
 
   /**
    * Maps names of JARs to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
    */
-  var additionalPlatformJars: MultiMap<String, String> = MultiMap.createLinkedSet()
+  val additionalPlatformJars: MultiMap<String, String> = MultiMap.createLinkedSet()
 
   /**
    * Module name to list of Ant-like patterns describing entries which should be excluded from its output.
    * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
    * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
    */
-  var moduleExcludes: MultiValuesMap<String, String> = MultiValuesMap<String, String>(true)
+  val moduleExcludes: MultiValuesMap<String, String> = MultiValuesMap<String, String>(true)
 
   /**
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
    */
-  var platformLayoutCustomizer: BiConsumer<PlatformLayout, BuildContext> = BiConsumer { _, _ -> }
+  internal val platformLayoutCustomizers = mutableListOf<BiConsumer<PlatformLayout, BuildContext>>()
 
-  fun appendPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
-    val prev = platformLayoutCustomizer
-    platformLayoutCustomizer = BiConsumer { layout, context ->
-      prev.accept(layout, context)
-      customizer.accept(layout, context)
-    }
+  fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
+    platformLayoutCustomizers.add(customizer)
   }
 
   /**
    * Names of the modules which classpath will be used to build searchable options index <br>
    * //todo[nik] get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
    */
-  var mainModules: MutableList<String> = mutableListOf()
+  var mainModules: List<String> = emptyList()
 
   /**
    * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.

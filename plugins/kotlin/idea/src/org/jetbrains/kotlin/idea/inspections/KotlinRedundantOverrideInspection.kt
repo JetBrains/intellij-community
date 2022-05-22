@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
+import org.jetbrains.kotlin.idea.util.hasNonSuppressAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
@@ -32,7 +33,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             val modifierList = function.modifierList ?: return
             if (!modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
             if (MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
-            if (function.annotationEntries.isNotEmpty()) return
+            if (function.hasNonSuppressAnnotation) return
             if (function.containingClass()?.isData() == true) return
 
             val bodyExpression = function.bodyExpression ?: return

@@ -2,7 +2,8 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
 import com.intellij.testFramework.LightProjectDescriptor;

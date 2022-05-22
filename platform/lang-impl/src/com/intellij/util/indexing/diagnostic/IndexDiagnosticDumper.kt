@@ -1,12 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -17,6 +13,8 @@ import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.indexingDiagnosticDir
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonMapper
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
@@ -24,9 +22,7 @@ import com.intellij.util.io.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.extension
@@ -37,8 +33,6 @@ class IndexDiagnosticDumper : Disposable {
   companion object {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service()
-
-    val diagnosticTimestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
 
     private const val fileNamePrefix = "diagnostic-"
 
@@ -84,10 +78,6 @@ class IndexDiagnosticDumper : Disposable {
 
     private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
 
-    val jacksonMapper: ObjectMapper by lazy {
-      jacksonObjectMapper().registerKotlinModule()
-    }
-
     fun readJsonIndexDiagnostic(file: Path): JsonIndexDiagnostic =
       jacksonMapper.readValue(file.toFile(), JsonIndexDiagnostic::class.java)
 
@@ -97,11 +87,6 @@ class IndexDiagnosticDumper : Disposable {
           dirStream.forEach { FileUtil.deleteWithRenaming(it) }
         }
       }
-    }
-
-    val indexingDiagnosticDir: Path by lazy {
-      val logPath = PathManager.getLogPath()
-      Paths.get(logPath).resolve("indexing-diagnostic")
     }
 
     fun getProjectDiagnosticDirectory(project: Project): Path {
@@ -161,7 +146,7 @@ class IndexDiagnosticDumper : Disposable {
       val (diagnosticJson: Path, diagnosticHtml: Path) = getFilesForNewJsonAndHtmlDiagnostics(indexDiagnosticDirectory)
 
       val jsonIndexDiagnostic = JsonIndexDiagnostic.generateForHistory(projectIndexingHistory)
-      jacksonMapper.writerWithDefaultPrettyPrinter().writeValue(diagnosticJson.toFile(), jsonIndexDiagnostic)
+      IndexDiagnosticDumperUtils.writeValue(diagnosticJson, jsonIndexDiagnostic)
       diagnosticHtml.write(jsonIndexDiagnostic.generateHtml())
 
       val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
@@ -182,9 +167,8 @@ class IndexDiagnosticDumper : Disposable {
     var diagnosticHtml: Path
     var nowTime = LocalDateTime.now()
     while (true) {
-      val timestamp = nowTime.format(diagnosticTimestampFormat)
-      diagnosticJson = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.json")
-      diagnosticHtml = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.html")
+      diagnosticJson = IndexDiagnosticDumperUtils.getDumpFilePath(fileNamePrefix, nowTime, "json", indexDiagnosticDirectory)
+      diagnosticHtml = IndexDiagnosticDumperUtils.getDumpFilePath(fileNamePrefix, nowTime, "html", indexDiagnosticDirectory)
       if (!diagnosticJson.exists() && !diagnosticHtml.exists()) {
         break
       }

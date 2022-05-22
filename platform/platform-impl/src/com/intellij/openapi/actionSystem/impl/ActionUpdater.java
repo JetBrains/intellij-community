@@ -58,6 +58,7 @@ final class ActionUpdater {
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
+  private static FList<String> ourInEDTActionOperationStack = FList.emptyList();
 
   private final PresentationFactory myPresentationFactory;
   private final DataContext myDataContext;
@@ -75,7 +76,6 @@ final class ActionUpdater {
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheSlowDataKeys;
   private boolean myForceAsync;
-  private String myInEDTActionOperation;
   private final Function<AnActionEvent, AnActionEvent> myEventTransform;
   private final Consumer<Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
@@ -188,6 +188,7 @@ final class ActionUpdater {
     return computeOnEdt(operationName, call);
   }
 
+  /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
   <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call) {
     long start0 = System.nanoTime();
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
@@ -203,7 +204,8 @@ final class ActionUpdater {
         }
       }
       long start = System.nanoTime();
-      myInEDTActionOperation = operationName;
+      FList<String> prevStack = ourInEDTActionOperationStack;
+      ourInEDTActionOperationStack = prevStack.prepend(operationName);
       try {
         return ProgressManager.getInstance().runProcess(() -> {
           try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
@@ -212,7 +214,7 @@ final class ActionUpdater {
         }, ProgressWrapper.wrap(progress));
       }
       finally {
-        myInEDTActionOperation = null;
+        ourInEDTActionOperationStack = prevStack;
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
           warns.add(elapsedReport(elapsed, true, operationName) + ". Use `UpdateInBackground`.");
@@ -227,6 +229,10 @@ final class ActionUpdater {
         LOG.warn(warn);
       }
     }
+  }
+
+  static @Nullable String currentInEDTOperationName() {
+    return ourInEDTActionOperationStack.getHead();
   }
 
   /**
@@ -372,8 +378,8 @@ final class ActionUpdater {
     ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
     return ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
       applicationEx,
-      () -> cancelPromise(promise, myInEDTActionOperation == null ? "write-action requested" :
-                                   NESTED_WA_REASON_PREFIX + myInEDTActionOperation),
+      () -> cancelPromise(promise, currentInEDTOperationName() == null ? "write-action requested" :
+                                   NESTED_WA_REASON_PREFIX + currentInEDTOperationName()),
       () -> applicationEx.tryRunReadAction(runnable));
   }
 

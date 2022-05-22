@@ -1,7 +1,6 @@
 // "Remove parameter 'x'" "false"
 // ACTION: Add 'block =' to argument
 // ACTION: Convert parameter to receiver
-// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Put parameters on separate lines
 // ACTION: Rename to _

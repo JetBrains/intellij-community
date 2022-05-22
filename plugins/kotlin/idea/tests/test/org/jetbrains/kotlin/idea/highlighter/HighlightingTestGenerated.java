@@ -108,6 +108,49 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/highlighter/suppress")
+    public static class Suppress extends AbstractHighlightingTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AllSuppressed.kt")
+        public void testAllSuppressed() throws Exception {
+            runTest("testData/highlighter/suppress/AllSuppressed.kt");
+        }
+
+        @TestMetadata("Class.kt")
+        public void testClass() throws Exception {
+            runTest("testData/highlighter/suppress/Class.kt");
+        }
+
+        @TestMetadata("Diagnosics.kt")
+        public void testDiagnosics() throws Exception {
+            runTest("testData/highlighter/suppress/Diagnosics.kt");
+        }
+
+        @TestMetadata("File.kt")
+        public void testFile() throws Exception {
+            runTest("testData/highlighter/suppress/File.kt");
+        }
+
+        @TestMetadata("Functions.kt")
+        public void testFunctions() throws Exception {
+            runTest("testData/highlighter/suppress/Functions.kt");
+        }
+
+        @TestMetadata("Parameter.kt")
+        public void testParameter() throws Exception {
+            runTest("testData/highlighter/suppress/Parameter.kt");
+        }
+
+        @TestMetadata("Unused.kt")
+        public void testUnused() throws Exception {
+            runTest("testData/highlighter/suppress/Unused.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighter")
     public static class Uncategorized extends AbstractHighlightingTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -32,7 +32,7 @@ class KotlinTodoSearcher : QueryExecutorBase<IndexPatternOccurrence, IndexPatter
             pattern = queryParameters.patternProvider.indexPatterns.firstOrNull { it.patternString.contains("TODO", true) } ?: return
         }
 
-        val cacheManager = TodoCacheManager.SERVICE.getInstance(file.project)
+        val cacheManager = TodoCacheManager.getInstance(file.project)
         val patternProvider = queryParameters.patternProvider
         val count = if (patternProvider != null) {
             cacheManager.getTodoCount(virtualFile, patternProvider)

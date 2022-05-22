@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.IdeView;
@@ -105,7 +105,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
       if (sourceRoots.length > 0) {
         for (VirtualFile sourceRoot : sourceRoots) {
           // TODO notify if we have multiple source roots and can't build mapping automatically
-          final VirtualFile contentRoot = ProjectFileIndex.SERVICE.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
+          final VirtualFile contentRoot = ProjectFileIndex.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
           if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
             final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
             return "\n    package_dir={'': '" + relativePath + "'},";

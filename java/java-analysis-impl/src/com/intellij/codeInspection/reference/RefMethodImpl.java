@@ -36,7 +36,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
 
-  private List<RefMethod> mySuperMethods; // guarded by this
+  private Object mySuperMethods; // guarded by this
   private List<RefOverridable> myDerivedReferences; // guarded by this
   private List<String> myUnThrownExceptions; // guarded by this
 
@@ -127,11 +127,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
       if (PsiModifier.PRIVATE != getAccessModifier() && !isStatic()) {
         initializeSuperMethods(javaPsi);
-        getRefManager().executeTask(() -> {
-          if (ownerClass != null && isExternalOverride()) {
-            ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this);
-          }
-        });
+        if (ownerClass != null && isExternalOverride()) {
+          getRefManager().executeTask(() -> ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this));
+        }
       }
     }
 
@@ -204,7 +202,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   @NotNull
   public synchronized Collection<RefMethod> getSuperMethods() {
-    return ObjectUtils.notNull(mySuperMethods, Collections.emptyList());
+    if (mySuperMethods instanceof Collection) {
+      //noinspection unchecked
+      return (Collection<RefMethod>)mySuperMethods;
+    }
+    return mySuperMethods != null ? List.of((RefMethod)mySuperMethods) : List.of();
   }
 
   @Override
@@ -277,10 +279,18 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   public synchronized void addSuperMethod(RefMethodImpl refSuperMethod) {
     if (mySuperMethods == null) {
-      mySuperMethods = new ArrayList<>(1);
+      mySuperMethods = refSuperMethod;
     }
-    if (!mySuperMethods.contains(refSuperMethod)) {
-      mySuperMethods.add(refSuperMethod);
+    else if (!(mySuperMethods instanceof List)) {
+      ArrayList<RefMethod> list = new ArrayList<>(2);
+      list.add((RefMethod)mySuperMethods);
+      list.add(refSuperMethod);
+      mySuperMethods = list;
+    }
+    else {
+      //noinspection unchecked
+      List<RefMethod> list = (List<RefMethod>)mySuperMethods;
+      list.add(refSuperMethod);
     }
   }
 
@@ -365,7 +375,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
     for (RefMethod superMethod : getSuperMethods()) {
       if (((RefMethodImpl)superMethod).isLibraryOverride(processed)) {
-        setLibraryOverride(true);
+        setFlag(true, IS_LIBRARY_OVERRIDE_MASK);
         return true;
       }
     }

@@ -37,6 +37,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 public final class ActionUtil {
@@ -77,21 +78,28 @@ public final class ActionUtil {
     }
     else {
       message = getUnavailableMessage("None of the following actions", true) +
-                                       ": " + StringUtil.join(actionNames, ", ");
+                ": " + StringUtil.join(actionNames, ", ");
     }
     return message;
   }
 
   public static @NotNull @NlsContexts.PopupContent String getUnavailableMessage(@NotNull String action, boolean plural) {
     if (plural) {
-      return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
+      return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action,
+                               ApplicationNamesInfo.getInstance().getProductName());
     }
-    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action,
+                             ApplicationNamesInfo.getInstance().getProductName());
   }
 
-  /** @deprecated Use {@link #performDumbAwareUpdate(AnAction, AnActionEvent, boolean)} instead */
+  /**
+   * @deprecated Use {@link #performDumbAwareUpdate(AnAction, AnActionEvent, boolean)} instead
+   */
   @Deprecated(forRemoval = true)
-  public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+  public static boolean performDumbAwareUpdate(boolean isInModalContext,
+                                               @NotNull AnAction action,
+                                               @NotNull AnActionEvent e,
+                                               boolean beforeActionPerformed) {
     return performDumbAwareUpdate(action, e, beforeActionPerformed);
   }
 
@@ -141,8 +149,12 @@ public final class ActionUtil {
         }
       };
       boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE : SlowOperations.ACTION_PERFORM)) {
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE
+                                                                                : SlowOperations.ACTION_PERFORM)) {
+        long startTime = System.nanoTime();
         runnable.run();
+        long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+        ActionsCollector.getInstance().recordUpdate(action, e, duration);
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible());
@@ -168,8 +180,9 @@ public final class ActionUtil {
   /**
    * Show a cancellable modal progress running the given computation under read action with the same {@link DumbService#isAlternativeResolveEnabled()}
    * as the caller. To be used in actions which need to perform potentially long-running computations synchronously without freezing UI.
+   *
    * @throws ProcessCanceledException if the user has canceled the progress. If the action can be safely stopped at this point
-   *   without leaving inconsistent data behind, this exception doesn't need to be caught and processed.
+   *                                  without leaving inconsistent data behind, this exception doesn't need to be caught and processed.
    */
   public static <T> T underModalProgress(@NotNull Project project,
                                          @NotNull @NlsContexts.ProgressTitle String progressTitle,
@@ -178,7 +191,9 @@ public final class ActionUtil {
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
     ThrowableComputable<T, RuntimeException> inReadAction = () -> ApplicationManager.getApplication().runReadAction(computable);
     ThrowableComputable<T, RuntimeException> prioritizedRunnable = () -> ProgressManager.getInstance().computePrioritized(inReadAction);
-    ThrowableComputable<T, RuntimeException> process = useAlternativeResolve ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) : prioritizedRunnable;
+    ThrowableComputable<T, RuntimeException> process = useAlternativeResolve
+                                                       ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable)
+                                                       : prioritizedRunnable;
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
   }
 
@@ -196,7 +211,6 @@ public final class ActionUtil {
       }
     }
     return false;
-
   }
 
   public static boolean lastUpdateAndCheckDumb(@NotNull AnAction action, @NotNull AnActionEvent e, boolean visibilityMatters) {
@@ -224,7 +238,9 @@ public final class ActionUtil {
     return !visibilityMatters || e.getPresentation().isVisible();
   }
 
-  /** @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)} */
+  /**
+   * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)}
+   */
   @Deprecated
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
     LOG.assertTrue(e.getDataContext() == context, "event context does not match the argument");
@@ -276,7 +292,7 @@ public final class ActionUtil {
 
   /**
    * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)} or
-   *                 {@link AnAction#actionPerformed(AnActionEvent)} instead
+   * {@link AnAction#actionPerformed(AnActionEvent)} instead
    */
   @Deprecated
   public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent event) {
@@ -388,7 +404,7 @@ public final class ActionUtil {
   /**
    * Convenience method for merging non-null properties from a registered action
    *
-   * @param action action to merge to
+   * @param action   action to merge to
    * @param actionId action id to merge from
    */
   public static AnAction mergeFrom(@NotNull AnAction action, @NotNull String actionId) {
@@ -441,7 +457,9 @@ public final class ActionUtil {
     }
   }
 
-  public static @NotNull ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
+  public static @NotNull ActionListener createActionListener(@NotNull String actionId,
+                                                             @NotNull Component component,
+                                                             @NotNull String place) {
     return e -> {
       AnAction action = getAction(actionId);
       if (action == null) {

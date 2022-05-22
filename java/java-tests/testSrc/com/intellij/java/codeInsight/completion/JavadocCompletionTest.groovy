@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.patterns.PlatformPatterns
@@ -45,7 +44,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   protected void setUp() {
     super.setUp()
     javaSettings = JavaCodeStyleSettings.getInstance(getProject())
-    myFixture.enableInspections(new JavaDocLocalInspection())
+    myFixture.enableInspections(new JavadocDeclarationInspection())
   }
 
   void testNamesInPackage() {

@@ -54,6 +54,8 @@ public abstract class GroupedElementsRenderer implements Accessible {
 
     if (!ExperimentalUI.isNewUI()) {
       setSelected(myComponent, isSelected);
+    } else {
+      UIUtil.setNotOpaqueRecursively(myComponent);
     }
     setSelected(myTextLabel, isSelected);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -21,6 +21,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.TimeoutUtil;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMaps;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +36,31 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   private static final ActionsBuiltInAllowedlist ourAllowedList = ActionsBuiltInAllowedlist.getInstance();
   private static final Map<AnActionEvent, Stats> ourStats = new WeakHashMap<>();
+
+  private static class ActionUpdateStatsKey {
+    final String actionId;
+    final String language;
+
+    private ActionUpdateStatsKey(@NotNull String actionId, @NotNull String language) {
+      this.actionId = actionId;
+      this.language = language;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ActionUpdateStatsKey key = (ActionUpdateStatsKey)o;
+      return Objects.equals(actionId, key.actionId) && Objects.equals(language, key.language);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(actionId, language);
+    }
+  }
+
+  private final Object2LongMap<ActionUpdateStatsKey> myUpdateStats = Object2LongMaps.synchronize(new Object2LongOpenHashMap<>());
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
@@ -201,6 +229,31 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
     data.add(EventFields.DurationMs.with(StatisticsUtil.INSTANCE.roundDuration(durationMillis)));
     recordActionInvoked(project, action, event, data);
+  }
+
+  @Override
+  public void recordUpdate(@NotNull AnAction action, @NotNull AnActionEvent event, long durationMs) {
+    if (durationMs <= 5) return;
+    List<EventPair<?>> data = new ArrayList<>();
+    PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
+    String actionId = addActionClass(data, action, info);
+    DataContext dataContext = getCachedDataContext(event);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Language language = getInjectedOrFileLanguage(project, dataContext);
+    if (language == null) {
+      language = Language.ANY;
+    }
+    ActionUpdateStatsKey statsKey = new ActionUpdateStatsKey(actionId, language.getID());
+    long reportedData = myUpdateStats.getLong(statsKey);
+    if (reportedData == 0 || durationMs >= 2 * reportedData) {
+      myUpdateStats.put(statsKey, durationMs);
+
+      data.add(EventFields.PluginInfo.with(info));
+      data.add(EventFields.Language.with(language));
+      data.add(EventFields.DurationMs.with(durationMs));
+
+      ActionsEventLogGroup.ACTION_UPDATED.log(project, data);
+    }
   }
 
   @NotNull

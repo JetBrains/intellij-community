@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs;
 
 import com.intellij.icons.AllIcons;
@@ -80,7 +80,7 @@ public class CompareWithLocalDialog {
     DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, changesBrowser, changesPanel);
     changesBrowser.setShowDiffActionPreview(diffPreview);
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(changesPanel, dialogTitle, false);
+    Content content = ContentFactory.getInstance().createContent(changesPanel, dialogTitle, false);
     content.setPreferredFocusableComponent(changesBrowser.getPreferredFocusedComponent());
     content.setDisposer(changesPanel);
 

@@ -52,6 +52,10 @@ abstract class JUnit5AssertionsConverterInspectionTestBase : UastInspectionTestB
       public @interface Test {}
     """.trimIndent())
     myFixture.addClass("""
+      package org.junit.platform.commons.annotation;
+      public @interface Testable {}
+    """.trimIndent())
+    myFixture.addClass("""
       package org.junit.jupiter.api;
       public final class Assertions {
         public static void assertArrayEquals(Object[] expected, Object[] actual) {}

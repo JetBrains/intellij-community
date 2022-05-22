@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
@@ -175,7 +176,7 @@ private fun Module.createSourceRootDirectory(nonGeneratedSourceFolders: List<Sou
 
     runWriteAction {
         VfsUtil.createDirectoryIfMissing(srcFolderPath.absolutePathString())
-        project.invalidateProjectRoots()
+        project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
     }
 
     return VfsUtil.findFile(srcFolderPath, true)

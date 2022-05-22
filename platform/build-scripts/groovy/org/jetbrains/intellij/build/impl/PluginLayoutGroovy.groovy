@@ -22,7 +22,7 @@ final class PluginLayoutGroovy {
    * to include such a library to the plugin distribution.</p>
    * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
    */
-  static PluginLayout plugin(@NotNull String mainModuleName, @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
+  static PluginLayout plugin(@NotNull String mainModuleName, @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body) {
     PluginLayout.plugin(mainModuleName, new Consumer<PluginLayout.PluginLayoutSpec>() {
       @Override
       void accept(PluginLayout.PluginLayoutSpec spec) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.annotations.ApiStatus
@@ -45,7 +45,7 @@ abstract class ProductProperties {
    * <br>
    * todo[nik] get rid of this and make sure that these resources are located in {@link #applicationInfoModule} instead
    */
-  var brandingResourcePaths: MutableList<String> = mutableListOf()
+  var brandingResourcePaths: List<Path> = emptyList()
 
   /**
    * Name of the command which runs IDE in 'offline inspections' mode (returned by 'getCommandName' in com.intellij.openapi.application.ApplicationStarter).
@@ -124,7 +124,7 @@ abstract class ProductProperties {
   /**
    * Path to an alternative scramble script which will should be used for a product
    */
-  var alternativeScrambleStubPath: String? = null
+  var alternativeScrambleStubPath: Path? = null
 
   /**
    * Describes which modules should be included into the product's platform and which plugins should be bundled with the product
@@ -153,12 +153,12 @@ abstract class ProductProperties {
   /**
    * Paths to properties files the content of which should be appended to idea.properties file
    */
-  var additionalIDEPropertiesFilePaths: MutableList<String> = mutableListOf()
+  var additionalIDEPropertiesFilePaths: List<Path> = emptyList()
 
   /**
    * Paths to directories the content of which should be added to 'license' directory of IDE distribution
    */
-  var additionalDirectoriesWithLicenses: MutableList<String> = mutableListOf()
+  var additionalDirectoriesWithLicenses: List<Path> = emptyList()
 
   /**
    * Base file name (without extension) for product archives and installers (*.exe, *.tar.gz, *.dmg)
@@ -199,7 +199,7 @@ abstract class ProductProperties {
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
    * todo[nik] get rid of this
    */
-  var additionalModulesToCompile: MutableList<String> = mutableListOf()
+  var additionalModulesToCompile: List<String> = emptyList()
 
   /**
    * Specified modules which tests need to be compiled when product is built.
@@ -249,12 +249,12 @@ abstract class ProductProperties {
   /**
    * Build steps which are always skipped for this product. Can be extended via {@link org.jetbrains.intellij.build.BuildOptions#buildStepsToSkip} but not overridden.
    */
-  var incompatibleBuildSteps: MutableList<String> = mutableListOf()
+  var incompatibleBuildSteps: List<String> = emptyList()
 
   /**
    * Names of JARs inside IDE_HOME/lib directory which need to be added to the Xbootclasspath to start the IDE
    */
-  var xBootClassPathJarNames: MutableList<String> = mutableListOf()
+  var xBootClassPathJarNames: List<String> = emptyList()
 
   /**
    * Customize PRODUCT_CODE-builtinModules.json which contains information about product modules,

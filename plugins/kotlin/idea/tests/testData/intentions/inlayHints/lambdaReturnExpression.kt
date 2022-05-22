@@ -5,5 +5,5 @@ fun String.filter(predicate: (String) -> Boolean): String = this
 
 val q = "".filter {
     val length = it.length
-    <caret>length > 0
+    length ><caret> 0
 }

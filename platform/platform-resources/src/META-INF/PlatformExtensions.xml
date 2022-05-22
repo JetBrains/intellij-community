@@ -56,6 +56,9 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
+    <applicationService serviceInterface="com.intellij.util.net.ssl.OsCertificatesService"
+                        serviceImplementation="com.intellij.util.net.ssl.OsCertificatesServiceImpl" />
+
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter"
                         serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>
 
@@ -148,6 +151,7 @@
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings" preload="notHeadless"/>
 
     <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="true" os="mac"/>
+    <cachesInvalidator implementation="com.intellij.ui.jcef.JBCefAppCacheInvalidator" order="last" />
 
     <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService"
                                           serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeUiServiceImpl"/>
@@ -319,8 +323,6 @@
                         headlessImplementation="com.intellij.ide.dnd.HeadlessDnDManager"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
                         serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.ui.errorView.ErrorViewFactory"
-                        serviceImplementation="com.intellij.ui.errorView.impl.ErrorViewFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
@@ -962,6 +964,10 @@
                  description="Use KWallet if KWallet &amp; SecretService are both available."/>
 
     <applicationService
+      serviceInterface="com.intellij.credentialStore.CredentialStoreManager"
+      serviceImplementation="com.intellij.credentialStore.CredentialStoreManagerImpl"/>
+
+    <applicationService
       serviceInterface="com.intellij.openapi.projectRoots.JdkFinder"
       serviceImplementation="com.intellij.openapi.projectRoots.impl.JdkFinderImpl"/>
 
@@ -1353,6 +1359,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
+
+    <projectBuildWarmupSupport implementation="com.intellij.warmup.PlatformBuildWarmupSupport" />
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

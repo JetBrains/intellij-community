@@ -30,6 +30,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private final @NotNull ViewFactory myViewFactory;
   private final @NotNull StyleSheet myStyle;
 
+  private final @NotNull HTMLEditorKit.LinkController myLinkController = new MouseExitSupportLinkController();
   private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
 
@@ -139,9 +140,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       LinkController oldLinkController = listeners1.get(0);
       pane.removeMouseListener(oldLinkController);
       pane.removeMouseMotionListener(oldLinkController);
-      MouseExitSupportLinkController newLinkController = new MouseExitSupportLinkController();
-      pane.addMouseListener(newLinkController);
-      pane.addMouseMotionListener(newLinkController);
+      pane.addMouseListener(myLinkController);
+      pane.addMouseMotionListener(myLinkController);
     }
   }
 
@@ -157,6 +157,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   @Override
   public void deinstall(@NotNull JEditorPane c) {
+    c.removeMouseListener(myLinkController);
+    c.removeMouseMotionListener(myLinkController);
     c.removeHyperlinkListener(myHyperlinkListener);
     super.deinstall(c);
   }

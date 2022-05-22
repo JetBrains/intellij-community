@@ -4,7 +4,6 @@
 // ACTION: Converts the assignment statement to an expression
 // ACTION: Create local variable 'foobar'
 // ACTION: Create property 'foobar'
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 
 

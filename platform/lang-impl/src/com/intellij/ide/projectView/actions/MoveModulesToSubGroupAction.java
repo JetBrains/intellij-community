@@ -51,13 +51,13 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
     if (myModuleGroup != null) {
       String message = IdeBundle.message("prompt.specify.name.of.module.subgroup", myModuleGroup.presentableText(), whatToMove(modules));
       String subgroup = Messages.showInputDialog(message, IdeBundle.message("title.module.sub.group"), Messages.getQuestionIcon());
-      if (subgroup == null || "".equals(subgroup.trim())) return;
+      if (subgroup == null || subgroup.trim().isEmpty()) return;
       newGroup = ContainerUtil.append(myModuleGroup.getGroupPathList(), subgroup);
     }
     else {
       String message = IdeBundle.message("prompt.specify.module.group.name", whatToMove(modules));
       String group = Messages.showInputDialog(message, IdeBundle.message("title.module.group"), Messages.getQuestionIcon());
-      if (group == null || "".equals(group.trim())) return;
+      if (group == null || group.trim().isEmpty()) return;
       newGroup = Collections.singletonList(group);
     }
 

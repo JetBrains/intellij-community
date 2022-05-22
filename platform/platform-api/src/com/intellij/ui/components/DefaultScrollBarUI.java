@@ -34,7 +34,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   JScrollBar myScrollBar;
 
   final ScrollBarPainter.Track myTrack = new ScrollBarPainter.Track(() -> myScrollBar);
-  final ScrollBarPainter.Thumb myThumb = new ScrollBarPainter.Thumb(() -> myScrollBar, false);
+  final ScrollBarPainter.Thumb myThumb = createThumbPainter();
 
   private boolean isValueCached;
   private int myCachedValue;
@@ -48,6 +48,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
     myThickness = thickness;
     myThicknessMax = thicknessMax;
     myThicknessMin = thicknessMin;
+  }
+
+  protected ScrollBarPainter.Thumb createThumbPainter() {
+    return new ScrollBarPainter.Thumb(() -> myScrollBar, false);
   }
 
   int getThickness() {
@@ -125,13 +129,20 @@ class DefaultScrollBarUI extends ScrollBarUI {
         if (alignment == Alignment.BOTTOM) y += offset;
       }
     }
-    if (small) {
-      x += 1;
-      y += 1;
-      width -= 2;
-      height -= 2;
+
+    int inset = insetForSmall(small);
+    if (inset != 0) {
+      x += inset;
+      y += inset;
+      width -= 2 * inset;
+      height -= 2 * inset;
     }
+
     p.paint(g, x, y, width, height, p.animator.myValue);
+  }
+
+  protected int insetForSmall(boolean small) {
+    return small ? 1 : 0;
   }
 
   private int getTrackOffset(int offset) {

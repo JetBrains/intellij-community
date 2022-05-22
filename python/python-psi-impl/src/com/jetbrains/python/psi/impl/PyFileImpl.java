@@ -25,7 +25,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -186,7 +185,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public PyFileImpl(FileViewProvider viewProvider, Language language) {
     super(viewProvider, language);
     myFutureFeatures = new HashMap<>();
-    myModificationTracker = PsiModificationTracker.SERVICE.getInstance(getProject());
+    myModificationTracker = PsiModificationTracker.getInstance(getProject());
   }
 
   @Override
@@ -826,7 +825,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         if (psiDirectory != null) {
           final VirtualFile virtualFile = getVirtualFile();
           if (virtualFile != null) {
-            final VirtualFile root = ProjectFileIndex.SERVICE.getInstance(getProject()).getContentRootForFile(virtualFile);
+            final VirtualFile root = ProjectFileIndex.getInstance(getProject()).getContentRootForFile(virtualFile);
             if (root != null) {
               final VirtualFile parent = virtualFile.getParent();
               final VirtualFile rootParent = root.getParent();

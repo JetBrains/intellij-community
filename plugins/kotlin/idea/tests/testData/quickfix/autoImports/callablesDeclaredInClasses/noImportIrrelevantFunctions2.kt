@@ -3,7 +3,6 @@
 // ACTION: Convert to with
 // ACTION: Create extension function 'Base.defaultFun'
 // ACTION: Create member function 'Base.defaultFun'
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: defaultFun
 

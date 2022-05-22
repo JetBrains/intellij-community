@@ -171,7 +171,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       }
 
       if (memberClass != null && member instanceof PsiMethod) {
-        if (memberClass.isRecord()) if (((PsiMethod)member).isConstructor()) {
+        if (memberClass.isRecord() && ((PsiMethod)member).isConstructor()) {
           final PsiModifierList modifierList = memberClass.getModifierList();
           assert modifierList != null; // anonymous records don't exist
           return PsiUtil.getAccessLevel(modifierList);

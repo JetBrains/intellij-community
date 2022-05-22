@@ -5,15 +5,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UUnknownExpression
 
 @ApiStatus.Internal
 class UnknownJavaExpression(
   override val sourcePsi: PsiElement,
   uastParent: UElement?
-) : JavaAbstractUElement(uastParent), UExpression, UElement {
-  override fun asLogString(): String = "[!] " + UnknownJavaExpression::class.java.simpleName + " ($sourcePsi)"
-
+) : JavaAbstractUElement(uastParent), UUnknownExpression, UElement {
   override val uAnnotations: List<UAnnotation>
     get() = emptyList()
 }

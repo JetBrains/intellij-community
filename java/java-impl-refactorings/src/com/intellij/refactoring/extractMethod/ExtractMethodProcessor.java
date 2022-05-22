@@ -1678,7 +1678,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void copyParamAnnotations(PsiParameter parm) {
-    final PsiVariable variable = PsiResolveHelper.SERVICE.getInstance(myProject).resolveReferencedVariable(parm.getName(), myElements[0]);
+    final PsiVariable variable = PsiResolveHelper.getInstance(myProject).resolveReferencedVariable(parm.getName(), myElements[0]);
     if (variable instanceof PsiParameter) {
       final PsiModifierList modifierList = variable.getModifierList();
       if (modifierList != null) {

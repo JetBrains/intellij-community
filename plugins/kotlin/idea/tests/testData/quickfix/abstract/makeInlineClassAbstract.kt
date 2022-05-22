@@ -2,7 +2,6 @@
 // ERROR: Class 'A' is not abstract and does not implement abstract member public abstract fun foo(): String defined in I
 // ERROR: Primary constructor is required for value class
 // ACTION: Create test
-// ACTION: Do not show return expression hints
 // ACTION: Extract 'A' from current file
 // ACTION: Implement members
 // ACTION: Rename file to A.kt

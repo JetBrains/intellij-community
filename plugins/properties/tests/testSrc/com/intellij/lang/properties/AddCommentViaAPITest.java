@@ -18,7 +18,7 @@ public class AddCommentViaAPITest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myParser = PsiParserFacade.SERVICE.getInstance(getProject());
+    myParser = PsiParserFacade.getInstance(getProject());
   }
 
   @Override

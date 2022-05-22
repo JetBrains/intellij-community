@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies;
 
 import com.google.common.util.concurrent.Striped;
@@ -20,10 +20,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.Arrays;
@@ -165,9 +162,9 @@ final public class BuildDependenciesDownloader {
       numberOfTopLevelEntries = stream.count();
     }
 
-    return (codeVersion + "\n" + archiveFile + "\n" +
-           "topLevelEntries:" + numberOfTopLevelEntries + "\n" +
-           "options:" + getExtractOptionsShortString(options) + "\n").getBytes(StandardCharsets.UTF_8);
+    return (codeVersion + "\n" + archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS) + "\n" +
+            "topLevelEntries:" + numberOfTopLevelEntries + "\n" +
+            "options:" + getExtractOptionsShortString(options) + "\n").getBytes(StandardCharsets.UTF_8);
   }
 
   private static boolean checkFlagFile(Path archiveFile, Path flagFile, Path targetDirectory, BuildDependenciesExtractOptions[] options)
@@ -383,7 +380,10 @@ final public class BuildDependenciesDownloader {
   }
 
   private static String getExtractOptionsShortString(BuildDependenciesExtractOptions[] options) {
-    if (options.length <= 0) return "";
+    if (options.length == 0) {
+      return "";
+    }
+
     StringBuilder sb = new StringBuilder();
     for (BuildDependenciesExtractOptions option : options) {
       if (option == BuildDependenciesExtractOptions.STRIP_ROOT) {

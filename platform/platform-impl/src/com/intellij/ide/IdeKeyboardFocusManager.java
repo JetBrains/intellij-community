@@ -15,17 +15,15 @@
  */
 package com.intellij.ide;
 
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
-import javax.swing.*;
 import javax.swing.FocusManager;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
@@ -66,19 +64,13 @@ class IdeKeyboardFocusManager extends DefaultFocusManager /* see javadoc above *
   }
 
   @Override
-  public boolean dispatchKeyEvent(KeyEvent e) {
-    activateEditorOnEscape(e);
-    return super.dispatchKeyEvent(e);
-  }
-
-  private void activateEditorOnEscape(KeyEvent e) {
-    if (getFocusOwner() == null && !e.isConsumed() && KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR)) {
-      Project project = ProjectUtil.getActiveProject();
-      if (project != null) {
-        ToolWindowManager.getInstance(project).activateEditorComponent();
-        e.consume();
-      }
+  public boolean postProcessKeyEvent(KeyEvent e) {
+    if (!e.isConsumed() &&
+        KeymapUtil.isEventForAction(e, IdeActions.ACTION_FOCUS_EDITOR) &&
+        EditorsSplitters.activateEditorComponentOnEscape(e.getComponent())) {
+      e.consume();
     }
+    return super.postProcessKeyEvent(e);
   }
 
   @NotNull

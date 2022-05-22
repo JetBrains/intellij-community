@@ -1,5 +1,4 @@
 // "Make 'foo' protected" "false"
-// ACTION: Do not show return expression hints
 // ACTION: Introduce local variable
 // ACTION: Make 'foo' internal
 // ACTION: Make 'foo' public

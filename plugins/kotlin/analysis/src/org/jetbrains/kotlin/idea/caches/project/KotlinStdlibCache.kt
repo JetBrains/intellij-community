@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.project
 
@@ -131,7 +128,7 @@ class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
                         scope
                     )
                 })
-                val index = ProjectFileIndex.SERVICE.getInstance(project)
+                val index = ProjectFileIndex.getInstance(project)
                 for (manifest in stdlibManifests) {
                     val orderEntries = index.getOrderEntriesForFile(manifest)
                     orderEntries.firstNotNullOfOrNull { it.safeAs<LibraryOrderEntry>()?.library.safeAs<LibraryEx>() }?.let {

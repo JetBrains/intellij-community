@@ -414,6 +414,11 @@ public final class HighlightMethodUtil {
       if (highlightInfo == null) {
         highlightInfo = createIncompatibleTypeHighlightInfo(methodCall, resolveHelper, (MethodCandidateInfo)resolveResult, methodCall);
       }
+      
+      if (highlightInfo == null) {
+        highlightInfo = checkInferredReturnTypeAccessible((MethodCandidateInfo)resolveResult, methodCall);
+      }
+      
     }
     else {
       MethodCandidateInfo candidateInfo = resolveResult instanceof MethodCandidateInfo ? (MethodCandidateInfo)resolveResult : null;
@@ -1840,6 +1845,22 @@ public final class HighlightMethodUtil {
           .descriptionAndTooltip(JavaErrorBundle.message("formal.varargs.element.type.inaccessible.here",
                                                          PsiFormatUtil.formatClass(targetClass, PsiFormatUtilBase.SHOW_FQ_NAME)))
           .range(argumentList != null ? argumentList : place)
+          .create();
+      }
+    }
+    return null;
+  }
+
+  private static HighlightInfo checkInferredReturnTypeAccessible(@NotNull MethodCandidateInfo info, @NotNull PsiMethodCallExpression methodCall) {
+    PsiMethod method = info.getElement();
+    PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
+    if (targetClass instanceof PsiTypeParameter && ((PsiTypeParameter)targetClass).getOwner() == method) {
+      PsiClass inferred = PsiUtil.resolveClassInClassTypeOnly(info.getSubstitutor().substitute((PsiTypeParameter)targetClass));
+      if (inferred != null && !PsiUtil.isAccessible(inferred, methodCall, null)) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .descriptionAndTooltip(JavaErrorBundle.message("inaccessible.type",
+                                                         PsiFormatUtil.formatClass(inferred, PsiFormatUtilBase.SHOW_FQ_NAME | PsiFormatUtilBase.SHOW_NAME)))
+          .range(methodCall.getArgumentList())
           .create();
       }
     }

@@ -32,10 +32,7 @@
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="Gradle" level="project" />
-    <orderEntry type="library" name="commons-io" level="project" />
-    <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="kodein-di-jvm" level="project" />
-    <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="module-library">
       <library name="rauschig.jarchivelib" type="repository">
         <properties maven-id="org.rauschig:jarchivelib:1.2.0" />
@@ -58,33 +55,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
-    <orderEntry type="module-library" scope="TEST">
-      <library name="io.kotest:kotest-assertions-core-jvm" type="repository">
-        <properties maven-id="io.kotest:kotest-assertions-core-jvm:4.5.0">
-          <exclude>
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-core-jvm/4.5.0/kotest-assertions-core-jvm-4.5.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/4.5.0/kotest-assertions-shared-jvm-4.5.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.9/java-diff-utils-4.9.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/4.5.0/kotest-common-jvm-4.5.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-api-jvm/4.5.0/kotest-assertions-api-jvm-4.5.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-core-jvm/4.5.0/kotest-assertions-core-jvm-4.5.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/4.5.0/kotest-assertions-shared-jvm-4.5.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/github/java-diff-utils/java-diff-utils/4.9/java-diff-utils-4.9-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/4.5.0/kotest-common-jvm-4.5.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-api-jvm/4.5.0/kotest-assertions-api-jvm-4.5.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="mockito-junit-jupiter" type="repository">
@@ -114,5 +84,16 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="jackson-datatype-jsr310" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.13.1/jackson-datatype-jsr310-2.13.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
   </component>
 </module>

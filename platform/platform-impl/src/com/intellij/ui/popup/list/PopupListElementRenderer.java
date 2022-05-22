@@ -109,10 +109,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
         if (ExperimentalUI.isNewUI()) {
-          int rowHeight = JBUI.CurrentTheme.List.rowHeight();
-          if (rowHeight > 0) {
-            size.height = rowHeight;
-          }
+          size.height = JBUI.CurrentTheme.List.rowHeight();
         }
         return size;
       }
@@ -136,15 +133,20 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     myMnemonicLabel = new JLabel();
     Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
-    myMnemonicLabel.setBorder(JBUI.Borders.empty(insets));
+    myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
     if (!ExperimentalUI.isNewUI()) {
+      //noinspection HardCodedStringLiteral
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, insets);
       myMnemonicLabel.setPreferredSize(preferredSize);
     }
     else {
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
+
+      Dimension preferredSize = new JLabel("W").getPreferredSize();
+      JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
+      myMnemonicLabel.setPreferredSize(preferredSize);
     }
 
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
@@ -310,6 +312,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
       if (ExperimentalUI.isNewUI() && mnemonic == null) {
+        //noinspection HardCodedStringLiteral
         Dimension preferredSize = new JLabel("W").getPreferredSize();
         JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.numberMnemonicInsets());
         myMnemonicLabel.setText("  ");

@@ -126,8 +126,6 @@
     <applicationService serviceInterface="com.intellij.execution.filters.HyperlinkInfoFactory"
                         serviceImplementation="com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl"/>
     <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
-    <consoleFilterProvider implementation="com.intellij.execution.filters.GenericFileFilterProvider"
-                           order="last"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManagerUtil"/>
 
@@ -1470,6 +1468,8 @@
                  key="ide.completion.auto.insert.item.timeout"/>
     <registryKey defaultValue="true" description="Separate applying index values from counting" restartRequired="true"
                  key="indexing.separate.applying.values.from.counting"/>
+    <registryKey defaultValue="true" description="Separate applying index values from counting for content independent indexes" restartRequired="true"
+                 key="indexing.separate.applying.values.from.counting.for.content.independent.indexes"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ContentRootIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.SourceRootIndexableEntityProvider"/>
@@ -1495,7 +1495,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter"/>
 
     <advancedSetting id="ide.suppress.double.click.handler" default="false" groupKey="group.advanced.settings.ui"/>
-    <advancedSetting id="ide.enable.generic.file.filter" default="true" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.usages.page.size" default="100" groupKey="group.advanced.settings.find"/>
     <advancedSetting id="bigger.font.in.project.view" default="false" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="editor.comment.line.caret.down" default="true" groupKey="group.advanced.settings.editor"/>

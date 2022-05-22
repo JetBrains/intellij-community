@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.codeVision.ui.renderers.painters
 
 import com.intellij.codeInsight.daemon.impl.HintUtil
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -17,7 +18,7 @@ open class CodeVisionThemeInfoProvider {
       JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
     else {
-      JBColor.GRAY
+      editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND).foregroundColor
     }
   }
 

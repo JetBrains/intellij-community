@@ -1,12 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.editor.DiffEditorEscapeAction
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
@@ -26,13 +29,13 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.Processor
+import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import kotlin.streams.toList
 
 abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcessor) : DiffPreview {
   protected val project get() = diffProcessor.project!!
@@ -86,7 +89,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     val newDoubleClickHandler = Processor<MouseEvent> { e ->
       if (isToggleEvent(tree, e)) return@Processor false
 
-      isPreviewOnDoubleClickAllowed() && openPreview(true) || oldDoubleClickHandler?.process(e) == true
+      isPreviewOnDoubleClickAllowed() && performDiffAction() || oldDoubleClickHandler?.process(e) == true
     }
 
     tree.doubleClickHandler = newDoubleClickHandler
@@ -96,7 +99,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   private fun installEnterKeyHandler(tree: ChangesTree) {
     val oldEnterKeyHandler = tree.enterKeyHandler
     val newEnterKeyHandler = Processor<KeyEvent> { e ->
-      isPreviewOnEnterAllowed() && openPreview(false) || oldEnterKeyHandler?.process(e) == true
+      isPreviewOnEnterAllowed() && performDiffAction() || oldEnterKeyHandler?.process(e) == true
     }
 
     tree.enterKeyHandler = newEnterKeyHandler
@@ -128,26 +131,40 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     }
   }
 
-  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
-    if (isPreviewVisible) openPreview(focus) else closePreview()
-  }
-
   protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpenWithRemotes(previewFile)
 
-  fun closePreview() {
+  override fun closePreview() {
     FileEditorManager.getInstance(project).closeFile(previewFile)
     updatePreviewProcessor?.clear()
   }
 
-  open fun openPreview(focusEditor: Boolean): Boolean {
+  override fun openPreview(requestFocus: Boolean): Boolean {
+    if (!ensureHasContent()) return false
+    return openPreviewEditor(requestFocus)
+  }
+
+  private fun ensureHasContent(): Boolean {
     updatePreviewProcessor?.refresh(false)
-    if (!hasContent()) return false
+    return hasContent()
+  }
 
+  private fun openPreviewEditor(requestFocus: Boolean): Boolean {
     escapeHandler?.let { handler -> registerEscapeHandler(previewFile, handler) }
-
-    openPreview(project, previewFile, focusEditor)
-
+    openPreview(project, previewFile, requestFocus)
     return true
+  }
+
+  override fun performDiffAction(): Boolean {
+    if (!ensureHasContent()) return false
+
+    if (ExternalDiffTool.isEnabled()) {
+      val diffProducers = diffProcessor.castSafelyTo<DiffRequestProcessorWithProducers>()?.collectDiffProducers(true)
+      if (showExternalToolIfNeeded(project, diffProducers)) {
+        return true
+      }
+    }
+
+    return openPreviewEditor(true)
   }
 
   private class EditorTabDiffPreviewVirtualFile(val preview: EditorTabPreview)
@@ -165,6 +182,14 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
     fun registerEscapeHandler(file: VirtualFile, handler: Runnable) {
       file.putUserData(DiffVirtualFileBase.ESCAPE_HANDLER, EditorTabPreviewEscapeAction(handler))
+    }
+
+    fun showExternalToolIfNeeded(project: Project?, diffProducers: ListSelection<out DiffRequestProducer>?): Boolean {
+      if (diffProducers == null || diffProducers.isEmpty) return false
+
+      if (!ExternalDiffTool.wantShowExternalToolFor(diffProducers.list)) return false
+      ExternalDiffTool.show(project, diffProducers.list, DiffDialogHints.DEFAULT)
+      return true
     }
   }
 }
@@ -187,10 +212,8 @@ private class EditorTabDiffPreviewProvider(
   override fun getEditorTabName(processor: DiffRequestProcessor?): @Nls String = tabNameProvider().orEmpty()
 
   override fun createDiffRequestChain(): DiffRequestChain? {
-    if (diffProcessor is ChangeViewDiffRequestProcessor) {
-      val producers = ListSelection.create(diffProcessor.allChanges.toList(), diffProcessor.currentChange).map {
-        it.createProducer(diffProcessor.project)
-      }
+    if (diffProcessor is DiffRequestProcessorWithProducers) {
+      val producers = diffProcessor.collectDiffProducers(false) ?: return null
       return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
     }
     return null

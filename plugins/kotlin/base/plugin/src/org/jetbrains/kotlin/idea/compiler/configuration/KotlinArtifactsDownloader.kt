@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
 
@@ -45,6 +46,34 @@ object KotlinArtifactsDownloader {
         }
 
         return KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version).toFile()
+    }
+
+    /**
+     * @return **true** if all dependencies are ready
+     */
+    fun downloadMissingJpsPluginDependencies(
+        project: Project,
+        jpsVersion: String,
+        indicator: ProgressIndicator,
+        onError: (String) -> Unit,
+    ): Boolean {
+        lazyDownloadMavenArtifact(
+            project,
+            KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+            jpsVersion,
+            indicator,
+            KotlinBasePluginBundle.message("progress.text.downloading.kotlin.jps.plugin"),
+            onError = onError,
+        ) ?: return false
+
+        lazyDownloadAndUnpackKotlincDist(
+            project,
+            jpsVersion,
+            indicator,
+            onError = onError,
+        ) ?: return false
+
+        return true
     }
 
     fun lazyDownloadAndUnpackKotlincDist(
@@ -93,7 +122,7 @@ object KotlinArtifactsDownloader {
         indicator: ProgressIndicator,
         onError: (String) -> Unit
     ): File? {
-        check(!EventQueue.isDispatchThread()) {
+        check(isUnitTestMode() || !EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
         }
         val prop = RepositoryLibraryProperties(
@@ -123,7 +152,7 @@ object KotlinArtifactsDownloader {
         )
         if (downloadedCompiler.isEmpty()) {
             with(prop) {
-                onError("Failed to download maven artifact ($groupId:$artifactId${getVersion()}). " +
+                onError("Failed to download maven artifact ($groupId:$artifactId:${getVersion()}). " +
                                 "Searched the artifact in following repos:\n" +
                                 repos.joinToString("\n") { it.url })
             }

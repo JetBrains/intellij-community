@@ -961,7 +961,11 @@ public final class JBUI {
 
         @NotNull
         public static Insets innerInsets() {
-          return insets("Popup.Selection.innerInsets", insets(0, 8));
+          JBInsets result = insets("Popup.Selection.innerInsets", insets(0, 8));
+          // Top and bottom values are ignored now
+          result.top = 0;
+          result.bottom = 0;
+          return result;
         }
       }
     }
@@ -1307,7 +1311,10 @@ public final class JBUI {
       }
 
       static int rowHeight() {
-        return getInt("List.rowHeight", JBUIScale.scale(24));
+        int defaultHeight = JBUIScale.scale(24);
+        int result = getInt("List.rowHeight", defaultHeight);
+        // Linux doesn't support rowHeight now, use default value. See IDEA-234112
+        return result <= 0 ? defaultHeight : result;
       }
 
       final class Selection {

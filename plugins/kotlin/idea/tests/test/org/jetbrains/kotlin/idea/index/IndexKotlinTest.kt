@@ -28,7 +28,7 @@ class IndexKotlinTest : KotlinLightCodeInsightFixtureTestCase() {
         }
 
         private fun createLibrary(project: Project, name: String): Library? {
-            val path = testDataFilePath().resolve("lib").takeIf(Path::exists) ?: return null
+            val path = dataFilePath().resolve("lib").takeIf(Path::exists) ?: return null
             val library = LibraryTablesRegistrar.getInstance()!!.getLibraryTable(project).createLibrary(name)
             val model = library.modifiableModel
             model.addRoot(VfsUtil.getUrlForLibraryRoot(path), OrderRootType.CLASSES)

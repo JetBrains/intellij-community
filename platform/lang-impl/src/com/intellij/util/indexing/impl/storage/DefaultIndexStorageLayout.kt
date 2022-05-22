@@ -79,9 +79,7 @@ object DefaultIndexStorageLayout {
     ) {
       override fun initMapAndCache() {
         assert(PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null)
-        if (!extension.dependsOnFileContent()) {
-          PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext)
-        }
+        PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext)
         try {
           super.initMapAndCache()
         }
@@ -94,7 +92,7 @@ object DefaultIndexStorageLayout {
   }
 
   class DefaultStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
-    private val storageLockContext = StorageLockContext()
+    private val storageLockContext = newStorageLockContext()
 
     @Throws(IOException::class)
     override fun openIndexStorage(): IndexStorage<K, V> {
@@ -121,7 +119,7 @@ object DefaultIndexStorageLayout {
 
   class SnapshotMappingsStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>,
                                                                  contentHashEnumeratorReopen: Boolean) : VfsAwareIndexStorageLayout<K, V> {
-    private val storageLockContext = StorageLockContext()
+    private val storageLockContext = newStorageLockContext()
     private val mySnapshotInputMappings: SnapshotInputMappings<K, V> by lazy(LazyThreadSafetyMode.NONE) {
       SnapshotInputMappings<K, V>(extension, getForwardIndexAccessor(extension))
     }
@@ -163,7 +161,7 @@ object DefaultIndexStorageLayout {
   }
 
   class SingleEntryStorageLayout<K, V> internal constructor(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
-    private val storageLockContext = StorageLockContext()
+    private val storageLockContext = newStorageLockContext()
 
     @Throws(IOException::class)
     override fun openIndexStorage(): IndexStorage<K, V> {
@@ -185,5 +183,9 @@ object DefaultIndexStorageLayout {
 
   private fun deleteIndexDirectory(extension: FileBasedIndexExtension<*, *>) {
     FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(extension.name).toFile())
+  }
+
+  private fun newStorageLockContext(): StorageLockContext {
+    return StorageLockContext(false, true)
   }
 }

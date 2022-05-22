@@ -8,12 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
  */
-abstract class BaseLayout {
+open class BaseLayout {
   companion object {
     const val APP_JAR = "app.jar"
-
-    @JvmStatic
-    fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
   }
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
@@ -36,7 +33,7 @@ abstract class BaseLayout {
   /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
   val explicitlySetJarPaths: MutableSet<String> = LinkedHashSet()
 
-  private val moduleNameToJarPath: MutableMap<String, String> = mutableMapOf()
+  private val moduleNameToJarPath: MutableMap<String, String> = LinkedHashMap()
 
   fun getIncludedModuleNames(): Collection<String> = moduleJars.values()
 
@@ -59,15 +56,14 @@ abstract class BaseLayout {
 
       // allow to put module to several JARs if JAR located in another dir
       // (e.g. intellij.spring.customNs packed into main JAR and customNs/customNs.jar)
-      if (!previousJarPath.contains("/") && !relativeJarPath.contains("/")) {
-        error(
-          "$moduleName cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath")
+      if (!previousJarPath.contains("/") && !relativeJarPath.contains('/')) {
+        error("$moduleName cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath")
       }
     }
   }
 
   open fun withModule(moduleName: String) {
-    withModuleImpl(moduleName, convertModuleNameToFileName(moduleName) + ".jar")
+    withModuleImpl(moduleName, "${convertModuleNameToFileName(moduleName)}.jar")
   }
 
   protected fun withModuleImpl(moduleName: String, jarPath: String) {
@@ -83,3 +79,5 @@ abstract class BaseLayout {
     moduleExcludes.putValue(moduleName, excludedPattern)
   }
 }
+
+internal fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

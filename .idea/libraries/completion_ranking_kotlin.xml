@@ -1,13 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <component name="libraryTable">
   <library name="completion-ranking-kotlin" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.3" />
+    <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-kotlin:0.3.4" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.3/completion-ranking-kotlin-0.3.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.4/completion-ranking-kotlin-0.3.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.3/completion-ranking-kotlin-0.3.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.3.4/completion-ranking-kotlin-0.3.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -22,8 +22,6 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
 public class MethodNameTokenizerJava extends NamedElementTokenizer<PsiMethod> {

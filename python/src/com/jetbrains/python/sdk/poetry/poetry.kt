@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
 import com.google.gson.annotations.SerializedName
@@ -12,8 +12,8 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -50,9 +50,13 @@ import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
-import com.jetbrains.python.packaging.*
+import com.jetbrains.python.packaging.IndicatedProcessOutputListener
+import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.*
+import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
+import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
 import icons.PythonIcons
@@ -274,7 +278,7 @@ fun runPoetry(projectPath: @SystemDependent String?, vararg args: String): Strin
                      emptyList(), ProcessOutput())
 
   val command = listOf(executable) + args
-  @Suppress("DialogTitleCapitalization") val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
+  val commandLine = GeneralCommandLine(command).withWorkDirectory(projectPath)
   val handler = CapturingProcessHandler(commandLine)
   val indicator = ProgressManager.getInstance().progressIndicator
   val result = with(handler) {

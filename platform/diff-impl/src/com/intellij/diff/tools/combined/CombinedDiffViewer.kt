@@ -30,8 +30,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBScrollPane
@@ -53,7 +51,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.max
 
-class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffViewer, DataProvider {
+class CombinedDiffViewer(context: DiffContext) : DiffViewer, DataProvider {
   private val project = context.project
 
   internal val contentPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false))
@@ -112,7 +110,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
     viewer.init()
   }
 
-  internal fun insertChildBlock(content: CombinedDiffBlockContent, position: CombinedDiffRequest.InsertPosition?): CombinedDiffBlock<*> {
+  internal fun insertChildBlock(content: CombinedDiffBlockContent, position: CombinedDiffModel.InsertPosition?): CombinedDiffBlock<*> {
     val above = position?.above ?: false
     val insertIndex =
       if (position == null) -1
@@ -200,11 +198,59 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
     }
   }
 
+  fun isNavigationEnabled(): Boolean = diffBlocks.size > 0
+
+  fun hasNextChange(fromUpdate: Boolean): Boolean {
+    val curFilesIndex = scrollSupport.blockIterable.index
+    return curFilesIndex != -1 && curFilesIndex < diffBlocks.size - 1
+  }
+
+  fun hasPrevChange(fromUpdate: Boolean): Boolean {
+    val curFilesIndex = scrollSupport.blockIterable.index
+    return curFilesIndex != -1 && curFilesIndex > 0
+  }
+
+  fun goToNextChange(fromDifferences: Boolean) {
+    goToChange(fromDifferences, true)
+  }
+
+  fun goToPrevChange(fromDifferences: Boolean) {
+    goToChange(fromDifferences, false)
+  }
+
+  private fun goToChange(fromDifferences: Boolean, next: Boolean) {
+    val differencesIterable = getDifferencesIterable()
+    val blocksIterable = getBlocksIterable()
+    val canGoToDifference = { if (next) differencesIterable?.canGoNext() == true else differencesIterable?.canGoPrev() == true }
+    val goToDifference = { if (next) differencesIterable?.goNext() else differencesIterable?.goPrev() }
+    val canGoToBlock = { if (next) blocksIterable.canGoNext() else blocksIterable.canGoPrev() }
+    val goToBlock = { if (next) blocksIterable.goNext() else blocksIterable.goPrev() }
+
+    when {
+      fromDifferences && canGoToDifference() -> goToDifference()
+      fromDifferences && canGoToBlock() -> {
+        goToBlock()
+        selectDiffBlock(ScrollPolicy.DIFF_CHANGE)
+      }
+
+      canGoToBlock() -> {
+        goToBlock()
+        selectDiffBlock(ScrollPolicy.DIFF_BLOCK)
+      }
+    }
+  }
+
+  internal enum class IterationState {
+    NEXT, PREV, NONE
+  }
+
+  internal var iterationState = IterationState.NONE
+
   private fun notifyVisibleBlocksChanged() {
     val viewRect = scrollPane.viewport.viewRect
     val (visibleBlocks, hiddenBlocks) = getAllBlocks().partition { it.component.bounds.intersects(viewRect) }
 
-    if (visibleBlocks.isNotEmpty()) {
+    if (hiddenBlocks.isNotEmpty()) {
       blockListeners.multicaster.blocksHidden(hiddenBlocks)
     }
 
@@ -239,6 +285,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
 
   fun getAllBlocks() = diffBlocks.values.asSequence()
 
+  fun getBlock(id: CombinedBlockId) = diffBlocks[id]
   fun getBlock(viewer: DiffViewer) = diffViewers.entries.find { it.value == viewer }?.key?.let { blockId -> diffBlocks[blockId] }
 
   fun getViewer(id: CombinedBlockId) = diffViewers[id]
@@ -259,8 +306,7 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
     return getBlockId(index)?.let { blockId -> diffViewers[blockId] }
   }
 
-  fun selectDiffBlock(filePath: FilePath, fileStatus: FileStatus, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
-    val blockId = CombinedPathBlockId(filePath, fileStatus)
+  fun selectDiffBlock(blockId: CombinedBlockId, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
     val index = diffBlocksPositions[blockId]
     if (index == null || index == -1) return
 

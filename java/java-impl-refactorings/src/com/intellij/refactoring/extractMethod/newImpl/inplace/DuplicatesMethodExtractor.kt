@@ -52,8 +52,11 @@ class DuplicatesMethodExtractor {
     this.extractOptions = extractOptions
 
     val elementsToReplace = MethodExtractor().prepareRefactoringElements(extractOptions)
-    val calls = runWriteAction { replacePsiRange(elements, elementsToReplace.callElements) }
-    val method = runWriteAction { targetClass.addAfter (elementsToReplace.method, anchor) as PsiMethod }
+    val (calls, method) = runWriteAction {
+      val callElements = replacePsiRange(elements, elementsToReplace.callElements)
+      val addedMethod = targetClass.addAfter(elementsToReplace.method, anchor) as PsiMethod
+      Pair(callElements, addedMethod)
+    }
 
     val methodPointer = SmartPointerManager.createPointer(method)
     val callsPointer = calls.map(SmartPointerManager::createPointer)

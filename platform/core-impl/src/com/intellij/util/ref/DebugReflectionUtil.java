@@ -246,7 +246,9 @@ public final class DebugReflectionUtil {
           valueStr = "FList (size=" + ((FList<?>)value).size() + ")";
         }
         else {
-          valueStr = value instanceof Collection ? "Collection (size=" + ((Collection<?>)value).size() + ")" : String.valueOf(value);
+          valueStr = value instanceof Collection ? "Collection (size=" + ((Collection<?>)value).size() + ")"
+          : value instanceof Object[] ? Arrays.toString((Object[])value)
+          : String.valueOf(value);
         }
         valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
       }

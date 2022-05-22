@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.runInEdtAndGet
@@ -34,7 +35,6 @@ import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompiler
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
@@ -42,7 +42,8 @@ import org.jetbrains.kotlin.idea.debugger.test.util.LogPropagator
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
-import org.jetbrains.kotlin.idea.test.TestFiles.*
+import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
+import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
 import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.ComparisonFailure
 import java.io.File
@@ -83,8 +84,25 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         super.runBare(testRunnable)
     }
 
+    var originalUseIrBackendForEvaluation = true
+
+    private fun registerEvaluatorBackend() {
+        val useIrBackendForEvaluation = Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend")
+        originalUseIrBackendForEvaluation = useIrBackendForEvaluation.asBoolean()
+        useIrBackendForEvaluation.setValue(
+            fragmentCompilerBackend() == FragmentCompilerBackend.JVM_IR
+        )
+    }
+
+    private fun restoreEvaluatorBackend() {
+        Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend")
+            .setValue(originalUseIrBackendForEvaluation)
+    }
+
     override fun setUp() {
         super.setUp()
+
+        registerEvaluatorBackend()
 
         KotlinDebuggerCaches.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
@@ -98,13 +116,14 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
             ThrowableRunnable { detachLibraries() },
             ThrowableRunnable { logPropagator?.detach() },
             ThrowableRunnable { logPropagator = null },
+            ThrowableRunnable { restoreEvaluatorBackend() },
             ThrowableRunnable { super.tearDown() }
         )
     }
 
-    protected fun testDataFile(fileName: String): File = File(getTestDataPath(), fileName)
+    protected fun dataFile(fileName: String): File = File(getTestDataPath(), fileName)
 
-    protected fun testDataFile(): File = testDataFile(fileName())
+    protected fun dataFile(): File = dataFile(fileName())
 
     protected open fun fileName(): String = getTestDataFileName(this::class.java, this.name) ?: (getTestName(false) + ".kt")
 
@@ -112,13 +131,18 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
     open fun useIrBackend() = false
 
-    open fun fragmentCompilerBackend() = CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM
+    enum class FragmentCompilerBackend {
+        JVM,
+        JVM_IR
+    }
+
+    open fun fragmentCompilerBackend() = FragmentCompilerBackend.JVM_IR
 
     protected open fun targetBackend(): TargetBackend =
         when (fragmentCompilerBackend()) {
-            CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM ->
+            FragmentCompilerBackend.JVM ->
                 if (useIrBackend()) TargetBackend.JVM_IR_WITH_OLD_EVALUATOR else TargetBackend.JVM_WITH_OLD_EVALUATOR
-            CodeFragmentCompiler.Companion.FragmentCompilerBackend.JVM_IR ->
+            FragmentCompilerBackend.JVM_IR ->
                 if (useIrBackend()) TargetBackend.JVM_IR_WITH_IR_EVALUATOR else TargetBackend.JVM_WITH_IR_EVALUATOR
         }
 
@@ -127,7 +151,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
     @Suppress("UNUSED_PARAMETER")
     fun doTest(unused: String) {
-        val wholeFile = testDataFile()
+        val wholeFile = dataFile()
         val wholeFileContents = FileUtil.loadFile(wholeFile, true)
 
         val testFiles = createTestFiles(wholeFile, wholeFileContents)

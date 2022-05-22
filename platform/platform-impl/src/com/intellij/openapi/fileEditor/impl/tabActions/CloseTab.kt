@@ -27,7 +27,6 @@ import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
-@Suppress("ComponentNotRegistered")
 class CloseTab(c: JComponent,
                val file: VirtualFile,
                val project: Project,

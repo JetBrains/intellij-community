@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.BundledRuntime
+import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.model.JpsModel
@@ -40,13 +41,13 @@ interface CompilationContext {
 
   fun findRequiredModule(name: String): JpsModule
 
-  fun findModule(name: String): JpsModule
+  fun findModule(name: String): JpsModule?
 
   /**
    * If module {@code newName} was renamed returns its old name and {@code null} otherwise. This method can be used to temporary keep names
    * of directories and JARs in the product distributions after renaming modules.
    */
-  fun getOldModuleName(newName: String): String
+  fun getOldModuleName(newName: String): String?
 
   fun getModuleOutputDir(module: JpsModule): Path
 
@@ -60,3 +61,23 @@ interface CompilationContext {
   @Deprecated("Use notifyArtifactWasBuilt")
   fun notifyArtifactBuilt(artifactPath: String)
 }
+
+interface CompilationTasks {
+  companion object {
+    @JvmStatic
+    fun create(context: CompilationContext): CompilationTasks = CompilationTasksImpl(context)
+  }
+
+  fun compileAllModulesAndTests()
+
+  fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
+
+  fun buildProjectArtifacts(artifactNames: Set<String>)
+
+  fun resolveProjectDependencies()
+
+  fun resolveProjectDependenciesAndCompileAll()
+
+  fun reuseCompiledClassesIfProvided()
+}
+

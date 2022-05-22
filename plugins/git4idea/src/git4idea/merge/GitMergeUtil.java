@@ -14,11 +14,13 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.*;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitConflict;
@@ -380,7 +382,9 @@ public final class GitMergeUtil {
       }
     }
 
-    GitFileUtils.addPathsForce(project, root, toAdd);
+    String[] addParameters = GitVersionSpecialty.ADD_REJECTS_SPARSE_FILES_FOR_CONFLICTS.existsIn(project)
+                             ? new String[]{"--sparse"} : ArrayUtil.EMPTY_STRING_ARRAY;
+    GitFileUtils.addPaths(project, root, toAdd, true, false, addParameters);
     GitFileUtils.deletePaths(project, root, toDelete);
   }
 

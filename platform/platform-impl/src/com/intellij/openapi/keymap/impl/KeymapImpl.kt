@@ -667,7 +667,7 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
 @Suppress("SpellCheckingInspection") private const val resharperKeymap = "com.intellij.plugins.resharperkeymap"
 @Suppress("SpellCheckingInspection") private const val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
 @Suppress("SpellCheckingInspection") private const val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
-@Suppress("SpellCheckingInspection") private const val visualStudio2022Keymap = "com.intellij.plugins.visualstudio2022keymap"
+private const val visualStudio2022Keymap = "com.intellij.plugins.visualstudio2022keymap"
 @Suppress("SpellCheckingInspection") private const val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
 @Suppress("SpellCheckingInspection") private const val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
 @Suppress("SpellCheckingInspection") private const val riderKeymap = "com.intellij.plugins.riderkeymap"
@@ -683,7 +683,6 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
       ApplicationManager.getApplication().invokeLater(
         {
           // TODO remove when PluginAdvertiser implements that
-          @Suppress("SpellCheckingInspection")
           val pluginId = when (keymapName) {
             "Mac OS X",
             "Mac OS X 10.5+" -> macOSKeymap

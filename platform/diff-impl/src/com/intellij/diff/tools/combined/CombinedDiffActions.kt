@@ -4,6 +4,7 @@ package com.intellij.diff.tools.combined
 import com.intellij.diff.DiffContext
 import com.intellij.diff.actions.impl.*
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
+import com.intellij.diff.tools.combined.CombinedDiffViewer.IterationState
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.FoldingModelSupport
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
@@ -38,21 +39,21 @@ internal open class CombinedNextChangeAction(private val context: DiffContext) :
       return
     }
 
-    val processor = context.getUserData(COMBINED_DIFF_PROCESSOR)
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
-    if (processor == null || !processor.isNavigationEnabled()) {
+    if (viewer == null || !viewer.isNavigationEnabled()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
     e.presentation.isVisible = true
-    e.presentation.isEnabled = processor.hasNextChange(true)
+    e.presentation.isEnabled = viewer.hasNextChange(true)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val processor = context.getUserData(COMBINED_DIFF_PROCESSOR) ?: return
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
 
-    if (!processor.isNavigationEnabled() || !processor.hasNextChange(false)) return
-    processor.goToNextChange(false)
+    if (!viewer.isNavigationEnabled() || !viewer.hasNextChange(false)) return
+    viewer.goToNextChange(false)
   }
 }
 
@@ -63,21 +64,21 @@ internal open class CombinedPrevChangeAction(private val context: DiffContext) :
       return
     }
 
-    val processor = context.getUserData(COMBINED_DIFF_PROCESSOR)
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
-    if (processor == null || !processor.isNavigationEnabled()) {
+    if (viewer == null || !viewer.isNavigationEnabled()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
     e.presentation.isVisible = true
-    e.presentation.isEnabled = processor.hasPrevChange(true)
+    e.presentation.isEnabled = viewer.hasPrevChange(true)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val processor = context.getUserData(COMBINED_DIFF_PROCESSOR) ?: return
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
 
-    if (!processor.isNavigationEnabled() || !processor.hasPrevChange(false)) return
-    processor.goToPrevChange(false)
+    if (!viewer.isNavigationEnabled() || !viewer.hasPrevChange(false)) return
+    viewer.goToPrevChange(false)
   }
 }
 
@@ -98,9 +99,9 @@ internal open class CombinedNextDifferenceAction(private val settings: DiffSetti
       e.presentation.isEnabled = true
       return
     }
-    val processor = context.getUserData(COMBINED_DIFF_PROCESSOR)
-    if (processor != null &&
-        settings.isGoToNextFileOnNextDifference && processor.isNavigationEnabled() && processor.hasNextChange(true)) {
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    if (viewer != null &&
+        settings.isGoToNextFileOnNextDifference && viewer.isNavigationEnabled() && viewer.hasNextChange(true)) {
       e.presentation.isEnabled = true
       return
     }
@@ -109,21 +110,21 @@ internal open class CombinedNextDifferenceAction(private val settings: DiffSetti
 
   override fun actionPerformed(e: AnActionEvent) {
     val iterable = getDifferenceIterable(e)
-    val processor = context.getUserData(COMBINED_DIFF_PROCESSOR) ?: return
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
     context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, DiffUserDataKeysEx.ScrollToPolicy.FIRST_CHANGE)
     if (iterable != null && iterable.canGoNext()) {
       iterable.goNext()
-      processor.iterationState = CombinedDiffRequestProcessor.IterationState.NONE
+      viewer.iterationState = IterationState.NONE
       return
     }
-    if (!processor.isNavigationEnabled() || !processor.hasNextChange(false) || !settings.isGoToNextFileOnNextDifference) return
-    if (processor.iterationState != CombinedDiffRequestProcessor.IterationState.NEXT) {
-      processor.notifyGoDifferenceMessage(e, true)
-      processor.iterationState = CombinedDiffRequestProcessor.IterationState.NEXT
+    if (!viewer.isNavigationEnabled() || !viewer.hasNextChange(false) || !settings.isGoToNextFileOnNextDifference) return
+    if (viewer.iterationState != IterationState.NEXT) {
+      context.getUserData(COMBINED_DIFF_MAIN_UI)?.notifyMessage(e, true)
+      viewer.iterationState = IterationState.NEXT
       return
     }
-    processor.goToNextChange(true)
-    processor.iterationState = CombinedDiffRequestProcessor.IterationState.NONE
+    viewer.goToNextChange(true)
+    viewer.iterationState = IterationState.NONE
   }
 }
 
@@ -144,9 +145,9 @@ internal open class CombinedPrevDifferenceAction(private val settings: DiffSetti
       e.presentation.isEnabled = true
       return
     }
-    val processor = context.getUserData(COMBINED_DIFF_PROCESSOR)
-    if (processor != null
-        && settings.isGoToNextFileOnNextDifference && processor.isNavigationEnabled() && processor.hasPrevChange(true)) {
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    if (viewer != null
+        && settings.isGoToNextFileOnNextDifference && viewer.isNavigationEnabled() && viewer.hasPrevChange(true)) {
       e.presentation.isEnabled = true
       return
     }
@@ -155,21 +156,21 @@ internal open class CombinedPrevDifferenceAction(private val settings: DiffSetti
 
   override fun actionPerformed(e: AnActionEvent) {
     val iterable = getDifferenceIterable(e)
-    val processor = context.getUserData(COMBINED_DIFF_PROCESSOR) ?: return
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
     context.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, DiffUserDataKeysEx.ScrollToPolicy.LAST_CHANGE)
     if (iterable != null && iterable.canGoPrev()) {
       iterable.goPrev()
-      processor.iterationState = CombinedDiffRequestProcessor.IterationState.NONE
+      viewer.iterationState = IterationState.NONE
       return
     }
-    if (!processor.isNavigationEnabled() || !processor.hasPrevChange(false) || !settings.isGoToNextFileOnNextDifference) return
-    if (processor.iterationState != CombinedDiffRequestProcessor.IterationState.PREV) {
-      processor.notifyGoDifferenceMessage(e, false)
-      processor.iterationState = CombinedDiffRequestProcessor.IterationState.PREV
+    if (!viewer.isNavigationEnabled() || !viewer.hasPrevChange(false) || !settings.isGoToNextFileOnNextDifference) return
+    if (viewer.iterationState != IterationState.PREV) {
+      context.getUserData(COMBINED_DIFF_MAIN_UI)?.notifyMessage(e, true)
+      viewer.iterationState = IterationState.PREV
       return
     }
-    processor.goToPrevChange(true)
-    processor.iterationState = CombinedDiffRequestProcessor.IterationState.NONE
+    viewer.goToPrevChange(true)
+    viewer.iterationState = IterationState.NONE
   }
 }
 

@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -119,7 +118,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertFalse(sources.exists());
     assertFalse(javadoc.exists());
 
-    MavenProject project = myProjectsTree.getRootProjects().get(0);
+    MavenProject project = getProjectsTree().getRootProjects().get(0);
     MavenArtifact dep = project.getDependencies().get(0);
     downloadArtifacts(Arrays.asList(project), Arrays.asList(dep));
 
@@ -148,7 +147,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    MavenProject project = myProjectsTree.getRootProjects().get(0);
+    MavenProject project = getProjectsTree().getRootProjects().get(0);
     MavenArtifactDownloader.DownloadResult unresolvedArtifacts = downloadArtifacts(Arrays.asList(project), null);
     assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedSources, new MavenId("junit", "junit", "4.0"));
     assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedDocs, new MavenId("junit", "junit", "4.0"));

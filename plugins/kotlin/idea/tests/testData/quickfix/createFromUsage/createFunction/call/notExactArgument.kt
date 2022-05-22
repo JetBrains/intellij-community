@@ -1,7 +1,6 @@
 // "Create function 'synchronized'" "false"
 // ACTION: Convert expression to 'Int'
 // ACTION: Converts the assignment statement to an expression
-// ACTION: Do not show return expression hints
 // ACTION: Round using roundToInt()
 // ERROR: Type mismatch: inferred type is Float but Int was expected
 // WITH_STDLIB

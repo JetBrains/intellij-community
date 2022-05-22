@@ -106,7 +106,7 @@ public final class UITheme {
                                                @NotNull Function<? super String, String> iconsMapper)
     throws IllegalStateException {
     if (provider != null) {
-      theme.setProviderClassLoader(provider);
+      theme.providerClassLoader = provider;
     }
 
     initializeNamedColors(theme);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsEditorCookie
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsProcessor
-import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
+import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractMoveOnCutPasteTest : AbstractCopyPasteTest() {
     private val OPTIMIZE_IMPORTS_AFTER_CUT_DIRECTIVE = "// OPTIMIZE_IMPORTS_AFTER_CUT"
@@ -23,7 +23,7 @@ abstract class AbstractMoveOnCutPasteTest : AbstractCopyPasteTest() {
     private val COPY_DIRECTIVE = "// COPY"
 
     protected fun doTest(unused: String) {
-        val testFile = testDataFile()
+        val testFile = dataFile()
         val sourceFileName = testFile.name
         val testFileText = FileUtil.loadFile(testFile, true)
 
@@ -43,7 +43,7 @@ abstract class AbstractMoveOnCutPasteTest : AbstractCopyPasteTest() {
         editor.putUserData(MoveDeclarationsEditorCookie.KEY, null) // because editor is reused
 
         val targetFileName = sourceFileName.replace(".kt", ".to.kt")
-        val targetFileExists = testDataFile(targetFileName).exists()
+        val targetFileExists = dataFile(targetFileName).exists()
         val targetPsiFile = if (targetFileExists) configureTargetFile(targetFileName) else null
         performNotWriteEditorAction(IdeActions.ACTION_PASTE)
         UIUtil.dispatchAllInvocationEvents()
@@ -61,19 +61,19 @@ abstract class AbstractMoveOnCutPasteTest : AbstractCopyPasteTest() {
 
             if (dependencyPsiFile != null) {
                 KotlinTestUtils.assertEqualsToFile(
-                    testDataFile(dependencyFileName.replace(".kt", ".expected.kt")),
-                    dependencyPsiFile.dumpTextWithErrors()
+                  dataFile(dependencyFileName.replace(".kt", ".expected.kt")),
+                  dependencyPsiFile.dumpTextWithErrors()
                 )
             }
 
             KotlinTestUtils.assertEqualsToFile(
-                testDataFile(sourceFileName.replace(".kt", ".expected.kt")),
-                sourcePsiFile.dumpTextWithErrors()
+              dataFile(sourceFileName.replace(".kt", ".expected.kt")),
+              sourcePsiFile.dumpTextWithErrors()
             )
             if (targetPsiFile != null) {
                 KotlinTestUtils.assertEqualsToFile(
-                    testDataFile(targetFileName.replace(".kt", ".expected.kt")),
-                    targetPsiFile.dumpTextWithErrors()
+                  dataFile(targetFileName.replace(".kt", ".expected.kt")),
+                  targetPsiFile.dumpTextWithErrors()
                 )
             }
         }

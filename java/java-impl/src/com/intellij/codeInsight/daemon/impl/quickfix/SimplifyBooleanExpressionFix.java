@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -322,7 +322,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
   private static boolean isConflictingLocalVariable(PsiCodeBlock parent, PsiElement declaration) {
     if (!(declaration instanceof PsiLocalVariable)) return false;
     String name = ((PsiLocalVariable)declaration).getName();
-    return PsiResolveHelper.SERVICE.getInstance(declaration.getProject()).resolveAccessibleReferencedVariable(name, parent) != null;
+    return PsiResolveHelper.getInstance(declaration.getProject()).resolveAccessibleReferencedVariable(name, parent) != null;
   }
 
   private static PsiBlockStatement wrapWithCodeBlock(PsiStatement replacement) {

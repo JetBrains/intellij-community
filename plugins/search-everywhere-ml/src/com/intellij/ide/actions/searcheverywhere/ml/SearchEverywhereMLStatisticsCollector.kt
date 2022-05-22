@@ -66,14 +66,13 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
   }
 
   fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
-                        experimentGroup: Int, orderByMl: Boolean,
                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
                         timeToFirstResult: Int,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     reportElements(
-      project, SEARCH_RESTARTED, seSessionId, searchIndex, experimentGroup, orderByMl,
+      project, SEARCH_RESTARTED, seSessionId, searchIndex, cache.experimentGroup, cache.orderByMl,
       elementIdProvider, context, cache, timeToFirstResult, emptyList(),
       EMPTY_ARRAY, emptyList(), elementsProvider
     )
@@ -119,6 +118,10 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       if (elementData != null) {
         data.addAll(elementData)
       }
+      val contributors = elements.map { element -> element.contributor }.toHashSet()
+      data.add(CONTRIBUTORS.with(contributors.map { c ->
+        ObjectEventData(CONTRIBUTOR_INFO_ID.with(c.searchProviderId), CONTRIBUTOR_WEIGHT.with(c.sortWeight))
+      }))
       eventId.log(data)
     }
   }
@@ -177,14 +180,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
         CONTRIBUTOR_ID_KEY.with(it.contributor.searchProviderId)
       )
 
-      val elementId = elementIdProvider.getId(it.element)
-      if (elementId != null) {
-        // After changing tabs, it may happen that the code will run for an outdated list of results,
-        // for example, results from All tab will be reported after switching to the Actions tab.
-        // As this can lead to exceptions, we'll check if the element is supported, before collecting
-        // features for it.
-        addElementFeatures(elementId, it, state, result, actionManager)
-      }
+      addElementFeatures(elementIdProvider.getId(it.element), it, state, result, actionManager)
       ObjectEventData(result)
     }
     data.add(COLLECTED_RESULTS_DATA_KEY.with(value))
@@ -206,7 +202,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     return true
   }
 
-  private fun addElementFeatures(elementId: Int,
+  private fun addElementFeatures(elementId: Int?,
                                  elementInfo: SearchEverywhereFoundElementInfo,
                                  state: SearchEverywhereMlSearchState,
                                  result: MutableList<EventPair<*>>,
@@ -220,7 +216,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       result.add(ML_WEIGHT_KEY.with(roundDouble(score)))
     }
 
-    result.add(ID_KEY.with(itemInfo.id))
+    itemInfo.id?.let { result.add(ID_KEY.with(it)) }
 
     doWhenIsActionWrapper(elementInfo.element) {
       val action = it.action
@@ -244,7 +240,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 23, RECORDER_CODE)
+    private val GROUP = EventLogGroup("mlse.log", 24, RECORDER_CODE)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
@@ -290,15 +286,21 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     internal val CONTRIBUTOR_ID_KEY = EventFields.String("contributorId", SE_TABS)
     internal val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
 
-    private val COLLECTED_RESULTS_DATA_KEY =
-      ObjectListEventField("collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_ID_KEY, ML_WEIGHT_KEY)
+    private val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
+      "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_ID_KEY, ML_WEIGHT_KEY
+    )
+
+    // information about contributors
+    private val CONTRIBUTOR_INFO_ID = EventFields.String("id", SE_TABS)
+    private val CONTRIBUTOR_WEIGHT = EventFields.Int("weight")
+    private val CONTRIBUTORS = ObjectListEventField("contributors", CONTRIBUTOR_INFO_ID, CONTRIBUTOR_WEIGHT)
 
     // events
     private val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
     private val SEARCH_RESTARTED = registerEvent("searchRestarted")
 
     private fun createFeaturesEventObject(): ObjectEventField {
-      val features = arrayListOf<EventField<*>>()
+      val features = arrayListOf<EventField<*>>(SearchEverywhereElementFeaturesProvider.NAME_LENGTH)
       features.addAll(SearchEverywhereElementFeaturesProvider.nameFeatureToField.values)
       for (featureProvider in SearchEverywhereElementFeaturesProvider.getFeatureProviders()) {
         features.addAll(featureProvider.getFeaturesDeclarations())
@@ -325,6 +327,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
         SELECTED_ELEMENTS_DATA_KEY,
         SELECTED_ELEMENTS_CONSISTENT,
         SEARCH_STATE_FEATURES_DATA_KEY,
+        CONTRIBUTORS,
         COLLECTED_RESULTS_DATA_KEY
       )
       fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())

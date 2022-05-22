@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 class MarkdownHighlightingAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {

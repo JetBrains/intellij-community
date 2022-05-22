@@ -1,14 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift
 
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkListItem
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -71,7 +67,6 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
       rehighlightPreviousUi = true
       text(JavaLessonsBundle.message("java.missed.sdk.configure"))
       var progressHighlightingStarted = false
-      var downloadingListenerAdded = false
       timerCheck {
         val jdk = JavaProjectUtil.getEffectiveJdk(project)
 
@@ -88,18 +83,6 @@ internal class JavaLangSupport : JavaBasedLangSupport() {
                                  LearningBalloonConfig(Balloon.Position.above, width = 0, highlightingComponent = panel))
                 }
               }
-            }
-          }
-        }
-
-        if (jdk != null && !downloadingListenerAdded) {
-          downloadingListenerAdded = SdkDownloadTracker.getInstance().tryRegisterDownloadingListener(jdk, taskDisposable,
-                                                                                                     AbstractProgressIndicatorExBase()) {
-            // todo: For some reason after the downloading JDK is not fully applied, imports are still red.
-            //  So we need to trigger the indexing by setting the same JDK that already set just to call listeners of JDK update.
-            //  Remove this hack when IDEA-244649 will be fixed.
-            runWriteAction {
-              ProjectRootManager.getInstance(project).projectSdk = JavaProjectUtil.getEffectiveJdk(project)
             }
           }
         }

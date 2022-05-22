@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
@@ -21,6 +22,28 @@ private val testDescriptor by lazy { DefaultPluginDescriptor("test") }
 @TestOnly
 fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T>, instance: T) {
   (this as ComponentManagerImpl).registerServiceInstance(serviceInterface, instance, testDescriptor)
+}
+
+/**
+ * Register a new service or replace an existing service with a specified instance for testing purposes.
+ * Registration will be rolled back when parentDisposable is disposed. In most of the cases,
+ * [com.intellij.testFramework.UsefulTestCase.getTestRootDisposable] should be specified.
+ */
+@TestOnly
+fun <T : Any> ComponentManager.registerOrReplaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
+  val previous = this.getService(serviceInterface)
+  if (previous != null) {
+    replaceService(serviceInterface, instance, parentDisposable)
+  } else {
+    (this as ComponentManagerImpl).registerServiceInstance(serviceInterface, instance, testDescriptor)
+    if (instance is Disposable) {
+      Disposer.register(parentDisposable, instance)
+    } else {
+      Disposer.register(parentDisposable) {
+        this.unregisterComponent(serviceInterface)
+      }
+    }
+  }
 }
 
 @TestOnly

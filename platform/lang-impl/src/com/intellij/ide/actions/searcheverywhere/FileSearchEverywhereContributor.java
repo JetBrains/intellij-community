@@ -113,7 +113,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     }
 
     SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-    if (mlService != null && mlService.shouldOrderByMl(this.getClass().getSimpleName())) {
+    if (mlService != null && mlService.shouldOrderByMl()) {
       double mlWeight = mlService.getMlWeight(this, element, degree);
 
       if (mlWeight >= 0.0) {

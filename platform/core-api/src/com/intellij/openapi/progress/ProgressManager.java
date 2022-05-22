@@ -33,6 +33,14 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     return result;
   }
 
+  /**
+   * @return ProgressManager or null if not yet initialized
+   */
+  @ApiStatus.Internal
+  @Nullable
+  public static ProgressManager getInstanceOrNull() {
+    return ourInstance;
+  }
   public abstract boolean hasProgressIndicator();
   public abstract boolean hasModalProgressIndicator();
   public abstract boolean hasUnsafeProgressIndicator();

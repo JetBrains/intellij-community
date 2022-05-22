@@ -17520,6 +17520,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/specifyTypeExplicitly/anonymousObject.kt");
         }
 
+        @TestMetadata("anonymousObjectJavaClass.kt")
+        public void testAnonymousObjectJavaClass() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/anonymousObjectJavaClass.kt");
+        }
+
         @TestMetadata("backticked.kt")
         public void testBackticked() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/backticked.kt");

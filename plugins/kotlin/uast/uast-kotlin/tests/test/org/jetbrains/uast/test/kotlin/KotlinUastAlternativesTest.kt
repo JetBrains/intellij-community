@@ -12,19 +12,19 @@ import org.jetbrains.uast.*
 import org.junit.Test
 
 class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
-    override fun check(testName: String, file: UFile) {
-    }
+    override fun check(testName: String, file: UFile) { }
 
-    private fun UFile.findIndexOfElement(elem: String): Int = javaPsi?.text?.indexOf(elem) ?: let {
-        fail("Could not retrieve element $elem.")
-        0
+    private fun UFile.findIndexOfElement(elem: String): Int {
+        val index = sourcePsi.text.indexOf(elem)
+        if (index == -1) fail("Could not retrieve element $elem.")
+        return index
     }
 
     @Test
     fun testPropertyAlternatives() {
-        doTest("ManyAlternatives") { name, file ->
+        doTest("ManyAlternatives") { _, file ->
             val index = file.findIndexOfElement("writebleProp")
-            val ktProperty = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtProperty::class.java)!!
+            val ktProperty = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), KtProperty::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
             plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UField::class.java)).let {
@@ -37,7 +37,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
             plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UMethod::class.java, UField::class.java)).let {
                 assertEquals(
                     "public final fun getWritebleProp() : int = UastEmptyExpression, " +
-                            "public final fun setWritebleProp(value: int) : void = UastEmptyExpression, " +
+                            "public final fun setWritebleProp(<set-?>: int) : void = UastEmptyExpression, " +
                             "@org.jetbrains.annotations.NotNull private var writebleProp: int = 0",
                     it.joinToString(transform = UElement::asRenderString)
                 )
@@ -47,7 +47,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
                 assertEquals(
                     "@org.jetbrains.annotations.NotNull private var writebleProp: int = 0, " +
                             "public final fun getWritebleProp() : int = UastEmptyExpression, " +
-                            "public final fun setWritebleProp(value: int) : void = UastEmptyExpression",
+                            "public final fun setWritebleProp(<set-?>: int) : void = UastEmptyExpression",
                     it.joinToString(transform = UElement::asRenderString)
                 )
             }
@@ -56,7 +56,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
                 assertEquals(
                     "@org.jetbrains.annotations.NotNull private var writebleProp: int = 0, " +
                             "public final fun getWritebleProp() : int = UastEmptyExpression, " +
-                            "public final fun setWritebleProp(value: int) : void = UastEmptyExpression",
+                            "public final fun setWritebleProp(<set-?>: int) : void = UastEmptyExpression",
                     it.joinToString(transform = UElement::asRenderString)
                 )
             }
@@ -67,9 +67,9 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
 
     @Test
     fun testParamAndPropertylternatives() {
-        doTest("ManyAlternatives") { name, file ->
+        doTest("ManyAlternatives") { _, file ->
             val index = file.findIndexOfElement("paramAndProp")
-            val ktProperty = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtParameter::class.java)!!
+            val ktProperty = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), KtParameter::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
             plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UField::class.java)).let {
@@ -102,9 +102,9 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
 
     @Test
     fun testJustParamAlternatives() {
-        doTest("ManyAlternatives") { name, file ->
+        doTest("ManyAlternatives") { _, file ->
             val index = file.findIndexOfElement("justParam")
-            val ktProperty = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtParameter::class.java)!!
+            val ktProperty = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), KtParameter::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
             plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UField::class.java)).let {
@@ -131,9 +131,9 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
 
     @Test
     fun testPrimaryConstructorAlternatives() {
-        doTest("ManyAlternatives") { name, file ->
+        doTest("ManyAlternatives") { _, file ->
             val index = file.findIndexOfElement("ClassA")
-            val ktProperty = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtClass::class.java)!!
+            val ktProperty = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), KtClass::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktProperty.language)!!
 
             plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UClass::class.java)).let {
@@ -163,7 +163,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
     fun testStaticMethodAlternatives() {
         doTest("ManyAlternatives") { name, file ->
             val index = file.findIndexOfElement("foo")
-            val ktFunction = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index), KtNamedFunction::class.java)!!
+            val ktFunction = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), KtNamedFunction::class.java)!!
             val plugin = UastLanguagePlugin.byLanguage(ktFunction.language)!!
             val alternatives = plugin.convertToAlternatives<UElement>(ktFunction, arrayOf(UMethod::class.java, UMethod::class.java))
             assertEquals("""

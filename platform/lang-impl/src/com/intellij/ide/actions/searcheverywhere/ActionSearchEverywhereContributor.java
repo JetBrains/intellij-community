@@ -111,7 +111,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
         final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
         SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-        if (mlService != null && mlService.shouldOrderByMl(this.getClass().getSimpleName())) {
+        if (mlService != null && mlService.shouldOrderByMl()) {
           descriptor = getMLWeightedItemDescriptor(mlService, element);
         }
         else {
@@ -233,12 +233,12 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
   private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull SearchEverywhereMlService service,
                                                                                         @NotNull GotoActionModel.MatchedValue element) {
-    if (element.getType() == GotoActionModel.MatchedValueType.ABBREVIATION) {
-      return new FoundItemDescriptor<>(element, element.getMatchingDegree(), 1.0);
-    }
-
     double mlWeight = service.getMlWeight(this, element, element.getMatchingDegree());
     if (mlWeight > 0) {
+      if (element.getType() == GotoActionModel.MatchedValueType.ABBREVIATION) {
+        return new FoundItemDescriptor<>(element, element.getMatchingDegree(), 1.0);
+      }
+
       return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
     }
     return new FoundItemDescriptor<>(element, element.getMatchingDegree());

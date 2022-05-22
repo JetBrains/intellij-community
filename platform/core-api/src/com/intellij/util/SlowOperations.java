@@ -116,7 +116,8 @@ public final class SlowOperations {
     return false;
   }
 
-  private static boolean isAlwaysAllowed() {
+  @ApiStatus.Internal
+  public static boolean isAlwaysAllowed() {
     if (ourAlwaysAllow == 1) {
       return true;
     }

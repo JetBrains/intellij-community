@@ -26,7 +26,8 @@ public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
     "SearchEverywhere",
     "Terminal.SmartCommandExecution.Run",
     "Terminal.SmartCommandExecution.Debug",
-    "UiInspector"
+    "UiInspector",
+    "CopyUiLabel"
   );
 
   public void testActionsWithShortcuts() throws Exception {

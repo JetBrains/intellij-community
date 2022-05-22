@@ -27,7 +27,7 @@ public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware
     e.getPresentation().setEnabled(false);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, e.getData(PlatformCoreDataKeys.MODULE));
+      Pair<Sdk, Module> sdkAndModule = PydevConsoleRunnerUtil.findPythonSdkAndModule(project, e.getData(PlatformCoreDataKeys.MODULE));
       if (sdkAndModule.first != null) {
         e.getPresentation().setEnabled(true);
       }

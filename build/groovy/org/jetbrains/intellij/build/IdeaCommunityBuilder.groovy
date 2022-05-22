@@ -6,13 +6,12 @@ import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @CompileStatic
 final class IdeaCommunityBuilder {
   private final BuildContext buildContext
 
-  IdeaCommunityBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
+  IdeaCommunityBuilder(Path home, BuildOptions options = new BuildOptions(), Path projectHome = home) {
     this(BuildContextImpl.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options))
   }
 
@@ -49,7 +48,7 @@ final class IdeaCommunityBuilder {
     }
   }
 
-  void buildUnpackedDistribution(String targetDirectory) {
-    BuildTasks.create(buildContext).buildUnpackedDistribution(Paths.get(targetDirectory), false)
+  void buildUnpackedDistribution(Path targetDirectory) {
+    BuildTasks.create(buildContext).buildUnpackedDistribution(targetDirectory, false)
   }
 }

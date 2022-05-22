@@ -401,9 +401,11 @@ open class CodeVisionHost(val project: Project) {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
         if (!inlaySettingsEditor && !lifeSettingModel.disabledCodeVisionProviderIds.contains(it.groupId)) {
-          if (!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) {
-            everyProviderReadyToUpdate = false
-            return@forEach
+          runSafe("shouldRecomputeForEditor for ${it.id}") {
+            if (!it.shouldRecomputeForEditor(editor, precalculatedUiThings[it.id])) {
+              everyProviderReadyToUpdate = false
+              return@forEach
+            }
           }
         }
         if (groupsToRecalculate.isNotEmpty() && !groupsToRecalculate.contains(it.id)) return@forEach
@@ -416,7 +418,7 @@ open class CodeVisionHost(val project: Project) {
           return@forEach
         }
         providerWhoWantToUpdate.add(it.id)
-        try {
+        runSafe("computeCodeVision for ${it.id}") {
           val state = it.computeCodeVision(editor, precalculatedUiThings[it.id])
           if (state.isReady.not()) {
             if (editorOpenTime != null) {
@@ -433,11 +435,6 @@ open class CodeVisionHost(val project: Project) {
             watcher.dropProvider(it.groupId)
             results.addAll(state.result)
           }
-        }
-        catch (e: Exception) {
-          if (e is ControlFlowException) throw e
-
-          logger.error("Exception during computeForEditor for ${it.id}", e)
         }
       }
 
@@ -492,6 +489,17 @@ open class CodeVisionHost(val project: Project) {
     }
 
     return indicator
+  }
+
+  private inline fun runSafe(name: String, block: () -> Unit) {
+    try {
+      block()
+    }
+    catch (e: Exception) {
+      if (e is ControlFlowException) throw e
+
+      logger.error("Exception during $name", e)
+    }
   }
 
   protected open fun openCodeVisionSettings(groupId: String? = null) {

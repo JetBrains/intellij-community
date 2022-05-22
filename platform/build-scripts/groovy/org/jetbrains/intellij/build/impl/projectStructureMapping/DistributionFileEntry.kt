@@ -29,7 +29,7 @@ interface LibraryFileEntry {
  */
 class ModuleLibraryFileEntry(override val path: Path,
                              val moduleName: String,
-                             override val libraryFile: Path,
+                             override val libraryFile: Path?,
                              override val size: Int) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "module-library-file"
@@ -48,7 +48,7 @@ class ModuleTestOutputEntry(override val path: Path, val moduleName: String) : D
  */
 class ProjectLibraryEntry(override val path: Path,
                           val data: ProjectLibraryData,
-                          override val libraryFile: Path,
+                          override val libraryFile: Path?,
                           override val size: Int) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "project-library"

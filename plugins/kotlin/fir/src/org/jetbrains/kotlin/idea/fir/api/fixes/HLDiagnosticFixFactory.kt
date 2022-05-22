@@ -101,4 +101,5 @@ private class IntentionActionAsQuickFixWrapper<T : PsiElement>(val intentionActi
     override fun getText(): String = intentionAction.text
     override fun getFamilyName(): String = intentionAction.familyName
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) = intentionAction.invoke(project, editor, file)
+    override fun startInWriteAction(): Boolean = intentionAction.startInWriteAction()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
@@ -38,6 +40,7 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
@@ -98,6 +101,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   private volatile boolean breakpointsInitialized;
   private long myUserRequestStart;
+  private String myUserRequestAction;
 
   public XDebugSessionImpl(@NotNull ExecutionEnvironment environment, @NotNull XDebuggerManagerImpl debuggerManager) {
     this(environment, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false, null);
@@ -504,7 +508,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stepOver(final boolean ignoreBreakpoints) {
-    rememberUserActionStart("Step Over");
+    rememberUserActionStart(XDebuggerActions.STEP_OVER);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     if (ignoreBreakpoints) {
@@ -515,7 +519,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stepInto() {
-    rememberUserActionStart("Step Into");
+    rememberUserActionStart(XDebuggerActions.STEP_INTO);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.startStepInto(doResume());
@@ -523,7 +527,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stepOut() {
-    rememberUserActionStart("Step Out");
+    rememberUserActionStart(XDebuggerActions.STEP_OUT);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.startStepOut(doResume());
@@ -531,7 +535,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant) {
-    rememberUserActionStart("Smart Step Into");
+    rememberUserActionStart(XDebuggerActions.SMART_STEP_INTO);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     final XSuspendContext context = doResume();
@@ -540,7 +544,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void forceStepInto() {
-    rememberUserActionStart("Force Step Into");
+    rememberUserActionStart(XDebuggerActions.FORCE_STEP_INTO);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.startForceStepInto(doResume());
@@ -548,7 +552,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void runToPosition(@NotNull final XSourcePosition position, final boolean ignoreBreakpoints) {
-    rememberUserActionStart("Run To Cursor");
+    rememberUserActionStart(XDebuggerActions.RUN_TO_CURSOR);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     if (ignoreBreakpoints) {
@@ -559,7 +563,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void pause() {
-    rememberUserActionStart("Pause");
+    rememberUserActionStart(XDebuggerActions.PAUSE);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.startPausing();
@@ -584,7 +588,6 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void resume() {
-    rememberUserActionStart("Resume");
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
     myDebugProcess.resume(doResume());
@@ -861,7 +864,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     updateExecutionPosition();
 
-    logPerformanceEvent("Position reached");
+    logPositionReached(myTopFramePosition);
 
     final boolean showOnSuspend = myShowTabOnSuspend.compareAndSet(true, false);
     if (showOnSuspend || attract) {
@@ -1105,15 +1108,25 @@ public final class XDebugSessionImpl implements XDebugSession {
     return myEnvironment;
   }
 
-  private void rememberUserActionStart(String action) {
-    if (PERFORMANCE_LOG.isDebugEnabled()) {
-      myUserRequestStart = System.currentTimeMillis();
-    }
+  private void rememberUserActionStart(@NotNull String action) {
+    myUserRequestStart = System.currentTimeMillis();
+    myUserRequestAction = action;
   }
 
-  private void logPerformanceEvent(String event) {
-    if (myUserRequestStart > 0 && PERFORMANCE_LOG.isDebugEnabled()) {
-      PERFORMANCE_LOG.debug(event + " in " + (System.currentTimeMillis() - myUserRequestStart) + "ms");
+  private void logPositionReached(@Nullable XSourcePosition topFramePosition) {
+    if (myUserRequestStart > 0 && myUserRequestAction != null) {
+      long durationMs = System.currentTimeMillis() - myUserRequestStart;
+      if (PERFORMANCE_LOG.isDebugEnabled()) {
+        PERFORMANCE_LOG.debug("Position reached in " + durationMs + "ms");
+      }
+      FileType fileType = topFramePosition != null ? topFramePosition.getFile().getFileType() : null;
+      XDebuggerPerformanceCollector.EXECUTION_POINT_REACHED.log(
+        myProject,
+        EventFields.FileType.with(fileType),
+        XDebuggerPerformanceCollector.ACTION_ID.with(myUserRequestAction),
+        EventFields.DurationMs.with(durationMs)
+      );
+      myUserRequestAction = null;
     }
   }
 }

@@ -22,12 +22,6 @@ class BundledRuntimeTest {
               continue
             }
 
-            if (os == OsFamily.LINUX && arch == JvmArchitecture.aarch64 && prefix == JetBrainsRuntimeDistribution.JCEF) {
-              // Not supported yet
-              // https://youtrack.jetbrains.com/issue/JBR-3906
-              continue
-            }
-
             val home = try {
               bundledRuntime.extract(prefix.artifactPrefix, os, arch)
             }
@@ -73,7 +67,7 @@ class BundledRuntimeTest {
     val tempDir = FileUtil.createTempDirectory("compilation-context-", "")
     try {
       val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-      val context = CompilationContextImpl.create(communityHome.toString(), communityHome.toString(), tempDir.toString())
+      val context = CompilationContextImpl.create(communityHome, communityHome, tempDir.toString())
       block(context)
     }
     finally {

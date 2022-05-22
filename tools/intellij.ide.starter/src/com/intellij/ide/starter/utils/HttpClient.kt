@@ -1,7 +1,6 @@
 package com.intellij.ide.starter.utils
 
 import com.intellij.ide.starter.utils.FileSystem.isFileUpToDate
-import org.apache.commons.io.FileUtils
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpUriRequest
@@ -64,7 +63,7 @@ object HttpClient {
       }
 
       if (targetFile.isRegularFile() && targetFile.fileSize() > 0) {
-        logOutput("File $targetFile was already downloaded. Size ${FileUtils.byteCountToDisplaySize(targetFile.fileSize())}")
+        logOutput("File $targetFile was already downloaded. Size ${targetFile.fileSize().formatSize()}")
         return
       }
     }

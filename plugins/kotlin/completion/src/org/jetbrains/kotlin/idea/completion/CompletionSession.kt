@@ -276,7 +276,6 @@ abstract class CompletionSession(
         ImportInsertHelper.getInstance(file.project).isImportedWithDefault(ImportPath(it, false), file)
     }
 
-    @Suppress("InvalidBundleOrProperty") //workaround to avoid false-positive: KTIJ-19892
     protected open fun createSorter(): CompletionSorter {
         var sorter = CompletionSorter.defaultSorter(parameters, prefixMatcher)!!
 

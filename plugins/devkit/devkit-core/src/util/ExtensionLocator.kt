@@ -8,8 +8,6 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.util.ClassUtil
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import com.intellij.util.xml.DomManager

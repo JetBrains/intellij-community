@@ -168,7 +168,9 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       restoreState {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
-      test { invokeActionViaShortcut("ENTER") }
+      test {
+        waitAndUsePreviouslyFoundListItem { it.doubleClick() }
+      }
     }
   }
 

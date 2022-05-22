@@ -3,9 +3,9 @@ package org.jetbrains.intellij.build.python
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
+import org.jetbrains.intellij.build.io.FileKt
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -72,7 +72,7 @@ final class HelpersGenerator implements BiConsumer<Path, BuildContext> {
   void accept(Path targetDir, BuildContext context) {
     Path output = targetDir.resolve("helpers")
     Files.createDirectories(output)
-    BuildHelper.copyDir(context.paths.communityHomeDir.resolve("python/helpers"), output, new Predicate<Path>() {
+    FileKt.copyDir(context.paths.communityHomeDir.resolve("python/helpers"), output, new Predicate<Path>() {
       @Override
       boolean test(Path path) {
         if (path.endsWith("tests") || path.endsWith(".idea")) {

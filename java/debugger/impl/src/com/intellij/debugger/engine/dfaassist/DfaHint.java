@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public enum DfaHint {
-  NONE(null), ANY_VALUE(null, true), TRUE("= true", true), FALSE("= false", true), 
+  NONE(null), ANY_VALUE(null, true), TRUE("= true", true), FALSE("= false", true), NULL("= null", true),
   NPE("[NullPointerException]"), NULL_AS_NOT_NULL("[Null passed where not-null expected]"), CCE("[ClassCastException]"),
   ASE("[ArrayStoreException]"), AIOOBE("[ArrayIndexOutOfBoundsException]"), FAIL("[Method will fail]", true);
 

@@ -12,7 +12,7 @@ final class ExternalPluginBundler {
                      String targetDirectory,
                      String buildTaskName = pluginName) {
     def dependenciesProjectDir = new File(dependenciesPath)
-    new GradleRunner(dependenciesProjectDir, buildContext.paths.projectHome, buildContext.messages, buildContext.options).run(
+    new GradleRunner(dependenciesProjectDir, buildContext.paths.projectHome, buildContext.messages, buildContext.options, buildContext.paths.buildDependenciesCommunityRoot).run(
       "Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
     Properties properties = new Properties()
     new File(dependenciesProjectDir, "gradle.properties").withInputStream {

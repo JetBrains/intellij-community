@@ -179,7 +179,6 @@ internal class KotlinNonJvmSourceRootConverterProvider : ConverterProvider() {
                         .flatMap { it.getChildren(SOURCE_FOLDER_TAG) }
                 }
 
-                @Suppress("UnstableApiUsage")
                 private fun ModuleSettings.isExternalModule(): Boolean {
                     return when {
                         rootElement.getAttributeValue(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY) != null -> true

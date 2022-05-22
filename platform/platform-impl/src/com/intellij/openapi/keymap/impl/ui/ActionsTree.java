@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -594,7 +594,7 @@ public final class ActionsTree {
         }
         else {
           if (changed) {
-            foreground = PlatformColors.BLUE;
+            foreground = JBColor.namedColor("Tree.modifiedItemForeground", PlatformColors.BLUE);
           }
           else {
             foreground = UIUtil.getTreeForeground();

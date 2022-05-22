@@ -17,7 +17,9 @@ abstract class AbstractKotlinMainRunLineMarkerContributor : RunLineMarkerContrib
      */
     protected abstract fun acceptEntryPoint(function: KtNamedFunction): Boolean
 
-    override fun getInfo(element: PsiElement): Info? {
+    override fun getInfo(element: PsiElement): Info? = null
+
+    override fun getSlowInfo(element: PsiElement): Info? {
         val function = element.parent as? KtNamedFunction ?: return null
 
         if (function.nameIdentifier != element) return null

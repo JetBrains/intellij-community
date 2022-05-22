@@ -7,7 +7,7 @@ import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 object KotlinPluginBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass).toString()
+    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     KotlinPluginBuilder(communityHome, communityHome, IdeaCommunityProperties(communityHome)).build()
   }
 }

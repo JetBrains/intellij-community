@@ -156,6 +156,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val passIdsToIgnore = mutableListOf(
             Pass.LINE_MARKERS,
+            Pass.SLOW_LINE_MARKERS,
             Pass.EXTERNAL_TOOLS,
             Pass.POPUP_HINTS,
             Pass.UPDATE_ALL,

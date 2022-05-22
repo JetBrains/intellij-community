@@ -8,7 +8,13 @@ import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.SurroundingComponent
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JComponent
+import javax.swing.JScrollPane
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
+import kotlin.math.max
 
 internal var EditorGutterComponentEx.hoveredCollapsingComponentRect: CollapsingComponent? by SwingClientProperty("hoveredCollapsingComponentRect")
 
@@ -35,4 +41,39 @@ fun resetOutputInlayCustomHeight(component: Component?) {
     .filterIsInstance<CollapsingComponent>()
     .firstOrNull()
     ?.resetCustomHeight()
+}
+
+/**
+ * Scrolls the pane down in case of various size changes, if the pane was scrolled down before the size change.
+ *
+ * If the pane wasn't scrolled to the bottom (i.e. the last pixel of the view wasn't seen), the scroll remains unchanged.
+ */
+fun installAutoScrollToBottom(scrollPane: JScrollPane) {
+  var wasScrolledToBottom = true
+
+  val viewport = scrollPane.viewport
+  val view = viewport.view
+
+  val scrollToBottomListener = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent) {
+      if (wasScrolledToBottom) {
+        scrollPane.verticalScrollBar.value = max(0, view.height - viewport.viewRect.height)
+      }
+    }
+  }
+
+  viewport.addComponentListener(scrollToBottomListener)
+  view.addComponentListener(scrollToBottomListener)
+
+  scrollPane.verticalScrollBar.model.addChangeListener(object : ChangeListener {
+    var oldValue = scrollPane.verticalScrollBar.value
+
+    override fun stateChanged(e: ChangeEvent) {
+      val newValue = scrollPane.verticalScrollBar.value
+      if (oldValue != newValue) {
+        oldValue = newValue
+        wasScrolledToBottom = scrollPane.verticalScrollBar.value + viewport.viewRect.height >= view.height
+      }
+    }
+  })
 }

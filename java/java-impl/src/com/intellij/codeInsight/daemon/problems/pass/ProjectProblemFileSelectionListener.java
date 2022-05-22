@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.problems.FileStateCache;
@@ -232,7 +232,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
       connection.subscribe(InlayHintsSettings.getINLAY_SETTINGS_CHANGED(), listener);
       connection.subscribe(VirtualFileManager.VFS_CHANGES, listener);
       connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, listener);
-      PsiManager.getInstance(project).addPsiTreeChangeListener(listener, FileStateCache.SERVICE.INSTANCE.getInstance(project));
+      PsiManager.getInstance(project).addPsiTreeChangeListener(listener, FileStateCache.getInstance(project));
     }
   }
 }

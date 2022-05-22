@@ -66,7 +66,7 @@ final class ClassVersionChecker {
       return
     }
 
-    BuildHelper.span(TracerManager.spanBuilder("verify class file versions")
+    BuildHelperKt.span(TracerManager.spanBuilder("verify class file versions")
                        .setAttribute("ruleCount", config.size())
                        .setAttribute("root", root.toString()), new Runnable() {
       @Override

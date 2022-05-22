@@ -2,9 +2,15 @@
 
 package org.jetbrains.kotlin.idea.platform
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.Key
+import com.intellij.psi.util.ParameterizedCachedValue
+import com.intellij.psi.util.ParameterizedCachedValueProvider
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.core.util.AvailabilityProvider
+import org.jetbrains.kotlin.idea.core.util.isClassAvailableInModule
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.util.string.joinWithEscape
 import org.jetbrains.kotlin.name.FqName
@@ -27,6 +33,19 @@ import javax.swing.Icon
 
 private val TEST_FQ_NAME = FqName("kotlin.test.Test")
 private val IGNORE_FQ_NAME = FqName("kotlin.test.Ignore")
+private val GENERIC_KOTLIN_TEST_AVAILABLE_KEY = Key<ParameterizedCachedValue<Boolean, Module>>("GENERIC_KOTLIN_TEST_AVAILABLE")
+private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE: ParameterizedCachedValueProvider<Boolean, Module> = GenericKotlinTestAvailabilityProvider(test = false)
+private val GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITH_TEST_SCOPE = GenericKotlinTestAvailabilityProvider(true)
+
+private class GenericKotlinTestAvailabilityProvider(test: Boolean) : AvailabilityProvider(
+    test,
+    fqNames = setOf(TEST_FQ_NAME.asString()),
+    javaClassLookup = true,
+    // `kotlin.test.Test` could be a typealias
+    aliasLookup = true,
+    // `kotlin.test.Test` could be expected/actual annotation class
+    kotlinFullClassLookup = true
+)
 
 fun getGenericTestIcon(
     declaration: KtNamedDeclaration,
@@ -34,6 +53,13 @@ fun getGenericTestIcon(
     initialLocations: () -> List<String>?
 ): Icon? {
     val locations = initialLocations()?.toMutableList() ?: return null
+
+    // fast check if `kotlin.test.Test` is available in a module scope
+    declaration.isClassAvailableInModule(
+        GENERIC_KOTLIN_TEST_AVAILABLE_KEY,
+        GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITHOUT_TEST_SCOPE,
+        GENERIC_KOTLIN_TEST_AVAILABLE_PROVIDER_WITH_TEST_SCOPE
+    )?.takeUnless { it }?.let { return null }
 
     val clazz = when (declaration) {
         is KtClassOrObject -> declaration

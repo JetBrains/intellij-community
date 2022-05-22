@@ -89,7 +89,7 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
     public boolean isAcceptable(Object element, PsiElement context) {
       UElement type = UastContextKt.toUElement(context, UElement.class);
       if (type == null) return false;
-      UAnnotation annotation = isCheapEnoughToSearch(type);
+      UAnnotation annotation = findAnnotationParent(type);
       if (annotation == null || !myAnnotation.equals(annotation.getQualifiedName())) return false;
       UNamedExpression uPair = UastUtils.getParentOfType(type, UNamedExpression.class);
       if (uPair == null) return false;
@@ -97,7 +97,7 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
       return myParameterName.equals(name);
     }
 
-    private static UAnnotation isCheapEnoughToSearch(UElement element) {
+    private static UAnnotation findAnnotationParent(UElement element) {
       for (int i = 0; i < 5; i++) {
         if (element instanceof UDeclarationsExpression) {
           return null;
@@ -106,7 +106,9 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
           return (UAnnotation)element;
         }
         UElement parent = element.getUastParent();
-        if (parent == null) return null;
+        if (parent == null || parent instanceof UFile) {
+          return null;
+        }
         element = parent;
       }
       return null;

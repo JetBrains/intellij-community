@@ -2,19 +2,13 @@
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.intellij.buildsystem.model.DeclaredDependency
-import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerGoToAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
-import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerContributor.Companion.MODULE_DATA
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 class GradleDependencyAnalyzerGoToAction : DependencyAnalyzerGoToAction(GradleConstants.SYSTEM_ID) {
 
@@ -33,32 +27,5 @@ class GradleDependencyAnalyzerGoToAction : DependencyAnalyzerGoToAction(GradleCo
     val dependencyModifierService = DependencyModifierService.getInstance(project)
     return dependencyModifierService.declaredDependencies(module)
       .find { it.coordinates == coordinates }
-  }
-
-  private fun getUnifiedCoordinates(dependency: Dependency): UnifiedCoordinates? {
-    return when (val data = dependency.data) {
-      is Dependency.Data.Artifact -> getUnifiedCoordinates(data)
-      is Dependency.Data.Module -> getUnifiedCoordinates(data)
-    }
-  }
-
-  private fun getUnifiedCoordinates(data: Dependency.Data.Artifact): UnifiedCoordinates {
-    return UnifiedCoordinates(data.groupId, data.artifactId, data.version)
-  }
-
-  private fun getUnifiedCoordinates(data: Dependency.Data.Module): UnifiedCoordinates? {
-    val moduleData = data.getUserData(MODULE_DATA) ?: return null
-    return UnifiedCoordinates(moduleData.group, moduleData.externalName, moduleData.version)
-  }
-
-  private fun getParentModule(project: Project, dependency: Dependency): Module? {
-    val parentData = dependency.parent?.data as? Dependency.Data.Module ?: return null
-    return getModule(project, parentData)
-  }
-
-  private fun getModule(project: Project, data: Dependency.Data.Module): Module? {
-    val moduleData = data.getUserData(MODULE_DATA) ?: return null
-    val moduleManager = ModuleManager.getInstance(project)
-    return moduleManager.findModuleByName(moduleData.ideGrouping)
   }
 }

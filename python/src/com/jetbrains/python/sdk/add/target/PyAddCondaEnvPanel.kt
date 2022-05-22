@@ -58,7 +58,7 @@ open class PyAddCondaEnvPanel(
   protected val languageLevelsField: JComboBox<String>
   protected val condaPathField = TextFieldWithBrowseButton().apply {
     // TODO [targets] Requires target-based discovery
-    val path = PyCondaPackageService.getCondaExecutable(null)
+    val path = if (targetEnvironmentConfiguration.isLocal()) PyCondaPackageService.getCondaExecutable(null) else null
     path?.let {
       text = it
     }

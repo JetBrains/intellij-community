@@ -30,9 +30,8 @@ class JaegerJsonSpanExporter : SpanExporter {
 
     @JvmStatic
     fun setOutput(file: Path) {
-      var w = writer.getAndSet(null)
-      if (w != null) {
-        finishWriter(w)
+      writer.getAndSet(null)?.let {
+        finishWriter(it)
       }
       if (shutdownHookAdded.compareAndSet(false, true)) {
         Runtime.getRuntime().addShutdownHook(Thread({
@@ -43,7 +42,8 @@ class JaegerJsonSpanExporter : SpanExporter {
                                                       }
                                                     }, "close tracer"))
       }
-      w = JsonFactory().createGenerator(Files.newBufferedWriter(file)).useDefaultPrettyPrinter()
+
+      val w = JsonFactory().createGenerator(Files.newBufferedWriter(file)).useDefaultPrettyPrinter()
       writer.set(w)
       Companion.file = file
       w.writeStartObject()
@@ -69,25 +69,25 @@ class JaegerJsonSpanExporter : SpanExporter {
 
     private fun writeAttributesAsJson(w: JsonGenerator, attributes: Attributes) {
       attributes.forEach { k, v ->
-          if ((k as AttributeKey<*>).key == "_CES_") {
-            return@forEach
-          }
-
-          w.writeStartObject()
-          w.writeStringField("key", k.key)
-          w.writeStringField("type", k.type.name.lowercase(Locale.getDefault()))
-          if (v is Iterable<*>) {
-            w.writeArrayFieldStart("value")
-            for (item in v) {
-              w.writeString(item as String)
-            }
-            w.writeEndArray()
-          }
-          else {
-            w.writeStringField("value", v.toString())
-          }
-          w.writeEndObject()
+        if ((k as AttributeKey<*>).key == "_CES_") {
+          return@forEach
         }
+
+        w.writeStartObject()
+        w.writeStringField("key", k.key)
+        w.writeStringField("type", k.type.name.lowercase(Locale.getDefault()))
+        if (v is Iterable<*>) {
+          w.writeArrayFieldStart("value")
+          for (item in v) {
+            w.writeString(item as String)
+          }
+          w.writeEndArray()
+        }
+        else {
+          w.writeStringField("value", v.toString())
+        }
+        w.writeEndObject()
+      }
     }
 
     fun finish(tracerProvider: SdkTracerProvider?): Path? {

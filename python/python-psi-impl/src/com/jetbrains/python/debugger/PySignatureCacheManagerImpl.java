@@ -259,7 +259,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   public boolean clearCache() {
     final Ref<Boolean> deleted = Ref.create(false);
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      (Runnable)() -> ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(fileOrDir -> {
+      (Runnable)() -> ProjectFileIndex.getInstance(myProject).iterateContent(fileOrDir -> {
         if (readAttribute(fileOrDir) != null) {
           writeAttribute(fileOrDir, "");
           deleted.set(true);

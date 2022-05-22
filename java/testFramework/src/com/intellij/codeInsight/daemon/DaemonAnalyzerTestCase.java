@@ -278,6 +278,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     IntList toIgnore = new IntArrayList();
     if (!doTestLineMarkers()) {
       toIgnore.add(Pass.LINE_MARKERS);
+      toIgnore.add(Pass.SLOW_LINE_MARKERS);
     }
 
     if (!doExternalValidation()) {
@@ -285,6 +286,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     }
     if (forceExternalValidation()) {
       toIgnore.add(Pass.LINE_MARKERS);
+      toIgnore.add(Pass.SLOW_LINE_MARKERS);
       toIgnore.add(Pass.LOCAL_INSPECTIONS);
       toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);

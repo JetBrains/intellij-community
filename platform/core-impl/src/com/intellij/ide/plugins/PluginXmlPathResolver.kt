@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
@@ -7,7 +7,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.zip.ZipFile
 
-@Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolver {
   companion object {
     // don't use Kotlin emptyList here

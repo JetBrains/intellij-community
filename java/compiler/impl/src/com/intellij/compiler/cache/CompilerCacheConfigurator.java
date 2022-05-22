@@ -96,6 +96,10 @@ public class CompilerCacheConfigurator {
       LOG.info("The system contains up-to-date caches");
       return null;
     }
+    if (commitToDownload.equals(latestBuiltCommit)) {
+      LOG.info("Caches for the built commit won't be downloaded");
+      return null;
+    }
     return Pair.create(commitToDownload, commitsCountBetweenCompilation);
   }
 

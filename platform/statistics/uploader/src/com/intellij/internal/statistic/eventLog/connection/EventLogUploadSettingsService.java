@@ -30,8 +30,13 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     this(recorderId, appInfo, TimeUnit.MINUTES.toMillis(10));
   }
 
-  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
-    super(getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()), appInfo, settingsCacheTimeoutMs);
+  public EventLogUploadSettingsService(@NotNull String recorderId,
+                                       @NotNull EventLogApplicationInfo appInfo,
+                                       long settingsCacheTimeoutMs) {
+    super(
+      getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()),
+      recorderId, appInfo, settingsCacheTimeoutMs
+    );
     myApplicationInfo = appInfo;
   }
 

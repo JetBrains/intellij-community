@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.impl.BuildHelper
+import org.jetbrains.intellij.build.impl.BuildHelperKt
 import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
 import java.nio.charset.StandardCharsets
@@ -40,8 +40,7 @@ import java.util.function.Predicate
 import java.util.zip.GZIPOutputStream
 
 @CompileStatic
-class CompilationPartsUtil {
-
+final class CompilationPartsUtil {
   static void packAndUploadToServer(CompilationContext context, String zipsLocation) {
     upload(zipsLocation, context.messages, pack(context, zipsLocation))
   }
@@ -69,11 +68,13 @@ class CompilationPartsUtil {
     List<PackAndUploadContext> contexts = new ArrayList<PackAndUploadContext>(2048)
 
     File root = context.getProjectOutputDirectory().getAbsoluteFile()
-    List<File> subroots = root.listFiles().toList().collect { it.absoluteFile } // production, test
-    for (File subroot : subroots) {
-      FileUtil.ensureExists(new File("$zipsLocation/${subroot.name}"))
+    List<File> subRoots = root.listFiles().toList().collect { it.absoluteFile } // production, test
+    Path zipsLocationDir = Path.of(zipsLocation)
+    Files.createDirectories(zipsLocationDir)
+    for (File subRoot : subRoots) {
+      Files.createDirectories(zipsLocationDir.resolve(subRoot.name))
 
-      def modules = subroot.listFiles().toList().collect { it.absoluteFile }
+      def modules = subRoot.listFiles().toList().collect { it.absoluteFile }
       for (File module : modules) {
         def files = module.list()
         if (files == null || files.size() == 0) {
@@ -86,7 +87,7 @@ class CompilationPartsUtil {
           continue
         }
 
-        String name = "${subroot.name}/${module.name}".toString()
+        String name = "${subRoot.name}/${module.name}".toString()
         PackAndUploadContext ctx = new PackAndUploadContext(module, name, "$zipsLocation/${name}.jar".toString())
         contexts.add(ctx)
       }
@@ -553,7 +554,7 @@ class CompilationPartsUtil {
       if (Files.exists(destination)) {
         Files.delete(destination)
       }
-      BuildHelper.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
+      BuildHelperKt.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
     }
   }
 

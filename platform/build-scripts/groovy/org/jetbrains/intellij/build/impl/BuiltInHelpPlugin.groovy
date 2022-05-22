@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.tasks.HelpPluginKt
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
+import java.util.function.Consumer
 
 @CompileStatic
 final class BuiltInHelpPlugin {
@@ -22,37 +23,36 @@ final class BuiltInHelpPlugin {
       return null
     }
 
-    return PluginLayoutGroovy.plugin(MODULE_NAME) {
-      configure(delegate, pluginVersion, productName, resourceRoot)
-    }
-  }
-
-  private static configure(PluginLayout.PluginLayoutSpec spec, String pluginVersion, String productName, Path resourceRoot) {
-    String productLowerCase = productName.replace(" ", "-").toLowerCase()
-    spec.mainJarName = "$productLowerCase-help.jar"
-    spec.directoryName = "${productName.replace(" ", "")}Help"
-    spec.excludeFromModule(MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
-    spec.doNotCopyModuleLibrariesAutomatically(List.of("jsoup"))
-    spec.withGeneratedResources(new BiConsumer<Path, BuildContext>() {
+    return PluginLayout.plugin(MODULE_NAME, new Consumer<PluginLayout.PluginLayoutSpec>() {
       @Override
-      void accept(Path targetDir, BuildContext context) {
-        Path assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
-        HelpPluginKt.buildResourcesForHelpPlugin(
-          resourceRoot,
-          context.getModuleRuntimeClasspath(context.findRequiredModule(MODULE_NAME), false),
-          assetJar,
-          context.messages,
-          context.stableJavaExecutable,
-        )
-      }
-    })
-    spec.withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
-      @Override
-      void accept(ModuleOutputPatcher patcher, BuildContext context) {
-        patcher.patchModuleOutput(MODULE_NAME,
-                                  "META-INF/services/org.apache.lucene.codecs.Codec",
-                                  "org.apache.lucene.codecs.lucene50.Lucene50Codec")
-        patcher.patchModuleOutput(MODULE_NAME, "META-INF/plugin.xml", pluginXml(context, pluginVersion), true)
+      void accept(PluginLayout.PluginLayoutSpec spec) {
+        String productLowerCase = productName.replace(" ", "-").toLowerCase()
+        spec.mainJarName = "$productLowerCase-help.jar"
+        spec.directoryName = "${productName.replace(" ", "")}Help"
+        spec.excludeFromModule(MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
+        spec.doNotCopyModuleLibrariesAutomatically(List.of("jsoup"))
+        spec.withGeneratedResources(new BiConsumer<Path, BuildContext>() {
+          @Override
+          void accept(Path targetDir, BuildContext buildContext) {
+            Path assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
+            HelpPluginKt.buildResourcesForHelpPlugin(
+              resourceRoot,
+              buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(MODULE_NAME), false),
+              assetJar,
+              buildContext.messages,
+              buildContext.stableJavaExecutable,
+            )
+          }
+        })
+        spec.withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
+          @Override
+          void accept(ModuleOutputPatcher patcher, BuildContext buildContext) {
+            patcher.patchModuleOutput(MODULE_NAME,
+                                      "META-INF/services/org.apache.lucene.codecs.Codec",
+                                      "org.apache.lucene.codecs.lucene50.Lucene50Codec")
+            patcher.patchModuleOutput(MODULE_NAME, "META-INF/plugin.xml", pluginXml(buildContext, pluginVersion), true)
+          }
+        })
       }
     })
   }

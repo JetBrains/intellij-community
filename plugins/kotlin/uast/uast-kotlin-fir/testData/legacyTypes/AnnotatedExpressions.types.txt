@@ -1,7 +1,7 @@
 UFile (package = ) [public final class AnnotatedExpressionsKt {...]
     UClass (name = AnnotatedExpressionsKt) [public final class AnnotatedExpressionsKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:Unit
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]

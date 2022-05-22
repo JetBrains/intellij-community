@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 02-Oct-18
  */
 public final class SingleCharSequence implements CharSequence {
   private final char myCh;

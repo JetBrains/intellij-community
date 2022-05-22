@@ -61,7 +61,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
-  protected MavenProjectsTree myProjectsTree;
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
@@ -96,7 +95,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       () -> CompilerTestUtil.deleteBuildSystemDirectory(myProject),
       () -> {
         myProjectsManager = null;
-        myProjectsTree = null;
         myProjectResolver = null;
       },
       () -> super.tearDown(),
@@ -135,7 +133,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void assertRootProjects(String... expectedNames) {
-    List<MavenProject> rootProjects = myProjectsTree.getRootProjects();
+    List<MavenProject> rootProjects = myProjectsManager.getProjectsTree().getRootProjects();
     List<String> actualNames = ContainerUtil.map(rootProjects, it -> it.getMavenId().getArtifactId());
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
   }
@@ -195,6 +193,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
     ContentEntry contentRoot = getContentRoot(moduleName);
     doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
+  }
+
+  protected MavenProjectsTree getProjectsTree() {
+    return myProjectsManager.getProjectsTree();
   }
 
   private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {
@@ -463,7 +465,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                                         List<String> disabledProfiles, String... profiles) {
 
     myProjectsManager.initForTests();
-    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles), disabledProfiles));
+    myProjectsManager.getProjectsTree().setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles), disabledProfiles));
     MavenImportingManager importingManager = MavenImportingManager.getInstance(myProject);
     Promise<MavenImportFinishedContext> promise = importingManager.openProjectAndImport(
       new FilesList(files),
@@ -479,8 +481,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       myImportedContext = p.getContext();
       myReadContext = myImportedContext.getReadContext();
       myResolvedContext = myImportedContext.getResolvedContext();
-      myProjectsTree = myReadContext.getProjectsTree();
-      DependencySearchService depService = myProject.getServiceIfCreated(DependencySearchService.class);
+      DependencySearchService depService = myReadContext.getProject().getServiceIfCreated(DependencySearchService.class);
       if (depService != null) {
         depService.updateProviders();
       }
@@ -544,7 +545,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
 
     if (failOnReadingError) {
-      for (MavenProject each : myProjectsTree.getProjects()) {
+      for (MavenProject each : myProjectsManager.getProjectsTree().getProjects()) {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems());
       }
     }
@@ -585,8 +586,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void initProjectsManager(boolean enableEventHandling) {
     myProjectsManager.initForTests();
-    myProjectsTree = myProjectsManager.getProjectsTreeForTests();
-    myProjectResolver = new MavenProjectResolver(myProjectsTree);
+    myProjectResolver = new MavenProjectResolver(myProjectsManager.getProjectsTree());
     if (enableEventHandling) {
       myProjectsManager.enableAutoImportInTests();
     }
