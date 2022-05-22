@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRequestChain {
+public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain {
   @NotNull private final ListSelection<? extends DiffRequestProducer> myRequests;
 
   public SimpleDiffRequestChain(@NotNull DiffRequest request) {
@@ -54,19 +54,16 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
   }
 
   public static SimpleDiffRequestChain fromProducers(@NotNull List<? extends DiffRequestProducer> producers, int selectedIndex) {
-    ListSelection<? extends DiffRequestProducer> listSelection = ListSelection.createAt(producers, selectedIndex);
-    return new SimpleDiffRequestChain(listSelection, null);
+    return fromProducers(ListSelection.createAt(producers, selectedIndex));
+  }
+
+  public static SimpleDiffRequestChain fromProducers(@NotNull ListSelection<? extends DiffRequestProducer> producers) {
+    return new SimpleDiffRequestChain(producers, null);
   }
 
   @Override
-  @NotNull
-  public List<? extends DiffRequestProducer> getRequests() {
-    return myRequests.getList();
-  }
-
-  @Override
-  public int getIndex() {
-    return myRequests.getSelectedIndex();
+  public @NotNull ListSelection<? extends DiffRequestProducer> getListSelection() {
+    return myRequests;
   }
 
   public static class DiffRequestProducerWrapper implements DiffRequestProducer {

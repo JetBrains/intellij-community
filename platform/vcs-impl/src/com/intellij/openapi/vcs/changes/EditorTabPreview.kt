@@ -215,7 +215,7 @@ private class EditorTabDiffPreviewProvider(
   override fun createDiffRequestChain(): DiffRequestChain? {
     if (diffProcessor is DiffRequestProcessorWithProducers) {
       val producers = diffProcessor.collectDiffProducers(false) ?: return null
-      return SimpleDiffRequestChain.fromProducers(producers.list, producers.selectedIndex)
+      return SimpleDiffRequestChain.fromProducers(producers)
     }
     return null
   }

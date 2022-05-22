@@ -5,6 +5,7 @@ import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.AsyncDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.chains.DiffRequestSelectionChain;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChangeDiffRequestChain extends UserDataHolderBase implements GoToChangePopupBuilder.Chain {
+public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain, GoToChangePopupBuilder.Chain {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestChain.class);
   @NotNull private final ListSelection<? extends Producer> myProducers;
 
@@ -36,14 +37,14 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements GoToCh
   }
 
   @Override
-  @NotNull
-  public List<? extends Producer> getRequests() {
-    return myProducers.getList();
+  public @NotNull ListSelection<? extends Producer> getListSelection() {
+    return myProducers;
   }
 
   @Override
-  public int getIndex() {
-    return myProducers.getSelectedIndex();
+  @NotNull
+  public List<? extends Producer> getRequests() {
+    return myProducers.getList();
   }
 
   @NotNull
