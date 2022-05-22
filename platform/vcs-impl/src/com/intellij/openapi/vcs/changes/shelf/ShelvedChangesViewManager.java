@@ -488,7 +488,7 @@ public class ShelvedChangesViewManager implements Disposable {
         }
       }
     }
-    return wrappers;
+    return wrappers.asExplicitSelection();
   }
 
   @NotNull
