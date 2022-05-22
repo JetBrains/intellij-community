@@ -447,11 +447,12 @@ private fun runInParallel(tasks: List<BuildTaskRunnable>, context: BuildContext)
   return futures.map { it.rawResult }
 }
 
-private fun copyDependenciesFile(context: BuildContext) {
+private fun copyDependenciesFile(context: BuildContext): Path {
   val outputFile = context.paths.artifactDir.resolve("dependencies.txt")
   Files.createDirectories(outputFile.parent)
-  Files.copy(context.dependenciesProperties.file, outputFile, StandardCopyOption.REPLACE_EXISTING)
+  context.dependenciesProperties.copy(outputFile)
   context.notifyArtifactWasBuilt(outputFile)
+  return outputFile
 }
 
 private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: BuildContext) {
@@ -975,7 +976,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
 
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
-
+  val dependenciesFile = copyDependenciesFile(context)
   crossPlatformZip(
     macX64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
     macAarch64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
@@ -987,7 +988,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
     macExtraExecutables = context.macDistributionCustomizer!!.extraExecutables,
     linuxExtraExecutables = context.linuxDistributionCustomizer!!.extraExecutables,
     distFiles = context.getDistFiles(),
-    extraFiles = mapOf("dependencies.txt" to context.dependenciesProperties.file),
+    extraFiles = mapOf("dependencies.txt" to dependenciesFile),
     distAllDir = context.paths.distAllDir,
   )
 

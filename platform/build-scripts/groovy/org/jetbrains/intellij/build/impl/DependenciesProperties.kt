@@ -2,15 +2,15 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.CompilationContext
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.*
+import kotlin.io.path.appendText
 import kotlin.io.path.inputStream
 
-class DependenciesProperties(private val context: CompilationContext) {
-  private val directory = context.paths.communityHomeDir.resolve("build/dependencies")
-  private val propertiesFile = directory.resolve("gradle.properties")
-
-  val file: Path = propertiesFile
+class DependenciesProperties(context: CompilationContext) {
+  private val propertiesFile = context.paths.communityHomeDir.resolve("build/dependencies/gradle.properties")
 
   private val props: Properties by lazy {
     propertiesFile.inputStream().use {
@@ -23,11 +23,12 @@ class DependenciesProperties(private val context: CompilationContext) {
   fun property(name: String): String =
     props.getProperty(name) ?: error("`$name` is not defined in `$propertiesFile`")
 
-  fun propertyOrNull(name: String): String? {
-    val value = props.getProperty(name)
-    if (value == null) {
-      context.messages.warning("`$name` is not defined in `$propertiesFile`")
+  fun copy(copy: Path) {
+    Files.copy(propertiesFile, copy, StandardCopyOption.REPLACE_EXISTING)
+    // legacy key is required for backward compatibility with gradle-intellij-plugin
+    val jdkBuild = "jdkBuild"
+    if (props.getProperty(jdkBuild) == null) {
+      copy.appendText("\n$jdkBuild=${property("runtimeBuild")}\n")
     }
-    return value
   }
 }
