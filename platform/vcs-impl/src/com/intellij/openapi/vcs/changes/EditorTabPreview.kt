@@ -195,8 +195,9 @@ abstract class EditorTabPreviewBase(protected val project: Project,
     fun showExternalToolIfNeeded(project: Project?, diffProducers: ListSelection<out DiffRequestProducer>?): Boolean {
       if (diffProducers == null || diffProducers.isEmpty) return false
 
-      if (!ExternalDiffTool.wantShowExternalToolFor(diffProducers.list)) return false
-      ExternalDiffTool.show(project, diffProducers.list, DiffDialogHints.DEFAULT)
+      val producers = diffProducers.explicitSelection
+      if (!ExternalDiffTool.wantShowExternalToolFor(producers)) return false
+      ExternalDiffTool.show(project, producers, DiffDialogHints.DEFAULT)
       return true
     }
   }
