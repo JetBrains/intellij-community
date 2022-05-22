@@ -272,7 +272,8 @@ public abstract class VcsTreeModelData {
   public static ListSelection<Object> getListSelectionOrAll(@NotNull JTree tree) {
     List<Object> entries = selected(tree).userObjects();
     if (entries.size() > 1) {
-      return ListSelection.createAt(entries, 0);
+      return ListSelection.createAt(entries, 0)
+        .asExplicitSelection();
     }
 
     ChangesBrowserNode<?> selected = selected(tree).nodesStream().findFirst().orElse(null);
@@ -286,7 +287,8 @@ public abstract class VcsTreeModelData {
     }
 
     if (allEntries.size() <= entries.size()) {
-      return ListSelection.createAt(entries, 0).asExplicitSelection();
+      return ListSelection.createAt(entries, 0)
+        .asExplicitSelection();
     }
     else {
       int index = selected != null ? ContainerUtil.indexOfIdentity(allEntries, selected.getUserObject()) : 0;
