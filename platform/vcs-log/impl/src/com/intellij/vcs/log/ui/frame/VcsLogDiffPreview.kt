@@ -6,7 +6,6 @@ import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -174,7 +173,7 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
 
   override fun performDiffAction(): Boolean {
     if (ExternalDiffTool.isEnabled()) {
-      val diffProducers = ListSelection.createAt(changesBrowser.selectedChanges, 0)
+      val diffProducers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer)
         .map { change -> changesBrowser.getDiffRequestProducer(change, false) }
       if (EditorTabPreview.showExternalToolIfNeeded(project, diffProducers)) {
         return true
