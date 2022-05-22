@@ -58,6 +58,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     Wrapper change = getCurrentChange();
     List<Wrapper> changes = (selectedOnly ? getSelectedChanges() : getAllChanges()).collect(Collectors.toList());
     return ListSelection.create(changes, change)
+      .withExplicitSelection(selectedOnly)
       .map(wrapper -> wrapper.createProducer(project));
   }
 
