@@ -155,7 +155,8 @@ final class WindowsDistributionBuilder implements OsSpecificDistributionBuilder 
                                                    List.of(),
                                                    context)
 
-        exePath = new WinExeInstallerBuilder(context, customizer, jreDir).buildInstaller(winAndArchSpecificDistPath, productJsonDir, "", context).toString()
+        exePath = new WinExeInstallerBuilder(context, customizer, jreDir)
+          .buildInstaller(winAndArchSpecificDistPath, productJsonDir, "", context).toString()
       }
     })
 
