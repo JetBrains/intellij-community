@@ -1,189 +1,111 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.console;
+package com.jetbrains.python.console
 
-import com.google.common.collect.Maps;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathMapper;
-import com.jetbrains.python.run.EnvironmentController;
-import com.jetbrains.python.run.PlainEnvironmentController;
-import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.run.PythonRunConfiguration;
-import com.jetbrains.python.sdk.PythonEnvUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.util.PathMapper
+import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
+import com.jetbrains.python.run.EnvironmentController
+import com.jetbrains.python.run.PlainEnvironmentController
+import com.jetbrains.python.run.PythonCommandLineState
+import com.jetbrains.python.run.PythonRunConfiguration
+import com.jetbrains.python.sdk.PythonEnvUtil
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
+  protected class ConsoleParameters(val project: Project,
+                                    val sdk: Sdk?,
+                                    val workingDir: String?,
+                                    val envs: Map<String, String>,
+                                    val consoleType: PyConsoleType,
+                                    val settingsProvider: PyConsoleSettings,
+                                    val setupFragment: Array<String>)
 
-public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
-
-  protected static class ConsoleParameters {
-    private final @NotNull Project myProject;
-    private final @Nullable Sdk mySdk;
-    private final @Nullable String myWorkingDir;
-    private final @NotNull Map<String, String> myEnvs;
-    private final @NotNull PyConsoleType myConsoleType;
-    private final @NotNull PyConsoleOptions.PyConsoleSettings mySettingsProvider;
-    private final String @NotNull [] mySetupFragment;
-
-    public ConsoleParameters(@NotNull Project project,
-                             @Nullable Sdk sdk,
-                             @Nullable String workingDir,
-                             @NotNull Map<String, String> envs,
-                             @NotNull PyConsoleType consoleType,
-                             @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                             String @NotNull [] setupFragment) {
-      myProject = project;
-      mySdk = sdk;
-      myWorkingDir = workingDir;
-      myEnvs = envs;
-      myConsoleType = consoleType;
-      mySettingsProvider = settingsProvider;
-      mySetupFragment = setupFragment;
-    }
-
-    public @NotNull Project getProject() {
-      return myProject;
-    }
-
-    public @Nullable Sdk getSdk() {
-      return mySdk;
-    }
-
-    public @Nullable String getWorkingDir() {
-      return myWorkingDir;
-    }
-
-    public @NotNull Map<String, String> getEnvs() {
-      return myEnvs;
-    }
-
-    public @NotNull PyConsoleType getConsoleType() {
-      return myConsoleType;
-    }
-
-    public PyConsoleOptions.@NotNull PyConsoleSettings getSettingsProvider() {
-      return mySettingsProvider;
-    }
-
-    public String[] getSetupFragment() {
-      return mySetupFragment;
-    }
+  protected open fun createConsoleParameters(project: Project, contextModule: Module?): ConsoleParameters {
+    val sdkAndModule = findPythonSdkAndModule(project, contextModule)
+    val module = sdkAndModule.second
+    val sdk = sdkAndModule.first
+    val settingsProvider = PyConsoleOptions.getInstance(project).pythonConsoleSettings
+    val pathMapper = getPathMapper(project, sdk, settingsProvider)
+    val workingDir = getWorkingDir(project, module, pathMapper, settingsProvider)
+    val setupFragment = createSetupFragment(module, workingDir, pathMapper, settingsProvider)
+    val envs = settingsProvider.envs.toMutableMap()
+    putIPythonEnvFlag(project, envs)
+    return ConsoleParameters(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, setupFragment)
   }
 
-  protected @NotNull ConsoleParameters createConsoleParameters(@NotNull Project project,
-                                                               @Nullable Module contextModule) {
-    Pair<Sdk, Module> sdkAndModule = PydevConsoleRunnerUtil.findPythonSdkAndModule(project, contextModule);
-
-    @Nullable Module module = sdkAndModule.second;
-
-    @Nullable Sdk sdk = sdkAndModule.first;
-
-    PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
-
-    PathMapper pathMapper = PydevConsoleRunnerUtil.getPathMapper(project, sdk, settingsProvider);
-
-    String workingDir = getWorkingDir(project, module, pathMapper, settingsProvider);
-
-    String[] setupFragment = createSetupFragment(module, workingDir, pathMapper, settingsProvider);
-
-    Map<String, String> envs = Maps.newHashMap(settingsProvider.getEnvs());
-    putIPythonEnvFlag(project, envs);
-
-    return new ConsoleParameters(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, setupFragment);
+  override fun createConsoleRunner(project: Project, contextModule: Module?): PydevConsoleRunner {
+    val consoleParameters = createConsoleParameters(project, contextModule)
+    return PydevConsoleRunnerImpl(project, consoleParameters.sdk, consoleParameters.consoleType, consoleParameters.workingDir,
+                                  consoleParameters.envs, consoleParameters.settingsProvider, *consoleParameters.setupFragment)
   }
 
-  @Override
-  @NotNull
-  public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
-                                                @Nullable Module contextModule) {
-    final ConsoleParameters consoleParameters = createConsoleParameters(project, contextModule);
-    return new PydevConsoleRunnerImpl(project, consoleParameters.mySdk, consoleParameters.myConsoleType, consoleParameters.myWorkingDir,
-                                      consoleParameters.myEnvs, consoleParameters.mySettingsProvider, consoleParameters.mySetupFragment);
+  override fun createConsoleRunnerWithFile(project: Project, contextModule: Module?, config: PythonRunConfiguration): PydevConsoleRunner {
+    val consoleParameters = createConsoleParameters(project, contextModule)
+    val sdk = if (config.sdk != null) config.sdk else consoleParameters.sdk
+    val workingDir = if (config.workingDirectory != null) config.workingDirectory else consoleParameters.workingDir
+    val consoleEnvs = mutableMapOf<String, String>()
+    consoleEnvs.putAll(consoleParameters.envs)
+    consoleEnvs.putAll(config.envs)
+    return PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.consoleType, config.name, workingDir,
+                                          consoleEnvs, consoleParameters.settingsProvider, config, *consoleParameters.setupFragment)
   }
 
-  public static void putIPythonEnvFlag(@NotNull Project project, @NotNull Map<String, String> envs) {
-    putIPythonEnvFlag(project, new PlainEnvironmentController(envs));
-  }
+  companion object {
+    fun putIPythonEnvFlag(project: Project, envs: MutableMap<String, String>) {
+      putIPythonEnvFlag(project, PlainEnvironmentController(envs))
+    }
 
-  public static void putIPythonEnvFlag(@NotNull Project project, @NotNull EnvironmentController environmentController) {
-    String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
-    environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
-  }
+    @JvmStatic
+    fun putIPythonEnvFlag(project: Project, environmentController: EnvironmentController) {
+      val ipythonEnabled = if (PyConsoleOptions.getInstance(project).isIpythonEnabled) "True" else "False"
+      environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled)
+    }
 
-  @Nullable
-  public static String getWorkingDir(@NotNull Project project,
-                                     @Nullable Module module,
-                                     @Nullable PathMapper pathMapper,
-                                     @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider) {
-    String workingDir = settingsProvider.getWorkingDirectory();
-    if (StringUtil.isEmpty(workingDir)) {
-      if (module != null && ModuleRootManager.getInstance(module).getContentRoots().length > 0) {
-        workingDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getPath();
-      }
-      else {
-        VirtualFile[] projectRoots = ProjectRootManager.getInstance(project).getContentRoots();
-        for (VirtualFile root : projectRoots) {
-          if (root.getFileSystem() instanceof LocalFileSystem) {
-            // we can't start Python Console in remote folder without additional connection configurations
-            workingDir = root.getPath();
-            break;
+    fun getWorkingDir(project: Project, module: Module?, pathMapper: PathMapper?, settingsProvider: PyConsoleSettings): String? {
+      var workingDir = settingsProvider.workingDirectory
+      if (workingDir.isNullOrEmpty()) {
+        if (module != null && ModuleRootManager.getInstance(module).contentRoots.isNotEmpty()) {
+          workingDir = ModuleRootManager.getInstance(module).contentRoots[0].path
+        }
+        else {
+          val projectRoots = ProjectRootManager.getInstance(project).contentRoots
+          for (root in projectRoots) {
+            if (root.fileSystem is LocalFileSystem) {
+              // we can't start Python Console in remote folder without additional connection configurations
+              workingDir = root.path
+              break
+            }
           }
         }
       }
+      if (workingDir.isNullOrEmpty()) {
+        workingDir = System.getProperty("user.home")
+      }
+      if (pathMapper != null && workingDir != null) {
+        workingDir = pathMapper.convertToRemote(workingDir)
+      }
+      return workingDir
     }
-    if (workingDir.isEmpty()) {
-      workingDir = System.getProperty("user.home");
+
+    fun createSetupFragment(module: Module?,
+                            workingDir: String?,
+                            pathMapper: PathMapper?,
+                            settingsProvider: PyConsoleSettings): Array<String> {
+      var customStartScript = settingsProvider.customStartScript
+      if (customStartScript.isNotBlank()) {
+        customStartScript = "\n" + customStartScript
+      }
+      var pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.shouldAddContentRoots(),
+                                                                settingsProvider.shouldAddSourceRoots())
+      if (pathMapper != null) {
+        pythonPath = pathMapper.convertToRemote(pythonPath)
+      }
+      val selfPathAppend = constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript)
+      return arrayOf(selfPathAppend)
     }
-
-    if (pathMapper != null && workingDir != null) {
-      workingDir = pathMapper.convertToRemote(workingDir);
-    }
-
-    return workingDir;
-  }
-
-  public static String @NotNull [] createSetupFragment(@Nullable Module module,
-                                                       @Nullable String workingDir,
-                                                       @Nullable PathMapper pathMapper,
-                                                       @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider) {
-    String customStartScript = settingsProvider.getCustomStartScript();
-    if (customStartScript.trim().length() > 0) {
-      customStartScript = "\n" + customStartScript;
-    }
-    Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.shouldAddContentRoots(),
-                                                                             settingsProvider.shouldAddSourceRoots());
-    if (pathMapper != null) {
-      pythonPath = pathMapper.convertToRemote(pythonPath);
-    }
-    String selfPathAppend = PydevConsoleRunnerUtil.constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript);
-
-    return new String[]{selfPathAppend};
-  }
-
-  @Override
-  @NotNull
-  public PydevConsoleRunner createConsoleRunnerWithFile(@NotNull Project project,
-                                                        @Nullable Module contextModule,
-                                                        @NotNull PythonRunConfiguration config) {
-    final ConsoleParameters consoleParameters = createConsoleParameters(project, contextModule);
-    Sdk sdk = config.getSdk() != null ? config.getSdk() : consoleParameters.mySdk;
-    String workingDir = config.getWorkingDirectory() != null ? config.getWorkingDirectory() : consoleParameters.myWorkingDir;
-
-    Map<String, String> consoleEnvs = new HashMap<>();
-    consoleEnvs.putAll(consoleParameters.myEnvs);
-    consoleEnvs.putAll(config.getEnvs());
-
-    return new PydevConsoleWithFileRunnerImpl(project, sdk, consoleParameters.myConsoleType, config.getName(), workingDir,
-                                              consoleEnvs, consoleParameters.mySettingsProvider, config, consoleParameters.mySetupFragment);
   }
 }
