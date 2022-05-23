@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,8 @@ import java.util.List;
  * Utility class used to preserve index during 'map' operations
  */
 public final class ListSelection<T> {
+  private static final Logger LOG = Logger.getInstance(ListSelection.class);
+
   @NotNull private final List<T> myList;
   private final int mySelectedIndex;
   private final boolean myExplicitSelection;
@@ -36,6 +39,9 @@ public final class ListSelection<T> {
 
   @NotNull
   public static <V> ListSelection<V> createAt(@NotNull List<V> list, int selectedIndex) {
+    if (list.contains(null)) {
+      LOG.error("List selection should not contain nulls");
+    }
     return new ListSelection<>(list, selectedIndex);
   }
 

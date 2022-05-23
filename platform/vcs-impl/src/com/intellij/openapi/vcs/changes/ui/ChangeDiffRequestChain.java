@@ -8,7 +8,6 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.DiffRequestSelectionChain;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
@@ -27,14 +26,10 @@ import java.util.List;
  * @see ChangeDiffRequestChain.Async
  */
 public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain, GoToChangePopupBuilder.Chain {
-  private static final Logger LOG = Logger.getInstance(ChangeDiffRequestChain.class);
   @NotNull private final ListSelection<? extends Producer> myProducers;
 
   public ChangeDiffRequestChain(@NotNull ListSelection<? extends Producer> producers) {
-    myProducers = producers.map(it -> {
-      if (it == null) LOG.error("Producers must not be null");
-      return it;
-    });
+    myProducers = producers;
   }
 
   public ChangeDiffRequestChain(@NotNull List<? extends Producer> producers, int index) {
