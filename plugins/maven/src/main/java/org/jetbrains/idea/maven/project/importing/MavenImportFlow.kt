@@ -288,7 +288,6 @@ class MavenImportFlow {
 
   fun updateProjectManager(context: MavenReadContext) {
     val projectManager = MavenProjectsManager.getInstance(context.project)
-    projectManager.addManagedFilesWithProfiles(context.projectsTree.projectsFiles, context.initialContext.profiles, null)
     projectManager.setProjectsTree(context.projectsTree)
   }
 
