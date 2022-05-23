@@ -5,14 +5,13 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.Icon
 
 /**
- * @param T - avatar key type
+ * @param T - icon key type
  */
-interface AvatarIconsProvider<T> {
+interface IconsProvider<T> {
 
   /**
-   * @param key - avatar key
+   * @param key - icon key
    * @param iconSize - required icon size in pixels (unscaled)
-   * @return the icon which can be used to draw the avatar
    */
   @RequiresEdt
   fun getIcon(key: T?, iconSize: Int): Icon

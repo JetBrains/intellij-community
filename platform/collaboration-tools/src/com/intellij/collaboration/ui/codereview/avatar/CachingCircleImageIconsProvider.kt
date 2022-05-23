@@ -6,7 +6,6 @@ import com.intellij.ui.AsyncImageIcon
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.ImageUtil.*
 import java.awt.Image
 import java.time.Duration
@@ -14,7 +13,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
-abstract class CachingAvatarIconsProvider<T : Any>(private val defaultIcon: Icon) : AvatarIconsProvider<T> {
+abstract class CachingCircleImageIconsProvider<T : Any>(private val defaultIcon: Icon) : IconsProvider<T> {
 
   private val iconsCache = Caffeine.newBuilder()
     .expireAfterAccess(Duration.of(5, ChronoUnit.MINUTES))

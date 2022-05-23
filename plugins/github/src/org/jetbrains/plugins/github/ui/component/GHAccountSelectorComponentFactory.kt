@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.collaboration.ui.codereview.avatar.CachingAvatarIconsProvider
+import com.intellij.collaboration.ui.codereview.avatar.CachingCircleImageIconsProvider
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -151,7 +151,7 @@ class GHAccountSelectorComponentFactory {
     }
   }
 
-  private class AccountAvatarIconsProvider : CachingAvatarIconsProvider<GithubAccount>(GithubIcons.DefaultAvatar) {
+  private class AccountAvatarIconsProvider : CachingCircleImageIconsProvider<GithubAccount>(GithubIcons.DefaultAvatar) {
 
     private val requestExecutorManager = GithubApiRequestExecutorManager.getInstance()
     private val accountInformationProvider = GithubAccountInformationProvider.getInstance()

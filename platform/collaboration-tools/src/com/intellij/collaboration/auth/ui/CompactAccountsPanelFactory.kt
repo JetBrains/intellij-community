@@ -6,7 +6,7 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.codereview.avatar.AvatarIconsProvider
+import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
 import com.intellij.collaboration.ui.findIndex
 import com.intellij.collaboration.ui.items
 import com.intellij.openapi.application.ModalityState
@@ -103,7 +103,7 @@ class CompactAccountsPanelFactory<A : Account>(
   }
 
   private class IconCellRenderer<A : Account>(
-    private val iconsProvider: AvatarIconsProvider<A>,
+    private val iconsProvider: IconsProvider<A>,
     private val avatarSize: Int
   ) : ListCellRenderer<A>, JLabel() {
 
@@ -125,7 +125,7 @@ class CompactAccountsPanelFactory<A : Account>(
   private class PopupMenuListener<A : Account>(
     private val model: ListModel<A>,
     private val detailsProvider: AccountsDetailsProvider<A, AccountDetails>,
-    private val avatarIconsProvider: AvatarIconsProvider<A>,
+    private val avatarIconsProvider: IconsProvider<A>,
     private val popupConfig: PopupConfig<A>
   ) : ClickListener() {
 
