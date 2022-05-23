@@ -67,8 +67,8 @@ class LazyPomAndJarsDownloader(version: String) :
         )
     }
 
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: String) {
-        input.byteInputStream().use { DigestUtil.updateContentHash(messageDigest, it) }
+    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: String, buffer: ByteArray) {
+        input.byteInputStream().use { DigestUtil.updateContentHash(messageDigest, it, buffer) }
     }
 
     data class Context(val project: Project, val indicator: ProgressIndicator, @NlsContexts.ProgressText val indicatorDownloadText: String)
@@ -87,8 +87,8 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
         return listOf(unpackedDistDestination)
     }
 
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: List<File>) {
-        messageDigest.update(input)
+    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: List<File>, buffer: ByteArray) {
+        messageDigest.update(input, buffer)
     }
 
     fun lazyProduceDist(jars: List<File>): File =

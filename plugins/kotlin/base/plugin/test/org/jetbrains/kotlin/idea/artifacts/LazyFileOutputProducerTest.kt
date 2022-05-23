@@ -66,7 +66,7 @@ private class TestFileOutputProducer(private val output: File) : AbstractLazyFil
     fun lazyTestOutput(input: String) = lazyProduceOutput(input, Unit).singleOrNull()
         ?: error("${TestFileOutputProducer::produceOutput.name} returns single file")
 
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: String) {
-        input.byteInputStream().use { DigestUtil.updateContentHash(messageDigest, it) }
+    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: String, buffer: ByteArray) {
+        input.byteInputStream().use { DigestUtil.updateContentHash(messageDigest, it, buffer) }
     }
 }

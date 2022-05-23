@@ -19,8 +19,8 @@ class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputPro
         return listOf(destination)
     }
 
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: File) {
-        DigestUtil.updateContentHash(messageDigest, input.toPath())
+    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: File, buffer: ByteArray) {
+        DigestUtil.updateContentHash(messageDigest, input.toPath(), buffer)
     }
 
     fun lazyUnpack(zip: File) = lazyProduceOutput(zip, Unit).singleOrNull()

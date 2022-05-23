@@ -8,6 +8,8 @@ import java.io.File
 import java.security.MessageDigest
 
 private val ROOT = File(PathManager.getSystemPath()).resolve("kotlin-lazy-file-pipeline-cache")
+// 512Kb just because it's default in DigestUtil. For comparison, the biggest jar in kotlin dist is kotlin-compiler.jar is 158Mb
+private const val BUFFER_SIZE = 512 * 1024
 
 /**
  * - Re-calculates output when one of the inputs changes
@@ -44,7 +46,7 @@ abstract class AbstractLazyFileOutputProducer<I : Any, C>(uniquePipelineId: Stri
             outputsFile.isFile && hashFile.readText().trim() == calculateMd5(input)
 
     protected abstract fun produceOutput(input: I, computationContext: C): List<File>
-    protected abstract fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: I)
+    protected abstract fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: I, buffer: ByteArray)
 
     private fun readOutputsFile() = outputsFile.takeIf { it.exists() }
         ?.useLines { lines ->
@@ -53,10 +55,11 @@ abstract class AbstractLazyFileOutputProducer<I : Any, C>(uniquePipelineId: Stri
 
     private fun calculateMd5(input: I): String {
         val messageDigest = DigestUtil.md5()
+        val buffer = ByteArray(BUFFER_SIZE)
         // hash outputsFile too to make sure that user doesn't change this file
-        DigestUtil.updateContentHash(messageDigest, outputsFile.toPath())
-        updateMessageDigestWithInput(messageDigest, input)
-        messageDigest.update(outputs)
+        DigestUtil.updateContentHash(messageDigest, outputsFile.toPath(), buffer)
+        updateMessageDigestWithInput(messageDigest, input, buffer)
+        messageDigest.update(outputs, buffer)
         return DigestUtil.digestToHash(messageDigest)
     }
 
@@ -73,14 +76,14 @@ class LazyFileOutputProducerCacheInvalidator : CachesInvalidator() {
     }
 }
 
-fun MessageDigest.update(files: List<File>) {
+fun MessageDigest.update(files: List<File>, buffer: ByteArray) {
     val messageDigest = this
     files.flatMap { it.flattenDir() }
         .map { it.canonicalFile }
         .sorted() // sort for hash stability
         .ifEmpty { error("(${files.joinToString()} is empty") }
         .forEach { file ->
-            DigestUtil.updateContentHash(messageDigest, file.toPath())
+            DigestUtil.updateContentHash(messageDigest, file.toPath(), buffer)
         }
 }
 
