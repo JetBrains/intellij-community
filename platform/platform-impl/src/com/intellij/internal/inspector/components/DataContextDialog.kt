@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
@@ -8,6 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Comparing
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -34,11 +36,17 @@ class DataContextDialog(
   }
 
   override fun createCenterPanel(): JComponent? {
-    val model = buildTreeModel()
-    val table = JBTable(model)
+    val table = JBTable()
     table.setDefaultRenderer(Object::class.java, MyTableCellRenderer())
 
+    table.model = buildTreeModel(false)
+
     val panel = panel {
+      row {
+        @Suppress("DialogTitleCapitalization")
+        checkBox("Show GetDataRule") // NON-NLS
+          .actionListener { event, component -> table.model = buildTreeModel(component.isSelected) }
+      }
       row {
         scrollCell(table)
           .horizontalAlign(HorizontalAlign.FILL)
@@ -53,7 +61,7 @@ class DataContextDialog(
     return panel.withPreferredSize(width, height)
   }
 
-  private fun buildTreeModel(): DefaultTableModel {
+  private fun buildTreeModel(showDataRules: Boolean): DefaultTableModel {
     val model = DefaultTableModel()
     model.addColumn("Key")
     model.addColumn("Value")
@@ -63,7 +71,7 @@ class DataContextDialog(
 
     var component: Component? = contextComponent
     while (component != null) {
-      val result = collectDataFrom(component)
+      val result = collectDataFrom(component, showDataRules)
         .filter { data -> !Comparing.equal(values[data.key], data.value) } // filter out identical overrides
 
       if (result.isNotEmpty()) {
@@ -96,11 +104,15 @@ class DataContextDialog(
     addRow(arrayOf("", "", ""))
   }
 
-  private fun collectDataFrom(component: Component): List<ContextData> {
+  private fun collectDataFrom(component: Component, showDataRules: Boolean): List<ContextData> {
+    val dataManager = DataManager.getInstance() as DataManagerImpl
     val provider = DataManagerImpl.getDataProviderEx(component) ?: return emptyList()
     val result = mutableListOf<ContextData>()
     for (key in DataKey.allKeys()) {
-      val data = provider.getData(key.name) ?: continue
+      val data = when {
+                   showDataRules -> dataManager.getDataSimple(key.name, provider)
+                   else -> provider.getData(key.name)
+                 } ?: continue
       result += ContextData(key.name, data)
     }
     return result
