@@ -564,9 +564,9 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))));
     assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
-                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
   }
 
   @Test
