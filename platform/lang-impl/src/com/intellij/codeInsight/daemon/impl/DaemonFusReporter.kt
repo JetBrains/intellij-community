@@ -30,7 +30,7 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
     val errorCount = errorCounts?.let { it[errorIndex] } ?: -1
     val warningCount = errorCounts?.let { it[warningIndex] } ?: -1
-    val lines = editor?.document?.lineCount?.roundInt() ?: -1
+    val lines = editor?.document?.lineCount?.roundToOneSignificantDigit() ?: -1
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
     val fileType = editor?.let { FileDocumentManager.getInstance().getFile(it.document)?.fileType }
 
@@ -44,11 +44,11 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     )
   }
 
-  private fun Int.roundInt(): Int {
+  private fun Int.roundToOneSignificantDigit(): Int {
     if (this == 0) return 0
-    val l = log10(toDouble()).toInt()
-    val p = 10.0.pow(l.toDouble()).toInt()
-    return (this - this % p).coerceAtLeast(10)
+    val l = log10(toDouble()).toInt()          // 623 -> 2
+    val p = 10.0.pow(l.toDouble()).toInt()     // 623 -> 100
+    return (this - this % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
   }
 }
 
