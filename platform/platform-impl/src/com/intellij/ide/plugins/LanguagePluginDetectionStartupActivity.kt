@@ -10,7 +10,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -84,7 +84,7 @@ private fun findLanguagePluginToInstall(): PluginId? = try {
   }
 }
 catch (e: IOException) {
-  Logger.getInstance(LanguagePluginDetectionStartupActivity::class.java)
+  logger<LanguagePluginDetectionStartupActivity>()
     .info("Failed to detect recommended language plugin: ${e.message}")
   null
 }
