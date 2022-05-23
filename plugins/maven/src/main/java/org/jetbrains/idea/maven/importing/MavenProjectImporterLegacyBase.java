@@ -3,17 +3,19 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.service.project.*;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenImportingSettings;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
@@ -21,9 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporterBase {
-  protected final Project myProject;
-  protected final IdeModifiableModelsProvider myIdeModifiableModelsProvider;
-  protected final ModifiableModelsProviderProxy myModelsProvider;
   protected final ModuleModelProxy myModuleModel;
 
   public MavenProjectImporterLegacyBase(Project project,
@@ -31,56 +30,8 @@ public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporte
                                         MavenImportingSettings importingSettings,
                                         Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
                                         @NotNull IdeModifiableModelsProvider modelsProvider) {
-    super(projectsTree, importingSettings, projectsToImportWithChanges);
-    myProject = project;
-
-    WorkspaceEntityStorageBuilder diff;
-
-    if (modelsProvider instanceof IdeModifiableModelsProviderImpl) {
-      IdeModifiableModelsProviderImpl impl = (IdeModifiableModelsProviderImpl)modelsProvider;
-      diff = impl.getActualStorageBuilder();
-    }
-    else {
-      diff = null;
-    }
-
-    myIdeModifiableModelsProvider = modelsProvider;
-
-    if (MavenUtil.newModelEnabled(myProject) && diff != null) {
-      myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, diff);
-    }
-    else {
-      myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
-    }
+    super(project, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
     myModuleModel = myModelsProvider.getModuleModelProxy();
-  }
-
-  protected void configFacets(List<MavenModuleImporter> importers, List<MavenProjectsProcessorTask> postTasks) {
-    if (!importers.isEmpty()) {
-      IdeModifiableModelsProvider provider;
-      if (myIdeModifiableModelsProvider instanceof IdeUIModifiableModelsProvider) {
-        provider = myIdeModifiableModelsProvider; // commit does nothing for this provider, so it should be reused
-      }
-      else {
-        provider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
-      }
-
-      try {
-        List<MavenModuleImporter> toRun = ContainerUtil.filter(importers, it -> !it.isModuleDisposed() && !it.isAggregatorMainTestModule());
-
-        toRun.forEach(importer -> importer.setModifiableModelsProvider(provider));
-        toRun.forEach(importer -> importer.preConfigFacets());
-        toRun.forEach(importer -> importer.configFacets(postTasks));
-        toRun.forEach(importer -> importer.postConfigFacets());
-      }
-      finally {
-        MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
-          ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-            provider.commit();
-          });
-        });
-      }
-    }
   }
 
   protected void finalizeImport(List<Module> obsoleteModules) {
