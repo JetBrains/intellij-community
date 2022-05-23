@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.components.BaseState
@@ -22,6 +22,9 @@ class UpdateOptions : BaseState() {
 
   @get:OptionTag("SHOW_WHATS_NEW_EDITOR")
   var isShowWhatsNewEditor by property(true)
+
+  @get:OptionTag("WHATS_NEW_SHOWN_FOR")
+  var whatsNewShownFor by property(0)
 
   @get:OptionTag("LAST_TIME_CHECKED")
   var lastTimeChecked by property(0L)
