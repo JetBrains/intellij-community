@@ -57,10 +57,12 @@ class LinuxDistributionBuilder(private val context: BuildContext,
 
   override fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
+    val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledRuntime) {
-        context.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
-          buildTarGz(jreDirectoryPath = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX)
+        context.executeStep(spanBuilder("Build Linux .tar.gz without bundled JRE").setAttribute("arch", arch.name),
+                            BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
+          buildTarGz(jreDirectoryPath = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_JBR_SUFFIX + suffix)
         }
       }
       if (customizer.buildOnlyBareTarGz) {
@@ -68,10 +70,16 @@ class LinuxDistributionBuilder(private val context: BuildContext,
       }
 
       val jreDirectoryPath = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
-      val tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, "")
+      val tarGzPath = buildTarGz(jreDirectoryPath.toString(), osAndArchSpecificDistPath, suffix)
       context.bundledRuntime.checkExecutablePermissions(tarGzPath, rootDirectoryName, OsFamily.LINUX)
 
-      buildSnapPackage(jreDirectoryPath.toString(), osAndArchSpecificDistPath)
+      if (arch == JvmArchitecture.x64) {
+        buildSnapPackage(jreDirectoryPath.toString(), osAndArchSpecificDistPath)
+      }
+      else {
+        // TODO: Add snap for aarch64
+        context.messages.info("Skipping building Snap packages for non-x64 arch")
+      }
 
       val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
       try {

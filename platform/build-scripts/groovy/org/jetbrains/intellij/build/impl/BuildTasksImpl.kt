@@ -192,6 +192,7 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
   SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
+  SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.aarch64),
 )
 
 private fun isSourceFile(path: String): Boolean {
