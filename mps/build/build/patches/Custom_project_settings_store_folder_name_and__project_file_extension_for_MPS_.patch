@@ -30,20 +30,20 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 +    // MPS Hack: do not hack ProjectFileType, but make *.mpr file be project file
 +    if (file.toString().endsWith(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)) {
        macros.add(Macro(PROJECT_FILE, file))
-
+ 
 -      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
 +      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
        macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
-
+ 
        if (isUnitTestMode) {
 @@ -137,7 +138,7 @@
      }
-
+ 
      val presentableUrl = (if (dotIdea == null) file else projectBasePath)
 -    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, (presentableUrl.fileName ?: "").toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
 +    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, (presentableUrl.fileName ?: "").toString().toLowerCase(Locale.US).removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/), ".", ".xml")
      macros.add(Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve(cacheFileName)))
-
+ 
      storageManager.setMacros(macros)
 
 Index: jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java
@@ -56,7 +56,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 @@ -26,7 +26,7 @@
    public static final String MODULE_WORKING_DIR_NAME = "MODULE_WORKING_DIR";
    public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
-
+ 
 -  @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
 +  @NonNls public static final String DIRECTORY_STORE_NAME = ".mps";
    @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";

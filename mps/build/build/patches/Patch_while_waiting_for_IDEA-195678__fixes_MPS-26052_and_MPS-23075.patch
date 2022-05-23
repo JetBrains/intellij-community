@@ -3,11 +3,12 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(revision c29a202eba261ddf5e9872ecfabfb09bd53b0136)
-+++ community/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(date 1634821425810)
-@@ -639,7 +639,8 @@
-
-   private static String getUserHomeProjectDir() {
+diff --git a/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java b/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java
+--- a/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(revision f1d850713e9eac7b8cc7a27e215da206c9d8a393)
++++ b/platform/platform-impl/src/com/intellij/ide/impl/ProjectUtil.java	(date 1649327066295)
+@@ -680,7 +680,8 @@
+ 
+   public static String getUserHomeProjectDir() {
      String productName;
 -    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
 +    if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() ||

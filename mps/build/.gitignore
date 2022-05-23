@@ -3,6 +3,7 @@
 
 # Ignore output directory
 /out
+/build/jps-bootstrap-work
 
 # Ignore libraries because they are copied & modified by ant script
 /.idea/libraries

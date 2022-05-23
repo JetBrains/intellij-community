@@ -4,8 +4,8 @@
     <!-- Initialize and load properties                        -->
     <!-- ===================================================== -->
 
-    <property name="gant.script" value="${basedir}/mps_build.gant"/>
-    <property name="community.folder" value="${basedir}/../community"/>
+    <property name="jps.project.root" location="${basedir}/.."/>
+    <property name="community.folder" location="${basedir}/../community"/>
     <property name="community.out" value="${basedir}/../out/intellij idea"/>
     <property name="mps.folder" value="${basedir}/../.."/>
     <property name="version.properties.file" value="${mps.folder}/build/version.properties"/>
@@ -130,7 +130,7 @@
         <replaceregexp file="${basedir}/../.idea/modules.xml">
             <regexp pattern="&lt;modules&gt;${line.separator}"/>
             <substitution
-                    expression="\0      &lt;module fileurl=&quot;file://$PROJECT_DIR$/mps-platform.iml&quot; filepath=&quot;$PROJECT_DIR$/mps-platform.iml&quot; /&gt;${line.separator}      &lt;module fileurl=&quot;file://$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; filepath=&quot;$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; /&gt;${line.separator}"/>
+                expression="\0      &lt;module fileurl=&quot;file://$PROJECT_DIR$/mps-platform.iml&quot; filepath=&quot;$PROJECT_DIR$/mps-platform.iml&quot; /&gt;${line.separator}      &lt;module fileurl=&quot;file://$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; filepath=&quot;$PROJECT_DIR$/intellij.mps.resources/intellij.mps.resources.iml&quot; /&gt;${line.separator}"/>
         </replaceregexp>
     </target>
 
@@ -178,8 +178,22 @@
 
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
+        <property name="patchFileApplicationNamesInfo"
+                  value="${basedir}/patches/ApplicationNamesInfo.patch"/>
+        <echo message="Applying ${patchFileApplicationNamesInfo}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchFileApplicationNamesInfo}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchFileApplicationNamesInfo}"/>
+        </exec>
+
         <property name="patchFile"
                   value="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
+        <echo message="Applying ${patchFile}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="--check"/>
@@ -192,6 +206,7 @@
 
         <property name="patchFile2"
                   value="${basedir}/patches/Patch_while_waiting_for_IDEA-195678__fixes_MPS-26052_and_MPS-23075.patch"/>
+        <echo message="Applying ${patchFile2}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="--check"/>
@@ -204,6 +219,7 @@
 
         <property name="patchFile3"
                   value="${basedir}/patches/Fix_version_patching_for_bundled_plugins.patch"/>
+        <echo message="Applying ${patchFile3}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="--check"/>
@@ -216,6 +232,7 @@
 
         <property name="patchJps"
                   value="${basedir}/patches/jps.patch"/>
+        <echo message="Applying ${patchJps}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="--check"/>
@@ -224,22 +241,11 @@
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
             <arg value="${patchJps}"/>
-        </exec>
-
-        <property name="patchPluginManagerCore"
-                  value="${basedir}/patches/PluginManagerCore.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${patchPluginManagerCore}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchPluginManagerCore}"/>
         </exec>
 
         <property name="patchJBUIScale"
                   value="${basedir}/patches/JBUIScale.patch"/>
+        <echo message="Applying ${patchJBUIScale}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
             <arg value="--check"/>
@@ -250,43 +256,6 @@
             <arg value="${patchJBUIScale}"/>
         </exec>
 
-        <property name="patchKotlinLibRead"
-                  value="${basedir}/patches/problem_read_kotlin_lib.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${patchKotlinLibRead}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchKotlinLibRead}"/>
-        </exec>
-
-        <!--
-        <property name="IDEA-283546.patch"
-                  value="${basedir}/patches/IDEA-283546.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="${IDEA-283546.patch}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${IDEA-283546.patch}"/>
-        </exec>
-        -->
-
-        <property name="useAppInfoFromFile"
-                  value="${basedir}/patches/UseAppInfoFromFile.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${useAppInfoFromFile}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${useAppInfoFromFile}"/>
-        </exec>
     </target>
 
     <!-- ===================================================== -->
@@ -298,8 +267,19 @@
             description="Make all build preparation tasks"/>
 
     <!-- Exists as standalone task for TeamCity build -->
+    <condition property="script.suffix" value=".cmd">
+        <os family="windows" />
+    </condition>
+    <property name="script.suffix" value=".sh" />
+
     <target name="compile" description="Runs building script.">
-        <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true"/>
+        <symlink link="${jps.project.root}/.mps" resource="${jps.project.root}/.idea"/>
+        <exec failonerror="true" executable="${community.folder}/platform/jps-bootstrap/jps-bootstrap${script.suffix}">
+            <arg value="${jps.project.root}"/>
+            <arg value="mps-platform"/>
+            <arg value="org.jetbrains.intellij.build.MPSBuilder"/>
+            <arg value="${jps.project.root}"/>
+        </exec>
     </target>
 
     <target name="build" depends="pull,prepare,compile"

@@ -53,5 +53,5 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 -         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
 +         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".mps"
  }
-
+ 
  internal fun getInternalFileSource(source: EntitySource) = when (source) {

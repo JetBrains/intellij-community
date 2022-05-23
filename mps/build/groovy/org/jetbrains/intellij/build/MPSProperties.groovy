@@ -1,16 +1,19 @@
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 
 import java.nio.file.Paths
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 
 /**
  * @author victor
  */
+@CompileStatic
 class MPSProperties extends JetBrainsProductProperties {
     MPSProperties(String home) {
         baseFileName = "mps"
@@ -32,7 +35,7 @@ class MPSProperties extends JetBrainsProductProperties {
                 "intellij.java.execution.impl",
                 "intellij.java.compiler.instrumentationUtil"
         ]
-        productLayout.withAdditionalPlatformJar(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
+        productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources", "intellij.xml.dom")
 
 
         productLayout.withAdditionalPlatformJar("javac2.jar",
@@ -41,8 +44,7 @@ class MPSProperties extends JetBrainsProductProperties {
                 "intellij.java.compiler.instrumentationUtil",
                 "intellij.java.compiler.instrumentationUtil.java8")
         productLayout.withAdditionalPlatformJar("util.jar",
-                "intellij.platform.util",
-                "intellij.platform.util.rt")
+                "intellij.platform.util")
 
         productLayout.bundledPluginModules += [
                 "intellij.java.plugin",
@@ -66,22 +68,25 @@ class MPSProperties extends JetBrainsProductProperties {
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
-        productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.stream().map({ pluginLayout ->
+        productLayout.allNonTrivialPlugins = (CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.stream().map({ pluginLayout ->
             // This plugins are part of COMMUNITY_REPOSITORY_PLUGINS, but with OS restriction
             // We make OS specific builds later so build both ignoring restriction
             if (pluginLayout.mainModule == "intellij.laf.macos" || pluginLayout.mainModule == "intellij.laf.win10") {
-                pluginLayout.bundlingRestrictions.supportedOs = OsFamily.ALL
+                pluginLayout.bundlingRestrictions = new PluginBundlingRestrictions(OsFamily.ALL, pluginLayout.bundlingRestrictions.includeInEapOnly)
             }
             return pluginLayout
         }).collect() + [
                 JavaPluginLayout.javaPlugin()
-        ]
+        ]).toList()
 
-        productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
+        productLayout.platformLayoutCustomizer = { PlatformLayout layout, BuildContext context ->
             layout.customize {
+/*
+        TODO not compiling
                 for (String name : BaseIdeaProperties.JAVA_IDE_API_MODULES) {
                     withModule(name)
                 }
+*/
                 for (String name : BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES) {
                     withModule(name)
                 }
@@ -98,7 +103,7 @@ class MPSProperties extends JetBrainsProductProperties {
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
             }
-        } as Consumer<PlatformLayout>
+        } as BiConsumer<PlatformLayout, BuildContext>
 
         additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
         modulesToCompileTests = ["intellij.platform.jps.build", "intellij.platform.jps.model.tests", "intellij.platform.jps.model.serialization.tests"]
@@ -107,6 +112,7 @@ class MPSProperties extends JetBrainsProductProperties {
     }
 
     @Override
+    @CompileDynamic
     void copyAdditionalFiles(final BuildContext context, final String targetDirectory) {
         super.copyAdditionalFiles(context, targetDirectory)
         context.ant.copy(todir: "$targetDirectory/lib/ant") {
@@ -127,10 +133,6 @@ class MPSProperties extends JetBrainsProductProperties {
         // copy mac executable
         context.ant.copy(file: "$context.paths.communityHome/platform/build-scripts/resources/mac/Contents/MacOS/executable",
                 tofile: "$targetDirectory/build/resources/mps")
-
-        // copy windows append.bat
-        context.ant.copy(file: "$context.paths.communityHome/platform/build-scripts/resources/win/scripts/append.bat",
-                todir: "$targetDirectory/bin/win/")
 
         // copy jre version
         context.ant.copy(file: "$context.paths.communityHome/build/dependencies/gradle.properties",

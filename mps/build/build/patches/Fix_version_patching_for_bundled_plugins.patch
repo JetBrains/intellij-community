@@ -1,16 +1,17 @@
-Index: community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy
+Index: platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy	(revision 1449f6fdc67c7fe72156687711d141908af59647)
-+++ community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy	(date 1615373087751)
-@@ -853,7 +853,7 @@
-     def productLayout = buildContext.productProperties.productLayout
+diff --git a/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy b/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy
+--- a/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy	(revision f1d850713e9eac7b8cc7a27e215da206c9d8a393)
++++ b/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/PluginXmlPatcher.groovy	(date 1649330732884)
+@@ -67,7 +67,7 @@
+     def productLayout = context.productProperties.productLayout
      def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-             buildContext.proprietaryBuildTools.artifactsServer != null
+                                            context.proprietaryBuildTools.artifactsServer != null
 -    CompatibleBuildRange compatibleBuildRange = bundled || plugin.pluginCompatibilityExactVersion ||
 +    CompatibleBuildRange compatibleBuildRange = plugin.pluginCompatibilityExactVersion ||
-             //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
-             includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
-                     //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
+                                                 //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
+                                                 includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
+       //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build

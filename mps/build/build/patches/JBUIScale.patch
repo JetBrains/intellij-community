@@ -7,7 +7,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 +++ community/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.java	(date 1623668760410)
 @@ -70,6 +70,10 @@
      }
-
+ 
      Logger log = getLogger();
 +    if (font == null && SystemInfoRt.isLinux) {
 +      font = new Font(Font.SANS_SERIF, Font.PLAIN, 15);
