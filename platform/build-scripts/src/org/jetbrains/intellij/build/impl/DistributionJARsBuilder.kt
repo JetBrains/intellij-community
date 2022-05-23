@@ -910,7 +910,9 @@ private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): 
         arrayOf("Mac OS X", "Mac OS X 10.5+"),
         arrayOf("Default for GNOME"),
         arrayOf("Default for KDE"),
-        arrayOf("Default for XWin")
+        arrayOf("Default for XWin"),
+        arrayOf("Emacs"),
+        arrayOf("Sublime Text", "Sublime Text (Mac OS X)")
       ).map {
         async { buildKeymapPlugin(it, context.buildNumber, targetDir, keymapDir) }
       }

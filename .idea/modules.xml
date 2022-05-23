@@ -723,11 +723,9 @@
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-tests/intellij.jvm.analysis.testFramework.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-tests/intellij.jvm.analysis.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/eclipse-keymap/intellij.keymap.eclipse.iml" filepath="$PROJECT_DIR$/plugins/keymaps/eclipse-keymap/intellij.keymap.eclipse.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/emacs-keymap/intellij.keymap.emacs.iml" filepath="$PROJECT_DIR$/plugins/keymaps/emacs-keymap/intellij.keymap.emacs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/netbeans5.6-keymap/intellij.keymap.netbeans.iml" filepath="$PROJECT_DIR$/plugins/keymaps/netbeans5.6-keymap/intellij.keymap.netbeans.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/qtcreator-keymap/intellij.keymap.qtcreator.iml" filepath="$PROJECT_DIR$/plugins/keymaps/qtcreator-keymap/intellij.keymap.qtcreator.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/resharper-keymap/intellij.keymap.resharper.iml" filepath="$PROJECT_DIR$/plugins/keymaps/resharper-keymap/intellij.keymap.resharper.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/sublime-keymap/intellij.keymap.sublime.iml" filepath="$PROJECT_DIR$/plugins/keymaps/sublime-keymap/intellij.keymap.sublime.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-assist-keymap/intellij.keymap.visualAssist.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-assist-keymap/intellij.keymap.visualAssist.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-studio-keymap/intellij.keymap.visualStudio.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-studio-keymap/intellij.keymap.visualStudio.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-studio2022-keymap/intellij.keymap.visualStudio2022.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-studio2022-keymap/intellij.keymap.visualStudio2022.iml" />
