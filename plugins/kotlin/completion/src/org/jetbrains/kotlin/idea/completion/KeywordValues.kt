@@ -71,7 +71,7 @@ object KeywordValues {
                     return@matcher ExpectedInfoMatch.noMatch
                 }
 
-                if (info.fuzzyType?.type?.isBooleanOrNullableBoolean() ?: false)
+                if (info.fuzzyType?.type?.isBooleanOrNullableBoolean() == true)
                     ExpectedInfoMatch.match(TypeSubstitutor.EMPTY)
                 else
                     ExpectedInfoMatch.noMatch

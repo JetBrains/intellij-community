@@ -182,7 +182,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
     }
 
     private fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
-        if (left.isNullLiteral() || (right?.isNullLiteral() ?: false)) return true
+        if (left.isNullLiteral() || (right?.isNullLiteral() == true)) return true
         when (val type = left.type) {
             is PsiPrimitiveType, is PsiArrayType -> return true
 

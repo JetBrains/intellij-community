@@ -388,7 +388,7 @@ class SmartCompletion(
         while (true) {
             val infos =
                 ExpectedInfos(bindingContext, resolutionFacade, indicesHelper, useOuterCallsExpectedTypeCount = count).calculate(expression)
-            if (count == 2 /* use two outer calls maximum */ || infos.none { it.fuzzyType?.isAlmostEverything() ?: false }) {
+            if (count == 2 /* use two outer calls maximum */ || infos.none { it.fuzzyType?.isAlmostEverything() == true }) {
                 return if (forBasicCompletion)
                     infos.map { it.copy(tail = null) }
                 else
