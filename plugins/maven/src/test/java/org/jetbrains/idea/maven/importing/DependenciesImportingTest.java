@@ -365,9 +365,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "</parent>");
 
     importProject();
-    assertModules("project", "m1", "m2");
+    assertModules("project", "m1", mn("project", "m2"));
 
-    assertModuleModuleDeps("m1", "m2");
+    assertModuleModuleDeps("m1", mn("project", "m2"));
   }
 
   @Test
@@ -438,9 +438,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "</parent>");
 
     importProject();
-    assertModules("project", "m1", "m2");
+    assertModules("project", "m1", mn("project", "m2"));
 
-    assertModuleModuleDeps("m1", "m2");
+    assertModuleModuleDeps("m1", mn("project", "m2"));
   }
 
   @Test
@@ -482,9 +482,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "</parent>");
 
     importProject();
-    assertModules("project", "m1", "m2");
+    assertModules("project", "m1", mn("project", "m2"));
 
-    assertModuleModuleDeps("m1", "m2");
+    assertModuleModuleDeps("m1", mn("project", "m2"));
   }
 
   @Test
@@ -975,7 +975,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     importProject();
 
-    assertModuleLibDep("m", "Maven: group:lib:2");
+    assertModuleLibDep(mn("project", "m"), "Maven: group:lib:2");
   }
 
   @Test
@@ -1013,8 +1013,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     importProject();
 
-    assertModules("project", "m");
-    assertModuleLibDeps("m", "Maven: group:id:1.2.3");
+    assertModules("project", mn("project", "m"));
+    assertModuleLibDeps(mn("project", "m"), "Maven: group:id:1.2.3");
   }
 
   @Test
@@ -1055,7 +1055,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                          "</dependencies>");
 
     importProject();
-    assertModuleLibDeps("m", "Maven: group:id:1");
+    assertModuleLibDeps(mn("project", "m"), "Maven: group:id:1");
   }
 
   @Test
@@ -1101,8 +1101,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     importProject();
 
-    assertModules("project", "m");
-    assertModuleLibDeps("m", "Maven: group:id:1");
+    assertModules("project", mn("project", "m"));
+    assertModuleLibDeps(mn("project", "m"), "Maven: group:id:1");
   }
 
   @Test
@@ -1168,8 +1168,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     importProjectWithErrors();
 
-    assertModules("project", "m");
-    assertModuleLibDeps("m");
+    assertModules("project", mn("project", "m"));
+    assertModuleLibDeps(mn("project", "m"));
 
 
     MavenProject root = getProjectsTree().getRootProjects().get(0);
@@ -2168,7 +2168,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     importProject();
 
-    assertModuleLibDeps("m", "Maven: asm:asm-attrs:2.2.1", "Maven: asm:asm:2.2.1");
+    assertModuleLibDeps(mn("project", "m"), "Maven: asm:asm-attrs:2.2.1", "Maven: asm:asm:2.2.1");
   }
 
   @Test
@@ -2402,7 +2402,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
 
-    assertModuleLibDep("m1", "Maven: junit:junit:4.0",
+    assertModuleLibDep(mn("project", "m1"), "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
