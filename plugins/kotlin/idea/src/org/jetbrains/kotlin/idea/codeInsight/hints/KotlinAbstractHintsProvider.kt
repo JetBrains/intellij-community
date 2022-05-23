@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -60,7 +61,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                     if (isElementSupported(hintType, settings)) {
                         hintType.provideHintDetails(element).forEach { details ->
                             val p = PresentationAndSettings(
-                                getInlayPresentationForInlayInfoDetails(details, f, project, this@KotlinAbstractHintsProvider),
+                                getInlayPresentationForInlayInfoDetails(element, hintType, details, f, project, this@KotlinAbstractHintsProvider),
                                 details.inlayInfo.offset,
                                 details.inlayInfo.relatesToPrecedingText
                             )
@@ -75,6 +76,8 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
     companion object {
         fun getInlayPresentationForInlayInfoDetails(
+            element: PsiElement,
+            hintType: HintType?,
             infoDetails: InlayInfoDetails,
             factory: PresentationFactory,
             project: Project,
@@ -88,7 +91,10 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
             val roundedPresentation = factory.roundWithBackground(basePresentation)
             return InsetPresentation(
                 MenuOnClickPresentation(roundedPresentation, project) {
-                    listOf(ShowInlayHintsSettings())
+                    listOfNotNull(
+                        hintType?.let { DisableKotlinInlayHintsAction(it.hideDescription, it, project, element) },
+                        ShowInlayHintsSettings(provider.key)
+                    )
                 }, left = 1
             )
         }
@@ -171,4 +177,9 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
         abstract fun enable(hintType: HintType, enable: Boolean)
     }
+}
+
+internal fun refreshHints() {
+    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+    InlayHintsConfigurable.updateInlayHintsUI()
 }
