@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
 
 final class RasterizedImageDataLoader implements ImageDataLoader {
@@ -64,8 +63,10 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
                                                 int cacheKey,
                                                 int imageFlags) {
     String effectivePath = normalizePath(patched.first);
-    WeakReference<ClassLoader> effectiveClassLoaderRef = patched.second == null ? originalClassLoaderRef : new WeakReference<>(patched.second);
-    return new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey, imageFlags);
+    WeakReference<ClassLoader> effectiveClassLoaderRef =
+      patched.second == null ? originalClassLoaderRef : new WeakReference<>(patched.second);
+    return new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey,
+                                         imageFlags);
   }
 
   @Override
@@ -81,14 +82,21 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
     }
 
     // use cache key only if path to image is not customized
-    if (originalPath == path) {
-      boolean isSvg = cacheKey != 0;
-      // use cache key only if path to image is not customized
-      return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, cacheKey, imageFlags, false);
+    try {
+      //noinspection StringEquality
+      if (originalPath == path) {
+        boolean isSvg = cacheKey != 0;
+        // use cache key only if path to image is not customized
+        return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, cacheKey, imageFlags, false);
+      }
+      else {
+        boolean isSvg = path.endsWith(".svg");
+        return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, 0, imageFlags, true);
+      }
     }
-    else {
-      boolean isSvg = path.endsWith(".svg");
-      return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, 0, imageFlags, true);
+    catch (IOException e) {
+      Logger.getInstance(RasterizedImageDataLoader.class).debug(e);
+      return null;
     }
   }
 
@@ -103,6 +111,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
     ClassLoader classLoader = classLoaderRef.get();
     Pair<String, ClassLoader> patched = transform.patchPath(originalPath, classLoader);
     if (patched == null) {
+      //noinspection StringEquality
       if (path != this.originalPath && this.originalPath.equals(normalizePath(originalPath))) {
         return new RasterizedImageDataLoader(this.originalPath, this.originalClassLoaderRef,
                                              this.originalPath, this.originalClassLoaderRef,
@@ -146,7 +155,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
                                                 boolean isSvg,
                                                 int rasterizedCacheKey,
                                                 @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags,
-                                                boolean patched) {
+                                                boolean patched) throws IOException {
     long loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
 
     // Prefer retina images for HiDPI scale, because downscaling
@@ -186,14 +195,17 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       }
     }
 
-    List<Pair<String, Float>> effectivePaths;
+    // todo remove it, not used
+    ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
     if (patched) {
+      List<Pair<String, Float>> effectivePaths;
+
       Pair<String, Float> retinaDark = new Pair<>(name + "@2x_dark." + ext, isSvg ? scale : 2);
       Pair<String, Float> dark = new Pair<>(name + "_dark." + ext, isSvg ? scale : 1);
       Pair<String, Float> retina = new Pair<>(name + "@2x." + ext, isSvg ? scale : 2);
       Pair<String, Float> plain = new Pair<>(path, isSvg ? scale : 1);
       if (isRetina && isDark) {
-        effectivePaths = Arrays.asList(retinaDark, dark, retina, plain);
+        effectivePaths = List.of(retinaDark, dark, retina, plain);
       }
       else if (isDark) {
         effectivePaths = List.of(dark, plain);
@@ -201,16 +213,11 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       else {
         effectivePaths = isRetina ? List.of(retina, plain) : List.of(plain);
       }
-    }
-    else {
-      effectivePaths = List.of(new Pair<>(effectivePath, imageScale));
-    }
 
-    ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
-    try {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
       Image image = null;
-      for (Pair<String, Float> effPath: effectivePaths) {
+      boolean isUpScaleNeeded = !isSvg;
+      for (Pair<String, Float> effPath : effectivePaths) {
         String pathToImage = effPath.first;
         float imgScale = effPath.second;
         if (isSvg) {
@@ -221,13 +228,38 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
           image = ImageLoader.loadPngFromClassResource(pathToImage, null, classLoader, imgScale, originalUserSize);
         }
 
-        if (image != null) break;
+        if (image != null) {
+          if (isUpScaleNeeded) {
+            isUpScaleNeeded = effPath == plain || effPath == dark;
+          }
+          break;
+        }
       }
 
       if (start != -1) {
         IconLoadMeasurer.loadFromResources.end(start);
+        IconLoadMeasurer.addLoading(isSvg, loadingStart);
       }
-      if (loadingStart != -1) {
+
+      if (image == null) {
+        return null;
+      }
+      return ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext),
+                                      imageScale, isSvg);
+    }
+    else {
+      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+      Image image;
+      if (isSvg) {
+        image = SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark,
+                                                originalUserSize);
+      }
+      else {
+        image = ImageLoader.loadPngFromClassResource(effectivePath, null, classLoader, imageScale, originalUserSize);
+      }
+
+      if (start != -1) {
+        IconLoadMeasurer.loadFromResources.end(start);
         IconLoadMeasurer.addLoading(isSvg, loadingStart);
       }
 
@@ -236,10 +268,6 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       }
       return ImageLoader.convertImage(image, filters, flags, scaleContext, !isSvg, StartupUiUtil.isJreHiDPI(scaleContext),
                                       imageScale, isSvg);
-    }
-    catch (IOException e) {
-      Logger.getInstance(RasterizedImageDataLoader.class).debug(e);
-      return null;
     }
   }
 }
