@@ -312,7 +312,7 @@ private val TYPES_WITH_TRAILING_COMMA_ON_CALL_SITE = TokenSet.create(
     KtNodeTypes.TYPE_ARGUMENT_LIST,
     KtNodeTypes.INDICES,
     KtNodeTypes.VALUE_ARGUMENT_LIST,
-<caret>)
+    <caret>)
 
 fun UserDataHolder.addTrailingCommaIsAllowedForThis(): Boolean {
     val type = when (this) {
