@@ -37,7 +37,7 @@ final class FilePageCache {
 
   static {
     final int lower = 100;
-    final int upper = CpuArch.is32Bit() ? 200 : 700;
+    final int upper = CpuArch.is32Bit() ? 200 : 500;
 
     BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * PagedFileStorage.MB;
     final long max = maxDirectMemory() - 2L * BUFFER_SIZE;
