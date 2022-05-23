@@ -34,6 +34,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,6 +95,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.add(new RefreshAction());
     actions.addSeparator();
     actions.add(new ToggleAccessibleAction());
+    actions.addSeparator();
+    actions.add(new ShowDataContextAction());
     actions.addSeparator();
     actions.add(new MyNavigateAction());
 
@@ -447,6 +450,24 @@ public final class InspectorWindow extends JDialog implements Disposable {
       myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
       myHierarchyTree.resetModel(c, isAccessibleEnable);
       myHierarchyTree.expandPath(isAccessibleEnable);
+    }
+  }
+
+  private class ShowDataContextAction extends MyTextAction {
+    private ShowDataContextAction() {
+      super(InternalActionsBundle.messagePointer("action.Anonymous.text.DataContext"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      TreePath path = myHierarchyTree.getLeadSelectionPath();
+      if (path == null) return;
+      HierarchyTree.ComponentNode node = ObjectUtils.tryCast(path.getLastPathComponent(), HierarchyTree.ComponentNode.class);
+      if (node == null) return;
+      JComponent c = UIUtil.getParentOfType(JComponent.class, node.getComponent());
+      if (c == null) return;
+
+      new DataContextDialog(myProject, c).show();
     }
   }
 
