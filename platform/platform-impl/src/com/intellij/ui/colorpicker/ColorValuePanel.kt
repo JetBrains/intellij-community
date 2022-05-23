@@ -440,7 +440,7 @@ abstract class ButtonPanel : JPanel() {
   abstract fun clicked()
 
   override fun paintBorder(g: Graphics) {
-    g as? Graphics2D ?: return
+    if (g !is Graphics2D) return
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     val originalStroke = g.stroke
     when (mouseStatus) {

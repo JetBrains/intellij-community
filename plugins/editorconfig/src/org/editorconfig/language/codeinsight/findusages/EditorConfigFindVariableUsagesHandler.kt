@@ -32,7 +32,7 @@ class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElem
 
   override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope) =
     runReadAction {
-      searchScope as? LocalSearchScope ?: return@runReadAction emptyList<PsiReference>()
+      if (searchScope !is LocalSearchScope) return@runReadAction emptyList<PsiReference>()
       val id = getId(target) ?: return@runReadAction emptyList<PsiReference>()
       searchScope.scope.asSequence()
         .flatMap { PsiTreeUtil.findChildrenOfType(it, EditorConfigDescribableElement::class.java).asSequence() }
@@ -49,7 +49,7 @@ class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElem
       .filter { matches(it, id, element) }
 
   private fun matches(element: PsiElement, id: String, template: PsiElement): Boolean {
-    element as? EditorConfigDescribableElement ?: return false
+    if (element !is EditorConfigDescribableElement) return false
     if (!textMatchesToIgnoreCase(element, template)) return false
     return when (val descriptor = element.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor -> descriptor.id == id
@@ -60,7 +60,7 @@ class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElem
 
   companion object {
     fun getId(element: PsiElement): String? {
-      element as? EditorConfigDescribableElement ?: return null
+      if (element !is EditorConfigDescribableElement) return null
       return when (val descriptor = element.getDescriptor(false)) {
         is EditorConfigDeclarationDescriptor -> descriptor.id
         is EditorConfigReferenceDescriptor -> descriptor.id

@@ -48,7 +48,7 @@ class EditorConfigIdentifierIndex : FileBasedIndexExtension<String, Int>() {
     val isIndexing = ThreadLocal<Boolean>()
 
     private fun isValidReference(identifier: EditorConfigDescribableElement): Boolean {
-      identifier.getDescriptor(false) as? EditorConfigReferenceDescriptor ?: return false
+      if (identifier.getDescriptor(false) !is EditorConfigReferenceDescriptor) return false
       return when (val reference = identifier.reference) {
         is PsiPolyVariantReference -> reference.multiResolve(false).isNotEmpty()
         is PsiReference -> reference.resolve() != null

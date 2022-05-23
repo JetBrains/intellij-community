@@ -18,7 +18,7 @@ import org.editorconfig.language.util.EditorConfigIdentifierUtil
 class EditorConfigReferenceCorrectnessInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitPsiElement(element: PsiElement) {
-      element as? EditorConfigDescribableElement ?: return
+      if (element !is EditorConfigDescribableElement) return
       val descriptor = element.getDescriptor(false) as? EditorConfigReferenceDescriptor ?: return
       val reference = element.reference as? EditorConfigIdentifierReference ?: return
       if (reference.multiResolve(false).isNotEmpty()) return
