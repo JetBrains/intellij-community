@@ -55,5 +55,10 @@ fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String = buildStr
 @Contract(pure = true)
 private fun escape(s: String): String = StringUtil.escapeCharCharacters(s)
 
+/**
+ * Returns this [String] as Python string literal.
+ *
+ * Whitespaces, backslashes and single quotes are escaped and the escaped string is wrapped in single quotes.
+ */
 @Contract(pure = true)
-private fun String.toStringLiteral() = "'${escape(this)}'"
+fun String.toStringLiteral() = "'${escape(this)}'"

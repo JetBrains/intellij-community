@@ -21,6 +21,7 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.target.getPathMapper
+import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -108,11 +109,9 @@ fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<String>,
   if (workingDir != null) {
     pythonPath.add(workingDir)
   }
-  val path = pythonPath.joinToString(separator = ", ") { "'${it.escapeAsPythonLiteral()}'" }
+  val path = pythonPath.joinToString(separator = ", ", transform = String::toStringLiteral)
   return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path)
 }
-
-private fun String.escapeAsPythonLiteral(): String = replace("\\", "\\\\").replace("'", "\\'")
 
 fun addDefaultEnvironments(sdk: Sdk,
                            envs: Map<String, String>,
