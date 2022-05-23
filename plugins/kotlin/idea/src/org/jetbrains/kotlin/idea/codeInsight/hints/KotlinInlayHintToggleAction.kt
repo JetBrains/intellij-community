@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtFile
@@ -36,37 +35,41 @@ class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
     override fun getFamilyName(): String = KotlinBundle.message("hints.types")
     
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-        val element = findElement(editor, file) ?: return false
-        
         lastOptionName = ""
-        for (hintType in hintTypes) {
-            if (!hintType.isApplicable(element)) continue
-            findSetting(hintType, project)?.let {
-                val enabled = it.second.isEnabled(hintType)
-                lastOptionName = if (enabled) hintType.hideDescription else hintType.showDescription
-                return true
+        var element = findElement(editor, file)
+
+        while (element != null) {
+            for (hintType in hintTypes) {
+                if (!hintType.isApplicable(element)) continue
+                findSetting(hintType, project)?.let {
+                    val enabled = it.second.isEnabled(hintType)
+                    lastOptionName = if (enabled) hintType.hideDescription else hintType.showDescription
+                    return true
+                }
             }
+            element = element.parent
         }
         return false
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-        val element = findElement(editor, file) ?: return
+        var element = findElement(editor, file)
 
-        for (hintType in hintTypes) {
-            toggleHintSetting(hintType, project, element)
+        while(element != null) {
+            for (hintType in hintTypes) {
+                if (toggleHintSetting(hintType, project, element)) return
+            }
+            element = element.parent
         }
     }
 
-    override fun startInWriteAction(): Boolean = false
-
     private fun findElement(editor: Editor, file: PsiFile): PsiElement? {
-        if (file !is KtFile) return null
+        val ktFile = file as? KtFile ?: return null
         val offset = editor.caretModel.offset
-        val leaf1 = file.findElementAt(offset)
-        val leaf2 = file.findElementAt(offset - 1)
-        return if (leaf1 != null && leaf2 != null) PsiTreeUtil.findCommonParent(leaf1, leaf2) else null
+        return ktFile.findElementAt(offset - 1)
     }
+
+    override fun startInWriteAction(): Boolean = false
 
 }
 
@@ -75,10 +78,10 @@ internal fun toggleHintSetting(
     project: Project,
     element: PsiElement,
     state: (KotlinAbstractHintsProvider.HintsSettings) -> Boolean = { setting -> !setting.isEnabled(hintType) }
-) {
-    if (!hintType.isApplicable(element)) return
+): Boolean {
+    if (!hintType.isApplicable(element)) return false
     val hintsSettings = InlayHintsSettings.instance()
-    findSetting(hintType, project, hintsSettings)?.let {
+    return findSetting(hintType, project, hintsSettings)?.let {
         val settingsKey = it.first
         val settings = it.second
         val enable = state(settings)
@@ -89,8 +92,8 @@ internal fun toggleHintSetting(
         settings.enable(hintType, enable)
         hintsSettings.storeSettings(settingsKey, language, settings)
         refreshHints()
-        return
-    }
+        true
+    } ?: false
 }
 private fun findSetting(hintType: HintType, project: Project, hintsSettings: InlayHintsSettings = InlayHintsSettings.instance()):
         Pair<SettingsKey<KotlinAbstractHintsProvider.HintsSettings>, KotlinAbstractHintsProvider.HintsSettings>? {

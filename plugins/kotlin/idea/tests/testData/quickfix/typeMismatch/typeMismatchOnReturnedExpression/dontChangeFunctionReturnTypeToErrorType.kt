@@ -5,7 +5,6 @@
 // ACTION: Create enum 'NoSuchType'
 // ACTION: Create interface 'NoSuchType'
 // ACTION: Create type parameter 'NoSuchType' in function 'foo'
-// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Remove explicit lambda parameter types (may break code)
 // ERROR: Type mismatch: inferred type is ([Error type: Unresolved type for NoSuchType]) -> Int but Int was expected

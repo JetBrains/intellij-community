@@ -14,5 +14,7 @@ class DisableKotlinInlayHintsAction(
     private val element: PsiElement
 ) : AnAction(hideDescription) {
 
-    override fun actionPerformed(e: AnActionEvent) = toggleHintSetting(hintType, project, element) { false }
+    override fun actionPerformed(e: AnActionEvent) {
+        toggleHintSetting(hintType, project, element) { false }
+    }
 }
