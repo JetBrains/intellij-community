@@ -2,76 +2,63 @@
 package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
+import java.util.logging.*
 
-import java.util.logging.ConsoleHandler
-import java.util.logging.Handler
-import java.util.logging.Level
-import java.util.logging.LogRecord
-import java.util.logging.Logger
+internal class BuildMessagesHandler(private val messages: BuildMessages) : Handler() {
+  companion object {
+    fun initLogging(messages: BuildMessages) {
+      val rootLogger = Logger.getLogger("")
+      if (rootLogger.handlers.any { (it is ConsoleHandler && it.formatter is IdeaLogRecordFormatter) ||
+                                    (it is BuildMessagesHandler && it.messages == messages) }) {
+        // already configured by this code or similar one
+        return
+      }
 
-@CompileStatic
-final class BuildMessagesHandler extends Handler {
-  @NotNull final BuildMessages messages
-
-  BuildMessagesHandler(@NotNull BuildMessages messages) {
-    this.messages = messages
+      for (handler in rootLogger.handlers) {
+        rootLogger.removeHandler(handler)
+      }
+      rootLogger.addHandler(BuildMessagesHandler(messages))
+    }
   }
 
-  @Override
-  void publish(LogRecord record) {
-    def level = record.getLevel()
-    String message = "[${record.loggerName}] ${record.message}"
+  override fun publish(record: LogRecord) {
+    val level = record.level
+    val message = "[${record.loggerName}] ${record.message}"
     if (level.intValue() >= Level.SEVERE.intValue()) {
-      def throwable = record.thrown
-      if (throwable != null) {
-        messages.error(message, throwable)
-      }
-      else {
+      val throwable = record.thrown
+      if (throwable == null) {
         messages.error(message)
       }
+      else {
+        messages.error(message, throwable)
+      }
       return
     }
-    if (level.intValue() >= Level.WARNING.intValue()) {
-      messages.warning(message)
-      return
+
+    when {
+      level.intValue() >= Level.WARNING.intValue() -> {
+        messages.warning(message)
+        return
+      }
+      level.intValue() >= Level.INFO.intValue() -> {
+        messages.info(message)
+        return
+      }
+      level.intValue() >= Level.FINE.intValue() -> {
+        messages.debug(message)
+        return
+      }
+      else -> {
+        messages.warning("Unsupported log4j level: $level")
+        messages.info(message)
+      }
     }
-    if (level.intValue() >= Level.INFO.intValue()) {
-      messages.info(message)
-      return
-    }
-    if (level.intValue() >= Level.FINE.intValue()) {
-      messages.debug(message)
-      return
-    }
-    messages.warning("Unsupported log4j level: $level")
-    messages.info(message)
   }
 
-  static void initLogging(BuildMessages messages) {
-    Logger rootLogger = Logger.getLogger("")
-    if (rootLogger.handlers.any {
-      (it instanceof ConsoleHandler && it.formatter instanceof IdeaLogRecordFormatter)
-        ||
-      (it instanceof BuildMessagesHandler && (it as BuildMessagesHandler).messages == messages)
-    }) {
-      // already configured by this code or similar one
-      return
-    }
-
-    for (Handler handler : rootLogger.getHandlers()) {
-      rootLogger.removeHandler(handler)
-    }
-    rootLogger.addHandler(new BuildMessagesHandler(messages))
+  override fun flush() {
   }
 
-  @Override
-  void flush() {
-  }
-
-  @Override
-  void close(){
+  override fun close() {
   }
 }
