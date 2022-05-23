@@ -306,32 +306,51 @@ class CombinedDiffViewer(context: DiffContext) : DiffViewer, DataProvider {
     return getBlockId(index)?.let { blockId -> diffViewers[blockId] }
   }
 
-  fun selectDiffBlock(blockId: CombinedBlockId, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
+  fun selectDiffBlock(blockId: CombinedBlockId, scrollPolicy: ScrollPolicy, focusBlock: Boolean, onSelected: () -> Unit = {}) {
     val index = diffBlocksPositions[blockId]
     if (index == null || index == -1) return
 
-    selectDiffBlock(index, scrollPolicy, onSelected)
+    selectDiffBlock(index, scrollPolicy, focusBlock, onSelected)
   }
 
-  internal fun selectDiffBlock(scrollPolicy: ScrollPolicy) {
+  private fun selectDiffBlock(scrollPolicy: ScrollPolicy) {
     selectDiffBlock(scrollSupport.blockIterable.index, scrollPolicy)
   }
 
-  fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
+  fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index,
+                      scrollPolicy: ScrollPolicy,
+                      focusBlock: Boolean = true,
+                      onSelected: () -> Unit = {}) {
     getBlockId(index)?.let { diffBlocks[it] }?.run {
-      selectDiffBlock(index, this, scrollPolicy, onSelected)
+      selectDiffBlock(index, this, scrollPolicy, focusBlock, onSelected)
     }
   }
 
-  fun selectDiffBlock(block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
+  fun selectDiffBlock(block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy, focusBlock: Boolean = true, onSelected: () -> Unit = {}) {
     val index = diffBlocksPositions[block.id]
     if (index == null || index == -1) return
 
-    selectDiffBlock(index, block, scrollPolicy, onSelected)
+    selectDiffBlock(index, block, scrollPolicy, focusBlock, onSelected)
   }
 
-  private fun selectDiffBlock(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy, onSelected: () -> Unit) {
+  private fun selectDiffBlock(index: Int,
+                              block: CombinedDiffBlock<*>,
+                              scrollPolicy: ScrollPolicy,
+                              focusBlock: Boolean,
+                              onSelected: () -> Unit) {
     val viewer = diffViewers[block.id] ?: return
+
+    val doSelect = {
+      onSelected()
+      scrollSupport.blockIterable.index = index
+      blockToSelect = block
+      scrollSupport.scroll(index, block, scrollPolicy)
+    }
+
+    if (!focusBlock) {
+      doSelect()
+      return
+    }
 
     val componentToFocus =
       with(viewer) {
@@ -345,11 +364,7 @@ class CombinedDiffViewer(context: DiffContext) : DiffViewer, DataProvider {
     if (focusManager.focusOwner == componentToFocus) return
 
     focusManager.requestFocus(componentToFocus, true)
-    focusManager.doWhenFocusSettlesDown {
-      onSelected()
-      blockToSelect = block
-      scrollSupport.scroll(index, block, scrollPolicy)
-    }
+    focusManager.doWhenFocusSettlesDown(doSelect)
   }
 
   private fun createToolbarActions(): List<AnAction> {

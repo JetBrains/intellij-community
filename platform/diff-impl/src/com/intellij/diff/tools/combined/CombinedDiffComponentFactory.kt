@@ -106,7 +106,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
       if (blockIdToSelect != null) {
         combinedViewer.diffBlocks[blockIdToSelect]?.let { block ->
-          combinedViewer.selectDiffBlock(block, ScrollPolicy.DIFF_BLOCK)
+          combinedViewer.selectDiffBlock(block, ScrollPolicy.DIFF_BLOCK, false)
         }
       }
     }

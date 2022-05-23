@@ -165,7 +165,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
 
   private fun scrollToChange(change: Wrapper) {
     context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-      ?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), ScrollPolicy.DIFF_BLOCK)
+      ?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), ScrollPolicy.DIFF_BLOCK, false)
   }
 
   open fun selectChangeInTree(change: Wrapper) {
