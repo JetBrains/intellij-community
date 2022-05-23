@@ -62,7 +62,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
                                             cellHasFocus: Boolean): Component {
     UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus()))
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
-    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
+    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected, list.hasFocus())
 
     accountName.apply {
       text = account.name

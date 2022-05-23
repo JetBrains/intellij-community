@@ -79,7 +79,7 @@ class GHPRListCellRenderer(private val avatarIconsProvider: GHAvatarIconsProvide
                                             cellHasFocus: Boolean): Component {
     background = ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus())
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
-    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(list, isSelected)
+    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected, list.hasFocus())
 
     stateIcon.apply {
       icon = GHUIUtil.getPullRequestStateIcon(value.state, value.isDraft)
