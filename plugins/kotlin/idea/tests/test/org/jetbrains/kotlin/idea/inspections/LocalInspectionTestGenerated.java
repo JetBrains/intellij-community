@@ -11103,6 +11103,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantSpreadOperator/floatArrayOf.kt");
         }
 
+        @TestMetadata("hasOverloadFunction.kt")
+        public void testHasOverloadFunction() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantSpreadOperator/hasOverloadFunction.kt");
+        }
+
+        @TestMetadata("hasOverloadFunction2.kt")
+        public void testHasOverloadFunction2() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantSpreadOperator/hasOverloadFunction2.kt");
+        }
+
+        @TestMetadata("hasOverloadFunction3.kt")
+        public void testHasOverloadFunction3() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantSpreadOperator/hasOverloadFunction3.kt");
+        }
+
         @TestMetadata("intArrayOf.kt")
         public void testIntArrayOf() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantSpreadOperator/intArrayOf.kt");
