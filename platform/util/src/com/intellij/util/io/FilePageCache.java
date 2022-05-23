@@ -171,6 +171,10 @@ final class FilePageCache {
   private long myMaxLoadedSize;
   private volatile int myMappingChangeCount;
 
+  private long myCreatedCount;
+  private long myCreatedMs;
+  private long myDisposalMs;
+
   FilePageCache() {
     mySizeLimit = UPPER_LIMIT;
     mySegments = new LinkedHashMap<Long, DirectBufferWrapper>(10, 0.75f, true) {
@@ -271,18 +275,19 @@ final class FilePageCache {
       }
 
       long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
-      PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(key);
 
+      PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(key);
       disposeRemovedSegments(null);
+
+      long disposed = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
       wrapper = createValue(key, read, fileStorage);
 
       if (IOStatistics.DEBUG) {
         long finished = System.currentTimeMillis();
-        if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
-          IOStatistics.dump(
-            "Mapping " + wrapper + " for " + (finished - started));
-        }
+        myCreatedCount++;
+        myCreatedMs += (finished - disposed);
+        myDisposalMs += (disposed - started);
       }
 
       mySegmentsAccessLock.lock();
@@ -359,15 +364,15 @@ final class FilePageCache {
     return new DirectBufferWrapper(owner, off);
   }
 
-
   @NotNull
-  private Map<Long, DirectBufferWrapper> getBuffersOrderedForOwner(@NotNull StorageLockContext storageLockContext) {
+  private Map<Long, DirectBufferWrapper> getBuffersForOwner(@NotNull PagedFileStorage storage) {
+    StorageLockContext storageLockContext = storage.getStorageLockContext();
     mySegmentsAccessLock.lock();
     try {
       storageLockContext.checkReadAccess();
       Map<Long, DirectBufferWrapper> mineBuffers = new TreeMap<>();
       for (Map.Entry<Long, DirectBufferWrapper> entry : mySegments.entrySet()) {
-        if (entry.getValue().belongs(storageLockContext)) {
+        if (entry.getValue().getFile() == storage) {
           mineBuffers.put(entry.getKey(), entry.getValue());
         }
       }
@@ -379,7 +384,7 @@ final class FilePageCache {
   }
 
   void unmapBuffersForOwner(PagedFileStorage fileStorage) {
-    Map<Long, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(fileStorage.getStorageLockContext());
+    Map<Long, DirectBufferWrapper> buffers = getBuffersForOwner(fileStorage);
 
     if (!buffers.isEmpty()) {
       mySegmentsAccessLock.lock();
@@ -420,9 +425,9 @@ final class FilePageCache {
     }
   }
 
-  void flushBuffersForOwner(StorageLockContext storageLockContext) throws IOException {
-    storageLockContext.checkReadAccess();
-    Map<Long, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(storageLockContext);
+  void flushBuffersForOwner(PagedFileStorage storage) throws IOException {
+    storage.getStorageLockContext().checkReadAccess();
+    Map<Long, DirectBufferWrapper> buffers = getBuffersForOwner(storage);
 
     if (!buffers.isEmpty()) {
       List<IOException> exceptions = new SmartList<>();

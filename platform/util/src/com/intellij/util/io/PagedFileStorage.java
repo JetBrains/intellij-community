@@ -467,7 +467,7 @@ public class PagedFileStorage implements Forceable {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
     if (isDirty) {
-      myStorageLockContext.getBufferCache().flushBuffersForOwner(myStorageLockContext);
+      myStorageLockContext.getBufferCache().flushBuffersForOwner(this);
       isDirty = false;
     }
 
