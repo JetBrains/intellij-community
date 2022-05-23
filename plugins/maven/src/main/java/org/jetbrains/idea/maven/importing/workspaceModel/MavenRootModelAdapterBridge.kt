@@ -32,7 +32,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.io.File
 
 @Retention(AnnotationRetention.SOURCE)
-private annotation class NotRequiredToImplement;
+private annotation class NotRequiredToImplement
 
 class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                                   private val module: ModuleBridge,
@@ -180,7 +180,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
     return ModuleManagerComponentBridge(project).modules.firstOrNull { it.name == moduleName }
   }
 
-  private fun MavenArtifact.ideaLibraryName(): String = "${this.libraryName}";
+  private fun MavenArtifact.ideaLibraryName(): String = "${this.libraryName}"
 
   override fun addSystemDependency(artifact: MavenArtifact,
                                    scope: DependencyScope) {
@@ -213,7 +213,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
                   LibraryRootTypeId.SOURCES))
 
-    val libraryTableId = LibraryTableId.ProjectLibraryTableId; //(ModuleId(moduleEntity.name))
+    val libraryTableId = LibraryTableId.ProjectLibraryTableId //(ModuleId(moduleEntity.name))
 
     val libraryEntity = builder.addLibraryEntity(artifact.ideaLibraryName(), libraryTableId,
                                                  roots,

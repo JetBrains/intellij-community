@@ -160,6 +160,6 @@ class ContentRootCollectorTest : MavenTestCase() {
         contentRootByPath.put(path, each.contentRoot)
       }
     }
-    return contentRootByPath;
+    return contentRootByPath
   }
 }

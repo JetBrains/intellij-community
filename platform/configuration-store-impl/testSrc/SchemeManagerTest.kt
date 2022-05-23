@@ -594,7 +594,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must be system-independent`() {
-    DefaultLogger.disableStderrDumping(disposableRule.disposable);
+    DefaultLogger.disableStderrDumping(disposableRule.disposable)
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 

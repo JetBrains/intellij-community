@@ -75,7 +75,7 @@ interface TargetEnvironmentRequest {
   @JvmDefault
   fun duplicate(): TargetEnvironmentRequest = throw UnsupportedOperationException()
 
-  var projectPathOnTarget: String;
+  var projectPathOnTarget: String
 
   /**
    * Every target must support at least one non-configurable upload-only "default" volume, which may be used by the run configurations

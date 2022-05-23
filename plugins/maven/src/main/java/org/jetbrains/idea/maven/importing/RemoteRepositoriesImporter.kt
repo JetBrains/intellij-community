@@ -17,7 +17,7 @@ class RemoteRepositoriesImporter : MavenImporter("", "") {
   override fun processChangedModulesOnly(): Boolean = false
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
-    return true;
+    return true
   }
 
   override fun preProcess(module: Module?,
@@ -45,7 +45,7 @@ class RemoteRepositoriesImporter : MavenImporter("", "") {
     val settingsFile = MavenWorkspaceSettingsComponent.getInstance(
       module.project).settings.generalSettings.effectiveUserSettingsIoFile
 
-    return MavenUtil.getMirroredUrl(settingsFile, url, id);
+    return MavenUtil.getMirroredUrl(settingsFile, url, id)
   }
 
   companion object {

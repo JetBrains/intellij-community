@@ -145,8 +145,8 @@ class PyCodeFenceTest : PyTestCase() {
     expect_bytes(<warning descr="Expected type 'bytes', got 'str' instead">"abc"</warning>)
     ```
     """.trimIndent())
-    myFixture.enableInspections(PyTypeCheckerInspection::class.java);
-    myFixture.checkHighlighting(true, false, true);
+    myFixture.enableInspections(PyTypeCheckerInspection::class.java)
+    myFixture.checkHighlighting(true, false, true)
     assertSdkRootsNotParsed(myFixture.file)
   }
 

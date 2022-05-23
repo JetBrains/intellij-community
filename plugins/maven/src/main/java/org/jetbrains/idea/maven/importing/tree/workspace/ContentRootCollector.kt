@@ -93,7 +93,7 @@ object ContentRootCollector {
     folder: String,
     contentRootDataHolderByPath: MutableMap<String, ContentRootDataHolder>): ContentRootDataHolder {
 
-    var contentRootHolder: ContentRootDataHolder? = null;
+    var contentRootHolder: ContentRootDataHolder? = null
     for (contentRootPath in sortedPotentialContentRootSet) {
       if (FileUtil.isAncestor(contentRootPath, folder, false)) {
         contentRootHolder = contentRootDataHolderByPath.get(contentRootPath)

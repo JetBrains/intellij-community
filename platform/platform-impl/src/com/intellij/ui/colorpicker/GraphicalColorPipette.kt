@@ -175,7 +175,7 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
               }
             }
             else if (it.id == MouseEvent.MOUSE_MOVED) {
-              updatePipette();
+              updatePipette()
             }
           }
           if (it is KeyEvent && it.id == KeyEvent.KEY_PRESSED) {

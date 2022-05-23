@@ -69,7 +69,7 @@ private class ComboBoxArrowIcon : Icon {
       g2.fill(arrow)
     }
     finally {
-      g2.dispose();
+      g2.dispose()
     }
   }
 

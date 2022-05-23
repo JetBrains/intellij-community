@@ -96,7 +96,7 @@ object UastFacade : UastLanguagePlugin {
   private val exposedListeners = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakIdentityMap<UastPluginListener, Boolean>())
 
   init {
-    UastLanguagePlugin.extensionPointName.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null);
+    UastLanguagePlugin.extensionPointName.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null)
   }
 
   override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =

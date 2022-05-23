@@ -54,7 +54,7 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
     val totalSize = toProcess.size
     var count = 0
 
-    val locationsToSkip = mutableSetOf<AnnotationsLocation>();
+    val locationsToSkip = mutableSetOf<AnnotationsLocation>()
     runBackgroundableTask(TasksBundle.message("maven.tasks.external.annotations.resolving.title"), project) { indicator ->
       indicator.isIndeterminate = false
       toProcess.forEach { (mavenArtifact, library) ->

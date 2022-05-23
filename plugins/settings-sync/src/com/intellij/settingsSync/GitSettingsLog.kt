@@ -254,7 +254,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     LOG.info("Advancing master@${master.objectId.short}. Need merge of ide@${ide.objectId.short} and cloud@${cloud.objectId.short}")
     // 1. move master to ide
-    git.reset().setRef(IDE_REF_NAME).setMode(ResetCommand.ResetType.HARD).call();
+    git.reset().setRef(IDE_REF_NAME).setMode(ResetCommand.ResetType.HARD).call()
 
     // 2. merge with cloud
     val mergeResult = git.merge().include(cloud).call()
@@ -283,9 +283,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   private fun abortMerge() {
-    repository.writeMergeCommitMsg(null);
-    repository.writeMergeHeads(null);
-    git.reset().setMode(ResetCommand.ResetType.HARD).call();
+    repository.writeMergeCommitMsg(null)
+    repository.writeMergeHeads(null)
+    git.reset().setMode(ResetCommand.ResetType.HARD).call()
   }
 
   private fun Repository.headCommit(): RevCommit {

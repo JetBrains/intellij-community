@@ -46,7 +46,7 @@ class EnumSourceReference(element: PsiLanguageInjectionHost) : PsiReferenceBase<
     val annotation = PsiTreeUtil.getParentOfType(literal, PsiAnnotation::class.java, false)
                      ?: return null
     val memberValue = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
-    return PsiUtil.resolveClassInClassTypeOnly((memberValue as? PsiClassObjectAccessExpression)?.operand?.type);
+    return PsiUtil.resolveClassInClassTypeOnly((memberValue as? PsiClassObjectAccessExpression)?.operand?.type)
   }
 
 }

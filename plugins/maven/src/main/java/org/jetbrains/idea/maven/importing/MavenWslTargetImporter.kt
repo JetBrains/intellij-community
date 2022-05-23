@@ -38,7 +38,7 @@ class MavenWslTargetImporter : MavenImporter("", "") {
       project.basePath?.let { MavenWslUtil.tryGetWslDistribution(project) }
     }
     if (wslDistribution == null) {
-      return;
+      return
     }
     val configuration = TargetEnvironmentsManager.getInstance(project).targets.resolvedConfigs().find {
       it.typeId == WslTargetType.TYPE_ID
@@ -65,11 +65,11 @@ class MavenWslTargetImporter : MavenImporter("", "") {
     if (targetMavenPath == null) {
       MavenProjectsManager.getInstance(project).syncConsole.addWarning(MavenProjectBundle.message("wsl.misconfigured.title"),
                                                                        MavenProjectBundle.message("wsl.does.not.have.configured.maven",
-                                                                                                  wslDistribution.presentableName));
-      return null;
+                                                                                                  wslDistribution.presentableName))
+      return null
     }
 
-    val mavenVersion = MavenUtil.getMavenVersion(mavenPath);
+    val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
     mavenConfig.homePath = targetMavenPath
     mavenConfig.versionString = mavenVersion ?: ""
     WriteAction.runAndWait<Throwable> {
@@ -86,10 +86,10 @@ class MavenWslTargetImporter : MavenImporter("", "") {
     if (jdkPath == null) {
       MavenProjectsManager.getInstance(project).syncConsole.addWarning(MavenProjectBundle.message("wsl.misconfigured.title"),
                                                                        MavenProjectBundle.message("wsl.does.not.have.configured.jdk",
-                                                                                                  wslDistribution.presentableName));
-      return null;
+                                                                                                  wslDistribution.presentableName))
+      return null
     }
-    javaConfig.homePath = jdkPath;
+    javaConfig.homePath = jdkPath
     WriteAction.runAndWait<Throwable> {
       configuration.addLanguageRuntime(javaConfig)
     }
@@ -98,7 +98,7 @@ class MavenWslTargetImporter : MavenImporter("", "") {
   }
 
   private fun getJdkPath(project: Project, wslDistribution: WSLDistribution): String? {
-    val projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    val projectSdk = ProjectRootManager.getInstance(project).getProjectSdk()
     if (projectSdk != null && MavenWslUtil.tryGetWslDistributionForPath(projectSdk.homePath) == wslDistribution) {
       projectSdk.homePath?.let { wslDistribution.getWslPath(it) }?.let { return@getJdkPath it }
     }

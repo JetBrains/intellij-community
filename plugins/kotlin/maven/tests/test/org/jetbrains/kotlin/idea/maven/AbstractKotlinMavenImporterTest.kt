@@ -3232,7 +3232,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             try {
                 createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
                 MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getImportingSettings().jdkForImporter =
-                    ExternalSystemJdkUtil.USE_INTERNAL_JAVA;
+                    ExternalSystemJdkUtil.USE_INTERNAL_JAVA
 
                 val jdkHomePath = mockJdk.homePath
                 importProject(

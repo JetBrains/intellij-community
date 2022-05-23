@@ -20,7 +20,7 @@ abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtur
     open fun doTest(testDataPath: String) {
         val testDataFile = File(testDataPath)
         val sourceText = testDataFile.readText()
-        InTextDirectivesUtils.checkIfMuted(sourceText);
+        InTextDirectivesUtils.checkIfMuted(sourceText)
 
         withCustomCompilerOptions(sourceText, project, module) {
             val file = myFixture.addFileToProject(testDataFile.name, sourceText) as KtFile

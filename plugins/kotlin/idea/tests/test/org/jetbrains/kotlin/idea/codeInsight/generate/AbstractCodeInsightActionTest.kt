@@ -37,7 +37,7 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
     protected open fun testAction(action: AnAction, forced: Boolean): Presentation {
         val e = TestActionEvent(action)
         if (ActionUtil.lastUpdateAndCheckDumb(action, e, true) || forced) {
-            ActionUtil.performActionDumbAwareWithCallbacks(action,e);
+            ActionUtil.performActionDumbAwareWithCallbacks(action,e)
         }
         return e.presentation
     }

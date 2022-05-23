@@ -177,7 +177,7 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
     val result = SmartList<T>()
     while (this.isNotEmpty() && pred(this.first()))
       result.add(this.removeFirst())
-    return result;
+    return result
   }
 
 }

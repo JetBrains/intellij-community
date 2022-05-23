@@ -107,7 +107,7 @@ object NativeForCurrentSystemTarget : NativeTargetConfigurator, SingleCoexistenc
                         +"""if (hostOs == "Mac OS X") $variableName = macosX64('$moduleName')"""; nlIndented()
                         +"""else if (hostOs == "Linux") $variableName = linuxX64("$moduleName")"""; nlIndented()
                         +"""else if (isMingwX64) $variableName = mingwX64("$moduleName")"""; nlIndented()
-                        +"""else throw new GradleException("Host OS is not supported in Kotlin/Native.")""";
+                        +"""else throw new GradleException("Host OS is not supported in Kotlin/Native.")"""
                     }
                 }
                 nl()

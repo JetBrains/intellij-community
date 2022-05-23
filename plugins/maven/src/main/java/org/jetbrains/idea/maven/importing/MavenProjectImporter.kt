@@ -29,10 +29,10 @@ interface MavenProjectImporter {
                                     importingSettings, dummyModule)
       return object : MavenProjectImporter {
         override fun importProject(): List<MavenProjectsProcessorTask>? {
-          val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity);
+          val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
           val startTime = System.currentTimeMillis()
           try {
-            return importer.importProject();
+            return importer.importProject()
           }
           finally {
             activity.finished()
@@ -74,7 +74,7 @@ interface MavenProjectImporter {
 
     @JvmStatic
     fun isImportToTreeStructureEnabled(project: Project?): Boolean {
-      if (project == null) return true;
+      if (project == null) return true
       if (MavenProjectTreeLegacyImporter.isAlwaysUseTreeImport()) return true
       return MavenProjectsManager.getInstance(project).importingSettings.isImportToTreeStructure
     }

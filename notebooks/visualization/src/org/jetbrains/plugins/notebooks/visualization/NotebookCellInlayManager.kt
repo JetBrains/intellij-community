@@ -133,7 +133,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   private fun addDocumentListener() {
     val documentListener = object : DocumentListener {
       private var matchingCellsBeforeChange: List<NotebookCellLines.Interval> = emptyList()
-      private var isBulkModeEnabled = false;
+      private var isBulkModeEnabled = false
 
       private fun interestingLogicalLines(document: Document, startOffset: Int, length: Int): IntRange {
         // Adding one additional line is needed to handle deletions at the end of the document.

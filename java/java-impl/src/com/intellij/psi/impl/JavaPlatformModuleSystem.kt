@@ -179,7 +179,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun isPatchedModule(targetModuleName: String, module: Module, place: PsiFileSystemItem): Boolean {
     val rootForFile = ProjectRootManager.getInstance(place.project).fileIndex.getSourceRootForFile(place.virtualFile)
-    return rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(targetModuleName, module, rootForFile.path);
+    return rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(targetModuleName, module, rootForFile.path)
   }
 
   private fun inAddedExports(module: Module, targetName: String, packageName: String, useName: String): Boolean {

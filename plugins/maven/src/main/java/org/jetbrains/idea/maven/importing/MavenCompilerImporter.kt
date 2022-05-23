@@ -31,7 +31,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
-    return true;
+    return true
   }
 
   override fun processChangedModulesOnly(): Boolean {
@@ -44,14 +44,14 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
                        nativeMavenProject: NativeMavenProjectHolder,
                        embedder: MavenEmbedderWrapper,
                        context: ResolveContext) {
-    if (!super.isApplicable(mavenProject)) return;
-    if (!Registry.`is`("maven.import.compiler.arguments", true)) return;
+    if (!super.isApplicable(mavenProject)) return
+    if (!Registry.`is`("maven.import.compiler.arguments", true)) return
     val compilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
       it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder, context)
     }
 
     val autoDetectCompiler = MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler
-    MavenLog.LOG.debug("maven compiler autodetect = ", autoDetectCompiler);
+    MavenLog.LOG.debug("maven compiler autodetect = ", autoDetectCompiler)
 
     val backendCompiler = compilerExtension?.getCompiler(project) ?: return
     val ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
@@ -75,8 +75,8 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
                           mavenProject: MavenProject,
                           changes: MavenProjectChanges,
                           modifiableModelsProvider: IdeModifiableModelsProvider) {
-    if (!super.isApplicable(mavenProject)) return;
-    if (!Registry.`is`("maven.import.compiler.arguments", true)) return;
+    if (!super.isApplicable(mavenProject)) return
+    if (!Registry.`is`("maven.import.compiler.arguments", true)) return
     val config = getConfig(mavenProject) ?: return
 
     var compilers = modifiableModelsProvider.getUserData(COMPILERS)
@@ -122,7 +122,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
           defaultCompilerId == compilerExtension.mavenCompilerId) {
         val backendCompiler = compilerExtension.getCompiler(project)
         val autoDetectCompiler = MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler
-        MavenLog.LOG.debug("maven compiler autodetect = ", autoDetectCompiler);
+        MavenLog.LOG.debug("maven compiler autodetect = ", autoDetectCompiler)
         if (backendCompiler != null && ideCompilerConfiguration.defaultCompiler != backendCompiler && autoDetectCompiler) {
           if (ideCompilerConfiguration.registeredJavaCompilers.contains(backendCompiler)) {
             ideCompilerConfiguration.defaultCompiler = backendCompiler
@@ -245,7 +245,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
         options += "-parameters"
       }
 
-      if (pluginConfiguration == null) return options;
+      if (pluginConfiguration == null) return options
 
       val compilerArguments = pluginConfiguration.getChild("compilerArguments")
       if (compilerArguments != null) {
@@ -281,7 +281,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
           addIfNotNull(options, getResolvedText(compilerArg))
         }
       }
-      return options;
+      return options
     }
   }
 }

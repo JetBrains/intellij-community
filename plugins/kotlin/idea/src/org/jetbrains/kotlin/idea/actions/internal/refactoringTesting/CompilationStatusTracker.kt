@@ -41,7 +41,7 @@ internal class CompilationStatusTracker(private val project: Project) {
     }
 
     private val runBuildAction by lazyPub {
-        val am = ActionManager.getInstance();
+        val am = ActionManager.getInstance()
         val action = am.getAction("CompileProject")
 
         val event = AnActionEvent(
