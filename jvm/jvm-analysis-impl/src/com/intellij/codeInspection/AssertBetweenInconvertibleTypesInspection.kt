@@ -103,7 +103,10 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
         qualifier = getQualifier(lastDescribed as UCallExpression)
       }
       if (qualifier == null || !ASSERTJ_ASSERT_THAT.uCallMatches(qualifier)) return
-      checkConvertibleTypes(call, call.valueArguments[0], qualifier.valueArguments[0], holder)
+      val callValueArguments = call.valueArguments
+      val qualValueArguments = qualifier.valueArguments
+      if (callValueArguments.isEmpty() || qualValueArguments.isEmpty()) return
+      checkConvertibleTypes(call, callValueArguments[0], qualValueArguments[0], holder)
     }
   }
   @Nls
