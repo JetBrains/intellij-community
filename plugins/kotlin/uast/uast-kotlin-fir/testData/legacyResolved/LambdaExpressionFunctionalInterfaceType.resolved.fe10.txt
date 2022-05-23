@@ -9,6 +9,6 @@ UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: map
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> Decompiled_Class: Stream
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = of) -> Decompiled_Method: of
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = map) -> Decompiled_Method: map
-        UReturnExpression -> UQualifiedReferenceExpression -> Decompiled_Method: toString
+        UReturnExpression -> UQualifiedReferenceExpression -> null: null
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> Decompiled_Method: toString
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> null: null
