@@ -565,9 +565,10 @@ final class CommunityRepositoryModules {
       //  "//tools/adt/idea/android/annotations:androidAnnotations",
       withResourceArchiveFromModule("intellij.android.plugin", "../android/annotations", "resources/androidAnnotations.jar")
       //  "//tools/adt/idea/emulator/native:native_lib",
-      withResourceFromModule("intellij.android.emulator", "native/linux", "resources/native")
-      withResourceFromModule("intellij.android.emulator", "native/mac", "resources/native") // <= fixme-ank: mac-arm is broken
-      withResourceFromModule("intellij.android.emulator", "native/win", "resources/native") // <= fixme-ank: mac-arm is broken
+      withResourceFromModule("intellij.android.emulator", "native/linux", "resources/native/linux")
+      withResourceFromModule("intellij.android.emulator", "native/mac", "resources/native/mac")
+      withResourceFromModule("intellij.android.emulator", "native/mac_arm", "resources/native/mac_arm")
+      withResourceFromModule("intellij.android.emulator", "native/win", "resources/native/win")
       //  "//tools/base/app-inspection/inspectors/backgroundtask:bundle",
       //  "//tools/base/app-inspection/inspectors/network:bundle",
       //  "//tools/base/dynamic-layout-inspector/agent/appinspection:bundle",
