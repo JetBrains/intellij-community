@@ -181,6 +181,38 @@ public class PersistentBTreeEnumeratorTest {
   }
 
   @Test
+  public void testEmptyEnumeratorTryEnumerateDoesntAccessDisk() throws IOException {
+    myEnumerator.force();
+    boolean isEmpty = myEnumerator.processAllDataObject(s -> false, null);
+    assertTrue(isEmpty);
+
+    StorageLockContext.forceDirectMemoryCache();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
+
+    myEnumerator.tryEnumerate("qwerty");
+
+    FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    // ensure enumerator didn't request any page
+
+    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
+    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
+    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
+
+    assertEquals(0, pageLoadDiff);
+    assertEquals(0, pageMissDiff);
+    assertEquals(0, pageHitDiff);
+    assertEquals(0, pageFastHitDiff);
+  }
+
+  @Test
   public void testSmallEnumeratorTryEnumeratePerformance() throws IOException {
     List<String> data = Arrays.asList("qwe", "asd", "zxc", "123");
     for (String item : data) {
