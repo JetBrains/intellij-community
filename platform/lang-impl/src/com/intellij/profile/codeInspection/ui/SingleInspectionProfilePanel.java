@@ -771,8 +771,34 @@ public class SingleInspectionProfilePanel extends JPanel {
       final double severityPanelWeightY;
       ScopesAndSeveritiesTable scopesAndScopesAndSeveritiesTable;
       myOptionsLabel = new JBLabel(AnalysisBundle.message("inspections.settings.options.title"));
-      if (scopesNames.isEmpty()) {
 
+      if (scopesNames.isEmpty()) {
+        final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
+
+        // Scope
+        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor()), myProfile, project, null) {
+          @Override
+          protected void onScopesOrderChanged() {
+            updateRecursively(nodes, true);
+          }
+
+          @Override
+          protected void onScopeAdded(@NotNull String scopeName) {
+            updateRecursively(nodes, true);
+          }
+        };
+
+        final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
+          scopesChooser.getTemplatePresentation(),
+          ActionPlaces.UNKNOWN
+        );
+        final var scopesChooserPanel = UI.PanelFactory.panel(scopesChooserComponent)
+          .withLabel(InspectionsBundle.message("inspection.scope"))
+          .moveLabelOnTop()
+          .createPanel();
+        severityPanel.add(scopesChooserPanel, constraint.insets(0, 0, 0, UIUtil.DEFAULT_HGAP).get());
+
+        // Severity
         final LevelChooserAction severityLevelChooser =
           new LevelChooserAction(myProfile.getProfileManager().getSeverityRegistrar(),
                                  includeDoNotShow(nodes)) {
@@ -797,26 +823,10 @@ public class SingleInspectionProfilePanel extends JPanel {
           ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()));
         severityLevelChooser.setChosen(severity);
 
-        final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor()), myProfile, project, null) {
-          @Override
-          protected void onScopesOrderChanged() {
-            updateRecursively(nodes, true);
-          }
-
-          @Override
-          protected void onScopeAdded(@NotNull String scopeName) {
-            updateRecursively(nodes, true);
-          }
-        };
-
-        final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
-
-        JLabel severityLabel = new JLabel(InspectionsBundle.message("inspection.severity"));
-        severityPanel.add(severityLabel, constraint.anchorStart().fillY().insets(10, 0, 10, 0).get());
-
         final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(
-          severityLevelChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
-        severityPanel.add(severityLevelChooserComponent, constraint.growY().fillXY().get());
+          severityLevelChooser.getTemplatePresentation(),
+          ActionPlaces.UNKNOWN
+        );
         severityLevelChooserComponent.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
           KeyStroke.getKeyStroke(KeyEvent.VK_V, MnemonicHelper.getFocusAcceleratorKeyMask()),
           "changeSeverity"
@@ -829,17 +839,35 @@ public class SingleInspectionProfilePanel extends JPanel {
             button.showPopup();
           }
         });
+        final var severityLevelChooserPanel = UI.PanelFactory.panel(severityLevelChooserComponent)
+          .withLabel(InspectionsBundle.message("inspection.severity"))
+          .moveLabelOnTop()
+          .createPanel();
+        severityPanel.add(severityLevelChooserPanel, constraint.growXY().fillXY().get());
 
-        final JComponent scopesChooserComponent = scopesChooser.createCustomComponent(
-          scopesChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
-        severityPanel.add(scopesChooserComponent, constraint.growX().noFill().get());
+        // Highlighting
+        final HighlightingChooser highlightingChooser = new HighlightingChooser() {
+          @Override
+          void onKeyChosen(@NotNull TextAttributesKey key) {
+          }
+        };
+        final var highlightsChooserComponent = highlightingChooser.createCustomComponent(
+          highlightingChooser.getTemplatePresentation(),
+          ActionPlaces.UNKNOWN
+        );
+        highlightingChooser.setChosen(HighlightInfoType.WARNING.getAttributesKey());
+
+        final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
+          .withLabel(InspectionsBundle.message("inspection.highlighting"))
+          .moveLabelOnTop()
+          .createPanel();
+        severityPanel.add(highlightChooserPanel, constraint.get());
 
         severityPanelWeightY = 0.0;
         if (toolState != null) {
           if (!showDefaultConfigurationOptions) {
-            severityLabel.setVisible(false);
-            severityLevelChooserComponent.setVisible(false);
-            scopesChooserComponent.setVisible(false);
+            severityLevelChooserPanel.setVisible(false);
+            scopesChooserPanel.setVisible(false);
           }
 
           setConfigPanel(configPanelAnchor, toolState);
@@ -902,14 +930,8 @@ public class SingleInspectionProfilePanel extends JPanel {
               }
             }
           });
-        final JPanel panel = wrappedTable.createPanel();
-        panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
-        severityPanel = UI.PanelFactory
-          .panel(panel)
-          .withLabel(InspectionsBundle.message("inspection.scopes.and.severities"))
-          .moveLabelOnTop()
-          .resizeY(true)
-          .createPanel();
+        severityPanel = wrappedTable.createPanel();
+        severityPanel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
         severityPanelWeightY = 0.3;
       }
 
