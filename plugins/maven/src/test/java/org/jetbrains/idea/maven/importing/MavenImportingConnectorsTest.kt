@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -172,7 +172,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                           "    <relativePath>../parent/pom.xml</relativePath>\n" +
                           "  </parent>")
     importProject()
-    assertModules("project1", "m1")
+    assertModules("project1", mn("project", "m1"))
 
     assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
 

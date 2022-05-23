@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -24,7 +25,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
@@ -312,7 +312,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                                  "</parent>");
 
     importProject();
-    assertModules("project", "m1");
+    assertModules("project", mn("project", "m1"));
 
     List<MavenProject> roots = getProjectsTree().getRootProjects();
     assertEquals(1, roots.size());
@@ -349,7 +349,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                                  "</parent>");
 
     importProject();
-    assertModules("project", "m1");
+    assertModules("project", mn("project", "m1"));
 
     List<MavenProject> roots = getProjectsTree().getRootProjects();
     assertEquals(1, roots.size());
@@ -1062,8 +1062,8 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProject();
 
     assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("project")));
-    assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
-    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m2")));
+    assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
+    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m2"))));
   }
 
   @Test
@@ -1119,7 +1119,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                          "</build>");
 
     importProject();
-    assertModules("project", "m");
+    assertModules("project", mn("project", "m"));
   }
 
   @Test
@@ -1173,9 +1173,9 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
     importProject();
 
-    assertModules("project", "m1", "m2");
-    assertModuleLibDeps("m1");
-    assertModuleLibDeps("m2", "Maven: junit:junit:4.0");
+    assertModules("project", mn("project", "m1"), mn("project", "m2"));
+    assertModuleLibDeps(mn("project", "m1"));
+    assertModuleLibDeps(mn("project", "m2"), "Maven: junit:junit:4.0");
   }
 
   @Test

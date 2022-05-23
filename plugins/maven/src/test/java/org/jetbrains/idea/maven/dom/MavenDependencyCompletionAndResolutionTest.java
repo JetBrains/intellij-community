@@ -182,7 +182,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                                     "<version>1</version>");
 
     importProject();
-    assertModules("project", "module1", "module2");
+    assertModules("project", mn("project", "module1"), "module2");
 
     createModulePom("m2", "<groupId>test</groupId>" +
                     "<artifactId>module2</artifactId>" +

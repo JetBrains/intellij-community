@@ -60,7 +60,7 @@ interface MavenProjectImporter {
                                                         importingSettings, modelsProvider, project)
       }
 
-      if (isImportToTreeStructureEnabled(project) || MavenProjectTreeLegacyImporter.isAlwaysUseTreeImport()) {
+      if (isImportToTreeStructureEnabled(project)) {
         return MavenProjectTreeLegacyImporter(project, projectsTree, projectsToImportWithChanges,
                                               modelsProvider, importingSettings)
       }
@@ -75,6 +75,7 @@ interface MavenProjectImporter {
     @JvmStatic
     fun isImportToTreeStructureEnabled(project: Project?): Boolean {
       if (project == null) return true;
+      if (MavenProjectTreeLegacyImporter.isAlwaysUseTreeImport()) return true
       return MavenProjectsManager.getInstance(project).importingSettings.isImportToTreeStructure
     }
   }
