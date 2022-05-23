@@ -394,12 +394,9 @@ private fun buildOsSpecificDistributions(context: BuildContext): List<Distributi
     }
   }
 
-  val distTasks = listOfNotNull(
-    createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.x64),
-    createDistributionForOsTask(OsFamily.MACOS, JvmArchitecture.aarch64),
-    createDistributionForOsTask(OsFamily.WINDOWS, JvmArchitecture.x64),
-    createDistributionForOsTask(OsFamily.LINUX, JvmArchitecture.x64)
-  )
+  val distTasks = SUPPORTED_DISTRIBUTIONS.mapNotNull {
+    createDistributionForOsTask(it.os, it.arch)
+  }
 
   return spanBuilder(stepMessage).useWithScope {
     runInParallel(distTasks, context)
