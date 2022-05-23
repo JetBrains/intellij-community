@@ -7,6 +7,7 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.function.Predicate
+import java.util.regex.Pattern
 
 @PublishedApi
 internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
@@ -138,36 +139,38 @@ private fun deleteFile(file: Path) {
 @JvmOverloads
 fun substituteTemplatePlaceholders(inputFile: Path,
                                    outputFile: Path,
-                                   placeholderChar: String,
+                                   placeholder: String,
                                    values: List<Pair<String, String>>,
                                    mustUseAllPlaceholders: Boolean = true) {
   var result = Files.readString(inputFile)
 
   val missingPlaceholders = mutableListOf<String>()
   for ((name, value) in values) {
-    if (name.contains(placeholderChar)) {
-      error("Do not use placeholder '$placeholderChar' in name: $name")
+    check (!name.contains(placeholder)) {
+      "Do not use placeholder '$placeholder' in name: $name"
     }
 
-    val placeholder = "$placeholderChar$name$placeholderChar"
-    if (!result.contains(placeholder)) {
-      missingPlaceholders.add(placeholder)
+    val s = "$placeholder$name$placeholder"
+    if (!result.contains(s)) {
+      missingPlaceholders.add(s)
     }
 
-    result = result.replace(placeholder, value)
+    result = result.replace(s, value)
   }
 
-  if (mustUseAllPlaceholders && missingPlaceholders.isNotEmpty()) {
-    error("Missing placeholders [${missingPlaceholders.joinToString(" ")}] in template file $inputFile")
+  check(!mustUseAllPlaceholders || missingPlaceholders.isEmpty()) {
+    "Missing placeholders [${missingPlaceholders.joinToString(" ")}] in template file $inputFile"
   }
 
+  val escapedPlaceHolder = Pattern.quote(placeholder)
+  val regex = Regex("$escapedPlaceHolder.+$escapedPlaceHolder")
   val unsubstituted = result
-    .split('\n')
+    .splitToSequence('\n')
     .mapIndexed { line, s -> "line ${line + 1}: $s" }
-    .filter { Regex(Regex.escape(placeholderChar) + ".+" + Regex.escape(placeholderChar)).containsMatchIn(it) }
+    .filter(regex::containsMatchIn)
     .joinToString("\n")
-  if (unsubstituted.isNotBlank()) {
-    error("Some template parameters were left unsubstituted in template file $inputFile:\n$unsubstituted")
+  check (unsubstituted.isBlank()) {
+    "Some template parameters were left unsubstituted in template file $inputFile:\n$unsubstituted"
   }
 
   Files.createDirectories(outputFile.parent)

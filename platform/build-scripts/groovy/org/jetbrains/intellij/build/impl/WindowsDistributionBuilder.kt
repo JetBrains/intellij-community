@@ -28,7 +28,7 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiPredicate
 
-class WindowsDistributionBuilder(
+internal class WindowsDistributionBuilder(
   private val context: BuildContext,
   private val customizer: WindowsDistributionCustomizer,
   private val ideaProperties: Path?,
@@ -50,6 +50,7 @@ class WindowsDistributionBuilder(
 
     val binWin = FileSet(context.paths.communityHomeDir.resolve("bin/win")).includeAll()
     if (!context.includeBreakGenLibraries()) {
+      @Suppress("SpellCheckingInspection")
       binWin.exclude("breakgen*")
     }
     binWin.copyToDir(distBinDir)
@@ -99,6 +100,7 @@ class WindowsDistributionBuilder(
 
     val jreDir = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.WINDOWS, arch)
 
+    @Suppress("SpellCheckingInspection")
     val vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
     check(Files.exists(vcRtDll)) {
       "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
@@ -190,7 +192,7 @@ class WindowsDistributionBuilder(
     substituteTemplatePlaceholders(
       inputFile = winScripts.resolve("executable-template.bat"),
       outputFile = distBinDir.resolve(scriptName),
-      placeholderChar = "@@",
+      placeholder = "@@",
       values = listOf(
         Pair("product_full", fullName),
         Pair("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
@@ -204,6 +206,7 @@ class WindowsDistributionBuilder(
     )
 
     val inspectScript = context.productProperties.inspectCommandName
+    @Suppress("SpellCheckingInspection")
     for (fileName in listOf("format.bat", "inspect.bat", "ltedit.bat")) {
       val sourceFile = winScripts.resolve(fileName)
       val targetFile = distBinDir.resolve(fileName)
@@ -211,7 +214,7 @@ class WindowsDistributionBuilder(
       substituteTemplatePlaceholders(
         inputFile = sourceFile,
         outputFile = targetFile,
-        placeholderChar = "@@",
+        placeholder = "@@",
         values = listOf(
           Pair("product_full", fullName),
           Pair("script_name", scriptName),
@@ -256,6 +259,7 @@ class WindowsDistributionBuilder(
       val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
       val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico")
       val appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
+      @Suppress("SpellCheckingInspection")
       Files.writeString(launcherPropertiesPath, """
         IDS_JDK_ONLY=$context.productProperties.toolsJarRequired
         IDS_JDK_ENV_VAR=${envVarBaseName}_JDK
