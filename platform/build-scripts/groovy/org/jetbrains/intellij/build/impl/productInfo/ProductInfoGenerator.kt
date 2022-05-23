@@ -31,7 +31,7 @@ internal fun generateMultiPlatformProductJson(relativePathToBin: String,
   val json = ProductInfoData(
     name = appInfo.productName,
     version = appInfo.fullVersion,
-    versionSuffix = appInfo.versionSuffix,
+    versionSuffix = appInfo.versionSuffix!!,
     buildNumber = context.buildNumber,
     productCode = appInfo.productCode,
     dataDirectoryName = context.systemSelector,

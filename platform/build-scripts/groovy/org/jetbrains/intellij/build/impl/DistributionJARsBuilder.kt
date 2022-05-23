@@ -9,17 +9,15 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
-import groovy.lang.Reference
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
-import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getSearchableOptionsDir
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
@@ -51,7 +49,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Predicate
 import java.util.stream.Collectors
-import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
 /**
@@ -330,23 +327,23 @@ class DistributionJARsBuilder {
     private fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
       for (resourceData in layout.resourcePaths) {
         val source = basePath(context, resourceData.moduleName).resolve(resourceData.resourcePath).normalize()
-        val target = Reference(targetDirectory.resolve(resourceData.relativeOutputPath))
+        var target = targetDirectory.resolve(resourceData.relativeOutputPath)
         if (resourceData.packToZip) {
           if (Files.isDirectory(source)) {
             // do not compress - doesn't make sense as it is a part of distribution
-            zip(target.get(), mapOf(source to ""), compress = false)
+            zip(target, mapOf(source to ""), compress = false)
           }
           else {
-            target.set(target.get().resolve(source.fileName))
-            Compressor.Zip(target.get().toFile()).use { it.addFile(target.get().fileName.toString(), source) }
+            target = target.resolve(source.fileName)
+            Compressor.Zip(target).use { it.addFile(target.fileName.toString(), source) }
           }
         }
         else {
           if (Files.isRegularFile(source)) {
-            copyFileToDir(source, target.get())
+            copyFileToDir(source, target)
           }
           else {
-            copyDir(source, target.get())
+            copyDir(source, target)
           }
         }
       }
@@ -461,7 +458,7 @@ class DistributionJARsBuilder {
         createTask(spanBuilder("write patched app info")) {
           val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-          val result = injectAppInfo(moduleOutDir.resolve(relativePath), context.applicationInfo.getAppInfoXml())
+          val result = injectAppInfo(moduleOutDir.resolve(relativePath), context.applicationInfo.appInfoXml)
           moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
         null
         }
@@ -597,7 +594,7 @@ class DistributionJARsBuilder {
         nonPluginsEntries.add(e)
       }
     }
-    for (entry: DistributionFileEntry in DefaultGroovyMethods.plus(nonPluginsEntries, pluginsEntries)) {
+    for (entry in (nonPluginsEntries + pluginsEntries)) {
       when (entry) {
         is ModuleOutputEntry -> classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
         is LibraryFileEntry -> classPath.add((entry as LibraryFileEntry).libraryFile.toString())
@@ -1004,16 +1001,16 @@ fun buildLib(moduleOutputPatcher: ModuleOutputPatcher, platform: PlatformLayout,
   val scrambleTool = context.proprietaryBuildTools.scrambleTool ?: return libDirMappings
   val libDir = context.paths.distAllDir.resolve("lib")
   for (forbiddenJarName in scrambleTool.getNamesOfJarsRequiredToBeScrambled()) {
-    if (Files.exists(libDir.resolve(forbiddenJarName))) {
-      context.messages.error("The following JAR cannot be included into the product 'lib' directory," +
-                             " it need to be scrambled with the main jar: $forbiddenJarName")
+    check (!Files.exists(libDir.resolve(forbiddenJarName))) {
+      "The following JAR cannot be included into the product 'lib' directory, it need to be scrambled with the main jar: $forbiddenJarName"
     }
   }
   val modulesToBeScrambled = scrambleTool.getNamesOfModulesRequiredToBeScrambled()
   val productLayout = context.productProperties.productLayout
   for (jarName in platform.moduleJars.keySet()) {
     if (jarName != productLayout.mainJarName && jarName != PlatformModules.PRODUCT_JAR) {
-      val notScrambled = DefaultGroovyMethods.intersect(platform.moduleJars.get(jarName), modulesToBeScrambled)
+      @Suppress("ConvertArgumentToSet")
+      val notScrambled = platform.moduleJars.get(jarName).intersect(modulesToBeScrambled)
       if (!notScrambled.isEmpty()) {
         context.messages.error("Module \'${notScrambled.first()}\' is included into $jarName which is not scrambled.")
       }

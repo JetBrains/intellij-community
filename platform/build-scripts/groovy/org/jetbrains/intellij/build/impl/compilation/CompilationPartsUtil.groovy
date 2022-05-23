@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.impl.BuildHelperKt
 import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
@@ -93,24 +94,16 @@ final class CompilationPartsUtil {
     }
 
     messages.block("Building zip archives") {
-      try {
-        runUnderStatisticsTimer(messages, 'compile-parts:pack:time') {
-          contexts.each { PackAndUploadContext ctx ->
-            def childMessages = messages.forkForParallelTask(ctx.name)
-            executor.submit {
-              withForkedMessages(childMessages) { BuildMessages msgs ->
-                packItem(msgs, context, ctx)
-              }
-            }
+      runUnderStatisticsTimer(messages, 'compile-parts:pack:time') {
+        contexts.each { PackAndUploadContext ctx ->
+          executor.submit {
+            packItem(context, ctx)
           }
-
-          executor.waitForAllComplete(messages)
         }
-        executor.reportErrors(messages)
+
+        executor.waitForAllComplete(messages)
       }
-      finally {
-        messages.onAllForksFinished()
-      }
+      executor.reportErrors(messages)
     }
     contexts
   }
@@ -507,28 +500,20 @@ final class CompilationPartsUtil {
     }
 
     messages.block("Unpack compiled classes archives") {
-      try {
-        long start = System.nanoTime()
-        toUnpack.each { ctx ->
-          def childMessages = messages.forkForParallelTask("Unpacking $ctx.name")
-          executor.submit {
-            withForkedMessages(childMessages) { BuildMessages msgs ->
-              unpack(msgs, ctx)
-            }
-          }
+      long start = System.nanoTime()
+      toUnpack.each { ctx ->
+        executor.submit {
+          unpack(ctx)
         }
-        executor.waitForAllComplete(messages)
-
-        messages.reportStatisticValue('compile-parts:unpacked:bytes', toUnpack.collect { it.jar.size() }.sum(0l).toString())
-        messages.reportStatisticValue('compile-parts:unpacked:count', toUnpack.size().toString())
-        messages.reportStatisticValue('compile-parts:unpack:time',
-                                      TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-
-        executor.reportErrors(messages)
       }
-      finally {
-        messages.onAllForksFinished()
-      }
+      executor.waitForAllComplete(messages)
+
+      messages.reportStatisticValue('compile-parts:unpacked:bytes', toUnpack.collect { it.jar.size() }.sum(0l).toString())
+      messages.reportStatisticValue('compile-parts:unpacked:count', toUnpack.size().toString())
+      messages.reportStatisticValue('compile-parts:unpack:time',
+                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+
+      executor.reportErrors(messages)
     }
 
     executor.close()
@@ -536,25 +521,29 @@ final class CompilationPartsUtil {
     executor.reportErrors(messages)
   }
 
-  private static void unpack(BuildMessages messages, FetchAndUnpackContext ctx) {
-    messages.block("Unpacking $ctx.name") {
-      Files.createDirectories(ctx.output)
-      new Decompressor.Zip(ctx.jar).overwrite(true).extract(ctx.output)
-      if (ctx.saveHash) {
-        // Save actual hash
-        Files.writeString(ctx.output.resolve(".hash"), ctx.hash)
+  private static void unpack(FetchAndUnpackContext ctx) {
+    BuildHelperKt.span(TraceManager.spanBuilder("unpack").setAttribute("name", ctx.name), new Runnable() {
+      @Override
+      void run() {
+        Files.createDirectories(ctx.output)
+        new Decompressor.Zip(ctx.jar).overwrite(true).extract(ctx.output)
+        if (ctx.saveHash) {
+          // Save actual hash
+          Files.writeString(ctx.output.resolve(".hash"), ctx.hash)
+        }
       }
-    }
+    })
   }
 
-  private static void packItem(BuildMessages messages, CompilationContext compilationContext, PackAndUploadContext ctx) {
-    messages.block("Packing $ctx.name") {
-      def destination = new File(ctx.archive).toPath()
-      if (Files.exists(destination)) {
-        Files.delete(destination)
+  private static void packItem(CompilationContext compilationContext, PackAndUploadContext ctx) {
+    BuildHelperKt.span(TraceManager.spanBuilder("pack").setAttribute("name", ctx.name), new Runnable() {
+      @Override
+      void run() {
+        def destination = Path.of(ctx.archive)
+        Files.deleteIfExists(destination)
+        BuildHelperKt.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
       }
-      BuildHelperKt.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
-    }
+    })
   }
 
   private static String computeHash(Path file) {
@@ -593,7 +582,7 @@ final class CompilationPartsUtil {
   }
 
   @SuppressWarnings('GrUnnecessaryPublicModifier')
-  public static class PackAndUploadContext {
+  public static final class PackAndUploadContext {
     final File output
     final String archive
     final String name
@@ -636,16 +625,6 @@ final class CompilationPartsUtil {
     finally {
       def time = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
       messages.reportStatisticValue(name, time.toString())
-    }
-  }
-
-  private static <V> V withForkedMessages(BuildMessages messages, Closure<V> body) {
-    messages.onForkStarted()
-    try {
-      return body.call(messages)
-    }
-    finally {
-      messages.onForkFinished()
     }
   }
 }

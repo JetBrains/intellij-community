@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import groovy.transform.CompileStatic
@@ -11,14 +11,16 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
 @PackageScope
-final class NamedThreadPoolExecutor extends ThreadPoolExecutor {
+final class NamedThreadPoolExecutor {
   private final AtomicInteger counter = new AtomicInteger()
   private final List<Future> futures = new LinkedList<Future>()
   private final ConcurrentLinkedDeque<Throwable> errors = new ConcurrentLinkedDeque<Throwable>()
 
+  private final ThreadPoolExecutor executor
+
   NamedThreadPoolExecutor(String threadNamePrefix, int maximumPoolSize) {
-    super(maximumPoolSize, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(4096))
-    setThreadFactory(new ThreadFactory() {
+    executor = new ThreadPoolExecutor(maximumPoolSize, maximumPoolSize, 1, TimeUnit.MINUTES, new LinkedBlockingDeque(4096))
+    executor.setThreadFactory(new ThreadFactory() {
       @NotNull
       @Override
       Thread newThread(@NotNull Runnable r) {
@@ -30,17 +32,25 @@ final class NamedThreadPoolExecutor extends ThreadPoolExecutor {
   }
 
   void close() {
-    shutdown()
-    awaitTermination(10, TimeUnit.SECONDS)
-    shutdownNow()
+    executor.shutdown()
+    executor.awaitTermination(10, TimeUnit.SECONDS)
+    executor.shutdownNow()
   }
 
-  void submit(Closure<?> block) {
-    futures.add(this.submit(new Runnable() {
+  void prestartAllCoreThreads() {
+    executor.prestartAllCoreThreads()
+  }
+
+  void setMaximumPoolSize(int maximumPoolSize) {
+    executor.setMaximumPoolSize(maximumPoolSize)
+  }
+
+  void submit(Runnable block) {
+    futures.add(executor.submit(new Runnable() {
       @Override
       void run() {
         try {
-          block()
+          block.run()
         }
         catch (Throwable e) {
           errors.add(e)
@@ -84,5 +94,9 @@ final class NamedThreadPoolExecutor extends ThreadPoolExecutor {
         Thread.sleep(TimeUnit.SECONDS.toMillis(1))
       }
     }
+  }
+
+  int getCorePoolSize() {
+    return executor.corePoolSize
   }
 }

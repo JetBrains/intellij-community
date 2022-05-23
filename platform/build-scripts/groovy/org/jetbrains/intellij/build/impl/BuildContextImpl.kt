@@ -7,10 +7,8 @@ import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.codehaus.groovy.runtime.StringGroovyMethods
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.ProprietaryBuildTools.Companion.DUMMY
-import org.jetbrains.intellij.build.impl.CompilationContextImpl.Companion.create
 import org.jetbrains.intellij.build.projector.configure
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -24,7 +22,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.function.BiFunction
 import java.util.stream.Collectors
 
 class BuildContextImpl : BuildContext {
@@ -70,7 +67,7 @@ class BuildContextImpl : BuildContext {
     buildNumber = number ?: readSnapshotBuildNumber(paths.communityHomeDir)
     xBootClassPathJarNames = productProperties.xBootClassPathJarNames
     bootClassPathJarNames = listOf("util.jar", "util_rt.jar")
-    applicationInfo = ApplicationInfoPropertiesImpl(project, productProperties, options, messages).patch(this)
+    applicationInfo = ApplicationInfoPropertiesImpl(project, productProperties, options).patch(this)
     if (productProperties.productCode == null) {
       productProperties.productCode = applicationInfo.productCode
     }
@@ -147,11 +144,12 @@ class BuildContextImpl : BuildContext {
       val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
       val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
       val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
-      val compilationContext = create(communityHome = communityHome,
-                                      projectHome = projectHome,
-                                      buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHomeAsString,
-                                                                                                productProperties, options),
-                                      options = options)
+      val compilationContext = CompilationContextImpl.create(
+        communityHome = communityHome,
+        projectHome = projectHome,
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
+        options = options
+      )
       return BuildContextImpl(compilationContext, productProperties, windowsDistributionCustomizer, linuxDistributionCustomizer,
                               macDistributionCustomizer, proprietaryBuildTools, ConcurrentLinkedQueue())
     }
@@ -273,42 +271,42 @@ class BuildContextImpl : BuildContext {
     return shouldBuildDistributions() && listOf(BuildOptions.OS_ALL, os).contains(options.targetOs.lowercase())
   }
 
-  override fun forkForParallelTask(taskName: String): BuildContext {
-    return BuildContextImpl(this, messages.forkForParallelTask(taskName), distFiles)
-  }
-
   override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
-    val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString)
-    val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString)
-    val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString)
 
     /**
      * FIXME compiled classes are assumed to be already fetched in the FIXME from [CompilationContextImpl.prepareForBuild], please change them together
      */
     val options = BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
-    val compilationContextCopy = compilationContext.createCopy(messages, options, createBuildOutputRootEvaluator(
-      paths.projectHome, productProperties, options))
-    val copy = BuildContextImpl(compilationContextCopy, productProperties, windowsDistributionCustomizer, linuxDistributionCustomizer,
-                                macDistributionCustomizer, proprietaryBuildTools, ConcurrentLinkedQueue())
+    val compilationContextCopy = compilationContext.createCopy(
+      messages = messages,
+      options = options,
+      buildOutputRootEvaluator = createBuildOutputRootEvaluator(paths.projectHomeDir, productProperties, options)
+    )
+    val copy = BuildContextImpl(
+      compilationContext = compilationContextCopy,
+      productProperties = productProperties,
+      windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString),
+      linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
+      macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
+      proprietaryBuildTools = proprietaryBuildTools,
+      distFiles = ConcurrentLinkedQueue()
+    )
     copy.paths.artifactDir = paths.artifactDir.resolve(productProperties.productCode!!)
     copy.paths.artifacts = "${paths.artifacts}/${productProperties.productCode}"
     copy.compilationContext.prepareForBuild()
     return copy
   }
 
-  override fun includeBreakGenLibraries(): Boolean {
-    return isJavaSupportedInProduct
-  }
+  override fun includeBreakGenLibraries() = isJavaSupportedInProduct
 
   private val isJavaSupportedInProduct: Boolean
     get() = productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
 
   override fun patchInspectScript(path: Path) {
     //todo[nik] use placeholder in inspect.sh/inspect.bat file instead
-    Files.writeString(path, StringGroovyMethods.replaceAll(Files.readString(path), " inspect ",
-                                                           " " + productProperties.inspectCommandName + " "))
+    Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
   override fun getAdditionalJvmArguments(): List<String> {
@@ -351,12 +349,14 @@ class BuildContextImpl : BuildContext {
   }
 }
 
-private fun createBuildOutputRootEvaluator(projectHome: String,
+private fun createBuildOutputRootEvaluator(projectHome: Path,
                                            productProperties: ProductProperties,
-                                           buildOptions: BuildOptions): BiFunction<JpsProject, BuildMessages, String> {
-  return BiFunction { project: JpsProject?, messages: BuildMessages? ->
-    val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions, messages)
-    projectHome + "/out/" + productProperties.getOutputDirectoryName(applicationInfo)
+                                           buildOptions: BuildOptions): (JpsProject) -> Path {
+  return { project ->
+    val applicationInfo = ApplicationInfoPropertiesImpl(project = project,
+                                                        productProperties = productProperties,
+                                                        buildOptions = buildOptions)
+    projectHome.resolve("out/${productProperties.getOutputDirectoryName(applicationInfo)}")
   }
 }
 

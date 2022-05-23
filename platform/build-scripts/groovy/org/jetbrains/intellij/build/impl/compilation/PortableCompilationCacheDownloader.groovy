@@ -104,7 +104,7 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
         context.messages.error("Unable to find last cached commit for $availableCommitDepth in $lastCommits")
       }
       context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
-      context.messages.info("Using $executor.corePoolSize threads to download caches.")
+      context.messages.info("Using ${executor.corePoolSize} threads to download caches.")
       if (!downloadCompilationOutputsOnly || anyLocalChanges) {
         executor.submit {
           saveJpsCache(lastCachedCommit)

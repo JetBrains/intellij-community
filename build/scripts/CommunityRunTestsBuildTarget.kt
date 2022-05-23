@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.TestingTasks
-import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.intellij.build.impl.createCompilationContext
 
 /**
  * Compiles the sources and runs tests from 'community' project. Look at [org.jetbrains.intellij.build.TestingOptions] to see which
@@ -16,8 +16,9 @@ object CommunityRunTestsBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    val outputDir = "$communityHome/out/tests"
-    val context = CompilationContextImpl.create(communityHome, communityHome, outputDir)
+    val context = createCompilationContext(communityHome = communityHome,
+                                           projectHome = communityHome,
+                                           defaultOutputRoot = communityHome.resolve("out/tests"))
     TestingTasks.create(context).runTests(defaultMainModule = "intellij.idea.community.main")
   }
 }

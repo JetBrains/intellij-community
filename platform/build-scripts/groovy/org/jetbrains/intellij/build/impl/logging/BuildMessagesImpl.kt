@@ -3,10 +3,8 @@ package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.containers.Stack
-import com.intellij.util.text.UniqueNameGenerator
 import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
-import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.LayoutBuilder
@@ -14,36 +12,32 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Path
 import java.util.*
-import java.util.function.BiFunction
 
 class BuildMessagesImpl private constructor(private val logger: BuildMessageLogger,
-                                            private val loggerFactory: BiFunction<String?, AntTaskLogger, BuildMessageLogger>,
-                                            private val antTaskLogger: AntTaskLogger,
                                             private val debugLogger: DebugLogger,
                                             private val parentInstance: BuildMessagesImpl?) : BuildMessages {
-  private val forkedInstances = ArrayList<BuildMessagesImpl>()
   private val delayedMessages = ArrayList<LogMessage>()
-  private val taskNameGenerator = UniqueNameGenerator()
   private val blockNames = Stack<String>()
 
   companion object {
     fun create(): BuildMessagesImpl {
       val antProject = LayoutBuilder.getAnt().project
       val key = "IntelliJBuildMessages"
-      val registered = antProject.getReference<Any>(key)
-      if (registered != null) {
-        return DefaultGroovyMethods.asType(registered, BuildMessagesImpl::class.java)
+      antProject.getReference<BuildMessagesImpl>(key)?.let {
+        return it
       }
 
       val underTeamCity = System.getenv("TEAMCITY_VERSION") != null
       disableAntLogging(antProject)
       val mainLoggerFactory = if (underTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
       val debugLogger = DebugLogger()
-      val loggerFactory = BiFunction<String?, AntTaskLogger, BuildMessageLogger> { taskName: String?, logger: AntTaskLogger ->
+      val loggerFactory: (String?, AntTaskLogger) -> BuildMessageLogger = { taskName, logger ->
         CompositeBuildMessageLogger(listOf(mainLoggerFactory.apply(taskName, logger), debugLogger.createLogger(taskName)))
       }
       val antTaskLogger = AntTaskLogger(antProject)
-      val messages = BuildMessagesImpl(loggerFactory.apply(null, antTaskLogger), loggerFactory, antTaskLogger, debugLogger, null)
+      val messages = BuildMessagesImpl(logger = loggerFactory(null, antTaskLogger),
+                                       debugLogger = debugLogger,
+                                       parentInstance = null)
       antTaskLogger.defaultHandler = messages
       antProject.addBuildListener(antTaskLogger)
       antProject.addReference(key, messages)
@@ -186,29 +180,5 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
       //Until it is fixed we need to delay delivering of messages from the tasks running in parallel until all tasks have been finished.
       delayedMessages.add(message)
     }
-  }
-
-  override fun forkForParallelTask(taskName: String): BuildMessages {
-    val forked = BuildMessagesImpl(loggerFactory.apply(taskNameGenerator.generateUniqueName(taskName), antTaskLogger), loggerFactory, antTaskLogger, debugLogger, this)
-    DefaultGroovyMethods.leftShift(forkedInstances, forked)
-    return forked
-  }
-
-  override fun onAllForksFinished() {
-    for (forked in forkedInstances) {
-      for (message in forked.delayedMessages) {
-        forked.logger.processMessage(message)
-      }
-      forked.logger.dispose()
-    }
-    forkedInstances.clear()
-  }
-
-  override fun onForkStarted() {
-    antTaskLogger.registerThreadHandler(Thread.currentThread(), this)
-  }
-
-  override fun onForkFinished() {
-    antTaskLogger.unregisterThreadHandler(Thread.currentThread())
   }
 }

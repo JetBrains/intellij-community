@@ -2,9 +2,11 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
 import org.junit.Test
+import java.nio.file.Files
 
 class BundledRuntimeTest {
   @Test
@@ -64,14 +66,14 @@ class BundledRuntimeTest {
   }
 
   private fun withCompilationContext(block: (CompilationContext) -> Unit) {
-    val tempDir = FileUtil.createTempDirectory("compilation-context-", "")
+    val tempDir = Files.createTempDirectory("compilation-context-")
     try {
       val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-      val context = CompilationContextImpl.create(communityHome, communityHome, tempDir.toString())
+      val context = createCompilationContext(communityHome = communityHome, projectHome = communityHome, defaultOutputRoot = tempDir)
       block(context)
     }
     finally {
-      FileUtil.delete(tempDir)
+      NioFiles.deleteRecursively(tempDir)
     }
   }
 }

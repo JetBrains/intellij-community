@@ -36,22 +36,4 @@ interface BuildMessages: System.Logger {
   fun artifactBuilt(relativeArtifactPath: String)
 
   fun reportStatisticValue(key: String, value: String)
-
-  fun forkForParallelTask(taskName: String): BuildMessages
-
-  /**
-   * Must be invoked from the main thread when all forks have been finished
-   */
-  fun onAllForksFinished()
-
-  /**
-   * Must be invoked for the forked instance on the thread where it is executing before the task is started.
-   * It's required to correctly handle messages from Ant tasks.
-   */
-  fun onForkStarted()
-
-  /**
-   * Must be invoked for the forked instance on the thread where it is executing when the task is finished
-   */
-  fun onForkFinished()
 }
