@@ -442,7 +442,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
   private void updateRefMethod(PsiElement psiResolved,
                                RefMethodImpl refMethod,
-                               UExpression refExpression,
+                               @NotNull UExpression refExpression,
                                final UElement uFrom) {
     UMethod uMethod = Objects.requireNonNull(UastContextKt.toUElement(psiResolved, UMethod.class));
     refMethod.waitForInitialized();
@@ -467,6 +467,16 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       return;
     }
 
+    PsiType returnType = uMethod.getReturnType();
+    if (!uMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
+      PsiExpression expression = ObjectUtils.tryCast(refExpression.getJavaPsi(), PsiExpression.class);
+      if (expression == null || !ExpressionUtils.isVoidContext(expression)) {
+        refMethod.setReturnValueUsed(true);
+      }
+
+      addTypeReference(uFrom, returnType, refMethod.getRefManager());
+    }
+
     UCallExpression call = null;
     if (refExpression instanceof UCallExpression) {
       call = (UCallExpression)refExpression;
@@ -475,16 +485,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       call = ObjectUtils.tryCast(((UQualifiedReferenceExpression)refExpression).getSelector(), UCallExpression.class);
     }
     if (call != null) {
-      PsiType returnType = uMethod.getReturnType();
-      if (!uMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
-        PsiExpression expression = ObjectUtils.tryCast(call.getJavaPsi(), PsiExpression.class);
-        if (expression == null || !ExpressionUtils.isVoidContext(expression)) {
-          refMethod.setReturnValueUsed(true);
-        }
-
-        addTypeReference(uFrom, returnType, refMethod.getRefManager());
-      }
-
       List<UExpression> argumentList = call.getValueArguments();
       if (!argumentList.isEmpty()) {
         refMethod.updateParameterValues(argumentList, psiResolved);
