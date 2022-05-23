@@ -26,4 +26,4 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolve
 UBinaryExpression (operator = !=) -> UQualifiedReferenceExpression -> Decompiled_Method: isNotEmpty
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isNotEmpty) -> Decompiled_Method: isNotEmpty
-UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> Decompiled_Method: equals
+UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> null: null
