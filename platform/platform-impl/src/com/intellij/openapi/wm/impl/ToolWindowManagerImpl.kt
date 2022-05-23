@@ -186,7 +186,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
           toolWindowManager.revalidateStripeButtons()
 
-          val toolWindowId = toolWindowManager.activeToolWindowId ?: return
+          val toolWindowId = getToolWindowIdForComponent(event.component) ?: return
 
           val activeEntry = toolWindowManager.idToEntry.get(toolWindowId) ?: return
           val windowInfo = activeEntry.readOnlyWindowInfo
@@ -199,9 +199,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
             return
           }
 
-          // let's check that it is a toolwindow who loses the focus
-          if (isInActiveToolWindow(event.source, activeEntry.toolWindow) &&
-              !isInActiveToolWindow(event.oppositeComponent, activeEntry.toolWindow)) {
+          // let's check that tool window actually loses focus
+          if (getToolWindowIdForComponent(event.oppositeComponent) != toolWindowId) {
             // a toolwindow lost focus
             val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
             if (!focusGoesToPopup) {
@@ -540,10 +539,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   override fun activateEditorComponent() {
-    if (!EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)) {
-      // see note about requestFocus in focusDefaultComponentInSplittersIfPresent
-      frame?.rootPane?.requestFocus()
-    }
+    EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)
   }
 
   open fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean, source: ToolWindowEventSource? = null) {
@@ -656,15 +652,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       EDT.assertIsEdt()
       val frame = frame?.frame ?: return null
       if (frame.isActive) {
-        val focusOwner = focusManager.getLastFocusedFor(frame) ?: return null
-        var parent: Component? = focusOwner
-        while (parent != null) {
-          if (parent is InternalDecoratorImpl) {
-            return parent.toolWindow.id
-          }
-
-          parent = parent.parent
-        }
+        return getToolWindowIdForComponent(frame.mostRecentFocusOwner)
       }
       else {
         // let's check floating and windowed
@@ -2140,15 +2128,15 @@ private const val ACTIVE_ATTR_VALUE = "active"
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 private const val RECENT_TW_TAG = "recentWindows"
 
-private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowImpl): Boolean {
-  var source: Component? = if (component is JComponent) component else null
-  val activeToolWindowComponent = activeToolWindow.decoratorComponent
-  if (activeToolWindowComponent != null) {
-    while (source != null && source !== activeToolWindowComponent) {
-      source = ClientProperty.get(source, ToolWindowManagerImpl.PARENT_COMPONENT) ?: source.parent as? Component
+private fun getToolWindowIdForComponent(component: Component?): String? {
+  var c = component
+  while (c != null) {
+    if (c is InternalDecoratorImpl) {
+      return c.toolWindow.id
     }
+    c = ClientProperty.get(c, ToolWindowManagerImpl.PARENT_COMPONENT) ?: c.parent
   }
-  return source != null
+  return null
 }
 
 private class BalloonHyperlinkListener(private val listener: HyperlinkListener?) : HyperlinkListener {
