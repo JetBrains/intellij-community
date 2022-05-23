@@ -25,7 +25,6 @@ class ZoomIndicatorManager(project: Project) {
     val isEnabled: Boolean
       get() = AdvancedSettings.getBoolean("editor.show.zoom.indicator")
   }
-  private interface Listener : EventListener { fun onUpdate(value: Int) }
   private val alarm = Alarm(project)
   private val popupActions = arrayListOf("ResetFontSizeAction", "com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorView\$settingsAction\$1")
 

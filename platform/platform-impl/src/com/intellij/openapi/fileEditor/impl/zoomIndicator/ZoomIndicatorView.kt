@@ -21,11 +21,10 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadding, ins 0")) {
-
   var isHovered = false; private set
   var lastHoverMs = 0L; private set
 
-  private val fontSizeLabel: JLabel
+  private val fontSizeLabel = JLabel(IdeBundle.message("action.reset.font.size.info", "000"))
 
   private val settingsAction = object : DumbAwareAction(IdeBundle.message("action.open.editor.settings.text"), "", AllIcons.General.Settings) {
     override fun actionPerformed(e: AnActionEvent) {
@@ -48,9 +47,16 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
     else null
   }
 
-  private inner class PatchedActionLink(action: AnAction, private val event: AnActionEvent) : AnActionLink(action, ActionPlaces.POPUP) {
+  private inner class PatchedActionLink(action: AnAction, event: AnActionEvent) : AnActionLink(action, ActionPlaces.POPUP) {
     init {
       text = event.presentation.text
+      autoHideOnDisable = false
+      isEnabled = event.presentation.isEnabled
+      event.presentation.addPropertyChangeListener {
+        if (it.propertyName == Presentation.PROP_ENABLED) {
+          isEnabled = it.newValue as Boolean
+        }
+      }
     }
     override fun getData(dataId: String) = dataContext.getData(dataId) ?: super.getData(dataId)
     override fun isShowing() = true
@@ -61,6 +67,11 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
                                                    null, dataContext,
                                                    false, true)
     update(event)
+    fontSizeLabel.addPropertyChangeListener {
+      if (it.propertyName == "text") {
+        update(event)
+      }
+    }
 
     PatchedActionLink(this, event)
   }
@@ -80,7 +91,6 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
     val disposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, disposable)
 
-    fontSizeLabel = JLabel(IdeBundle.message("action.reset.font.size.info", "000"))
     updateFontSize()
 
     add(fontSizeLabel, "wmin ${JBUI.scale(100)}, gapbottom ${JBUI.scale(1)}, gapleft ${JBUI.scale(3)}")

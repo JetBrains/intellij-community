@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  */
 public class ResetFontSizeAction extends EditorAction {
-
   private static final String FONT_SIZE_TO_RESET_CONSOLE = "fontSizeToResetConsole";
   private static final String FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
@@ -110,8 +109,12 @@ public class ResetFontSizeAction extends EditorAction {
         return;
       }
       EditorEx editorEx = (EditorEx)editor;
+      float toReset = getStrategy(editorEx).getFontSize();
       //noinspection DialogTitleCapitalization
-      e.getPresentation().setText(IdeBundle.message("action.reset.font.size", getStrategy(editorEx).getFontSize()));
+      e.getPresentation().setText(IdeBundle.message("action.reset.font.size", toReset));
+      if (editor instanceof EditorImpl) {
+        e.getPresentation().setEnabled(((EditorImpl)editor).getFontSize2D() != toReset);
+      }
     }
   }
 
