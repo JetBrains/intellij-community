@@ -213,11 +213,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCreateVFPFromStrangeJarUrlMustCrash() throws IOException {
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, ()->myVirtualFilePointerManager.create("jar://C:/!/java.base", disposable, null));
-  }
-
-  @Test
   public void testPointerForFileSystemRoot1() {
     File rootDir = new File("/");
     assertTrue(rootDir.exists());
