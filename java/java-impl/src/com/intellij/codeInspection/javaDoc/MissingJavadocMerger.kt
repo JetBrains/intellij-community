@@ -39,6 +39,8 @@ class MissingJavadocMerger: InspectionElementsMergerBase() {
   private fun getFieldValue(sourceElement: Element, field: String) = JDOMExternalizerUtil.readOption(sourceElement, field)?.getChild("value")
 
   private fun readOptions(options: MissingJavadocInspection.Options, element: Element?)  {
+    //default scope in previous inspection was "none" which is equivalent to disabled settings
+    options.ENABLED = false
     if (element == null) return
     val requiredTags = JDOMExternalizerUtil.readField(element, "REQUIRED_TAGS")
     if (requiredTags != null) {
