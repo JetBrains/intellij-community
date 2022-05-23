@@ -90,6 +90,9 @@
                     testServiceImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl"
                     headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
 
+    <projectService serviceInterface="com.intellij.openapi.wm.impl.ToolWindowManagerState"
+                    serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
+
     <ideEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
 
     <applicationService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
