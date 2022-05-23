@@ -8,10 +8,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiIntersectionType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
@@ -30,10 +27,10 @@ import java.util.Set;
  * Immutable object representing a number of type constraints applied to some reference value.
  * Type constraints represent a lattice with {@link TypeConstraints#TOP} and {@link TypeConstraints#BOTTOM}
  * elements, as well as {@link #join(TypeConstraint)} and {@link #meet(TypeConstraint)} operations.
- *
+ * <p>
  * Besides TOP and BOTTOM there are two types of constrains: {@link Exact} (value is known to have exactly some JVM type)
  * and {@link Constrained} (value is instanceof zero or more JVM types and not instanceof zero or more JVM types).
- *
+ * <p>
  * value is instance of some type and value is not an instance of some type.
  * Null or primitive types are not handled here.
  */
@@ -205,7 +202,7 @@ public interface TypeConstraint {
     return false;
   }
 
-  default @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
+  default @Nullable PsiElement getEnumConstant(int ordinal) {
     return null;
   }
 
@@ -642,7 +639,7 @@ public interface TypeConstraint {
     }
 
     @Override
-    public @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
+    public @Nullable PsiElement getEnumConstant(int ordinal) {
       return myInstanceOf.size() == 1 ? myInstanceOf.iterator().next().getEnumConstant(ordinal) : null;
     }
 

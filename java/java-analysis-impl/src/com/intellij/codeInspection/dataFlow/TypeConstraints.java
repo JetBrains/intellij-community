@@ -245,6 +245,22 @@ public final class TypeConstraints {
   }
 
   @NotNull
+  public static TypeConstraint.Exact exactClass(@NotNull ClassDef classDef) {
+    String name = classDef.getQualifiedName();
+    if (name != null) {
+      switch (name) {
+        case JAVA_LANG_OBJECT:
+          return EXACTLY_OBJECT;
+        case JAVA_LANG_CLONEABLE:
+          return ArraySuperInterface.CLONEABLE;
+        case JAVA_IO_SERIALIZABLE:
+          return ArraySuperInterface.SERIALIZABLE;
+      }
+    }
+    return new ExactClass(classDef, false);
+  }
+
+  @NotNull
   public static TypeConstraint.Exact singleton(@NotNull PsiClass psiClass) {
     if (!psiClass.hasModifierProperty(PsiModifier.FINAL)) {
       throw new IllegalArgumentException("Singleton class must be final");
@@ -345,7 +361,7 @@ public final class TypeConstraints {
       if (equals(other)) return true;
       if (other instanceof PrimitiveArray || other instanceof ExactArray || other instanceof Unresolved) return true;
       if (other instanceof ExactClass) {
-        return InheritanceUtil.isInheritor(((ExactClass)other).myClass, myReference);
+        return ((ExactClass)other).myClass.isInheritor(myReference);
       }
       if (other instanceof ExactSubclass) {
         for (Exact superClass : ((ExactSubclass)other).mySupers) {
@@ -367,10 +383,14 @@ public final class TypeConstraints {
   }
 
   private static final class ExactClass implements TypeConstraint.Exact {
-    private final @NotNull PsiClass myClass;
+    private final @NotNull ClassDef myClass;
     private final boolean mySingleton;
 
     ExactClass(@NotNull PsiClass aClass, boolean singleton) {
+      this(new PsiClassDef(aClass), singleton);
+    }
+
+    ExactClass(@NotNull ClassDef aClass, boolean singleton) {
       assert !(aClass instanceof PsiTypeParameter);
       mySingleton = singleton;
       myClass = aClass;
@@ -387,27 +407,20 @@ public final class TypeConstraints {
     }
 
     @Override
-    public @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
-      int cur = 0;
-      for (PsiField field : myClass.getFields()) {
-        if (field instanceof PsiEnumConstant) {
-          if (cur == ordinal) return (PsiEnumConstant)field;
-          cur++;
-        }
-      }
-      return null;
+    public @Nullable PsiElement getEnumConstant(int ordinal) {
+      return myClass.getEnumConstant(ordinal);
     }
 
     @Override
     public boolean equals(Object obj) {
       return obj == this || obj instanceof ExactClass &&
                             mySingleton == ((ExactClass)obj).mySingleton &&
-                            myClass.getManager().areElementsEquivalent(myClass, ((ExactClass)obj).myClass);
+                            myClass.equals(((ExactClass)obj).myClass);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(myClass.getName());
+      return myClass.hashCode();
     }
 
     @Override
@@ -446,8 +459,7 @@ public final class TypeConstraints {
     public boolean canBeInstantiated() {
       // Abstract final type is incorrect. We, however, assume that final wins: it can be instantiated
       // otherwise TypeConstraints.instanceOf(type) would return impossible type
-      return (myClass.hasModifierProperty(PsiModifier.FINAL) || !myClass.hasModifierProperty(PsiModifier.ABSTRACT)) &&
-             !JAVA_LANG_VOID.equals(myClass.getQualifiedName());
+      return (myClass.isFinal() || !myClass.isAbstract()) && !JAVA_LANG_VOID.equals(myClass.getQualifiedName());
     }
 
     @Override
@@ -459,45 +471,30 @@ public final class TypeConstraints {
     @NotNull
     @Override
     public PsiType getPsiType(Project project) {
-      return JavaPsiFacade.getElementFactory(project).createType(myClass);
+      return myClass.toPsiType(project);
     }
 
     @NotNull
     @Override
     public String toString() {
-      String name = myClass.getQualifiedName();
-      if (name == null) {
-        name = myClass.getName();
-      }
-      if (name == null && myClass instanceof PsiAnonymousClass) {
-        PsiClassType baseClassType = ((PsiAnonymousClass)myClass).getBaseClassType();
-        name = "anonymous " + createExact(baseClassType);
-      }
-      return String.valueOf(name);
+      return myClass.toString();
     }
 
     @Override
     public boolean isFinal() {
-      return myClass.hasModifierProperty(PsiModifier.FINAL);
+      return myClass.isFinal();
     }
 
     @Override
     public StreamEx<Exact> superTypes() {
-      Set<PsiClass> superTypes = new LinkedHashSet<>();
-      InheritanceUtil.processSupers(myClass, false, t -> {
-        if (!(t instanceof PsiTypeParameter) && !t.hasModifierProperty(PsiModifier.FINAL)) {
-          superTypes.add(t);
-        }
-        return true;
-      });
-      return StreamEx.of(superTypes).map(TypeConstraints::exactClass);
+      return myClass.superTypes().map(TypeConstraints::exactClass);
     }
 
     @Override
     public boolean isAssignableFrom(@NotNull Exact other) {
       if (equals(other) || other instanceof Unresolved) return true;
       if (other instanceof ExactClass) {
-        return InheritanceUtil.isInheritorOrSelf(((ExactClass)other).myClass, myClass, true);
+        return ((ExactClass)other).myClass.isInheritor(myClass);
       }
       if (other instanceof ExactSubclass) {
         for (Exact superClass : ((ExactSubclass)other).mySupers) {
@@ -512,22 +509,12 @@ public final class TypeConstraints {
       if (equals(other) || other instanceof Unresolved || other == EXACTLY_OBJECT) return true;
       if (other instanceof ArraySuperInterface) {
         if (myClass.isInterface()) return true;
-        if (!myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
-        return InheritanceUtil.isInheritor(myClass, ((ArraySuperInterface)other).myReference);
+        if (!myClass.isFinal()) return true;
+        return myClass.isInheritor(((ArraySuperInterface)other).myReference);
       }
       if (other instanceof ExactClass) {
-        PsiClass otherClass = ((ExactClass)other).myClass;
-        if (myClass.isInterface() || otherClass.isInterface()) {
-          if (otherClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(otherClass, myClass);
-          if (myClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(myClass, otherClass);
-        }
-        if (myClass.isInterface() && otherClass.isInterface()) return true;
-        if (myClass.isInterface() && !otherClass.hasModifierProperty(PsiModifier.FINAL)) return true;
-        if (otherClass.isInterface() && !myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
-        PsiManager manager = myClass.getManager();
-        return manager.areElementsEquivalent(myClass, otherClass) ||
-               otherClass.isInheritor(myClass, true) ||
-               myClass.isInheritor(otherClass, true);
+        ClassDef otherClass = ((ExactClass)other).myClass;
+        return myClass.isConvertible(otherClass);
       }
       if (other instanceof ExactSubclass) {
         for (Exact superClass : ((ExactSubclass)other).mySupers) {
@@ -716,6 +703,134 @@ public final class TypeConstraints {
     @Override
     public boolean isConvertibleFrom(@NotNull Exact other) {
       return other instanceof Unresolved || other instanceof ExactClass || other instanceof ArraySuperInterface;
+    }
+  }
+
+  public interface ClassDef {
+    boolean isInheritor(@NotNull String superClassQualifiedName);
+    boolean isInheritor(@NotNull ClassDef superType);
+    boolean isConvertible(@NotNull ClassDef other);
+    boolean isInterface();
+    boolean isEnum();
+    boolean isFinal();
+    boolean isAbstract();
+    @Nullable PsiElement getEnumConstant(int ordinal);
+    @Nullable String getQualifiedName();
+    @NotNull StreamEx<@NotNull ClassDef> superTypes();
+    @NotNull PsiType toPsiType(@NotNull Project project);
+
+  }
+
+  private static class PsiClassDef implements ClassDef {
+    private final @NotNull PsiClass myClass;
+
+    private PsiClassDef(@NotNull PsiClass aClass) {
+      myClass = aClass;
+    }
+
+    @Override
+    public boolean isInheritor(@NotNull String superClassQualifiedName) {
+      return InheritanceUtil.isInheritor(myClass, superClassQualifiedName);
+    }
+
+    @Override
+    public boolean isInheritor(@NotNull ClassDef superType) {
+      return superType instanceof PsiClassDef && InheritanceUtil.isInheritorOrSelf(myClass, ((PsiClassDef)superType).myClass, true);
+    }
+
+    @Override
+    public boolean isConvertible(@NotNull ClassDef other) {
+      if (!(other instanceof PsiClassDef)) return false;
+      PsiClass otherClass = ((PsiClassDef)other).myClass;
+      if (myClass.isInterface() || otherClass.isInterface()) {
+        if (otherClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(otherClass, myClass);
+        if (myClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(myClass, otherClass);
+      }
+      if (myClass.isInterface() && otherClass.isInterface()) return true;
+      if (myClass.isInterface() && !otherClass.hasModifierProperty(PsiModifier.FINAL)) return true;
+      if (otherClass.isInterface() && !myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
+      PsiManager manager = myClass.getManager();
+      return manager.areElementsEquivalent(myClass, otherClass) ||
+             otherClass.isInheritor(myClass, true) ||
+             myClass.isInheritor(otherClass, true);
+    }
+
+    @Override
+    public boolean isInterface() {
+      return myClass.isInterface();
+    }
+
+    @Override
+    public boolean isEnum() {
+      return myClass.isEnum();
+    }
+
+    @Override
+    public @Nullable PsiElement getEnumConstant(int ordinal) {
+      int cur = 0;
+      for (PsiField field : myClass.getFields()) {
+        if (field instanceof PsiEnumConstant) {
+          if (cur == ordinal) return field;
+          cur++;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public @Nullable String getQualifiedName() {
+      return myClass.getQualifiedName();
+    }
+
+    @Override
+    public @NotNull StreamEx<@NotNull ClassDef> superTypes() {
+      Set<PsiClass> superTypes = new LinkedHashSet<>();
+      InheritanceUtil.processSupers(myClass, false, t -> {
+        if (!(t instanceof PsiTypeParameter) && !t.hasModifierProperty(PsiModifier.FINAL)) {
+          superTypes.add(t);
+        }
+        return true;
+      });
+      return StreamEx.of(superTypes).map(PsiClassDef::new);
+    }
+
+    @Override
+    public @NotNull PsiType toPsiType(@NotNull Project project) {
+      return JavaPsiFacade.getElementFactory(project).createType(myClass);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof PsiClassDef &&
+             myClass.getManager().areElementsEquivalent(myClass, ((PsiClassDef)obj).myClass);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myClass.getName());
+    }
+
+    @Override
+    public boolean isFinal() {
+      return myClass.hasModifierProperty(PsiModifier.FINAL);
+    }
+
+    @Override
+    public boolean isAbstract() {
+      return myClass.hasModifierProperty(PsiModifier.ABSTRACT);
+    }
+
+    @Override
+    public String toString() {
+      String name = myClass.getQualifiedName();
+      if (name == null) {
+        name = myClass.getName();
+      }
+      if (name == null && myClass instanceof PsiAnonymousClass) {
+        PsiClassType baseClassType = ((PsiAnonymousClass)myClass).getBaseClassType();
+        name = "anonymous " + createExact(baseClassType);
+      }
+      return String.valueOf(name);
     }
   }
 }
