@@ -896,8 +896,8 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
       }
 
       @Override
-      public void emitInvoke(CodeEmitter codeEmitter, MethodInfo methodInfo) {
-        codeEmitter.super_invoke(methodInfo.getSignature());
+      public void emitLoadArgsAndInvoke(CodeEmitter emitter, MethodInfo info) {
+        emitter.super_invoke(info.getSignature());
       }
 
       @Override
