@@ -2212,7 +2212,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             }
 
             assertEquals(
-                "The bundled version (1.6.21-release-357) of the Kotlin JPS plugin will be used<br>" +
+                "The bundled version (1.7.0-RC-246) of the Kotlin JPS plugin will be used<br>" +
                         "The reason: Kotlin JPS compiler maximum supported version is '$maxVersion' but '$versionToImport' is specified",
                 text
             )
