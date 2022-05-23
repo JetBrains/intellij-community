@@ -33,7 +33,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -274,44 +273,40 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     @Override
     public void handleSelect(boolean handleFinalChoices, InputEvent e) {
-      final Object selectedValue = getList().getSelectedValue();
-      final ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
-
-      if (actionPopupStep != null) {
-        KeepingPopupOpenAction dontClosePopupAction = getActionByClass(selectedValue, actionPopupStep, KeepingPopupOpenAction.class);
-        if (dontClosePopupAction != null) {
-          actionPopupStep.performAction((AnAction)dontClosePopupAction, e != null ? e.getModifiers() : 0, e);
-
-          // Update actions presentation, probably it was changed after this (current) action was executed
-          actionPopupStep.updateStepItems(() -> getList().repaint());
-          return;
-        }
+      Object value = getList().getSelectedValue();
+      ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
+      AnAction action = step == null ? null : getActionFromValue(value, step);
+      if (action instanceof KeepingPopupOpenAction ||
+          action != null && value instanceof ActionItem && ((ActionItem)value).isKeepPopupOpen()) {
+        step.performAction(action, e != null ? e.getModifiers() : 0, e);
+        step.updateStepItems(() -> getList().repaint());
       }
-
-      super.handleSelect(handleFinalChoices, e);
+      else {
+        super.handleSelect(handleFinalChoices, e);
+      }
     }
 
     protected void handleToggleAction() {
       List<Object> selectedValues = getList().getSelectedValuesList();
-
-      ListPopupStep<?> listStep = getListStep();
-      if (!(listStep instanceof ActionPopupStep)) return;
-      ActionPopupStep actionPopupStep = (ActionPopupStep)listStep;
-
-      List<ToggleAction> filtered = ContainerUtil.mapNotNull(selectedValues, o -> getActionByClass(o, actionPopupStep, ToggleAction.class));
-
-      for (ToggleAction action : filtered) {
-        actionPopupStep.performAction(action, 0);
+      ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
+      if (step == null) return;
+      boolean updateStep = false;
+      for (Object value : selectedValues) {
+        AnAction action = getActionFromValue(value, step);
+        if (action instanceof Toggleable) {
+          step.performAction(action, 0);
+          updateStep = true;
+        }
       }
-      getList().repaint();
+      if (updateStep) {
+        step.updateStepItems(() -> getList().repaint());
+      }
     }
 
     @Nullable
-    private static <T> T getActionByClass(@Nullable Object value, @NotNull ActionPopupStep actionPopupStep, @NotNull Class<T> actionClass) {
+    private static AnAction getActionFromValue(@Nullable Object value, @NotNull ActionPopupStep step) {
       ActionItem item = value instanceof ActionItem ? (ActionItem)value : null;
-      if (item == null) return null;
-      if (!actionPopupStep.isSelectable(item)) return null;
-      return actionClass.isInstance(item.getAction()) ? actionClass.cast(item.getAction()) : null;
+      return item == null || !step.isSelectable(item) ? null : item.getAction();
     }
   }
 
@@ -669,6 +664,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private boolean myIsSubstepSuppressed;
     private Icon myIcon;
     private Icon mySelectedIcon;
+    private boolean myIsKeepPopupOpen;
 
     private final int myMaxIconWidth;
     private final int myMaxIconHeight;
@@ -733,6 +729,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myIsEnabled = presentation.isEnabled();
       myIsPerformGroup = myAction instanceof ActionGroup && presentation.isPerformGroup();
       myIsSubstepSuppressed = myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(presentation);
+      myIsKeepPopupOpen = presentation.isMultipleChoice();
 
       Couple<Icon> icons = ActionStepBuilder.calcRawIcons(myAction, presentation);
       Icon icon = icons.first;
@@ -790,6 +787,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public boolean isPerformGroup() { return myIsPerformGroup; }
 
     public boolean isSubstepSuppressed() { return myIsSubstepSuppressed; }
+
+    public boolean isKeepPopupOpen() { return myIsKeepPopupOpen; }
 
     public @NlsContexts.DetailedDescription String getDescription() {
       return myDescription == null ? myTooltip : myDescription;
