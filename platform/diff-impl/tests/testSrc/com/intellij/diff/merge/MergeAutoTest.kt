@@ -41,8 +41,7 @@ class MergeAutoTest : MergeTestBase() {
         for (m in 1..MODIFICATION_CYCLE_COUNT) {
           checkUndo(MODIFICATION_CYCLE_SIZE) {
             for (n in 1..MODIFICATION_CYCLE_SIZE) {
-              val operation = RNG.nextInt(4)
-              when (operation) {
+              when (RNG.nextInt(4)) {
                 0 -> doApply()
                 1 -> doIgnore()
                 2 -> doTryResolve()

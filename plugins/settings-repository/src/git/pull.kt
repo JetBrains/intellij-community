@@ -277,8 +277,7 @@ private fun updateHead(refLogMessage: StringBuilder, newHeadId: ObjectId, oldHea
   refUpdate.setNewObjectId(newHeadId)
   refUpdate.setRefLogMessage(refLogMessage.toString(), false)
   refUpdate.setExpectedOldObjectId(oldHeadID)
-  val rc = refUpdate.update()
-  when (rc) {
+  when (val rc = refUpdate.update()) {
     RefUpdate.Result.NEW, RefUpdate.Result.FAST_FORWARD -> return
     RefUpdate.Result.REJECTED, RefUpdate.Result.LOCK_FAILURE -> throw ConcurrentRefUpdateException(JGitText.get().couldNotLockHEAD, refUpdate.ref, rc)
     else -> throw JGitInternalException(MessageFormat.format(JGitText.get().updatingRefFailed, Constants.HEAD, newHeadId.toString(), rc))

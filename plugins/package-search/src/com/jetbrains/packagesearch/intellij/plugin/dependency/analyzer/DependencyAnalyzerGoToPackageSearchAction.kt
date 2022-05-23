@@ -30,8 +30,7 @@ abstract class DependencyAnalyzerGoToPackageSearchAction : DumbAwareAction() {
         val module = getModule(e) ?: return
         val coordinates = getUnifiedCoordinates(e) ?: return
         val navigationService = DependencyNavigationService.getInstance(module.project)
-        val navigationResult = navigationService.navigateToDependency(module, coordinates)
-        val navigationResultMessage = when (navigationResult) {
+        val navigationResultMessage = when (navigationService.navigateToDependency(module, coordinates)) {
             is NavigationResult.CoordinatesNotFound -> PackageSearchBundle.message("packagesearch.actions.showToolWindow.not.found.dependency")
             is NavigationResult.DependencyNotFound -> PackageSearchBundle.message("packagesearch.actions.showToolWindow.not.found.dependency")
             is NavigationResult.ModuleNotSupported -> PackageSearchBundle.message("packagesearch.actions.showToolWindow.not.found.module")

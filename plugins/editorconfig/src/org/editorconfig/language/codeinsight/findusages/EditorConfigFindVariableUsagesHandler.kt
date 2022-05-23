@@ -51,8 +51,7 @@ class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElem
   private fun matches(element: PsiElement, id: String, template: PsiElement): Boolean {
     element as? EditorConfigDescribableElement ?: return false
     if (!textMatchesToIgnoreCase(element, template)) return false
-    val descriptor = element.getDescriptor(false)
-    return when (descriptor) {
+    return when (val descriptor = element.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor -> descriptor.id == id
       is EditorConfigReferenceDescriptor -> descriptor.id == id
       else -> false
@@ -62,8 +61,7 @@ class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElem
   companion object {
     fun getId(element: PsiElement): String? {
       element as? EditorConfigDescribableElement ?: return null
-      val descriptor = element.getDescriptor(false)
-      return when (descriptor) {
+      return when (val descriptor = element.getDescriptor(false)) {
         is EditorConfigDeclarationDescriptor -> descriptor.id
         is EditorConfigReferenceDescriptor -> descriptor.id
         else -> null

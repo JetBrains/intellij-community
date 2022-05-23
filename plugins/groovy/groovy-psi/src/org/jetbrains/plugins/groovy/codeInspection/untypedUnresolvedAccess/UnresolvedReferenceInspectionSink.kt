@@ -26,8 +26,7 @@ internal class UnresolvedReferenceInspectionSink(private val problemsHolder: Pro
 
   private fun handleSpecial(element: PsiElement, @InspectionMessage message: String, vararg fixes: LocalQuickFix?): Boolean {
     // at this point we register the problem with LIKE_UNKNOWN_SYMBOL type.
-    val level = GrUnresolvedAccessInspection.getHighlightDisplayLevel(element)
-    when (level) {
+    when (GrUnresolvedAccessInspection.getHighlightDisplayLevel(element)) {
       HighlightDisplayLevel.ERROR -> {
         // If we override LIKE_UNKNOWN_SYMBOL with GENERIC_ERROR_OR_WARNING (i.e. go into else branch of this statement),
         // and the level is ERROR, then the reference would be highlighted with red waved line [HighlightInfoType#ERROR].

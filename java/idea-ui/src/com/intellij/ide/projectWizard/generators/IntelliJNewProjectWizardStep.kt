@@ -133,8 +133,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     // Name uniqueness
     val project = context.project
     if (project != null) {
-      val model = ProjectStructureConfigurable.getInstance(project)?.context?.modulesConfigurator?.moduleModel
-      val module = when (model) {
+      val module = when (val model = ProjectStructureConfigurable.getInstance(project)?.context?.modulesConfigurator?.moduleModel) {
         null -> ModuleManager.getInstance(project)?.findModuleByName(moduleName)
         else -> model.findModuleByName(moduleName)
       }

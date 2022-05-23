@@ -140,7 +140,6 @@ private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolv
 
 private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
   if (isQualified) return false
-  val parent = parent
   return when (parent) {
     is GrReferenceElement<*>,
     is GrExtendsClause,

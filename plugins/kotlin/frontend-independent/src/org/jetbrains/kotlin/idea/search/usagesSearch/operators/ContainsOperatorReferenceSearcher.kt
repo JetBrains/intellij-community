@@ -32,8 +32,7 @@ class ContainsOperatorReferenceSearcher(
     }
 
     override fun processPossibleReceiverExpression(expression: KtExpression) {
-        val parent = expression.parent
-        when (parent) {
+        when (val parent = expression.parent) {
             is KtBinaryExpression -> {
                 if (parent.operationToken in OPERATION_TOKENS && expression == parent.right) {
                     processReferenceElement(parent.operationReference)

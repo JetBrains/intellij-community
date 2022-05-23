@@ -131,8 +131,7 @@ class AnnotationConverter(private val converter: Converter) {
                 setOf()
             }
             else {
-                val value = attributes[0].value
-                when (value) {
+                when (val value = attributes[0].value) {
                     is PsiArrayInitializerMemberValue -> value.initializers.filterIsInstance<PsiReferenceExpression>()
                             .flatMap { mapTargetByName(it) }
                             .toSet()

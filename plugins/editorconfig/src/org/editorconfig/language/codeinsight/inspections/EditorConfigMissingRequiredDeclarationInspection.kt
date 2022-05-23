@@ -25,9 +25,8 @@ class EditorConfigMissingRequiredDeclarationInspection : LocalInspectionTool() {
           describable.getDescriptor(false) === requiredDescriptor
         }
       }
-      val errorCount = errors.count()
 
-      val message = when (errorCount) {
+      val message = when (val errorCount = errors.count()) {
         0 -> return
         1 -> EditorConfigBundle.get("inspection.declaration.missing.singular.message", element.text)
         else -> EditorConfigBundle.get("inspection.declaration.missing.plural.message", element.text, errorCount)

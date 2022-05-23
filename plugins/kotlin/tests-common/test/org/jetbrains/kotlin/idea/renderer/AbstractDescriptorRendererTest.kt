@@ -2,27 +2,26 @@
 
 package org.jetbrains.kotlin.idea.renderer
 
-import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
-import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
-import org.jetbrains.kotlin.renderer.AnnotationArgumentsRenderingPolicy
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.container.ComponentProvider
 import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.CompilerEnvironment
-import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.idea.resolve.lazy.JvmResolveUtil
-import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestWithEnvironment
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.renderer.AnnotationArgumentsRenderingPolicy
+import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
+import org.jetbrains.kotlin.resolve.CompilerEnvironment
+import org.jetbrains.kotlin.resolve.TargetEnvironment
+import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import java.io.File
-import java.util.*
 
 abstract class AbstractDescriptorRendererTest : KotlinTestWithEnvironment() {
     protected open fun getDescriptor(declaration: KtDeclaration, container: ComponentProvider): DeclarationDescriptor {
@@ -51,8 +50,7 @@ abstract class AbstractDescriptorRendererTest : KotlinTestWithEnvironment() {
             }
 
             override fun visitParameter(parameter: KtParameter) {
-                val declaringElement = parameter.parent.parent
-                when (declaringElement) {
+                when (val declaringElement = parameter.parent.parent) {
                     is KtFunctionType -> return
                     is KtNamedFunction ->
                         addCorrespondingParameterDescriptor(getDescriptor(declaringElement, container) as FunctionDescriptor, parameter)

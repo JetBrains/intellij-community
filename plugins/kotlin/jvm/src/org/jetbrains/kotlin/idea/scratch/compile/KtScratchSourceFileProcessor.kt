@@ -56,8 +56,7 @@ class KtScratchSourceFileProcessor {
         private var resCount = 0
 
         fun process(expression: ScratchExpression) {
-            val psiElement = expression.element
-            when (psiElement) {
+            when (val psiElement = expression.element) {
                 is KtDestructuringDeclaration -> processDestructuringDeclaration(expression, psiElement)
                 is KtVariableDeclaration -> processDeclaration(expression, psiElement)
                 is KtFunction -> processDeclaration(expression, psiElement)

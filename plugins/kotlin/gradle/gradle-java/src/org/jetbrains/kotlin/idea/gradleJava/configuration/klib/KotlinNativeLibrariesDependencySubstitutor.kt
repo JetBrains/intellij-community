@@ -39,8 +39,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
     private fun substituteDependencies(dependencies: Collection<ExternalDependency>): List<ExternalDependency> {
         val result = ArrayList(dependencies)
         for (i in 0 until result.size) {
-            val dependency = result[i]
-            val dependencySubstitute = when (dependency) {
+            val dependencySubstitute = when (val dependency = result[i]) {
                 is FileCollectionDependency -> getFileCollectionDependencySubstitute(dependency)
                 else -> DependencySubstitute.NoSubstitute
             }

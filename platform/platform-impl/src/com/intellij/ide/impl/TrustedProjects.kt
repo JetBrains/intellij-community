@@ -43,8 +43,7 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boo
     val trustedPaths = TrustedPaths.getInstance()
     val trustedState = trustedPaths.getProjectPathTrustedState(projectDir)
     if (trustedState == ThreeState.UNSURE) {
-      val openingUntrustedProjectChoice = confirmOpeningUntrustedProject(projectDir)
-      when (openingUntrustedProjectChoice) {
+      when (confirmOpeningUntrustedProject(projectDir)) {
         OpenUntrustedProjectChoice.TRUST_AND_OPEN -> trustedPaths.setProjectPathTrusted(projectDir, true)
         OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE -> trustedPaths.setProjectPathTrusted(projectDir, false)
         OpenUntrustedProjectChoice.CANCEL -> return@invokeAndWaitIfNeeded false

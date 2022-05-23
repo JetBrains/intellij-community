@@ -110,8 +110,7 @@ fun lookupFirstItemsTexts(lookupItems: List<LookupElement?>, maxSize: Int): List
   // see JavaReflectionParametersCompletionTest.testConstructor and JavaReflectionParametersCompletionTest.testDeclaredConstructor
   DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable<List<String>, RuntimeException> {
     lookupItems.subList(0, Math.min(lookupItems.size, maxSize)).map {
-      val obj = it?.`object`
-      when (obj) {
+      when (val obj = it?.`object`) {
         is PsiMethod -> {
           obj.name + obj.parameterList.parameters.map { it.type.canonicalText + " " + it.name }
             .joinToString(",", prefix = "(", postfix = ")")

@@ -105,9 +105,7 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
   private var previousLoc: Point? = null
 
   private val picker: Dialog = let {
-    val owner = SwingUtilities.getWindowAncestor(parent)
-
-    val pickerFrame = when (owner) {
+    val pickerFrame = when (val owner = SwingUtilities.getWindowAncestor(parent)) {
       is Dialog -> JDialog(owner)
       is Frame -> JDialog(owner)
       else -> JDialog(JFrame())

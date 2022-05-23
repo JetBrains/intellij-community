@@ -74,8 +74,7 @@ private fun GroovyFileImpl.doCollectScriptDeclarations(topLevelOnly: Boolean): A
 }
 
 fun GrCodeReferenceElement.doGetKind(): CodeReferenceKind {
-  val parent = parent
-  return when (parent) {
+  return when (val parent = parent) {
     is GrPackageDefinition -> CodeReferenceKind.PACKAGE_REFERENCE
     is GrImportStatement -> CodeReferenceKind.IMPORT_REFERENCE
     is GrCodeReferenceElement -> parent.kind

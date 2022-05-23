@@ -48,8 +48,7 @@ class EditorConfigPatternRedundancyInspection : LocalInspectionTool() {
     allPatterns.count(pattern::textMatches) >= 2
 
   private fun findOtherPatterns(pattern: EditorConfigPattern): List<EditorConfigPattern> {
-    val parent = pattern.parent
-    val allPatterns = when (parent) {
+    val allPatterns = when (val parent = pattern.parent) {
       is EditorConfigPatternEnumeration -> parent.patternList
       else -> listOf(pattern)
     }

@@ -102,8 +102,7 @@ class SmartCompletion(
     }
 
     val descriptorsToSkip: Set<DeclarationDescriptor> by lazy<Set<DeclarationDescriptor>> {
-        val parent = expressionWithType.parent
-        when (parent) {
+        when (val parent = expressionWithType.parent) {
             is KtBinaryExpression -> {
                 if (parent.right == expressionWithType) {
                     val operationToken = parent.operationToken
@@ -401,8 +400,7 @@ class SmartCompletion(
     }
 
     private fun implicitlyTypedDeclarationFromInitializer(expression: KtExpression): KtDeclaration? {
-        val parent = expression.parent
-        when (parent) {
+        when (val parent = expression.parent) {
             is KtVariableDeclaration -> if (expression == parent.initializer && parent.typeReference == null) return parent
             is KtNamedFunction -> if (expression == parent.initializer && parent.typeReference == null) return parent
         }

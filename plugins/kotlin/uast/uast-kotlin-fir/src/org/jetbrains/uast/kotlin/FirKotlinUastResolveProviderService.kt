@@ -299,8 +299,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolvedTargetElement
         }
 
-        val ktModule = (resolvedTargetElement as? KtDeclaration)?.getKtModule(ktExpression.project)
-        when (ktModule) {
+        when ((resolvedTargetElement as? KtDeclaration)?.getKtModule(ktExpression.project)) {
             is KtSourceModule -> {
                 // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
                 resolvedTargetElement?.getMaybeLightElement(ktExpression)?.let { return it }

@@ -56,9 +56,7 @@ private fun getParametersFromDecorator(decorator: PyDecorator, evalContext: Type
 
   val parameterTypes = arrayOfNulls<PyType?>(parameterNames.size)
 
-  val iteratedItemType = valuesExpression.iteratedItemType
-
-  when (iteratedItemType) {
+  when (val iteratedItemType = valuesExpression.iteratedItemType) {
     is PyUnionType -> {
       //Could be union of tuples
       for (i in 0 until parameterTypes.size) {

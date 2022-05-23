@@ -18,8 +18,7 @@ class EditorConfigElementDescriptionProvider : ElementDescriptionProvider {
       return EditorConfigBundle.get("usage.type.option.key", element.text, element.section.header.text)
     }
 
-    val descriptor = element.getDescriptor(false)
-    return when (descriptor) {
+    return when (element.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor -> EditorConfigBundle.get(
         "usage.type.identifier",
