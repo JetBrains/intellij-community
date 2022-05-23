@@ -10,17 +10,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Represents list of changed files (ex: singular commit).
+ * Represents a list of changed files (ex: singular commit).
  * The list is not supposed to be changed and can be shown multiple times.
  * <p>
- * Use {@link AsyncDiffRequestChain} to load requests asynchronously after showing UI
- * Use {@link com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain} for chains with common "Go to change" navigation popup.
+ * Use {@link SimpleDiffRequestChain} and {@link com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain} as typical implementations.
+ * <p>
+ * Use {@link AsyncDiffRequestChain} instead if loading the list of changed files is a slow operation
  *
  * @see DiffRequestSelectionChain
  * @see com.intellij.diff.DiffManager#showDiff(Project, DiffRequestChain, DiffDialogHints)
  * @see com.intellij.diff.impl.CacheDiffRequestChainProcessor
  */
 public interface DiffRequestChain extends UserDataHolder {
+  /**
+   * NB: if you're calling this method for an unknown chain type, you should be ready to handle {@link AsyncDiffRequestChain}.
+   */
   @NotNull
   @RequiresEdt
   List<? extends DiffRequestProducer> getRequests();

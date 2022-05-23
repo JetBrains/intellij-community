@@ -21,6 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Supports typical tree-like "Go to Change" navigation popup.
+ *
+ * @see ChangeDiffRequestChain.Async
+ */
 public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain, GoToChangePopupBuilder.Chain {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestChain.class);
   @NotNull private final ListSelection<? extends Producer> myProducers;

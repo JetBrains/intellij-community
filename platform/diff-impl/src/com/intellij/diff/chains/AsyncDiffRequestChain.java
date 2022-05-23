@@ -17,6 +17,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
+/**
+ * Allows loading requests asynchronously after showing diff UI, without the need for modal progress
+ *
+ * @see com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Async
+ */
 public abstract class AsyncDiffRequestChain extends UserDataHolderBase implements DiffRequestSelectionChain {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
