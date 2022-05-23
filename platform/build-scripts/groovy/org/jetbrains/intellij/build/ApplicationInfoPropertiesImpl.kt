@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.xml.dom.readXmlAsModel
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -18,64 +19,62 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-@CompileStatic
-final class ApplicationInfoPropertiesImpl implements ApplicationInfoProperties {
-  @SuppressWarnings('SpellCheckingInspection')
-  private static final DateTimeFormatter BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
-  @VisibleForTesting
-  @SuppressWarnings('SpellCheckingInspection')
-  static final DateTimeFormatter MAJOR_RELEASE_DATE_PATTERN = DateTimeFormatter.ofPattern('uuuuMMdd')
-  private final String appInfoXml
-  final String majorVersion
-  final String minorVersion
-  final String microVersion
-  final String patchVersion
-  final String fullVersionFormat
-  final boolean isEAP
-  final String versionSuffix
+@SuppressWarnings("SpellCheckingInspection")
+private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
+
+@VisibleForTesting
+@SuppressWarnings("SpellCheckingInspection")
+val MAJOR_RELEASE_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMdd")
+
+class ApplicationInfoPropertiesImpl(
+  productProperties: ProductProperties,
+  buildOptions: BuildOptions,
+  private val appInfoXml: String,
+  messages: BuildMessages,
+) : ApplicationInfoProperties {
+  val majorVersion: String
+  val minorVersion: String
+  val microVersion: String
+  val patchVersion: String
+  val fullVersionFormat: String
+  override val isEAP: Boolean
+  val versionSuffix: String?
   /**
    * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
    * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
    */
-  final String minorVersionMainPart
-  final String shortProductName
-  final String productCode
-  final String productName
-  final String majorReleaseDate
-  final String edition
-  final String motto
-  final String companyName
-  final String shortCompanyName
-  final String svgRelativePath
-  final List<String> svgProductIcons
-  final String patchesUrl
+  val minorVersionMainPart: String
+  val shortProductName: String
+  val productCode: String?
+  val productName: String
+  val majorReleaseDate: String
+  val edition: String?
+  val motto: String?
+  val companyName: String
+  val shortCompanyName: String
+  val svgRelativePath: String
+  val svgProductIcons: List<String>
+  val patchesUrl: String
 
-  @Override
-  boolean isEAP() {
-    return isEAP
-  }
+  init {
+    val root = readXmlAsModel(appInfoXml.reader())
 
-  @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private ApplicationInfoPropertiesImpl(ProductProperties productProperties, BuildOptions buildOptions, String appInfoXml, BuildMessages messages) {
-    this.appInfoXml = appInfoXml
-    Node root = loadXml(appInfoXml)
-
-    Node versionTag = root["version"].first()
-    majorVersion = versionTag.@major
-    minorVersion = versionTag.@minor ?: "0"
-    microVersion = versionTag.@micro ?: "0"
-    patchVersion = versionTag.@patch ?: "0"
-    fullVersionFormat = versionTag.@full ?: "{0}.{1}"
-    isEAP = Boolean.parseBoolean(versionTag.@eap)
-    versionSuffix = versionTag.@suffix ?: isEAP ? "EAP" : null
+    val versionTag = root.getChild("version")!!
+    majorVersion = versionTag.getAttributeValue("major")!!
+    minorVersion = versionTag.getAttributeValue("minor") ?: "0"
+    microVersion = versionTag.getAttributeValue("micro") ?: "0"
+    patchVersion = versionTag.getAttributeValue("patch") ?: "0"
+    fullVersionFormat = versionTag.getAttributeValue("full") ?: "{0}.{1}"
+    isEAP = versionTag.getAttributeValue("eap").toBoolean()
+    versionSuffix = versionTag.getAttributeValue("suffix") ?: (if (isEAP) "EAP" else null)
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
 
-    def namesTag = root["names"].first()
-    shortProductName = namesTag.@product
-    String buildNumber = root["build"].first().@number
-    int productCodeSeparator = buildNumber.indexOf('-')
-    String productCode = null
+    val namesTag = root.getChild("names")
+    shortProductName = namesTag.getAttributeValue("product")!!
+    val buildTag = root.getChild("build")!!
+    val buildNumber = buildTag.getAttributeValue("number")!!
+    val productCodeSeparator = buildNumber.indexOf('-')
+    var productCode: String? = null
     if (productCodeSeparator != -1) {
       productCode = buildNumber.substring(0, productCodeSeparator)
     }
@@ -86,17 +85,17 @@ final class ApplicationInfoPropertiesImpl implements ApplicationInfoProperties {
       productCode = productProperties.productCode
     }
     this.productCode = productCode
-    def majorReleaseDate = root["build"].first().@majorReleaseDate
-    if (!isEAP && (majorReleaseDate == null || majorReleaseDate.startsWith('__'))) {
-      messages.error("majorReleaseDate may be omitted only for EAP")
+    val majorReleaseDate = buildTag.getAttributeValue("majorReleaseDate")
+    check (isEAP || (majorReleaseDate != null && !majorReleaseDate.startsWith("__"))) {
+      "majorReleaseDate may be omitted only for EAP"
     }
     this.majorReleaseDate = formatMajorReleaseDate(majorReleaseDate, buildOptions.buildDateInSeconds)
-    productName = namesTag.@fullname ?: shortProductName
-    edition = namesTag.@edition
-    motto = namesTag.@motto
+    productName = namesTag.getAttributeValue("fullname") ?: shortProductName
+    edition = namesTag.getAttributeValue("edition")
+    motto = namesTag.getAttributeValue("motto")
 
-    def companyTag = root["company"].first()
-    companyName = companyTag.@name
+    val companyTag = root.getChild("company")!!
+    companyName = companyTag.getAttributeValue("name")
     shortCompanyName = companyTag.@shortName ?: shortenCompanyName(companyName)
 
     def svgPath = getFirst(root["icon"])?.@svg
@@ -116,11 +115,6 @@ final class ApplicationInfoPropertiesImpl implements ApplicationInfoProperties {
   @CompileDynamic
   private static List<String> collectAllIcons(Node root) {
     (root.icon + root."icon-eap").collectMany { [it?.@"svg", it?.@"svg-small"] }.findAll { it != null }
-  }
-
-  /** this code is extracted to a method to work around Groovy compiler bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10457) */
-  private static Node loadXml(String appInfoXml) {
-    new StringReader(appInfoXml).withCloseable { new XmlParser().parse(it) }
   }
 
   @Override
