@@ -425,7 +425,6 @@ class RecentProjectFilteringTree(
 
         projectNameLabel.text = item.displayName() // NON-NLS
         projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
-        projectIconLabel.icon = IconUtil.desaturate(recentProjectsManager.getProjectIcon(item.projectPath, true))
 
         projectProgressBar.apply {
           val isProgressIndeterminate = progressIndicator.isIndeterminate
@@ -443,21 +442,25 @@ class RecentProjectFilteringTree(
           isIndeterminate = isProgressIndeterminate
         }
 
+        val icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
         when (cloneStatus) {
           CloneStatus.PROGRESS -> {
             projectCloneStatusPanel.isVisible = true
             projectCloneStatusPanel.isEnabled = true
             projectProgressLabel.text = taskInfo.actionTitle
+            projectIconLabel.icon = icon
           }
           CloneStatus.FAILURE -> {
             projectCloneStatusPanel.isVisible = false
             projectCloneStatusPanel.isEnabled = false
             projectPathLabel.text = taskInfo.failedTitle
+            projectIconLabel.icon = IconUtil.desaturate(icon)
           }
           CloneStatus.CANCEL -> {
             projectCloneStatusPanel.isVisible = false
             projectCloneStatusPanel.isEnabled = false
             projectPathLabel.text = taskInfo.canceledTitle
+            projectIconLabel.icon = IconUtil.desaturate(icon)
           }
           else -> {}
         }
