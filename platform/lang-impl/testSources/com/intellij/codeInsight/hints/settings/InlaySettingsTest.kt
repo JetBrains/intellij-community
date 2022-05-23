@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.containers.MultiMap
+import junit.framework.TestCase
 
 class InlaySettingsTest : LightPlatformTestCase() {
 
@@ -82,5 +83,15 @@ class InlaySettingsTest : LightPlatformTestCase() {
         println("     Options for ${options[opt].size} languages ($languages): $opt")
       }
     }
+  }
+
+  fun testFindSettingsGetsValueFromCache() {
+    val hintsSettings = InlayHintsSettings()
+    val key = SettingsKey<Int>("foo")
+    val settings = hintsSettings.findSettings(key, Language.ANY, createSettings = { 10 })
+    TestCase.assertEquals(10, settings)
+
+    val settingsRepeated = hintsSettings.findSettings(key, Language.ANY, createSettings = { 5 }) // uses not the lambda, but cached
+    TestCase.assertEquals(10, settingsRepeated)
   }
 }
