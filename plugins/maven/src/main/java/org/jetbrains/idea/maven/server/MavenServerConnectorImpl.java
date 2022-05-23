@@ -81,7 +81,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     if (!myConnectStarted.compareAndSet(false, true)) {
       return;
     }
-    MavenLog.LOG.warn("connecting new maven server:", new Exception());
+    MavenLog.LOG.debug("connecting new maven server:", new Exception());
     ApplicationManager.getApplication().executeOnPooledThread(new StartServerTask());
   }
 
