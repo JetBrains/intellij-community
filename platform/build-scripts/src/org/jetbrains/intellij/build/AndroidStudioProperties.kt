@@ -140,7 +140,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         // are put under plugin "intellij.clion" or IDE implementation. We put them under
         // this base plugin so that they will still be shipped.
         spec.withModule("intellij.cidr.psi.base", spec.mainJarName)
-        spec.withModule("intellij.cidr.resources", spec.mainJarName)
         spec.withModule("intellij.cidr.common", spec.mainJarName)
         spec.withModule("intellij.cidr.runner", spec.mainJarName)
         spec.withModule("intellij.cmake.psi", spec.mainJarName)
