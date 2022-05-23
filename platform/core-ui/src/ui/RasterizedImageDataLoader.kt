@@ -1,273 +1,230 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ImageDataByUrlLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.ui.icons.IconLoadMeasurer;
-import com.intellij.ui.icons.IconTransform;
-import com.intellij.ui.icons.ImageDataLoader;
-import com.intellij.ui.icons.ImageDescriptor;
-import com.intellij.ui.scale.DerivedScaleType;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.SVGLoader;
-import com.intellij.util.ui.StartupUiUtil;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.ImageDataByUrlLoader
+import com.intellij.openapi.util.Pair
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.IconTransform
+import com.intellij.ui.icons.ImageDataLoader
+import com.intellij.ui.icons.ImageDescriptor
+import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.ImageLoader
+import com.intellij.util.SVGLoader
+import com.intellij.util.ui.StartupUiUtil
+import org.intellij.lang.annotations.MagicConstant
+import java.awt.Image
+import java.awt.image.ImageFilter
+import java.io.IOException
+import java.lang.ref.WeakReference
+import java.net.URL
 
-import java.awt.*;
-import java.awt.image.ImageFilter;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
+internal class RasterizedImageDataLoader(private val path: String,
+                                         private val classLoaderRef: WeakReference<ClassLoader>,
+                                         private val originalPath: String,
+                                         private val originalClassLoaderRef: WeakReference<ClassLoader>,
+                                         private val cacheKey: Int,
+                                         private val imageFlags: Int) : ImageDataLoader {
+  override fun loadImage(filters: List<ImageFilter?>, scaleContext: ScaleContext, isDark: Boolean): Image? {
+    val classLoader = classLoaderRef.get() ?: return null
 
-final class RasterizedImageDataLoader implements ImageDataLoader {
-  private final int cacheKey;
-
-  private final String path;
-  private final WeakReference<ClassLoader> classLoaderRef;
-  private final String originalPath;
-  private final WeakReference<ClassLoader> originalClassLoaderRef;
-
-  private final int imageFlags;
-
-  RasterizedImageDataLoader(@NotNull String path,
-                            @NotNull WeakReference<ClassLoader> classLoaderRef,
-                            @NotNull String originalPath,
-                            @NotNull WeakReference<ClassLoader> originalClassLoaderRef,
-                            int cacheKey,
-                            int imageFlags) {
-    this.cacheKey = cacheKey;
-
-    this.path = path;
-    this.classLoaderRef = classLoaderRef;
-    this.originalPath = originalPath;
-    this.originalClassLoaderRef = originalClassLoaderRef;
-
-    this.imageFlags = imageFlags;
-  }
-
-  private static @NotNull String normalizePath(String patchedPath) {
-    return patchedPath.charAt(0) == '/' ? patchedPath.substring(1) : patchedPath;
-  }
-
-  static @NotNull ImageDataLoader createPatched(@NotNull String originalPath,
-                                                @NotNull WeakReference<ClassLoader> originalClassLoaderRef,
-                                                @NotNull Pair<String, ClassLoader> patched,
-                                                int cacheKey,
-                                                int imageFlags) {
-    String effectivePath = normalizePath(patched.first);
-    WeakReference<ClassLoader> effectiveClassLoaderRef =
-      patched.second == null ? originalClassLoaderRef : new WeakReference<>(patched.second);
-    return new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey,
-                                         imageFlags);
-  }
-
-  @Override
-  public @Nullable Image loadImage(@NotNull List<? extends ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
     // do not use cache
-    int flags = ImageLoader.ALLOW_FLOAT_SCALING;
+    var flags = ImageLoader.ALLOW_FLOAT_SCALING
     if (isDark) {
-      flags |= ImageLoader.USE_DARK;
-    }
-    ClassLoader classLoader = classLoaderRef.get();
-    if (classLoader == null) {
-      return null;
+      flags = flags or ImageLoader.USE_DARK
     }
 
     // use cache key only if path to image is not customized
     try {
-      //noinspection StringEquality
-      if (originalPath == path) {
-        boolean isSvg = cacheKey != 0;
+      if (originalPath === path) {
+        val isSvg = cacheKey != 0
         // use cache key only if path to image is not customized
-        return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, cacheKey, imageFlags, false);
+        return loadRasterized(path = path,
+                              filters = filters,
+                              classLoader = classLoader,
+                              flags = flags,
+                              scaleContext = scaleContext,
+                              isSvg = isSvg,
+                              rasterizedCacheKey = cacheKey,
+                              imageFlags = imageFlags,
+                              patched = false)
       }
       else {
-        boolean isSvg = path.endsWith(".svg");
-        return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, 0, imageFlags, true);
+        val isSvg = path.endsWith(".svg")
+        return loadRasterized(path = path,
+                              filters = filters,
+                              classLoader = classLoader,
+                              flags = flags,
+                              scaleContext = scaleContext,
+                              isSvg = isSvg,
+                              rasterizedCacheKey = 0,
+                              imageFlags = imageFlags,
+                              patched = true)
       }
     }
-    catch (IOException e) {
-      Logger.getInstance(RasterizedImageDataLoader.class).debug(e);
-      return null;
+    catch (e: IOException) {
+      logger<RasterizedImageDataLoader>().debug(e)
+      return null
     }
   }
 
-  @Override
-  public @Nullable URL getURL() {
-    ClassLoader classLoader = classLoaderRef.get();
-    return classLoader == null ? null : classLoader.getResource(path);
-  }
+  override fun getURL() = classLoaderRef.get()?.getResource(path)
 
-  @Override
-  public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-    ClassLoader classLoader = classLoaderRef.get();
-    Pair<String, ClassLoader> patched = transform.patchPath(originalPath, classLoader);
-    if (patched == null) {
-      //noinspection StringEquality
-      if (path != this.originalPath && this.originalPath.equals(normalizePath(originalPath))) {
-        return new RasterizedImageDataLoader(this.originalPath, this.originalClassLoaderRef,
-                                             this.originalPath, this.originalClassLoaderRef,
-                                             cacheKey, imageFlags);
-      }
-      return null;
-    }
-
+  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
+    val classLoader = classLoaderRef.get()
+    val patched = transform.patchPath(originalPath, classLoader)
+                  ?: return if (path !== this.originalPath && this.originalPath == normalizePath(originalPath)) {
+                    RasterizedImageDataLoader(path = this.originalPath,
+                                              classLoaderRef = originalClassLoaderRef,
+                                              originalPath = this.originalPath,
+                                              originalClassLoaderRef = originalClassLoaderRef,
+                                              cacheKey = cacheKey,
+                                              imageFlags = imageFlags)
+                  }
+                  else null
     if (patched.first.startsWith("file:/")) {
-      ClassLoader effectiveClassLoader = patched.second == null ? classLoader : patched.second;
-      try {
-        return new ImageDataByUrlLoader(new URL(patched.first), patched.first, effectiveClassLoader, false);
-      }
-      catch (MalformedURLException e) {
-        throw new RuntimeException(e);
-      }
+      val effectiveClassLoader = patched.second ?: classLoader
+      return ImageDataByUrlLoader(URL(patched.first), patched.first, effectiveClassLoader, false)
     }
     else {
-      return createPatched(this.originalPath, this.originalClassLoaderRef, patched, cacheKey, imageFlags);
+      return createPatched(this.originalPath, originalClassLoaderRef, patched, cacheKey, imageFlags)
     }
   }
 
-  @Override
-  public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
-    return classLoaderRef.get() == classLoader;
+  override fun isMyClassLoader(classLoader: ClassLoader) = classLoaderRef.get() === classLoader
+
+  override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
+}
+
+internal fun createPatched(originalPath: String,
+                          originalClassLoaderRef: WeakReference<ClassLoader>,
+                          patched: Pair<String, ClassLoader?>,
+                          cacheKey: Int,
+                          imageFlags: Int): ImageDataLoader {
+  val effectivePath = normalizePath(patched.first)
+  val effectiveClassLoaderRef: WeakReference<ClassLoader> = patched.second?.let(::WeakReference) ?: originalClassLoaderRef
+  return RasterizedImageDataLoader(path = effectivePath,
+                                   classLoaderRef = effectiveClassLoaderRef,
+                                   originalPath = originalPath,
+                                   originalClassLoaderRef = originalClassLoaderRef,
+                                   cacheKey = cacheKey,
+                                   imageFlags = imageFlags)
+}
+
+private fun normalizePath(patchedPath: String): String {
+  return patchedPath.removePrefix("")
+}
+
+@Throws(IOException::class)
+private fun loadRasterized(path: String,
+                           filters: List<ImageFilter?>,
+                           classLoader: ClassLoader,
+                           @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+                           scaleContext: ScaleContext,
+                           isSvg: Boolean,
+                           rasterizedCacheKey: Int,
+                           @MagicConstant(flagsFromClass = ImageDescriptor::class) imageFlags: Int,
+                           patched: Boolean): Image? {
+  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+
+  // Prefer retina images for HiDPI scale, because downscaling
+  // retina images provides a better result than up-scaling non-retina images.
+  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val dotIndex = path.lastIndexOf('.')
+  val name = if (dotIndex < 0) path else path.substring(0, dotIndex)
+  val scale = ImageLoader.adjustScaleFactor(flags and ImageLoader.ALLOW_FLOAT_SCALING == ImageLoader.ALLOW_FLOAT_SCALING, pixScale)
+  val isDark = flags and ImageLoader.USE_DARK == ImageLoader.USE_DARK
+  val isRetina = JBUIScale.isHiDPI(pixScale.toDouble())
+  val imageScale: Float
+  val ext = if (isSvg) "svg" else if (dotIndex < 0 || dotIndex == path.length - 1) "" else path.substring(dotIndex + 1)
+  val effectivePath: String
+  var isEffectiveDark = isDark
+  if (isRetina && isDark && imageFlags and ImageDescriptor.HAS_DARK_2x == ImageDescriptor.HAS_DARK_2x) {
+    effectivePath = "$name@2x_dark.$ext"
+    imageScale = if (isSvg) scale else 2f
   }
-
-  @Override
-  public String toString() {
-    return "RasterizedImageDataLoader(" +
-           ", classLoader=" + classLoaderRef.get() +
-           ", path='" + path + '\'' +
-           ')';
+  else if (isDark && imageFlags and ImageDescriptor.HAS_DARK == ImageDescriptor.HAS_DARK) {
+    effectivePath = "${name}_dark.$ext"
+    imageScale = if (isSvg) scale else 1f
   }
-
-  private static @Nullable Image loadRasterized(@NotNull String path,
-                                                @NotNull List<? extends ImageFilter> filters,
-                                                @NotNull ClassLoader classLoader,
-                                                @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                                @NotNull ScaleContext scaleContext,
-                                                boolean isSvg,
-                                                int rasterizedCacheKey,
-                                                @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags,
-                                                boolean patched) throws IOException {
-    long loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
-
-    // Prefer retina images for HiDPI scale, because downscaling
-    // retina images provides a better result than up-scaling non-retina images.
-    float pixScale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-
-    int dotIndex = path.lastIndexOf('.');
-    String name = dotIndex < 0 ? path : path.substring(0, dotIndex);
-    float scale = ImageLoader.adjustScaleFactor((flags & ImageLoader.ALLOW_FLOAT_SCALING) == ImageLoader.ALLOW_FLOAT_SCALING, pixScale);
-
-    boolean isDark = (flags & ImageLoader.USE_DARK) == ImageLoader.USE_DARK;
-    boolean isRetina = JBUIScale.isHiDPI(pixScale);
-
-    float imageScale;
-
-    String ext = isSvg ? "svg" : dotIndex < 0 || (dotIndex == path.length() - 1) ? "" : path.substring(dotIndex + 1);
-
-    String effectivePath;
-    boolean isEffectiveDark = isDark;
-    if (isRetina && isDark && (imageFlags & ImageDescriptor.HAS_DARK_2x) == ImageDescriptor.HAS_DARK_2x) {
-      effectivePath = name + "@2x_dark." + ext;
-      imageScale = isSvg ? scale : 2;
-    }
-    else if (isDark && (imageFlags & ImageDescriptor.HAS_DARK) == ImageDescriptor.HAS_DARK) {
-      effectivePath = name + "_dark." + ext;
-      imageScale = isSvg ? scale : 1;
+  else {
+    isEffectiveDark = false
+    if (isRetina && imageFlags and ImageDescriptor.HAS_2x == ImageDescriptor.HAS_2x) {
+      effectivePath = "$name@2x.$ext"
+      imageScale = if (isSvg) scale else 2f
     }
     else {
-      isEffectiveDark = false;
-      if (isRetina && (imageFlags & ImageDescriptor.HAS_2x) == ImageDescriptor.HAS_2x) {
-        effectivePath = name + "@2x." + ext;
-        imageScale = isSvg ? scale : 2;
-      }
-      else {
-        effectivePath = path;
-        imageScale = isSvg ? scale : 1;
-      }
+      effectivePath = path
+      imageScale = if (isSvg) scale else 1f
     }
+  }
 
-    // todo remove it, not used
-    ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
-    if (patched) {
-      List<Pair<String, Float>> effectivePaths;
-
-      Pair<String, Float> retinaDark = new Pair<>(name + "@2x_dark." + ext, isSvg ? scale : 2);
-      Pair<String, Float> dark = new Pair<>(name + "_dark." + ext, isSvg ? scale : 1);
-      Pair<String, Float> retina = new Pair<>(name + "@2x." + ext, isSvg ? scale : 2);
-      Pair<String, Float> plain = new Pair<>(path, isSvg ? scale : 1);
-      if (isRetina && isDark) {
-        effectivePaths = List.of(retinaDark, dark, retina, plain);
-      }
-      else if (isDark) {
-        effectivePaths = List.of(dark, plain);
-      }
-      else {
-        effectivePaths = isRetina ? List.of(retina, plain) : List.of(plain);
-      }
-
-      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-      Image image = null;
-      boolean isUpScaleNeeded = !isSvg;
-      for (Pair<String, Float> effPath : effectivePaths) {
-        String pathToImage = effPath.first;
-        float imgScale = effPath.second;
-        if (isSvg) {
-          image = SVGLoader.loadFromClassResource(null, classLoader, pathToImage, rasterizedCacheKey, imgScale, isEffectiveDark,
-                                                  originalUserSize);
-        }
-        else {
-          image = ImageLoader.loadPngFromClassResource(pathToImage, null, classLoader, imgScale, originalUserSize);
-        }
-
-        if (image != null) {
-          if (isUpScaleNeeded) {
-            isUpScaleNeeded = effPath == plain || effPath == dark;
-          }
-          break;
-        }
-      }
-
-      if (start != -1) {
-        IconLoadMeasurer.loadFromResources.end(start);
-        IconLoadMeasurer.addLoading(isSvg, loadingStart);
-      }
-
-      if (image == null) {
-        return null;
-      }
-      return ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext),
-                                      imageScale, isSvg);
+  // todo remove it, not used
+  val originalUserSize = ImageLoader.Dimension2DDouble(0.0, 0.0)
+  if (patched) {
+    val retinaDark = Pair("$name@2x_dark.$ext", if (isSvg) scale else 2f)
+    val dark = Pair(name + "_dark." + ext, if (isSvg) scale else 1f)
+    val retina = Pair("$name@2x.$ext", if (isSvg) scale else 2f)
+    val plain = Pair(path, if (isSvg) scale else 1f)
+    val effectivePaths = if (isRetina && isDark) {
+      listOf(retinaDark, dark, retina, plain)
+    }
+    else if (isDark) {
+      listOf(dark, plain)
     }
     else {
-      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-      Image image;
-      if (isSvg) {
-        image = SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark,
-                                                originalUserSize);
+      if (isRetina) listOf(retina, plain) else listOf(plain)
+    }
+    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+    var image: Image? = null
+    var isUpScaleNeeded = !isSvg
+    for (effPath in effectivePaths) {
+      val pathToImage = effPath.first
+      val imgScale = effPath.second
+      image = if (isSvg) {
+        SVGLoader.loadFromClassResource(null, classLoader, pathToImage, rasterizedCacheKey, imgScale, isEffectiveDark,
+                                        originalUserSize)
       }
       else {
-        image = ImageLoader.loadPngFromClassResource(effectivePath, null, classLoader, imageScale, originalUserSize);
+        ImageLoader.loadPngFromClassResource(pathToImage, null, classLoader, imgScale.toDouble(), originalUserSize)
       }
-
-      if (start != -1) {
-        IconLoadMeasurer.loadFromResources.end(start);
-        IconLoadMeasurer.addLoading(isSvg, loadingStart);
+      if (image != null) {
+        if (isUpScaleNeeded) {
+          isUpScaleNeeded = effPath === plain || effPath === dark
+        }
+        break
       }
-
-      if (image == null) {
-        return null;
-      }
-      return ImageLoader.convertImage(image, filters, flags, scaleContext, !isSvg, StartupUiUtil.isJreHiDPI(scaleContext),
-                                      imageScale, isSvg);
     }
+    if (start != -1L) {
+      IconLoadMeasurer.loadFromResources.end(start)
+      IconLoadMeasurer.addLoading(isSvg, loadingStart)
+    }
+    return if (image == null) {
+      null
+    }
+    else ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext),
+                                  imageScale.toDouble(), isSvg)
+  }
+  else {
+    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val image = if (isSvg) {
+      SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark,
+                                      originalUserSize)
+    }
+    else {
+      ImageLoader.loadPngFromClassResource(effectivePath, null, classLoader, imageScale.toDouble(), originalUserSize)
+    }
+    if (start != -1L) {
+      IconLoadMeasurer.loadFromResources.end(start)
+      IconLoadMeasurer.addLoading(isSvg, loadingStart)
+    }
+    return if (image == null) {
+      null
+    }
+    else ImageLoader.convertImage(image, filters, flags, scaleContext, !isSvg, StartupUiUtil.isJreHiDPI(scaleContext),
+                                  imageScale.toDouble(), isSvg)
   }
 }

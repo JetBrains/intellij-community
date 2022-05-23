@@ -1,500 +1,465 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util
 
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.icons.IconLoadMeasurer;
-import com.intellij.ui.scale.DerivedScaleType;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.ui.svg.SvgCacheManager;
-import com.intellij.ui.svg.SvgDocumentFactoryKt;
-import com.intellij.ui.svg.SvgPrebuiltCacheManager;
-import com.intellij.ui.svg.SvgTranscoder;
-import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.ImageUtil;
-import org.apache.batik.transcoder.TranscoderException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.Strings
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.ui.svg.SvgPrebuiltCacheManager
+import com.intellij.ui.svg.SvgTranscoder.Companion.createImage
+import com.intellij.ui.svg.SvgTranscoder.Companion.getDocumentSize
+import com.intellij.ui.svg.SvgTranscoder.Companion.iconMaxSize
+import com.intellij.ui.svg.createSvgDocument
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.ImageUtil
+import org.apache.batik.transcoder.TranscoderException
+import org.jetbrains.annotations.ApiStatus
+import org.w3c.dom.Document
+import org.w3c.dom.Element
+import java.awt.Component
+import java.awt.Graphics
+import java.awt.Image
+import java.awt.image.BufferedImage
+import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
+import javax.swing.Icon
+import kotlin.math.ceil
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Map;
+private val DEFAULT_THEME = ArrayUtilRt.EMPTY_BYTE_ARRAY
+private val USE_CACHE = java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))
+private var ourColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
+private var selectionColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
+private var contextColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
 
 /**
- * Plugins should use {@link ImageLoader#loadFromResource(String, Class)}.
+ * Plugins should use [ImageLoader.loadFromResource].
  */
 @ApiStatus.Internal
-public final class SVGLoader {
-  private static final byte[] DEFAULT_THEME = ArrayUtilRt.EMPTY_BYTE_ARRAY;
-  private static final boolean USE_CACHE = Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"));
-
-  private static SvgElementColorPatcherProvider ourColorPatcher;
-  private static SvgElementColorPatcherProvider selectionColorPatcher;
-  private static SvgElementColorPatcherProvider contextColorPatcher;
-
-  private static volatile boolean isColorRedefinitionContext;
-
-  private static final class SvgCache {
-    private static final SvgCacheManager persistentCache;
-    private static final SvgPrebuiltCacheManager prebuiltPersistentCache;
-
-    static {
-      SvgPrebuiltCacheManager prebuiltCache;
-      try {
-        Path dbDir = null;
-        if (USE_CACHE) {
-          String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
-          if (!"false".equals(dbPath)) {
-            if (dbPath == null || dbPath.isEmpty()) {
-              dbDir = Path.of(PathManager.getBinPath() + "/icons");
-            }
-            else {
-              dbDir = Path.of(dbPath);
-            }
-          }
-        }
-
-        prebuiltCache = dbDir != null && Files.isDirectory(dbDir) ? new SvgPrebuiltCacheManager(dbDir) : null;
-      }
-      catch (Exception e) {
-        Logger.getInstance(SVGLoader.class).error("Cannot use prebuilt svg cache", e);
-        prebuiltCache = null;
-      }
-
-      prebuiltPersistentCache = prebuiltCache;
-
-      SvgCacheManager cache;
-      try {
-        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v6.db")) : null;
-      }
-      catch (Exception e) {
-        Logger.getInstance(SVGLoader.class).error(e);
-        cache = null;
-      }
-
-      persistentCache = cache;
+object SVGLoader {
+  @Volatile
+  @JvmStatic
+  var isColorRedefinitionContext: Boolean = false
+    get() {
+      return (contextColorPatcher != null && field
+              && EDT.isCurrentThreadEdt()
+              && Registry.`is`("ide.patch.icons.on.selection", false))
     }
+
+  const val ICON_DEFAULT_SIZE = 16
+
+  @Throws(IOException::class)
+  @JvmStatic
+  fun load(url: URL, scale: Float): Image {
+    return load(path = url.path, stream = url.openStream(), scale = scale, isDark = false, docSize = null)
   }
 
-  public static @Nullable SvgCacheManager getCache() {
-    return SvgCache.persistentCache;
+  @Throws(IOException::class)
+  @JvmStatic
+  fun load(stream: InputStream, scale: Float): Image {
+    return load(path = null, stream = stream, scale = scale, isDark = false, docSize = null)
   }
 
-  public static final int ICON_DEFAULT_SIZE = 16;
-
-  private SVGLoader() {
-  }
-
-  public static Image load(@NotNull URL url, float scale) throws IOException {
-    return load(url.getPath(), url.openStream(), scale, false, null);
-  }
-
-  public static Image load(@NotNull InputStream stream, float scale) throws IOException {
-    return load(null, stream, scale, false, null);
-  }
-
-  public static Image load(@Nullable URL url, @NotNull InputStream stream, float scale) throws IOException {
-    return load(url == null ? null : url.getPath(), stream, scale, false, null);
+  @Throws(IOException::class)
+  @JvmStatic
+  fun load(url: URL?, stream: InputStream, scale: Float): Image {
+    return load(path = url?.path, stream = stream, scale = scale, isDark = false, docSize = null)
   }
 
   @ApiStatus.Internal
-  public static @Nullable Image loadFromClassResource(@Nullable Class<?> resourceClass,
-                                                      @Nullable ClassLoader classLoader,
-                                                      @NotNull String path,
-                                                      int rasterizedCacheKey,
-                                                      float scale,
-                                                      boolean isDark,
-                                                      @NotNull ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
-    byte[] themeDigest;
-    byte[] data = null;
-
-    if (USE_CACHE && !isColorRedefinitionContext()) {
-      @SuppressWarnings("DuplicatedCode")
-      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-
-      themeDigest = DEFAULT_THEME;
-
-      SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
+  @Throws(IOException::class)
+  @JvmStatic
+  fun loadFromClassResource(resourceClass: Class<*>?,
+                            classLoader: ClassLoader?,
+                            path: String,
+                            rasterizedCacheKey: Int,
+                            scale: Float,
+                            isDark: Boolean,
+                            docSize: ImageLoader.Dimension2DDouble /*OUT*/): Image? {
+    var themeDigest: ByteArray?
+    var data: ByteArray? = null
+    val cache = SvgCache.prebuiltPersistentCache
+    if (cache != null && !isColorRedefinitionContext) {
+      val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+      themeDigest = DEFAULT_THEME
+      val colorPatcher = ourColorPatcher
       if (colorPatcher != null) {
-        SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
+        val subPatcher = colorPatcher.forPath(path)
         if (subPatcher != null) {
-          themeDigest = subPatcher.digest();
+          themeDigest = subPatcher.digest()
         }
       }
-
       if (themeDigest != null) {
-        Image image;
+        @Suppress("ReplaceArrayEqualityOpWithArraysEquals")
         if (themeDigest == DEFAULT_THEME && rasterizedCacheKey != 0) {
-          SvgPrebuiltCacheManager cache = SvgCache.prebuiltPersistentCache;
-          if (cache != null) {
-            try {
-              image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
-            }
-            catch (Throwable e) {
-              Logger.getInstance(SVGLoader.class).error("cannot load from prebuilt icon cache", e);
-              image = null;
-            }
-            if (image != null) {
-              return image;
+          try {
+            cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize)?.let {
+              return it
             }
           }
+          catch (e: Throwable) {
+            logger<SVGLoader>().error("cannot load from prebuilt icon cache", e)
+          }
         }
-
-        data = ImageLoader.getResourceData(path, resourceClass, classLoader);
-        if (data == null) {
-          return null;
-        }
-
-        image = SvgCache.persistentCache.loadFromCache(themeDigest, data, scale, isDark, docSize);
-        if (image != null) {
-          return image;
+        data = ImageLoader.getResourceData(path, resourceClass, classLoader) ?: return null
+        SvgCache.persistentCache!!.loadFromCache(themeDigest, data, scale, isDark, docSize)?.let {
+          return it
         }
       }
-
-      if (start != -1) {
-        IconLoadMeasurer.svgCacheRead.end(start);
+      if (start != -1L) {
+        IconLoadMeasurer.svgCacheRead.end(start)
       }
     }
     else {
-      themeDigest = null;
+      themeDigest = null
     }
-
     if (data == null) {
-      data = ImageLoader.getResourceData(path, resourceClass, classLoader);
-      if (data == null) {
-        return null;
-      }
+      data = ImageLoader.getResourceData(path, resourceClass, classLoader) ?: return null
     }
-    return loadAndCache(path, data, scale, docSize, themeDigest);
+    return loadAndCache(path = path, data = data, scale = scale, docSize = docSize, themeDigest = themeDigest)
   }
 
   @ApiStatus.Internal
-  public static @NotNull Image load(@Nullable String path,
-                                    @NotNull InputStream stream,
-                                    float scale,
-                                    boolean isDark,
-                                    @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
-    if (docSize == null) {
-      docSize = new ImageLoader.Dimension2DDouble(0, 0);
+  @Throws(IOException::class)
+  @JvmStatic
+  fun load(path: String?,
+           stream: InputStream,
+           scale: Float,
+           isDark: Boolean,
+           docSize: ImageLoader.Dimension2DDouble? /*OUT*/): Image {
+    val persistentCache = SvgCache.persistentCache
+    if (persistentCache == null || isColorRedefinitionContext) {
+      return loadAndCache(path = path,
+                          data = stream.readAllBytes(),
+                          scale = scale,
+                          docSize = docSize,
+                          themeDigest = null)
     }
 
-    byte[] themeDigest = null;
-    byte[] data;
-    Image image;
 
-    if (USE_CACHE && !isColorRedefinitionContext()) {
-      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-      themeDigest = DEFAULT_THEME;
-      SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
-      if (colorPatcher != null) {
-        SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
-        if (subPatcher != null) {
-          themeDigest = subPatcher.digest();
-        }
-      }
-
-      if (themeDigest == null) {
-        data = null;
-      }
-      else {
-        data = stream.readAllBytes();
-        image = SvgCache.persistentCache.loadFromCache(themeDigest, data, scale, isDark, docSize);
-        if (image != null) {
-          return image;
-        }
-      }
-
-      if (start != -1) {
-        IconLoadMeasurer.svgCacheRead.end(start);
-      }
+    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val colorPatcher = ourColorPatcher?.forPath(path)
+    val themeDigest = if (colorPatcher == null) DEFAULT_THEME else colorPatcher.digest()
+    val data: ByteArray?
+    if (themeDigest == null) {
+      data = null
     }
     else {
-      data = stream.readAllBytes();
+      data = stream.readAllBytes()
+      persistentCache.loadFromCache(themeDigest = themeDigest,
+                                    imageBytes = data,
+                                    scale = scale,
+                                    isDark = isDark,
+                                    docSize = docSize)?.let {
+        return it
+      }
     }
-    return loadAndCache(path, data, scale, docSize, themeDigest);
+    if (start != -1L) {
+      IconLoadMeasurer.svgCacheRead.end(start)
+    }
+    return loadAndCache(path, data, scale, docSize, themeDigest)
   }
 
-  private static @NotNull BufferedImage loadAndCache(@Nullable String path,
-                                                     byte[] data,
-                                                     float scale,
-                                                     @NotNull ImageLoader.Dimension2DDouble docSize,
-                                                     byte[] themeDigest) throws IOException {
-    long decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
-    BufferedImage bufferedImage;
-    try {
-      bufferedImage = SvgTranscoder.createImage(scale, createDocument(path, data), docSize);
+  @Throws(IOException::class)
+  private fun loadAndCache(path: String?,
+                           data: ByteArray?,
+                           scale: Float,
+                           docSize: ImageLoader.Dimension2DDouble?,
+                           themeDigest: ByteArray?): BufferedImage {
+    val decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val bufferedImage = try {
+      createImage(scale, createDocument(path, data), docSize)
     }
-    catch (TranscoderException e) {
-      docSize.setSize(0, 0);
-      throw new IOException(e);
+    catch (e: TranscoderException) {
+      docSize?.setSize(0.0, 0.0)
+      throw IOException(e)
     }
-
-    if (decodingStart != -1) {
-      IconLoadMeasurer.svgDecoding.end(decodingStart);
+    if (decodingStart != -1L) {
+      IconLoadMeasurer.svgDecoding.end(decodingStart)
     }
-
     if (themeDigest != null) {
       try {
-        long cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled();
-        SvgCache.persistentCache.storeLoadedImage(themeDigest, data, scale, bufferedImage);
-        IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart);
+        val cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+        SvgCache.persistentCache?.storeLoadedImage(themeDigest, data!!, scale, bufferedImage)
+        IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart)
       }
-      catch (Exception e) {
-        Logger.getInstance(SVGLoader.class).error("Failed to write SVG cache for: " + path, e);
+      catch (e: Exception) {
+        Logger.getInstance(SVGLoader::class.java).error("Failed to write SVG cache for: $path", e)
       }
     }
-    return bufferedImage;
+    return bufferedImage
   }
 
-  public static @NotNull BufferedImage loadWithoutCache(byte @NotNull [] content, float scale) throws IOException {
-    try {
-      return SvgTranscoder.createImage(scale, createDocument(null, new ByteArrayInputStream(content)), null);
+  @Throws(IOException::class)
+  @JvmStatic
+  fun loadWithoutCache(content: ByteArray, scale: Float): BufferedImage {
+    return try {
+      createImage(scale, createDocument(null, ByteArrayInputStream(content)), null)
     }
-    catch (TranscoderException e) {
-      throw new IOException(e);
+    catch (e: TranscoderException) {
+      throw IOException(e)
     }
   }
 
   /**
-   * Loads an image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
-   * <p></p>
-   * Note: always pass {@code url} when it is available.
+   * Loads an image with the specified `width` and `height` (in user space). Size specified in svg file is ignored.
+   *
+   *
+   * Note: always pass `url` when it is available.
    */
-  public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext scaleContext, double width, double height) throws IOException {
-    try {
-      double scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-      return SvgTranscoder
-        .createImage(1, createDocument(url != null ? url.getPath() : null, stream), null, (float)(width * scale), (float)(height * scale));
+  @Throws(IOException::class)
+  @JvmStatic
+  fun load(url: URL?, stream: InputStream, scaleContext: ScaleContext, width: Double, height: Double): Image {
+    return try {
+      val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE)
+      createImage(1f, createDocument(url?.path, stream), null, (width * scale).toFloat(), (height * scale).toFloat())
     }
-    catch (TranscoderException e) {
-      throw new IOException(e);
+    catch (e: TranscoderException) {
+      throw IOException(e)
     }
   }
 
   /**
    * Loads a HiDPI-aware image of the size specified in the svg file.
    */
-  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream, ScaleContext context) throws IOException {
-    BufferedImage image = (BufferedImage)load(url == null ? null : url.getPath(), stream, (float)context.getScale(DerivedScaleType.PIX_SCALE), false, null);
-    @SuppressWarnings("unchecked") T t = (T)ImageUtil.ensureHiDPI(image, context);
-    return t;
+  @Throws(IOException::class)
+  @JvmStatic
+  fun loadHiDPI(url: URL?, stream: InputStream, context: ScaleContext): Image {
+    val image = load(path = url?.path,
+                     stream = stream,
+                     scale = context.getScale(DerivedScaleType.PIX_SCALE).toFloat(),
+                     isDark = false,
+                     docSize = null)
+    return ImageUtil.ensureHiDPI(image, context)
   }
 
-  public static ImageLoader.Dimension2DDouble getDocumentSize(@NotNull InputStream stream, float scale) throws IOException {
+  @Throws(IOException::class)
+  @JvmStatic
+  fun getDocumentSize(stream: InputStream, scale: Float): ImageLoader.Dimension2DDouble {
     // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
     // So, to optimize we extract the svg header (possibly prepended with <?xml> header) and parse only it.
     // Assumes 8-bit encoding of the input stream (no one in theirs right mind would use wide characters for SVG anyway).
-    BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream(100);
-    byte[] bytes = new byte[3];
-    boolean checkClosingBracket = false;
-    int ch;
-    while ((ch = stream.read()) != -1) {
-      buffer.write(ch);
-      if (ch == '<') {
-        int n = stream.read(bytes, 0, 3);
-        if (n == -1) break;
-        buffer.write(bytes, 0, n);
-        checkClosingBracket = n == 3 && bytes[0] == 's' && bytes[1] == 'v' && bytes[2] == 'g';
+    val buffer = BufferExposingByteArrayOutputStream(100)
+    val bytes = ByteArray(3)
+    var checkClosingBracket = false
+    var ch: Int
+    while (stream.read().also { ch = it } != -1) {
+      buffer.write(ch)
+      if (ch == '<'.code) {
+        val n = stream.read(bytes, 0, 3)
+        if (n == -1) break
+        buffer.write(bytes, 0, n)
+        checkClosingBracket = n == 3 && bytes[0] == 's'.code.toByte() && bytes[1] == 'v'.code.toByte() && bytes[2] == 'g'.code.toByte()
       }
-      else if (checkClosingBracket && ch == '>') {
-        buffer.write(new byte[]{'<', '/', 's', 'v', 'g', '>'});
-        ByteArrayInputStream input = new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size());
-        return SvgTranscoder.getDocumentSize(scale, SvgDocumentFactoryKt.createSvgDocument(null, input));
+      else if (checkClosingBracket && ch == '>'.code) {
+        buffer.write(
+          byteArrayOf('<'.code.toByte(), '/'.code.toByte(), 's'.code.toByte(), 'v'.code.toByte(), 'g'.code.toByte(), '>'.code.toByte()))
+        val input = ByteArrayInputStream(buffer.internalBuffer, 0, buffer.size())
+        return getDocumentSize(scale, createSvgDocument(null, input))
       }
     }
-    return new ImageLoader.Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
+    return ImageLoader.Dimension2DDouble((ICON_DEFAULT_SIZE * scale).toDouble(), (ICON_DEFAULT_SIZE * scale).toDouble())
   }
 
-  public static double getMaxZoomFactor(@Nullable String path, @NotNull InputStream stream, @NotNull ScaleContext scaleContext) throws IOException {
-    ImageLoader.Dimension2DDouble size = SvgTranscoder.getDocumentSize((float)scaleContext.getScale(DerivedScaleType.PIX_SCALE), createDocument(path, stream));
-    float iconMaxSize = SvgTranscoder.getIconMaxSize();
-    return Math.min(iconMaxSize / size.getWidth(), iconMaxSize / size.getHeight());
+  @Throws(IOException::class)
+  @JvmStatic
+  fun getMaxZoomFactor(path: String?, stream: InputStream, scaleContext: ScaleContext): Double {
+    val size = getDocumentSize(scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat(), createDocument(path, stream))
+    val iconMaxSize = iconMaxSize
+    return (iconMaxSize / size.width).coerceAtMost(iconMaxSize / size.height)
   }
 
-  private static @NotNull Document createDocument(@Nullable String url, @NotNull InputStream inputStream) {
-    Document document = SvgDocumentFactoryKt.createSvgDocument(url, inputStream);
-    patchColors(url, document);
-    return document;
+  private fun createDocument(url: String?, inputStream: InputStream): Document {
+    val document = createSvgDocument(url, inputStream)
+    patchColors(url, document)
+    return document
   }
 
-  private static @NotNull Document createDocument(@Nullable String url, byte[] data) {
-    Document document = SvgDocumentFactoryKt.createSvgDocument(url, data);
-    patchColors(url, document);
-    return document;
+  private fun createDocument(url: String?, data: ByteArray?): Document {
+    val document = createSvgDocument(url, data!!)
+    patchColors(url, document)
+    return document
   }
 
-  private static void patchColors(@Nullable String url, @NotNull Document document) {
-    SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
+  private fun patchColors(url: String?, document: Document) {
+    val colorPatcher = ourColorPatcher
     if (colorPatcher != null) {
-      SvgElementColorPatcher patcher = colorPatcher.forPath(url);
-      if (patcher != null) {
-        patcher.patchColors(document.getDocumentElement());
-      }
+      val patcher = colorPatcher.forPath(url)
+      patcher?.patchColors(document.documentElement)
     }
-    if (isColorRedefinitionContext()) {
-      SvgElementColorPatcherProvider selectionPatcherProvider = getColorPatcherProvider();
+    if (isColorRedefinitionContext) {
+      val selectionPatcherProvider = colorPatcherProvider
       if (selectionPatcherProvider != null) {
-        SvgElementColorPatcher selectionPatcher = selectionPatcherProvider.forPath(url);
-        if (selectionPatcher != null) {
-          selectionPatcher.patchColors(document.getDocumentElement());
-        }
+        val selectionPatcher = selectionPatcherProvider.forPath(url)
+        selectionPatcher?.patchColors(document.documentElement)
       }
     }
   }
 
-  public static void setContextColorPatcher(@Nullable SvgElementColorPatcherProvider provider) {
-    contextColorPatcher = provider;
+  @JvmStatic
+  fun setContextColorPatcher(provider: SvgElementColorPatcherProvider?) {
+    contextColorPatcher = provider
   }
 
-  private static SvgElementColorPatcherProvider getColorPatcherProvider() {
-    return contextColorPatcher;
-  }
-
-  @Nullable
-  public static SVGLoader.SvgElementColorPatcher newPatcher(byte @Nullable [] digest,
-                                                            @NotNull Map<String, String> newPalette,
-                                                            @NotNull Map<String, Integer> alphas) {
-    if (newPalette.isEmpty()) {
-      return null;
+  @JvmStatic
+  var colorPatcherProvider: SvgElementColorPatcherProvider?
+    get() = contextColorPatcher
+    set(colorPatcher) {
+      ourColorPatcher = colorPatcher
+      IconLoader.clearCache()
     }
 
-    return new SVGLoader.SvgElementColorPatcher() {
-      @Override
-      public byte[] digest() {
-        return digest;
+  @JvmStatic
+  fun newPatcher(digest: ByteArray?,
+                 newPalette: Map<String, String>,
+                 alphas: Map<String, Int>): SvgElementColorPatcher? {
+    return if (newPalette.isEmpty()) {
+      null
+    }
+    else object : SvgElementColorPatcher {
+      override fun digest(): ByteArray? {
+        return digest
       }
 
-      @Override
-      public void patchColors(@NotNull Element svg) {
-        patchColorAttribute(svg, "fill");
-        patchColorAttribute(svg, "stroke");
-        NodeList nodes = svg.getChildNodes();
-        int length = nodes.getLength();
-        for (int i = 0; i < length; i++) {
-          Node item = nodes.item(i);
-          if (item instanceof Element) {
-            patchColors((Element)item);
+      override fun patchColors(svg: Element) {
+        patchColorAttribute(svg, "fill")
+        patchColorAttribute(svg, "stroke")
+        val nodes = svg.childNodes
+        val length = nodes.length
+        for (i in 0 until length) {
+          val item = nodes.item(i)
+          if (item is Element) {
+            patchColors(item)
           }
         }
       }
 
-      private void patchColorAttribute(@NotNull Element svg, String attrName) {
-        String color = svg.getAttribute(attrName);
-        String opacity = svg.getAttribute(attrName + "-opacity");
+      private fun patchColorAttribute(svg: Element, attrName: String) {
+        val color = svg.getAttribute(attrName)
+        val opacity = svg.getAttribute("$attrName-opacity")
         if (!Strings.isEmpty(color)) {
-          int alpha = 255;
+          var alpha = 255
           if (!Strings.isEmpty(opacity)) {
             try {
-              alpha = (int)Math.ceil(255f * Float.parseFloat(opacity));
+              alpha = ceil((255f * opacity.toFloat()).toDouble()).toInt()
             }
-            catch (Exception ignore) { }
+            catch (ignore: Exception) {
+            }
           }
-          String newColor = null;
-          String key = toCanonicalColor(color);
+          var newColor: String? = null
+          val key = toCanonicalColor(color)
           if (alpha != 255) {
-            newColor = newPalette.get(key + Integer.toHexString(alpha));
+            newColor = newPalette[key + Integer.toHexString(alpha)]
           }
           if (newColor == null) {
-            newColor = newPalette.get(key);
+            newColor = newPalette[key]
           }
-
           if (newColor != null) {
-            svg.setAttribute(attrName, newColor);
-            if (alphas.get(newColor) != null) {
-              svg.setAttribute(attrName + "-opacity", String.valueOf((Float.valueOf(alphas.get(newColor)) / 255f)));
+            svg.setAttribute(attrName, newColor)
+            if (alphas[newColor] != null) {
+              svg.setAttribute("$attrName-opacity", (java.lang.Float.valueOf(alphas[newColor]!!.toFloat()) / 255f).toString())
             }
           }
         }
       }
-    };
-  }
-
-  private static String toCanonicalColor(String color) {
-    String s = Strings.toLowerCase(color);
-    //todo[kb]: add support for red, white, black, and other named colors
-    if (s.startsWith("#") && s.length() < 7) {
-      s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s));
     }
-    return s;
   }
 
-  public static void setColorPatcherProvider(@Nullable SvgElementColorPatcherProvider colorPatcher) {
-    ourColorPatcher = colorPatcher;
-    IconLoader.clearCache();
+  private fun toCanonicalColor(color: String): String {
+    var s = color.lowercase()
+    //todo[kb]: add support for red, white, black, and other named colors
+    if (s.startsWith("#") && s.length < 7) {
+      s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s))
+    }
+    return s
   }
 
-  public static void setSelectionColorPatcherProvider(@Nullable SvgElementColorPatcherProvider colorPatcher) {
-    selectionColorPatcher = colorPatcher;
-    IconLoader.clearCache();
+  @JvmStatic
+  fun setSelectionColorPatcherProvider(colorPatcher: SvgElementColorPatcherProvider?) {
+    selectionColorPatcher = colorPatcher
+    IconLoader.clearCache()
   }
 
-  public static void setColorRedefinitionContext(boolean isColorRedefinitionContext) {
-    SVGLoader.isColorRedefinitionContext = isColorRedefinitionContext;
-  }
-
-  public static boolean isColorRedefinitionContext() {
-    return contextColorPatcher != null
-           && isColorRedefinitionContext
-           && EDT.isCurrentThreadEdt()
-           && Registry.is("ide.patch.icons.on.selection", false);
-  }
-
-  public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
+  @JvmStatic
+  fun paintIconWithSelection(icon: Icon, c: Component?, g: Graphics?, x: Int, y: Int) {
     if (selectionColorPatcher == null) {
-      icon.paintIcon(c, g, x, y);
+      icon.paintIcon(c, g, x, y)
     }
     else {
       try {
-        setContextColorPatcher(selectionColorPatcher);
-        setColorRedefinitionContext(true);
-        icon.paintIcon(c, g, x, y);
+        setContextColorPatcher(selectionColorPatcher)
+        isColorRedefinitionContext = true
+        icon.paintIcon(c, g, x, y)
       }
       finally {
-        setContextColorPatcher(null);
-        setColorRedefinitionContext(false);
+        setContextColorPatcher(null)
+        isColorRedefinitionContext = false
       }
     }
   }
 
-  public interface SvgElementColorPatcher {
-    void patchColors(@NotNull Element svg);
+  interface SvgElementColorPatcher {
+    fun patchColors(svg: Element)
 
     /**
      * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
      */
-    byte @Nullable [] digest();
+    fun digest(): ByteArray?
   }
 
-  public interface SvgElementColorPatcherProvider {
-    /**
-     * @deprecated Use {@link #forPath(String)}
-     */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    default @Nullable SvgElementColorPatcher forURL(@SuppressWarnings("unused") @Nullable URL url) {
-      return null;
+  interface SvgElementColorPatcherProvider {
+    fun forPath(path: String?): SvgElementColorPatcher?
+  }
+
+  val persistentCache: SvgCacheManager?
+    get() = SvgCache.persistentCache
+}
+
+private object SvgCache {
+  val persistentCache: SvgCacheManager?
+  val prebuiltPersistentCache: SvgPrebuiltCacheManager?
+
+  init {
+    var prebuiltCache: SvgPrebuiltCacheManager? = null
+    if (USE_CACHE) {
+      try {
+        var dbDir: Path? = null
+        val dbPath = System.getProperty("idea.ui.icons.prebuilt.db")
+        if (dbPath != "false") {
+          dbDir = if (dbPath == null || dbPath.isEmpty()) {
+            Path.of(PathManager.getBinPath() + "/icons")
+          }
+          else {
+            Path.of(dbPath)
+          }
+        }
+        prebuiltCache = if (dbDir != null && Files.isDirectory(dbDir)) SvgPrebuiltCacheManager(dbDir) else null
+      }
+      catch (e: Exception) {
+        logger<SVGLoader>().error("Cannot use prebuilt svg cache", e)
+        prebuiltCache = null
+      }
     }
 
-    default @Nullable SvgElementColorPatcher forPath(@Nullable String path) {
-      return forURL(null);
+    prebuiltPersistentCache = prebuiltCache
+    persistentCache = try {
+      if (USE_CACHE) SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v6.db")) else null
+    }
+    catch (e: Exception) {
+      Logger.getInstance(SVGLoader::class.java).error(e)
+      null
     }
   }
 }

@@ -97,14 +97,14 @@ class SvgCacheManager(dbFile: Path) {
                     imageBytes: ByteArray,
                     scale: Float,
                     isDark: Boolean,
-                    docSize: ImageLoader.Dimension2DDouble): Image? {
+                    docSize: ImageLoader.Dimension2DDouble?): Image? {
     val key = getCacheKey(themeDigest, imageBytes)
     val map = getMap(scale, isDark, scaleToMap, store, mapBuilder)
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
       val data = map.get(key) ?: return null
       val image = readImage(data)
-      docSize.setSize((data.w / scale).toDouble(), (data.h / scale).toDouble())
+      docSize?.setSize((data.w / scale).toDouble(), (data.h / scale).toDouble())
       IconLoadMeasurer.svgCacheRead.end(start)
       return image
     }

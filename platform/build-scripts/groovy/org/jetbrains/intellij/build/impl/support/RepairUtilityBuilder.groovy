@@ -8,11 +8,7 @@ import io.opentelemetry.api.trace.Span
 import kotlin.Unit
 import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildContextKt
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.io.ProcessKt
 
@@ -75,7 +71,7 @@ final class RepairUtilityBuilder {
         }
 
         if (cache.isEmpty()) {
-          return
+          return Unit.INSTANCE
         }
 
         Binary binary = findBinary(context, os, arch)
@@ -106,7 +102,7 @@ final class RepairUtilityBuilder {
           BINARIES_CACHE = buildBinaries(context)
         }
         if (BINARIES_CACHE.isEmpty()) {
-          return
+          return Unit.INSTANCE
         }
         OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
                              SystemInfoRt.isMac ? OsFamily.MACOS :

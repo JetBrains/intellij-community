@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -100,7 +100,7 @@ public final class IfsUtil {
 
           file.putUserData(FORMAT_KEY, SVG_FORMAT);
           file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(new ImageDocument.CachedScaledImageProvider() {
-            final ScaleContext.Cache<BufferedImage> cache = new ScaleContext.Cache<>((ctx) -> {
+            final ScaleContext.Cache<Image> cache = new ScaleContext.Cache<>((ctx) -> {
               try {
                 return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
               }
@@ -113,11 +113,12 @@ public final class IfsUtil {
             public void clearCache() {
               cache.clear();
             }
+
             @Override
             public BufferedImage apply(Double zoom, Component ancestor) {
               ScaleContext ctx = ScaleContext.create(ancestor);
               ctx.setScale(OBJ_SCALE.of(zoom));
-              return cache.getOrProvide(ctx);
+              return (BufferedImage)cache.getOrProvide(ctx);
             }
           }));
           return true;
