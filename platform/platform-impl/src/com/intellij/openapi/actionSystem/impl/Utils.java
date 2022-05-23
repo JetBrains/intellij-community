@@ -118,7 +118,7 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    assert isAsyncDataContext(context);
+    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
     return new ActionUpdater(presentationFactory, context, place, false, false)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
@@ -129,7 +129,7 @@ public final class Utils {
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction) {
-    assert isAsyncDataContext(context);
+    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
     return new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
@@ -234,7 +234,7 @@ public final class Utils {
     }
     else {
       if (Registry.is("actionSystem.update.actions.async") && !ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.warn(new Throwable("Non-async data context detected in async mode in '" + place + "': " + context.getClass().getName()));
+        LOG.error("Async data context required in '" + place + "': " + context.getClass().getName());
       }
       try {
         list = DO_FULL_EXPAND ?
