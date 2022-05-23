@@ -37,7 +37,11 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
   }
 
   public SimpleDiffRequestChain(@NotNull List<? extends DiffRequest> requests) {
-    myRequests = ListSelection.createAt(requests, 0).map(request -> new DiffRequestProducerWrapper(request));
+    this(requests, 0);
+  }
+
+  public SimpleDiffRequestChain(@NotNull List<? extends DiffRequest> requests, int selectedIndex) {
+    myRequests = ListSelection.createAt(requests, selectedIndex).map(request -> new DiffRequestProducerWrapper(request));
   }
 
   private SimpleDiffRequestChain(@NotNull ListSelection<? extends DiffRequestProducer> requests, @Nullable Object constructorFlag) {
