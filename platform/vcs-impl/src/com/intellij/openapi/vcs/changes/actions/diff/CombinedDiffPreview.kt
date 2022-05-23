@@ -157,6 +157,8 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
       selectedChange == null -> selectedChanges[0]
       else -> selectedChange
     }
+
+    selected?.let { context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, CombinedPathBlockId(it.filePath, it.fileStatus, it.tag)) }
   }
 
   internal fun getSelectedOrAllChangesStream(): Stream<out Wrapper> {

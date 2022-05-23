@@ -151,9 +151,9 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       model.unloadRequestContents(blockIds)
     }
 
-    override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedDiffBlock<*>?) {
+    override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedBlockId?) {
       val blockIds = blocks.asSequence().map(CombinedDiffBlock<*>::id).toSet()
-      model.loadRequestContents(blockIds, blockToSelect?.id)
+      model.loadRequestContents(blockIds, blockToSelect)
     }
   }
 
@@ -162,6 +162,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       Runnable {
         val childCount = model.requests.size
         val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
+        val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
 
         BackgroundTaskUtil.executeOnPooledThread(ourDisposable) {
          val indicator = EmptyProgressIndicator()
@@ -183,7 +184,12 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
               }
             }
             finally {
-              runInEdt { mainUi.stopProgress() }
+              runInEdt {
+                mainUi.stopProgress()
+                if (blockToSelect != null) {
+                  combinedViewer.selectDiffBlock(blockToSelect, ScrollPolicy.DIFF_BLOCK, true)
+                }
+              }
             }
 
           }, indicator)
