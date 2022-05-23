@@ -5,7 +5,6 @@ import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.test.TestFailedLineManager
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.ProgramRunnerUtil
@@ -28,6 +27,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.ClassUtil
+import com.intellij.testIntegration.TestFailedLineManager
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -47,7 +47,8 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     cache.remove(file)?.forEach { (s: String, info: TestInfoCache) -> testStorage.writeState(s, info.record) }
   }
 
-  override fun getTestInfo(call: UCallExpression): TestFailedLineManager.TestInfo? {
+  override fun getTestInfo(element: PsiElement): TestFailedLineManager.TestInfo? {
+    val call = element.toUElementOfType<UCallExpression>() ?: return null
     val containingMethod = call.getContainingUMethod() ?: return null
     val callSourcePsi = call.sourcePsi ?: return null
     val file = call.getContainingUFile()?.sourcePsi ?: return null
@@ -70,9 +71,9 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     var record: TestStateStorage.Record,
     var pointer: SmartPsiElementPointer<PsiElement>? = null
   ): TestFailedLineManager.TestInfo {
-    override val errorMessage: String = record.errorMessage
+    override fun getErrorMessage(): String = record.errorMessage
 
-    override val topStacktraceLine: String = record.topStacktraceLine
+    override fun getTopStackTraceLine(): String = record.topStacktraceLine
   }
 
   private fun getTestInfo(method: UMethod): TestInfoCache? {
@@ -92,9 +93,9 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     return info
   }
 
-  override fun ruConfigurationQuickFix(element: PsiElement): LocalQuickFix = RunActionFix(element)
+  override fun getRunQuickFix(element: PsiElement): LocalQuickFix = RunActionFix(element)
 
-  override fun debugConfigurationQuickFix(element: PsiElement, topStacktraceLine: String): LocalQuickFix =
+  override fun getDebugQuickFix(element: PsiElement, topStacktraceLine: String): LocalQuickFix =
     DebugActionFix(element, topStacktraceLine)
 
   private open class RunActionFix(element: PsiElement, executorId: String = DefaultRunExecutor.EXECUTOR_ID) : LocalQuickFix, Iconable {
