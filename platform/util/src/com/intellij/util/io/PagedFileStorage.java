@@ -416,7 +416,7 @@ public class PagedFileStorage implements Forceable {
   @NotNull
   private DirectBufferWrapper doGetBufferWrapper(long page, boolean modify) throws IOException {
     DirectBufferWrapper pageFromCache =
-      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getBufferCache().getMappingChangeCount());
+      myLastAccessedBufferCache.getPageFromCache(page);
 
     if (myReadOnly && modify) {
       throw new IOException("Read-only storage can't be modified");
@@ -439,7 +439,7 @@ public class PagedFileStorage implements Forceable {
       byteBufferWrapper.useNativeByteOrder();
     }
 
-    myLastAccessedBufferCache.updateCache(page, byteBufferWrapper, myStorageLockContext.getBufferCache().getMappingChangeCount());
+    myLastAccessedBufferCache.updateCache(page, byteBufferWrapper);
 
     return byteBufferWrapper;
   }
