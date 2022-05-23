@@ -5,7 +5,6 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ReportValue
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.OptionTag
-import java.util.concurrent.TimeUnit
 
 class UpdateOptions : BaseState() {
   @get:CollectionBean

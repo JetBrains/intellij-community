@@ -47,20 +47,20 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
     return myState.isCheckNeeded();
   }
 
-  public boolean isPluginsCheckNeeded() {
-    return myState.isPluginsCheckNeeded();
-  }
-
   public void setCheckNeeded(boolean value) {
     myState.setCheckNeeded(value);
   }
 
-  public boolean isShowWhatsNewEditor() {
-    return myState.isShowWhatsNewEditor();
+  public boolean isPluginsCheckNeeded() {
+    return myState.isPluginsCheckNeeded();
   }
 
-  public void setShowWhatsNewEditor(boolean value) {
-    myState.setShowWhatsNewEditor(value);
+  public void setPluginsCheckNeeded(boolean value) {
+    myState.setPluginsCheckNeeded(value);
+  }
+
+  public boolean isShowWhatsNewEditor() {
+    return myState.isShowWhatsNewEditor();
   }
 
   public int getWhatsNewShownFor() {

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings
 
 import com.intellij.configurationStore.deserialize
 import com.intellij.openapi.updateSettings.impl.UpdateOptions
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
@@ -11,7 +12,7 @@ import org.junit.Test
 class UpdateOptionsTest : BareTestFixtureTestCase() {
   @Test fun `auto check is enabled`() {
     // it is an important default value (true), so ensure that it is not inadvertently modified
-    assertThat(UpdateOptions().isCheckNeeded).isTrue
+    assertThat(UpdateSettings().isCheckNeeded).isTrue
   }
 
   @Test fun deserialization() {

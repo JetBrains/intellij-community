@@ -205,7 +205,7 @@ final class UpdateCheckerService {
       }
     }
     if (lastShownFor == 0) {
-      // ensures that the "what's new" page is shown _only_ for users who have updated from a previous version
+      // this ensures that the "what's new" page is shown _only_ for users who have updated from a previous version
       // (to detect updates, the method relies on imported settings; users starting from scratch are out of luck)
       settings.setWhatsNewShownFor(current.getBaselineVersion());
       return false;
