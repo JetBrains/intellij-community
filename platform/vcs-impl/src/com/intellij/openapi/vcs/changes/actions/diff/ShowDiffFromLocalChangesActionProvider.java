@@ -109,7 +109,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     else {
       ListSelection<Producer> producers = collectRequestProducers(project, changes, unversioned, view);
       if (producers.isEmpty()) return;
-      chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
+      chain = new ChangeDiffRequestChain(producers);
     }
 
     chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
@@ -146,9 +146,9 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   @NotNull
   public static ListSelection<Producer> collectRequestProducers(@NotNull Project project,
-                                                                 @NotNull List<? extends Change> changes,
-                                                                 @NotNull List<? extends FilePath> unversioned,
-                                                                 @NotNull ChangesListView changesView) {
+                                                                @NotNull List<? extends Change> changes,
+                                                                @NotNull List<? extends FilePath> unversioned,
+                                                                @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
       List<Change> selectedChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
@@ -171,7 +171,8 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     ListSelection<Producer> changeProducers = createChangeProducers(project, changes, 0);
     ListSelection<Producer> unversionedProducers = createUnversionedProducers(project, unversioned, 0);
-    return ListSelection.createAt(ContainerUtil.concat(changeProducers.getList(), unversionedProducers.getList()), 0);
+    return ListSelection.createAt(ContainerUtil.concat(changeProducers.getList(), unversionedProducers.getList()), 0)
+      .asExplicitSelection();
   }
 
   private static ListSelection<Producer> createChangeProducers(@NotNull Project project,

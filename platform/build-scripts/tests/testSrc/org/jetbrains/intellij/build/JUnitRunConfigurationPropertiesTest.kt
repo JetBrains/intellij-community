@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.io.URLUtil
-import junit.framework.AssertionFailedError
 import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -35,11 +34,12 @@ class JUnitRunConfigurationPropertiesTest {
     assertEquals("test pattern", properties.name)
     assertEquals("main-module", properties.moduleName)
     assertEquals(listOf("com.example.Test", "com.example.package..*"), properties.testClassPatterns)
+    @Suppress("SpellCheckingInspection")
     assertEquals(listOf("-ea", "-Dintellij.build.test.patterns.escaped=true"), properties.vmParameters)
     assertEquals(emptyList<String>(), properties.requiredArtifacts)
   }
 
-  @Test(expected = AssertionFailedError::class)
+  @Test(expected = RuntimeException::class)
   fun `load test with method fork mode`() {
     loadRunConfiguration("test_method_fork_mode.xml")
   }
@@ -53,6 +53,6 @@ class JUnitRunConfigurationPropertiesTest {
 
   private fun loadRunConfiguration(fileName: String): JUnitRunConfigurationProperties {
     val url = JUnitRunConfigurationPropertiesTest::class.java.getResource("runConfigurations/$fileName")
-    return JUnitRunConfigurationProperties.loadRunConfiguration(URLUtil.urlToFile(url!!), MockBuildMessages())
+    return JUnitRunConfigurationProperties.loadRunConfiguration(URLUtil.urlToFile(url!!).toPath())
   }
 }

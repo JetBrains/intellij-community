@@ -135,7 +135,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                         dataLoader: DataLoader,
                         moduleName: String?): IdeaPluginDescriptorImpl {
     raw.name = name
-    @Suppress("TestOnlyProblems")
     val result = IdeaPluginDescriptorImpl(raw, path = path, isBundled = isBundled, id = id, moduleName = moduleName,
                                           useCoreClassLoader = useCoreClassLoader)
     result.descriptorPath = descriptorPath

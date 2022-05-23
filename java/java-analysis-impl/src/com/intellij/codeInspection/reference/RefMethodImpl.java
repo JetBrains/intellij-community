@@ -457,7 +457,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (method instanceof LightElement) {
       method = method.getNavigationElement();
     }
-    return (RefMethod)manager.getReference(method);
+    RefElement reference = manager.getReference(method);
+    if (!(reference instanceof RefMethod) && reference != null) {
+      LOG.error("Expected refMethod but found: " + reference.getClass().getName() + "; for externalName: " +externalName );
+      return null;
+    }
+    return (RefMethod)reference;
   }
 
   @Nullable

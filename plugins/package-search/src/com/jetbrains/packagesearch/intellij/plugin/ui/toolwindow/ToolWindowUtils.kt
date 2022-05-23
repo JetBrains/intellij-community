@@ -136,7 +136,7 @@ internal fun ContentManager.addTab(
     )
 }
 
-@Suppress("unused")
+@Suppress("UnusedReceiverParameter")
 internal fun Dispatchers.toolWindowManager(project: Project): CoroutineDispatcher = object : CoroutineDispatcher() {
 
     private val executor = ToolWindowManager.getInstance(project)

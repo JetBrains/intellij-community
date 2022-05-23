@@ -1,9 +1,9 @@
 <html>
 <body>
 Reports JUnit 4 <code>@BeforeClass</code> and <code>@AfterClass</code> annotated methods and JUnit 5
-<code>@BeforeAll</code> and <code>@AfterAll</code> annotated methods that are not public, not static, do not return a void type or take
+<code>@BeforeAll</code> and <code>@AfterAll</code> annotated methods that are not public, not static, whose return type is not void or take
 arguments without declaring a parameter resolver.
-Such methods are easy to create inadvertently, but they will not be executed by JUnit tests runners.
+Such methods are easy to create inadvertently and will not be executed by JUnit tests runners.
 <p><b>Example:</b></p>
 <pre><code>
   public class MainTest {

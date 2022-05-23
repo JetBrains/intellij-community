@@ -241,7 +241,6 @@ private fun resolveMacOSIDE(unpackDir: File): InstalledIDE {
   val executablePath = appHome / "MacOS" / executableName
   require(executablePath.isRegularFile()) { "Cannot find macOS IDE executable file in $executablePath" }
 
-  @Suppress("SpellCheckingInspection")
   val originalVMOptions = appHome / "bin" / "$executableName.vmoptions"
   require(originalVMOptions.isRegularFile()) { "Cannot find macOS IDE vmoptions file in $executablePath" }
 

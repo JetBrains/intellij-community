@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.ImageLoader
-import com.intellij.util.ui.ImageUtil
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import java.awt.Image
@@ -44,9 +43,8 @@ class CachingGHUserAvatarLoader : Disposable {
                                url: String, maximumSize: Int): Image? {
     try {
       val loadedImage = requestExecutor.execute(indicator, GithubApiRequests.CurrentUser.getAvatar(url))
-      val scaledImage = if (loadedImage.width <= maximumSize && loadedImage.height <= maximumSize) loadedImage
+      return if (loadedImage.width <= maximumSize && loadedImage.height <= maximumSize) loadedImage
       else ImageLoader.scaleImage(loadedImage, maximumSize) as BufferedImage
-      return ImageUtil.createCircleImage(scaledImage)
     }
     catch (e: ProcessCanceledException) {
       return null

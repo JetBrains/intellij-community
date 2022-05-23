@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.openapi.diagnostic.Logger
@@ -82,7 +82,7 @@ object CachedArgumentsRestoring {
         return EntityArgsInfoImpl(currentCompilerArguments, defaultCompilerArgumentsBucket, dependencyClasspath)
     }
 
-    private fun Map.Entry<KotlinCachedCompilerArgument<*>, KotlinCachedCompilerArgument<*>>.obtainPropertyWithCachedValue(
+    private fun Map.Entry<KotlinCachedRegularCompilerArgument, KotlinCachedCompilerArgument<*>?>.obtainPropertyWithCachedValue(
         propertiesByName: Map<String, KProperty1<out CommonCompilerArguments, *>>,
         cacheAware: CompilerArgumentsCacheAware
     ): Pair<KProperty1<out CommonCompilerArguments, *>, KotlinRawCompilerArgument<*>>? {
@@ -115,7 +115,7 @@ object CachedArgumentsRestoring {
         cachedBucket.singleArguments.entries.mapNotNull {
             val (property, value) = it.obtainPropertyWithCachedValue(propertiesByName, cacheAware) ?: return@mapNotNull null
             val newValue = when (value) {
-                is KotlinRawEmptyCompilerArgument -> null
+                null -> null
                 is KotlinRawRegularCompilerArgument -> value.data
                 else -> {
                     LOGGER.error(property.prepareLogMessage())
@@ -139,7 +139,7 @@ object CachedArgumentsRestoring {
         cachedBucket.multipleArguments.entries.mapNotNull {
             val (property, value) = it.obtainPropertyWithCachedValue(propertiesByName, cacheAware) ?: return@mapNotNull null
             val restoredValue = when (value) {
-                is KotlinRawEmptyCompilerArgument -> null
+                null -> null
                 is KotlinRawMultipleCompilerArgument -> value.data.toTypedArray()
                 else -> {
                     LOGGER.error(property.prepareLogMessage())
@@ -177,7 +177,7 @@ object CachedArgumentsRestoring {
         }
 
     private fun restoreEntry(
-        entry: Map.Entry<KotlinCachedCompilerArgument<*>, KotlinCachedCompilerArgument<*>>,
+        entry: Map.Entry<KotlinCachedCompilerArgument<*>, KotlinCachedCompilerArgument<*>?>,
         cacheAware: CompilerArgumentsCacheAware
     ): Pair<KotlinRawCompilerArgument<*>, KotlinRawCompilerArgument<*>>? {
         val key = restoreCompilerArgument(entry.key, cacheAware) ?: return null
@@ -189,13 +189,12 @@ object CachedArgumentsRestoring {
 object CachedCompilerArgumentsRestoringManager {
     private val LOGGER = Logger.getInstance(CachedCompilerArgumentsRestoringManager.javaClass)
 
-    @Suppress("UNCHECKED_CAST")
     fun <TCache> restoreCompilerArgument(
         argument: TCache,
         cacheAware: CompilerArgumentsCacheAware
     ): KotlinRawCompilerArgument<*>? =
         when (argument) {
-            is KotlinCachedEmptyCompilerArgument -> KotlinRawEmptyCompilerArgument
+            null -> null
             is KotlinCachedBooleanCompilerArgument -> BOOLEAN_ARGUMENT_RESTORING_STRATEGY.restoreArgument(argument, cacheAware)
             is KotlinCachedRegularCompilerArgument -> REGULAR_ARGUMENT_RESTORING_STRATEGY.restoreArgument(argument, cacheAware)
             is KotlinCachedMultipleCompilerArgument -> MULTIPLE_ARGUMENT_RESTORING_STRATEGY.restoreArgument(argument, cacheAware)
@@ -215,10 +214,7 @@ object CachedCompilerArgumentsRestoringManager {
                 cachedArgument: KotlinCachedBooleanCompilerArgument,
                 cacheAware: CompilerArgumentsCacheAware
             ): KotlinRawBooleanCompilerArgument? =
-                cacheAware.getCached(cachedArgument.data)?.let { KotlinRawBooleanCompilerArgument(java.lang.Boolean.valueOf(it)) } ?: run {
-                    LOGGER.error("Cannot find boolean argument value for key '${cachedArgument.data}'")
-                    null
-                }
+                KotlinRawBooleanCompilerArgument(java.lang.Boolean.valueOf(cachedArgument.data))
         }
 
     private val REGULAR_ARGUMENT_RESTORING_STRATEGY =

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
@@ -15,7 +15,6 @@ class SaveResult {
   private val errors: MutableList<Throwable> = SmartList()
   val readonlyFiles: MutableList<SaveSessionAndFile> = SmartList()
 
-  @Suppress("MemberVisibilityCanBePrivate")
   var isChanged = false
 
   @Synchronized

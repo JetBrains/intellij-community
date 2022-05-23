@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.createTask
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -11,14 +13,13 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.OpenedPackages.getCommandLineArguments
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
-import org.jetbrains.intellij.build.tasks.createTask
-import org.jetbrains.intellij.build.tasks.useWithScope
 import java.io.File
+import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
@@ -28,7 +29,7 @@ import kotlin.io.path.copyTo
 val DEFAULT_TIMEOUT = TimeUnit.MINUTES.toMillis(10L)
 
 fun span(spanBuilder: SpanBuilder, task: Runnable) {
-  spanBuilder.startSpan().useWithScope {
+  spanBuilder.useWithScope {
     task.run()
   }
 }
@@ -59,17 +60,9 @@ fun zip(context: CompilationContext, targetFile: Path, dir: Path, compress: Bool
   zipWithPrefixes(context, targetFile, mapOf(dir to ""), compress)
 }
 
-fun zipWithPrefix(context: CompilationContext,
-                  targetFile: Path,
-                  dirs: List<Path>,
-                  prefix: String?,
-                  compress: Boolean) {
-  zipWithPrefixes(context, targetFile, dirs.associateWithTo(LinkedHashMap(dirs.size)) { (prefix ?: "") }, compress)
-}
-
 fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path, String>, compress: Boolean) {
   spanBuilder("pack")
-    .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString()).startSpan()
+    .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
     .useWithScope {
       org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = map, compress = compress, addDirEntries = false)
     }
@@ -89,7 +82,7 @@ fun runJava(context: CompilationContext,
             onError: (() -> Unit)? = null) {
   runJava(mainClass = mainClass,
           args = args,
-          jvmArgs = getCommandLineArguments(context) + jvmArgs,
+          jvmArgs = getCommandLineArgumentsForOpenPackages(context) + jvmArgs,
           classPath = classPath,
           javaExe = context.stableJavaExecutable,
           logger = context.messages,
@@ -109,14 +102,14 @@ fun runJava(context: CompilationContext,
  *
  * This way we can get valid artifacts for one OS if builds artifacts for another OS failed.
  */
-fun invokeAllSettled(tasks: List<ForkJoinTask<*>>) {
+internal fun invokeAllSettled(tasks: List<ForkJoinTask<*>>) {
   for (task in tasks) {
     task.fork()
   }
   joinAllSettled(tasks)
 }
 
-fun joinAllSettled(tasks: List<ForkJoinTask<*>>) {
+private fun joinAllSettled(tasks: List<ForkJoinTask<*>>) {
   if (tasks.isEmpty()) {
     return
   }
@@ -172,9 +165,8 @@ fun runApplicationStarter(context: BuildContext,
     for (jarFile in BuildUtils.getPluginJars(pluginPath)) {
       if (effectiveIdeClasspath.add(jarFile.toString())) {
         context.messages.debug("$jarFile from plugin $pluginPath")
-        val pluginId = BuildUtils.readPluginId(jarFile)
-        if (pluginId != null) {
-          additionalPluginIds.add(pluginId)
+        readPluginId(jarFile)?.let {
+          additionalPluginIds.add(it)
         }
       }
     }
@@ -187,6 +179,21 @@ fun runApplicationStarter(context: BuildContext,
     logFile.copyTo(logFileToPublish.toPath(), true)
     context.notifyArtifactBuilt(logFileToPublish.toPath())
     context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
+  }
+}
+
+private fun readPluginId(pluginJar: Path): String? {
+  if (!pluginJar.toString().endsWith(".jar") || !Files.isRegularFile(pluginJar)) {
+    return null
+  }
+
+  try {
+    FileSystems.newFileSystem(pluginJar, null).use {
+      return readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
+    }
+  }
+  catch (ignore: NoSuchFileException) {
+    return null
   }
 }
 
@@ -216,4 +223,11 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext,
     Files.createDirectories(configDir)
     Files.writeString(configDir.resolve("disabled_plugins.txt"), java.lang.String.join("\n", toDisable))
   }
+}
+
+/**
+ * @return List of JVM args for opened packages (JBR17+) in a format `--add-opens=PACKAGE=ALL-UNNAMED`
+ */
+fun getCommandLineArgumentsForOpenPackages(context: CompilationContext): List<String> {
+  return Files.readAllLines(context.paths.communityHomeDir.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt"))
 }

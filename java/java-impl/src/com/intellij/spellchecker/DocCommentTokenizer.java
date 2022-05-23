@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
 public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {

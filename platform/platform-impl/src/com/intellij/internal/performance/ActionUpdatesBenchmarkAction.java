@@ -1,0 +1,252 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.internal.performance;
+
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PingProgress;
+import com.intellij.openapi.progress.util.PotemkinProgress;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
+public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
+
+  private static final Logger LOG = Logger.getInstance(ActionUpdatesBenchmarkAction.class);
+
+  private static final long MIN_REPORTED_UPDATE_MILLIS = 5;
+  private static final long MIN_REPORTED_NO_CHECK_CANCELED_MILLIS = 20;
+
+  /** @noinspection StaticNonFinalField */
+  public static Consumer<? super String> ourMissingKeysConsumer;
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(true);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Component originalComponent = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    Project project = e.getProject();
+    InputEvent inputEvent = e.getInputEvent();
+    Component component;
+    if (inputEvent instanceof MouseEvent) {
+      Component c = inputEvent.getComponent();
+      component = Objects.requireNonNullElse(
+        UIUtil.getDeepestComponentAt(c, ((MouseEvent)inputEvent).getX(), ((MouseEvent)inputEvent).getY()), c);
+    }
+    else {
+      component = originalComponent;
+    }
+    if (project == null || component == null) return;
+    updateAllActions(project, component);
+  }
+
+  private static void updateAllActions(@NotNull Project project, @NotNull Component component) {
+    AtomicReference<String> activityName = new AtomicReference<>();
+    PotemkinProgress progress = new PotemkinProgress("Updating all actions", project, null, null);
+    progress.setText("Warming up...");
+    progress.setDelayInMillis(0);
+    AtomicLong lastCheckCanceled = new AtomicLong(System.nanoTime());
+    Map<String, TraceData> noCheckCanceled = new HashMap<>();
+    Runnable noCheckCanceledChecker = () -> {
+      long maxDiff = MIN_REPORTED_NO_CHECK_CANCELED_MILLIS;
+      while (progress.isRunning()) {
+        String text = activityName.get();
+        long last = lastCheckCanceled.get();
+        long curDiff = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - last);
+        if (last != 0 && text != null && curDiff > maxDiff) {
+          StackTraceElement[] trace = EDT.getEventDispatchThread().getStackTrace();
+          if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - last) > maxDiff &&
+              text.equals(activityName.get())) {
+            noCheckCanceled.put(text, new TraceData(curDiff, trace, noCheckCanceled.get(text)));
+          }
+        }
+        TimeoutUtil.sleep(maxDiff / 3 + 1);
+      }
+    };
+    MyProgress cancellationChecker = new MyProgress() {
+      @Override
+      public void interact() {
+        lastCheckCanceled.set(System.nanoTime());
+      }
+    };
+    try {
+      progress.start(); // show progress but avoid the overhead when measuring
+      AppExecutorUtil.getAppExecutorService().execute(noCheckCanceledChecker);
+      updateAllActionsInner(project, component, (name, displayName, runnable) -> {
+        progress.setText("Checking '" + Objects.requireNonNullElse(displayName, name) + "'");
+        progress.interact();
+        return ProgressManager.getInstance().runProcess(() -> {
+          long start = System.nanoTime();
+          try {
+            activityName.set(name);
+            lastCheckCanceled.set(start);
+            runnable.run();
+          }
+          catch (Throwable th) {
+            if (!(th instanceof ControlFlowException)) {
+              LOG.error(th); // KotlinStdlibCacheImpl.findStdlibInModuleDependencies PCE
+            }
+          }
+          finally {
+            activityName.set(null);
+          }
+          return TimeoutUtil.getDurationMillis(start);
+        }, cancellationChecker);
+      });
+    }
+    finally {
+      progress.stop();
+    }
+    LOG.info("---- " + noCheckCanceled.size() + " no-checkCanceled places detected ----");
+    if (!noCheckCanceled.isEmpty()) {
+      String[] keys = ArrayUtil.toStringArray(noCheckCanceled.keySet());
+      Arrays.sort(keys, Comparator.comparing(o -> -noCheckCanceled.get(o).delta));
+      for (int i = 0; i < keys.length; i++) {
+        TraceData last = Objects.requireNonNull(noCheckCanceled.get(keys[i]));
+        int traceCount = 0;
+        for (TraceData cur = last; cur != null; cur = cur.next) traceCount++;
+        LOG.info("no checkCanceled (" + i + ") (" + traceCount + " hits) in " + last.delta + " ms - " + keys[i]);
+      }
+      int min = Math.min(noCheckCanceled.size(), 5);
+      LOG.info("---- top " + min + " of " + noCheckCanceled.size() + " no-checkCanceled places ----");
+      for (int i = 0; i < keys.length && i < min; i++) {
+        TraceData last = noCheckCanceled.get(keys[i]);
+        int traceCount = 0, traceIdx = 0;
+        for (TraceData cur = last; cur != null; cur = cur.next) traceCount++;
+        for (TraceData cur = last; cur != null && traceIdx < 3; cur = cur.next, traceIdx++) {
+          Throwable throwable = new Throwable("no checkCanceled (" + i + ") (" + (traceIdx + 1) + " of " + traceCount + " hits)" +
+                                              " in " + cur.delta + " ms - " + keys[i]);
+          throwable.setStackTrace(cur.trace);
+          LOG.info(ExceptionUtil.getThrowableText(throwable, ActionUpdatesBenchmarkAction.class.getName()));
+        }
+      }
+    }
+  }
+
+  private static void updateAllActionsInner(@NotNull Project project,
+                                            @NotNull Component component,
+                                            @NotNull MyRunner activityRunner) {
+    ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
+    List<Pair<Integer, String>> results = new ArrayList<>();
+    List<Pair<String, String>> results2 = new ArrayList<>();
+
+    DataContext rawContext = DataManager.getInstance().getDataContext(component);
+
+    PsiManager.getInstance(project).dropPsiCaches();
+    PsiManager.getInstance(project).dropResolveCaches();
+    ActionToolbarImpl.resetAllToolbars();
+
+    LOG.info("Benchmarking actions update for component: " + component.getClass().getName());
+
+    long startContext = System.nanoTime();
+    DataContext wrappedContext = Utils.wrapToAsyncDataContext(rawContext);
+    LOG.info(TimeoutUtil.getDurationMillis(startContext) + " ms to create data-context");
+
+    long startPrecache = System.nanoTime();
+    ReadAction.run(() -> {
+      for (DataKey<?> key : DataKey.allKeys()) {
+        activityRunner.run("DataContext(\"" + key.getName() + "\")", null, () -> wrappedContext.getData(key));
+      }
+    });
+    LOG.info(TimeoutUtil.getDurationMillis(startPrecache) + " ms to pre-cache data-context");
+
+    int count = 0;
+    long startActions = System.nanoTime();
+    for (String id : actionManager.getActionIds()) {
+      AnAction action = actionManager.getAction(id);
+      if (action == null) continue;
+      if (action.getClass() == DefaultActionGroup.class) continue;
+      ProgressManager.checkCanceled();
+      AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
+      ReadAction.run(() -> {
+        HashSet<String> ruleKeys = new HashSet<String>();
+        long elapsed;
+        String actionName = action.getClass().getName();
+        try {
+          ourMissingKeysConsumer = ruleKeys::add;
+          elapsed = activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true));
+        }
+        finally {
+          ourMissingKeysConsumer = null;
+        }
+        if (elapsed > 0) {
+          results.add(Pair.create((int)elapsed, actionName));
+        }
+        if (!(action instanceof UpdateInBackground)) {
+          if (ruleKeys.isEmpty()) {
+            if (event.getPresentation().isEnabled()) {
+              results2.add(Pair.create("UI only?", actionName));
+            }
+          }
+          else {
+            results2.add(Pair.create(ContainerUtil.sorted(ruleKeys).toString(), actionName));
+          }
+        }
+      });
+      count++;
+    }
+    long elapsedActions = TimeoutUtil.getDurationMillis(startActions);
+    LOG.info(elapsedActions + " ms total to update " + count + " actions");
+    results.sort(Comparator.comparingInt(o -> -o.first));
+    for (Pair<Integer, String> result : results) {
+      if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
+      LOG.info(result.first + " ms - " + result.second);
+    }
+    LOG.info("---- slow data usage for " + results2.size() + " actions ---- ");
+    results2.sort(Pair.comparingByFirst());
+    for (Pair<String, String> pair : results2) {
+      LOG.info(pair.first + " - " + pair.second);
+    }
+  }
+
+  private static class TraceData {
+    final long delta;
+    final StackTraceElement[] trace;
+    final TraceData next;
+
+    TraceData(long delta, StackTraceElement @NotNull [] trace, @Nullable TraceData next) {
+      this.delta = delta;
+      this.trace = trace;
+      this.next = next;
+    }
+  }
+
+  private interface MyRunner {
+    long run(String name, String displayName, Runnable runnable);
+  }
+
+  private abstract static class MyProgress extends ProgressIndicatorBase implements PingProgress {
+
+  }
+}

@@ -46,7 +46,6 @@ data class UnattendedHostStatus(
   }
 }
 
-@Suppress("MemberVisibilityCanBePrivate")
 @ApiStatus.Experimental
 object UnattendedHostConstants {
   val LOG = logger<UnattendedHostConstants>()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForMod
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForScriptDependenciesName
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForSdkName
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForSpecialInfoName
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.caches.resolve.PlatformAnalysisSettings
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -42,6 +41,7 @@ import org.jetbrains.kotlin.idea.project.useCompositeAnalysis
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.util.hasSuppressAnnotation
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.*
@@ -418,45 +418,27 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
 
     private val kotlinSuppressCache: CachedValue<KotlinSuppressCache> = CachedValuesManager.getManager(project).createCachedValue(
         {
-            CachedValueProvider.Result<KotlinSuppressCache>(
+            CachedValueProvider.Result(
                 object : KotlinSuppressCache() {
                     override fun getSuppressionAnnotations(annotated: PsiElement): List<AnnotationDescriptor> {
                         if (annotated !is KtAnnotated) return emptyList()
-                        if (annotated.annotationEntries.none {
-                                it.calleeExpression?.text?.endsWith(SUPPRESS_ANNOTATION_SHORT_NAME) == true
-                            }
-                        ) {
+                        if (!annotated.hasSuppressAnnotation) {
                             // Avoid running resolve heuristics
-                            // TODO: Check aliases in imports
                             return emptyList()
                         }
 
-                        val context =
-                            when (annotated) {
-                                is KtFile -> {
-                                    annotated.fileAnnotationList?.analyze(BodyResolveMode.PARTIAL)
-                                        ?: return emptyList()
-                                }
-                                is KtModifierListOwner -> {
-                                    annotated.modifierList?.analyze(BodyResolveMode.PARTIAL)
-                                        ?: return emptyList()
-                                }
-                                else ->
-                                    annotated.analyze(BodyResolveMode.PARTIAL)
-                            }
+                        val context = when (annotated) {
+                            is KtFile -> annotated.fileAnnotationList?.safeAnalyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+                            is KtModifierListOwner -> annotated.modifierList?.safeAnalyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+                            else -> annotated.safeAnalyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+                        } ?: return emptyList()
 
                         val annotatedDescriptor = context.get(BindingContext.DECLARATION_TO_DESCRIPTOR, annotated)
-
                         if (annotatedDescriptor != null) {
                             return annotatedDescriptor.annotations.toList()
                         }
 
-                        return annotated.annotationEntries.mapNotNull {
-                            context.get(
-                                BindingContext.ANNOTATION,
-                                it
-                            )
-                        }
+                        return annotated.annotationEntries.mapNotNull { context.get(BindingContext.ANNOTATION, it) }
                     }
                 },
                 LibraryModificationTracker.getInstance(project),
@@ -624,10 +606,6 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val contextFile = (contextElement as? KtElement)?.containingKtFile
             ?: throw AssertionError("Analyzing kotlin code fragment of type ${this::class.java} with java context of type ${contextElement::class.java}")
         return if (contextFile is KtCodeFragment) contextFile.getContextFile() else contextFile
-    }
-
-    private companion object {
-        private val SUPPRESS_ANNOTATION_SHORT_NAME = StandardNames.FqNames.suppress.shortName().identifier
     }
 }
 

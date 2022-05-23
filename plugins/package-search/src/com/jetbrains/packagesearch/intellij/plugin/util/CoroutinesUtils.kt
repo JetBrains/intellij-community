@@ -1,5 +1,3 @@
-@file:Suppress("FunctionName")
-
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.openapi.progress.ProgressIndicator

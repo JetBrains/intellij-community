@@ -14,7 +14,6 @@ import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 @Suppress("DEPRECATION")
 class MarkdownLinkDestination(node: ASTNode): MarkdownLinkDestinationImpl(node) {
   override fun accept(visitor: PsiElementVisitor) {
-    @Suppress("DEPRECATION")
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitLinkDestination(this)
       else -> super.accept(visitor)

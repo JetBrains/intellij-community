@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.createTask
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
@@ -16,12 +18,13 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getSearchableOptionsDir
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
 import org.jetbrains.intellij.build.impl.PlatformModules.collectPlatformModules
 import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsTask
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
@@ -48,6 +51,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Predicate
 import java.util.stream.Collectors
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -68,6 +73,26 @@ class DistributionJARsBuilder {
   }
 
   companion object {
+    fun getPluginAutoUploadFile(communityRoot: BuildDependenciesCommunityRoot): Path {
+      val autoUploadFile = communityRoot.communityRoot.resolve("../build/plugins-autoupload.txt")
+      require(autoUploadFile.isRegularFile()) {
+        "File '$autoUploadFile' must exist"
+      }
+      return autoUploadFile
+    }
+
+    fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
+      val config = Files.lines(autoUploadFile).use { lines ->
+        lines
+          .map { StringUtil.split(it, "//", true, false)[0] }
+          .map { StringUtil.split(it, "#", true, false)[0].trim() }
+          .filter { !it.isEmpty() }
+          .collect(Collectors.toCollection { TreeSet(String.CASE_INSENSITIVE_ORDER) })
+      }
+
+      return config
+    }
+
     private fun scramble(context: BuildContext) {
       pack(actualModuleJars = mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities")),
            outputDir = context.paths.buildOutputDir.resolve("internal"),
@@ -186,14 +211,10 @@ class DistributionJARsBuilder {
      * @return predicate to test if a given plugin should be auto-published
      */
     private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<PluginLayout> {
+      val file = getPluginAutoUploadFile(buildContext.paths.buildDependenciesCommunityRoot)
+      val config = readPluginAutoUploadFile(file)
+
       val productCode = buildContext.applicationInfo.productCode
-      val config = Files.lines(buildContext.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")).use { lines ->
-        lines
-          .map { StringUtil.split(it, "//", true, false)[0] }
-          .map { StringUtil.split(it, "#", true, false)[0].trim() }
-          .filter { !it.isEmpty() }
-          .collect(Collectors.toCollection { TreeSet(String.CASE_INSENSITIVE_ORDER) })
-      }
       return Predicate<PluginLayout> { plugin -> //see the specification in the plugins-autoupload.txt. Supported rules:
         //   <plugin main module name> ## include the plugin
         //   +<product code>:<plugin main module name> ## include the plugin
@@ -275,7 +296,7 @@ class DistributionJARsBuilder {
       // patchers must be executed _before_ pack because patcher patches module output
       if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
         val patchers = layout.patchers
-        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).startSpan().useWithScope {
+        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope {
           for (patcher in patchers) {
             patcher.accept(moduleOutputPatcher, context)
           }
@@ -335,7 +356,7 @@ class DistributionJARsBuilder {
 
       val resourceGenerators = layout.resourceGenerators
       if (!resourceGenerators.isEmpty()) {
-        spanBuilder("generate and pack resources").startSpan().useWithScope {
+        spanBuilder("generate and pack resources").useWithScope {
           for (item in resourceGenerators) {
             val resourceFile = item.apply(targetDirectory, context) ?: continue
             if (Files.isRegularFile(resourceFile)) {
@@ -743,7 +764,7 @@ class DistributionJARsBuilder {
       }
 
       bulkZipWithPrefix(commonSourceDir = stageDir, items = dirToJar, compress = compressPluginArchive)
-      BuiltInHelpPlugin.helpPlugin(context, defaultPluginVersion)?.let { helpPlugin ->
+      buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)?.let { helpPlugin ->
         val spec = buildHelpPlugin(helpPlugin = helpPlugin,
                                    pluginsToPublishDir = stageDir,
                                    targetDir = autoUploadingDir,
@@ -779,7 +800,7 @@ class DistributionJARsBuilder {
                               context: BuildContext): PluginRepositorySpec {
     val directory = getActualPluginDirectoryName(helpPlugin, context)
     val destFile = targetDir.resolve("$directory.zip")
-    spanBuilder("build help plugin").setAttribute("dir", directory).startSpan().useWithScope {
+    spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope {
       buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                    plugins = listOf(helpPlugin),
                    targetDirectory = pluginsToPublishDir,
@@ -851,7 +872,7 @@ private fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
   if (!scrambleTasks.isEmpty()) {
     // scrambling can require classes from platform
     buildPlatformTask?.let { task ->
-      spanBuilder("wait for platform lib for scrambling").startSpan().useWithScope { task.join() }
+      spanBuilder("wait for platform lib for scrambling").useWithScope { task.join() }
     }
     invokeAllSettled(scrambleTasks)
   }

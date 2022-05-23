@@ -7,24 +7,23 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.util.prefix
-import com.intellij.completion.ml.util.queryLength
-import com.intellij.completion.ml.util.RelevanceUtil
-import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.completion.ml.features.RankingFeaturesOverrides
 import com.intellij.completion.ml.performance.CompletionPerformanceTracker
-import com.intellij.completion.ml.settings.CompletionMLRankingSettings
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
+import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.util.RelevanceUtil
+import com.intellij.completion.ml.util.prefix
+import com.intellij.completion.ml.util.queryLength
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.textMatching.PrefixMatchingUtil
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-@Suppress("DEPRECATION")
 class MLSorterFactory : CompletionFinalSorter.Factory {
   override fun newSorter() = MLSorter()
 }

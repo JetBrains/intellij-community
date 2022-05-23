@@ -8166,6 +8166,104 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/redundantDiagnosticSuppress")
+    public static class RedundantDiagnosticSuppress extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alias.kt")
+        public void testAlias() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/alias.kt");
+        }
+
+        @TestMetadata("alias2.kt")
+        public void testAlias2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/alias2.kt");
+        }
+
+        @TestMetadata("destructuringDeclaration.kt")
+        public void testDestructuringDeclaration() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/destructuringDeclaration.kt");
+        }
+
+        @TestMetadata("lowerCase.kt")
+        public void testLowerCase() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/lowerCase.kt");
+        }
+
+        @TestMetadata("multipleSuppression.kt")
+        public void testMultipleSuppression() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/multipleSuppression.kt");
+        }
+
+        @TestMetadata("onClass.kt")
+        public void testOnClass() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/onClass.kt");
+        }
+
+        @TestMetadata("onFile.kt")
+        public void testOnFile() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/onFile.kt");
+        }
+
+        @TestMetadata("onFunction.kt")
+        public void testOnFunction() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/onFunction.kt");
+        }
+
+        @TestMetadata("onInvalidExpression.kt")
+        public void testOnInvalidExpression() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/onInvalidExpression.kt");
+        }
+
+        @TestMetadata("onParameter.kt")
+        public void testOnParameter() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/onParameter.kt");
+        }
+
+        @TestMetadata("onStatement.kt")
+        public void testOnStatement() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/onStatement.kt");
+        }
+
+        @TestMetadata("suppressedDestructuringDeclaration.kt")
+        public void testSuppressedDestructuringDeclaration() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/suppressedDestructuringDeclaration.kt");
+        }
+
+        @TestMetadata("suppressedLowerCase.kt")
+        public void testSuppressedLowerCase() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/suppressedLowerCase.kt");
+        }
+
+        @TestMetadata("suppressedOnAnotherFunction.kt")
+        public void testSuppressedOnAnotherFunction() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/suppressedOnAnotherFunction.kt");
+        }
+
+        @TestMetadata("suppressedOnClass.kt")
+        public void testSuppressedOnClass() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/suppressedOnClass.kt");
+        }
+
+        @TestMetadata("suppressedOnFile.kt")
+        public void testSuppressedOnFile() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/suppressedOnFile.kt");
+        }
+
+        @TestMetadata("suppressedOnFunction.kt")
+        public void testSuppressedOnFunction() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/suppressedOnFunction.kt");
+        }
+
+        @TestMetadata("suppressedOnStatement.kt")
+        public void testSuppressedOnStatement() throws Exception {
+            runTest("testData/inspectionsLocal/redundantDiagnosticSuppress/suppressedOnStatement.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantElseInIf")
     public static class RedundantElseInIf extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

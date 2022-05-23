@@ -1,17 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.tracer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 
 fun buildMacZip(targetFile: Path,
                 zipRoot: String,
-                productJson: ByteArray,
+                productJson: String,
                 allDist: Path,
                 macDist: Path,
                 extraFiles: Collection<Map.Entry<Path, String>>,
@@ -22,7 +24,6 @@ fun buildMacZip(targetFile: Path,
     .setAttribute("file", targetFile.toString())
     .setAttribute("zipRoot", zipRoot)
     .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFilePatterns)
-    .startSpan()
     .use {
       val fs = targetFile.fileSystem
       val patterns = executableFilePatterns.map { fs.getPathMatcher("glob:$it") }
@@ -41,7 +42,7 @@ fun buildMacZip(targetFile: Path,
         NoDuplicateZipArchiveOutputStream(targetFileChannel).use { zipOutStream ->
           zipOutStream.setLevel(compressionLevel)
 
-          zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson)
+          zipOutStream.entry("$zipRoot/Resources/product-info.json", productJson.encodeToByteArray())
 
           val fileFilter: (Path, Path) -> Boolean = { sourceFile, relativeFile ->
             val path = relativeFile.toString()

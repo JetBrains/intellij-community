@@ -29,14 +29,11 @@ fun getPathMapper(project: Project,
                   sdk: Sdk?,
                   consoleSettings: PyConsoleSettings): PyRemotePathMapper? {
   if (sdk == null) return null
-  val sdkAdditionalData = sdk.sdkAdditionalData
-  if (sdkAdditionalData is PyTargetAwareAdditionalData) {
-    return getPathMapper(project, consoleSettings, (sdkAdditionalData as PyTargetAwareAdditionalData?)!!)
+  return when (val sdkAdditionalData = sdk.sdkAdditionalData) {
+    is PyTargetAwareAdditionalData -> getPathMapper(project, consoleSettings, sdkAdditionalData)
+    is PyRemoteSdkAdditionalDataBase -> getPathMapper(project, consoleSettings, sdkAdditionalData)
+    else -> null
   }
-  return if (sdkAdditionalData is PyRemoteSdkAdditionalDataBase) {
-    getPathMapper(project, consoleSettings, sdkAdditionalData)
-  }
-  else null
 }
 
 fun getPathMapper(project: Project,

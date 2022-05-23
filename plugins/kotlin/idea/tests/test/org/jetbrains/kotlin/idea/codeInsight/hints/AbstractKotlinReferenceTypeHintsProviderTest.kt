@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
 
-@Suppress("UnstableApiUsage")
 abstract class AbstractKotlinReferenceTypeHintsProviderTest :
     InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
 

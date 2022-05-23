@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.concurrency.ContextCallable;
-import com.intellij.concurrency.ContextRunnable;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask;
@@ -112,7 +111,7 @@ public final class Propagation {
 
   public static @NotNull Runnable handleContext(@NotNull Runnable runnable) {
     if (propagateThreadContext()) {
-      return new ContextRunnable(runnable);
+      return ThreadContext.captureThreadContext(runnable);
     }
     else {
       return runnable;
@@ -121,7 +120,7 @@ public final class Propagation {
 
   private static <V> @NotNull Callable<V> handleContext(@NotNull Callable<V> callable) {
     if (propagateThreadContext()) {
-      return new ContextCallable<>(callable);
+      return ThreadContext.captureThreadContext(callable);
     }
     else {
       return callable;

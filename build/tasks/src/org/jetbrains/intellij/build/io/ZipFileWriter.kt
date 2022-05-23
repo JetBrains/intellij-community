@@ -170,7 +170,6 @@ class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater
     return compressedSize
   }
 
-  @Suppress("DuplicatedCode")
   fun compressedData(nameString: String, data: ByteArray) {
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size

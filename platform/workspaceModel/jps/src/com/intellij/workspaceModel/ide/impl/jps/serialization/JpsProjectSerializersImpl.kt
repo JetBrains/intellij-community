@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.diagnostic.AttachmentFactory
@@ -98,7 +98,6 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   private fun createFileInDirectorySource(directoryUrl: VirtualFileUrl, fileName: String): JpsFileEntitySource.FileInDirectory {
     val source = JpsFileEntitySource.FileInDirectory(directoryUrl, configLocation)
     // Don't convert to links[key] = ... because it *may* became autoboxing
-    @Suppress("ReplacePutWithAssignment")
     fileIdToFileName.put(source.fileNameId, fileName)
     LOG.debug { "createFileInDirectorySource: ${source.fileNameId}=$fileName" }
     return source
@@ -131,7 +130,6 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                  directoryUrl: VirtualFileUrl): JpsFileEntitySource.FileInDirectory? {
     val source = fileInDirectorySourceNames.findSource(entityType, fileName)
     if (source == null || source.directory != directoryUrl) return null
-    @Suppress("ReplacePutWithAssignment")
     fileIdToFileName.put(source.fileNameId, fileName)
     LOG.debug { "bindExistingSource: ${source.fileNameId}=$fileName" }
     return source
@@ -635,7 +633,6 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val oldFileName = fileIdToFileName.get(actualFileSource.fileNameId)
           if (oldFileName != fileNameByEntity) {
             // Don't convert to links[key] = ... because it *may* became autoboxing
-            @Suppress("ReplacePutWithAssignment")
             fileIdToFileName.put(actualFileSource.fileNameId, fileNameByEntity)
             LOG.debug { "update association for ${actualFileSource.fileNameId} to $fileNameByEntity (was $oldFileName)" }
             if (oldFileName != null) {

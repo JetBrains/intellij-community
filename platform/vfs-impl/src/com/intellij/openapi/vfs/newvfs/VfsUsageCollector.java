@@ -8,19 +8,20 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP = new EventLogGroup("vfs", 4);
+  private static final EventLogGroup GROUP = new EventLogGroup("vfs", 5);
+
+  private static final LongEventField WaitMs = EventFields.Long("wait_ms");  // -1 for synchronous refresh/events
 
   private static final BooleanEventField RefreshRecursive = EventFields.Boolean("recursive");
   private static final RoundedIntEventField RefreshLocalRoots = EventFields.RoundedInt("roots_local");
   private static final RoundedIntEventField RefreshArchiveRoots = EventFields.RoundedInt("roots_arc");
   private static final RoundedIntEventField RefreshOtherRoots = EventFields.RoundedInt("roots_other");
   private static final BooleanEventField RefreshCancelled = EventFields.Boolean("cancelled");
-  private static final LongEventField RefreshWaitMs = EventFields.Long("wait_ms");  // -1 for synchronous refresh
   private static final IntEventField RefreshTries = EventFields.Int("tries");
   private static final VarargEventId REFRESH_SESSION = GROUP.registerVarargEvent(
     "refresh_session",
     RefreshRecursive, RefreshLocalRoots, RefreshArchiveRoots, RefreshOtherRoots,
-    RefreshCancelled, RefreshWaitMs, EventFields.DurationMs, RefreshTries);
+    RefreshCancelled, WaitMs, EventFields.DurationMs, RefreshTries);
 
   private static final IntEventField RefreshFullScans = EventFields.Int("full_scans");
   private static final IntEventField RefreshPartialScans = EventFields.Int("partial_scans");
@@ -31,6 +32,13 @@ final class VfsUsageCollector extends CounterUsagesCollector {
     "refresh_scan",
     RefreshFullScans, RefreshPartialScans, RefreshRetries, EventFields.DurationMs, RefreshVfsTimeMs, RefreshIoTimeMs);
 
+  private static final LongEventField EventListenersMs = EventFields.Long("listeners_ms");
+  private static final IntEventField EventTries = EventFields.Int("tries");
+  private static final IntEventField EventNumber = EventFields.Int("events");
+  private static final VarargEventId EVENTS = GROUP.registerVarargEvent(
+    "events",
+    WaitMs, EventListenersMs, EventTries, EventFields.DurationMs, EventNumber);
+
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
@@ -40,7 +48,7 @@ final class VfsUsageCollector extends CounterUsagesCollector {
     if (duration >= DURATION_THRESHOLD_MS) {
       REFRESH_SESSION.log(
         RefreshRecursive.with(recursive), RefreshLocalRoots.with(lfsRoots), RefreshArchiveRoots.with(arcRoots), RefreshOtherRoots.with(otherRoots),
-        RefreshCancelled.with(cancelled), RefreshWaitMs.with(wait), EventFields.DurationMs.with(duration), RefreshTries.with(tries));
+        RefreshCancelled.with(cancelled), WaitMs.with(wait), EventFields.DurationMs.with(duration), RefreshTries.with(tries));
     }
   }
 
@@ -49,6 +57,14 @@ final class VfsUsageCollector extends CounterUsagesCollector {
       REFRESH_SCAN.log(
         RefreshFullScans.with(fullScans), RefreshPartialScans.with(partialScans), RefreshRetries.with(retries),
         EventFields.DurationMs.with(duration), RefreshVfsTimeMs.with(vfsTime), RefreshIoTimeMs.with(ioTime));
+    }
+  }
+
+  static void logEventProcessing(long wait, long listenerTime, int listenerTries, long edtTime, int events) {
+    if (listenerTime + edtTime >= DURATION_THRESHOLD_MS) {
+      EVENTS.log(
+        WaitMs.with(wait), EventListenersMs.with(listenerTime), EventTries.with(listenerTries),
+        EventFields.DurationMs.with(edtTime), EventNumber.with(events));
     }
   }
 }

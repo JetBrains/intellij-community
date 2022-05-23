@@ -44,7 +44,6 @@ class GithubApiRequestExecutorManager : Disposable {
     return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, null, parentComponent) }
   }
 
-  @RequiresEdt
   @Throws(GithubMissingTokenException::class)
   fun getExecutor(account: GithubAccount): GithubApiRequestExecutor {
     return getOrTryToCreateExecutor(account) { throw GithubMissingTokenException(account) }!!

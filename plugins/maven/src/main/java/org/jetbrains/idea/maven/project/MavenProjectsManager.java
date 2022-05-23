@@ -843,6 +843,9 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public void setProjectsTree(MavenProjectsTree newTree) {
+    if (!isInitialized()) {
+      initNew(Collections.emptyList(), MavenExplicitProfiles.NONE);
+    }
     myProjectsTree = newTree;
     myWatcher.setProjectsTree(newTree);
   }

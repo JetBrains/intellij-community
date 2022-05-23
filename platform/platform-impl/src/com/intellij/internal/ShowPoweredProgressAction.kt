@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("HardCodedStringLiteral")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.internal
 
@@ -12,10 +11,8 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.TimerUtil
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import javax.swing.*
 import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 class ShowPoweredProgressAction : AnAction("Show Powered Progress") {
   override fun actionPerformed(e: AnActionEvent) {

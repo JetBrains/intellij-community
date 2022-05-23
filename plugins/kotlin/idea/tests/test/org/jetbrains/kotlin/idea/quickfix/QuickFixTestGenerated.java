@@ -13645,6 +13645,29 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/suppress/inspections/unusedImports.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/suppress/redundant")
+        public static class Redundant extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("RemoveAnnotation.kt")
+            public void testRemoveAnnotation() throws Exception {
+                runTest("testData/quickfix/suppress/redundant/RemoveAnnotation.kt");
+            }
+
+            @TestMetadata("RemoveAnnotationEntry.kt")
+            public void testRemoveAnnotationEntry() throws Exception {
+                runTest("testData/quickfix/suppress/redundant/RemoveAnnotationEntry.kt");
+            }
+
+            @TestMetadata("Suppressed.kt")
+            public void testSuppressed() throws Exception {
+                runTest("testData/quickfix/suppress/redundant/Suppressed.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

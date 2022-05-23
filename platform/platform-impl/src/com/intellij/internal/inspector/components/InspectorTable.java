@@ -9,12 +9,14 @@ import com.intellij.internal.inspector.ComponentPropertiesCollector;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -56,7 +58,7 @@ import java.util.Objects;
 import static com.intellij.execution.ui.ConsoleViewContentType.ERROR_OUTPUT;
 import static com.intellij.execution.ui.ConsoleViewContentType.NORMAL_OUTPUT;
 
-final class InspectorTable extends JBSplitter implements DataProvider {
+final class InspectorTable extends JBSplitter implements DataProvider, Disposable {
   private final @Nullable Project myProject;
   private final MyModel myModel;
   private StripeTable myTable;
@@ -159,8 +161,25 @@ final class InspectorTable extends JBSplitter implements DataProvider {
   public void refresh() {
     myModel.refresh();
     if (myModel.myComponent != null) {
-      setSecondComponent(new DimensionsComponent(myModel.myComponent));
+      setPreviewComponent(new DimensionsComponent(myModel.myComponent));
     }
+  }
+
+  private void setPreviewComponent(JComponent component) {
+    disposePreviewComponent();
+    setSecondComponent(component);
+  }
+
+  private void disposePreviewComponent() {
+    JComponent preview = getSecondComponent();
+    if (preview instanceof Disposable) {
+      Disposer.dispose((Disposable)preview);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    disposePreviewComponent();
   }
 
   @NotNull
@@ -375,7 +394,7 @@ final class InspectorTable extends JBSplitter implements DataProvider {
 
       if (value instanceof Dimension || value instanceof Rectangle || value instanceof Border || value instanceof Insets) {
         if (myModel.myComponent != null) {
-          setSecondComponent(new DimensionsComponent(myModel.myComponent));
+          setPreviewComponent(new DimensionsComponent(myModel.myComponent));
         }
       }
       else if (myProject != null) {
@@ -423,7 +442,10 @@ final class InspectorTable extends JBSplitter implements DataProvider {
         consoleView.scrollTo(0);
 
         if (consoleView.getContentSize() > 0) {
-          setSecondComponent(consoleComponent);
+          setPreviewComponent(consoleComponent);
+        }
+        else {
+          Disposer.dispose(consoleView);
         }
       }
     }

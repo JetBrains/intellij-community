@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
-
-import java.util.function.Supplier
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
 
 @CompileStatic
 final class GradleRunner {
@@ -15,14 +14,17 @@ final class GradleRunner {
   private final BuildMessages messages
   private final List<String> additionalParams
   private final BuildOptions options
+  private final BuildDependenciesCommunityRoot communityRoot
 
   GradleRunner(
     File gradleProjectDir,
     String projectDir,
     BuildMessages messages,
     BuildOptions options,
+    BuildDependenciesCommunityRoot communityRoot,
     List<String> additionalParams = []
   ) {
+    this.communityRoot = communityRoot
     this.messages = messages
     this.options = options
     this.projectDir = projectDir
@@ -52,9 +54,7 @@ final class GradleRunner {
   }
 
   private boolean runInner(String title, File buildFile, boolean force, boolean parallel, String... tasks) {
-    return messages.block("Gradle $tasks", new Supplier<Boolean>() {
-      @Override
-      Boolean get() {
+    return messages.block("Gradle $tasks") {
         Span.current().addEvent(title)
         if (runInner(buildFile, parallel, tasks)) {
           return Boolean.TRUE
@@ -68,8 +68,7 @@ final class GradleRunner {
           messages.error(errorMessage)
         }
         return Boolean.FALSE
-      }
-    }) == Boolean.TRUE
+      } == Boolean.TRUE
   }
 
   private boolean runInner(File buildFile, boolean parallel, String... tasks) {
@@ -98,7 +97,7 @@ final class GradleRunner {
     command.addAll(additionalParams)
     command.addAll(tasks)
     def processBuilder = new ProcessBuilder(command).directory(gradleProjectDir)
-    processBuilder.environment().put("JAVA_HOME", SystemProperties.javaHome)
+    processBuilder.environment().put("JAVA_HOME", Jdk11Downloader.getJdkHome(communityRoot).toString())
     def process = processBuilder.start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)

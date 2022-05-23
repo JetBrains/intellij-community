@@ -104,7 +104,6 @@ internal fun moveComponentConfiguration(defaultProject: Project,
   fun processComponents(aClass: Class<*>) {
     val stateAnnotation = getStateSpec(aClass) ?: return
 
-    @Suppress("MoveVariableDeclarationIntoWhen")
     val storagePath = when {
       stateAnnotation.name.isEmpty() -> "misc.xml"
       else -> (stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return).path

@@ -42,7 +42,6 @@ abstract class HoledIcon(private val icon: Icon) : RetrievableIcon, ScalableIcon
         val path = Path2D.Float(Path2D.WIND_EVEN_ODD)
         path.append(area, false)
         path.append(hole, false)
-        @Suppress("GraphicsSetClipInspection")
         g.clip = path // safe because based on old clip
       }
       icon.paintIcon(c, g, 0, 0)

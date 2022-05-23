@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PackageDirectoryMismatch")
 package com.intellij.ide.passwordSafe.impl
 
@@ -26,7 +26,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSafeSettings, provider: CredentialStore? = null /* TestOnly */) : PasswordSafe() {
-  @Suppress("unused")
   constructor() : this(service<PasswordSafeSettings>(), null)
 
   override var isRememberPasswordByDefault: Boolean
@@ -181,41 +180,47 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
                                                   { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) })
   }
 
-  if (settings.providerType == ProviderType.KEEPASS) {
-    try {
-      val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
-      return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
+  if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {
+    if (settings.providerType == ProviderType.KEEPASS) {
+      try {
+        val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
+        return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
+      }
+      catch (e: IncorrectMasterPasswordException) {
+        LOG.warn(e)
+        showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
+                  else CredentialStoreBundle.message("notification.title.password.incorrect"))
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        showError(CredentialStoreBundle.message("notification.title.database.error"))
+      }
     }
-    catch (e: IncorrectMasterPasswordException) {
-      LOG.warn(e)
-      showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
-                else CredentialStoreBundle.message("notification.title.password.incorrect"))
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      showError(CredentialStoreBundle.message("notification.title.database.error"))
+    else {
+      try {
+        val store = createPersistentCredentialStore()
+        if (store == null) {
+          showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
+        }
+        else {
+          return store
+        }
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
+      }
     }
   }
   else {
-    try {
-      val store = createPersistentCredentialStore()
-      if (store == null) {
-        showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
-      }
-      else {
-        return store
-      }
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
-    }
+    LOG.error("Provider ${settings.providerType} is not supported in this environment")
+    showError(CredentialStoreBundle.message("notification.title.cannot.use.provider", settings.providerType))
   }
 
   settings.providerType = ProviderType.MEMORY_ONLY

@@ -33,6 +33,8 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     private fun checkKotlincPresence(present: Boolean = true, jpsVersionOnly: Boolean = false) {
         val file = File(project.basePath, ".idea/kotlinc.xml")
         assertEquals(present, file.exists())
+        if (!present) return
+
         val children = JDOMUtil.load(file).children
         assertNotEmpty(children)
 
@@ -63,7 +65,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
-        checkKotlincPresence(jpsVersionOnly = true)
+        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
 
     fun testKotlinBundledAdded() {
@@ -150,7 +152,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
-        checkKotlincPresence(jpsVersionOnly = true)
+        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
 
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
@@ -176,7 +178,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             autoAdvanceApiVersion = true
         }
         application.saveAll()
-        checkKotlincPresence(jpsVersionOnly = true)
+        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
 
     fun testProject107InconsistentVersionInConfig() {
@@ -245,7 +247,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             sourceMapEmbedSources = ""
         }
         application.saveAll()
-        checkKotlincPresence(jpsVersionOnly = true)
+        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
 
     private fun doTestLoadAndSaveProjectWithFacetConfig(valueBefore: String, valueAfter: String) {

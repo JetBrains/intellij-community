@@ -113,10 +113,9 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
             }
             GradleProjectImportHandler.getInstances(project).forEach { it.importBySourceSet(kotlinFacet, sourceSetNode) }
         }
+
         if (maxCompilerVersion != null) {
-            KotlinJpsPluginSettings.getInstance(project)?.update {
-                version = maxCompilerVersion.rawVersion
-            }
+            KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(project, maxCompilerVersion.rawVersion)
         }
     }
 }
@@ -227,7 +226,6 @@ private fun detectPlatformByLibrary(moduleNode: DataNode<ModuleData>): IdePlatfo
     return detectedPlatforms.singleOrNull() ?: detectedPlatforms.firstOrNull { !it.isCommon }
 }
 
-@Suppress("unused") // Used in the Android plugin
 fun configureFacetByGradleModule(
     moduleNode: DataNode<ModuleData>,
     sourceSetName: String?,

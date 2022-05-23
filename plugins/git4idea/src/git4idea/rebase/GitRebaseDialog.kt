@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.dvcs.DvcsUtil
@@ -425,7 +425,6 @@ internal class GitRebaseDialog(private val project: Project,
     isVisible = false
     setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) SHORT_FIELD_LENGTH else LONG_FIELD_LENGTH))
     setPlaceholder(GitBundle.message("rebase.dialog.new.base"))
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
     addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
@@ -438,7 +437,6 @@ internal class GitRebaseDialog(private val project: Project,
     prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setMinimumAndPreferredWidth(JBUI.scale(SHORT_FIELD_LENGTH))
     setPlaceholder(GitBundle.message("rebase.dialog.target"))
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
     addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
@@ -458,7 +456,6 @@ internal class GitRebaseDialog(private val project: Project,
   private fun createBranchField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
     prototypeDisplayValue = GIT_REF_PROTOTYPE_VALUE
     setPlaceholder(GitBundle.message("rebase.dialog.branch.field"))
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
       popupEmptyText = GitBundle.message("merge.branch.popup.empty.text")))

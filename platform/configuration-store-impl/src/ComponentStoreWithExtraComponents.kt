@@ -60,7 +60,6 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     coroutineScope {
       // expects EDT
       launch(AppUIExecutor.onUiThread().expireWith(serviceContainer).coroutineDispatchingContext()) {
-        @Suppress("Duplicates")
         val errors = SmartList<Throwable>()
         for (settingsSavingComponent in settingsSavingComponents) {
           runAndCollectException(errors) {

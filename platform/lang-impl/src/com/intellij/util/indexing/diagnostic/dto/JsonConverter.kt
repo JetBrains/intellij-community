@@ -42,7 +42,6 @@ fun ScanningStatistics.ScannedFile.toJson(): JsonScanningStatistics.JsonScannedF
     wasFullyIndexedByInfrastructureExtension = wasFullyIndexedByInfrastructureExtension
   )
 
-@Suppress("DuplicatedCode")
 fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio: Double): JsonFileProviderIndexStatistics {
   val jsonIndexedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
     indexedFiles.map { it.toJson() }

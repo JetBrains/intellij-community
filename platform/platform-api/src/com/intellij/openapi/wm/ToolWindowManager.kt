@@ -101,7 +101,6 @@ abstract class ToolWindowManager {
   /**
    * does nothing if tool window with specified isn't registered.
    */
-  @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
   abstract fun unregisterToolWindow(id: String)
 

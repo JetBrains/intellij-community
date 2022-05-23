@@ -14,7 +14,6 @@ internal object ServerURLs {
     const val base = "https://package-search.services.jetbrains.com/api"
 }
 
-@Suppress("unused") // Used in SearchClient but the lazy throws off the IDE code analysis
 private val contentType by lazy {
     @Suppress("MayBeConst") // False positive
     object {
@@ -43,7 +42,6 @@ internal class PackageSearchApiClient(
         encodeDefaults = false
     }
 
-    @Suppress("BlockingMethodInNonBlockingContext")
     suspend fun packagesByQuery(
         searchQuery: String,
         onlyStable: Boolean = false,

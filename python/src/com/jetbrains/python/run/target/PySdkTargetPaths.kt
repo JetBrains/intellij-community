@@ -65,6 +65,15 @@ fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvir
   return targetPath?.let { constant(it) } ?: targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
 }
 
+fun getTargetPathForPythonConsoleExecution(project: Project,
+                                           sdk: Sdk?,
+                                           pathMapper: PyRemotePathMapper?,
+                                           localPath: String): TargetEnvironmentFunction<String> {
+  val targetPath = pathMapper?.convertToRemoteOrNull(localPath)
+                   ?: getPythonConsolePathMapper(project, sdk)?.convertToRemoteOrNull(localPath)
+  return targetPath?.let { constant(it) } ?: getTargetEnvironmentValueForLocalPath(localPath)
+}
+
 /**
  * Note that the returned mapper includes the path mappings collected by the execution of [appendBasicMappings].
  */

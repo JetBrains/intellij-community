@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -38,7 +38,9 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
-import org.jetbrains.kotlin.idea.versions.*
+import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.versions.findKotlinRuntimeLibrary
+import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected constructor() : KotlinProjectConfigurator {
@@ -132,7 +134,6 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         getKotlinLibrary(project) ?: createNewLibrary(project, collector)
     }
 
-    @Suppress("unused") // Please do not delete this function (used in ProcessingKt plugin)
     fun configureSilently(project: Project) {
         val collector = createConfigureKotlinNotificationCollector(project)
         getOrCreateKotlinLibrary(project, collector)

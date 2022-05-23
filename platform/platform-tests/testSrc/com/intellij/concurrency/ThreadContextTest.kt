@@ -3,8 +3,11 @@ package com.intellij.concurrency
 
 import com.intellij.testFramework.ApplicationExtension
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
@@ -24,6 +27,29 @@ class ThreadContextTest {
       acc + 1
     }
     assertEquals(elements.size, contextSize)
+  }
+
+  @Test
+  fun `resetThreadContext resets context`() {
+    assertDoesNotThrow {
+      checkUninitializedThreadContext()
+    }
+    withThreadContext(EmptyCoroutineContext).use {
+      assertThrows<IllegalStateException> {
+        checkUninitializedThreadContext()
+      }
+      resetThreadContext().use {
+        assertDoesNotThrow {
+          checkUninitializedThreadContext()
+        }
+      }
+      assertThrows<IllegalStateException> {
+        checkUninitializedThreadContext()
+      }
+    }
+    assertDoesNotThrow {
+      checkUninitializedThreadContext()
+    }
   }
 
   @Test
@@ -47,19 +73,19 @@ class ThreadContextTest {
   }
 
   @Test
-  fun `resetThreadContext replaces context`() {
+  fun `replaceThreadContext replaces context`() {
     val outerElement1 = TestElement("outer1")
-    resetThreadContext(outerElement1).use {
+    replaceThreadContext(outerElement1).use {
       assertSame(currentThreadContext(), outerElement1)
 
       val innerElement1 = TestElement("inner1")
-      resetThreadContext(innerElement1).use {
+      replaceThreadContext(innerElement1).use {
         assertSame(currentThreadContext(), innerElement1)
       }
       assertSame(currentThreadContext(), outerElement1)
 
       val innerElement2 = TestElement2("inner2")
-      resetThreadContext(innerElement2).use {
+      replaceThreadContext(innerElement2).use {
         assertSame(currentThreadContext(), innerElement2)
       }
       assertSame(currentThreadContext(), outerElement1)

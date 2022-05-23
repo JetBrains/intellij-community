@@ -95,7 +95,6 @@ private suspend fun <X> asyncTarget(
   if (asyncLinkResolveResult == null) {
     return InternalResolveLinkResult.CannotResolve
   }
-  @Suppress("REDUNDANT_ELSE_IN_WHEN")
   when (asyncLinkResolveResult) {
     is AsyncResolvedTarget -> {
       val pointer = asyncLinkResolveResult.pointer

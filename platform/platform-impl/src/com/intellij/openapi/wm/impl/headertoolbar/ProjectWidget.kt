@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
-import com.intellij.ui.IconManager
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -101,7 +100,9 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
 
 private class ProjectWidget(private val project: Project): ToolbarComboWidget(), Disposable {
   override fun doExpand(e: InputEvent) {
-    val step = MyStep(createActionsList(), this)
+    val dataContext = DataManager.getInstance().getDataContext(this)
+    val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.MAIN_TOOLBAR, null, dataContext)
+    val step = MyStep(createActionsList(anActionEvent), this)
     val widgetRenderer = ProjectWidgetRenderer(step::getSeparatorAbove)
 
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
@@ -127,25 +128,18 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
   override fun dispose() {}
 
-  private fun createActionsList(): Map<AnAction, Presentation?> {
-    val actionManager = ActionManager.getInstance()
-    val res = listOfNotNull<Pair<AnAction, Presentation?>>(
-      actionManager.createActionPair("NewProject", IdeBundle.message("project.widget.new"), "expui/general/add.svg"),
-      actionManager.createActionPair("OpenFile", IdeBundle.message("project.widget.open"), "expui/toolwindow/project.svg"),
-      actionManager.createActionPair("ProjectFromVersionControl", IdeBundle.message("project.widget.from.vcs"), "expui/vcs/vcs.svg")
-    ).toMap().toMutableMap()
+  private fun createActionsList(initEvent: AnActionEvent): Map<AnAction, Presentation?> {
+    val res = mutableMapOf<AnAction, Presentation?>()
 
+    val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
+    group.getChildren(initEvent).forEach { action ->
+      val e = AnActionEvent.createFromAnAction(action, initEvent.inputEvent, initEvent.place, initEvent.dataContext)
+      ActionUtil.performDumbAwareUpdate(action, e, false)
+      res[action] = e.presentation
+    }
     RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res[it] = null }
 
     return res
-  }
-
-  private fun ActionManager.createActionPair(actionID: String, name: String, iconPath: String): Pair<AnAction, Presentation>? {
-    val action = getAction(actionID) ?: return null
-    val presentation = action.templatePresentation.clone()
-    presentation.text = name
-    presentation.icon = IconManager.getInstance().getIcon(iconPath, AllIcons::class.java)
-    return Pair(action, presentation)
   }
 
   private class MyStep(private val actionsMap: Map<AnAction, Presentation?>, private val widget: Component): ListPopupStep<AnAction> {

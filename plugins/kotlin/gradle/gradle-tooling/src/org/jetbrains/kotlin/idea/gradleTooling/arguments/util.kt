@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.gradleTooling.arguments
 import org.gradle.api.Task
 import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCachingManager.cacheCompilerArgument
 import org.jetbrains.kotlin.idea.gradleTooling.getDeclaredMethodOrNull
 import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheMapper
@@ -28,7 +27,8 @@ fun buildCachedArgsInfo(
 ): CachedExtractedArgsInfo {
     val cachedCurrentArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileKotlinTask, cacheMapper, defaultsOnly = false)
     val cachedDefaultArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileKotlinTask, cacheMapper, defaultsOnly = true)
-    val dependencyClasspath = buildDependencyClasspath(compileKotlinTask).map { cacheCompilerArgument(it, cacheMapper) }
+    val dependencyClasspath =
+        buildDependencyClasspath(compileKotlinTask).map { KotlinCachedRegularCompilerArgument(cacheMapper.cacheArgument(it)) }
     return CachedExtractedArgsInfo(cacheMapper.cacheOriginIdentifier, cachedCurrentArguments, cachedDefaultArguments, dependencyClasspath)
 }
 
@@ -40,9 +40,12 @@ fun buildSerializedArgsInfo(
     val compileTaskClass = compileKotlinTask.javaClass
     val getCurrentArguments = compileTaskClass.getMethodOrNull("getSerializedCompilerArguments")
     val getDefaultArguments = compileTaskClass.getMethodOrNull("getDefaultSerializedCompilerArguments")
-    val currentArguments = safelyGetArguments(compileKotlinTask, getCurrentArguments, logger).map { cacheCompilerArgument(it, cacheMapper) }
-    val defaultArguments = safelyGetArguments(compileKotlinTask, getDefaultArguments, logger).map { cacheCompilerArgument(it, cacheMapper) }
-    val dependencyClasspath = buildDependencyClasspath(compileKotlinTask).map { cacheCompilerArgument(it, cacheMapper) }
+    val currentArguments = safelyGetArguments(compileKotlinTask, getCurrentArguments, logger)
+        .map { KotlinCachedRegularCompilerArgument(cacheMapper.cacheArgument(it)) }
+    val defaultArguments = safelyGetArguments(compileKotlinTask, getDefaultArguments, logger)
+        .map { KotlinCachedRegularCompilerArgument(cacheMapper.cacheArgument(it)) }
+    val dependencyClasspath = buildDependencyClasspath(compileKotlinTask)
+        .map { KotlinCachedRegularCompilerArgument(cacheMapper.cacheArgument(it)) }
 
     return CachedSerializedArgsInfo(cacheMapper.cacheOriginIdentifier, currentArguments, defaultArguments, dependencyClasspath)
 }

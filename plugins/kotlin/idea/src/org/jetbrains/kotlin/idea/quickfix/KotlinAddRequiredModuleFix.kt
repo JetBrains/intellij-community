@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -19,10 +19,8 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 
 class KotlinAddRequiredModuleFix(module: PsiJavaModule, private val requiredName: String) :
     LocalQuickFixAndIntentionActionOnPsiElement(module) {
-    @Suppress("InvalidBundleOrProperty")
     override fun getFamilyName(): String = KotlinBundle.message("kotlin.add.required.module.fix.family.name")
 
-    @Suppress("InvalidBundleOrProperty")
     override fun getText(): String = QuickFixBundle.message("module.info.add.requires.name", requiredName)
 
     override fun startInWriteAction() = true

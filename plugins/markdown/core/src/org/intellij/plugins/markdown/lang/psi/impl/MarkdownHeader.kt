@@ -42,7 +42,6 @@ class MarkdownHeader: MarkdownHeaderImpl {
     get() = buildAnchorText()
 
   override fun accept(visitor: PsiElementVisitor) {
-    @Suppress("DEPRECATION")
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitHeader(this)
       else -> super.accept(visitor)

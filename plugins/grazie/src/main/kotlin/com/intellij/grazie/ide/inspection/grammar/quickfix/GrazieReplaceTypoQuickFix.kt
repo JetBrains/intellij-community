@@ -104,7 +104,7 @@ object GrazieReplaceTypoQuickFix {
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val file = problem.text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
-    @Suppress("HardCodedStringLiteral") val familyName: @IntentionFamilyName String = familyName(problem)
+    val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
     problem.suggestions.forEachIndexed { index, suggestion ->
       val changes = suggestion.changes

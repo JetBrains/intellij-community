@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
@@ -227,7 +227,6 @@ class NoSettings {
  * Similar to [com.intellij.openapi.util.Key], but it also requires language to be unique.
  * Allows type-safe access to settings of provider.
  */
-@Suppress("unused")
 data class SettingsKey<T>(val id: String) {
   fun getFullId(language: Language): String = language.id + "." + id
 }

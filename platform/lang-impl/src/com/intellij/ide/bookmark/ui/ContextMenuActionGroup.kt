@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -11,7 +11,6 @@ import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
 
-@Suppress("ComponentNotRegistered")
 internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, ActionGroup() {
 
   override fun getChildren(event: AnActionEvent?): Array<AnAction> {

@@ -2,7 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.callable
-import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.replaceThreadContext
 import com.intellij.concurrency.runnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -116,7 +116,7 @@ class CancellationPropagationTest {
   fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking {
     launch {
       Propagation.prapagata {
-        resetThreadContext(coroutineContext).use {
+        replaceThreadContext(coroutineContext).use {
           ApplicationManager.getApplication().withModality {
             val runnable = Runnable {
               fail()
@@ -127,13 +127,13 @@ class CancellationPropagationTest {
           }
         }
       }
-      }.join()
-      pumpEDT()
+    }.join()
+    pumpEDT()
   }
 
   @Test
   fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking {
-    resetThreadContext(coroutineContext).use {
+    replaceThreadContext(coroutineContext).use {
       val expired = AtomicBoolean(false)
       ApplicationManager.getApplication().withModality {
         val runnable = Runnable {
@@ -184,9 +184,9 @@ class CancellationPropagationTest {
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
-      resetThreadContext(coroutineContext).use {
-        suspendCancellableCoroutine<Unit> { continuation ->
-          Propagation.prapagata {
+    replaceThreadContext(coroutineContext).use {
+      suspendCancellableCoroutine<Unit> { continuation ->
+        Propagation.prapagata {
           val parentJob = checkNotNull(Cancellation.currentJob())
           submit { // switch to another thread
             val result: Result<Unit> = runCatching {

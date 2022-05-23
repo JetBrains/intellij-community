@@ -45,7 +45,7 @@ fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null
   ))
 }
 
-internal inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
+inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
   Files.createDirectories(file.parent)
   FileChannel.open(file, W_CREATE_NEW).use {
     task(it)
@@ -136,7 +136,11 @@ private fun deleteFile(file: Path) {
 }
 
 @JvmOverloads
-fun substituteTemplatePlaceholders(inputFile: Path, outputFile: Path, placeholderChar: String, values: List<Pair<String, String>>, mustUseAllPlaceholders: Boolean = true) {
+fun substituteTemplatePlaceholders(inputFile: Path,
+                                   outputFile: Path,
+                                   placeholderChar: String,
+                                   values: List<Pair<String, String>>,
+                                   mustUseAllPlaceholders: Boolean = true) {
   var result = Files.readString(inputFile)
 
   val missingPlaceholders = mutableListOf<String>()

@@ -1267,7 +1267,6 @@
                      enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
-                     suppressId="unused"
                      key="inspection.unused.receiver.parameter.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinUnusedImportInspection"
@@ -1802,6 +1801,7 @@
                      enabledByDefault="true"
                      level="INFO"
                      language="kotlin"
+                     runForWholeFile="true"
                      key="inspection.member.visibility.can.be.private.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.NullableBooleanElvisInspection"
@@ -2030,6 +2030,15 @@
                      language="kotlin"
                      suppressId="RedundantOverride"
                      key="inspection.kotlin.redundant.override.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinRedundantDiagnosticSuppressInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     runForWholeFile="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.redundant.suppression.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SuspiciousEqualsCombination"
                      groupPath="Kotlin"

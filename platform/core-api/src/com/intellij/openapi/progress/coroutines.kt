@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.progress
 
-import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.replaceThreadContext
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -75,7 +75,7 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
     val context = currentJob +
                   CoroutineName("job run blocking")
     runBlocking(context) {
-      resetThreadContext(EmptyCoroutineContext).use {
+      replaceThreadContext(EmptyCoroutineContext).use {
         action()
       }
     }
@@ -106,7 +106,7 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
                   CoroutineName("indicator run blocking") +
                   ProgressIndicatorSink(indicator).asContextElement()
     runBlocking(context) {
-      resetThreadContext(EmptyCoroutineContext).use {
+      replaceThreadContext(EmptyCoroutineContext).use {
         action()
       }
     }
@@ -134,7 +134,7 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
-  return resetThreadContext(coroutineContext).use {
+  return replaceThreadContext(coroutineContext).use {
     withJob(coroutineContext.job, action)
   }
 }

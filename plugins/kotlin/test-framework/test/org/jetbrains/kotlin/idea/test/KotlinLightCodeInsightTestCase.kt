@@ -1,13 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-@file:Suppress("unused", "PropertyName")
-
 package org.jetbrains.kotlin.idea.test
 
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import java.io.File
 
-@Suppress("DEPRECATION")
 @Deprecated("Use KotlinLightCodeInsightFixtureTestCase instead")
 abstract class KotlinLightCodeInsightTestCase : com.intellij.testFramework.LightJavaCodeInsightTestCase() {
     open fun getTestDataDirectory(): File {

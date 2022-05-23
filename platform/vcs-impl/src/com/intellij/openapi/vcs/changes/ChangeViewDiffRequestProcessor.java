@@ -58,6 +58,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     Wrapper change = getCurrentChange();
     List<Wrapper> changes = (selectedOnly ? getSelectedChanges() : getAllChanges()).collect(Collectors.toList());
     return ListSelection.create(changes, change)
+      .withExplicitSelection(selectedOnly)
       .map(wrapper -> wrapper.createProducer(project));
   }
 
@@ -339,7 +340,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Nullable
-  private static <T> List<T> toListIfNotMany(@NotNull Stream<? extends T> stream, boolean fromUpdate) {
+  public static <T> List<T> toListIfNotMany(@NotNull Stream<? extends T> stream, boolean fromUpdate) {
     if (!fromUpdate) return stream.collect(Collectors.toList());
 
     List<T> result = stream.limit(MANY_CHANGES_THRESHOLD + 1).collect(Collectors.toList());

@@ -36,7 +36,6 @@ internal fun loadDescriptorInTest(
   )
 
   if (result == null) {
-    @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
     throw AssertionError("Cannot load plugin from $dir")
   }

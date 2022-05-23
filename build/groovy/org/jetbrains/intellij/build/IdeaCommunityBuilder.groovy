@@ -9,25 +9,25 @@ import java.nio.file.Path
 
 @CompileStatic
 final class IdeaCommunityBuilder {
-  private final BuildContext buildContext
+  private final BuildContext context
 
   IdeaCommunityBuilder(Path home, BuildOptions options = new BuildOptions(), Path projectHome = home) {
     this(BuildContextImpl.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options))
   }
 
-  IdeaCommunityBuilder(BuildContext buildContext) {
-    this.buildContext = buildContext
+  IdeaCommunityBuilder(BuildContext context) {
+    this.context = context
   }
 
   /**
    * Compiles production modules and test modules required for {@link org.jetbrains.intellij.build.CommunityStandaloneJpsBuilder#processJpsLayout}
    */
   void compileModules() {
-    BuildTasks.create(buildContext).compileProjectAndTests(["intellij.platform.jps.build"])
+    BuildTasks.create(context).compileProjectAndTests(["intellij.platform.jps.build"])
   }
 
   void buildFullUpdater() {
-    def tasks = BuildTasks.create(buildContext)
+    def tasks = BuildTasks.create(context)
     tasks.compileModules(List.of("updater"))
     tasks.buildFullUpdaterJar()
   }
@@ -38,17 +38,17 @@ final class IdeaCommunityBuilder {
      * required because {@link org.jetbrains.intellij.build.BuildTasks#buildDistributions} will trigger compilation of production modules
      * wiping out test modules compiled in {@link org.jetbrains.intellij.build.IdeaCommunityBuilder#compileModules}
      */
-    buildContext.options.incrementalCompilation = true
-    def tasks = BuildTasks.create(buildContext)
+    context.options.incrementalCompilation = true
+    def tasks = BuildTasks.create(context)
     tasks.buildDistributions()
-    buildContext.messages.block("Build standalone JPS") {
-      Path jpsArtifactDir = buildContext.paths.artifactDir.resolve("jps")
-      new CommunityStandaloneJpsBuilder(buildContext)
-        .processJpsLayout(jpsArtifactDir, buildContext.fullBuildNumber, new ProjectStructureMapping(), true, {})
+    context.messages.block("Build standalone JPS") {
+      Path jpsArtifactDir = context.paths.artifactDir.resolve("jps")
+      new CommunityStandaloneJpsBuilder(context)
+        .processJpsLayout(jpsArtifactDir, context.fullBuildNumber, new ProjectStructureMapping(), true, {})
     }
   }
 
   void buildUnpackedDistribution(Path targetDirectory) {
-    BuildTasks.create(buildContext).buildUnpackedDistribution(targetDirectory, false)
+    BuildTasks.create(context).buildUnpackedDistribution(targetDirectory, false)
   }
 }

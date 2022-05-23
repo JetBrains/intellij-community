@@ -323,8 +323,6 @@
                         headlessImplementation="com.intellij.ide.dnd.HeadlessDnDManager"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
                         serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.ui.errorView.ErrorViewFactory"
-                        serviceImplementation="com.intellij.ui.errorView.impl.ErrorViewFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
@@ -605,9 +603,6 @@
 
     <applicationService serviceInterface="com.intellij.ui.ColorChooserService"
                         serviceImplementation="com.intellij.ui.ColorChooserServiceImpl"/>
-
-    <applicationService serviceInterface="com.intellij.ui.ExperimentalUI"
-                        serviceImplementation="com.intellij.ui.ExperimentalUIImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.AbbreviationManager"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
@@ -964,6 +959,10 @@
     <credentialStore implementation="com.intellij.credentialStore.LinuxCredentialStoreFactory" os="linux"/>
     <registryKey key="credentialStore.linux.prefer.kwallet" defaultValue="false" restartRequired="true"
                  description="Use KWallet if KWallet &amp; SecretService are both available."/>
+
+    <applicationService
+      serviceInterface="com.intellij.credentialStore.CredentialStoreManager"
+      serviceImplementation="com.intellij.credentialStore.CredentialStoreManagerImpl"/>
 
     <applicationService
       serviceInterface="com.intellij.openapi.projectRoots.JdkFinder"
