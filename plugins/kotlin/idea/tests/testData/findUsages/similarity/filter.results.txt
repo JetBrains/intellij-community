@@ -1,0 +1,10 @@
+[{id=0
+, myUsages=5|filteredMap = numbersMap.|filter| { (key, value) ->  value > |10| && key.endsWith(|"1"|)},
+6|filteredMap = numbersMap.|filter| { (key, value) -> key.endsWith(|"5"|) && value > |1|}}
+, {id=1
+, myUsages=7|filteredMap = numbersMap.|filter| { (key, value) -> |false| },
+8|filteredMap = numbersMap.|filter| { (key, value) -> |true| }}
+, {id=2
+, myUsages=9|filteredMap = numbersMap.|filter| { (key, value) -> key.endsWith(|"1"|) },
+10|filteredMap = numbersMap.|filter| { (key, value) -> key.endsWith(|"1"|) }}
+]

@@ -3,6 +3,7 @@ package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -33,8 +34,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageContextPanel;
+import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +48,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -60,6 +64,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private Pattern myCachedSearchPattern;
   private Pattern myCachedReplacePattern;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private @Nullable UsageViewImpl myUsageView;
+  private @Nullable MostCommonUsagePatternsComponent myCommonUsagePatternsComponent;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     this(project, presentation, false);
@@ -70,6 +76,16 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                            boolean isEditor) {
     super(project, presentation);
     myIsEditor = isEditor;
+  }
+
+
+  public void setUsageView(@Nullable UsageViewImpl usageView) {
+    myUsageView = usageView;
+  }
+
+  @Nullable
+  public UsageViewImpl getUsageView() {
+    return myUsageView;
   }
 
   @Nullable
@@ -88,11 +104,14 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     return null;
   }
 
+
   public static class Provider implements UsageContextPanel.Provider {
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true);
+      UsagePreviewPanel previewPanel = new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true);
+      previewPanel.setUsageView((UsageViewImpl)usageView);
+      return previewPanel;
     }
 
     @Override
@@ -326,11 +345,19 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   public void dispose() {
     isDisposed = true;
     releaseEditor();
+    disposeMostCommonUsageComponent();
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getProject() == myProject && editor.getUserData(PREVIEW_EDITOR_FLAG) == this) {
         LOG.error("Editor was not released:" + editor);
       }
     }
+  }
+
+  private void disposeMostCommonUsageComponent() {
+    if (myCommonUsagePatternsComponent != null) {
+      Disposer.dispose(myCommonUsagePatternsComponent);
+    }
+    myCommonUsagePatternsComponent = null;
   }
 
   private void releaseEditor() {
@@ -371,8 +398,30 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Override
-  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
+  public void updateLayoutLater(List<? extends UsageInfo> infos, @NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && selectedGroupNodes(infos, groups) && myUsageView != null) {
+      releaseEditor();
+      disposeMostCommonUsageComponent();
+      removeAll();
+      myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(myUsageView, groups);
+      add(myCommonUsagePatternsComponent);
+    } else {
+      previewUsages(infos);
+    }
+  }
+
+  private static boolean selectedGroupNodes(List<? extends UsageInfo> infos, Collection<Collection<? extends UsageGroup>> groups) {
+    return (infos == null || infos.isEmpty()) && !groups.isEmpty();
+  }
+
+  @Override
+  protected void updateLayoutLater(@Nullable List<? extends UsageInfo> infos) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    previewUsages(infos);
+  }
+
+  private void previewUsages(@Nullable List<? extends UsageInfo> infos) {
     String cannotPreviewMessage = cannotPreviewMessage(infos);
     if (cannotPreviewMessage == null) {
       resetEditor(infos);

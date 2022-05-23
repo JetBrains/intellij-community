@@ -1707,5 +1707,6 @@
       <separator/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
+    <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
   </actions>
 </idea-plugin>

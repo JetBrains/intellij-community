@@ -8,6 +8,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,9 @@ class UsageNodeTreeBuilder {
       if (dumb && !DumbService.isDumbAware(rule)) continue;
 
       List<UsageGroup> groups = rule.getParentGroupsFor(usage, myTargets);
+      if (usage instanceof SimilarityUsage) {
+        ((SimilarityUsage)usage).addUsageGroupData(groups);
+      }
       for (UsageGroup group : groups) {
         groupNode = groupNode.addOrGetGroup(group, i, edtModelToSwingNodeChangesQueue);
       }

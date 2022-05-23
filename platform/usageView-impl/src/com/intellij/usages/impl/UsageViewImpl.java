@@ -2230,7 +2230,7 @@ public class UsageViewImpl implements UsageViewEx {
     return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
   }
 
-  private @NotNull Collection<Collection<? extends UsageGroup>> getSelectedGroups() {
+  private @NotNull Collection<@NotNull Collection<? extends UsageGroup>> getSelectedGroups() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Collection<Collection<? extends UsageGroup>> groupPaths = new ArrayList<>();
     for (TreeNode node : selectedNodes()) {

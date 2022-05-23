@@ -399,6 +399,7 @@
 
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
+    <extensionPoint name="usageFeaturesProvider" interface="com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider" dynamic="true"/>
     <extensionPoint name="usageFilteringRuleProvider" interface="com.intellij.usages.rules.UsageFilteringRuleProvider" dynamic="true"/>
     <extensionPoint name="importFilteringRule" interface="com.intellij.usages.rules.ImportFilteringRule" dynamic="true"/>
     <extensionPoint name="usageGroupingRuleProvider" interface="com.intellij.usages.rules.UsageGroupingRuleProvider" dynamic="true"/>

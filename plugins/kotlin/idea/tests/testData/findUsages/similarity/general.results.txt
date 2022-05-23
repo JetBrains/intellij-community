@@ -1,0 +1,8 @@
+[{id=0
+, myUsages=15|java.lang.System.out.println(|off|(|1|))}
+, {id=1
+, myUsages=16|off|(|1|),
+17|off|(|1|)}
+, {id=2
+, myUsages=18|if| (|off|(getFive())) {}
+]
