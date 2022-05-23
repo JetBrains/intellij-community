@@ -34,7 +34,7 @@ def main():
     from generate_code import generate_dont_trace_files
     from generate_code import generate_cython_module
 
-    # First, make sure that our code is up to date.
+    # First, make sure that our code is up-to-date.
     generate_dont_trace_files()
     generate_cython_module()
 
