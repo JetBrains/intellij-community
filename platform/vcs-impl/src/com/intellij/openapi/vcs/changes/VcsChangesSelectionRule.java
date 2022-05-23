@@ -39,7 +39,7 @@ public class VcsChangesSelectionRule implements GetDataRule {
     Change[] selectedChanges = VcsDataKeys.SELECTED_CHANGES.getData(dataProvider);
     if (selectedChanges != null) {
       return ListSelection.createAt(Arrays.asList(selectedChanges), 0)
-        .withExplicitSelection(true);
+        .asExplicitSelection();
     }
 
     Change[] changes = VcsDataKeys.CHANGES.getData(dataProvider);
