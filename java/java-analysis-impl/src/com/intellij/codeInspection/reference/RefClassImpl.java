@@ -43,6 +43,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private RefMethodImpl myDefaultConstructor; // guarded by this
   private Set<RefElement> myInTypeReferences; // guarded by this
   private List<RefJavaElement> myClassExporters; // guarded by this
+  private Set<RefClass> myOutTypeReferences; // guarded by this
   private final RefModule myRefModule;
 
   RefClassImpl(UClass uClass, PsiElement psi, RefManager manager) {
@@ -550,8 +551,21 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myClassExporters.add(exporter);
   }
 
+  @Override
+  synchronized void addOutTypeReference(RefClass refClass) {
+    if (myOutTypeReferences == null){
+      myOutTypeReferences = new HashSet<>();
+    }
+    myOutTypeReferences.add(refClass);
+  }
+
   public synchronized List<RefJavaElement> getClassExporters() {
     return myClassExporters;
+  }
+
+  @Override
+  public synchronized @NotNull Collection<RefClass> getOutTypeReferences() {
+    return ObjectUtils.notNull(myOutTypeReferences, Collections.emptySet());
   }
 
   private void setAnonymous(boolean anonymous) {
