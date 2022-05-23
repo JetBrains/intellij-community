@@ -59,7 +59,8 @@ def main():
     generate_cython_module()
 
     for python_install in python_installations:
-        assert os.path.exists(python_install)
+        assert os.path.exists(python_install), \
+            "'%s' interpreter does not exist." % python_install
 
     remove_binaries(['.pyd'])
 
