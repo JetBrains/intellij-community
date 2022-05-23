@@ -7,13 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
-import org.jetbrains.idea.maven.importing.tree.*
+import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
+import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
+import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
+import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterWorkspaceBase
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
@@ -22,28 +22,30 @@ class MavenProjectTreeImporterToWorkspaceModel(
   projectsTree: MavenProjectsTree,
   projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
   importingSettings: MavenImportingSettings,
-  ideModelsProvider: IdeModifiableModelsProvider,
+  modelsProvider: IdeModifiableModelsProvider,
   project: Project
-) : MavenProjectImporterBase(project, projectsTree, importingSettings, projectsToImportWithChanges, ideModelsProvider) {
+) : MavenProjectImporterWorkspaceBase(projectsTree, projectsToImportWithChanges, importingSettings, modelsProvider, project) {
 
   private val createdModulesList = ArrayList<Module>()
-  private val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val contextProvider = MavenProjectImportContextProvider(project, projectsTree,
                                                                   projectsToImportWithChanges, myImportingSettings)
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
-
     val postTasks = ArrayList<MavenProjectsProcessorTask>()
     val context = contextProvider.context
     if (context.hasChanges) {
-      importModules(context, postTasks)
+      try {
+        importModules(context, postTasks)
+      }
+      finally {
+        MavenUtil.invokeAndWaitWriteAction(myProject) { myModelsProvider.dispose() }
+      }
       scheduleRefreshResolvedArtifacts(postTasks)
     }
     return postTasks
-
   }
 
-  private fun importModules(context: MavenModuleImportContext, postTasks: ArrayList<MavenProjectsProcessorTask>) {
+  private fun importModules(context: MavenModuleImportContext, postTasks: List<MavenProjectsProcessorTask>) {
     val builder = WorkspaceEntityStorageBuilder.create()
 
     val createdModuleIds = ArrayList<Pair<MavenModuleImportData, ModuleId>>()
@@ -56,7 +58,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
       createdModuleIds.add(importData to moduleEntity.persistentId())
     }
 
-    val legacyModuleImportDataList = mutableListOf<MavenModuleImportData>()
+    val moduleImportData = mutableListOf<ModuleImportData>()
     MavenUtil.invokeAndWaitWriteAction(myProject) {
       WorkspaceModel.getInstance(myProject).updateProjectModel { current ->
         current.replaceBySource(
@@ -69,28 +71,13 @@ class MavenProjectTreeImporterToWorkspaceModel(
         val module = storage.findModuleByEntity(entity)
         if (module != null) {
           createdModulesList.add(module)
-
-          legacyModuleImportDataList.add(mapToLegacyImportModel(importData, module))
+          moduleImportData.add(ModuleImportData(module, importData.mavenProject, importData.moduleData.type))
         }
       }
     }
 
-    val configurer = MavenProjectTreeLegacyImporter.TreeModuleConfigurer(myProjectsTree, myImportingSettings, myModelsProvider)
+    finalizeImport(moduleImportData, context.moduleNameByProject, postTasks)
 
-    // todo configModule seems to repeat folders configuration
-    val importers = configurer.configModules(legacyModuleImportDataList, context.moduleNameByProject)
-    configFacets(importers, postTasks)
-
-    MavenUtil.invokeAndWaitWriteAction(myProject) { myModelsProvider.dispose() }
-
-  }
-
-  private fun mapToLegacyImportModel(importData: MavenModuleImportData, module: Module): MavenModuleImportData {
-    return importData.copy(
-      moduleData = LegacyModuleData(module,
-                                    importData.moduleData.type,
-                                    importData.moduleData.javaVersionHolder,
-                                    isNewModule = true))
   }
 
   override fun createdModules(): List<Module> {
