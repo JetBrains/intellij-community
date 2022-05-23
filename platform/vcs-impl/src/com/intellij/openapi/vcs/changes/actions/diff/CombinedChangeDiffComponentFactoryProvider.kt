@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.toListIfNotMany
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
+import kotlin.streams.toList
 
 class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryProvider {
   override fun create(model: CombinedDiffModel): CombinedDiffComponentFactory = MyFactory(model)
@@ -36,7 +37,10 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
       val viewer get() = model.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
       override fun getChanges(): ListSelection<out PresentableChange> {
-        val changes = model.requests.values.filterIsInstance<PresentableChange>()
+        val changes =
+          if (model is CombinedDiffPreviewModel) model.getAllChanges().toList()
+          else model.requests.values.filterIsInstance<PresentableChange>()
+
         val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
         val selectedIndex = when {
           selected != null -> changes.indexOfFirst { it.tag == selected.tag
