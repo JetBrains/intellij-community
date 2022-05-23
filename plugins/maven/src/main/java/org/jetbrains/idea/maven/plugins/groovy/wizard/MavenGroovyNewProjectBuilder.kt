@@ -61,36 +61,39 @@ class MavenGroovyNewProjectBuilder(private val groovySdkVersion: String) : Abstr
   private fun setupMavenStructure(project: Project, root: VirtualFile) {
     val vcsFileAdder = GitSilentFileAdderProvider.create(project)
     try {
-      val pom = WriteCommandAction.writeCommandAction(project)
-        .withName(MavenWizardBundle.message("maven.new.project.wizard.groovy.creating.groovy.project"))
-        .compute<VirtualFile, RuntimeException> {
-          root.findChild(MavenConstants.POM_XML)?.delete(this)
-          val file = root.createChildData(this, MavenConstants.POM_XML)
-          vcsFileAdder.markFileForAdding(file)
-          val properties = Properties()
-          val conditions = Properties()
-          properties.setProperty("GROOVY_VERSION", groovySdkVersion)
-          properties.setProperty("GROOVY_REPOSITORY", GroovyConfigUtils.getMavenSdkRepository(groovySdkVersion))
-          conditions.setProperty("NEED_POM",
-                                 (GroovyConfigUtils.compareSdkVersions(groovySdkVersion, GroovyConfigUtils.GROOVY2_5) >= 0).toString())
-          conditions.setProperty("CREATE_SAMPLE_CODE", "true")
-          MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, properties,
-                                                       conditions, MAVEN_GROOVY_XML_TEMPLATE, false)
-          file
+      root.refresh(true, false) {
+        val pom = WriteCommandAction.writeCommandAction(project)
+          .withName(MavenWizardBundle.message("maven.new.project.wizard.groovy.creating.groovy.project"))
+          .compute<VirtualFile, RuntimeException> {
+            root.refresh(true, false)
+            root.findChild(MavenConstants.POM_XML)?.delete(this)
+            val file = root.createChildData(this, MavenConstants.POM_XML)
+            vcsFileAdder.markFileForAdding(file)
+            val properties = Properties()
+            val conditions = Properties()
+            properties.setProperty("GROOVY_VERSION", groovySdkVersion)
+            properties.setProperty("GROOVY_REPOSITORY", GroovyConfigUtils.getMavenSdkRepository(groovySdkVersion))
+            conditions.setProperty("NEED_POM",
+                                   (GroovyConfigUtils.compareSdkVersions(groovySdkVersion, GroovyConfigUtils.GROOVY2_5) >= 0).toString())
+            conditions.setProperty("CREATE_SAMPLE_CODE", "true")
+            MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, properties,
+                                                         conditions, MAVEN_GROOVY_XML_TEMPLATE, false)
+            file
+          }
+
+        val sourceDirectory = VfsUtil.createDirectories(root.path + "/src/main/groovy")
+        VfsUtil.createDirectories(root.path + "/src/main/resources")
+        VfsUtil.createDirectories(root.path + "/src/test/groovy")
+        if (createSampleCode) {
+          vcsFileAdder.markFileForAdding(sourceDirectory)
+          createSampleGroovyCodeFile(project, sourceDirectory)
         }
 
-      val sourceDirectory = VfsUtil.createDirectories(root.path + "/src/main/groovy")
-      VfsUtil.createDirectories(root.path + "/src/main/resources")
-      VfsUtil.createDirectories(root.path + "/src/test/groovy")
-      if (createSampleCode) {
-        vcsFileAdder.markFileForAdding(sourceDirectory)
-        createSampleGroovyCodeFile(project, sourceDirectory)
-      }
+        MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
-      MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
-
-      MavenUtil.invokeLater(project, ModalityState.NON_MODAL) {
-        PsiManager.getInstance(project).findFile(pom)?.let(EditorHelper::openInEditor)
+        MavenUtil.invokeLater(project, ModalityState.NON_MODAL) {
+          PsiManager.getInstance(project).findFile(pom)?.let(EditorHelper::openInEditor)
+        }
       }
     }
     finally {
