@@ -7,10 +7,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
  * Equality provider can be used to compare items found by different (or sometimes same) instances of
  * [SearchEverywhereContributor] and decide that those items are pointing to the same entity.
  *
- * For example following items can be instances of different classes, but the same entities:
+ * For example, following items can be instances of different classes, but the same entities:
  * - Same file returned by [FileSearchEverywhereContributor] and [RecentFilesSEContributor]
  * - Java public class and .java file containing this class
- * - Different links/wrappers to the same [PsiElement]
+ * - Different links/wrappers to the same [com.intellij.psi.PsiElement]
  * - etc.
  */
 interface SEResultsEqualityProvider {
@@ -30,14 +30,14 @@ interface SEResultsEqualityProvider {
 
     /**
      * New found item should be skipped.
-     * Should be used when better presentation of found entity is already exists in results.
+     * Should be used when better presentation of found entity already exists in results.
      */
     object Skip : SEEqualElementsActionType() {
       override fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType = if (another is Replace) another else this
     }
 
     /**
-     * Already existing item `toBeReplaced` should be replaced with new found item.
+     * Already existing item `toBeReplaced` should be replaced with the new found item.
      * Should be used when equal item already exists in results but new one represents corresponding entity better.
      */
     data class Replace(val toBeReplaced: List<SearchEverywhereFoundElementInfo>) : SEEqualElementsActionType() {
@@ -54,7 +54,7 @@ interface SEResultsEqualityProvider {
    *
    * See [SEEqualElementsActionType] for possible actions
    *
-   * @param newItem new found item. This item is suggested to add to results list.
+   * @param newItem new found item. This item is suggested to be added to results list.
    * @param alreadyFoundItems list of already found results. Those items are already shown in results list.
    */
   fun compareItems(newItem: SearchEverywhereFoundElementInfo, alreadyFoundItems: List<SearchEverywhereFoundElementInfo>): SEEqualElementsActionType
