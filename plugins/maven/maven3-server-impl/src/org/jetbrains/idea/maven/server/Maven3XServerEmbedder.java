@@ -264,7 +264,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     myRepositorySystem = getComponent(RepositorySystem.class);
 
-    myImporterSpy = getComponent(MavenImporterSpy.class);
+    MavenImporterSpy importerSpy = getComponentIfExists(MavenImporterSpy.class);
+
+    if (importerSpy == null) {
+      importerSpy = new MavenImporterSpy();
+      myContainer.addComponent(importerSpy, MavenImporterSpy.class.getName());
+    }
+    myImporterSpy = importerSpy;
   }
 
   @NotNull
@@ -586,6 +592,16 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
+  public <T> T getComponentIfExists(Class<T> clazz) {
+    try {
+      return (T)myContainer.lookup(clazz.getName());
+    }
+    catch (ComponentLookupException e) {
+      return null;
+    }
+  }
+
+
   private ArtifactRepository createLocalRepository() {
     try {
       final ArtifactRepository localRepository =
@@ -680,7 +696,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     if (VersionComparatorUtil.compare(getMavenVersion(), "3.8.5") >= 0) {
       modelValidator = new CustomModelValidator385((CustomMaven3ModelInterpolator2)modelInterpolator,
                                                    (DefaultModelValidator)getComponent(ModelValidator.class));
-    } else {
+    }
+    else {
       modelValidator = getComponent(ModelValidator.class, "ide");
       myContainer.addComponent(modelValidator, ModelValidator.class.getName());
     }
@@ -1258,7 +1275,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         collector.add(MavenProjectProblem.createStructureProblem(
           traceElement.getFileName() + ":" + traceElement.getLineNumber(), each.getMessage()));
       }
-      else if (problemTransferArtifact != null){
+      else if (problemTransferArtifact != null) {
         myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
         String message = getRootMessage(each);
         MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
@@ -1401,7 +1418,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       if (transferArtifact != null) {
         MavenArtifact mavenArtifact = MavenModelConverter.convertArtifact(transferArtifact, getLocalRepositoryFile());
         problem = MavenProjectProblem.createRepositoryProblem("", message, true, mavenArtifact);
-      } else {
+      }
+      else {
         problem = MavenProjectProblem.createStructureProblem("", message);
       }
       return new MavenArtifactResolveResult(Collections.emptyList(), problem);
