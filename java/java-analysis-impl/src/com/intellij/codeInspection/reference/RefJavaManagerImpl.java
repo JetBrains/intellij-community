@@ -478,6 +478,15 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     }
 
     @Override
+    public boolean visitLambdaExpression(@NotNull ULambdaExpression node) {
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
+      if (refElement != null) {
+        myRefManager.buildReferences(refElement);
+      }
+      return true;
+    }
+
+    @Override
     public boolean visitField(@NotNull UField node) {
       visitDeclaration(node);
       return false;
