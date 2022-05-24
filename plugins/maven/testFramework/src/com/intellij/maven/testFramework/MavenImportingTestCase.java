@@ -381,9 +381,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {
+    assertModuleGroupPath(moduleName, false, expected);
+  }
+
+  protected void assertModuleGroupPath(String moduleName, boolean groupWasManuallyAdded, String... expected) {
+    boolean moduleGroupsNotSupported = MavenProjectImporter.isImportToWorkspaceModelEnabled()
+                                       || MavenProjectImporter.isImportToTreeStructureEnabled(myProject) && !groupWasManuallyAdded;
+
     String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(getModule(moduleName));
 
-    if (expected.length == 0) {
+    if (moduleGroupsNotSupported || expected.length == 0) {
       assertNull(path);
     }
     else {

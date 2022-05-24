@@ -59,7 +59,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
 
     importProject();
-    assertModuleGroupPath("project", "group");
+    assertModuleGroupPath("project", true, "group");
   }
 
   @Test
