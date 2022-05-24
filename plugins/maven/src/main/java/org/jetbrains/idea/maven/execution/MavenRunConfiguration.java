@@ -482,13 +482,29 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       }
     }
 
+    @Override
+    protected @Nullable ConsoleView createConsole(@NotNull Executor executor) throws ExecutionException {
+      ConsoleView console = super.createConsole(executor);
+      if (console != null && getEnvironment().getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
+        return JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(
+          myConfiguration,
+          getRunnerSettings(),
+          console,
+          executor
+        );
+      }
+      else {
+        return console;
+      }
+    }
+
     public ExecutionResult doDelegateBuildExecute(@NotNull Executor executor,
                                                   @NotNull ProgramRunner runner,
                                                   ExternalSystemTaskId taskId,
                                                   DefaultBuildDescriptor descriptor,
                                                   ProcessHandler processHandler,
                                                   Function<String, String> targetFileMapper) throws ExecutionException {
-      ConsoleView consoleView = super.createConsole(executor);
+      ConsoleView consoleView = createConsole(executor);
       BuildViewManager viewManager = getEnvironment().getProject().getService(BuildViewManager.class);
       descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
       descriptor.withExecutionEnvironment(getEnvironment());
@@ -590,7 +606,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     @Nullable
     private BuildView createBuildView(@NotNull Executor executor, @NotNull ExternalSystemTaskId taskId,
                                       @NotNull BuildDescriptor descriptor) throws ExecutionException {
-      ConsoleView console = super.createConsole(executor);
+      ConsoleView console = createConsole(executor);
       if (console == null) {
         return null;
       }
