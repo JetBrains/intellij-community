@@ -4,7 +4,7 @@ package com.intellij.completion.ml.sorting
 
 import com.intellij.codeInsight.completion.CompletionFinalSorter
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.ml.IgnoreMLLookupElement
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -199,7 +199,7 @@ class MLSorter : CompletionFinalSorter() {
       val decoratingItemsPolicy = lookupStorage.model?.decoratingPolicy() ?: DecoratingItemsPolicy.DISABLED
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
       return items
-        .filter { it !is IgnoreMLLookupElement }
+        .filter { it !is MLRankingIgnorable }
         .reorderByMLScores(element2score, topItemsCount)
         .insertIgnoredItems(items)
         .markRelevantItemsIfNeeded(element2score, lookup, decoratingItemsPolicy)
@@ -241,7 +241,7 @@ class MLSorter : CompletionFinalSorter() {
   private fun Iterable<LookupElement>.insertIgnoredItems(allItems: Iterable<LookupElement>): Iterable<LookupElement> {
     val result = this.toMutableList()
     for ((index, item) in allItems.withIndex()) {
-      if (item is IgnoreMLLookupElement) {
+      if (item is MLRankingIgnorable) {
         result.add(index, item)
       }
     }
