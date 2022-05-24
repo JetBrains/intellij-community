@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +27,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.getPreferredFocusedComponent;
@@ -120,14 +119,37 @@ public class ActionGroupPanelWrapper {
     boolean singleProjectGenerator = list.getModel().getSize() == 1;
 
     final Ref<Component> selected = Ref.create();
-    final JPanel main = new NonOpaquePanel(new BorderLayout());
+    final HashMap<Object, JPanel> panelsMap = new HashMap<>();
+    final Set<JButton> actionButtonsCache = new HashSet<>();
+    final JPanel main = new NonOpaquePanel(new BorderLayout()) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+
+        // Update all UI components that are detached from windows
+        if (SwingUtilities.getWindowAncestor(this) == null) {
+          for (Component component : getComponents()) {
+            IJSwingUtilities.updateComponentTreeUI(component);
+          }
+        }
+        for (JPanel panel : panelsMap.values()) {
+          if (panel.getParent() == null) {
+            IJSwingUtilities.updateComponentTreeUI(panel);
+          }
+        }
+        for (JButton button : actionButtonsCache) {
+          if (button.getParent() == null) {
+            IJSwingUtilities.updateComponentTreeUI(button);
+          }
+        }
+      }
+    };
     main.add(actionsListPanel, BorderLayout.WEST);
 
     JPanel bottomPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
     bottomPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new JBColor(Gray._217, Gray._81)));
     main.add(bottomPanel, BorderLayout.SOUTH);
 
-    final HashMap<Object, JPanel> panelsMap = new HashMap<>();
     ListSelectionListener selectionListener = e -> {
       if (e.getValueIsAdjusting()) {
         // Update when a change has been finalized.
@@ -146,7 +168,9 @@ public class ActionGroupPanelWrapper {
         selected.set(panel);
         main.add(selected.get());
 
-        updateBottomPanel(panel, (AbstractActionWithPanel)value, bottomPanel, backAction);
+        JButton actionButton = ((AbstractActionWithPanel)value).getActionButton();
+        actionButtonsCache.add(actionButton);
+        updateBottomPanel(panel, actionButton, bottomPanel, backAction);
 
         main.revalidate();
         main.repaint();
@@ -176,17 +200,17 @@ public class ActionGroupPanelWrapper {
   }
 
   private static void updateBottomPanel(@NotNull JPanel currentPanel,
-                                        @NotNull AbstractActionWithPanel actionWithPanel,
+                                        @NotNull JButton actionButton,
                                         @NotNull JPanel bottomPanel,
                                         @Nullable Runnable backAction) {
     bottomPanel.removeAll();
 
     if (SystemInfo.isMac) {
       addCancelButton(bottomPanel, backAction);
-      addActionButton(bottomPanel, actionWithPanel, currentPanel);
+      addActionButton(bottomPanel, actionButton, currentPanel);
     }
     else {
-      addActionButton(bottomPanel, actionWithPanel, currentPanel);
+      addActionButton(bottomPanel, actionButton, currentPanel);
       addCancelButton(bottomPanel, backAction);
     }
   }
@@ -199,9 +223,8 @@ public class ActionGroupPanelWrapper {
   }
 
   private static void addActionButton(@NotNull JPanel bottomPanel,
-                                      @NotNull AbstractActionWithPanel actionWithPanel,
+                                      @NotNull JButton actionButton,
                                       @NotNull JPanel currentPanel) {
-    JButton actionButton = actionWithPanel.getActionButton();
     bottomPanel.add(actionButton);
     currentPanel.getRootPane().setDefaultButton(actionButton);
   }
