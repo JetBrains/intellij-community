@@ -37,9 +37,30 @@ class MermaidCompletionContributor : CompletionContributor() {
     extend(
       CompletionType.BASIC,
       or(
-        psiElement().inside(MermaidFlowchartDocumentImpl::class.java)
+        psiElement().inside(MermaidFlowchartDocumentImpl::class.java) //!!!
       ),
       MermaidFlowchartCompletionProvider()
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterLeaf(
+        or(
+          psiElement(MermaidTokens.Pie.PIE),
+          psiElement(MermaidTokens.EOL).afterLeaf(psiElement(MermaidTokens.Pie.PIE))
+        )
+      ),
+      MermaidPieShowDataCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterLeaf(
+        or(
+          psiElement(MermaidTokens.Pie.PIE),
+          psiElement(MermaidTokens.EOL)
+        )
+      ),
+      MermaidPieTitleCompletionProvider()
     )
   }
 }
@@ -57,12 +78,14 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
   private fun createKeywordLookupElement(keyword: String): LookupElement {
     val insertHandler = InsertHandler { ctx: InsertionContext, _: LookupElement? ->
       val editor = ctx.editor
+      val document = editor.document
       // attempt to fix bug with completion of first element in document
-      editor.document.deleteString(ctx.startOffset - 1, ctx.tailOffset)
+      val lineStartOffset = document.getLineStartOffset(document.getLineNumber(ctx.startOffset))
+      document.deleteString(lineStartOffset, ctx.tailOffset)
       EditorModificationUtil.insertStringAtCaret(editor, keyword)
     }
     return LookupElementBuilder
-        .create(keyword)
-        .withInsertHandler(insertHandler)
+      .create(keyword)
+      .withInsertHandler(insertHandler)
   }
 }
