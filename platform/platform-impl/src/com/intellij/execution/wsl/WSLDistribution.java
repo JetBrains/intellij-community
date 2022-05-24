@@ -166,6 +166,7 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   /**
    * Copying changed files recursively from wslPath/ to windowsPath/; with rsync
+   * Consider using ``WslSync`` class
    *
    * @param wslPath           source path inside wsl, e.g. /usr/bin
    * @param windowsPath       target windows path, e.g. C:/tmp; Directory going to be created
