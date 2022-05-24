@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessorImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
+import javax.swing.*;
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor.NewifiedConstructor;
@@ -496,7 +497,8 @@ public final class CompleteReferenceExpression {
       if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName()) || myIsMap) return;
 
       for (LookupElement element : GroovyCompletionUtil.createLookupElements(resolveResult, false, myMatcher, null)) {
-        myConsumer.consume(((LookupElementBuilder)element).withIcon(JetgroovyIcons.Groovy.Property));
+        Icon icon = field.getIcon(0);
+        myConsumer.consume(((LookupElementBuilder)element).withIcon(icon == null ? JetgroovyIcons.Groovy.Property : icon));
       }
 
     }
