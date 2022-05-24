@@ -32,7 +32,7 @@ def list_binaries():
 
     for binary_dir in BINARY_DIRS:
         for f in os.listdir(os.path.join(root_dir, binary_dir)):
-            if f.endswith('.so'):
+            if f.endswith(binary_suffix):
                 yield f
 
 
@@ -42,13 +42,22 @@ def ensure_interpreters(python_installations):
             "'%s' interpreter does not exist." % python_install
 
 
+def is_frame_evaluation_supported(version_number):
+    for prefix in ('36', '37', '38', '39', '310'):
+        if version_number.startswith(prefix):
+            return True
+    return False
+
+
 def regenerate_binaries(python_installations):
     for f in list_binaries():
         raise AssertionError('Binary not removed: %s' % (f,))
 
     for i, python_install in enumerate(python_installations):
-        new_name = 'pydevd_cython_%s_%s' % (sys.platform,
-                                            extract_version(python_install))
+        version_number = extract_version(python_install)
+
+        new_name = 'pydevd_cython_%s_%s' % (sys.platform, version_number)
+
         args = [
             python_install,
             os.path.join(root_dir, 'build_tools', 'build.py'),
@@ -60,13 +69,9 @@ def regenerate_binaries(python_installations):
         if i != 0:
             args.append('--no-regenerate-files')
 
-        version_number = extract_version(python_install)
-
-        if version_number.startswith('36') or version_number.startswith('37') or \
-                version_number.startswith('38') or version_number.startswith('39') \
-                or version_number.startswith('310'):
+        if is_frame_evaluation_supported(version_number):
             name_frame_eval = 'pydevd_frame_evaluator_%s_%s' % (
-                sys.platform, extract_version(python_install))
+                sys.platform, version_number)
             args.append('--target-pyd-frame-eval=%s' % name_frame_eval)
 
         print('Calling: %s' % (' '.join(args)))
