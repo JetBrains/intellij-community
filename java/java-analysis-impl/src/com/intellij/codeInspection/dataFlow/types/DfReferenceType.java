@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
-import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
 import com.intellij.openapi.util.NlsSafe;
@@ -87,28 +86,6 @@ public interface DfReferenceType extends DfType {
    * @return this type without special field knowledge, or simply this type if it's a constant
    */
   default DfReferenceType dropSpecialField() {
-    return this;
-  }
-
-  /**
-   * @param type type to drop
-   * @return this type dropping any relation to the supplied type
-   */
-  @NotNull
-  default DfType withoutType(@NotNull TypeConstraint type) {
-    TypeConstraint constraint = getConstraint();
-    if (constraint.equals(type)) {
-      return dropTypeConstraint();
-    }
-    if (type instanceof TypeConstraint.Exact) {
-      TypeConstraint.Exact exact = (TypeConstraint.Exact)type;
-      TypeConstraint result = TypeConstraints.TOP;
-      result = constraint.instanceOfTypes().without(exact).map(TypeConstraint.Exact::instanceOf)
-        .foldLeft(result, TypeConstraint::meet);
-      result = constraint.notInstanceOfTypes().without(exact).map(TypeConstraint.Exact::notInstanceOf)
-        .foldLeft(result, TypeConstraint::meet);
-      return dropTypeConstraint().meet(result.asDfType());
-    }
     return this;
   }
 
