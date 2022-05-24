@@ -105,7 +105,7 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
 
     @SafeFieldForPreview
     private val configuration: RunnerAndConfigurationSettings = ConfigurationContext(element).configuration ?: throw IllegalStateException(
-      "Could not create action because configuration context was not found for element $element."
+      "Could not create action because configuration context was not found for element ${element.text}."
     )
 
     override fun getFamilyName(): @Nls(capitalization = Nls.Capitalization.Sentence) String =
