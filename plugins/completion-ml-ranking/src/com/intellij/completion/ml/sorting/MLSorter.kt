@@ -239,13 +239,10 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   private fun Iterable<LookupElement>.insertIgnoredItems(allItems: Iterable<LookupElement>): Iterable<LookupElement> {
-    val result = this.toMutableList()
-    for ((index, item) in allItems.withIndex()) {
-      if (item is MLRankingIgnorable) {
-        result.add(index, item)
-      }
+    val sortedItems = this.iterator()
+    return allItems.map { item ->
+      if (item is MLRankingIgnorable) item else sortedItems.next()
     }
-    return result
   }
 
   private fun Iterable<LookupElement>.removeDuplicatesIfNeeded(): Iterable<LookupElement> =
