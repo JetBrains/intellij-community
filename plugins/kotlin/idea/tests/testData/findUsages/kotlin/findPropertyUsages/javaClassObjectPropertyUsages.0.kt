@@ -9,3 +9,4 @@ class A {
 }
 
 // DISABLE-ERRORS
+// FIR_COMPARISON
