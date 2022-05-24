@@ -740,11 +740,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void updateColors(UIDefaults defaults) {
-    for (Object key : defaults.keySet().toArray()) {
-      Object value = defaults.get(key);
+    // MultiUIDefaults doesn't override keySet() in JDK 11 (JDK 17 is ok) and returns set of UIDefaults,
+    // but not expected UI pairs with key/value. So don't use it
+    for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
+      Object value = entry.getValue();
       if (value instanceof Color && !(value instanceof JBColor && ((JBColor)value).getName() != null)) {
-        defaults.remove(key);
-        defaults.put(key, wrapColorToNamedColor((Color)value, key.toString()));
+        entry.setValue(wrapColorToNamedColor((Color)value, entry.getKey().toString()));
       }
     }
   }
