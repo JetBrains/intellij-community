@@ -6,26 +6,28 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory;
-import com.intellij.ui.IdeUICustomization;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
  */
 final class ManageRecentProjectsAction extends DumbAwareAction {
+  private static final int SEPARATOR_HEIGHT = 1;
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Disposable disposable = Disposer.newDisposable();
@@ -34,20 +36,46 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(disposable);
     Tree recentProjectTree = recentProjectFilteringTree.getTree();
     SearchTextField searchTextField = recentProjectFilteringTree.installSearchField();
+    SeparatorComponent separatorComponent = new SeparatorComponent(SEPARATOR_HEIGHT, WelcomeScreenUIManager.getSeparatorColor(), null);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(recentProjectTree, true);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setOpaque(false);
 
-    JPanel panel = JBUI.Panels.simplePanel();
-    panel.add(searchTextField, BorderLayout.NORTH);
-    panel.add(scrollPane, BorderLayout.CENTER);
+    ComponentContainer componentContainer = new ComponentContainer() {
+      private final JBTextField textField = searchTextField.getTextEditor();
 
-    PopupUtil.applyNewUIBackground(panel);
-    JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, searchTextField)
+      @Override
+      public @NotNull JComponent getComponent() {
+        JPanel panel = new JPanel(null);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(WelcomeScreenUIManager.getProjectsBackground());
+        panel.setFocusTraversalPolicy(new ListFocusTraversalPolicy(
+          Arrays.asList(textField, recentProjectTree)
+        ));
+        panel.setFocusTraversalPolicyProvider(true);
+        panel.setFocusCycleRoot(true);
+
+        panel.add(searchTextField);
+        panel.add(separatorComponent);
+        panel.add(scrollPane);
+
+        return panel;
+      }
+
+      @Override
+      public JComponent getPreferredFocusableComponent() {
+        return textField;
+      }
+
+      @Override
+      public void dispose() { }
+    };
+
+    PopupUtil.applyNewUIBackground(componentContainer.getComponent());
+    JBPopup popup = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(componentContainer.getComponent(), componentContainer.getPreferredFocusableComponent())
       .setTitle(IdeUICustomization.getInstance().projectMessage("popup.title.recent.projects"))
       .setFocusable(true)
       .setRequestFocus(true)
-      .setMayBeParent(true)
       .setDimensionServiceKey(null, "manage.recent.projects.popup", false)
       .setMovable(true)
       .setResizable(true)
