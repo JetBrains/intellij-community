@@ -173,10 +173,14 @@ class LinuxDistributionBuilder(private val context: BuildContext,
     spanBuilder("build Linux tar.gz")
       .setAttribute("jreDirectoryPath", jreDirectoryPath ?: "")
       .useWithScope {
-        for (dir in paths) {
-          updateExecutablePermissions(dir, executableFilesPatterns)
+        synchronized(context.paths.distAllDir) {
+          // Sync to prevent concurrent context.paths.distAllDir modification and reading from two Linux builders,
+          // otherwise tar building may fail due to FS change (changed attributes) while reading a file
+          for (dir in paths) {
+            updateExecutablePermissions(dir, executableFilesPatterns)
+          }
+          ArchiveUtils.tar(tarPath, tarRoot, paths.map(Path::toString), context.options.buildDateInSeconds)
         }
-        ArchiveUtils.tar(tarPath, tarRoot, paths.map(Path::toString), context.options.buildDateInSeconds)
         checkInArchive(context, tarPath, tarRoot)
         context.notifyArtifactBuilt(tarPath)
       }
