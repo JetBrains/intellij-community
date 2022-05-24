@@ -310,7 +310,7 @@ data class KotlinMPPGradleModelImpl(
     )
     @Suppress("OverridingDeprecatedMember")
     override val partialCacheAware: CompilerArgumentsCacheAware
-        get() = throw UnsupportedOperationException("Not yet implemented")
+        get() = cacheAware
 
 }
 
