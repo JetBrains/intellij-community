@@ -110,7 +110,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
 
         MermaidTokens.TITLE_VALUE,
         MermaidTokens.DOUBLE_QUOTE,
-        MermaidTokens.STRING_VALUE -> arrayOf(MermaidTextAttributes.string)
+        MermaidTokens.STRING_VALUE,
+        MermaidTokens.ALIAS -> arrayOf(MermaidTextAttributes.string)
 
         MermaidTokens.LINE_COMMENT,
         MermaidTokens.COMMENT_TEXT,

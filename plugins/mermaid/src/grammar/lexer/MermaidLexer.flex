@@ -241,7 +241,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 }
 <node_text> {
 	[\"] { yybegin(node_quoted_text); return DOUBLE_QUOTE; }
-	[^\s\n\r;\])\"]+ { return ALIAS; }
+	[^\s\n\r;\])\"\}]+[^\s\n\r;\])\"\}/\\] { return ALIAS; }
   "]" { yybegin(flowchart_body); return Flowchart.SQUARE_END; }
   ")" { yybegin(flowchart_body); return Flowchart.ROUND_END; }
   "])" { yybegin(flowchart_body); return Flowchart.STADIUM_END; }
