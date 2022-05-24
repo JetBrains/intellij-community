@@ -30,7 +30,7 @@ class ProjectSettingsTracker(
   private val parentDisposable: Disposable
 ) {
 
-  private val status = ProjectStatus(debugName = "Settings ${projectAware.projectId.debugName}")
+  private val projectStatus = ProjectStatus(debugName = "Settings ${projectAware.projectId.debugName}")
 
   private val settingsFilesStatus = AtomicReference(SettingsFilesStatus())
 
@@ -52,9 +52,9 @@ class ProjectSettingsTracker(
     return file.calculateCrc(project, projectAware.projectId.systemId)
   }
 
-  fun isUpToDate() = status.isUpToDate()
+  fun isUpToDate() = projectStatus.isUpToDate()
 
-  fun getModificationType() = status.getModificationType()
+  fun getModificationType() = projectStatus.getModificationType()
 
   fun getSettingsContext(): ExternalSystemSettingsFilesReloadContext {
     val modificationType = getModificationType()
@@ -62,15 +62,13 @@ class ProjectSettingsTracker(
     return SettingsFilesReloadContext(modificationType, status.updated, status.created, status.deleted)
   }
 
-  private fun createSettingsFilesStatus(
-    oldSettingsFilesCRC: Map<String, Long>,
-    newSettingsFilesCRC: Map<String, Long>
-  ): SettingsFilesStatus {
-    val updatedFiles = oldSettingsFilesCRC.keys.intersect(newSettingsFilesCRC.keys)
-      .filterTo(HashSet()) { oldSettingsFilesCRC[it] != newSettingsFilesCRC[it] }
-    val createdFiles = newSettingsFilesCRC.keys.minus(oldSettingsFilesCRC.keys)
-    val deletedFiles = oldSettingsFilesCRC.keys.minus(newSettingsFilesCRC.keys)
-    return SettingsFilesStatus(oldSettingsFilesCRC, newSettingsFilesCRC, updatedFiles, createdFiles, deletedFiles)
+  fun getState() = State(projectStatus.isDirty(), settingsFilesStatus.get().oldCRC.toMap())
+
+  fun loadState(state: State) {
+    if (state.isDirty) {
+      projectStatus.markDirty(currentTime(), EXTERNAL)
+    }
+    settingsFilesStatus.set(SettingsFilesStatus(state.settingsFiles.toMap()))
   }
 
   fun refreshChanges() {
@@ -78,23 +76,16 @@ class ProjectSettingsTracker(
     submitSettingsFilesRefresh { settingsPaths ->
       submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
         val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-          createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
+          SettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
         }
         LOG.info("[refreshChanges] Settings file status: ${settingsFilesStatus}")
         when (settingsFilesStatus.hasChanges()) {
-          true -> status.markDirty(operationStamp, EXTERNAL)
-          else -> status.markReverted(operationStamp)
+          true -> projectStatus.markDirty(operationStamp, EXTERNAL)
+          else -> projectStatus.markReverted(operationStamp)
         }
         projectTracker.scheduleChangeProcessing()
       }
     }
-  }
-
-  fun getState() = State(status.isDirty(), settingsFilesStatus.get().oldCRC.toMap())
-
-  fun loadState(state: State) {
-    if (state.isDirty) status.markDirty(currentTime(), EXTERNAL)
-    settingsFilesStatus.set(SettingsFilesStatus(state.settingsFiles.toMap()))
   }
 
   private fun submitSettingsFilesCollection(invalidateCache: Boolean = false, callback: (Set<String>) -> Unit) {
@@ -137,14 +128,25 @@ class ProjectSettingsTracker(
 
   data class State(var isDirty: Boolean = true, var settingsFiles: Map<String, Long> = emptyMap())
 
-  private data class SettingsFilesStatus(
-    val oldCRC: Map<String, Long> = emptyMap(),
-    val newCRC: Map<String, Long> = emptyMap(),
-    val updated: Set<String> = emptySet(),
-    val created: Set<String> = emptySet(),
-    val deleted: Set<String> = emptySet()
+  private class SettingsFilesStatus(
+    val oldCRC: Map<String, Long>,
+    val newCRC: Map<String, Long>,
   ) {
-    constructor(CRC: Map<String, Long>) : this(oldCRC = CRC)
+
+    constructor(CRC: Map<String, Long> = emptyMap()) : this(CRC, CRC)
+
+    val updated: Set<String> by lazy {
+      oldCRC.keys.intersect(newCRC.keys)
+        .filterTo(HashSet()) { oldCRC[it] != newCRC[it] }
+    }
+
+    val created: Set<String> by lazy {
+      newCRC.keys.minus(oldCRC.keys)
+    }
+
+    val deleted: Set<String> by lazy {
+      oldCRC.keys.minus(newCRC.keys)
+    }
 
     fun hasChanges() = updated.isNotEmpty() || created.isNotEmpty() || deleted.isNotEmpty()
   }
@@ -157,26 +159,24 @@ class ProjectSettingsTracker(
   ) : ExternalSystemSettingsFilesReloadContext
 
   private inner class ProjectListener : ExternalSystemProjectListener {
-    private var settingsFilesCRC: Map<String, Long> = emptyMap()
-
     override fun onProjectReloadStart() {
       applyChangesOperation.startTask()
-      settingsFilesCRC = settingsFilesStatus.get().newCRC
+      settingsFilesStatus.updateAndGet {
+        SettingsFilesStatus(it.newCRC, it.newCRC)
+      }
     }
 
     override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
       val operationStamp = currentTime()
       submitSettingsFilesRefresh { settingsPaths ->
         submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-          val settingsFilesCRC = settingsFilesCRC
           val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            createSettingsFilesStatus(newSettingsFilesCRC + settingsFilesCRC, newSettingsFilesCRC)
+            SettingsFilesStatus(newSettingsFilesCRC + it.oldCRC, newSettingsFilesCRC)
           }
-          if (settingsFilesStatus.hasChanges()) {
-            this@ProjectSettingsTracker.status.markDirty(operationStamp, EXTERNAL)
-          }
-          else {
-            this@ProjectSettingsTracker.status.markSynchronized(operationStamp)
+          LOG.info("[onProjectReloadFinish] Settings file status: ${settingsFilesStatus}")
+          when (settingsFilesStatus.hasChanges()) {
+            true -> projectStatus.markDirty(operationStamp, EXTERNAL)
+            else -> projectStatus.markSynchronized(operationStamp)
           }
           applyChangesOperation.finishTask()
         }
@@ -188,12 +188,12 @@ class ProjectSettingsTracker(
       submitSettingsFilesCollection (invalidateCache = true) { settingsPaths ->
         submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
           val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
+            SettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
           }
           LOG.info("[onSettingsFilesListChange] Settings file status: ${settingsFilesStatus}")
           when (settingsFilesStatus.hasChanges()) {
-            true -> status.markModified(operationStamp, EXTERNAL)
-            else -> status.markReverted(operationStamp)
+            true -> projectStatus.markModified(operationStamp, EXTERNAL)
+            else -> projectStatus.markReverted(operationStamp)
           }
           projectTracker.scheduleChangeProcessing()
         }
@@ -205,7 +205,7 @@ class ProjectSettingsTracker(
     override fun onFileChange(path: String, modificationStamp: Long, modificationType: ExternalSystemModificationType) {
       val operationStamp = currentTime()
       logModificationAsDebug(path, modificationStamp, modificationType)
-      status.markModified(operationStamp, modificationType)
+      projectStatus.markModified(operationStamp, modificationType)
     }
 
     override fun apply() {
@@ -213,10 +213,11 @@ class ProjectSettingsTracker(
       submitSettingsFilesCollection { settingsPaths ->
         submitSettingsFilesCRCCalculation(settingsPaths, this, "apply") { newSettingsFilesCRC ->
           val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
+            SettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
           }
+          LOG.info("[apply] Settings file status: ${settingsFilesStatus}")
           if (!settingsFilesStatus.hasChanges()) {
-            status.markReverted(operationStamp)
+            projectStatus.markReverted(operationStamp)
           }
           projectTracker.scheduleChangeProcessing()
         }
