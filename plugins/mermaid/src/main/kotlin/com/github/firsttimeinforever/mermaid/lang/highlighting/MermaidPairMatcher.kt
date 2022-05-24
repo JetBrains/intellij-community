@@ -29,7 +29,6 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Flowchart.TRAP_START, MermaidTokens.Flowchart.TRAP_END, true),
         BracePair(MermaidTokens.Flowchart.INV_TRAP_START, MermaidTokens.Flowchart.INV_TRAP_END, true),
         BracePair(MermaidTokens.Flowchart.DOUBLE_CIRCLE_START, MermaidTokens.Flowchart.DOUBLE_CIRCLE_END, true),
-        BracePair(MermaidTokens.Flowchart.SEP, MermaidTokens.Flowchart.SEP, true)
       )
 
       override fun getPairs(): Array<BracePair> = pairs

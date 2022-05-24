@@ -21,6 +21,8 @@
                     implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidCommenter"/>
     <lang.braceMatcher language="MyMermaid"
                        implementationClass="com.github.firsttimeinforever.mermaid.lang.highlighting.MermaidPairMatcher"/>
+    <quoteHandler fileType="MyMermaid"
+                  className="com.github.firsttimeinforever.mermaid.editor.MermaidQuoteHandler" />
 
     <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
     <liveTemplateContext implementation="com.github.firsttimeinforever.mermaid.editor.MermaidContextType"/>
