@@ -268,11 +268,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         if (isNewUIPlugin(pluginDescriptor)) {
           ExperimentalUI.getInstance().onExpUIDisabled();
-          if (getCurrentLookAndFeel().getName().equals("Dark") || getCurrentLookAndFeel().getName().equals("Light")) {
-            setCurrentLookAndFeel(JBColor.isBright() ? getDefaultLightLaf() : getDefaultDarkLaf());
-          }
-          ApplicationManager.getApplication().invokeLater(() -> RegistryBooleanOptionDescriptor.suggestRestart(null),
-                                                          ModalityState.NON_MODAL);
         }
       }
 
@@ -292,12 +287,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       private void enableExpUI() {
         if (!Registry.is("ide.experimental.ui")) {
           ExperimentalUI.getInstance().onExpUIEnabled();
-          String name = JBColor.isBright() ? "Light" : "Dark";
-          Optional<UIManager.LookAndFeelInfo> laf = Arrays.stream(getInstalledLookAndFeels())
-                                                          .filter(x -> x.getName().equals(name))
-                                                          .findFirst();
-          laf.ifPresent(info -> setCurrentLookAndFeel(info));
-          ApplicationManager.getApplication().invokeLater(() -> RegistryBooleanOptionDescriptor.suggestRestart(null));
         }
       }
     });
