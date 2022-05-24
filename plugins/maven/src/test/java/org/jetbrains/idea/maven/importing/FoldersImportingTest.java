@@ -214,7 +214,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                      "</build>");
     resolveFoldersAndImport();
 
-    if (supportsKeepingEntitiesFromPreviousImport()) {
+    if (supportsKeepingFoldersFromPreviousImport()) {
       assertSources("project", "src2", "src1");
     }
     else {

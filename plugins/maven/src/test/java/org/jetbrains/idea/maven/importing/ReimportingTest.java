@@ -112,7 +112,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
     configConfirmationForNoAnswer();
     importProject();
-    if (supportsKeepingEntitiesFromPreviousImport()) {
+    if (supportsKeepingModulesFromPreviousImport()) {
       assertModules("project", "m1", "m2");
     }
     else {
@@ -135,10 +135,10 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     assertEquals(0, counter.get());
 
     importProject();
-    assertEquals(supportsKeepingEntitiesFromPreviousImport() ? 1 : 0, counter.get());
+    assertEquals(supportsKeepingModulesFromPreviousImport() ? 1 : 0, counter.get());
 
     importProject();
-    assertEquals(supportsKeepingEntitiesFromPreviousImport() ? 1 : 0, counter.get());
+    assertEquals(supportsKeepingModulesFromPreviousImport() ? 1 : 0, counter.get());
   }
 
   @Test

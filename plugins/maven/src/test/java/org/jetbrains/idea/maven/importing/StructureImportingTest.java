@@ -622,8 +622,10 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     importProjects(p1, p2);
     assertModules("project1", "project2", "module");
 
-    assertModuleGroupPath("project1", "project1 and modules");
-    assertModuleGroupPath("module", "project1 and modules");
+    if (supportModuleGroups()) {
+      assertModuleGroupPath("project1", "project1 and modules");
+      assertModuleGroupPath("module", "project1 and modules");
+    }
 
     p2 = createModulePom("project2",
                          "<groupId>test</groupId>" +
@@ -642,7 +644,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
     updateProjectsAndImport(p2); // should not fail to map module names. 
 
-    if (supportsKeepingEntitiesFromPreviousImport()) {
+    if (supportsKeepingModulesFromPreviousImport()) {
       assertModules("project1", "project2", "module", "module (1)");
     }
     else {

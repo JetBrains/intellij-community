@@ -116,9 +116,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
   }
 
-  public boolean supportsKeepingEntitiesFromPreviousImport() {
+  public boolean supportsKeepingModulesFromPreviousImport() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
            && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+  }
+
+  public boolean supportsKeepingFoldersFromPreviousImport() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
   }
 
   public boolean supportsCreateAggregatorOption() {
