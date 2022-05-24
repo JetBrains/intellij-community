@@ -9,6 +9,7 @@ import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoState
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -18,16 +19,23 @@ enum class FeedbackTypes {
     private val unknownProjectTypeName = "UNKNOWN"
     private val testProjectTypeName = "TEST"
     private val maxNumberNotificationShowed = 3
+    private val suitableIDEs = listOf("IntelliJ IDEA Community Edition", "IntelliJ IDEA Ultimate Edition")
     override val suitableIdeVersion: String = "2022.1"
 
     override fun isSuitable(): Boolean {
       val projectCreationInfoState = ProjectCreationInfoService.getInstance().state
 
       return isIntellijIdeaEAP() &&
+             checkIdeIsSuitable() &&
              checkIdeVersionIsSuitable() &&
              checkProjectCreationFeedbackNotSent(projectCreationInfoState) &&
              checkProjectCreated(projectCreationInfoState) &&
              checkNotificationNumberNotExceeded(projectCreationInfoState)
+    }
+
+    private fun checkIdeIsSuitable(): Boolean {
+      val ideName = ApplicationNamesInfo.getInstance().fullProductNameWithEdition
+      return ideName in suitableIDEs
     }
 
     private fun checkProjectCreationFeedbackNotSent(state: ProjectCreationInfoState): Boolean {
