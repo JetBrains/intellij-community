@@ -53,8 +53,14 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     Sdk sdk = setupJdkForModule("project");
 
     importProject();
-    assertFalse(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
-    assertEquals(sdk, ModuleRootManager.getInstance(getModule("project")).getSdk());
+
+    if (supportsKeepingManualChanges()) {
+      assertFalse(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
+      assertEquals(sdk, ModuleRootManager.getInstance(getModule("project")).getSdk());
+    }
+    else {
+      assertTrue(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
+    }
   }
 
   @Test
@@ -514,6 +520,8 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testModuleGroupsWhenNotCreatingModulesForAggregatorProjects() {
+    if (!supportsCreateAggregatorOption() || !supportModuleGroups()) return;
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -634,12 +642,19 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
 
     updateProjectsAndImport(p2); // should not fail to map module names. 
 
-    assertModules("project1", "project2", "module", "module (1)");
+    if (supportsKeepingEntitiesFromPreviousImport()) {
+      assertModules("project1", "project2", "module", "module (1)");
+    }
+    else {
+      assertModules("project1", "project2", "module (1)", "module (2)");
+    }
 
-    assertModuleGroupPath("project1", "project1 and modules");
-    assertModuleGroupPath("module", "project1 and modules");
-    assertModuleGroupPath("project2", "project2 and modules");
-    assertModuleGroupPath("module (1)", "project2 and modules");
+    if (supportModuleGroups()) {
+      assertModuleGroupPath("project1", "project1 and modules");
+      assertModuleGroupPath("module", "project1 and modules");
+      assertModuleGroupPath("project2", "project2 and modules");
+      assertModuleGroupPath("module (1)", "project2 and modules");
+    }
   }
 
   @Test

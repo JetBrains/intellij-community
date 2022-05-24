@@ -112,7 +112,12 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
     configConfirmationForNoAnswer();
     importProject();
-    assertModules("project", "m1", "m2");
+    if (supportsKeepingEntitiesFromPreviousImport()) {
+      assertModules("project", "m1", "m2");
+    }
+    else {
+      assertModules("project", "m1");
+    }
   }
 
   @Test
@@ -130,10 +135,10 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     assertEquals(0, counter.get());
 
     importProject();
-    assertEquals(1, counter.get());
+    assertEquals(supportsKeepingEntitiesFromPreviousImport() ? 1 : 0, counter.get());
 
     importProject();
-    assertEquals(1, counter.get());
+    assertEquals(supportsKeepingEntitiesFromPreviousImport() ? 1 : 0, counter.get());
   }
 
   @Test
@@ -163,7 +168,12 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
     getMavenImporterSettings().setCreateModulesForAggregators(false);
     myProjectsManager.performScheduledImportInTests();
-    assertModules(mn("project", "m2"));
+    if (supportsCreateAggregatorOption()) {
+      assertModules(mn("project", "m2"));
+    }
+    else {
+      assertModules("project", "m1", "m2");
+    }
 
     getMavenImporterSettings().setCreateModulesForAggregators(true);
     myProjectsManager.performScheduledImportInTests();
@@ -191,7 +201,13 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
                           "<version>1</version>" +
                           "<packaging>pom</packaging>");
     importProject();
-    assertModules("m1", "m2");
+
+    if (supportsCreateAggregatorOption()) {
+      assertModules("m1", "m2");
+    }
+    else {
+      assertModules("project", "m1", "m2", "m3");
+    }
   }
 
   @Test

@@ -120,18 +120,32 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     });
 
 
-    assertSources("project", "userSourceFolder");
-    assertExcludes("project", "target", "userExcludedFolder");
+    if (supportsKeepingManualChanges()) {
+      assertSources("project", "userSourceFolder");
+      assertExcludes("project", "target", "userExcludedFolder");
+    }
 
     importProject();
 
-    assertSources("project", "userSourceFolder");
-    assertExcludes("project", "target", "userExcludedFolder");
+    if (supportsKeepingManualChanges()) {
+      assertSources("project", "userSourceFolder");
+      assertExcludes("project", "target", "userExcludedFolder");
+    }
+    else {
+      assertSources("project");
+      assertExcludes("project", "target");
+    }
 
     resolveFoldersAndImport();
 
-    assertSources("project", "userSourceFolder");
-    assertExcludes("project", "target", "userExcludedFolder");
+    if (supportsKeepingManualChanges()) {
+      assertSources("project", "userSourceFolder");
+      assertExcludes("project", "target", "userExcludedFolder");
+    }
+    else {
+      assertSources("project");
+      assertExcludes("project", "target");
+    }
   }
 
   @Test
@@ -192,15 +206,20 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     getMavenImporterSettings().setKeepSourceFolders(true);
     createProjectPom("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<build>" +
-                  "  <sourceDirectory>src1</sourceDirectory>" +
-                  "</build>");
+                     "<build>" +
+                     "  <sourceDirectory>src1</sourceDirectory>" +
+                     "</build>");
     resolveFoldersAndImport();
 
-    assertSources("project", "src2", "src1");
+    if (supportsKeepingEntitiesFromPreviousImport()) {
+      assertSources("project", "src2", "src1");
+    }
+    else {
+      assertSources("project", "src1");
+    }
   }
 
   @Test

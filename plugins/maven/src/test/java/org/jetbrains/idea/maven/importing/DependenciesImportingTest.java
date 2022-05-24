@@ -23,7 +23,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
   @Test
@@ -1349,6 +1348,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testDoNotResetUserLibraryDependencies() {
+    if (!supportsKeepingManualChanges()) return;
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1378,6 +1379,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testDoNotResetUserModuleDependencies() {
+    if (!supportsKeepingManualChanges()) return;
+
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -1824,8 +1827,13 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertProjectLibraries("Maven: group:lib1:1",
-                           "Maven: group:lib2:1");
+    if (supportsKeepingManualChanges()) {
+      assertProjectLibraries("Maven: group:lib1:1",
+                             "Maven: group:lib2:1");
+    }
+    else {
+      assertProjectLibraries();
+    }
   }
 
   @Test
@@ -1838,14 +1846,22 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     assertProjectLibraries("lib");
     addLibraryRoot("lib", OrderRootType.CLASSES, "file://" + getRepositoryPath() + "/foo/bar.jar!/");
-    assertModuleLibDeps("project", "lib");
+    if (supportsKeepingManualChanges()) {
+      assertModuleLibDeps("project", "lib");
+    }
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
     assertProjectLibraries("lib");
-    assertModuleLibDeps("project", "lib");
+
+    if (supportsKeepingManualChanges()) {
+      assertModuleLibDeps("project", "lib");
+    }
+    else {
+      assertModuleLibDeps("project");
+    }
   }
 
   @Test
@@ -2433,18 +2449,18 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
           .addInvalidLibrary("Maven: AnotherLibrary", LibraryTablesRegistrar.PROJECT_LEVEL);
         modifiableModel.commit();
       });
+      if (supportsKeepingManualChanges()) {
+        assertModuleLibDeps("project", "Maven: junit:junit:4.0", "SomeLibrary", "Maven: AnotherLibrary");
+      }
 
       importProject();
 
-      List<String> librariesDepNames = Arrays.stream(ModuleRootManager.getInstance(getModule("project"))
-                                                       .getOrderEntries())
-        .filter(LibraryOrderEntry.class::isInstance)
-        .map(LibraryOrderEntry.class::cast)
-        .map(loe -> loe.getLibraryName())
-        .collect(Collectors.toList());
-
-      assertContain(librariesDepNames, "SomeLibrary", "Maven: junit:junit:4.0");
-      assertDoesntContain(librariesDepNames, "Maven: AnotherLibrary");
+      if (supportsKeepingManualChanges()) {
+        assertModuleLibDeps("project", "SomeLibrary", "Maven: junit:junit:4.0");
+      }
+      else {
+        assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+      }
     }
     finally {
       value.resetToDefault();

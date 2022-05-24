@@ -107,6 +107,25 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     );
   }
 
+  public boolean supportModuleGroups() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+  }
+
+  public boolean supportsKeepingManualChanges() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
+  }
+
+  public boolean supportsKeepingEntitiesFromPreviousImport() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+  }
+
+  public boolean supportsCreateAggregatorOption() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+  }
+
   protected void stopMavenImportManager() {
     if (!isNewImportingProcess) return;
     MavenImportingManager manager = MavenImportingManager.getInstance(myProject);
@@ -385,12 +404,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void assertModuleGroupPath(String moduleName, boolean groupWasManuallyAdded, String... expected) {
-    boolean moduleGroupsNotSupported = MavenProjectImporter.isImportToWorkspaceModelEnabled()
-                                       || MavenProjectImporter.isImportToTreeStructureEnabled(myProject) && !groupWasManuallyAdded;
+    boolean moduleGroupsSupported = supportModuleGroups() || groupWasManuallyAdded && supportsKeepingManualChanges();
 
     String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(getModule(moduleName));
 
-    if (moduleGroupsNotSupported || expected.length == 0) {
+    if (!moduleGroupsSupported || expected.length == 0) {
       assertNull(path);
     }
     else {
