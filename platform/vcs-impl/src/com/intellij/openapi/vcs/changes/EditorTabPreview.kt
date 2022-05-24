@@ -166,9 +166,16 @@ abstract class EditorTabPreviewBase(protected val project: Project,
     if (!ensureHasContent()) return false
 
     if (ExternalDiffTool.isEnabled()) {
-      val diffProducers = (updatePreviewProcessor as? DiffRequestProcessorWithProducers)?.collectDiffProducers(true)
-      if (showExternalToolIfNeeded(project, diffProducers)) {
-        return true
+      val processorWithProducers = updatePreviewProcessor as? DiffRequestProcessorWithProducers
+      if (processorWithProducers != null ) {
+        var diffProducers = processorWithProducers.collectDiffProducers(true)
+        if (diffProducers != null && diffProducers.isEmpty) {
+          diffProducers = processorWithProducers.collectDiffProducers(false)?.list?.firstOrNull()
+            ?.let { ListSelection.createSingleton(it) }
+        }
+        if (showExternalToolIfNeeded(project, diffProducers)) {
+          return true
+        }
       }
     }
 
