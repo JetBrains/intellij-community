@@ -223,7 +223,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          else {
                            if (psiResolved instanceof LightElement) {
-                             psiResolved = psiResolved.getNavigationElement();
+                             UElement uElement = UastContextKt.toUElement(psiResolved);
+                             PsiElement sourcePsi = uElement != null ? uElement.getSourcePsi() : null;
+                             psiResolved = sourcePsi != null ? sourcePsi : psiResolved.getNavigationElement();
                            }
 
                            refResolved = refManager.getReference(psiResolved);

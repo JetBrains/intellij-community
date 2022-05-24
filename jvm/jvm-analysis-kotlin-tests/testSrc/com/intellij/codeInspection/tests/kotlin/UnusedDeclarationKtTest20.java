@@ -77,6 +77,10 @@ public class UnusedDeclarationKtTest20 extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testPropertyReference() {
+    doTest();
+  }
+
   public void testNonJvmReferences() {
     doTest();
   }
