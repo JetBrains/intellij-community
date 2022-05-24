@@ -1,14 +1,16 @@
 package org.jetbrains.deft.impl
 
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.deft.codegen.ijws.getRefType
 import org.jetbrains.deft.codegen.ijws.refsFields
 import org.jetbrains.deft.codegen.model.KtObjModule
 import org.jetbrains.deft.impl.fields.ExtField
 
+private val LOG = logger<ObjModule>()
+
 abstract class ObjModule {
   @RequiresOptIn
   annotation class InitApi
-
 
   internal lateinit var byId: Array<ObjType<*, *>?>
 
@@ -50,7 +52,7 @@ abstract class ObjModule {
   }
 
   private fun cleanUpUnrelatedReferences() {
-    println("Ext fields count before cleanup ${extFields.size}")
+    LOG.info("Ext fields count before cleanup ${extFields.size}")
     extFields.removeIf { extField ->
       val ref = extField.type.getRefType()
       if (ref.child) return@removeIf false
@@ -59,12 +61,12 @@ abstract class ObjModule {
         ((ref.targetObjType.module as? KtObjModule)?.extFields?.filter { it.type.getRefType().targetObjType == extField.owner && it.owner == ref.targetObjType && it != extField }
          ?: emptyList())
       if (declaredReferenceFromChild.isEmpty()) {
-        println("Unrelated reference declared in one entity without @Child annotation will be skipped. It exist at ${extField.owner.name}#${extField.name} but absent at ${ref.targetObjType.name}")
+        LOG.info("Unrelated reference declared in one entity without @Child annotation will be skipped. It exist at ${extField.owner.name}#${extField.name} but absent at ${ref.targetObjType.name}")
         return@removeIf true
       }
       return@removeIf false
     }
-    println("Ext fields count after cleanup ${extFields.size}")
+    LOG.info("Ext fields count after cleanup ${extFields.size}")
   }
 
   internal fun type(typeId: Int): ObjType<*, *> =
