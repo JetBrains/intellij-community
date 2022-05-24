@@ -81,12 +81,11 @@ class MPSProperties extends JetBrainsProductProperties {
 
         productLayout.platformLayoutCustomizer = { PlatformLayout layout, BuildContext context ->
             layout.customize {
-/*
-        TODO not compiling
-                for (String name : BaseIdeaProperties.JAVA_IDE_API_MODULES) {
-                    withModule(name)
+                for (String moduleName : List.of("intellij.java.testFramework", "intellij.platform.testFramework.core")) {
+                    if (!productLayout.productApiModules.contains(moduleName)) {
+                        withModule(moduleName, "testFramework.jar")
+                    }
                 }
-*/
                 for (String name : BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES) {
                     withModule(name)
                 }
