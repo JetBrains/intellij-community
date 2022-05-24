@@ -130,9 +130,7 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
       }
 
       private fun showPopup() {
-        presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
-          environment.showToolWindowTab()
-        }
+        presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.showToolWindowTab()
       }
 
       private fun doRightClick() {

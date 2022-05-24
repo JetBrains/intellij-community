@@ -371,9 +371,7 @@ interface UastApiTestBase : UastPluginSelection {
             barMethod.assertResolveCall("IntRange(1, 2)")
         }
 
-        uFile.findElementByTextFromPsi<UElement>("barT").getParentOfType<UMethod>()!!.let { barMethod ->
-            barMethod.assertResolveCall("foo()")
-        }
+        uFile.findElementByTextFromPsi<UElement>("barT").getParentOfType<UMethod>()!!.assertResolveCall("foo()")
 
         uFile.findElementByTextFromPsi<UElement>("listT").getParentOfType<UMethod>()!!.let { barMethod ->
             barMethod.assertResolveCall("isEmpty()")

@@ -315,7 +315,7 @@ class MavenImportingManager(val project: Project) {
   }
 
   fun forceStopImport() {
-    currentContext?.let { it.indicator.cancel() }
+    currentContext?.indicator?.cancel()
   }
 
 
