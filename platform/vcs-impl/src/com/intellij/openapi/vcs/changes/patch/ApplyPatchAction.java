@@ -173,6 +173,10 @@ public final class ApplyPatchAction extends DumbAwareAction {
     String localContent = convertLineSeparators(mergeData.getLocal());
     String patchedContent = mergeData.getPatched();
 
+    if (localContent.equals(patchedContent)) {
+      return ApplyPatchStatus.ALREADY_APPLIED;
+    }
+
     Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
     Consumer<MergeResult> callback = result13 -> {
       FileDocumentManager.getInstance().saveDocument(document);

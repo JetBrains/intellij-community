@@ -36,15 +36,23 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
 
     GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(document.getText(), myPatch.getHunks());
     if (appliedPatch != null) {
-      VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(appliedPatch.patchedText));
-      FileDocumentManager.getInstance().saveDocument(document);
-      return new Result(appliedPatch.status);
+      if (appliedPatch.status == ApplyPatchStatus.ALREADY_APPLIED) {
+        return new Result(appliedPatch.status);
+      }
+
+      if (appliedPatch.status == ApplyPatchStatus.SUCCESS ||
+          (appliedPatch.status == ApplyPatchStatus.PARTIAL && baseContents == null)) {
+        VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(appliedPatch.patchedText));
+        FileDocumentManager.getInstance().saveDocument(document);
+        return new Result(appliedPatch.status);
+      }
     }
+
     return new Result(ApplyPatchStatus.FAILURE) {
       @Override
       public ApplyPatchForBaseRevisionTexts getMergeData() {
-        return ApplyPatchForBaseRevisionTexts
-          .create(project, fileToPatch, pathBeforeRename, myPatch, baseContents != null ? baseContents.get() : null);
+        return ApplyPatchForBaseRevisionTexts.create(project, fileToPatch, pathBeforeRename, myPatch,
+                                                     baseContents != null ? baseContents.get() : null);
       }
     };
   }
