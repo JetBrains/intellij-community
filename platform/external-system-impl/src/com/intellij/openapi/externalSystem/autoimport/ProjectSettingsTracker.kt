@@ -4,6 +4,8 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
@@ -57,28 +59,89 @@ class ProjectSettingsTracker(
   fun getModificationType() = projectStatus.getModificationType()
 
   fun getSettingsContext(): ExternalSystemSettingsFilesReloadContext {
-    val modificationType = getModificationType()
     val status = settingsFilesStatus.get()
-    return SettingsFilesReloadContext(modificationType, status.updated, status.created, status.deleted)
+    return SettingsFilesReloadContext(status.updated, status.created, status.deleted)
+  }
+
+  /**
+   * Updates settings files status using new CRCs.
+   * @param isReloadJustFinished see [adjustCrc] for details
+   */
+  private fun updateSettingsFilesStatus(
+    newCRC: Map<String, Long>,
+    isReloadJustFinished: Boolean = false,
+    debugName: String? = null
+  ): SettingsFilesStatus {
+    return settingsFilesStatus.updateAndGet {
+      SettingsFilesStatus(it.oldCRC, newCRC)
+        .adjustCrc(isReloadJustFinished, debugName)
+    }
+  }
+
+  /**
+   * Adjusts settings files status. It allows ignoring files modifications by rules from
+   * external system. For example some build systems needed to ignore files updates during reload.
+   *
+   * @see ExternalSystemProjectAware.isIgnoredSettingsFileEvent
+   */
+  private fun SettingsFilesStatus.adjustCrc(isReloadJustFinished: Boolean, debugName: String?): SettingsFilesStatus {
+    val modificationType = getModificationType()
+    val isReloadInProgress = !applyChangesOperation.isOperationCompleted()
+    val reloadStatus = when {
+      isReloadJustFinished -> ReloadStatus.JUST_FINISHED
+      isReloadInProgress -> ReloadStatus.IN_PROGRESS
+      else -> ReloadStatus.IDLE
+    }
+    val oldCRC = oldCRC.toMutableMap()
+    for (path in updated) {
+      val context = SettingsFilesModificationContext(UPDATE, modificationType, reloadStatus)
+      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
+        oldCRC[path] = newCRC[path]!!
+      }
+    }
+    for (path in created) {
+      val context = SettingsFilesModificationContext(CREATE, modificationType, reloadStatus)
+      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
+        oldCRC[path] = newCRC[path]!!
+      }
+    }
+    for (path in deleted) {
+      val context = SettingsFilesModificationContext(DELETE, modificationType, reloadStatus)
+      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
+        oldCRC.remove(path)
+      }
+    }
+    val status = SettingsFilesStatus(oldCRC, newCRC)
+    LOG.debug(
+      (if (debugName != null) "[$debugName] " else "") +
+      "ReloadStatus=$reloadStatus, " +
+      "ModificationType=$modificationType, " +
+      "Updated=${status.updated}, " +
+      "Created=${status.created}, " +
+      "Deleted=${status.deleted}"
+    )
+    return status
   }
 
   fun getState() = State(projectStatus.isDirty(), settingsFilesStatus.get().oldCRC.toMap())
 
   fun loadState(state: State) {
-    if (state.isDirty) {
-      projectStatus.markDirty(currentTime(), EXTERNAL)
-    }
+    val operationStamp = currentTime()
     settingsFilesStatus.set(SettingsFilesStatus(state.settingsFiles.toMap()))
+    when (state.isDirty) {
+      true -> projectStatus.markDirty(operationStamp, EXTERNAL)
+      else -> projectStatus.markSynchronized(operationStamp)
+    }
   }
 
   fun refreshChanges() {
     val operationStamp = currentTime()
     submitSettingsFilesRefresh { settingsPaths ->
       submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-        val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-          SettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
-        }
-        LOG.info("[refreshChanges] Settings file status: ${settingsFilesStatus}")
+        val settingsFilesStatus = updateSettingsFilesStatus(
+          newCRC = newSettingsFilesCRC,
+          debugName = "refreshChanges"
+        )
         when (settingsFilesStatus.hasChanges()) {
           true -> projectStatus.markDirty(operationStamp, EXTERNAL)
           else -> projectStatus.markReverted(operationStamp)
@@ -151,12 +214,17 @@ class ProjectSettingsTracker(
     fun hasChanges() = updated.isNotEmpty() || created.isNotEmpty() || deleted.isNotEmpty()
   }
 
-  private data class SettingsFilesReloadContext(
-    override val modificationType: ExternalSystemModificationType,
+  private class SettingsFilesReloadContext(
     override val updated: Set<String>,
     override val created: Set<String>,
     override val deleted: Set<String>
   ) : ExternalSystemSettingsFilesReloadContext
+
+  private class SettingsFilesModificationContext(
+    override val event: ExternalSystemSettingsFilesModificationContext.Event,
+    override val modificationType: ExternalSystemModificationType,
+    override val reloadStatus: ReloadStatus,
+  ) : ExternalSystemSettingsFilesModificationContext
 
   private inner class ProjectListener : ExternalSystemProjectListener {
     override fun onProjectReloadStart() {
@@ -164,16 +232,18 @@ class ProjectSettingsTracker(
       settingsFilesStatus.updateAndGet {
         SettingsFilesStatus(it.newCRC, it.newCRC)
       }
+      projectStatus.markSynchronized(currentTime())
     }
 
     override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
       val operationStamp = currentTime()
       submitSettingsFilesRefresh { settingsPaths ->
         submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            SettingsFilesStatus(newSettingsFilesCRC + it.oldCRC, newSettingsFilesCRC)
-          }
-          LOG.info("[onProjectReloadFinish] Settings file status: ${settingsFilesStatus}")
+          val settingsFilesStatus = updateSettingsFilesStatus(
+            newCRC = newSettingsFilesCRC,
+            isReloadJustFinished = true,
+            debugName = "onProjectReloadFinish"
+          )
           when (settingsFilesStatus.hasChanges()) {
             true -> projectStatus.markDirty(operationStamp, EXTERNAL)
             else -> projectStatus.markSynchronized(operationStamp)
@@ -187,10 +257,10 @@ class ProjectSettingsTracker(
       val operationStamp = currentTime()
       submitSettingsFilesCollection (invalidateCache = true) { settingsPaths ->
         submitSettingsFilesCRCCalculation(settingsPaths) { newSettingsFilesCRC ->
-          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            SettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
-          }
-          LOG.info("[onSettingsFilesListChange] Settings file status: ${settingsFilesStatus}")
+          val settingsFilesStatus = updateSettingsFilesStatus(
+            newCRC = newSettingsFilesCRC,
+            debugName = "onSettingsFilesListChange"
+          )
           when (settingsFilesStatus.hasChanges()) {
             true -> projectStatus.markModified(operationStamp, EXTERNAL)
             else -> projectStatus.markReverted(operationStamp)
@@ -212,10 +282,10 @@ class ProjectSettingsTracker(
       val operationStamp = currentTime()
       submitSettingsFilesCollection { settingsPaths ->
         submitSettingsFilesCRCCalculation(settingsPaths, this, "apply") { newSettingsFilesCRC ->
-          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            SettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
-          }
-          LOG.info("[apply] Settings file status: ${settingsFilesStatus}")
+          val settingsFilesStatus = updateSettingsFilesStatus(
+            newCRC = newSettingsFilesCRC,
+            debugName = "ProjectSettingsListener.apply"
+          )
           if (!settingsFilesStatus.hasChanges()) {
             projectStatus.markReverted(operationStamp)
           }

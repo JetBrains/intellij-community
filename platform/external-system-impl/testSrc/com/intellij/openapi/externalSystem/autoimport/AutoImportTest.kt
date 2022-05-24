@@ -7,6 +7,8 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatu
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCollisionPassType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus.IN_PROGRESS
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 import com.intellij.openapi.util.Ref
@@ -1038,5 +1040,46 @@ class AutoImportTest : AutoImportTestCase() {
     projectAware.registerSettingsFile(settingsFile2)
     projectAware.notifySettingsFilesListChanged()
     assertProjectAware(projectAware, refresh = 2, event = "handle settings files list change event when file added")
+  }
+
+  @Test
+  fun `test skip insignificant changes`() {
+    simpleTest {
+      assertState(refresh = 1, settingsAccess = 1, notified = false, event = "register project without cache")
+
+      ignoreSettingsFileWhen("ignored.groovy") { it.event == UPDATE }
+      val ignoredSettingsFile = createSettingsVirtualFile("ignored.groovy")
+      assertState(refresh = 1, notified = true, event = "settings file creation")
+      scheduleProjectReload()
+      assertState(refresh = 2, notified = false, event = "reload")
+      ignoredSettingsFile.modify()
+      assertState(refresh = 2, notified = false, event = "settings file ignored modification")
+      markDirty()
+      ignoredSettingsFile.modify()
+      assertState(refresh = 2, notified = true, event = "settings file ignored modification with dirty AI state")
+      scheduleProjectReload()
+      assertState(refresh = 3, notified = false, event = "reload")
+      ignoredSettingsFile.delete()
+      assertState(refresh = 3, notified = true, event = "settings files deletion")
+      scheduleProjectReload()
+      assertState(refresh = 4, notified = false, event = "reload")
+
+      ignoreSettingsFileWhen("build.lock") { it.reloadStatus == IN_PROGRESS && it.modificationType == EXTERNAL }
+      val propertiesFile = createSettingsVirtualFile("build.lock")
+      assertState(refresh = 4, notified = true, event = "settings file creation")
+      onceDuringRefresh {
+        propertiesFile.modify(EXTERNAL)
+      }
+      scheduleProjectReload()
+      assertState(refresh = 5, notified = false, event = "ignored settings file creation during reload")
+      propertiesFile.modify(EXTERNAL)
+      assertState(refresh = 6, notified = false, event = "settings file modification")
+      onceDuringRefresh {
+        propertiesFile.modify(INTERNAL)
+      }
+      markDirty()
+      scheduleProjectReload()
+      assertState(refresh = 7, notified = true, event = "settings file modification during reload")
+    }
   }
 }

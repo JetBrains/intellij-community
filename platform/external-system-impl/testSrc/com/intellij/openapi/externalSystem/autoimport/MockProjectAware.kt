@@ -15,6 +15,7 @@ import com.intellij.util.EventDispatcher
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.collections.LinkedHashMap
 import kotlin.concurrent.thread
 
 class MockProjectAware(
@@ -40,6 +41,8 @@ class MockProjectAware(
       settingsAccessCounter.incrementAndGet()
     }
 
+  private val ignoredSettingsFiles = LinkedHashMap<String, (ExternalSystemSettingsFilesModificationContext) -> Boolean>()
+
   fun resetAssertionCounters() {
     settingsAccessCounter.set(0)
     refreshCounter.set(0)
@@ -49,6 +52,20 @@ class MockProjectAware(
 
   fun registerSettingsFile(path: String) {
     _settingsFiles.add(path)
+  }
+
+  fun ignoreSettingsFileWhen(path: String, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) {
+    ignoredSettingsFiles[path] = condition
+  }
+
+  override fun isIgnoredSettingsFileEvent(path: String, context: ExternalSystemSettingsFilesModificationContext): Boolean {
+    val condition = ignoredSettingsFiles[path]
+    if (condition != null) {
+      return condition(context)
+    }
+    else {
+      return super.isIgnoredSettingsFileEvent(path, context)
+    }
   }
 
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
