@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -56,15 +57,22 @@ public final class ExternalDiffTool {
   public static boolean wantShowExternalToolFor(@NotNull List<? extends DiffRequestProducer> diffProducers) {
     if (isDefault()) return true;
 
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     return JBIterable.from(diffProducers)
-             .map(DiffRequestProducer::getName)
-             .filter(filePath -> !FileUtilRt.getExtension(filePath).equals("tmp"))
-             .map(filePath -> fileTypeManager.getFileTypeByFileName(filePath))
+             .map(ExternalDiffTool::getFileType)
              .unique()
              .map(fileType -> ExternalDiffSettings.findDiffTool(fileType))
              .filter(Conditions.notNull())
              .first() != null;
+  }
+
+  @NotNull
+  private static FileType getFileType(@NotNull DiffRequestProducer producer) {
+    FileType contentType = producer.getContentType();
+    if (contentType != null) return contentType;
+
+    String filePath = producer.getName();
+    if (FileUtilRt.getExtension(filePath).equals("tmp")) return UnknownFileType.INSTANCE;
+    return FileTypeManager.getInstance().getFileTypeByFileName(filePath);
   }
 
   public static boolean checkNotTooManyRequests(@Nullable Project project, @NotNull List<? extends DiffRequestProducer> diffProducers) {

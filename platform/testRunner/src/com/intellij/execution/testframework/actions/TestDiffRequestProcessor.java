@@ -14,6 +14,8 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
@@ -33,7 +35,7 @@ public class TestDiffRequestProcessor {
   public static DiffRequestChain createRequestChain(@Nullable Project project, @NotNull ListSelection<? extends DiffHyperlink> requests) {
     ListSelection<DiffRequestProducer> producers = requests.map(hyperlink -> new DiffHyperlinkRequestProducer(project, hyperlink));
 
-    SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducers(producers.getList(), producers.getSelectedIndex());
+    SimpleDiffRequestChain chain = SimpleDiffRequestChain.fromProducers(producers);
     chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.TESTS_FAILED_ASSERTIONS);
     chain.putUserData(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, true);
     chain.putUserData(DiffUserDataKeys.DIALOG_GROUP_KEY,
@@ -55,6 +57,12 @@ public class TestDiffRequestProcessor {
       String testName = myHyperlink.getTestName();
       if (testName != null) return testName;
       return myHyperlink.getDiffTitle();
+    }
+
+    @Override
+    public @Nullable FileType getContentType() {
+      VirtualFile file = findFile(myHyperlink.getFilePath());
+      return file != null ? file.getFileType() : PlainTextFileType.INSTANCE;
     }
 
     @Override
