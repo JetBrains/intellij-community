@@ -6,7 +6,9 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.IdeBundle;
@@ -83,10 +85,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.jetbrains.python.console.PydevConsoleRunner.CONSOLE_COMMUNICATION_KEY;
 
-public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
+public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor, PyTargetedCodeExecutor {
   public static final Key<Boolean> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   private static final Key<Map<Integer, Integer>> COUNTER_LINE_NUMBER = new Key<>("PYDEV_COUNTER_LINE_NUMBER");
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
@@ -113,6 +116,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   private ActionToolbar myToolbar;
   private boolean myIsToolwindowHorizontal = true;
+
+  /**
+   * The execution environment of the process associated with this {@link PythonConsoleView}.
+   */
+  private @Nullable TargetEnvironment myTargetEnvironment;
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
@@ -261,34 +269,39 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void executeCode(final @Nullable String code, @Nullable final Editor editor) {
-    myInitialized.doWhenDone(
-      () -> {
-        if (code != null) {
-          if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
-            executeInConsole(code);
-          }
-          else {
-            ProgressManager.getInstance().run(new Task.Backgroundable(null, PyBundle.message("console.executing.code.in.console"), true) {
-              @Override
-              public void run(@NotNull final ProgressIndicator indicator) {
-                while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
-                  if (indicator.isCanceled()) {
-                    break;
-                  }
-                  TimeoutUtil.sleep(300);
-                }
-                if (!indicator.isCanceled()) {
-                  executeInConsole(code);
-                }
-              }
-            });
-          }
-        }
-        else {
-          requestFocus();
-        }
+    myInitialized.doWhenDone(() -> executeCodeImpl(code));
+  }
+
+  /**
+   * Must be called when {@link #myInitialized} is resolved.
+   *
+   * @param code the code to be executed
+   */
+  private void executeCodeImpl(@Nullable String code) {
+    if (code != null) {
+      if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+        executeInConsole(code);
       }
-    );
+      else {
+        ProgressManager.getInstance().run(new Task.Backgroundable(null, PyBundle.message("console.executing.code.in.console"), true) {
+          @Override
+          public void run(@NotNull final ProgressIndicator indicator) {
+            while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
+              if (indicator.isCanceled()) {
+                break;
+              }
+              TimeoutUtil.sleep(300);
+            }
+            if (!indicator.isCanceled()) {
+              executeInConsole(code);
+            }
+          }
+        });
+      }
+    }
+    else {
+      requestFocus();
+    }
   }
 
 
@@ -453,6 +466,34 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     mySplitView = view;
     Disposer.register(this, view);
     splitWindow();
+  }
+
+  /**
+   * Assigns {@link TargetEnvironment} to this view. The target environment could be later used for code execution using
+   * {@link #executeCode(Function)}.
+   * <p>
+   * Works in pair with {@link #attachToProcess(ProcessHandler)}.
+   *
+   * @param targetEnvironment {@link TargetEnvironment} related to the process
+   */
+  public void setTargetEnvironment(@NotNull TargetEnvironment targetEnvironment) {
+    myTargetEnvironment = targetEnvironment;
+  }
+
+  @Override
+  public void executeCode(@NotNull Function<TargetEnvironment, String> code) {
+    myInitialized.doWhenDone(
+      () -> {
+        TargetEnvironment targetEnvironment = myTargetEnvironment;
+        if (targetEnvironment == null) {
+          throw new IllegalStateException("Execution environment must be initialized");
+        }
+        else {
+          String codeValue = code.apply(targetEnvironment);
+          executeCodeImpl(codeValue);
+        }
+      }
+    );
   }
 
   private static boolean isToolwindowHorizontal(ToolWindow toolWindow) {

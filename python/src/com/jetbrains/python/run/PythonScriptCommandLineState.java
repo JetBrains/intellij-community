@@ -118,7 +118,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId())) {
         PyRunFileInConsoleAction.configExecuted(myConfig);
 
-        String runFileText = PythonConsoleScripts.buildScriptWithConsoleRun(myConfig);
+        Function<TargetEnvironment, String> runFileText = PythonConsoleScripts.buildScriptFunctionWithConsoleRun(myConfig);
         boolean useExistingConsole = PyConsoleOptions.getInstance(project).isUseExistingConsole();
         PyExecuteInConsole.executeCodeInConsole(project, runFileText, null, useExistingConsole, false, true, myConfig);
 

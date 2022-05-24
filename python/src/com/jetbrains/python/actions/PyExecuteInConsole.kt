@@ -4,6 +4,8 @@
 package com.jetbrains.python.actions
 
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -16,6 +18,8 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.*
 import com.jetbrains.python.run.PythonRunConfiguration
+import java.util.function.Consumer
+import java.util.function.Function
 
 fun executeCodeInConsole(project: Project,
                          commandText: String?,
@@ -24,6 +28,33 @@ fun executeCodeInConsole(project: Project,
                          canUseDebugConsole: Boolean,
                          requestFocusToConsole: Boolean,
                          config: PythonRunConfiguration?) {
+  val executeCodeInConsole = commandText?.let { Consumer<ExecutionConsole> { (it as PyCodeExecutor).executeCode(commandText, editor) } }
+  val executeInStartingConsole = Function<VirtualFile?, Boolean> { PyExecuteConsoleCustomizer.instance.isConsoleStarting(it, commandText) }
+  executeCodeInConsole(project, executeCodeInConsole, executeInStartingConsole, editor, canUseExistingConsole, canUseDebugConsole,
+                       requestFocusToConsole, config)
+}
+
+fun executeCodeInConsole(project: Project,
+                         commandText: TargetEnvironmentFunction<String>,
+                         editor: Editor?,
+                         canUseExistingConsole: Boolean,
+                         canUseDebugConsole: Boolean,
+                         requestFocusToConsole: Boolean,
+                         config: PythonRunConfiguration?) {
+  val executeCodeInConsole = Consumer<ExecutionConsole> { (it as PyTargetedCodeExecutor).executeCode(commandText) }
+  val executeInStartingConsole = Function<VirtualFile?, Boolean> { PyExecuteConsoleCustomizer.instance.isConsoleStarting(it, null) }
+  executeCodeInConsole(project, executeCodeInConsole, executeInStartingConsole, editor, canUseExistingConsole, canUseDebugConsole,
+                       requestFocusToConsole, config)
+}
+
+private fun executeCodeInConsole(project: Project,
+                                 executeInConsole: Consumer<ExecutionConsole>?,
+                                 executeInStartingConsole: Function<VirtualFile?, Boolean>,
+                                 editor: Editor?,
+                                 canUseExistingConsole: Boolean,
+                                 canUseDebugConsole: Boolean,
+                                 requestFocusToConsole: Boolean,
+                                 config: PythonRunConfiguration?) {
   var existingConsole: RunContentDescriptor? = null
   var isDebug = false
   var newConsoleListener: PydevConsoleRunner.ConsoleListener? = null
@@ -51,13 +82,13 @@ fun executeCodeInConsole(project: Project,
   }
   if (existingConsole != null) {
     val console = existingConsole.executionConsole
-    (console as PyCodeExecutor).executeCode(commandText, editor)
+    executeInConsole?.accept(console)
     val consoleView = showConsole(project, existingConsole, isDebug)
     requestFocus(requestFocusToConsole, editor, consoleView)
   }
   else {
-    if (!PyExecuteConsoleCustomizer.instance.isConsoleStarting(virtualFile, commandText)) {
-      startNewConsoleInstance(project, virtualFile, commandText, config, newConsoleListener)
+    if (!executeInStartingConsole.apply(virtualFile)) {
+      startNewConsoleInstance(project, virtualFile, executeInConsole, config, newConsoleListener)
     }
   }
 }
@@ -142,11 +173,11 @@ fun isAlive(dom: RunContentDescriptor): Boolean {
 
 private fun startNewConsoleInstance(project: Project,
                                     virtualFile: VirtualFile?,
-                                    runFileText: String?,
+                                    executeInConsole: Consumer<ExecutionConsole>?,
                                     config: PythonRunConfiguration?,
                                     listener: PydevConsoleRunner.ConsoleListener?) {
   val consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance()
-  val runner = if (runFileText == null || config == null) {
+  val runner = if (executeInConsole == null || config == null) {
     consoleRunnerFactory.createConsoleRunner(project, null)
   }
   else {
@@ -154,7 +185,7 @@ private fun startNewConsoleInstance(project: Project,
   }
   runner.addConsoleListener { consoleView ->
     if (consoleView is PyCodeExecutor) {
-      (consoleView as PyCodeExecutor).executeCode(runFileText, null)
+      executeInConsole?.accept(consoleView)
       PythonConsoleToolWindow.getInstance(project)?.toolWindow?.show(null)
     }
   }

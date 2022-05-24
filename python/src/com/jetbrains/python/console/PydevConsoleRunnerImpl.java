@@ -145,6 +145,32 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Nullable @NlsContexts.TabTitle private String myConsoleInitTitle = null;
   private PythonConsoleView myConsoleView;
 
+  /**
+   * The function is resolved to {@link #myResolvedStatementsToExecute} against the target environment associated with this console.
+   */
+  private final @Nullable Function<TargetEnvironment, @NotNull String> myStatementsToExecuteFunction;
+
+  private @Nullable String myResolvedStatementsToExecute;
+
+  public PydevConsoleRunnerImpl(@NotNull final Project project,
+                                @Nullable Sdk sdk,
+                                @NotNull final PyConsoleType consoleType,
+                                @NotNull final @NlsContexts.TabTitle String title,
+                                @Nullable final String workingDir,
+                                @NotNull Map<String, String> environmentVariables,
+                                @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
+                                @NotNull Function<TargetEnvironment, @NotNull String> statementsToExecuteFunction) {
+    myProject = project;
+    mySdk = sdk;
+    myTitle = title;
+    myWorkingDir = workingDir;
+    myConsoleType = consoleType;
+    myEnvironmentVariables = environmentVariables;
+    myConsoleSettings = settingsProvider;
+    myStatementsToExecute = null;
+    myStatementsToExecuteFunction = statementsToExecuteFunction;
+  }
+
   public PydevConsoleRunnerImpl(@NotNull final Project project,
                                 @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
@@ -161,6 +187,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
     myStatementsToExecute = statementsToExecute;
+    myStatementsToExecuteFunction = environment -> StringUtil.join(statementsToExecute, "\n");
   }
 
   public PydevConsoleRunnerImpl(@NotNull final Project project,
@@ -281,7 +308,14 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
               throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
             }
             initAndRun(mySdk);
-            connect(myStatementsToExecute);
+            String[] statementsToExecute;
+            if (myResolvedStatementsToExecute != null) {
+              statementsToExecute = new String[]{myResolvedStatementsToExecute};
+            }
+            else {
+              statementsToExecute = myStatementsToExecute;
+            }
+            connect(statementsToExecute);
             if (requestEditorFocus) {
               myConsoleView.requestFocus();
             }
@@ -540,6 +574,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // TODO [Targets API] We should pass the proper progress indicator here
     TargetEnvironment targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY);
 
+    myResolvedStatementsToExecute = myStatementsToExecuteFunction.apply(targetEnvironment);
+
     // TODO [Targets API] [regression] We should create PTY process when `PtyCommandLine.isEnabled()`
     //  (see the legacy method `doCreateConsoleCmdLine()`)
 
@@ -575,7 +611,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myRemoteConsoleProcessData = remoteConsoleProcessData;
     myPydevConsoleCommunication = remoteConsoleProcessData.getPydevConsoleCommunication();
 
-    return new CommandLineProcess(process, commandLineString);
+    return new CommandLineProcess(process, commandLineString, targetEnvironment);
   }
 
   private static class PyRemoteSocketToLocalHostProviderStub implements PyRemoteSocketToLocalHostProvider {
@@ -719,6 +755,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       });
 
       // Attach to process
+      TargetEnvironment targetEnvironment = commandLineProcess.getTargetEnvironment();
+      if (targetEnvironment != null) {
+        myConsoleView.setTargetEnvironment(targetEnvironment);
+      }
       myConsoleView.attachToProcess(myProcessHandler);
       createContentDescriptorAndActions();
 
@@ -1064,9 +1104,18 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     @Nullable
     private final String myCommandLine;
 
+    private final @Nullable TargetEnvironment myTargetEnvironment;
+
     private CommandLineProcess(@NotNull Process process, @Nullable String commandLine) {
       myProcess = process;
       myCommandLine = commandLine;
+      myTargetEnvironment = null;
+    }
+
+    private CommandLineProcess(@NotNull Process process, @Nullable String commandLine, @NotNull TargetEnvironment targetEnvironment) {
+      myProcess = process;
+      myCommandLine = commandLine;
+      myTargetEnvironment = targetEnvironment;
     }
 
     @NotNull
@@ -1077,6 +1126,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     @Nullable
     public String getCommandLine() {
       return myCommandLine;
+    }
+
+    private @Nullable TargetEnvironment getTargetEnvironment() {
+      return myTargetEnvironment;
     }
   }
 
