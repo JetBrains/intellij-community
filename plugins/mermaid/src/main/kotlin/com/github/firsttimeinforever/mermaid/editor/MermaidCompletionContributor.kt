@@ -13,6 +13,8 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.*
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 
 class MermaidCompletionContributor : CompletionContributor() {
@@ -20,14 +22,7 @@ class MermaidCompletionContributor : CompletionContributor() {
   init {
     extend(
       CompletionType.BASIC,
-      psiElement().inside(
-        true, psiFile(), or(
-          psiElement(MermaidTokens.Flowchart.FLOWCHART),
-          psiElement(MermaidTokens.Pie.PIE),
-          psiElement(MermaidTokens.Journey.JOURNEY),
-          psiElement(MermaidTokens.Sequence.SEQUENCE)
-        )
-      ),
+      psiElement(),
       MermaidDiagramCompletionProvider()
     )
 
@@ -115,7 +110,20 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
     context: ProcessingContext,
     result: CompletionResultSet
   ) {
-    result.addAllElements(diagrams.map { createKeywordLookupElement(it) })
+    parameters.position.parentOfType<PsiFile>()?.let {
+      if (it.children.all { element ->
+          not(
+            or(
+              psiElement(MermaidTokens.Flowchart.FLOWCHART),
+              psiElement(MermaidTokens.Pie.PIE),
+              psiElement(MermaidTokens.Journey.JOURNEY),
+              psiElement(MermaidTokens.Sequence.SEQUENCE)
+            )
+          ).accepts(element)
+        }) {
+        result.addAllElements(diagrams.map { d -> createKeywordLookupElement(d) })
+      }
+    }
   }
 
   private fun createKeywordLookupElement(keyword: String): LookupElement {
