@@ -155,14 +155,14 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
     }
   }
 
-  private static DataContext getProjectAwareDataContext(final Editor editor, @NotNull final DataContext original) {
+  private static @NotNull DataContext getProjectAwareDataContext(@NotNull Editor editor, @NotNull DataContext original) {
     if (PROJECT.getData(original) == editor.getProject()) {
-      return new DialogAwareDataContext(original);
+      return original;
     }
 
     return dataId -> {
       if (PROJECT.is(dataId)) {
-        final Project project = editor.getProject();
+        Project project = editor.getProject();
         if (project != null) {
           return project;
         }
