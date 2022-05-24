@@ -22,9 +22,9 @@ message()
 }
 
 if [ -z "$(command -v uname)" ] || [ -z "$(command -v realpath)" ] || [ -z "$(command -v dirname)" ] || [ -z "$(command -v cat)" ] || \
-   [ -z "$(command -v egrep)" ]; then
+   [ -z "$(command -v grep)" ]; then
   TOOLS_MSG="Required tools are missing:"
-  for tool in uname realpath egrep dirname cat ; do
+  for tool in uname realpath grep dirname cat ; do
      test -z "$(command -v $tool)" && TOOLS_MSG="$TOOLS_MSG $tool"
   done
   message "$TOOLS_MSG (SHELL=$SHELL PATH=$PATH)"
