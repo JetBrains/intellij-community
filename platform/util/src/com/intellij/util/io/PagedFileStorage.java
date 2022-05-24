@@ -435,9 +435,6 @@ public class PagedFileStorage implements Forceable {
       throw new IOException("storage is already closed; path " + myFile);
     }
     DirectBufferWrapper byteBufferWrapper = myStorageLockContext.getBufferCache().get(myStorageIndex | page, !modify); // TODO: long page
-    if (myNativeBytesOrder) {
-      byteBufferWrapper.useNativeByteOrder();
-    }
 
     myLastAccessedBufferCache.updateCache(page, byteBufferWrapper);
 
@@ -456,6 +453,10 @@ public class PagedFileStorage implements Forceable {
 
   public boolean isReadOnly() {
     return myReadOnly;
+  }
+
+  boolean useNativeByteOrder() {
+    return myNativeBytesOrder;
   }
 
   private static byte[] getThreadLocalTypedIOBuffer() {
