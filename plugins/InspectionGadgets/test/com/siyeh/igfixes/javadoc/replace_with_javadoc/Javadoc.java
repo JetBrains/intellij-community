@@ -1,5 +1,3 @@
-// "Replace with javadoc" "false"
-
 class Main {
   /**
    * javadoc<caret>

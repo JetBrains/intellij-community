@@ -43,4 +43,8 @@ class ReplaceWithJavadocInspectionFixTest : IGQuickFixesTestCase() {
   fun testBlockComment() {
     doTest()
   }
+
+  fun testJavadoc() {
+    assertQuickfixNotAvailable()
+  }
 }
