@@ -15,7 +15,7 @@ object VmOptionsGenerator {
                                                           "-ea", "-Dsun.io.useCanonCaches=false", "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
                                                           "-Djdk.attach.allowAttachSelf=true",
                                                           "-Djdk.module.illegalAccess.silent=true", "-Dkotlinx.coroutines.debug=off")
-  private val MEMORY_OPTIONS: Map<String, String> = java.util.Map.of("-Xms", "128m", "-Xmx", "750m", "-XX:ReservedCodeCacheSize=", "512m")
+  private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf("-Xms" to "128m", "-Xmx" to "750m", "-XX:ReservedCodeCacheSize=" to "512m")
 
   @JvmStatic
   fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> {

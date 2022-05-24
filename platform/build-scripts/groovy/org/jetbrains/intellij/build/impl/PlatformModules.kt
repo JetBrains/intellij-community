@@ -112,14 +112,14 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
 object PlatformModules {
   const val PRODUCT_JAR = "product.jar"
 
-  val CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
+  val CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = linkedMapOf(
     // jna uses native lib
-    "jna", LibraryPackMode.STANDALONE_MERGED,
-    "lz4-java", LibraryPackMode.STANDALONE_MERGED,
-    "jetbrains-annotations-java5", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
-    "intellij-coverage", LibraryPackMode.STANDALONE_SEPARATE,
-    "github.jnr.ffi", LibraryPackMode.STANDALONE_SEPARATE,
-    )
+    "jna" to LibraryPackMode.STANDALONE_MERGED,
+    "lz4-java" to LibraryPackMode.STANDALONE_MERGED,
+    "jetbrains-annotations-java5" to LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+    "intellij-coverage" to LibraryPackMode.STANDALONE_SEPARATE,
+    "github.jnr.ffi" to LibraryPackMode.STANDALONE_SEPARATE,
+  )
 
   fun collectPlatformModules(to: MutableCollection<String>) {
     to.addAll(PLATFORM_API_MODULES)

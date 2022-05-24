@@ -198,7 +198,7 @@ final class RepairUtilityBuilder {
         Map<Binary, Path> binaries = BINARIES.collectEntries {
           [(it): projectHome.resolve(it.relativeSourcePath)]
         }
-        def executablePermissions = Set.of(
+        def executablePermissions = EnumSet.of(
           OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE
         )
         for (Path file in binaries.values()) {
