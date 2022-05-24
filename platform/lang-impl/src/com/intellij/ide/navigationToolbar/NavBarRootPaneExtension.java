@@ -233,6 +233,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
         if (ExperimentalUI.isNewUI()) {
           boolean visible = settings.getShowNavigationBar() && !settings.getPresentationMode();
           myScrollPane.setVisible(visible);
+          myNavigationBar.updateState(visible);
         }
         myNavigationBar.setBorder(null);
       }
