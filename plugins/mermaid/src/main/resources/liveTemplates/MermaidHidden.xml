@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="Shell Script Hidden">
+  <template id="mermaid_subgraph" name="mermaid_subgraph"
+            value="subgraph $ID$ &#10;    $END$$SELECTION$&#10;end"
+            description="subgraph statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+</templateSet>
