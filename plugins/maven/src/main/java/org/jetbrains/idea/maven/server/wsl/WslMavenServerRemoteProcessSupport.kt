@@ -25,9 +25,9 @@ internal class WslMavenServerRemoteProcessSupport(private val myWslDistribution:
   override fun getRemoteHost(): String {
     val ip = myWslDistribution.wslIp
     if (ip == null) {
-      throw RuntimeException(SyncBundle.message("maven.sync.wsl.ip.cannot.resolve"));
+      throw RuntimeException(SyncBundle.message("maven.sync.wsl.ip.cannot.resolve"))
     }
-    return ip;
+    return ip
   }
 
   override fun type() = "WSL"

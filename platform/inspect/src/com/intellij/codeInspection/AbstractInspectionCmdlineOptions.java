@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.PlainTextFormatter;
@@ -18,18 +19,25 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
 
   @Nullable
   protected abstract String getProfileNameOrPathProperty();
+
   @Nullable
   protected abstract String getProjectPathProperty();
+
   @Nullable
   protected abstract String getOutputPathProperty();
+
   @Nullable
   protected abstract String getDirToInspectProperty();
+
   @Nullable
   protected abstract String getOutputFormatProperty();
+
   @Nullable
   protected abstract String getXSLTSchemePathProperty();
+
   @Nullable
   protected abstract Boolean getErrorCodeRequiredProperty();
+
   @Nullable
   protected abstract Boolean getRunWithEditorSettingsProperty();
 
@@ -56,7 +64,8 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     final String xsltSchemePath = getXSLTSchemePathProperty();
     if (xsltSchemePath != null) {
       app.myOutputFormat = xsltSchemePath;
-    } else {
+    }
+    else {
       final String outputFormat = getOutputFormatProperty();
       if (outputFormat != null) {
         app.myOutputFormat = StringUtil.toLowerCase(outputFormat);
@@ -99,7 +108,8 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
         if (outputFormat == converterFormat) {
           builder = null;
           break;
-        } else {
+        }
+        else {
           if (builder.length() != 0) {
             builder.append(", ");
           }

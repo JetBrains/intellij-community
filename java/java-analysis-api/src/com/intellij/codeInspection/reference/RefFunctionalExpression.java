@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,11 +8,11 @@ import org.jetbrains.uast.UExpression;
 import java.util.List;
 
 /**
- * A node in the reference graph corresponding to lambda expressions and method references.
+ * A node in the reference graph corresponding to a lambda expression or method reference.
  */
 public interface RefFunctionalExpression extends RefJavaElement, RefOverridable {
   /**
-   * @return list of parameters of corresponding functional expression
+   * @return list of parameters of the functional expression
    */
   @NotNull
   List<RefParameter> getParameters();
@@ -26,7 +26,7 @@ public interface RefFunctionalExpression extends RefJavaElement, RefOverridable 
 
   /**
    * @return true, if the lambda expression's body is empty, false if not.
-   * Note that method reference always contains a body.
+   * Note that a method reference always contains a body.
    */
   boolean hasEmptyBody();
 }

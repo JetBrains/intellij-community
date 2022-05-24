@@ -60,9 +60,7 @@ class KotlinEditorTextProvider : EditorTextProvider {
                 return if (parent is KtQualifiedExpression && (!isSelector || parent.selectorExpression == this)) parent else this
             }
 
-            val parent = ktElement.parent
-
-            val newExpression = when (parent) {
+            val newExpression = when (val parent = ktElement.parent) {
                 is KtThisExpression -> parent
                 is KtSuperExpression -> parent.qualifiedParentOrSelf(isSelector = false)
                 is KtArrayAccessExpression -> if (parent.arrayExpression == ktElement) ktElement else parent.qualifiedParentOrSelf()

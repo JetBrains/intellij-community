@@ -24,9 +24,7 @@ class PyDunderSlotsInspection : PyInspection() {
       super.visitPyClass(node)
 
       if (!LanguageLevel.forElement(node).isPython2) {
-        val slots = findSlotsValue(node)
-
-        when (slots) {
+        when (val slots = findSlotsValue(node)) {
           is PySequenceExpression -> slots
             .elements
             .asSequence()

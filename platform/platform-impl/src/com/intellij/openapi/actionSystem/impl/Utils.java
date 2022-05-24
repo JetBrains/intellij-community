@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,9 +119,7 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    assert isAsyncDataContext(context);
-    return new ActionUpdater(presentationFactory, context, place, false, false)
-      .expandActionGroupAsync(group, group instanceof CompactActionGroup);
+    return expandActionGroupAsync(group, presentationFactory, context, place, false);
   }
 
   @ApiStatus.Internal
@@ -129,9 +128,13 @@ public final class Utils {
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction) {
-    assert isAsyncDataContext(context);
-    return new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction)
-      .expandActionGroupAsync(group, group instanceof CompactActionGroup);
+    LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
+    ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
+    List<AnAction> actions = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
+    if (actions != null) {
+      return Promises.resolvedCancellablePromise(actions);
+    }
+    return updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
 
   @ApiStatus.Internal
@@ -234,7 +237,7 @@ public final class Utils {
     }
     else {
       if (Registry.is("actionSystem.update.actions.async") && !ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.warn(new Throwable("Non-async data context detected in async mode in '" + place + "': " + context.getClass().getName()));
+        LOG.error("Async data context required in '" + place + "': " + context.getClass().getName());
       }
       try {
         list = DO_FULL_EXPAND ?

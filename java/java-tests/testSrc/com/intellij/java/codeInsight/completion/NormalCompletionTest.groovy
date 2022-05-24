@@ -14,6 +14,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.psi.*
 import com.intellij.psi.augment.PsiAugmentProvider
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -2675,5 +2676,18 @@ class Abc {
     myFixture.configureByText("Test.java", "class Test {Class<?> get() {return String<caret>}}")
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems(0, 'String', 'String.class', 'StringBuffer.class', 'StringBuffer', 'StringBuilder.class', 'StringBuilder', 'StringIndexOutOfBoundsException.class', 'StringIndexOutOfBoundsException')
+  }
+
+  void testCompleteMethodWithoutParentheses() {
+    def settings = EditorSettingsExternalizable.getInstance()
+    settings.setInsertParenthesesAutomatically(false);
+    try {
+      myFixture.configureByText("Test.java", "class Test {void myMethod() { myMet<caret> }}")
+      myFixture.completeBasic()
+      myFixture.checkResult("class Test {void myMethod() { myMethod<caret> }}")
+    }
+    finally {
+      settings.setInsertParenthesesAutomatically(true)
+    }
   }
 }

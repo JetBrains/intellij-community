@@ -94,8 +94,7 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
 
     @Suppress("SameParameterValue")
     private fun namedDouble(name: String, default: Double): Double {
-      val value = UIManager.get(name)
-      return when (value) {
+      return when (val value = UIManager.get(name)) {
         is Double -> value
         is Int -> value.toDouble()
         is String -> value.toDoubleOrNull() ?: default

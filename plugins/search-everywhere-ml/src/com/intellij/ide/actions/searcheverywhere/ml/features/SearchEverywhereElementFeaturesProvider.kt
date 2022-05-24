@@ -6,9 +6,11 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.textMatching.PrefixMatchingType
 import com.intellij.textMatching.PrefixMatchingUtil
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.round
 
-internal abstract class SearchEverywhereElementFeaturesProvider(private val supportedContributorIds: List<String>) {
+@ApiStatus.Internal
+abstract class SearchEverywhereElementFeaturesProvider(private val supportedContributorIds: List<String>) {
   constructor(vararg supportedTabs: Class<out SearchEverywhereContributor<*>>) : this(supportedTabs.map { it.simpleName })
 
   companion object {

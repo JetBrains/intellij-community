@@ -31,13 +31,13 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
   @Override
   @Nullable
-  public PsiElement adjustElementToCopy(final PsiElement element) {
+  public PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     if (element instanceof PsiPackage) return element;
     if (element instanceof PsiDirectory) {
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
       if (psiPackage != null) return psiPackage;
     }
-    if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
+    if (!(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
       return element.getParent();
     }
     return null;
@@ -45,7 +45,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
   @Override
   @Nullable
-  public String getQualifiedName(PsiElement element) {
+  public String getQualifiedName(@NotNull PsiElement element) {
     if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
     }
@@ -91,7 +91,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   @Override
-  public PsiElement qualifiedNameToElement(final String fqn, final Project project) {
+  public PsiElement qualifiedNameToElement(@NotNull String fqn, @NotNull Project project) {
     final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(fqn);
     if (psiPackage != null) {
       return psiPackage;
@@ -151,7 +151,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   @Override
-  public void insertQualifiedName(String fqn, final PsiElement element, final Editor editor, final Project project) {
+  public void insertQualifiedName(@NotNull String fqn, @NotNull PsiElement element, @NotNull Editor editor, @NotNull Project project) {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = editor.getDocument();
 

@@ -96,7 +96,7 @@ class MavenSyncConsole(private val myProject: Project) {
     debugLog("maven sync: started importing $myProject")
 
     myPostponed.forEach(this::doIfImportInProcess)
-    myPostponed.clear();
+    myPostponed.clear()
   }
 
   private fun createTaskId() = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
@@ -135,14 +135,14 @@ class MavenSyncConsole(private val myProject: Project) {
   fun addWarning(@Nls text: String, @Nls description: String) = addWarning(text, description, null)
 
   fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcessOrPostpone {
-    if (!newIssue(issue.title + issue.description)) return@doIfImportInProcessOrPostpone;
+    if (!newIssue(issue.title + issue.description)) return@doIfImportInProcessOrPostpone
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, issue, kind))
-    hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR;
+    hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR
   }
 
   @Synchronized
   fun addWarning(@Nls text: String, @Nls description: String, filePosition: FilePosition?) = doIfImportInProcess {
-    if (!newIssue(text + description + filePosition)) return;
+    if (!newIssue(text + description + filePosition)) return
     if (filePosition == null) {
       mySyncView.onEvent(mySyncId,
                          MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, SyncBundle.message("maven.sync.group.compiler"), text,

@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.devServer
 
+import com.intellij.diagnostic.telemetry.useWithScope
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.TracerManager
-import org.jetbrains.intellij.build.tasks.useWithScope
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -92,10 +92,9 @@ private fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, projectOu
   }
 
   val moduleOutputPatcher = ModuleOutputPatcher()
-  TracerManager.spanBuilder("build plugin")
+  TraceManager.spanBuilder("build plugin")
     .setAttribute("mainModule", mainModule)
     .setAttribute("dir", plugin.dir.fileName.toString())
-    .startSpan()
     .useWithScope {
       Span.current().addEvent("build ${mainModule}")
 

@@ -9,8 +9,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
@@ -44,30 +47,26 @@ internal class KotlinDistAutomaticDownloaderForKotlinBundled(
     }
 }
 
-private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries: Boolean, version: String, project: Project) {
+private fun downloadKotlinDistIfNeeded(isKotlinBundledPotentiallyUsedInLibraries: Boolean, @NlsSafe version: String, project: Project) {
     if (version.isNotBlank() && isKotlinBundledPotentiallyUsedInLibraries && !KotlinArtifactsDownloader.isKotlinDistInitialized(version)) {
         ProgressManager.getInstance().run(
             object : Task.Backgroundable(project, KotlinBasePluginBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
                 override fun run(indicator: ProgressIndicator) {
-                    KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist(
-                        project = project,
-                        version = version,
-                        indicator = indicator,
-                        onError = { errorMsg ->
-                            NotificationGroupManager.getInstance()
-                                .getNotificationGroup("Kotlin dist downloading failed")
-                                .createNotification(
-                                    KotlinBundle.message("kotlin.dist.downloading.failed.msg"),
-                                    errorMsg,
-                                    NotificationType.ERROR,
-                                )
-                                .setImportant(true)
-                                .setIcon(AllIcons.Ide.FatalError)
-                                .notify(project)
-                        },
-                    )?.let { path ->
+                    val dist = KotlinArtifactsDownloader.lazyDownloadAndUnpackKotlincDist(project, version, indicator)
+                    if (dist == null) {
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup("Kotlin dist downloading failed")
+                            .createNotification(
+                                KotlinBundle.message("kotlin.dist.downloading.failed.msg"),
+                                KotlinArtifactsDownloader.failedToDownloadMavenArtifact(project, KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version),
+                                NotificationType.ERROR,
+                            )
+                            .setImportant(true)
+                            .setIcon(AllIcons.Ide.FatalError)
+                            .notify(project)
+                    } else {
                         // Since this dist is used as library we should refresh it
-                        KotlinBundledRefresher.requestKotlinDistRefresh(path.toPath())
+                        KotlinBundledRefresher.requestKotlinDistRefresh(dist.toPath())
                     }
                 }
             }

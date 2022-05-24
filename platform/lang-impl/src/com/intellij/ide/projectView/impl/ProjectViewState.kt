@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(name = "ProjectViewState", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
@@ -21,7 +22,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
   }
 
   var abbreviatePackageNames = ProjectViewSettings.Immutable.DEFAULT.isAbbreviatePackageNames
-  var autoscrollFromSource = false
+  var autoscrollFromSource = ExperimentalUI.isNewUI()
   var autoscrollToSource = UISettings.getInstance().state.defaultAutoScrollToSource
   var compactDirectories = ProjectViewSettings.Immutable.DEFAULT.isCompactDirectories
   var flattenModules = ProjectViewSettings.Immutable.DEFAULT.isFlattenModules

@@ -201,7 +201,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
   }
 
   private fun assertBuildScriptClassPathContains(moduleName: String, expectedEntries: Collection<VirtualFile>) {
-    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
+    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName)
     val modulePath = ExternalSystemApiUtil.getExternalProjectPath(module)
                      ?: throw AssertionFailedError("Could not find external project path for module '$moduleName'")
     val entries = GradleBuildClasspathManager.getInstance(myProject).getModuleClasspathEntries(modulePath)

@@ -10,7 +10,7 @@ import com.intellij.psi.statistics.StatisticsInfo
 internal class SearchEverywhereFileStatistician
   : SearchEverywhereStatistician<Any>(PsiFileSystemItem::class.java, PsiItemWithPresentation::class.java) {
   override fun serializeElement(element: Any, location: String): StatisticsInfo? {
-    val file = getFile(element) ?: return null
+    val file = getFile(element)?.takeIf { it.virtualFile != null } ?: return null
 
     val context = getContext(file) ?: return null
     val value = file.virtualFile?.path ?: return null

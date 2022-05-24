@@ -2,11 +2,24 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
+ * Factory for Project-level widgets placed in main toolbar.
+ *
+ * @see [MainToolbarWidgetFactory]
+ *
  * Extension point: com.intellij.projectToolbarWidget
  */
+@ApiStatus.Experimental
+@ApiStatus.Internal
 interface MainToolbarProjectWidgetFactory : MainToolbarWidgetFactory {
+
+  /**
+   * Factory method to create widget
+   *
+   * @param project current project
+   */
   fun createWidget(project: Project): JComponent
 }

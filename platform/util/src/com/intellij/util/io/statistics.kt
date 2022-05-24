@@ -66,7 +66,21 @@ data class CachedChannelsStatistics(val hit: Int,
 data class FilePageCacheStatistics(val cachedChannelsStatistics: CachedChannelsStatistics,
                                    val uncachedFileAccess: Int,
                                    val maxRegisteredFiles: Int,
+                                   val maxCacheSizeInBytes: Long,
                                    val pageHit: Int,
+                                   val pageFastCacheHit: Int,
                                    val pageMiss: Int,
                                    val pageLoad: Int,
-                                   val capacityInBytes: Long)
+                                   val disposedBuffers: Int,
+                                   val capacityInBytes: Long) {
+  fun dumpInfoImportantForBuildProcess() : String {
+    return "pageHits=$pageHit, " +
+           "pageFastCacheHits=$pageFastCacheHit, " +
+           "pageMisses=$pageMiss, " +
+           "pageLoad=$pageLoad, " +
+           "capacityInBytes=$capacityInBytes, " +
+           "disposedBuffers=$disposedBuffers " +
+           "maxRegisteredFiles=$maxRegisteredFiles " +
+           "maxCacheSizeInBytes=$maxCacheSizeInBytes"
+  }
+}

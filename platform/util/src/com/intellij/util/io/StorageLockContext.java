@@ -115,4 +115,14 @@ public final class StorageLockContext {
   public static @NotNull FilePageCacheStatistics getStatistics() {
     return ourDefaultCache.getStatistics();
   }
+
+  @ApiStatus.Internal
+  public static void assertNoBuffersLocked() {
+    ourDefaultCache.assertNoBuffersLocked();
+  }
+
+  @ApiStatus.Internal
+  public static long getCacheMaxSize() {
+    return ourDefaultCache.getMaxSize();
+  }
 }

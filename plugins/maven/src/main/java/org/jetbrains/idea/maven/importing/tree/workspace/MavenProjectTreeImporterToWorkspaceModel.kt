@@ -126,7 +126,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
     val mapToOldImportModel = mapToOldImportModel(importData)
     MavenProjectTreeLegacyImporter.configModule(mapToOldImportModel, mavenModuleImporter, rootModelAdapter)
 
-    mavenModuleImporter.setModifiableModelsProvider(modifiableModelsProvider);
+    mavenModuleImporter.setModifiableModelsProvider(modifiableModelsProvider)
 
     mavenModuleImporter.preConfigFacets()
     mavenModuleImporter.configFacets(postTasks)

@@ -191,8 +191,8 @@ class WorkspaceModuleImporter(
     if (importingSettings.generatedSourcesFolder != GeneratedSourcesFolder.IGNORE) {
       annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(false)
       annotationProcessorTestDirectory = mavenProject.getAnnotationProcessorDirectory(true)
-      if (File(annotationProcessorDirectory).list().isNullOrEmpty()) annotationProcessorDirectory = null;
-      if (File(annotationProcessorTestDirectory).list().isNullOrEmpty()) annotationProcessorTestDirectory = null;
+      if (File(annotationProcessorDirectory).list().isNullOrEmpty()) annotationProcessorDirectory = null
+      if (File(annotationProcessorTestDirectory).list().isNullOrEmpty()) annotationProcessorTestDirectory = null
     }
 
     val generatedDir = mavenProject.getGeneratedSourcesDirectory(false)

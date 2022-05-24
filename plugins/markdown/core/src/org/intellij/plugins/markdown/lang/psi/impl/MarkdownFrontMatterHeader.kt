@@ -35,10 +35,9 @@ class MarkdownFrontMatterHeader(type: IElementType): CompositePsiElement(type), 
     override fun handleContentChange(element: MarkdownFrontMatterHeader, range: TextRange, content: String): MarkdownFrontMatterHeader? {
       if (content.contains("---")) {
         val textElement = MarkdownPsiElementFactory.createTextElement(element.project, content)
-        return when (textElement) {
-          is MarkdownFrontMatterHeader -> element.replace(textElement) as MarkdownFrontMatterHeader
-          else -> null
-        }
+        return if (textElement is MarkdownFrontMatterHeader) {
+          element.replace(textElement) as MarkdownFrontMatterHeader
+        } else null
       }
       val children = element.firstChild.siblings(forward = true, withSelf = true)
       val contentElement = children.filterIsInstance<MarkdownFrontMatterHeaderContent>().firstOrNull() ?: return null

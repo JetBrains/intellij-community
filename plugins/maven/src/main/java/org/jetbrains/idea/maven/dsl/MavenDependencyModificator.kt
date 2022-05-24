@@ -397,8 +397,8 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     val directVersion = dependency.version.stringValue
     if (directVersion != null) return directVersion
 
-    val groupId = dependency.groupId.stringValue;
-    val artifactId = dependency.artifactId.stringValue;
+    val groupId = dependency.groupId.stringValue
+    val artifactId = dependency.artifactId.stringValue
 
     val domModel = dependency.getParentOfType(MavenDomProjectModel::class.java, false) ?: return null
     val ref = Ref<String>()

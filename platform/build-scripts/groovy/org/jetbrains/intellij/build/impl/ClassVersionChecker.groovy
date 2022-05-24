@@ -9,8 +9,8 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.TraceManager
 
 import java.nio.channels.FileChannel
 import java.nio.file.DirectoryStream
@@ -61,12 +61,8 @@ final class ClassVersionChecker {
     return version.isEmpty() ? -1 : JavaVersion.parse(version).feature + 44  // 1.1 = 45
   }
 
-  static void checkVersions(Map<String, String> config, BuildContext context, Path root) {
-    if (context.options.buildStepsToSkip.contains(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
-      return
-    }
-
-    BuildHelperKt.span(TracerManager.spanBuilder("verify class file versions")
+  static void checkVersions(Map<String, String> config, BuildMessages messages, Path root) {
+    BuildHelperKt.span(TraceManager.spanBuilder("verify class file versions")
                        .setAttribute("ruleCount", config.size())
                        .setAttribute("root", root.toString()), new Runnable() {
       @Override
@@ -95,7 +91,7 @@ final class ClassVersionChecker {
         }
 
         if (checker.checkedClassCount.get() == 0) {
-          context.messages.error("No classes found under $root - please check the configuration")
+          messages.error("No classes found under $root - please check the configuration")
         }
 
         int errorCount = errors.size()
@@ -105,14 +101,14 @@ final class ClassVersionChecker {
           .setAttribute("errorCount", errorCount)
         if (errorCount != 0) {
           for (String error in errors) {
-            context.messages.warning(error)
+            messages.warning(error)
           }
-          context.messages.error("Failed with $errorCount problems")
+          messages.error("Failed with $errorCount problems")
         }
 
         Collection<String> unusedRules = rules.findResults { it.wasUsed ? null : it.path }
         if (!unusedRules.isEmpty()) {
-          context.messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
+          messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
                                  "ProductProperties::versionCheckerConfig are out of date:\n${String.join("\n", unusedRules)}")
         }
       }

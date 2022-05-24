@@ -238,7 +238,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
   public static RefJavaModule moduleFromExternalName(@NotNull RefManagerImpl manager, @NotNull String fqName) {
     Project project = manager.getProject();
     PsiJavaModule javaModule = JavaPsiFacade.getInstance(project).findModule(fqName, GlobalSearchScope.projectScope(project));
-    return javaModule == null ? null : new RefJavaModuleImpl(javaModule, manager);
+    return javaModule == null ? null : (RefJavaModule)manager.getReference(javaModule);
   }
 
   @NotNull

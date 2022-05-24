@@ -95,11 +95,11 @@ public class InspectionMain implements ApplicationStarter {
         }
         else //noinspection StatementWithEmptyBody
           if ("-qodana".equals(arg)) {
-        }
-        else {
-          System.err.println("unexpected argument: " + arg);
-          printHelp();
-        }
+          }
+          else {
+            System.err.println("unexpected argument: " + arg);
+            printHelp();
+          }
       }
     }
     catch (IndexOutOfBoundsException e) {

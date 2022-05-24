@@ -67,7 +67,7 @@ abstract class DefaultJreSelector {
 
   class ProjectSdkSelector(val project: Project): DefaultJreSelector() {
     override fun getNameAndDescription(): Pair<String?, String> = Pair.create(ProjectRootManager.getInstance(project).projectSdkName, "project SDK")
-    override fun getVersion(): String? = ProjectRootManager.getInstance(project).projectSdk?.versionString;
+    override fun getVersion(): String? = ProjectRootManager.getInstance(project).projectSdk?.versionString
     override fun isValid(): Boolean = !project.isDisposed
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.JsonPointerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -18,13 +19,13 @@ import org.jetbrains.annotations.Nullable;
 public class JsonQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
   @Override
-  public PsiElement adjustElementToCopy(PsiElement element) {
+  public PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     return null;
   }
 
   @Nullable
   @Override
-  public String getQualifiedName(PsiElement element) {
+  public String getQualifiedName(@NotNull PsiElement element) {
     return generateQualifiedName(element, JsonQualifiedNameKind.Qualified);
   }
 
@@ -63,7 +64,7 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   @Override
-  public PsiElement qualifiedNameToElement(String fqn, Project project) {
+  public PsiElement qualifiedNameToElement(@NotNull String fqn, @NotNull Project project) {
     return null;
   }
 }

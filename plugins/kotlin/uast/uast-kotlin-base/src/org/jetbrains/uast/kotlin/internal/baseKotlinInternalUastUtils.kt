@@ -58,8 +58,7 @@ fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
 fun KtExpression.readWriteAccess(): ReferenceAccess {
     var expression = getQualifiedExpressionForSelectorOrThis()
     loop@ while (true) {
-        val parent = expression.parent
-        when (parent) {
+        when (val parent = expression.parent) {
             is KtParenthesizedExpression, is KtAnnotatedExpression, is KtLabeledExpression -> expression = parent as KtExpression
             else -> break@loop
         }

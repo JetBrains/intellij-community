@@ -3,7 +3,10 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.diagnostic.telemetry.forkJoinTask
+import com.intellij.diagnostic.telemetry.use
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.tracer
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -45,7 +48,7 @@ fun runScrambler(scramblerJar: Path,
 
       // update package index (main jar will be merged into app.jar, so, skip it)
       ForkJoinTask.invokeAll(files.subList(1, files.size).map { file ->
-        task(tracer.spanBuilder("update package index after scrambling")
+        forkJoinTask(tracer.spanBuilder("update package index after scrambling")
                .setAttribute("file", file.toString())) {
           updatePackageIndexUsingTempFile(file)
         }
@@ -59,7 +62,7 @@ fun runScrambler(scramblerJar: Path,
       }
 
       ForkJoinTask.invokeAll(files.map { file ->
-        task(tracer.spanBuilder("update package index after scrambling")
+        forkJoinTask(tracer.spanBuilder("update package index after scrambling")
                .setAttribute("plugin", pluginDir.toString())
                .setAttribute("file", pluginDir.relativize(file).toString())) {
           updatePackageIndexUsingTempFile(file)
@@ -112,7 +115,7 @@ private fun updatePackageIndex(sourceFile: Path, targetFile: Path) {
 // so we check validity of the produced class files here
 private fun checkClassFilesValidity(jarFile: Path) {
   val checkVisitor = object : ClassVisitor(Opcodes.API_VERSION) {}
-  tracer.spanBuilder("check class files validity").setAttribute("file", jarFile.toString()).startSpan().use {
+  tracer.spanBuilder("check class files validity").setAttribute("file", jarFile.toString()).use {
     readZipFile(jarFile) { name, entry ->
       if (name.endsWith(".class")) {
         try {

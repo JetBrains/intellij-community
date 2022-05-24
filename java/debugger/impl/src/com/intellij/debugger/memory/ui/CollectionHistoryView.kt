@@ -283,7 +283,7 @@ class CollectionHistoryView(private val myClsName: String,
         val javaValue = myValueNode?.valueContainer as? JavaValue ?: return false
         val type = javaValue.descriptor.type ?: return false
         val project = myDebugProcess.project
-        val psiType = PsiType.getTypeByName(type.name(), project, GlobalSearchScope.allScope(project));
+        val psiType = PsiType.getTypeByName(type.name(), project, GlobalSearchScope.allScope(project))
         val resolved = PsiUtil.resolveClassInClassTypeOnly(psiType) ?: return false
         return InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_MAP)
       }

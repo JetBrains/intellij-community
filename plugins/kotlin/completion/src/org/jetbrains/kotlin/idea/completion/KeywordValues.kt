@@ -62,8 +62,7 @@ object KeywordValues {
         if (callTypeAndReceiver is CallTypeAndReceiver.DEFAULT) {
             val booleanInfoMatcher = matcher@{ info: ExpectedInfo ->
                 // no sense in true or false as if-condition or when entry for when with no subject
-                val additionalData = info.additionalData
-                val skipTrueFalse = when (additionalData) {
+                val skipTrueFalse = when (val additionalData = info.additionalData) {
                     is IfConditionAdditionalData -> true
                     is WhenEntryAdditionalData -> !additionalData.whenWithSubject
                     else -> false
@@ -72,7 +71,7 @@ object KeywordValues {
                     return@matcher ExpectedInfoMatch.noMatch
                 }
 
-                if (info.fuzzyType?.type?.isBooleanOrNullableBoolean() ?: false)
+                if (info.fuzzyType?.type?.isBooleanOrNullableBoolean() == true)
                     ExpectedInfoMatch.match(TypeSubstitutor.EMPTY)
                 else
                     ExpectedInfoMatch.noMatch

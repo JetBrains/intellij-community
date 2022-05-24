@@ -26,7 +26,7 @@ object IndexableEntityProviderMethods {
   fun findModuleForEntity(entity: ModuleEntity, storage: WorkspaceEntityStorage, project: Project): Module? =
     findModuleForEntity(entity, storage.moduleMap, project)
 
-  fun findModuleForEntity(entity: ModuleEntity, map: ExternalEntityMapping<ModuleBridge>, project: Project): Module? {
+  private fun findModuleForEntity(entity: ModuleEntity, map: ExternalEntityMapping<ModuleBridge>, project: Project): Module? {
     val moduleName = entity.name
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName)
     if (module == null && !isModuleUnloaded(entity, map)) {
@@ -35,7 +35,7 @@ object IndexableEntityProviderMethods {
     return module
   }
 
-  fun isModuleUnloaded(entity: ModuleEntity, mapping: ExternalEntityMapping<ModuleBridge>): Boolean =
+  private fun isModuleUnloaded(entity: ModuleEntity, mapping: ExternalEntityMapping<ModuleBridge>): Boolean =
     mapping.getDataByEntity(entity) == null
 
   fun createIterators(entity: ModuleEntity,

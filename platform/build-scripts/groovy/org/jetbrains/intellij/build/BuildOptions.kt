@@ -165,7 +165,7 @@ class BuildOptions {
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  var targetOs: String?
+  var targetOs: String
 
   /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
@@ -298,13 +298,19 @@ class BuildOptions {
   var randomSeedNumber: Long = 0
 
   init {
-    targetOs = System.getProperty(TARGET_OS_PROPERTY)
+    var targetOs = System.getProperty(TARGET_OS_PROPERTY, OS_ALL)
     if (targetOs == OS_CURRENT) {
-      targetOs = if (SystemInfoRt.isWindows) OS_WINDOWS else if (SystemInfoRt.isMac) OS_MAC else if (SystemInfoRt.isLinux) OS_LINUX else null
+      targetOs = when {
+        SystemInfoRt.isWindows -> OS_WINDOWS
+        SystemInfoRt.isMac -> OS_MAC
+        SystemInfoRt.isLinux -> OS_LINUX
+        else -> throw RuntimeException("Unknown OS")
+      }
     }
-    else if (targetOs.isNullOrEmpty()) {
+    else if (targetOs.isEmpty()) {
       targetOs = OS_ALL
     }
+    this.targetOs = targetOs
 
     val sourceDateEpoch = System.getenv("SOURCE_DATE_EPOCH")
     buildDateInSeconds = sourceDateEpoch?.toLong() ?: (System.currentTimeMillis() / 1000)

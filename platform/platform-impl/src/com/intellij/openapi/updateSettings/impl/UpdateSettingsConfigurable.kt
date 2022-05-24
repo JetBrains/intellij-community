@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.icons.AllIcons
@@ -62,7 +62,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
               .gap(RightGap.SMALL)
             comboBox(channelModel)
               .bindItem(getter = { settings.selectedActiveChannel },
-                setter = { settings.selectedChannelStatus = selectedChannel(it) })
+                        setter = { settings.selectedChannelStatus = selectedChannel(it) })
               .enabledIf(checkBox.selected)
           }
         }
@@ -79,8 +79,8 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
             val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myLastCheckedLabel))
             val settingsCopy = UpdateSettings()
             settingsCopy.state.copyFrom(settings.state)
-            settingsCopy.state.isCheckNeeded = true
-            settingsCopy.state.isPluginsCheckNeeded = true
+            settingsCopy.isCheckNeeded = true
+            settingsCopy.isPluginsCheckNeeded = true
             if (channelSelectionLockedMessage == null) {
               settingsCopy.selectedChannelStatus = selectedChannel(channelModel.selected)
             }

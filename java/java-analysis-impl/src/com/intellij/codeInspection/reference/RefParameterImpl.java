@@ -24,7 +24,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
 
   private final short myIndex;
   private Object myActualValueTemplate; // guarded by this
-  private int myUsageCount; // guarded by this
+  private short myUsageCount; // guarded by this
 
   RefParameterImpl(UParameter parameter, PsiElement psi, int index, RefManager manager, RefElement refElement) {
     super(parameter, psi, manager);

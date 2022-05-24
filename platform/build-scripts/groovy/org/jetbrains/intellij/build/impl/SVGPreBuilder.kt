@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask

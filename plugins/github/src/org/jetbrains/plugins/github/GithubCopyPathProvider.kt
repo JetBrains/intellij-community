@@ -15,7 +15,7 @@ class GithubCopyPathProvider: DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? {
     if (virtualFile == null) return null
 
-    val fileStatus = ChangeListManager.getInstance(project).getStatus(virtualFile);
+    val fileStatus = ChangeListManager.getInstance(project).getStatus(virtualFile)
     if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) return null
 
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile)

@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import io.opentelemetry.api.trace.SpanBuilder
-import java.util.function.Supplier
-
 interface BuildMessages: System.Logger {
   fun info(message: String)
 
@@ -34,9 +31,7 @@ interface BuildMessages: System.Logger {
 
   fun setParameter(parameterName: String, value: String)
 
-  fun <V> block(blockName: String, task: Supplier<V>): V
-
-  fun <V> block(spanBuilder: SpanBuilder, task: Supplier<V>): V
+  fun <V> block(blockName: String, task: () -> V): V
 
   fun artifactBuilt(relativeArtifactPath: String)
 

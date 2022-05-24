@@ -28,7 +28,7 @@ import java.nio.charset.UnsupportedCharsetException
 class MavenEncodingImporter : MavenImporter("", "") {
 
   override fun isApplicable(mavenProject: MavenProject): Boolean {
-    return true;
+    return true
   }
 
   override fun postProcess(module: Module,

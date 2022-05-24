@@ -62,10 +62,11 @@ object DigestUtil {
   }
 
   @JvmStatic
-  fun updateContentHash(digest: MessageDigest, path: Path) {
+  @JvmOverloads
+  fun updateContentHash(digest: MessageDigest, path: Path, buffer: ByteArray = ByteArray(512 * 1024)) {
     try {
       path.inputStream().use {
-        updateContentHash(digest, it)
+        updateContentHash(digest, it, buffer)
       }
     }
     catch (e: IOException) {
@@ -74,13 +75,13 @@ object DigestUtil {
   }
 
   @JvmStatic
-  fun updateContentHash(digest: MessageDigest, inputStream: InputStream) {
-    val buff = ByteArray(512 * 1024)
+  @JvmOverloads
+  fun updateContentHash(digest: MessageDigest, inputStream: InputStream, buffer: ByteArray = ByteArray(512 * 1024)) {
     try {
       while (true) {
-        val sz = inputStream.read(buff)
+        val sz = inputStream.read(buffer)
         if (sz <= 0) break
-        digest.update(buff, 0, sz)
+        digest.update(buffer, 0, sz)
       }
     }
     catch (e: IOException) {

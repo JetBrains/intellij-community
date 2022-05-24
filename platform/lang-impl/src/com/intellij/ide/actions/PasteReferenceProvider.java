@@ -31,6 +31,7 @@ public class PasteReferenceProvider implements PasteProvider {
     if (project == null || editor == null) return;
 
     final String fqn = getCopiedFqn(dataContext);
+    if (fqn == null) return;
 
     QualifiedNameProvider theProvider = null;
     PsiElement element = null;
@@ -61,7 +62,12 @@ public class PasteReferenceProvider implements PasteProvider {
     return project != null && fqn != null && QualifiedNameProviderUtil.qualifiedNameToElement(fqn, project) != null;
   }
 
-  private static void insert(final String fqn, final PsiElement element, final Editor editor, final QualifiedNameProvider provider) {
+  private static void insert(
+    @NotNull String fqn,
+    @NotNull PsiElement element,
+    @NotNull Editor editor,
+    @NotNull QualifiedNameProvider provider
+  ) {
     final Project project = editor.getProject();
     if (project == null) return;
 

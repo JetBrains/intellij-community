@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 @RunWith(JUnit3RunnerWithInners::class)
 class InplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    override val testDataDirectory = IDEA_TEST_DATA_DIR.resolve("refactoring/extractFunction/inplace")
+    override val testDataDirectory = IDEA_TEST_DATA_DIR.resolve("refactoring/extractFunctionInplace")
 
     fun testStringTemplate() {
         doTest()

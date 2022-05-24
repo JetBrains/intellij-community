@@ -195,7 +195,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
       WHILE_ON_NEW_LINE = true
       BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
 
-      SPACE_WITHIN_BRACES = true;
+      SPACE_WITHIN_BRACES = true
     }
     doTest()
   }
@@ -4089,7 +4089,7 @@ public enum LevelCode {
   }
 
   fun testIdea153525() {
-    settings.LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
+    settings.LAMBDA_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED
     doTextTest(
       """
       public class Test {

@@ -8,6 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
+import com.intellij.util.io.stats.FilePageCacheStatistics;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.junit.After;
@@ -177,6 +178,142 @@ public class PersistentBTreeEnumeratorTest {
 
     assertNull(myEnumerator.valueOf(1000));
     assertEquals(string, myEnumerator.valueOf(value));
+  }
+
+  @Test
+  public void testEmptyEnumeratorTryEnumerateDoesntAccessDisk() throws IOException {
+    myEnumerator.force();
+    boolean isEmpty = myEnumerator.processAllDataObject(s -> false, null);
+    assertTrue(isEmpty);
+
+    StorageLockContext.forceDirectMemoryCache();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
+
+    myEnumerator.tryEnumerate("qwerty");
+
+    FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    // ensure enumerator didn't request any page
+
+    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
+    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
+    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
+
+    assertEquals(0, pageLoadDiff);
+    assertEquals(0, pageMissDiff);
+    assertEquals(0, pageHitDiff);
+    assertEquals(0, pageFastHitDiff);
+  }
+
+  @Test
+  public void testSmallEnumeratorTryEnumeratePerformance() throws IOException {
+    List<String> data = Arrays.asList("qwe", "asd", "zxc", "123");
+    for (String item : data) {
+      myEnumerator.enumerate(item);
+    }
+
+    List<String> absentData = Arrays.asList("456", "789", "jjj", "kkk");
+
+    StorageLockContext.forceDirectMemoryCache();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 400, () -> {
+      for (int i = 0; i < 10000; i++) {
+        for (String item : data) {
+          assertNotEquals(0, myEnumerator.tryEnumerate(item));
+        }
+
+        for (String item : absentData) {
+          assertEquals(0, myEnumerator.tryEnumerate(item));
+        }
+      }
+    }).attempts(1).assertTiming();
+    FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    // ensure enumerator didn't request any page
+
+    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
+    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
+    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
+
+    assertEquals(1, pageLoadDiff);
+    assertEquals(0, pageMissDiff);
+    assertEquals(0, pageHitDiff);
+    assertEquals(0, pageFastHitDiff);
+  }
+
+  @Test
+  public void testEnumeratorDiskAccessCount() throws IOException {
+    StorageLockContext.forceDirectMemoryCache();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+    FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
+
+    for (int i = 0; i < 1000; i++) {
+      myEnumerator.enumerate("value" + i);
+    }
+    for (int i = 0; i < 1000; i++) {
+      myEnumerator.tryEnumerate("value" + i);
+    }
+
+    FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
+    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
+    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+    int pageFastHitDiff = statsAfter.getPageFastCacheHit() - statsBefore.getPageFastCacheHit();
+
+    assertEquals(3, pageLoadDiff);
+    assertEquals(0, pageMissDiff);
+    assertEquals(0, pageHitDiff);
+    assertEquals(1929, pageFastHitDiff);
+  }
+
+  @Test
+  public void testEnumeratorRootRecaching() throws IOException {
+    List<String> data = Arrays.asList("qwe", "asd", "zxc", "123");
+    for (String item : data) {
+      myEnumerator.enumerate(item);
+    }
+
+    StorageLockContext.forceDirectMemoryCache();
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
+    for (String item : data) {
+      assertNotEquals(0, myEnumerator.tryEnumerate(item));
+      StorageLockContext.forceDirectMemoryCache();
+    }
+    FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
+
+    // ensure we don't cache anything
+    StorageLockContext.assertNoBuffersLocked();
+
+    // ensure enumerator didn't request any page
+
+    int pageLoadDiff = statsAfter.getPageLoad() - statsBefore.getPageLoad();
+    int pageMissDiff = statsAfter.getPageMiss() - statsBefore.getPageMiss();
+    int pageHitDiff = statsAfter.getPageHit() - statsBefore.getPageHit();
+
+    assertEquals(4, pageLoadDiff);
+    assertEquals(0, pageMissDiff);
+    assertEquals(0, pageHitDiff);
   }
 
   @Test

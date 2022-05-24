@@ -175,4 +175,6 @@ public interface EditorSettings {
 
   @Nullable Boolean isShowVisualFormattingLayer();
   void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer);
+
+  boolean isInsertParenthesesAutomatically();
 }

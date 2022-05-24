@@ -85,8 +85,7 @@ object ExtractMethodHelper {
   }
 
   fun getValidParentOf(element: PsiElement): PsiElement {
-    val parent = element.parent
-    val physicalParent = when (parent) {
+    val physicalParent = when (val parent = element.parent) {
       is DummyHolder -> parent.context
       null -> element.context
       else -> parent

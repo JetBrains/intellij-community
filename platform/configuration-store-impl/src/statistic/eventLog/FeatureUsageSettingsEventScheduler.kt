@@ -51,7 +51,7 @@ private fun logConfigStateEvents(): CompletableFuture<Void> {
     projects.addFirst(projectManager.defaultProject)
   }
   val projectCompletableFuture = logProjectInitializedComponentsAndContinue(projects)
-  return CompletableFuture.allOf(applicationCompletableFuture, projectCompletableFuture);
+  return CompletableFuture.allOf(applicationCompletableFuture, projectCompletableFuture)
 }
 
 private fun logProjectInitializedComponentsAndContinue(projects: ArrayDeque<Project>): CompletableFuture<Void?> {

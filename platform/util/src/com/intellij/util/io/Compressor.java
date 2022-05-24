@@ -105,7 +105,11 @@ public abstract class Compressor implements Closeable {
    */
   public static class Zip extends Compressor {
     public Zip(@NotNull File file) throws IOException {
-      this(new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(file.toPath()))));
+      this(file.toPath());
+    }
+
+    public Zip(@NotNull Path file) throws IOException {
+      this(new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(file))));
     }
 
     public Zip(@NotNull OutputStream stream) {

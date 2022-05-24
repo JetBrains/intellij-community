@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import com.intellij.util.lang.JavaVersion
@@ -9,15 +10,14 @@ import io.opentelemetry.api.common.Attributes
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
-import org.jetbrains.intellij.build.tasks.use
 import java.nio.file.Files
 import java.nio.file.Path
 
 class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
-  private val jpsCache = PortableCompilationCache(context)
+  private val jpsCache by lazy { PortableCompilationCache(context) }
 
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
     reuseCompiledClassesIfProvided()
@@ -44,33 +44,36 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
         messages.error("Build script must be executed under Java 11 to compile intellij project, " +
                        "but it\'s executed under Java ${JavaVersion.current()}")
       }
+
       resolveProjectDependencies()
       messages.progress("Compiling project")
       val runner = JpsCompilationRunner(context)
-      try {
-        if (moduleNames == null) {
-          if (includingTestsInModules == null) {
-            runner.buildAll()
-          }
-          else {
-            runner.buildProduction()
-          }
+      if (moduleNames == null) {
+        if (includingTestsInModules == null) {
+          runner.buildAll()
         }
         else {
-          val invalidModules = moduleNames.filter { context.findModule(it) == null }
-          if (!invalidModules.isEmpty()) {
-            messages.warning("The following modules won\'t be compiled: $invalidModules")
-          }
-          runner.buildModules(moduleNames.mapNotNull(context::findModule))
-        }
-        if (includingTestsInModules != null) {
-          for (moduleName in includingTestsInModules) {
-            runner.buildModuleTests(context.findModule(moduleName))
-          }
+          runner.buildProduction()
         }
       }
-      catch (e: Throwable) {
-        messages.error("Compilation failed with exception: $e", e)
+      else {
+        val invalidModules = mutableListOf<String>()
+        val modules = moduleNames.mapNotNull {
+          val module = context.findModule(it)
+          if (module == null) {
+            invalidModules.add(it)
+          }
+          module
+        }
+        if (!invalidModules.isEmpty()) {
+          messages.warning("The following modules won\'t be compiled: $invalidModules")
+        }
+        runner.buildModules(modules)
+      }
+      if (includingTestsInModules != null) {
+        for (moduleName in includingTestsInModules) {
+          runner.buildModuleTests(context.findRequiredModule(moduleName))
+        }
       }
     }
   }
@@ -127,9 +130,9 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
       CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
-      unpackCompiledClasses(context.projectOutputDirectory.toPath(), context)
+      unpackCompiledClasses(context.projectOutputDirectory, context)
     }
-    else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired) {
+    else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
       jpsCache.downloadCacheAndCompileProject()
     }
     context.compilationData.compiledClassesAreLoaded = true
@@ -143,7 +146,7 @@ private fun cleanOutput(context: CompilationContext) {
     outputDirectoriesToKeep.add("classes")
   }
   if (context.options.incrementalCompilation) {
-    outputDirectoriesToKeep.add(context.compilationData.dataStorageRoot.name)
+    outputDirectoriesToKeep.add(context.compilationData.dataStorageRoot.fileName.toString())
     outputDirectoriesToKeep.add("classes")
     outputDirectoriesToKeep.add("project-artifacts")
   }
@@ -152,7 +155,7 @@ private fun cleanOutput(context: CompilationContext) {
   spanBuilder("clean output")
     .setAttribute("path", outDir.toString())
     .setAttribute(AttributeKey.stringArrayKey("outputDirectoriesToKeep"), java.util.List.copyOf(outputDirectoriesToKeep))
-    .startSpan().use { span ->
+    .use { span ->
       Files.newDirectoryStream(outDir).use { dirStream ->
         for (file in dirStream) {
           val attributes = Attributes.of(AttributeKey.stringKey("dir"), outDir.relativize(file).toString())
@@ -176,7 +179,7 @@ internal fun areCompiledClassesProvided(options: BuildOptions): Boolean {
 }
 
 private fun unpackCompiledClasses(classOutput: Path, context: CompilationContext) {
-  spanBuilder("unpack compiled classes archive").startSpan().use {
+  spanBuilder("unpack compiled classes archive").use {
     NioFiles.deleteRecursively(classOutput)
     Decompressor.Zip(context.options.pathToCompiledClassesArchive ?: throw IllegalStateException("intellij.build.compiled.classes.archive is not set")).extract(classOutput)
   }

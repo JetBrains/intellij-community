@@ -133,7 +133,9 @@ enum class HintType(
         KotlinBundle.message("hints.settings.dont.show.lambda.receivers.parameters"),
         true
     ) {
-        override fun isApplicable(e: PsiElement) = e is KtFunctionLiteral
+        override fun isApplicable(e: PsiElement): Boolean {
+            return e is KtFunctionLiteral && e.parent is KtLambdaExpression && (e.parent as KtLambdaExpression).leftCurlyBrace.isFollowedByNewLine()
+        }
 
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
             e.safeAs<KtFunctionLiteral>()?.parent.safeAs<KtLambdaExpression>()?.let { expression ->

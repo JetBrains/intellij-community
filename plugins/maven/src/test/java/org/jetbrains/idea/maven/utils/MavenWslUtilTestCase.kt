@@ -59,7 +59,7 @@ class MavenWslUtilTestCase : MavenTestCase() {
   fun testShouldReturnMavenLocalDirOnWsl() {
     TestCase.assertEquals(
       File(File(myUserHome, ".m2"), "repository"),
-      myDistribution.resolveLocalRepository(null, null, null));
+      myDistribution.resolveLocalRepository(null, null, null))
   }
 
   @Test
@@ -76,10 +76,10 @@ class MavenWslUtilTestCase : MavenTestCase() {
                                        "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                                        "      xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
                                        "      <localRepository>/tmp/path/to/repo</localRepository>\n" +
-                                       "</settings>");
+                                       "</settings>")
     TestCase.assertEquals(
       File(myDistribution.getWindowsPath("/tmp/path/to/repo")!!),
-      myDistribution.resolveLocalRepository(null, null, subFile.path));
+      myDistribution.resolveLocalRepository(null, null, subFile.path))
   }
 
   @Test
@@ -91,7 +91,7 @@ class MavenWslUtilTestCase : MavenTestCase() {
 
   @Test
   fun testWindowFileMapInMnt() {
-    TestCase.assertEquals(File("c:\\somefile"), myDistribution.getWindowsFile(File("/mnt/c/somefile")));
+    TestCase.assertEquals(File("c:\\somefile"), myDistribution.getWindowsFile(File("/mnt/c/somefile")))
   }
 
   @Test
@@ -101,7 +101,7 @@ class MavenWslUtilTestCase : MavenTestCase() {
 
   @Test
   fun testWslFileMapInMnt() {
-    TestCase.assertEquals(File("/mnt/c/somefile"), myDistribution.getWslFile(File("c:\\somefile")));
+    TestCase.assertEquals(File("/mnt/c/somefile"), myDistribution.getWslFile(File("c:\\somefile")))
   }
 
   @Test

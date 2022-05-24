@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtFile
@@ -36,55 +35,79 @@ class KotlinInlayHintToggleAction : IntentionAction, HighPriorityAction {
     override fun getFamilyName(): String = KotlinBundle.message("hints.types")
     
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-        val element = findElement(editor, file) ?: return false
-        
         lastOptionName = ""
-        for (hintType in hintTypes) {
-            findSetting(hintType, project, element)?.let {
-                val enabled = it.isEnabled(hintType)
-                lastOptionName = if (enabled) hintType.hideDescription else hintType.showDescription
-                return true
+        var element = findElement(editor, file)
+
+        while (element != null) {
+            for (hintType in hintTypes) {
+                if (!hintType.isApplicable(element)) continue
+                findSetting(hintType, project)?.let {
+                    val enabled = it.second.isEnabled(hintType)
+                    lastOptionName = if (enabled) hintType.hideDescription else hintType.showDescription
+                    return true
+                }
             }
+            element = element.parent
         }
         return false
     }
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-        val element = findElement(editor, file) ?: return
+        var element = findElement(editor, file)
 
-        for (hintType in hintTypes) {
-            findSetting(hintType, project, element)?.let {
-                val enabled = it.isEnabled(hintType)
-                it.enable(hintType, !enabled)
-                InlayHintsPassFactory.forceHintsUpdateOnNextPass()
-                return
+        while(element != null) {
+            for (hintType in hintTypes) {
+                if (toggleHintSetting(hintType, project, element)) return
             }
+            element = element.parent
         }
+    }
+
+    private fun findElement(editor: Editor, file: PsiFile): PsiElement? {
+        val ktFile = file as? KtFile ?: return null
+        val offset = editor.caretModel.offset
+        return ktFile.findElementAt(offset - 1)
     }
 
     override fun startInWriteAction(): Boolean = false
 
-    private fun findElement(editor: Editor, file: PsiFile): PsiElement? {
-        if (file !is KtFile) return null
-        val offset = editor.caretModel.offset
-        val leaf1 = file.findElementAt(offset)
-        val leaf2 = file.findElementAt(offset - 1)
-        return if (leaf1 != null && leaf2 != null) PsiTreeUtil.findCommonParent(leaf1, leaf2) else null
-    }
+}
 
-    private fun findSetting(hintType: HintType, project: Project, element: PsiElement): KotlinAbstractHintsProvider.HintsSettings? {
-        if (!hintType.isApplicable(element)) return null
-        val hintsSettings = InlayHintsSettings.instance()
-        val providerInfos = InlayHintsProviderFactory.EP.extensionList
+internal fun toggleHintSetting(
+    hintType: HintType,
+    project: Project,
+    element: PsiElement,
+    state: (KotlinAbstractHintsProvider.HintsSettings) -> Boolean = { setting -> !setting.isEnabled(hintType) }
+): Boolean {
+    if (!hintType.isApplicable(element)) return false
+    val hintsSettings = InlayHintsSettings.instance()
+    return findSetting(hintType, project, hintsSettings)?.let {
+        val settingsKey = it.first
+        val settings = it.second
+        val enable = state(settings)
+        val language = KotlinLanguage.INSTANCE
+        if (enable) {
+            InlayHintsSettings.instance().changeHintTypeStatus(settingsKey, language, true)
+        }
+        settings.enable(hintType, enable)
+        hintsSettings.storeSettings(settingsKey, language, settings)
+        refreshHints()
+        true
+    } ?: false
+}
+private fun findSetting(hintType: HintType, project: Project, hintsSettings: InlayHintsSettings = InlayHintsSettings.instance()):
+        Pair<SettingsKey<KotlinAbstractHintsProvider.HintsSettings>, KotlinAbstractHintsProvider.HintsSettings>? {
+    val language = KotlinLanguage.INSTANCE
+    val providerInfos =
+        InlayHintsProviderFactory.EP.extensionList
             .flatMap { it.getProvidersInfo(project) }
-            .filter { it.language == KotlinLanguage.INSTANCE }
-        val provider = providerInfos
-            .firstOrNull {
-                val hintsProvider = it.provider as? KotlinAbstractHintsProvider ?: return@firstOrNull false
-                hintsProvider.isHintSupported(hintType)
-            }
-            ?.provider?.safeAs<KotlinAbstractHintsProvider<KotlinAbstractHintsProvider.HintsSettings>>() ?: return null
-        val settingsKey = provider.key
-        return hintsSettings.findSettings(settingsKey, KotlinLanguage.INSTANCE, provider::createSettings)
-    }
+            .filter { it.language == language }
+    val provider = providerInfos
+        .firstOrNull {
+            val hintsProvider = it.provider as? KotlinAbstractHintsProvider ?: return@firstOrNull false
+            hintsProvider.isHintSupported(hintType)
+        }
+        ?.provider?.safeAs<KotlinAbstractHintsProvider<KotlinAbstractHintsProvider.HintsSettings>>() ?: return null
+    val settingsKey = provider.key
+    return settingsKey to hintsSettings.findSettings(settingsKey, language, provider::createSettings)
 }

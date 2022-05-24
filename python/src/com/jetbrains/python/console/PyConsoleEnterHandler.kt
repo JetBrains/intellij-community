@@ -51,11 +51,11 @@ class PyConsoleEnterHandler {
       } else {
         // otherwise just process enter action
         executeEnterHandler(project, editor)
-        return false;
+        return false
       }
     }
     else {
-      return true;
+      return true
     }
     val psiMgr = PsiDocumentManager.getInstance(project)
     psiMgr.commitDocument(editor.document)

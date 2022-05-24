@@ -12,7 +12,7 @@ object CommunityLibraryLicenses {
   @JvmStatic
   @SuppressWarnings("SpellCheckingInspection")
   val LICENSES_LIST: List<LibraryLicense> = java.util.List.of(
-    LibraryLicense(name = "A fast Java JSON schema validator", libraryName = "networknt.json.schema.validator",
+    LibraryLicense(name = "A fast Java JSON schema validator", libraryName = "json-schema-validator",
                    url = "https://github.com/networknt/json-schema-validator").apache(),
     LibraryLicense(name = "aalto-xml", libraryName = "aalto-xml", url = "https://github.com/FasterXML/aalto-xml/").apache(),
     LibraryLicense(name = "AAPT Protos", libraryName = "aapt-proto", url = "https://source.android.com/").apache(),
@@ -605,6 +605,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "OkHttp", libraryName = "okhttp", url = "https://square.github.io/okhttp/").apache(),
     LibraryLicense(name = "Okio", libraryName = "okio", url = "https://github.com/square/okio").apache(),
     LibraryLicense(libraryName = "opentelemetry", url = "https://opentelemetry.io/").apache(),
+    LibraryLicense(libraryName = "opentelemetry-exporter-otlp", url = "https://opentelemetry.io/").apache(),
     LibraryLicense(libraryName = "opentest4j", url = "https://github.com/ota4j-team/opentest4j").apache(),
     LibraryLicense(name = "Package Search API Models", libraryName = "package-search-api-models",
                    url = "https://package-search.jetbrains.com", version = "2.2.3").apache(),

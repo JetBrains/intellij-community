@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 class IdeaJvmTargetVersionProviderService: JvmTargetVersionsProviderService(), IdeaWizardService {
 
     override fun listSupportedJvmTargetVersions(projectKind: ProjectKind): Set<TargetJvmVersion> {
-        return JvmTarget.values().mapNotNull { mapToInternal(it) }.toSet()
+        return JvmTarget.supportedValues().mapNotNull { mapToInternal(it) }.toSet()
     }
 
     private fun mapToInternal(target: JvmTarget): TargetJvmVersion? = try {

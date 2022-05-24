@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.impl.BuildHelperKt
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.TracerManager
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.io.HttpKt
 
 import java.nio.charset.StandardCharsets
@@ -33,7 +33,7 @@ final class StatisticsRecorderBundledMetadataProvider {
     }
 
     return BuildHelperKt.createSkippableTask(
-      TracerManager.spanBuilder("bundle a default version of feature usage statistics"),
+      TraceManager.spanBuilder("bundle a default version of feature usage statistics"),
       BuildOptions.FUS_METADATA_BUNDLE_STEP,
       context,
       new Function0<Unit>() {

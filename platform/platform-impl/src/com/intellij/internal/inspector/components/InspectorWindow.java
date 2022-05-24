@@ -30,9 +30,11 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,65 +90,13 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (location != null) setLocation(location);
 
     DefaultActionGroup actions = new DefaultActionGroup();
-    actions.addAction(new MyTextAction(IdeBundle.messagePointer("action.Anonymous.text.highlight")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myIsHighlighted = !myIsHighlighted;
-        updateHighlighting();
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(myInfo != null || !myComponents.isEmpty());
-      }
-    });
-
+    actions.addAction(new ToggleHighlightAction());
     actions.addSeparator();
-
-    actions.add(new MyTextAction(InternalActionsBundle.messagePointer("action.Anonymous.text.refresh")) {
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        getCurrentTable().refresh();
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!myComponents.isEmpty());
-      }
-    });
-
+    actions.add(new RefreshAction());
     actions.addSeparator();
-
-    actions.add(new MyTextAction(InternalActionsBundle.messagePointer("action.Anonymous.text.Accessible")) {
-      private boolean isAccessibleEnable = false;
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        switchHierarchy();
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setText(isAccessibleEnable
-                                    ? InternalActionsBundle.message("action.Anonymous.text.Visible")
-                                    : InternalActionsBundle.message("action.Anonymous.text.Accessible"));
-      }
-
-      private void switchHierarchy() {
-        TreePath path = myHierarchyTree.getLeadSelectionPath();
-        Object node = path == null ? null : path.getLastPathComponent();
-        if (node == null) return;
-        Component c = ((HierarchyTree.ComponentNode)node).getComponent();
-        if (c != null) {
-          isAccessibleEnable = !isAccessibleEnable;
-          myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
-          myHierarchyTree.resetModel(c, isAccessibleEnable);
-          myHierarchyTree.expandPath(isAccessibleEnable);
-        }
-      }
-    });
-
+    actions.add(new ToggleAccessibleAction());
+    actions.addSeparator();
+    actions.add(new ShowDataContextAction());
     actions.addSeparator();
     actions.add(new MyNavigateAction());
 
@@ -433,6 +383,91 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
       g2d.setComposite(old);
       g2d.setColor(oldColor);
+    }
+  }
+
+  private class ToggleHighlightAction extends MyTextAction {
+    private ToggleHighlightAction() {
+      super(IdeBundle.messagePointer("action.Anonymous.text.highlight"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myIsHighlighted = !myIsHighlighted;
+      updateHighlighting();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(myInfo != null || !myComponents.isEmpty());
+    }
+  }
+
+  private class RefreshAction extends MyTextAction {
+    private RefreshAction() {
+      super(InternalActionsBundle.messagePointer("action.Anonymous.text.refresh"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      getCurrentTable().refresh();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(!myComponents.isEmpty());
+    }
+  }
+
+  private class ToggleAccessibleAction extends MyTextAction {
+    private boolean isAccessibleEnable = false;
+
+    private ToggleAccessibleAction() {
+      super(InternalActionsBundle.messagePointer("action.Anonymous.text.Accessible"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      switchHierarchy();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setText(isAccessibleEnable
+                                  ? InternalActionsBundle.message("action.Anonymous.text.Visible")
+                                  : InternalActionsBundle.message("action.Anonymous.text.Accessible"));
+    }
+
+    private void switchHierarchy() {
+      TreePath path = myHierarchyTree.getLeadSelectionPath();
+      if (path == null) return;
+      HierarchyTree.ComponentNode node = ObjectUtils.tryCast(path.getLastPathComponent(), HierarchyTree.ComponentNode.class);
+      if (node == null) return;
+      Component c = node.getComponent();
+      if (c == null) return;
+
+      isAccessibleEnable = !isAccessibleEnable;
+      myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
+      myHierarchyTree.resetModel(c, isAccessibleEnable);
+      myHierarchyTree.expandPath(isAccessibleEnable);
+    }
+  }
+
+  private class ShowDataContextAction extends MyTextAction {
+    private ShowDataContextAction() {
+      super(InternalActionsBundle.messagePointer("action.Anonymous.text.DataContext"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      TreePath path = myHierarchyTree.getLeadSelectionPath();
+      if (path == null) return;
+      HierarchyTree.ComponentNode node = ObjectUtils.tryCast(path.getLastPathComponent(), HierarchyTree.ComponentNode.class);
+      if (node == null) return;
+      JComponent c = UIUtil.getParentOfType(JComponent.class, node.getComponent());
+      if (c == null) return;
+
+      new DataContextDialog(myProject, c).show();
     }
   }
 

@@ -87,7 +87,7 @@ import java.util.List;
  *      <tr valign="top"><td><td><pre>constructor</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}
  *      <tr valign="top"><td><td><pre>implicitly read</pre><td>{@link com.intellij.codeInspection.reference.RefFieldImpl}
  *
- *      <tr valign="top"><td>21<td><pre>is body empty</pre><td>{@link com.intellij.codeInspection.reference.RefMethodImpl}
+ *      <tr valign="top"><td>21<td><pre>is body empty</pre><td>{@link RefMethodImpl} & {@link RefFunctionalExpressionImpl}
  *      <tr valign="top"><td><td><pre>is final</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
  *      <tr valign="top"><td><td><pre>with static constructor</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefMethodImpl}
  *      <tr valign="top"><td><td><pre>implicitly written</pre><td>{@link com.intellij.codeInspection.reference.RefFieldImpl}
@@ -111,6 +111,7 @@ import java.util.List;
  *      <tr valign="top"><td><td><pre>access public</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}
  *
  *      <tr valign="top"><td>26<td><pre>is implicitly used constructor</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
+ *      <tr valign="top"><td><td><pre>is enum class</pre><td>{@link RefClassImpl}
  *
  *      <tr valign="top"><td>27<td><pre>is with duplicates</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassImpl}
  *      <tr valign="top"><td><td><pre>is abstract</pre><td>{@link com.jetbrains.php.lang.inspections.reference.elements.PhpRefClassMemberImpl}

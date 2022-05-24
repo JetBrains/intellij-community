@@ -67,9 +67,7 @@ class KotlinStructureViewElement(
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        val element = element
-
-        val children = when (element) {
+        val children = when (val element = element) {
             is KtFile -> element.declarations
             is KtClass -> element.getStructureDeclarations()
             is KtClassOrObject -> element.declarations

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.configurationStore.StoreUtilKt;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -17,7 +18,6 @@ import com.intellij.util.io.DirectoryContentSpecKt;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.junit.Test;
 
 import java.io.File;
@@ -163,7 +163,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
     getMavenImporterSettings().setCreateModulesForAggregators(false);
     myProjectsManager.performScheduledImportInTests();
-    assertModules("m2");
+    assertModules(mn("project", "m2"));
 
     getMavenImporterSettings().setCreateModulesForAggregators(true);
     myProjectsManager.performScheduledImportInTests();
@@ -432,17 +432,17 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
     configConfirmationForYesAnswer();
     importProject();
     assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(getModule("project")));
-    assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(getModule(mn("project", "m1"))));
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("project")));
-    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
+    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))));
 
     createProjectPom(String.format(parentPomTemplate, "1.7"));
 
     importProject();
     assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getEffectiveLanguageLevel(getModule("project")));
-    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getEffectiveLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getEffectiveLanguageLevel(getModule(mn("project", "m1"))));
     assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("project")));
-    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
+    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))));
   }
 
   @Test
@@ -484,13 +484,13 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
     configConfirmationForYesAnswer();
     importProject();
-    assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(getModule("m1")));
-    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(getModule(mn("project", "m1"))));
+    assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))));
 
     createModulePom("m1", String.format(m1pomTemplate, "1.7"));
 
     importProject();
-    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getEffectiveLanguageLevel(getModule("m1")));
-    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getEffectiveLanguageLevel(getModule(mn("project", "m1"))));
+    assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))));
   }
 }

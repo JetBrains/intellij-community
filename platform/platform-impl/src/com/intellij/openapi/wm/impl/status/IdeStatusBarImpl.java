@@ -782,9 +782,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   private void registerCloneTasks() {
-    CloneableProjectsService.getInstance().collectCloneableProjects().forEach(cloneProject -> {
-      addProgress(cloneProject.getProgressIndicator(), cloneProject.getTaskInfo());
-    });
+    CloneableProjectsService.getInstance()
+      .collectCloneableProjects()
+      .stream()
+      .map(cloneableProjectItem -> cloneableProjectItem.getCloneableProject())
+      .forEach(cloneableProject -> addProgress(cloneableProject.getProgressIndicator(), cloneableProject.getCloneTaskInfo()));
 
     ApplicationManager.getApplication().getMessageBus()
       .connect(this)

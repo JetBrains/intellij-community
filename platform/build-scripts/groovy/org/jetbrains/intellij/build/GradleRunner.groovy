@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -6,8 +6,6 @@ import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
-
-import java.util.function.Supplier
 
 @CompileStatic
 final class GradleRunner {
@@ -56,9 +54,7 @@ final class GradleRunner {
   }
 
   private boolean runInner(String title, File buildFile, boolean force, boolean parallel, String... tasks) {
-    return messages.block("Gradle $tasks", new Supplier<Boolean>() {
-      @Override
-      Boolean get() {
+    return messages.block("Gradle $tasks") {
         Span.current().addEvent(title)
         if (runInner(buildFile, parallel, tasks)) {
           return Boolean.TRUE
@@ -72,8 +68,7 @@ final class GradleRunner {
           messages.error(errorMessage)
         }
         return Boolean.FALSE
-      }
-    }) == Boolean.TRUE
+      } == Boolean.TRUE
   }
 
   private boolean runInner(File buildFile, boolean parallel, String... tasks) {

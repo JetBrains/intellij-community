@@ -190,7 +190,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> checkAllMavenConnectorsDisposed(),
       () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
-      () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();
         MavenIndicesManager mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager.class);
@@ -198,6 +197,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
           Disposer.dispose(mavenIndicesManager);
         }
       },
+      () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> deleteDirOnTearDown(myDir),
       () -> {
         if (myWSLDistribution != null) {

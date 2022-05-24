@@ -54,8 +54,7 @@ class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVis
   private fun checkSingleArgumentLambda(lambda: GrLambdaExpression) {
     val parameterList = lambda.parameterList
     if (parameterList.lParen != null) return
-    val parent = lambda.parent
-    when (parent) {
+    when (val parent = lambda.parent) {
       is GrAssignmentExpression, is GrVariable, is GrParenthesizedExpression -> return
       is GrArgumentList -> if (parent.parent is GrMethodCallExpression) return
     }

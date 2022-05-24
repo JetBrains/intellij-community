@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.ModuleStructureValidator
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.junit.Rule
@@ -22,7 +23,9 @@ abstract class IdeStructureTestBase {
 
   protected abstract fun createProductProperties(homePath: Path): ProductProperties
   protected abstract fun createBuildTools(): ProprietaryBuildTools
-  protected abstract val missingModulesException: Set<String>
+  protected abstract val missingModulesException: Set<MissingModuleException>
+
+  data class MissingModuleException(val fromModule: String, val toModule: String, val scope: JpsJavaDependencyScope)
 
   private fun createBuildContext(): BuildContext {
     val homePath = Path.of(PathManager.getHomePathFor(javaClass)!!)
@@ -58,7 +61,7 @@ abstract class IdeStructureTestBase {
     val buildContext = createBuildContext()
     val jarBuilder = DistributionJARsBuilder(buildContext, emptySet())
     val exceptions = missingModulesException
-    val activeExceptions = mutableSetOf<String>()
+    val activeExceptions = mutableSetOf<MissingModuleException>()
 
     val module2Jar = jarBuilder.state.platform.getJarToIncludedModuleNames().flatMap { it.value.map { e -> e to it.key } }.toMap()
     for (kv in module2Jar.entries.sortedBy { it.key }) {
@@ -69,8 +72,9 @@ abstract class IdeStructureTestBase {
           if (dependencyExtension.scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)) {
             val moduleDependency = dependency.module!!
             if (!module2Jar.containsKey(moduleDependency.name)) {
-              if (exceptions.contains(moduleDependency.name)) {
-                activeExceptions.add(moduleDependency.name)
+              val missingModuleException = MissingModuleException(module.name, moduleDependency.name, dependencyExtension.scope)
+              if (exceptions.contains(missingModuleException)) {
+                activeExceptions.add(missingModuleException)
               } else {
                 val message = "${buildContext.productProperties.productCode} (${javaClass.simpleName}): missing module from the product layout '${moduleDependency.name}' referenced from '${module.name}' scope ${dependencyExtension.scope}"
                 errorCollector.addError(IllegalStateException(message))

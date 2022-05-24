@@ -306,7 +306,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static boolean isTopLevelClass(RefElement refElement) {
-    return refElement instanceof RefClass && RefJavaUtil.getInstance().getTopLevelClass(refElement) == refElement;
+    return refElement instanceof RefClass && refElement.getOwner() instanceof RefPackage;
   }
 
   @Nullable
@@ -351,8 +351,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         if (!isAccessibleFrom(subClass, to, accessModifier)) return false;
       }
 
-      List<RefEntity> children = refClass.getChildren();
-      for (RefEntity refElement : children) {
+      for (RefEntity refElement : refClass.getChildren()) {
         if (!isAccessible((RefJavaElement)refElement, accessModifier)) return false;
       }
 

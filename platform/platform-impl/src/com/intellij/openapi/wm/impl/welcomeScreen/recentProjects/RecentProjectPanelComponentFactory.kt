@@ -16,7 +16,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 
 internal object RecentProjectPanelComponentFactory {
-  private const val UPDATE_INTERVAL = 1_000 // 1 sec
+  private const val UPDATE_INTERVAL = 50 // 50ms -- 20 frames per second
 
   @JvmStatic
   fun createComponent(parentDisposable: Disposable): RecentProjectFilteringTree {
@@ -33,6 +33,7 @@ internal object RecentProjectPanelComponentFactory {
         override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) = filteringTree.updateTree()
         override fun onCloneRemoved() = filteringTree.updateTree()
         override fun onCloneFailed() = filteringTree.updateTree()
+        override fun onCloneCanceled() = filteringTree.updateTree()
       })
     }
 

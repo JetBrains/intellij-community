@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.impl.retry.Retry
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
@@ -64,11 +66,11 @@ class CompilationPartsUploader implements Closeable {
     myMessages.error(message)
   }
 
-  boolean upload(@NotNull final String path, @NotNull final File file, boolean sendHead) throws UploadException {
+  boolean upload(@NotNull final String path, @NotNull final Path file, boolean sendHead) {
     debug("Preparing to upload " + file + " to " + myServerUrl)
 
-    if (!file.exists()) {
-      throw new UploadException("The file " + file.getPath() + " does not exist")
+    if (!Files.exists(file)) {
+      throw new RuntimeException("The file " + file + " does not exist")
     }
     if (sendHead) {
       int code = doHead(path)
@@ -129,7 +131,7 @@ class CompilationPartsUploader implements Closeable {
   }
 
   @NotNull
-  protected int doHead(String path) throws UploadException {
+  protected int doHead(String path) {
     CloseableHttpResponse response = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
@@ -140,7 +142,7 @@ class CompilationPartsUploader implements Closeable {
       return response.getStatusLine().getStatusCode()
     }
     catch (Exception e) {
-      throw new UploadException("Failed to HEAD $path: " + e.getMessage(), e)
+      throw new RuntimeException("Failed to HEAD $path: " + e.getMessage(), e)
     }
     finally {
       CloseStreamUtil.closeStream(response)
@@ -148,7 +150,7 @@ class CompilationPartsUploader implements Closeable {
   }
 
   @NotNull
-  protected void doDelete(String path) throws UploadException {
+  protected void doDelete(String path) {
     CloseableHttpResponse response = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
@@ -156,7 +158,7 @@ class CompilationPartsUploader implements Closeable {
       executeWithRetry(new HttpDelete(url))
     }
     catch (Exception e) {
-      throw new UploadException("Failed to DELETE $path: " + e.getMessage(), e)
+      throw new RuntimeException("Failed to DELETE $path: " + e.getMessage(), e)
     }
     finally {
       CloseStreamUtil.closeStream(response)
@@ -164,14 +166,14 @@ class CompilationPartsUploader implements Closeable {
   }
 
   @NotNull
-  private String doPut(String path, File file) throws UploadException {
+  private String doPut(String path, Path file)  {
     CloseableHttpResponse response = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
       debug("PUT " + url)
 
       def request = new HttpPut(url)
-      request.setEntity(new FileEntity(file, ContentType.APPLICATION_OCTET_STREAM))
+      request.setEntity(new FileEntity(file.toFile(), ContentType.APPLICATION_OCTET_STREAM))
 
       response = executeWithRetry(request)
 
@@ -185,7 +187,7 @@ class CompilationPartsUploader implements Closeable {
       return statusCode
     }
     catch (Exception e) {
-      throw new UploadException("Failed to PUT file to $path: " + e.getMessage(), e)
+      throw new RuntimeException("Failed to PUT file to $path: " + e.getMessage(), e)
     }
     finally {
       CloseStreamUtil.closeStream(response)

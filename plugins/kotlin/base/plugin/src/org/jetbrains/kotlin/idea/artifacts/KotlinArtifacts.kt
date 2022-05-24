@@ -3,16 +3,17 @@
 package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.util.io.Decompressor
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.io.File
 
 class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     companion object {
-        const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
-        const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
-        const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
-        val KOTLIN_DIST_LOCATION_PREFIX = File(PathManager.getSystemPath(), KOTLIN_DIST_ARTIFACT_ID)
+        @NlsSafe const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
+        @NlsSafe const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
+        @NlsSafe const val KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID = "kotlin-dist-for-jps-meta"
+        @NlsSafe const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
+        val KOTLIN_DIST_LOCATION_PREFIX = File(PathManager.getSystemPath(), "kotlin-dist-for-ide")
 
         @get:JvmStatic
         val instance: KotlinArtifacts by lazy {
@@ -51,17 +52,4 @@ class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     val kotlinxSerializationCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
     val parcelizeRuntime = File(kotlincLibDirectory, KotlinArtifactNames.PARCELIZE_RUNTIME)
     val androidExtensionsRuntime = File(kotlincLibDirectory, KotlinArtifactNames.ANDROID_EXTENSIONS_RUNTIME)
-}
-
-fun lazyUnpackJar(jar: File, destination: File): File {
-    val unpackedDistTimestamp = destination.lastModified()
-    val packedDistTimestamp = jar.lastModified()
-    if (unpackedDistTimestamp != 0L && packedDistTimestamp != 0L && unpackedDistTimestamp >= packedDistTimestamp) {
-        return destination
-    }
-    destination.deleteRecursively()
-
-    Decompressor.Zip(jar).extract(destination)
-    check(destination.isDirectory)
-    return destination
 }

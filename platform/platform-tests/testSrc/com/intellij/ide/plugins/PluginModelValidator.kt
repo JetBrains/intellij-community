@@ -33,7 +33,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.javaFX.community",
   "intellij.lightEdit",
   "intellij.webstorm",
-  "intellij.cwm.plugin", /* platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
+  "intellij.cwm.plugin", /* remote-dev/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
   "intellij.osgi", /* no particular package prefix to choose */
   "intellij.hunspell", /* MP-3656 Marketplace doesn't allow uploading plugins without dependencies */
   "kotlin.resources-fir", /* Kotlin FIR IDE Plugin has the same plugin id as the plain Kotlin plugin */

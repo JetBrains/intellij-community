@@ -34,7 +34,7 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e);
     }
-    else if (ExperimentalUI.isNewUI()) {
+    else if (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
       e.getPresentation().setIcon(IconManager.getInstance().getIcon("expui/general/add.svg", AllIcons.class));
     }
   }

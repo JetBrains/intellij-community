@@ -13,7 +13,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -21,13 +20,11 @@ import org.jetbrains.uast.*;
 import java.util.*;
 
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
-  private static final RefParameter[] EMPTY_PARAMS_ARRAY = new RefParameter[0];
-
   private static final int IS_APPMAIN_MASK            = 0b1_00000000_00000000; // 17th bit
   private static final int IS_LIBRARY_OVERRIDE_MASK   = 0b10_00000000_00000000; // 18th bit
   private static final int IS_CONSTRUCTOR_MASK        = 0b100_00000000_00000000; // 19th bit
   private static final int IS_ABSTRACT_MASK           = 0b1000_00000000_00000000; // 20th bit
-  private static final int IS_BODY_EMPTY_MASK         = 0b10000_00000000_00000000; // 21st bit
+  public static final int IS_BODY_EMPTY_MASK          = 0b10000_00000000_00000000; // 21st bit
   private static final int IS_ONLY_CALLS_SUPER_MASK   = 0b100000_00000000_00000000; // 22nd bit
   private static final int IS_RETURN_VALUE_USED_MASK  = 0b1000000_00000000_00000000; // 23rd bit
   private static final int IS_RECORD_ACCESSOR_MASK    = 0b10000000_00000000_00000000; // 24rd bit
@@ -39,8 +36,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private Object mySuperMethods; // guarded by this
   private List<RefOverridable> myDerivedReferences; // guarded by this
   private List<String> myUnThrownExceptions; // guarded by this
-
-  private RefParameter[] myParameters; // guarded by this
   private volatile String myReturnValueTemplate = RETURN_VALUE_UNDEFINED; // guarded by this
 
   RefMethodImpl(UMethod method, PsiElement psi, RefManager manager) {
@@ -53,7 +48,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   // To be used only from RefImplicitConstructor!
-  protected RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
+  RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
 
     // fair enough to add parent here
@@ -66,28 +61,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  public synchronized void add(@NotNull RefEntity child) {
-    if (child instanceof RefParameter) {
-      ((WritableRefEntity)child).setOwner(this);
-      return;
-    }
-    super.add(child);
-  }
-
-  @NotNull
-  @Override
-  public synchronized List<RefEntity> getChildren() {
-    List<RefEntity> superChildren = super.getChildren();
-    if (myParameters == null) return superChildren;
-    if (superChildren.isEmpty()) return Arrays.asList(myParameters);
-
-    List<RefEntity> allChildren = new ArrayList<>(superChildren.size() + myParameters.length);
-    allChildren.addAll(superChildren);
-    Collections.addAll(allChildren, myParameters);
-    return allChildren;
-  }
-
-  @Override
   protected synchronized void initialize() {
     UMethod method = (UMethod)getUastElement();
     LOG.assertTrue(method != null);
@@ -96,7 +69,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     List<UParameter> paramList = method.getUastParameters();
     if (!paramList.isEmpty()) {
-      List<RefParameter> newParameters = new ArrayList<>(paramList.size());
       final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       for (int i = 0; i < paramList.size(); i++) {
         UParameter param = paramList.get(i);
@@ -104,11 +76,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
           final RefParameter refParameter = getRefJavaManager().getParameterReference(param, i, this);
           if (refParameter != null) {
             refUtil.setIsFinal(refParameter, param.isFinal());
-            newParameters.add(refParameter);
           }
         }
       }
-      myParameters = newParameters.toArray(EMPTY_PARAMS_ARRAY);
     }
 
     RefElement parentRef = findParentRef(sourcePsi, method, myManager);
@@ -117,7 +87,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (!myManager.isDeclarationsFound()) return;
 
     PsiMethod javaPsi = method.getJavaPsi();
-    RefClass ownerClass = ObjectUtils.tryCast(parentRef, RefClass.class);
     if (!isConstructor()) {
       setAbstract(javaPsi.hasModifierProperty(PsiModifier.ABSTRACT));
 
@@ -127,9 +96,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       }
       if (PsiModifier.PRIVATE != getAccessModifier() && !isStatic()) {
         initializeSuperMethods(javaPsi);
-        if (ownerClass != null && isExternalOverride()) {
-          getRefManager().executeTask(() -> ((RefClassImpl)ownerClass).addLibraryOverrideMethod(this));
-        }
       }
     }
 
@@ -213,7 +179,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @NotNull
   public synchronized Collection<RefMethod> getDerivedMethods() {
     if (myDerivedReferences == null) return Collections.emptyList();
-    return StreamEx.of(myDerivedReferences).select(RefMethod.class).toList();
+    return ContainerUtil.filterIsInstance(myDerivedReferences, RefMethod.class);
   }
 
   @Override
@@ -278,10 +244,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   public synchronized void addSuperMethod(RefMethodImpl refSuperMethod) {
+    if (refSuperMethod.checkFlag(IS_LIBRARY_OVERRIDE_MASK)) setLibraryOverride(true);
     if (mySuperMethods == null) {
       mySuperMethods = refSuperMethod;
     }
-    else if (!(mySuperMethods instanceof List)) {
+    else if (mySuperMethods instanceof RefMethod) {
       ArrayList<RefMethod> list = new ArrayList<>(2);
       list.add((RefMethod)mySuperMethods);
       list.add(refSuperMethod);
@@ -289,8 +256,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
     else {
       //noinspection unchecked
-      List<RefMethod> list = (List<RefMethod>)mySuperMethods;
-      list.add(refSuperMethod);
+      ((List<RefMethod>)mySuperMethods).add(refSuperMethod);
     }
   }
 
@@ -301,7 +267,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public synchronized RefParameter @NotNull [] getParameters() {
     LOG.assertTrue(isInitialized());
-    return ObjectUtils.notNull(myParameters, EMPTY_PARAMS_ARRAY);
+    return ContainerUtil.filterIsInstance(getChildren(), RefParameter.class).toArray(RefParameter.EMPTY_ARRAY);
   }
 
   @Override
@@ -317,13 +283,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       ownerClass.waitForInitialized();
       addReference(ownerClass, ownerClass.getPsiElement(), method, false, true, null);
     }
-    UExpression body = method.getUastBody();
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     refUtil.addReferencesTo(method, this, method);
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
-    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(body));
+    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(method.getUastBody()));
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
 
     getRefManager().fireBuildReferences(this);
@@ -375,7 +340,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
     for (RefMethod superMethod : getSuperMethods()) {
       if (((RefMethodImpl)superMethod).isLibraryOverride(processed)) {
-        setFlag(true, IS_LIBRARY_OVERRIDE_MASK);
+        setLibraryOverride(true);
         return true;
       }
     }
@@ -457,7 +422,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (method instanceof LightElement) {
       method = method.getNavigationElement();
     }
-    return (RefMethod)manager.getReference(method);
+    RefElement reference = manager.getReference(method);
+    if (!(reference instanceof RefMethod) && reference != null) {
+      LOG.error("Expected refMethod but found: " + reference.getClass().getName() + "; for externalName: " +externalName );
+      return null;
+    }
+    return (RefMethod)reference;
   }
 
   @Nullable

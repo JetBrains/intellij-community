@@ -6,9 +6,11 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
@@ -18,8 +20,10 @@ import com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectPanel
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
+import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -75,7 +79,7 @@ class RecentProjectFilteringTree(
       )
 
       SmartExpander.installOn(this)
-      TreeHoverListener.DEFAULT.addTo(this)
+      TreeHoverToSelectionListener().addTo(this)
 
       isRootVisible = false
       cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
@@ -159,6 +163,14 @@ class RecentProjectFilteringTree(
     }
   }
 
+  private class TreeHoverToSelectionListener : TreeHoverListener() {
+    override fun onHover(tree: JTree, row: Int) {
+      if (row != -1) {
+        tree.setSelectionRow(row)
+      }
+    }
+  }
+
   private class ProjectActionMouseListener(private val tree: Tree) : PopupHandler() {
     override fun mousePressed(mouseEvent: MouseEvent) {
       super.mousePressed(mouseEvent)
@@ -173,7 +185,7 @@ class RecentProjectFilteringTree(
 
       if (intersectWithActionIcon(point)) {
         when (item) {
-          is CloneableProjectItem -> CloneableProjectsService.getInstance().cancelClone(item.progressIndicator)
+          is CloneableProjectItem -> cancelCloneProject(item.cloneableProject)
           else -> invokePopup(mouseEvent.component, point.x, point.y)
         }
       }
@@ -201,15 +213,30 @@ class RecentProjectFilteringTree(
     }
 
     private fun getCloseIconRect(row: Int): Rectangle {
+      val helper = RenderingHelper(tree) // because the renderer's bounds are not full width
       val bounds = tree.getRowBounds(row)
       val icon = IconUtil.toSize(AllIcons.Ide.Notification.Gear,
                                  ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
                                  ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
 
-      // Use `tree.bound` because the renderer's border is not full width
-      return Rectangle(tree.bounds.width - icon.iconWidth - JBUIScale.scale(10),
+      return Rectangle(helper.width - helper.rightMargin - icon.iconWidth - JBUIScale.scale(14),
                        bounds.y + (bounds.height - icon.iconHeight) / 2,
                        icon.iconWidth, icon.iconHeight)
+    }
+
+    private fun cancelCloneProject(cloneableProject: CloneableProject) {
+      val taskInfo = cloneableProject.cloneTaskInfo
+      val exitCode = Messages.showYesNoDialog(
+        taskInfo.stopDescription,
+        taskInfo.stopTitle,
+        IdeBundle.message("action.stop"),
+        IdeBundle.message("button.cancel"),
+        Messages.getQuestionIcon()
+      )
+
+      if (exitCode == Messages.OK) {
+        CloneableProjectsService.getInstance().cancelClone(cloneableProject)
+      }
     }
   }
 
@@ -242,12 +269,10 @@ class RecentProjectFilteringTree(
       selected: Boolean, expanded: Boolean,
       leaf: Boolean, row: Int, hasFocus: Boolean
     ): Component {
-      val isHovered = TreeHoverListener.getHoveredRow(tree) == row
-
       return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
         is RootItem -> JBUI.Panels.simplePanel()
-        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, isHovered, isProjectPathValid(item.projectPath))
-        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, isHovered)
+        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, selected, isProjectPathValid(item.projectPath))
+        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, selected)
         is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item)
       }
     }
@@ -287,7 +312,7 @@ class RecentProjectFilteringTree(
         add(projectActions, BorderLayout.EAST)
       }
 
-      fun customizeComponent(item: RecentProjectItem, isHovered: Boolean, isProjectPathValid: Boolean): JComponent {
+      fun customizeComponent(item: RecentProjectItem, isSelected: Boolean, isProjectPathValid: Boolean): JComponent {
         projectNameLabel.apply {
           text = item.displayName
           foreground = if (isProjectPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
@@ -300,7 +325,7 @@ class RecentProjectFilteringTree(
           disabledIcon = IconUtil.desaturate(icon)
           isEnabled = isProjectPathValid
         }
-        projectActions.isVisible = isHovered
+        projectActions.isVisible = isSelected
 
         val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
         toolTipText = if (isProjectPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
@@ -331,12 +356,12 @@ class RecentProjectFilteringTree(
         add(projectGroupActions, BorderLayout.EAST)
       }
 
-      fun customizeComponent(item: ProjectsGroupItem, isHovered: Boolean): JComponent {
+      fun customizeComponent(item: ProjectsGroupItem, isSelected: Boolean): JComponent {
         projectGroupNameLabel.apply {
           clear()
           append(item.displayName(), SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground())) // NON-NLS
         }
-        projectGroupActions.isVisible = isHovered
+        projectGroupActions.isVisible = isSelected
 
         AccessibleContextUtil.setName(this, projectGroupNameLabel) // NON-NLS
         AccessibleContextUtil.setDescription(this, projectGroupNameLabel) // NON-NLS
@@ -369,25 +394,31 @@ class RecentProjectFilteringTree(
       }
       private val projectCancelButton = JLabel().apply {
         icon = AllIcons.Actions.DeleteTag
-        border = JBUI.Borders.empty(0, 0, 0, 17)
-      }
-      private val projectProgressBar = JProgressBar().apply {
-        isOpaque = false
-        border = JBUI.Borders.empty(4)
+        border = JBUI.Borders.empty(0, 0, 0, 14)
       }
       private val projectProgressLabel = JLabel().apply {
         foreground = UIUtil.getInactiveTextColor()
       }
+      private val projectProgressBar = JProgressBar().apply {
+        isOpaque = false
+      }
+      private val projectProgressBarPanel = JBUI.Panels.simplePanel().apply {
+        isOpaque = false
+        border = JBUI.Borders.empty(8)
+
+        add(projectProgressLabel, BorderLayout.NORTH)
+        add(projectProgressBar, BorderLayout.SOUTH)
+      }
       private val projectCloneStatusPanel = JBUI.Panels.simplePanel().apply {
         isOpaque = false
 
-        add(projectProgressLabel, BorderLayout.WEST)
-        add(projectProgressBar, BorderLayout.CENTER)
+        add(projectProgressBarPanel, BorderLayout.CENTER)
         add(projectCancelButton, BorderLayout.EAST)
       }
 
       init {
         isOpaque = false
+        border = JBUI.Borders.empty(4)
 
         add(projectNamePanel, BorderLayout.CENTER)
         add(projectIconLabel, BorderLayout.WEST)
@@ -395,28 +426,60 @@ class RecentProjectFilteringTree(
       }
 
       fun customizeComponent(item: CloneableProjectItem): JComponent {
+        val cloneableProject = item.cloneableProject
+        val taskInfo = cloneableProject.cloneTaskInfo
+        val progressIndicator = cloneableProject.progressIndicator
+        val cloneStatus = cloneableProject.cloneStatus
+
         projectNameLabel.text = item.displayName() // NON-NLS
         projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
-        projectIconLabel.icon = IconUtil.desaturate(recentProjectsManager.getProjectIcon(item.projectPath, true))
-        projectProgressBar.isIndeterminate = item.progressIndicator.isIndeterminate
 
         projectProgressBar.apply {
-          when (item.cloneStatus) {
-            CloneStatus.PROGRESS -> {
-              projectCloneStatusPanel.isVisible = true
-              projectProgressLabel.text = item.taskInfo.actionTitle
-              value = (item.progressIndicator.fraction * 100).toInt()
-            }
-            CloneStatus.FAILURE -> {
-              projectCloneStatusPanel.isVisible = false
-              projectPathLabel.text = item.taskInfo.failureTitle
+          val isProgressIndeterminate = progressIndicator.isIndeterminate
+          if (isProgressIndeterminate) {
+            val progressBarUI = projectProgressBar.ui
+            if (progressBarUI is DarculaProgressBarUI) {
+              progressBarUI.updateIndeterminateAnimationIndex(startMillis)
             }
           }
+
+          if (cloneStatus == CloneStatus.PROGRESS) {
+            value = (progressIndicator.fraction * 100).toInt()
+          }
+
+          isIndeterminate = isProgressIndeterminate
         }
 
-        toolTipText = item.progressIndicator.text2
+        val icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
+        when (cloneStatus) {
+          CloneStatus.PROGRESS -> {
+            projectCloneStatusPanel.isVisible = true
+            projectCloneStatusPanel.isEnabled = true
+            projectProgressLabel.text = taskInfo.actionTitle
+            projectIconLabel.icon = icon
+          }
+          CloneStatus.FAILURE -> {
+            projectCloneStatusPanel.isVisible = false
+            projectCloneStatusPanel.isEnabled = false
+            projectPathLabel.text = taskInfo.failedTitle
+            projectIconLabel.icon = IconUtil.desaturate(icon)
+          }
+          CloneStatus.CANCEL -> {
+            projectCloneStatusPanel.isVisible = false
+            projectCloneStatusPanel.isEnabled = false
+            projectPathLabel.text = taskInfo.canceledTitle
+            projectIconLabel.icon = IconUtil.desaturate(icon)
+          }
+          else -> {}
+        }
+
+        toolTipText = taskInfo.actionTooltipText
 
         return this
+      }
+
+      companion object {
+        private const val startMillis = 0L
       }
     }
   }
@@ -434,9 +497,21 @@ class RecentProjectFilteringTree(
 
     private fun activateItem(tree: Tree) {
       val node = tree.lastSelectedPathComponent.castSafelyTo<DefaultMutableTreeNode>() ?: return
-      val item = node.userObject.castSafelyTo<RecentProjectItem>() ?: return
-      val actionEvent = createActionEvent(tree)
-      item.openProject(actionEvent)
+      val item = node.userObject.castSafelyTo<RecentProjectTreeItem>() ?: return
+      when (item) {
+        is RecentProjectItem -> {
+          val actionEvent = createActionEvent(tree)
+          item.openProject(actionEvent)
+        }
+        is ProjectsGroupItem -> {
+          val treePath = tree.selectionPath ?: return
+          if (tree.isExpanded(treePath))
+            tree.collapsePath(treePath)
+          else
+            tree.expandPath(treePath)
+        }
+        else -> {}
+      }
     }
 
     private fun removeItem(tree: Tree) {

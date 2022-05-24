@@ -235,17 +235,17 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         if (selectedStack != currentExecutionStack) {
           val newSelectedItemIndex = threads.model.items.indexOfFirst { it.stack == currentExecutionStack }
           if (newSelectedItemIndex != -1) {
-            threads.selectedIndex = newSelectedItemIndex;
-            myFramesManager.refresh();
-            selectedStack = threads.selectedValue?.stack;
+            threads.selectedIndex = newSelectedItemIndex
+            myFramesManager.refresh()
+            selectedStack = threads.selectedValue?.stack
           }
         }
         if (selectedStack != currentExecutionStack)
-          return@invokeLaterIfNeeded;
+          return@invokeLaterIfNeeded
 
         val selectedFrame = frames.selectedValue
         if (selectedFrame != currentStackFrame) {
-          frames.setSelectedValue(currentStackFrame, true);
+          frames.setSelectedValue(currentStackFrame, true)
         }
       }
 

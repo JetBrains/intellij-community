@@ -389,7 +389,7 @@ class XDebugSessionTab2(
         is XDebuggerThreadsList -> component.isEmpty
         is XDebuggerFramesList -> component.isEmpty
         is XDebuggerTree -> component.isEmpty
-        else -> false;
+        else -> false
       }
     }
   }

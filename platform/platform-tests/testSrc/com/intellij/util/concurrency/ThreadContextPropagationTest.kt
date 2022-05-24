@@ -79,7 +79,7 @@ class ThreadContextPropagationTest {
     return suspendCancellableCoroutine { continuation ->
       val element = TestElement("element")
       withThreadContext(element) {                                       // install context in calling thread
-        Propagation.prapagata {
+        Propagation.runTestWithPropagationEnabled {
           submit {                                                         // switch to another thread
             val result: Result<Unit> = runCatching {
               assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context

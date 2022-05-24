@@ -25,28 +25,33 @@ import java.util.Collections.synchronizedList
 
 @Service(Level.APP)
 class CloneableProjectsService {
-  private val projectProgressIndicators: MutableList<CloneableProjectProgressIndicator> = synchronizedList(mutableListOf())
+  private val cloneableProjects: MutableList<CloneableProject> = synchronizedList(mutableListOf())
 
   @RequiresEdt
   fun runCloneTask(projectPath: String, cloneTask: CloneTask) {
-    val progressIndicator = CloneableProjectProgressIndicator(projectPath, cloneTask.taskInfo(), CloneStatus.PROGRESS)
-    addCloneableProject(progressIndicator)
+    val taskInfo = cloneTask.taskInfo()
+    val progressIndicator = CloneableProjectProgressIndicator(taskInfo)
+    val cloneableProject = CloneableProject(projectPath, taskInfo, progressIndicator, CloneStatus.PROGRESS)
+    addCloneableProject(cloneableProject)
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().runProcess(Runnable {
-        try {
-          when (cloneTask.run(progressIndicator)) {
-            CloneStatus.SUCCESS -> onSuccess(progressIndicator)
-            CloneStatus.FAILURE -> onFailure(progressIndicator)
-            else -> {}
-          }
+        val cloneStatus: CloneStatus = try {
+          cloneTask.run(progressIndicator)
         }
         catch (_: ProcessCanceledException) {
-          removeCloneProject(progressIndicator)
+          CloneStatus.CANCEL
         }
         catch (exception: Throwable) {
           logger<CloneableProjectsService>().error(exception)
-          onFailure(progressIndicator)
+          CloneStatus.FAILURE
+        }
+
+        when (cloneStatus) {
+          CloneStatus.SUCCESS -> onSuccess(cloneableProject)
+          CloneStatus.FAILURE -> onFailure(cloneableProject)
+          CloneStatus.CANCEL -> onCancel(cloneableProject)
+          else -> {}
         }
       }, progressIndicator)
     }
@@ -55,51 +60,57 @@ class CloneableProjectsService {
   fun collectCloneableProjects(): List<CloneableProjectItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
 
-    return projectProgressIndicators.map { projectProgressIndicators ->
-      val projectPath = projectProgressIndicators.projectPath
-
+    return cloneableProjects.map { cloneableProject ->
+      val projectPath = cloneableProject.projectPath
       val projectName = recentProjectManager.getProjectName(projectPath)
       val displayName = recentProjectManager.getDisplayName(projectPath) ?: projectName
 
-      CloneableProjectItem(projectPath, projectName, displayName, projectProgressIndicators,
-                           projectProgressIndicators.cloneTaskInfo, projectProgressIndicators.cloneStatus)
+      CloneableProjectItem(projectPath, projectName, displayName, cloneableProject)
     }
   }
 
-  fun cancelClone(progressIndicator: ProgressIndicator) {
-    progressIndicator.cancel()
-    removeCloneProject(progressIndicator)
+  fun cancelClone(cloneableProject: CloneableProject) {
+    cloneableProject.progressIndicator.cancel()
   }
 
-  private fun addCloneableProject(progressIndicator: CloneableProjectProgressIndicator) {
-    projectProgressIndicators.add(progressIndicator)
-    fireCloneAddedEvent(progressIndicator)
-  }
+  fun removeCloneProject(cloneableProject: CloneableProject) {
+    if (cloneableProject.cloneStatus == CloneStatus.PROGRESS) {
+      cloneableProject.progressIndicator.cancel()
+    }
 
-  private fun removeCloneProject(progressIndicator: ProgressIndicator) {
-    projectProgressIndicators.remove(progressIndicator)
+    cloneableProjects.remove(cloneableProject)
     fireCloneRemovedEvent()
   }
 
-  private fun upgradeCloneProjectToRecent(progressIndicator: CloneableProjectProgressIndicator) {
+  private fun addCloneableProject(cloneableProject: CloneableProject) {
+    cloneableProjects.add(cloneableProject)
+    fireCloneAddedEvent(cloneableProject)
+  }
+
+  private fun upgradeCloneProjectToRecent(cloneableProject: CloneableProject) {
     val recentProjectsManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-    recentProjectsManager.addRecentPath(progressIndicator.projectPath, RecentProjectMetaInfo())
-    removeCloneProject(progressIndicator)
+    recentProjectsManager.addRecentPath(cloneableProject.projectPath, RecentProjectMetaInfo())
+    removeCloneProject(cloneableProject)
   }
 
-  private fun onSuccess(progressIndicator: CloneableProjectProgressIndicator) {
-    upgradeCloneProjectToRecent(progressIndicator)
+  private fun onSuccess(cloneableProject: CloneableProject) {
+    upgradeCloneProjectToRecent(cloneableProject)
   }
 
-  private fun onFailure(progressIndicator: CloneableProjectProgressIndicator) {
-    progressIndicator.cloneStatus = CloneStatus.FAILURE
+  private fun onFailure(cloneableProject: CloneableProject) {
+    cloneableProject.cloneStatus = CloneStatus.FAILURE
     fireCloneFailedEvent()
   }
 
-  private fun fireCloneAddedEvent(progressIndicator: CloneableProjectProgressIndicator) {
+  private fun onCancel(cloneableProject: CloneableProject) {
+    cloneableProject.cloneStatus = CloneStatus.CANCEL
+    fireCloneCanceledEvent()
+  }
+
+  private fun fireCloneAddedEvent(cloneableProject: CloneableProject) {
     ApplicationManager.getApplication().messageBus
       .syncPublisher(TOPIC)
-      .onCloneAdded(progressIndicator, progressIndicator.cloneTaskInfo)
+      .onCloneAdded(cloneableProject.progressIndicator, cloneableProject.cloneTaskInfo)
   }
 
   private fun fireCloneRemovedEvent() {
@@ -114,17 +125,28 @@ class CloneableProjectsService {
       .onCloneFailed()
   }
 
+  private fun fireCloneCanceledEvent() {
+    ApplicationManager.getApplication().messageBus
+      .syncPublisher(TOPIC)
+      .onCloneCanceled()
+  }
+
   enum class CloneStatus {
     SUCCESS,
     PROGRESS,
-    FAILURE
+    FAILURE,
+    CANCEL
   }
 
   class CloneTaskInfo(
     @NlsContexts.ProgressTitle private val title: String,
     @Nls private val cancelTooltipText: String,
     @Nls val actionTitle: String,
-    @Nls val failureTitle: String
+    @Nls val actionTooltipText: String,
+    @Nls val failedTitle: String,
+    @Nls val canceledTitle: String,
+    @Nls val stopTitle: String,
+    @Nls val stopDescription: String
   ) : TaskInfo {
     override fun getTitle(): String = title
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
@@ -132,11 +154,14 @@ class CloneableProjectsService {
     override fun isCancellable(): Boolean = true
   }
 
-  private class CloneableProjectProgressIndicator(
+  data class CloneableProject(
     val projectPath: String,
     val cloneTaskInfo: CloneTaskInfo,
+    val progressIndicator: ProgressIndicatorEx,
     var cloneStatus: CloneStatus
-  ) : AbstractProgressIndicatorExBase() {
+  )
+
+  private class CloneableProjectProgressIndicator(cloneTaskInfo: CloneTaskInfo) : AbstractProgressIndicatorExBase() {
     init {
       setOwnerTask(cloneTaskInfo)
     }
@@ -157,6 +182,9 @@ class CloneableProjectsService {
 
     @JvmDefault
     fun onCloneFailed() {}
+
+    @JvmDefault
+    fun onCloneCanceled() {}
   }
 
   companion object {

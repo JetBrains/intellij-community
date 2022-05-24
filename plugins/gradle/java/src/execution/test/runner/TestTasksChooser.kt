@@ -115,8 +115,7 @@ open class TestTasksChooser {
 
   @NlsContexts.PopupTitle
   private fun suggestPopupTitle(context: DataContext): String {
-    val locationName = context.getData(LOCATION)
-    return when (locationName) {
+    return when (val locationName = context.getData(LOCATION)) {
       null -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title.common")
       else -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title", locationName)
     }

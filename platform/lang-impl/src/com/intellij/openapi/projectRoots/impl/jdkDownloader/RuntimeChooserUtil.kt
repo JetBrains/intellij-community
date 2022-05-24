@@ -12,9 +12,7 @@ object RuntimeChooserUtil {
     model.fetchAvailableJbrs()
     model.fetchCurrentRuntime()
 
-    val result = RuntimeChooserDialog(null, model).showDialogAndGetResult()
-
-    return when (result) {
+    return when (val result = RuntimeChooserDialog(null, model).showDialogAndGetResult()) {
       is RuntimeChooserDialogResult.Cancel -> Unit
       is RuntimeChooserDialogResult.UseDefault -> service<RuntimeChooserPaths>().resetCustomJdk()
       is RuntimeChooserDialogResult.UseCustomJdk -> service<RuntimeChooserPaths>().installCustomJdk(result.name) { result.path }

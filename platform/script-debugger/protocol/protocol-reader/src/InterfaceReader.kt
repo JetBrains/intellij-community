@@ -148,7 +148,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
             if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
               return RAW_STRING_PARSER
             }
-            else if ((member?.returnType?.isMarkedNullable ?: false) || method.getAnnotation<Optional>(Optional::class.java) != null) {
+            else if ((member?.returnType?.isMarkedNullable == true) || method.getAnnotation<Optional>(Optional::class.java) != null) {
               return NULLABLE_STRING_PARSER
             }
           }

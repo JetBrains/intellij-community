@@ -35,7 +35,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     M6("light_idea_test_m6", sourceRootName = "src_m6", resourceRootName = "res_m6"),
     M7("light_idea_test_m7", sourceRootName = "src_m7"),
     M8("light_idea_test_m8", sourceRootName = "src_m8"),
-    M_TEST("light_idea_test_m_test", testRootName = "m_test_src");
+    M_TEST("light_idea_test_m_test", sourceRootName="m_src_src", testRootName = "m_test_src");
 
     fun sourceRoot(): VirtualFile? = if (this === MAIN) LightPlatformTestCase.getSourceRoot() else findRoot(sourceRootName)
     fun testRoot(): VirtualFile? = findRoot(testRootName)

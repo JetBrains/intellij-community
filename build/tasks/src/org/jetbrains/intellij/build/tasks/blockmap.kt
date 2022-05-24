@@ -2,12 +2,14 @@
 package org.jetbrains.intellij.build.tasks
 
 import com.fasterxml.jackson.jr.ob.JSON
+import com.intellij.diagnostic.telemetry.use
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import io.opentelemetry.api.common.AttributeKey
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.compressDir
 import org.jetbrains.intellij.build.io.writeNewZip
+import org.jetbrains.intellij.build.tracer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
@@ -18,7 +20,6 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Map.Entry<String,
   tracer.spanBuilder("archive directories")
     .setAttribute(AttributeKey.longKey("count"), items.size.toLong())
     .setAttribute(AttributeKey.stringKey("commonSourceDir"), commonSourceDir.toString())
-    .startSpan()
     .use { parentSpan ->
       val json = JSON.std.without(JSON.Feature.USE_FIELDS)
       ForkJoinTask.invokeAll(items.map { item ->
@@ -29,7 +30,6 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Map.Entry<String,
             tracer.spanBuilder("build plugin archive")
               .setAttribute("inputDir", dir.toString())
               .setAttribute("outputFile", target.toString())
-              .startSpan()
               .use {
                 writeNewZip(target, compress = compress) { zipCreator ->
                   ZipArchiver(zipCreator).use { archiver ->
@@ -40,7 +40,6 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Map.Entry<String,
               }
             tracer.spanBuilder("build plugin blockmap")
               .setAttribute("file", target.toString())
-              .startSpan()
               .use {
                 buildBlockMap(target, json)
               }

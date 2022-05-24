@@ -50,9 +50,7 @@ class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
         editor: Editor,
         module: Module?
     ): PsiClass? {
-        val target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().allAccepted)
-
-        return when (target) {
+        return when (val target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().allAccepted)) {
             is PsiClass -> target
             is KtConstructor<*> -> getOriginalPsiClassOrCreateLightClass(target.getContainingClassOrObject(), module)
             is KtClassOrObject -> getOriginalPsiClassOrCreateLightClass(target, module)

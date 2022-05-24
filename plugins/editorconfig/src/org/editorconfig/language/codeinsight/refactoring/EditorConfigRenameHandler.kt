@@ -14,10 +14,9 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigReferenceDe
 
 class EditorConfigRenameHandler : VariableInplaceRenameHandler() {
   override fun isAvailable(element: PsiElement?, editor: Editor, file: PsiFile): Boolean {
-    element as? EditorConfigDescribableElement ?: return false
+    if (element !is EditorConfigDescribableElement) return false
     if (PsiElementRenameHandler.isVetoed(element)) return false
-    val descriptor = element.getDescriptor(false)
-    return when (descriptor) {
+    return when (element.getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor,
       is EditorConfigReferenceDescriptor ->
         editor.settings.isVariableInplaceRenameEnabled

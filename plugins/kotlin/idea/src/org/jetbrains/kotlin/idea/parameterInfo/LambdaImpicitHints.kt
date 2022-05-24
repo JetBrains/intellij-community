@@ -41,7 +41,7 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): List<InlayInfoDetail
     return listOfNotNull(implicitReceiverHint, singleParameterHint)
 }
 
-private fun ASTNode.isFollowedByNewLine(): Boolean {
+internal fun ASTNode.isFollowedByNewLine(): Boolean {
     for (sibling in siblings()) {
         if (sibling.elementType != TokenType.WHITE_SPACE && sibling.psi !is PsiComment) {
             continue

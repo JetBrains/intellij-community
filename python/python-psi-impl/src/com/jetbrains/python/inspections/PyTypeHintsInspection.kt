@@ -392,9 +392,7 @@ class PyTypeHintsInspection : PyInspection() {
         multiFollowAssignmentsChain(operand)
           .forEach {
             if (it is PyQualifiedNameOwner) {
-              val qName = it.qualifiedName
-
-              when (qName) {
+              when (val qName = it.qualifiedName) {
                 PyTypingTypeProvider.GENERIC,
                 PyTypingTypeProvider.CLASS_VAR,
                 PyTypingTypeProvider.FINAL,

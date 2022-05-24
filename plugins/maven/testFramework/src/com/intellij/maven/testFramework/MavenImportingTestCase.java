@@ -40,6 +40,7 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -119,6 +120,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     super.setUpInWriteAction();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
     removeFromLocalRepository("test");
+  }
+
+  protected void assertModules(String expectedName) {
+
+  }
+
+  protected String mn(String parent, String moduleName) {
+    if (!MavenProjectImporter.isImportToTreeStructureEnabled(myProject)) return moduleName;
+    return parent + "." + moduleName;
   }
 
   protected void assertModules(String... expectedNames) {
@@ -218,6 +228,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       }
 
       actual.add(folderUrl);
+    }
+
+    if (MavenProjectImporter.isImportToWorkspaceModelEnabled()) {
+      // The new workspace model currently doesn't return source folders in the same order that they were added.
+      // Actually, we don't care about the source folders order as it shouldn't affect functionality.
+      checkOrder = false;
     }
 
     if (checkOrder) {

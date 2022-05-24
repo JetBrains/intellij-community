@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.impl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
@@ -180,8 +181,9 @@ class DiffRepoWithLocalAction : AnActionExtensionProvider {
 
   override fun actionPerformed(e: AnActionEvent) {
     val repoBrowser = e.getData(REPOSITORY_BROWSER_DATA_KEY) ?: return
-    val changes = repoBrowser.getSelectionAsChanges()
-    ShowDiffAction.showDiffForChange(repoBrowser.project, changes)
+    val selection = ListSelection.createAt(repoBrowser.getSelectionAsChanges(), 0)
+      .asExplicitSelection()
+    ShowDiffAction.showDiffForChange(repoBrowser.project, selection)
   }
 }
 

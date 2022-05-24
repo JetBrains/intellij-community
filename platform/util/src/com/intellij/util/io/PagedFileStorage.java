@@ -416,13 +416,14 @@ public class PagedFileStorage implements Forceable {
   @NotNull
   private DirectBufferWrapper doGetBufferWrapper(long page, boolean modify) throws IOException {
     DirectBufferWrapper pageFromCache =
-      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getBufferCache().getMappingChangeCount());
+      myLastAccessedBufferCache.getPageFromCache(page);
 
     if (myReadOnly && modify) {
       throw new IOException("Read-only storage can't be modified");
     }
 
     if (pageFromCache != null) {
+      myStorageLockContext.getBufferCache().incrementFastCacheHitsCount();
       return pageFromCache;
     }
 
@@ -438,7 +439,7 @@ public class PagedFileStorage implements Forceable {
       byteBufferWrapper.useNativeByteOrder();
     }
 
-    myLastAccessedBufferCache.updateCache(page, byteBufferWrapper, myStorageLockContext.getBufferCache().getMappingChangeCount());
+    myLastAccessedBufferCache.updateCache(page, byteBufferWrapper);
 
     return byteBufferWrapper;
   }
@@ -466,7 +467,7 @@ public class PagedFileStorage implements Forceable {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
     if (isDirty) {
-      myStorageLockContext.getBufferCache().flushBuffersForOwner(myStorageLockContext);
+      myStorageLockContext.getBufferCache().flushBuffersForOwner(this);
       isDirty = false;
     }
 

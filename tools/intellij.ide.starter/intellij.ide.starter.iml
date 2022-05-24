@@ -95,5 +95,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
+    <orderEntry type="library" scope="TEST" name="java-diff-utils" level="project" />
   </component>
 </module>

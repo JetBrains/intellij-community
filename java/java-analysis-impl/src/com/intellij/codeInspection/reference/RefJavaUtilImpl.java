@@ -100,14 +100,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitSimpleNameReferenceExpression(@NotNull USimpleNameReferenceExpression node) {
-                         final PsiElement target = node.resolve();
-
                          visitReferenceExpression(node);
-                         if (target instanceof PsiClass) {
-                           final PsiClass aClass = (PsiClass)target;
-                           final RefElement refElement = refManager.getReference(aClass);
-                           refFrom.addReference(refElement, aClass, decl, false, true, null);
-                         }
                          return false;
                        }
 
@@ -272,7 +265,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression methodRef) {
-                         RefElement refMethod = refFrom.getRefManager().getReference(methodRef.getSourcePsi());
+                         RefElement refMethod = refManager.getReference(methodRef.getSourcePsi());
                          if (refFrom == refMethod) {
                            visitReferenceExpression(methodRef);
                            return false;
@@ -294,7 +287,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            refFrom.addReference(refWhat, aClass, decl, false, true, null);
                          }
                          PsiElement functionalExpr = expression.getSourcePsi();
-                         RefElement refFunctionalExpr = refFrom.getRefManager().getReference(functionalExpr);
+                         RefElement refFunctionalExpr = refManager.getReference(functionalExpr);
                          if (refFunctionalExpr != null) refFunctionalExpr.waitForInitialized();
                          refFrom.addReference(refFunctionalExpr, functionalExpr, decl, false, true, expression);
                        }
@@ -379,15 +372,11 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                  hasConstructorsMarked = true;
                                }
 
-                               UClass uClass = refClass.getUastElement();
-                               if (uClass != null && uClass.getJavaPsi().isEnum()) {
-                                 for (RefEntity child : refClass.getChildren()) {
-                                   if (child instanceof RefFieldImpl) {
-                                     UField uField = ((RefField)child).getUastElement();
-                                     if (uField instanceof UEnumConstant) {
-                                       ((RefFieldImpl)child).markReferenced(refFrom, false, true, node);
-                                       refFrom.addOutReference((RefElement)child);
-                                     }
+                               if (refClass.isEnum()) {
+                                 for (RefField field : refClass.getFields()) {
+                                   if (field.isEnumConstant()) {
+                                     ((RefFieldImpl)field).markReferenced(refFrom, false, true, node);
+                                     refFrom.addOutReference(field);
                                    }
                                  }
                                }
@@ -442,7 +431,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
   private void updateRefMethod(PsiElement psiResolved,
                                RefMethodImpl refMethod,
-                               UExpression refExpression,
+                               @NotNull UExpression refExpression,
                                final UElement uFrom) {
     UMethod uMethod = Objects.requireNonNull(UastContextKt.toUElement(psiResolved, UMethod.class));
     refMethod.waitForInitialized();
@@ -467,6 +456,16 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       return;
     }
 
+    PsiType returnType = uMethod.getReturnType();
+    if (!uMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
+      PsiExpression expression = ObjectUtils.tryCast(refExpression.getJavaPsi(), PsiExpression.class);
+      if (expression == null || !ExpressionUtils.isVoidContext(expression)) {
+        refMethod.setReturnValueUsed(true);
+      }
+
+      addTypeReference(uFrom, returnType, refMethod.getRefManager());
+    }
+
     UCallExpression call = null;
     if (refExpression instanceof UCallExpression) {
       call = (UCallExpression)refExpression;
@@ -475,16 +474,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       call = ObjectUtils.tryCast(((UQualifiedReferenceExpression)refExpression).getSelector(), UCallExpression.class);
     }
     if (call != null) {
-      PsiType returnType = uMethod.getReturnType();
-      if (!uMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
-        PsiExpression expression = ObjectUtils.tryCast(call.getJavaPsi(), PsiExpression.class);
-        if (expression == null || !ExpressionUtils.isVoidContext(expression)) {
-          refMethod.setReturnValueUsed(true);
-        }
-
-        addTypeReference(uFrom, returnType, refMethod.getRefManager());
-      }
-
       List<UExpression> argumentList = call.getValueArguments();
       if (!argumentList.isEmpty()) {
         refMethod.updateParameterValues(argumentList, psiResolved);

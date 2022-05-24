@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
 import groovy.transform.CompileStatic
@@ -9,7 +9,7 @@ import org.apache.tools.ant.RuntimeConfigurable
 import org.jetbrains.intellij.build.BuildMessages
 
 @CompileStatic
-class AntTaskLogger implements BuildListener {
+final class AntTaskLogger implements BuildListener {
   BuildMessages defaultHandler
   private final Map<Thread, BuildMessages> threadHandlers = [:]
   private final Map<RuntimeConfigurable, BuildMessages> taskHandlers = [:]

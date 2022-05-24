@@ -381,15 +381,19 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     private void fillJvmVersionList() {
         for (TargetPlatform jvm : JvmIdePlatformKind.INSTANCE.getPlatforms()) {
-            @NlsSafe String description =
-                    PlatformUtilKt.subplatformsOfType(jvm, JdkPlatform.class).get(0).getTargetVersion().getDescription();
+            JvmTarget jvmTarget = PlatformUtilKt.subplatformsOfType(jvm, JdkPlatform.class).get(0).getTargetVersion();
+            @NlsSafe String description = jvmTarget.getDescription();
+            if (jvmTarget == JvmTarget.JVM_1_6) {
+                description += " " + KotlinBundle.message("deprecated.jvm.version");
+            }
+
             jvmVersionComboBox.addItem(description);
         }
     }
 
     private void fetchAvailableJpsCompilersAsync(Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onFinish) {
         JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
-                        KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID, KotlinArtifacts.KOTLIN_DIST_ARTIFACT_ID))
+                        KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID, KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID))
                 .onProcessed(distVersions -> {
                     if (distVersions == null) {
                         onFinish.accept(null);

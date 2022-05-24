@@ -20,14 +20,13 @@ import org.jetbrains.annotations.Contract
  *               directory
  * @return lines to be executed in Python REPL
  */
-fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
-  val sb = StringBuilder()
+fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String = buildString {
   val configEnvs = config.envs
   configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED)
   if (configEnvs.isNotEmpty()) {
-    sb.append("import os\n")
+    append("import os\n")
     for ((key, value) in configEnvs) {
-      sb.append("os.environ['").append(escape(key)).append("'] = '").append(escape(value)).append("'\n")
+      append("os.environ[${key.toStringLiteral()}] = ${value.toStringLiteral()}\n")
     }
   }
   val project = config.project
@@ -39,27 +38,22 @@ fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
     scriptPath = pathMapper.convertToRemote(scriptPath)
     workingDir = pathMapper.convertToRemote(workingDir)
   }
-  sb.append("runfile('").append(escape(scriptPath)).append("'")
+  append("runfile(").append(scriptPath.toStringLiteral())
   val scriptParameters = ProgramParametersConfigurator.expandMacrosAndParseParameters(config.scriptParameters)
-  if (scriptParameters.size != 0) {
-    sb.append(", args=[")
-    for (i in scriptParameters.indices) {
-      if (i != 0) {
-        sb.append(", ")
-      }
-      sb.append("'").append(escape(scriptParameters[i])).append("'")
-    }
-    sb.append("]")
+  if (scriptParameters.isNotEmpty()) {
+    append(", args=[").append(scriptParameters.joinToString(separator = ", ", transform = String::toStringLiteral)).append("]")
   }
   if (!workingDir.isEmpty()) {
-    sb.append(", wdir='").append(escape(workingDir)).append("'")
+    append(", wdir=").append(workingDir.toStringLiteral())
   }
   if (config.isModuleMode) {
-    sb.append(", is_module=True")
+    append(", is_module=True")
   }
-  sb.append(")")
-  return sb.toString()
+  append(")")
 }
 
 @Contract(pure = true)
 private fun escape(s: String): String = StringUtil.escapeCharCharacters(s)
+
+@Contract(pure = true)
+private fun String.toStringLiteral() = "'${escape(this)}'"

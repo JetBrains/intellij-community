@@ -82,8 +82,7 @@ object EditorConfigPsiTreeUtil {
     }
 
     val service = EditorConfigFileHierarchyService.getInstance(file.project)
-    val serviceResult = service.getParentEditorConfigFiles(virtualFile)
-    return when (serviceResult) {
+    return when (val serviceResult = service.getParentEditorConfigFiles(virtualFile)) {
       is EditorConfigServiceLoaded -> serviceResult.list
       is EditorConfigServiceLoading -> findParentFilesUsingIndex(file, virtualFile)
     }

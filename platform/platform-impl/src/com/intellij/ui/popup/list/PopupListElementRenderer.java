@@ -132,15 +132,16 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
-    Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
-    myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
     if (!ExperimentalUI.isNewUI()) {
+      Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
+      myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
       //noinspection HardCodedStringLiteral
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, insets);
       myMnemonicLabel.setPreferredSize(preferredSize);
     }
     else {
+      myMnemonicLabel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.ActionsList.mnemonicInsets()));
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
 
@@ -314,7 +315,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       if (ExperimentalUI.isNewUI() && mnemonic == null) {
         //noinspection HardCodedStringLiteral
         Dimension preferredSize = new JLabel("W").getPreferredSize();
-        JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.numberMnemonicInsets());
+        JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.mnemonicInsets());
         myMnemonicLabel.setText("  ");
       }
       Color foreground =

@@ -70,7 +70,7 @@ abstract class AbstractHighlightingPassBase(
 
     companion object {
         @Volatile
-        private var IGNORE_IN_TESTS: Boolean = false;
+        private var IGNORE_IN_TESTS: Boolean = false
 
         /**
          * Make {@link AbstractHighlightingPassBase}-derived passes report nothing inside this method

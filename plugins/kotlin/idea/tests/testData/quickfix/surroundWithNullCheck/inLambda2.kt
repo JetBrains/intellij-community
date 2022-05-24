@@ -1,6 +1,7 @@
 // "Surround with null check" "false"
 // ACTION: Add 'return@bar'
 // ACTION: Add non-null asserted (!!) call
+// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Introduce local variable
 // ACTION: Replace 'it' with explicit parameter
 // ACTION: Replace with safe (?.) call

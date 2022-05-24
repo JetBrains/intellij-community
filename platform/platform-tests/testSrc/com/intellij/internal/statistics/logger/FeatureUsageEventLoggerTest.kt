@@ -442,8 +442,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     } */
 
     class TestObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
-      var versions by field(EventFields.StringListValidatedByCustomRule("versions", CustomValidationRule::class.java))
+      var name by field(EventFields.StringValidatedByCustomRule<CustomValidationRule>("name"))
+      var versions by field(EventFields.StringListValidatedByCustomRule<CustomValidationRule>("versions"))
     }
 
     val group = EventLogGroup("newGroup", 1)

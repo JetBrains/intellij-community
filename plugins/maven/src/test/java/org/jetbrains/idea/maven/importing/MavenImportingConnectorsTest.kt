@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -50,9 +50,9 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                             "<artifactId>m2</artifactId>" +
                                             "<version>2</version>")
     MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
-    waitForLinkingCompleted();
+    waitForLinkingCompleted()
     assertModules("project1", "m1", "project2", "m2")
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
+    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
 
     assertUnorderedElementsAreEqual(
       MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
@@ -63,7 +63,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun waitForLinkingCompleted() {
-    if (!isNewImportingProcess) return;
+    if (!isNewImportingProcess) return
     PlatformTestUtil.waitForPromise(getInstance(myProject).getImportFinishPromise())
   }
 
@@ -94,10 +94,10 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
 
     createProjectSubFile("../anotherProject/.mvn/jvm.config", "-Dsomething=blablabla")
     MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
-    waitForLinkingCompleted();
+    waitForLinkingCompleted()
     assertModules("project1", "m1", "project2", "m2")
 
-    assertEquals(2, MavenServerManager.getInstance().allConnectors.size);
+    assertEquals(2, MavenServerManager.getInstance().allConnectors.size)
 
     assertUnorderedElementsAreEqual(
       MavenServerManager.getInstance().allConnectors.map {
@@ -135,12 +135,12 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile("../anotherProject/.mvn/jvm.config", "-Dsomething=blablabla")
     val value = Registry.`is`("maven.server.per.idea.project")
     try {
-      Registry.get("maven.server.per.idea.project").setValue(true);
+      Registry.get("maven.server.per.idea.project").setValue(true)
       MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
-      waitForLinkingCompleted();
+      waitForLinkingCompleted()
       assertModules("project1", "m1", "project2", "m2")
 
-      assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
+      assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
 
       assertContainsElements(
         MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
@@ -172,9 +172,9 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                           "    <relativePath>../parent/pom.xml</relativePath>\n" +
                           "  </parent>")
     importProject()
-    assertModules("project1", "m1")
+    assertModules("project1", mn("project", "m1"))
 
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
+    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
 
     assertUnorderedElementsAreEqual(
       MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
@@ -192,11 +192,11 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                              "<packaging>pom</packaging>"
     )
     val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject)
-    settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings");
+    settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings")
     createProjectSubFile(".mvn/jvm.config", "-Dsomething=jvm")
     importProject()
     val allConnectors = MavenServerManager.getInstance().allConnectors
-    assertEquals(1, allConnectors.size);
+    assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=settings", mavenServerConnector.vmOptions)
   }
@@ -211,7 +211,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile(".mvn/jvm.config", "-Dsomething=something")
     importProject()
     val allConnectors = MavenServerManager.getInstance().allConnectors
-    assertEquals(1, allConnectors.size);
+    assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=something", mavenServerConnector.vmOptions)
   }
@@ -224,10 +224,10 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                              "<packaging>pom</packaging>"
     )
     val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject)
-    settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings");
+    settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings")
     importProject()
     val allConnectors = MavenServerManager.getInstance().allConnectors
-    assertEquals(1, allConnectors.size);
+    assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=settings", mavenServerConnector.vmOptions)
   }
@@ -241,7 +241,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     )
     createProjectSubFile(".mvn/jvm.config", "-Xms800m")
     importProject()
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
+    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
   }
 
 
