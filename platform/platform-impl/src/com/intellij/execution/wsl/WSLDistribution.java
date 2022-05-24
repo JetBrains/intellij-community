@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -23,10 +24,8 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.util.Consumer;
-import com.intellij.util.Functions;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SystemProperties;
+import com.intellij.remote.RemoteCredentials;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -165,41 +164,32 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   /**
-   * Copying changed files recursively from wslPath/ to windowsPath/; with rsync
+   * Copying changed files recursively from {@code wslPath} to {@code windowsPath} with rsync
    * Consider using ``WslSync`` class
    *
-   * @param wslPath           source path inside wsl, e.g. /usr/bin
-   * @param windowsPath       target windows path, e.g. C:/tmp; Directory going to be created
+   * @param wslPath           path to the source file or directory inside wsl, e.g. /usr/bin or /usr/bin/bundle
+   * @param windowsPath       target windows path, e.g. C:/tmp; Parent directories are going to be created
    * @param additionalOptions may be used for --delete (not recommended), --include and so on
    * @param handlerConsumer   consumes process handler just before execution. Can be used for fast cancellation
    * @return process output
+   * @implNote we use the same trick as in {@link com.intellij.ssh.RSyncUtil#download(List, List, RemoteCredentials, ProgressIndicator)} to
+   * achieve consistent copying behaviour for both files and directories.
+   * @see com.intellij.ssh.RSyncUtil#download(List, List, RemoteCredentials, ProgressIndicator)
    */
-
   public void copyFromWsl(@NotNull String wslPath,
                           @NotNull String windowsPath,
                           @Nullable List<String> additionalOptions,
-                          @Nullable Consumer<? super ProcessHandler> handlerConsumer
-  )
-    throws ExecutionException {
-
-
-    //noinspection ResultOfMethodCallIgnored
-    new File(windowsPath).mkdirs();
-    List<String> command = new ArrayList<>(Arrays.asList(RSYNC, "-cr"));
-
+                          @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
+    var command = ContainerUtil.newArrayList(RSYNC, "--checksum", "--recursive");
     if (additionalOptions != null) {
       command.addAll(additionalOptions);
     }
+    command.add(getSourceWslPath(wslPath));
+    command.add(getTargetWslPath(windowsPath));
 
-    command.add(wslPath + "/");
-    String targetWslPath = getWslPath(windowsPath);
-    if (targetWslPath == null) {
-      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
-    }
-    command.add(targetWslPath + "/");
     var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
     if (process.getExitCode() != 0) {
-      // Most common problem is rsync not onstalled
+      // Most common problem is rsync not installed
       if (executeOnWsl(10_000, "type", RSYNC).getExitCode() != 0) {
         throw new ExecutionException(IdeBundle.message("wsl.no.rsync", this.myDescriptor.getMsId()));
       }
@@ -700,5 +690,27 @@ public class WSLDistribution implements AbstractWslDistribution {
     WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true);
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT,
                                                               true);
+  }
+
+  /**
+   * @return {@code wslPath} without trailing slashes.
+   */
+  private static @NotNull String getSourceWslPath(final @NotNull String wslPath) {
+    return UriUtil.trimTrailingSlashes(wslPath);
+  }
+
+  /**
+   * @return path to the parent of {@code windowsPath}, always with a trailing slash. Also creates all parent directories.
+   */
+  private @NotNull String getTargetWslPath(final @NotNull String windowsPath) throws ExecutionException {
+    var windowsPathParent = new File(windowsPath).getParentFile();
+    if (!FileUtil.createDirectory(windowsPathParent)) {
+      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.create.target.dir.message", windowsPathParent));
+    }
+    var targetWslPath = getWslPath(windowsPathParent.getPath());
+    if (targetWslPath == null) {
+      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
+    }
+    return targetWslPath + "/";
   }
 }
