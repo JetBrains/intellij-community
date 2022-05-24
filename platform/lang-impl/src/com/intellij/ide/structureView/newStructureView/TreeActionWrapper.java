@@ -27,7 +27,7 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware, Action
     super.update(e);
     Presentation presentation = e.getPresentation();
     ActionPresentation actionPresentation = myAction.getPresentation();
-    if (presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON) == null) {
+    if (!e.isFromContextMenu() && presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON) == null) {
       presentation.setIcon(actionPresentation.getIcon());
     }
     presentation.setText(actionPresentation.getText());
