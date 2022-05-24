@@ -141,6 +141,12 @@ internal fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqN
     "kotlin.String" -> CommonClassNames.JAVA_LANG_STRING
     "kotlin.CharSequence" -> CommonClassNames.JAVA_LANG_CHAR_SEQUENCE
     "kotlin.Throwable" -> CommonClassNames.JAVA_LANG_THROWABLE
+    "kotlin.Exception" -> CommonClassNames.JAVA_LANG_EXCEPTION
+    "kotlin.RuntimeException" -> CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION
+    "kotlin.IndexOutOfBoundsException" -> "java.lang.IndexOutOfBoundsException"
+    "kotlin.ClassCastException" -> "java.lang.ClassCastException"
+    "kotlin.ArithmeticException" -> "java.lang.ArithmeticException"
+    "kotlin.NullPointerException" -> CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION
     "kotlin.Cloneable" -> CommonClassNames.JAVA_LANG_CLONEABLE
     "kotlin.Number" -> CommonClassNames.JAVA_LANG_NUMBER
     "kotlin.Comparable" -> CommonClassNames.JAVA_LANG_COMPARABLE

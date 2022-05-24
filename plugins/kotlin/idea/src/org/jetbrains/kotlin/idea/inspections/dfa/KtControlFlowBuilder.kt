@@ -301,7 +301,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(PushValueInstruction(DfTypes.NULL, anchor))
             setOffset(endOffset)
         } else {
-            val transfer = trapTracker.maybeTransferValue("java.lang.ClassCastException")
+            val transfer = trapTracker.maybeTransferValue("kotlin.ClassCastException")
             addInstruction(EnsureInstruction(KotlinCastProblem(operand, expr), RelationType.IS, type, transfer))
             if (typeReference != null) {
                 val castType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
@@ -341,7 +341,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 if (indexType.canBeNull()) {
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
-                val transfer = trapTracker.maybeTransferValue("java.lang.ArrayIndexOutOfBoundsException")
+                val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                 val elementType = expr.builtIns.getArrayElementType(curType)
                 if (lastIndex && storedValue != null) {
                     processExpression(storedValue)
@@ -357,7 +357,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     if (indexType.canBeNull()) {
                         addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                     }
-                    val transfer = trapTracker.maybeTransferValue("java.lang.StringIndexOutOfBoundsException")
+                    val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
                     if (lastIndex && storedValue != null) {
                         processExpression(storedValue)
@@ -369,7 +369,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     if (indexType.canBeNull()) {
                         addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                     }
-                    val transfer = trapTracker.maybeTransferValue("java.lang.IndexOutOfBoundsException")
+                    val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
                     if (lastIndex && storedValue != null) {
                         processExpression(storedValue)
@@ -707,7 +707,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun addCall(expr: KtExpression, args: Int, qualifierOnStack: Boolean = false) {
-        val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
+        val transfer = trapTracker.maybeTransferValue("kotlin.Throwable")
         addInstruction(KotlinFunctionCallInstruction(expr, args, qualifierOnStack, transfer))
     }
 
@@ -851,7 +851,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
         } else if (ref == "!!") {
-            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.NullPointerException")
+            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("kotlin.NullPointerException")
             val operandType = operand?.getKotlinType()
             if (operandType?.canBeNull() == true) {
                 addInstruction(EnsureInstruction(KotlinNullCheckProblem(expr), RelationType.NE, DfTypes.NULL, transfer))
@@ -1395,7 +1395,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         if ((mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) && resultType != null &&
             (resultType.isLong() || resultType.isInt())) {
-            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.ArithmeticException")
+            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("kotlin.ArithmeticException")
             val zero = if (resultType.isLong()) DfTypes.longValue(0) else DfTypes.intValue(0)
             addInstruction(EnsureInstruction(null, RelationType.NE, zero, transfer, true))
         }
@@ -1443,7 +1443,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(right)
             addImplicitConversion(right, balancedType)
             if (forceEqualityByContent && !mayCompareByContent(leftDfType, rightDfType)) {
-                val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
+                val transfer = trapTracker.maybeTransferValue("kotlin.Throwable")
                 addInstruction(KotlinEqualityInstruction(expr, relation != RelationType.EQ, transfer))
             } else {
                 addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
