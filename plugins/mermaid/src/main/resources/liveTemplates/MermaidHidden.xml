@@ -11,4 +11,79 @@
     </context>
   </template>
 
+  <template id="mermaid_loop" name="mermaid_loop"
+            value="loop $ID$ &#10;    $END$$SELECTION$&#10;end"
+            description="loop statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_alt" name="mermaid_alt"
+            value="alt $ID$ &#10;    $END$$SELECTION$&#10;end"
+            description="alt statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_else" name="mermaid_else"
+            value="else&#10;    $END$$SELECTION$&#10;"
+            description="else statement"
+            toReformat="false" toShortenFQNames="false">
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_opt" name="mermaid_opt"
+            value="opt $ID$ &#10;    $END$$SELECTION$&#10;end"
+            description="opt statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_par" name="mermaid_par"
+            value="par $ID$ &#10;    $END$$SELECTION$&#10;end"
+            description="par statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_and" name="mermaid_and"
+            value="and&#10;    $END$$SELECTION$&#10;"
+            description="and statement"
+            toReformat="false" toShortenFQNames="false">
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_rect" name="mermaid_rect"
+            value="rect rgb($ID)$ &#10;    $END$$SELECTION$&#10;end"
+            description="rect statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
 </templateSet>

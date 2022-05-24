@@ -2,11 +2,16 @@ package com.github.firsttimeinforever.mermaid.editor
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidFlowchartDocumentImpl
+import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidSequenceDocumentImpl
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.*
+import com.intellij.patterns.PsiElementPattern
+import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 
 class MermaidCompletionContributor : CompletionContributor() {
@@ -18,7 +23,8 @@ class MermaidCompletionContributor : CompletionContributor() {
         true, psiFile(), or(
           psiElement(MermaidTokens.Flowchart.FLOWCHART),
           psiElement(MermaidTokens.Pie.PIE),
-          psiElement(MermaidTokens.Journey.JOURNEY)
+          psiElement(MermaidTokens.Journey.JOURNEY),
+          psiElement(MermaidTokens.Sequence.SEQUENCE)
         )
       ),
       MermaidDiagramCompletionProvider()
@@ -36,9 +42,7 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
-      or(
-        psiElement().inside(MermaidFlowchartDocumentImpl::class.java) //!!!
-      ),
+      psiElement().inside(MermaidFlowchartDocumentImpl::class.java),
       MermaidFlowchartCompletionProvider()
     )
 
@@ -62,6 +66,44 @@ class MermaidCompletionContributor : CompletionContributor() {
       ),
       MermaidPieTitleCompletionProvider()
     )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterSiblingSkipping(
+        not(psiElement(MermaidSequenceDocumentImpl::class.java)),
+        psiElement(MermaidSequenceDocumentImpl::class.java)
+      ),
+      MermaidSequenceCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideBlock(psiElement(MermaidTokens.Sequence.ALT)),
+      MermaidSequenceBranchCompletionProvider("else")
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideBlock(psiElement(MermaidTokens.Sequence.PAR)),
+      MermaidSequenceBranchCompletionProvider("and")
+    )
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.insideBlock(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {
+    return with(object : PatternCondition<PsiElement>("insideBlock") {
+      override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
+        val parent = psiElement.parent
+        val children = parent.children
+        var i = listOf(*children).indexOf(psiElement)
+        while (--i >= 0) {
+          if (psiElement(MermaidTokens.END).accepts(children[i], context)) {
+            return false
+          }
+          if (pattern.accepts(children[i], context)) {
+            return true
+          }
+        }
+        return false
+      }
+    })
   }
 }
 
