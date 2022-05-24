@@ -20,7 +20,7 @@ data class MavenImportingResult(
   val dummyModulesCreated: Module?
 )
 
-sealed abstract class MavenImportContext(val project: Project) {
+abstract sealed class MavenImportContext(val project: Project) {
   abstract val indicator: MavenProgressIndicator
 }
 

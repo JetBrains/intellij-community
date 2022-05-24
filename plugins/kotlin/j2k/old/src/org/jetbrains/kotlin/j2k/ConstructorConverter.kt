@@ -242,7 +242,7 @@ class ConstructorConverter(
     private fun PsiExpression.isSuperConstructorCall() = (this as? PsiMethodCallExpression)?.methodExpression?.text == "super"
     private fun PsiExpression.isThisConstructorCall() = (this as? PsiMethodCallExpression)?.methodExpression?.text == "this"
 
-    private inner open class ReplacingExpressionConverter(val parameterUsageReplacementMap: Map<String, String>) : SpecialExpressionConverter {
+    private open inner class ReplacingExpressionConverter(val parameterUsageReplacementMap: Map<String, String>) : SpecialExpressionConverter {
         override fun convertExpression(expression: PsiExpression, codeConverter: CodeConverter): Expression? {
             if (expression is PsiReferenceExpression && expression.qualifier == null) {
                 val replacement = parameterUsageReplacementMap[expression.referenceName]

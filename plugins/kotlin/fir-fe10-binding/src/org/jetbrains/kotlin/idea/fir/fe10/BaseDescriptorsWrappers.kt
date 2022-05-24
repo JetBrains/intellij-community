@@ -651,7 +651,7 @@ class KtSymbolBasedPropertyDescriptor(
 abstract class KtSymbolBasedVariableAccessorDescriptor(
     val propertyDescriptor: KtSymbolBasedPropertyDescriptor
 ) : KtSymbolBasedDeclarationDescriptor(propertyDescriptor.context), VariableAccessorDescriptor {
-    override abstract val ktSymbol: KtPropertyAccessorSymbol
+    abstract override val ktSymbol: KtPropertyAccessorSymbol
 
     override fun getPackageFqNameIfTopLevel(): FqName = error("should be called")
     override fun getContainingDeclaration(): DeclarationDescriptor = propertyDescriptor

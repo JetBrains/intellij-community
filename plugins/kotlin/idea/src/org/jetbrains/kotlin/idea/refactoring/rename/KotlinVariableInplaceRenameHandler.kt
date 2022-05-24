@@ -63,6 +63,6 @@ open class KotlinVariableInplaceRenameHandler : VariableInplaceRenameHandler() {
         return RenamerImpl(currentElementToRename, editor, currentName, currentName)
     }
 
-    override public fun isAvailable(element: PsiElement?, editor: Editor, file: PsiFile) =
+    public override fun isAvailable(element: PsiElement?, editor: Editor, file: PsiFile) =
         editor.settings.isVariableInplaceRenameEnabled && element != null && isInplaceRenameAvailable(element)
 }

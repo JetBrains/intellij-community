@@ -13,7 +13,7 @@ internal sealed class PackageSearchOperation<T> {
 
     sealed class Package : PackageSearchOperation<UnifiedDependency>() {
 
-        override abstract val model: UnifiedDependency
+        abstract override val model: UnifiedDependency
 
         data class Install(
             override val model: UnifiedDependency,
@@ -57,7 +57,7 @@ internal sealed class PackageSearchOperation<T> {
 
     sealed class Repository : PackageSearchOperation<UnifiedDependencyRepository>() {
 
-        override abstract val model: UnifiedDependencyRepository
+        abstract override val model: UnifiedDependencyRepository
 
         data class Install(
             override val model: UnifiedDependencyRepository,
