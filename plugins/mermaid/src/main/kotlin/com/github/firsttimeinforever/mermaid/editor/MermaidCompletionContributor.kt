@@ -2,6 +2,7 @@ package com.github.firsttimeinforever.mermaid.editor
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidFlowchartDocumentImpl
+import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidPieDocumentImpl
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidSequenceDocumentImpl
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
@@ -58,10 +59,10 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
-      psiElement().afterLeaf(
-        or(
-          psiElement(MermaidTokens.Pie.PIE),
-          psiElement(MermaidTokens.EOL)
+      psiElement().withParent(
+        psiElement().afterSiblingSkipping(
+          not(psiElement(MermaidTokens.Pie.PIE)).andOr(not(psiElement(MermaidPieDocumentImpl::class.java))),
+          or(psiElement(MermaidTokens.Pie.PIE), psiElement(MermaidPieDocumentImpl::class.java))
         )
       ),
       MermaidPieTitleCompletionProvider()
