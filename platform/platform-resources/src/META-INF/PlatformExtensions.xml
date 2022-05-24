@@ -1378,7 +1378,7 @@
     <listener class="com.intellij.util.EarlyAccessRegistryManager$MyListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings$ToolbarRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-    <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <!-- <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/> -->
 
     <listener class="com.intellij.ide.FrameStateManagerAppListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
   </applicationListeners>
