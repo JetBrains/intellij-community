@@ -110,13 +110,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @ApiStatus.Internal
   public void disconnect() {
-    PersistentFsConnectionListener.EP_NAME.extensions().forEach(PersistentFsConnectionListener::beforeConnectionClosed);
-    // TODO make sure we don't have files in memory
-    FileNameCache.drop();
-    LOG.assertTrue(myConnected.get());
-    myRoots.clear();
-    myIdToDirCache.clear();
-    performShutdown();
+    if (myConnected.compareAndSet(true, false)) {
+      PersistentFsConnectionListener.EP_NAME.extensions().forEach(PersistentFsConnectionListener::beforeConnectionClosed);
+      // TODO make sure we don't have files in memory
+      FileNameCache.drop();
+      myRoots.clear();
+      myIdToDirCache.clear();
+      LOG.info("VFS dispose started");
+      FSRecords.dispose();
+      LOG.info("VFS dispose completed");
+    }
   }
 
   private void doConnect() {
@@ -140,14 +143,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public void dispose() {
     disconnect();
-  }
-
-  private void performShutdown() {
-    if (myConnected.compareAndSet(true, false)) {
-      LOG.info("VFS dispose started");
-      FSRecords.dispose();
-      LOG.info("VFS dispose completed");
-    }
   }
 
   @Override
