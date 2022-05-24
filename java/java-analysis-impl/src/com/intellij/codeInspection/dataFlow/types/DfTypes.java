@@ -290,7 +290,7 @@ public final class DfTypes {
 
   /**
    * Returns a custom constant type
-   *
+   * <p>
    * The following types of the objects are supported:
    * <ul>
    *   <li>Integer/Long/Double/Float/Boolean (will be unboxed)</li>
@@ -388,11 +388,11 @@ public final class DfTypes {
 
   /**
    * @param constant string constant
-   * @param stringType string type
+   * @param constraint string type constraint
    * @return concatenation result string
    */
-  public static @NotNull DfConstantType<?> concatenationResult(@NotNull String constant, @NotNull PsiType stringType) {
-    return new DfReferenceConstantType(constant, TypeConstraints.exact(stringType), true);
+  public static @NotNull DfConstantType<?> concatenationResult(@NotNull String constant, @NotNull TypeConstraint constraint) {
+    return new DfReferenceConstantType(constant, constraint, true);
   }
 
   /**
