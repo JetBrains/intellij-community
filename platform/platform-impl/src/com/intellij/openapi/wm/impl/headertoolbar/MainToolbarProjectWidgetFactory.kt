@@ -8,9 +8,9 @@ import javax.swing.JComponent
 /**
  * Factory for Project-level widgets placed in main toolbar.
  *
- * @see [MainToolbarWidgetFactory]
+ * Extension point: `com.intellij.projectToolbarWidget`
  *
- * Extension point: com.intellij.projectToolbarWidget
+ * @see [MainToolbarWidgetFactory]
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
