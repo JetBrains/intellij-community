@@ -18,7 +18,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
@@ -26,8 +25,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -268,22 +267,22 @@ public class DebuggerDfaRunner {
       state.applyCondition(var.eq(((JdiValueInfo.PrimitiveConstant)valueInfo).getDfType()));
     }
     else if (valueInfo instanceof JdiValueInfo.StringConstant) {
-      PsiType stringType = JavaPsiFacade.getElementFactory(myProject)
-        .createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope());
+      TypeConstraint stringType = myProvider.constraintFromJvmClassName(myBody, "java/lang/String");
       state.applyCondition(var.eq(DfTypes.referenceConstant(((JdiValueInfo.StringConstant)valueInfo).getValue(), stringType)));
     }
     else if (valueInfo instanceof JdiValueInfo.ObjectRef) {
-      PsiType psiType = getType(myProject, myBody.getResolveScope(), ((JdiValueInfo.ObjectRef)valueInfo).getSignature());
-      if (psiType == null) return;
-      TypeConstraint exactType = TypeConstraints.exact(psiType);
+      TypeConstraint exactType = getType(myBody, ((JdiValueInfo.ObjectRef)valueInfo).getSignature());
+      if (exactType == TypeConstraints.TOP) return;
       state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
       if (valueInfo instanceof JdiValueInfo.EnumConstant) {
         String name = ((JdiValueInfo.EnumConstant)valueInfo).getName();
-        PsiClass enumClass = ((PsiClassType)psiType).resolve();
-        if (enumClass != null && enumClass.isEnum()) {
-          PsiField enumConst = enumClass.findFieldByName(name, false);
-          if (enumConst instanceof PsiEnumConstant) {
-            state.applyCondition(var.eq(DfTypes.referenceConstant(enumConst, exactType)));
+        if (exactType.isEnum()) {
+          PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(exactType.getPsiType(myProject));
+          if (enumClass != null) {
+            PsiField enumConst = enumClass.findFieldByName(name, false);
+            if (enumConst instanceof PsiEnumConstant) {
+              state.applyCondition(var.eq(DfTypes.referenceConstant(enumConst, exactType)));
+            }
           }
         }
       }
@@ -299,34 +298,32 @@ public class DebuggerDfaRunner {
     }
   }
 
-  private static @Nullable PsiType getType(@NotNull Project project,
-                                           @NotNull GlobalSearchScope scope,
-                                           @NotNull String signature) {
+  private @NotNull TypeConstraint getType(@NotNull PsiElement context, @NotNull String signature) {
     int arrayDepth = 0;
     while (signature.length() > arrayDepth && signature.charAt(arrayDepth) == '[') {
       arrayDepth++;
     }
-    PsiType psiType = getNonArrayType(project, scope, signature.substring(arrayDepth));
-    if (psiType == null) return null;
-    for (int i=0; i<arrayDepth; i++) {
-      psiType = psiType.createArrayType();
-    }
-    return psiType;
-  }
-
-  @Nullable
-  private static PsiType getNonArrayType(@NotNull Project project, @NotNull GlobalSearchScope scope, @NotNull String signature) {
-    if (signature.length() == 1) {
-      return PsiPrimitiveType.fromJvmTypeDescriptor(signature.charAt(0));
-    }
-    if (signature.startsWith("L")) {
-      if (!signature.endsWith(";")) return null;
-      String jvmType = signature.substring(1, signature.length() - 1);
-      PsiClass aClass = DebuggerUtils.findClass(jvmType.replace('/', '.'), project, scope);
-      if (aClass != null) {
-        return JavaPsiFacade.getElementFactory(project).createType(aClass);
+    TypeConstraint constraint = null;
+    String nonArraySig = signature.substring(arrayDepth);
+    if (nonArraySig.length() == 1) {
+      if (arrayDepth > 0) {
+        arrayDepth--;
+      }
+      PsiPrimitiveType primitiveType = PsiPrimitiveType.fromJvmTypeDescriptor(nonArraySig.charAt(0));
+      if (primitiveType != null) {
+        constraint = TypeConstraints.exact(primitiveType.createArrayType());
       }
     }
-    return null;
+    else if (nonArraySig.startsWith("L")) {
+      if (nonArraySig.endsWith(";")) {
+        String jvmType = nonArraySig.substring(1, nonArraySig.length() - 1);
+        constraint = myProvider.constraintFromJvmClassName(context, jvmType);
+      }
+    }
+    if (constraint == null) return TypeConstraints.TOP;
+    for (int i = 0; i < arrayDepth; i++) {
+      constraint = constraint.arrayOf();
+    }
+    return constraint;
   }
 }

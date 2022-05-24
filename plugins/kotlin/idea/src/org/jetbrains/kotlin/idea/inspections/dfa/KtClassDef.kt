@@ -28,7 +28,7 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-internal class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstraints.ClassDef {
+class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstraints.ClassDef {
     override fun isInheritor(superClassQualifiedName: String): Boolean =
         cls.getAllSuperClassifiers().any { superClass ->
           superClass is ClassDescriptor && correctFqName(superClass.fqNameUnsafe) == superClassQualifiedName
@@ -94,9 +94,28 @@ internal class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : Ty
             else TypeConstraints.exactClass(KtClassDef(descriptor, context))
         }
 
+        fun fromJvmClassName(context: KtElement, jvmClassName: String): TypeConstraints.ClassDef? {
+            var corrected: String? = null
+            if (jvmClassName.startsWith("java/")) {
+                val fqn = jvmClassName.replace('/', '.')
+                corrected = kotlinToJavaClass.entries.firstOrNull { (_, javaClass) -> javaClass == fqn }?.key
+            }
+
+            val name = FqName.fromSegments(if (corrected == null) jvmClassName.split(Regex("[$/]")) else corrected.split('.'))
+            val descriptor = context.findModuleDescriptor().resolveClassByFqName(name, NoLookupLocation.FROM_IDE)
+            return if (descriptor == null) null else KtClassDef(descriptor, context)
+
+        }
+
         fun typeConstraintFactory(context: KtElement): TypeConstraints.TypeConstraintFactory {
-            return TypeConstraints.TypeConstraintFactory {
-                    fqn -> getClassConstraint(context, FqName.fromSegments(fqn.split('.')).toUnsafe())
+            return TypeConstraints.TypeConstraintFactory { fqn ->
+                val corrected: String
+                if (fqn.startsWith("java.")) {
+                    corrected = kotlinToJavaClass.entries.firstOrNull { (_, javaClass) -> javaClass == fqn }?.key ?: fqn
+                } else {
+                    corrected = fqn
+                }
+                getClassConstraint(context, FqName.fromSegments(corrected.split('.')).toUnsafe())
             }
         }
     }

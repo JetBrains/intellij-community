@@ -1,10 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist.java;
 
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.java.JavaClassDef;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener;
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider;
@@ -196,5 +200,11 @@ public class JavaDfaAssistProvider implements DfaAssistProvider {
   @NotNull
   public DebuggerDfaListener createListener() {
     return new JavaDebuggerDfaListener();
+  }
+
+  @Override
+  public @NotNull TypeConstraint constraintFromJvmClassName(@NotNull PsiElement anchor, @NotNull String jvmClassName) {
+    PsiClass aClass = DebuggerUtils.findClass(jvmClassName.replace('/', '.'), anchor.getProject(), anchor.getResolveScope());
+    return aClass != null ? TypeConstraints.exactClass(aClass) : TypeConstraints.TOP;
   }
 }

@@ -1613,9 +1613,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (typeReference == null) return DfType.TOP
         val kotlinType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
         if (kotlinType == null || kotlinType.constructor.declarationDescriptor is TypeParameterDescriptor) return DfType.TOP
-        return if (kotlinType.isMarkedNullable) kotlinType.toDfType(typeReference)
+        if (kotlinType.isMarkedNullable) return kotlinType.toDfType(typeReference)
         // makeNullable to convert primitive to boxed
-        else kotlinType.makeNullable().toDfType(typeReference).meet(DfTypes.NOT_NULL_OBJECT)
+        val dfType = kotlinType.makeNullable().toDfType(typeReference).meet(DfTypes.NOT_NULL_OBJECT)
+        return if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
     }
 
     private fun processIfExpression(ifExpression: KtIfExpression) {

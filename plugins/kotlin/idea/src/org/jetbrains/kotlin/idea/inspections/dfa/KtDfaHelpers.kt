@@ -37,7 +37,50 @@ import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
-internal fun KotlinType?.toDfType(context: KtElement) : DfType {
+internal val kotlinToJavaClass = mapOf(
+    "kotlin.Any" to CommonClassNames.JAVA_LANG_OBJECT,
+    "kotlin.String" to CommonClassNames.JAVA_LANG_STRING,
+    "kotlin.CharSequence" to CommonClassNames.JAVA_LANG_CHAR_SEQUENCE,
+    "kotlin.Throwable" to CommonClassNames.JAVA_LANG_THROWABLE,
+    "kotlin.Exception" to CommonClassNames.JAVA_LANG_EXCEPTION,
+    "kotlin.RuntimeException" to CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION,
+    "kotlin.IndexOutOfBoundsException" to "java.lang.IndexOutOfBoundsException",
+    "kotlin.ClassCastException" to "java.lang.ClassCastException",
+    "kotlin.ArithmeticException" to "java.lang.ArithmeticException",
+    "kotlin.NullPointerException" to CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION,
+    "kotlin.Cloneable" to CommonClassNames.JAVA_LANG_CLONEABLE,
+    "kotlin.Number" to CommonClassNames.JAVA_LANG_NUMBER,
+    "kotlin.Comparable" to CommonClassNames.JAVA_LANG_COMPARABLE,
+    "kotlin.Enum" to CommonClassNames.JAVA_LANG_ENUM,
+    "kotlin.Annotation" to CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION,
+    "kotlin.Nothing" to CommonClassNames.JAVA_LANG_VOID,
+    "kotlin.Int" to CommonClassNames.JAVA_LANG_INTEGER,
+    "kotlin.Long" to CommonClassNames.JAVA_LANG_LONG,
+    "kotlin.Boolean" to CommonClassNames.JAVA_LANG_BOOLEAN,
+    "kotlin.Byte" to CommonClassNames.JAVA_LANG_BYTE,
+    "kotlin.Short" to CommonClassNames.JAVA_LANG_SHORT,
+    "kotlin.Float" to CommonClassNames.JAVA_LANG_FLOAT,
+    "kotlin.Double" to CommonClassNames.JAVA_LANG_DOUBLE,
+    "kotlin.Char" to CommonClassNames.JAVA_LANG_CHARACTER,
+    "kotlin.collections.Iterable" to CommonClassNames.JAVA_LANG_ITERABLE,
+    "kotlin.collections.MutableIterable" to CommonClassNames.JAVA_LANG_ITERABLE,
+    "kotlin.collections.Iterator" to CommonClassNames.JAVA_UTIL_ITERATOR,
+    "kotlin.collections.MutableIterator" to CommonClassNames.JAVA_UTIL_ITERATOR,
+    "kotlin.collections.Collection" to CommonClassNames.JAVA_UTIL_COLLECTION,
+    "kotlin.collections.MutableCollection" to CommonClassNames.JAVA_UTIL_COLLECTION,
+    "kotlin.collections.List" to CommonClassNames.JAVA_UTIL_LIST,
+    "kotlin.collections.MutableList" to CommonClassNames.JAVA_UTIL_LIST,
+    "kotlin.collections.ListIterator" to "java.util.ListIterator",
+    "kotlin.collections.MutableListIterator" to "java.util.ListIterator",
+    "kotlin.collections.Set" to CommonClassNames.JAVA_UTIL_SET,
+    "kotlin.collections.MutableSet" to CommonClassNames.JAVA_UTIL_SET,
+    "kotlin.collections.Map" to CommonClassNames.JAVA_UTIL_MAP,
+    "kotlin.collections.MutableMap" to CommonClassNames.JAVA_UTIL_MAP,
+    "kotlin.collections.MapEntry" to CommonClassNames.JAVA_UTIL_MAP_ENTRY,
+    "kotlin.collections.MutableMapEntry" to CommonClassNames.JAVA_UTIL_MAP_ENTRY
+)
+
+internal fun KotlinType?.toDfType(context: KtElement): DfType {
     if (this == null) return DfType.TOP
     if (canBeNull()) {
         var notNullableType = makeNotNullable().toDfTypeNotNullable(context)
@@ -136,40 +179,9 @@ private fun ClassDescriptor.getTypeConstraint(context: KtElement): TypeConstrain
 }
 
 // see org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap in kotlin compiler
-internal fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNameUnsafe.asString()) {
-    "kotlin.Any" -> CommonClassNames.JAVA_LANG_OBJECT
-    "kotlin.String" -> CommonClassNames.JAVA_LANG_STRING
-    "kotlin.CharSequence" -> CommonClassNames.JAVA_LANG_CHAR_SEQUENCE
-    "kotlin.Throwable" -> CommonClassNames.JAVA_LANG_THROWABLE
-    "kotlin.Exception" -> CommonClassNames.JAVA_LANG_EXCEPTION
-    "kotlin.RuntimeException" -> CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION
-    "kotlin.IndexOutOfBoundsException" -> "java.lang.IndexOutOfBoundsException"
-    "kotlin.ClassCastException" -> "java.lang.ClassCastException"
-    "kotlin.ArithmeticException" -> "java.lang.ArithmeticException"
-    "kotlin.NullPointerException" -> CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION
-    "kotlin.Cloneable" -> CommonClassNames.JAVA_LANG_CLONEABLE
-    "kotlin.Number" -> CommonClassNames.JAVA_LANG_NUMBER
-    "kotlin.Comparable" -> CommonClassNames.JAVA_LANG_COMPARABLE
-    "kotlin.Enum" -> CommonClassNames.JAVA_LANG_ENUM
-    "kotlin.Annotation" -> CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION
-    "kotlin.Nothing" -> CommonClassNames.JAVA_LANG_VOID
-    "kotlin.Int" -> CommonClassNames.JAVA_LANG_INTEGER
-    "kotlin.Long" -> CommonClassNames.JAVA_LANG_LONG
-    "kotlin.Boolean" -> CommonClassNames.JAVA_LANG_BOOLEAN
-    "kotlin.Byte" -> CommonClassNames.JAVA_LANG_BYTE
-    "kotlin.Short" -> CommonClassNames.JAVA_LANG_SHORT
-    "kotlin.Float" -> CommonClassNames.JAVA_LANG_FLOAT
-    "kotlin.Double" -> CommonClassNames.JAVA_LANG_DOUBLE
-    "kotlin.Char" -> CommonClassNames.JAVA_LANG_CHARACTER
-    "kotlin.collections.Iterable", "kotlin.collections.MutableIterable" -> CommonClassNames.JAVA_LANG_ITERABLE
-    "kotlin.collections.Iterator", "kotlin.collections.MutableIterator" -> CommonClassNames.JAVA_UTIL_ITERATOR
-    "kotlin.collections.Collection", "kotlin.collections.MutableCollection" -> CommonClassNames.JAVA_UTIL_COLLECTION
-    "kotlin.collections.List", "kotlin.collections.MutableList" -> CommonClassNames.JAVA_UTIL_LIST
-    "kotlin.collections.ListIterator", "kotlin.collections.MutableListIterator" -> "java.util.ListIterator"
-    "kotlin.collections.Set", "kotlin.collections.MutableSet" -> CommonClassNames.JAVA_UTIL_SET
-    "kotlin.collections.Map", "kotlin.collections.MutableMap" -> CommonClassNames.JAVA_UTIL_MAP
-    "kotlin.collections.MapEntry", "kotlin.collections.MutableMapEntry" -> CommonClassNames.JAVA_UTIL_MAP_ENTRY
-    else -> rawName
+internal fun correctFqName(fqNameUnsafe: FqNameUnsafe): String {
+    val rawName = fqNameUnsafe.asString()
+    return kotlinToJavaClass.getOrDefault(rawName, rawName)
 }
 
 internal fun KotlinType?.fqNameEquals(fqName: String): Boolean {
