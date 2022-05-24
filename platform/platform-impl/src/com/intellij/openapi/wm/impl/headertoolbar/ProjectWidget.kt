@@ -162,9 +162,10 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
     override fun getMnemonicNavigationFilter(): MnemonicNavigationFilter<AnAction>? = null
 
-    override fun isSpeedSearchEnabled(): Boolean = false
+    override fun isSpeedSearchEnabled(): Boolean = true
 
-    override fun getSpeedSearchFilter(): SpeedSearchFilter<AnAction>? = null
+    override fun getSpeedSearchFilter(): SpeedSearchFilter<AnAction> =
+      SpeedSearchFilter { (it as? ReopenProjectAction)?.projectNameToDisplay ?: getTextFor(it) }
 
     override fun isAutoSelectionEnabled(): Boolean = false
 
