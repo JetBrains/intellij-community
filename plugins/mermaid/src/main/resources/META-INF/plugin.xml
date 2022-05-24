@@ -19,5 +19,7 @@
                             implementationClass="com.github.firsttimeinforever.mermaid.editor.MermaidCompletionContributor"/>
     <lang.commenter language="MyMermaid"
                     implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidCommenter"/>
+    <lang.braceMatcher language="MyMermaid"
+                       implementationClass="com.github.firsttimeinforever.mermaid.lang.highlighting.MermaidPairMatcher"/>
   </extensions>
 </idea-plugin>
