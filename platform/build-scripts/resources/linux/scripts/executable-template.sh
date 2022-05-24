@@ -61,8 +61,11 @@ if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/__product_vendor__/__system_selector__/
   fi
 fi
 
-if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
-  JRE="$IDE_HOME/jbr"
+if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ -f "$IDE_HOME/jbr/release" ]; then
+  JBR_ARCH="OS_ARCH=\"$OS_ARCH\""
+  if grep -q -e "$JBR_ARCH" "$IDE_HOME/jbr/release" ; then
+    JRE="$IDE_HOME/jbr"
+  fi
 fi
 
 # shellcheck disable=SC2153
