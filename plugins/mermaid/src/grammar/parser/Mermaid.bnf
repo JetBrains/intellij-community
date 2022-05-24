@@ -108,11 +108,11 @@ private sequenceStatement ::= (PARTICIPANT | ACTOR) identifier [AS idAlias]
 	| noteStatement
 	| linksStatement
 	| linkStatement
-	| LOOP MESSAGE sequenceDocument END
-	| RECT MESSAGE sequenceDocument END
-	| OPT MESSAGE sequenceDocument END
-	| ALT MESSAGE elseSections END
-	| PAR MESSAGE parSections END
+	| LOOP [MESSAGE] sequenceDocument END
+	| RECT [MESSAGE] sequenceDocument END
+	| OPT [MESSAGE] sequenceDocument END
+	| ALT [MESSAGE] elseSections END
+	| PAR [MESSAGE] parSections END
 	| directive
   | comment
 idAlias ::= ALIAS+
@@ -136,8 +136,8 @@ private linkContent ::= string COLON string [COMMA linkContent]
 
 linkStatement ::= LINK identifier MESSAGE
 
-elseSections ::= sequenceDocument [ELSE MESSAGE elseSections]
-parSections ::= sequenceDocument [AND MESSAGE parSections]
+elseSections ::= sequenceDocument [ELSE [MESSAGE] elseSections]
+parSections ::= sequenceDocument [AND [MESSAGE] parSections]
 
 comment ::= LINE_COMMENT [COMMENT_TEXT]
 
