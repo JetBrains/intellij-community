@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.tree;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -22,7 +20,6 @@ import org.jetbrains.idea.maven.importing.*;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.util.*;
 
@@ -117,15 +114,6 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
         myModuleModel.disposeModule(each);
       }
     }
-  }
-
-  private void removeOutdatedCompilerConfigSettings() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-    final JpsJavaCompilerOptions javacOptions = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
-    String options = javacOptions.ADDITIONAL_OPTIONS_STRING;
-    options = options.replaceFirst("(-target (\\S+))", ""); // Old IDEAs saved
-    javacOptions.ADDITIONAL_OPTIONS_STRING = options;
   }
 
   public static class TreeModuleConfigurer {

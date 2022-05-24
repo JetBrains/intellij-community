@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.importing.MavenModuleImporter
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 abstract class MavenProjectImporterWorkspaceBase(
   projectsTree: MavenProjectsTree,
@@ -41,8 +42,9 @@ abstract class MavenProjectImporterWorkspaceBase(
     }
 
     configFacets(importers, postTasks)
+
+    MavenUtil.invokeAndWaitWriteAction(myProject) { removeOutdatedCompilerConfigSettings() }
   }
 
   protected data class ModuleImportData(val module: Module, val mavenProject: MavenProject, val moduleType: MavenModuleType?)
-
 }

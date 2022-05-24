@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
@@ -15,6 +17,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 import java.util.*;
@@ -118,6 +121,15 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     else {
       postTasks.add(new RefreshingFilesTask(files));
     }
+  }
+
+  protected void removeOutdatedCompilerConfigSettings() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    final JpsJavaCompilerOptions javacOptions = JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
+    String options = javacOptions.ADDITIONAL_OPTIONS_STRING;
+    options = options.replaceFirst("(-target (\\S+))", ""); // Old IDEAs saved
+    javacOptions.ADDITIONAL_OPTIONS_STRING = options;
   }
 
   protected boolean projectsToImportHaveChanges() {
