@@ -180,32 +180,25 @@ class SoftLinksTest {
     }
 
     val updatedEntity = builder.entities(EntityWithSoftLinks::class.java).single()
-    assertAll(
-      { kotlin.test.assertEquals("AnotherData", updatedEntity.link.name) },
-      { kotlin.test.assertEquals("AnotherData", updatedEntity.manyLinks.single().name) },
-      { kotlin.test.assertEquals("AnotherData", updatedEntity.optionalLink!!.name) },
-      { kotlin.test.assertEquals("AnotherData", updatedEntity.inContainer.id.name) },
-      { kotlin.test.assertEquals("AnotherData", updatedEntity.inOptionalContainer!!.id.name) },
-      { kotlin.test.assertEquals("AnotherData", updatedEntity.inContainerList.single().id.name) },
-      {
-        kotlin.test.assertEquals(
-          "AnotherData",
-          updatedEntity.deepContainer.single().goDeeper.single().goDeep.single().id.name
-        )
-      },
-      { kotlin.test.assertEquals("AnotherData", (updatedEntity.sealedContainer as SealedContainer.BigContainer).id.name) },
-      {
-        kotlin.test.assertEquals(
-          "AnotherData",
-          (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name
-        )
-      },
-      {
-        kotlin.test.assertEquals(
-          "AnotherData",
-          (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name
-        )
-      },
+
+    assertEquals("AnotherData", updatedEntity.link.name)
+    assertEquals("AnotherData", updatedEntity.manyLinks.single().name)
+    assertEquals("AnotherData", updatedEntity.optionalLink!!.name)
+    assertEquals("AnotherData", updatedEntity.inContainer.id.name)
+    assertEquals("AnotherData", updatedEntity.inOptionalContainer!!.id.name)
+    assertEquals("AnotherData", updatedEntity.inContainerList.single().id.name)
+    assertEquals(
+      "AnotherData",
+      updatedEntity.deepContainer.single().goDeeper.single().goDeep.single().id.name
+    )
+    assertEquals("AnotherData", (updatedEntity.sealedContainer as SealedContainer.BigContainer).id.name)
+    assertEquals(
+      "AnotherData",
+      (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name
+    )
+    assertEquals(
+      "AnotherData",
+      (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name
     )
   }
 }
