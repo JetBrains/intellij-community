@@ -2,13 +2,12 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIterator
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
@@ -47,19 +46,9 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     return result
   }
 
-  private fun createLibraryIterator(libraryId: LibraryId,
-                                    entityStorage: WorkspaceEntityStorage,
-                                    project: Project): LibraryIndexableFilesIterator? =
-    if (libraryId.tableId is LibraryTableId.GlobalLibraryTableId) {
-      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryId.tableId.level, project)?.let { libraryTable ->
-        libraryTable.getLibraryByName(libraryId.name)?.let { LibraryIndexableFilesIteratorImpl.createIterator(it) }
-      }
-    }
-    else {
-      entityStorage.resolve(libraryId)?.let { entityStorage.libraryMap.getDataByEntity(it) }?.let {
-        LibraryIndexableFilesIteratorImpl.createIterator(it)
-      }
-    }
+  private fun createLibraryIterator(libraryId: LibraryId, entityStorage: WorkspaceEntityStorage, project: Project): LibraryIndexableFilesIterator? {
+    return libraryId.findLibraryBridge(entityStorage, project)?.let { LibraryIndexableFilesIteratorImpl.createIterator(it) }
+  }
 
   private class DependencyChecker(val entityStorage: WorkspaceEntityStorage,
                                   val idsToIndex: MutableSet<LibraryId>) {

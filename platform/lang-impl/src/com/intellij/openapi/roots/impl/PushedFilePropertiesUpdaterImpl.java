@@ -44,6 +44,7 @@ import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.roots.*;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtilsKt;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.Sequence;
@@ -344,7 +345,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
             WorkspaceEntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-            Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, storage, project);
+            Module module = ModuleEntityUtilsKt.findModuleBridge(moduleEntity, storage);
             if (module == null) {
               return Stream.empty();
             }

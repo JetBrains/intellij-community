@@ -32,10 +32,10 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtilsKt;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
@@ -170,7 +170,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
 
       private @Nullable Module extractModule(@NotNull ModuleEntity entity, @NotNull WorkspaceEntityStorage storage) {
-        return IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(entity, storage, myProject);
+        return ModuleEntityUtilsKt.findModuleBridge(entity, storage);
       }
 
       private @Nullable Module extractModule(@NotNull ContentRootEntity entity, @NotNull WorkspaceEntityStorage storage) {

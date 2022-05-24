@@ -36,10 +36,9 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
       }
     }
 
-    val moduleMap = entityStorage.moduleMap
     partialIteratorsMap.forEach { pair ->
       entityStorage.resolve(pair.key)?.also { entity ->
-        result.addAll(IndexableEntityProviderMethods.createIterators(entity, resolveRoots(pair.value), moduleMap, project))
+        result.addAll(IndexableEntityProviderMethods.createIterators(entity, resolveRoots(pair.value), entityStorage))
       }
     }
     return result
