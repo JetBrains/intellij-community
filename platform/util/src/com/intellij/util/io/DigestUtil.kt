@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import com.intellij.util.lazyPub
 import java.io.IOException
 import java.io.InputStream
 import java.math.BigInteger
@@ -9,6 +8,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.security.Provider
 import java.security.SecureRandom
+import kotlin.io.path.inputStream
 
 object DigestUtil {
   private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
@@ -22,19 +22,19 @@ object DigestUtil {
 
   @JvmStatic
   fun md5(): MessageDigest = md5.cloneDigest()
-  private val md5 by lazyPub { getMessageDigest("MD5") }
+  private val md5 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("MD5") }
 
   @JvmStatic
   fun sha1(): MessageDigest = sha1.cloneDigest()
-  private val sha1 by lazyPub { getMessageDigest("SHA-1") }
+  private val sha1 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-1") }
 
   @JvmStatic
   fun sha256(): MessageDigest = sha256.cloneDigest()
-  private val sha256 by lazyPub { getMessageDigest("SHA-256") }
+  private val sha256 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-256") }
 
   @JvmStatic
   fun sha512(): MessageDigest = sha512.cloneDigest()
-  private val sha512 by lazyPub { getMessageDigest("SHA-512") }
+  private val sha512 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-512") }
 
   @JvmStatic
   fun digestToHash(digest: MessageDigest) = bytesToHex(digest.digest())
@@ -57,7 +57,7 @@ object DigestUtil {
       clone() as MessageDigest
     }
     catch (e: CloneNotSupportedException) {
-      throw IllegalArgumentException("Message digest is not cloneable: ${this}")
+      throw IllegalArgumentException("Message digest is not cloneable: $this")
     }
   }
 
