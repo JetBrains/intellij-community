@@ -574,20 +574,21 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Application app = ApplicationManager.getApplication();
     Collection<Tools> tools = new ArrayList<>(myGlobalInspectionContext.getTools().values());
-    final Runnable buildAction = () -> {
-      try {
-        setUpdating(true);
-        myTree.removeAllNodes();
-        addToolsSynchronously(tools);
-      }
-      finally {
-        setUpdating(false);
-      }
-    };
     if (app.isUnitTestMode()) {
-      buildAction.run();
+      updateResults(tools);
     } else {
-      updateTree(buildAction);
+      updateTree(() -> updateResults(tools));
+    }
+  }
+
+  public void updateResults(Collection<Tools> tools) {
+    try {
+      setUpdating(true);
+      myTree.removeAllNodes();
+      addToolsSynchronously(tools);
+    }
+    finally {
+      setUpdating(false);
     }
   }
 

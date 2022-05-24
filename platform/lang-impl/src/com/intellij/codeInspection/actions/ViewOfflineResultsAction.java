@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -44,10 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ViewOfflineResultsAction.class);
@@ -187,7 +184,14 @@ public class ViewOfflineResultsAction extends AnAction {
                                                                  new OfflineInspectionRVContentProvider(resMap));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
     context.addView(view, title, true);
-    view.update();
+    Collection<Tools> tools = new ArrayList<>(context.getTools().values());
+    ProgressManager.getInstance().run(new Task.Backgroundable(project,
+                                                              InspectionsBundle.message("progress.title.load.offline.inspection.results")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        view.updateResults(tools);
+      }
+    });
     return view;
   }
 }
