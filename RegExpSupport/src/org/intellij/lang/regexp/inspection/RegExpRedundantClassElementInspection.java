@@ -41,8 +41,14 @@ public class RegExpRedundantClassElementInspection extends LocalInspectionTool {
   }
 
   private static boolean isAnyDigit(RegExpClassElement classElement) {
-    return classElement instanceof RegExpSimpleClass && ((RegExpSimpleClass)classElement).getKind().equals(DIGIT) ||
-           classElement instanceof RegExpPosixBracketExpression && ((RegExpPosixBracketExpression)classElement).getClassName().equals("digit");
+    if (classElement instanceof RegExpSimpleClass) {
+      return ((RegExpSimpleClass)classElement).getKind().equals(DIGIT);
+    }
+    if (classElement instanceof RegExpPosixBracketExpression) {
+      String className = ((RegExpPosixBracketExpression)classElement).getClassName();
+      return className != null && className.equals("digit");
+    }
+    return false;
   }
 
   private static boolean isAnyNonDigit(RegExpClassElement classElement) {
@@ -50,8 +56,14 @@ public class RegExpRedundantClassElementInspection extends LocalInspectionTool {
   }
 
   private static boolean isAnyWordCharacter(RegExpClassElement classElement) {
-    return classElement instanceof RegExpSimpleClass && ((RegExpSimpleClass)classElement).getKind().equals(WORD) ||
-           classElement instanceof RegExpPosixBracketExpression && ((RegExpPosixBracketExpression)classElement).getClassName().equals("word");
+    if (classElement instanceof RegExpSimpleClass) {
+      return ((RegExpSimpleClass)classElement).getKind().equals(WORD);
+    }
+    if (classElement instanceof RegExpPosixBracketExpression) {
+      String className = ((RegExpPosixBracketExpression)classElement).getClassName();
+      return className != null && className.equals("word");
+    }
+    return false;
   }
 
   private static boolean isAnyNonWordCharacter(RegExpClassElement classElement) {
