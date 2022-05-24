@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.model.SideEffectGuard
@@ -49,12 +49,13 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
           for (state in nonDefaultToolStates) {
             val toolWrapper = copyToolSettings(state.tool)
             val scope = state.getScope(project)
-            if (scope == null) {
+            val tool = if (scope == null) {
               tools.addTool(state.scopeName, toolWrapper, state.isEnabled, state.level)
             }
             else {
               tools.addTool(scope, toolWrapper, state.isEnabled, state.level)
             }
+            state.textAttributesKey?.externalName?.let { tool.setTextAttributesKey(it) }
           }
         }
         tools.isEnabled = toolList.isEnabled

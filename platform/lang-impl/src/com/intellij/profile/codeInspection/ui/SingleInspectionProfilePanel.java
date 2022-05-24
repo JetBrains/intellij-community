@@ -819,8 +819,9 @@ public class SingleInspectionProfilePanel extends JPanel {
               myTreeTable.updateUI();
             }
           };
-        final HighlightSeverity severity =
-          ScopesAndSeveritiesTable.getSeverity(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()));
+        final HighlightSeverity severity = ScopesAndSeveritiesTable.getSeverity(
+          ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState())
+        );
         severityLevelChooser.setChosen(severity);
 
         final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(
@@ -849,13 +850,28 @@ public class SingleInspectionProfilePanel extends JPanel {
         final HighlightingChooser highlightingChooser = new HighlightingChooser() {
           @Override
           void onKeyChosen(@NotNull TextAttributesKey key) {
+            final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
+            for (final InspectionConfigTreeNode.Tool node : nodes) {
+              final NamedScope scope = node.getDefaultDescriptor().getScope();
+              final boolean doUpdate = myProfile.getTextAttributesKey(node.getKey(), scope, project) != key;
+              if (doUpdate) {
+                myProfile.setTextAttributesKey(node.getKey().toString(), key.toString(), null, project);
+                toUpdate.add(node);
+              }
+            }
+            updateRecursively(toUpdate, true);
+            myTreeTable.updateUI();
           }
         };
         final var highlightsChooserComponent = highlightingChooser.createCustomComponent(
           highlightingChooser.getTemplatePresentation(),
           ActionPlaces.UNKNOWN
         );
-        highlightingChooser.setChosen(HighlightInfoType.WARNING.getAttributesKey());
+        final TextAttributesKey key = ScopesAndSeveritiesTable.getTextAttributesKey(
+          ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()),
+          project
+        );
+        highlightingChooser.setChosen(key);
 
         final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
           .withLabel(InspectionsBundle.message("inspection.highlighting"))
@@ -1182,12 +1198,18 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (profile.getErrorLevel(desc.getKey(), desc.getScope(), project) != desc.getLevel()) {
       return true;
     }
+    if (profile.getTextAttributesKey(desc.getKey(), desc.getScope(), project) != desc.getTextAttributesKey()) {
+      return true;
+    }
     final List<Descriptor> descriptors = toolDescriptors.getNonDefaultDescriptors();
     for (Descriptor descriptor : descriptors) {
       if (profile.isToolEnabled(descriptor.getKey(), descriptor.getScope(), project) != descriptor.isEnabled()) {
         return true;
       }
       if (profile.getErrorLevel(descriptor.getKey(), descriptor.getScope(), project) != descriptor.getLevel()) {
+        return true;
+      }
+      if (profile.getTextAttributesKey(descriptor.getKey(), descriptor.getScope(), project) != descriptor.getTextAttributesKey()) {
         return true;
       }
     }

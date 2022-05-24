@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -12,6 +13,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -41,6 +43,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.profile.codeInspection.ui.table.HighlightingRenderer.EDIT_HIGHLIGHTING;
 import static com.intellij.profile.codeInspection.ui.table.SeverityRenderer.EDIT_SEVERITIES;
 
 /**
@@ -52,10 +55,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
   public static final HighlightSeverity MIXED_FAKE_SEVERITY = new HighlightSeverity("Mixed", -1);
   @SuppressWarnings("UnusedDeclaration")
   public static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, AllIcons.General.InspectionsMixed);
+  public static final TextAttributesKey MIXED_FAKE_KEY = TextAttributesKey.createTextAttributesKey("Mixed");
 
   private static final int SCOPE_ENABLED_COLUMN = 0;
   private static final int SCOPE_NAME_COLUMN = 1;
   private static final int SEVERITY_COLUMN = 2;
+  private static final int HIGHLIGHTING_COLUMN = 3;
 
   public ScopesAndSeveritiesTable(final TableSettings tableSettings) {
     super(new MyTableModel(tableSettings));
@@ -100,6 +105,11 @@ public class ScopesAndSeveritiesTable extends JBTable {
     SeverityRenderer renderer = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> tableSettings.onSettingsChanged(), this);
     severityColumn.setCellRenderer(renderer);
     severityColumn.setCellEditor(renderer);
+
+    final TableColumn highlightingColumn = columnModel.getColumn(HIGHLIGHTING_COLUMN);
+    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer();
+    highlightingColumn.setCellRenderer(highlightingRenderer);
+    highlightingColumn.setCellEditor(highlightingRenderer);
 
     setColumnSelectionAllowed(false);
     setRowSelectionAllowed(true);
@@ -211,6 +221,25 @@ public class ScopesAndSeveritiesTable extends JBTable {
     return previousValue;
   }
 
+  @NotNull
+  public static TextAttributesKey getTextAttributesKey(final @NotNull List<? extends ScopeToolState> scopeToolStates, @NotNull Project project) {
+    TextAttributesKey previousValue = null;
+    final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(project);
+    for (final ScopeToolState scopeToolState : scopeToolStates) {
+      TextAttributesKey key = scopeToolState.getTextAttributesKey();
+      if (key == null) {
+        final var severity = scopeToolState.getLevel().getSeverity();
+        key = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+      }
+      if (previousValue == null) {
+        previousValue = key;
+      } else if (!previousValue.equals(key)){
+        return MIXED_FAKE_KEY;
+      }
+    }
+    return previousValue != null ? previousValue : MIXED_FAKE_KEY;
+  }
+
   private static class MyTableModel extends AbstractTableModel implements EditableModel {
     @NotNull
     private final InspectionProfileImpl myInspectionProfile;
@@ -245,7 +274,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       } else if (columnIndex == SCOPE_ENABLED_COLUMN) {
         return true;
       }
-      assert columnIndex == SEVERITY_COLUMN;
+      assert (columnIndex == SEVERITY_COLUMN || columnIndex == HIGHLIGHTING_COLUMN);
 
       if (Boolean.FALSE.equals(isEnabled(rowIndex))) {
         return false;
@@ -263,12 +292,21 @@ public class ScopesAndSeveritiesTable extends JBTable {
     @Nullable
     @Override
     public String getColumnName(final int column) {
-      return null;
+      switch (column) {
+        case SCOPE_NAME_COLUMN:
+          return LangBundle.message("scopes.chooser.scope.column");
+        case SEVERITY_COLUMN:
+          return LangBundle.message("scopes.chooser.scope.severity");
+        case HIGHLIGHTING_COLUMN:
+          return LangBundle.message("scopes.chooser.scope.highlighting");
+        default:
+          return null;
+      }
     }
 
     @Override
     public int getColumnCount() {
-      return 3;
+      return 4;
     }
 
     @Override
@@ -281,6 +319,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
       }
       if (SEVERITY_COLUMN == columnIndex) {
         return HighlightSeverity.class;
+      }
+      if (HIGHLIGHTING_COLUMN == columnIndex) {
+        return TextAttributesKey.class;
       }
       throw new IllegalArgumentException();
     }
@@ -297,6 +338,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
           return rowIndex == lastRowIndex() ? LangBundle.message("scopes.table.everywhere.else") : getScopeName(rowIndex);
         case SEVERITY_COLUMN:
           return getSeverityState(rowIndex);
+        case HIGHLIGHTING_COLUMN:
+          return getAttributesKey(rowIndex);
         default:
           throw new IllegalArgumentException("Invalid column index " + columnIndex);
       }
@@ -317,6 +360,14 @@ public class ScopesAndSeveritiesTable extends JBTable {
         return MIXED_FAKE_SEVERITY;
       }
       return getSeverity(existedScopesStatesAndNonExistNames.getExistedStates());
+    }
+
+    private TextAttributesKey getAttributesKey(final int rowIndex) {
+      final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
+      if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
+        return MIXED_FAKE_KEY;
+      }
+      return getTextAttributesKey(existedScopesStatesAndNonExistNames.myExistedStates, myProject);
     }
 
     @Nullable
@@ -397,6 +448,12 @@ public class ScopesAndSeveritiesTable extends JBTable {
         }
         final String scopeName = rowIndex == lastRowIndex() ? null : getScopeName(rowIndex);
         myInspectionProfile.setErrorLevel(myKeys, level, scopeName, myProject);
+      }
+      else if (columnIndex == HIGHLIGHTING_COLUMN) {
+        if (value == EDIT_HIGHLIGHTING) return;
+        final TextAttributesKey key = (TextAttributesKey)value;
+        final String scopeName = rowIndex == lastRowIndex() ? null : getScopeName(rowIndex);
+        myInspectionProfile.setTextAttributeKey(myKeys, key, scopeName, myProject);
       }
       else if (columnIndex == SCOPE_ENABLED_COLUMN) {
         final NamedScope scope = getScope(rowIndex);

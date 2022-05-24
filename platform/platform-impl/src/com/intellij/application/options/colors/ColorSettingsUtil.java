@@ -62,7 +62,7 @@ public final class ColorSettingsUtil {
     return true;
   }
 
-  public static List<Pair<TextAttributesKey, @Nls String>> getErrorTextAttributes() {
+  public static ArrayList<Pair<TextAttributesKey, @Nls String>> getErrorTextAttributes() {
     final ArrayList<Pair<TextAttributesKey, @Nls String>> attributes = new ArrayList<>(
       List.of(
        new Pair<>(CodeInsightColors.DEPRECATED_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol")),

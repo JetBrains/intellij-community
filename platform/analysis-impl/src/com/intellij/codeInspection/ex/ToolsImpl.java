@@ -501,6 +501,18 @@ public final class ToolsImpl implements Tools {
     return myDefaultState.getLevel();
   }
 
+  @Nullable
+  public TextAttributesKey getTextAttributesKey(NamedScope scope, Project project) {
+    if (myTools != null && scope != null) {
+      for (ScopeToolState state : myTools) {
+        if (state.getScopeName().equals(scope.getScopeId())) {
+          return state.getTextAttributesKey();
+        }
+      }
+    }
+    return myDefaultState.getTextAttributesKey();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ToolsImpl)) return false;
@@ -517,7 +529,7 @@ public final class ToolsImpl implements Tools {
     return true;
   }
 
-  
+
   public void setTextAttributesKey(@NotNull String externalName, @Nullable String scopeName) {
     if (scopeName == null) {
       myDefaultState.setTextAttributesKey(externalName);

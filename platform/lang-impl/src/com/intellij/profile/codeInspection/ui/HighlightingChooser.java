@@ -53,7 +53,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   }
 
   @NotNull
-  private static @Nls String stripColorOptionCategory(@NotNull @Nls String displayName) {
+  public static @Nls String stripColorOptionCategory(@NotNull @Nls String displayName) {
     final int separatorPos = displayName.indexOf("//");
     final @Nls String name = separatorPos == -1 ? displayName
                                                 : displayName.substring(separatorPos + 2);
@@ -73,6 +73,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
     group.add(new DumbAwareAction(InspectionsBundle.message("inspection.edit.highlighting.action")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        // TODO: Open ColorAndFontOptions in a new popup
         DataContext dataContext = DataManager.getInstance().getDataContext(button);
         ColorAndFontOptions.selectOrEditColor(dataContext,
                                               OptionsBundle.message("options.java.attribute.descriptor.error").split("//")[0],

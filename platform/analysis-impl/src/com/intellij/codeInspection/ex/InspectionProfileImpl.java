@@ -859,6 +859,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return tools != null ? tools.getLevel(scope, project) : HighlightDisplayLevel.WARNING;
   }
 
+  @Transient
+  public @Nullable TextAttributesKey getTextAttributesKey(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
+    ToolsImpl tools = getToolsOrNull(key.toString(), project);
+    return tools != null ? tools.getTextAttributesKey(scope, project) : null;
+  }
+
   public ScopeToolState addScope(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                                  NamedScope scope,
                                  @NotNull HighlightDisplayLevel level,
@@ -875,6 +881,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public void setErrorLevel(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, String scopeName, Project project) {
     for (HighlightDisplayKey key : keys) {
       setErrorLevel(key, level, scopeName, project);
+    }
+  }
+
+  public void setTextAttributeKey(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull TextAttributesKey attributesKey, String scopeName, Project project) {
+    for (HighlightDisplayKey key : keys) {
+      setTextAttributesKey(key.toString(), attributesKey.toString(), scopeName, project);
     }
   }
 
