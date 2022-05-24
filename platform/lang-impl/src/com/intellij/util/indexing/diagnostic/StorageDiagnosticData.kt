@@ -41,35 +41,47 @@ object StorageDiagnosticData {
   private const val maxFiles = 10
   private const val dumpPeriodInMinutes = 5L
 
+  @JvmStatic
   fun dumpPeriodically() {
     val executor = AppExecutorUtil.createBoundedScheduledExecutorService(
       "Storage Diagnostic Dumper",
       1,
     )
 
-    val sessionStartTime = ApplicationManager.getApplication().startTime
-    val sessionLocalDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(sessionStartTime), ZoneId.systemDefault())
-
     executor.scheduleWithFixedDelay(Runnable {
-      try {
-        val stats = getStorageDataStatistics()
-        val file = getDumpFile(sessionLocalDateTime)
-        IndexDiagnosticDumperUtils.writeValue(file, stats)
-      }
-      catch (e: Exception) {
-        thisLogger().error(e)
-      }
-      finally {
-        deleteOutdatedDiagnostics()
-      }
+      dump(onShutdown = false)
     }, dumpPeriodInMinutes, dumpPeriodInMinutes, TimeUnit.MINUTES)
   }
 
-  private fun getDumpFile(time: LocalDateTime): Path = IndexDiagnosticDumperUtils.getDumpFilePath(
+  @JvmStatic
+  fun dumpOnShutdown() {
+    dump(onShutdown = true)
+  }
+
+  @Synchronized
+  private fun dump(onShutdown: Boolean) {
+    val sessionStartTime = ApplicationManager.getApplication().startTime
+    val sessionLocalDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(sessionStartTime), ZoneId.systemDefault())
+
+    try {
+      val stats = getStorageDataStatistics()
+      val file = getDumpFile(sessionLocalDateTime, onShutdown)
+      IndexDiagnosticDumperUtils.writeValue(file, stats)
+    }
+    catch (e: Exception) {
+      thisLogger().error(e)
+    }
+    finally {
+      deleteOutdatedDiagnostics()
+    }
+  }
+
+  private fun getDumpFile(time: LocalDateTime, onShutdown: Boolean): Path = IndexDiagnosticDumperUtils.getDumpFilePath(
     fileNamePrefix,
     time,
     "json",
-    IndexDiagnosticDumperUtils.indexingDiagnosticDir
+    IndexDiagnosticDumperUtils.indexingDiagnosticDir,
+    suffix = if (onShutdown) "on-shutdown-" else ""
   )
 
   @VisibleForTesting

@@ -228,7 +228,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      StorageDiagnosticData.INSTANCE.dumpPeriodically();
+      StorageDiagnosticData.dumpPeriodically();
     }
   }
 
@@ -366,9 +366,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   static class MyShutDownTask implements Runnable {
     @Override
     public void run() {
-      FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-      if (fileBasedIndex instanceof FileBasedIndexImpl) {
-        ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false, "IDE shutdown");
+      try {
+        FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+        if (fileBasedIndex instanceof FileBasedIndexImpl) {
+          ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false, "IDE shutdown");
+        }
+      }
+      finally {
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          StorageDiagnosticData.dumpOnShutdown();
+        }
       }
     }
   }
