@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.roots.findAll
+import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -36,10 +37,10 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
     override fun getExtraProjectModelClasses(): Set<Class<out Any>> =
         throw UnsupportedOperationException("Use getModelProvider() instead!")
 
-    override fun getModelProvider(): ProjectImportModelProvider? = IdeaKotlinProjectModelProvider
+    override fun getModelProvider(): ProjectImportModelProvider? = IdeaKpmProjectProvider
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(
-        IdeaKotlinProjectModel::class.java, Unit::class.java
+        IdeaKpmProject::class.java, Extras::class.java, Unit::class.java
     )
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
@@ -77,19 +78,19 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         populateDependenciesByFragmentData(gradleModule, ideModule, ideProject, resolverCtx)
     }
 
-    private fun modelExists(gradleModule: IdeaModule): Boolean = resolverCtx.getIdeaKotlinProjectModel(gradleModule) != null
+    private fun modelExists(gradleModule: IdeaModule): Boolean = resolverCtx.getIdeaKpmProject(gradleModule) != null
 
     companion object {
-        private val nativeDebugSuggester = object : KotlinMultiplatformNativeDebugSuggester<IdeaKotlinProjectModel>() {
-            override fun hasKotlinNativeHome(model: IdeaKotlinProjectModel?): Boolean = model?.kotlinNativeHome?.exists() ?: false
+        private val nativeDebugSuggester = object : KotlinMultiplatformNativeDebugSuggester<IdeaKpmProject>() {
+            override fun hasKotlinNativeHome(model: IdeaKpmProject?): Boolean = model?.kotlinNativeHome?.exists() ?: false
         }
 
-        internal fun ProjectResolverContext.getIdeaKotlinProjectModel(gradleModule: IdeaModule): IdeaKotlinProjectModel? {
-            return this.getExtraProject(gradleModule, IdeaKotlinProjectModel::class.java)
+        internal fun ProjectResolverContext.getIdeaKpmProject(gradleModule: IdeaModule): IdeaKpmProject? {
+            return this.getExtraProject(gradleModule, IdeaKpmProject::class.java)
         }
 
         private fun suggestNativeDebug(gradleModule: IdeaModule, resolverCtx: ProjectResolverContext) {
-            nativeDebugSuggester.suggestNativeDebug(resolverCtx.getIdeaKotlinProjectModel(gradleModule), resolverCtx)
+            nativeDebugSuggester.suggestNativeDebug(resolverCtx.getIdeaKpmProject(gradleModule), resolverCtx)
 
             if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio && !PlatformUtils.isMobileIde() &&
                 !PlatformUtils.isAppCode()
@@ -100,15 +101,15 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         }
 
         //TODO check this
-        internal fun extractPackagePrefix(fragment: IdeaKotlinFragment): String? = null
-        internal fun extractContentRootSources(model: IdeaKotlinProjectModel): Collection<IdeaKotlinFragment> =
+        internal fun extractPackagePrefix(fragment: IdeaKpmFragment): String? = null
+        internal fun extractContentRootSources(model: IdeaKpmProject): Collection<IdeaKpmFragment> =
             model.modules.flatMap { it.fragments }
 
         //TODO replace with proper implementation, like with KotlinTaskProperties
-        internal fun extractPureKotlinSourceFolders(fragment: IdeaKotlinFragment): Collection<File> = fragment.sourceDirs
+        internal fun extractPureKotlinSourceFolders(fragment: IdeaKpmFragment): Collection<File> = fragment.sourceDirs
 
         //TODO Unite with KotlinGradleProjectResolverExtension.getSourceSetName
-        internal val IdeaKotlinProjectModel.pureKotlinSourceFolders: Collection<String>
+        internal val IdeaKpmProject.pureKotlinSourceFolders: Collection<String>
             get() = extractContentRootSources(this).flatMap { extractPureKotlinSourceFolders(it) }.map { it.absolutePath }
 
         internal val DataNode<out ModuleData>.sourceSetName
@@ -149,7 +150,7 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
                 }
 
                 val sourceDependencyIds = kpmFragmentData.fragmentDependencies
-                    .filterIsInstance<IdeaKotlinFragmentDependency>()
+                    .filterIsInstance<IdeaKpmFragmentDependency>()
                     .mapNotNull { fragmentDependency ->
                         val foundGradleModule = allGradleModules.singleOrNull { dependencyGradleModule ->
                             dependencyGradleModule.name == fragmentDependency.coordinates.module.projectName
@@ -162,7 +163,7 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
                 dependencyModuleNodes.forEach { addModuleDependency(fragmentSourceSetNode, it) }
 
                 val groupedBinaryDependencies = kpmFragmentData.fragmentDependencies
-                    .filterIsInstance<IdeaKotlinResolvedBinaryDependency>()
+                    .filterIsInstance<IdeaKpmResolvedBinaryDependency>()
                     .groupBy { it.coordinates.toString() }
                     .map { (coordinates, binariesWithType) ->
                         GroupedLibraryDependency(coordinates, binariesWithType.map { it.binaryFile to it.binaryType.toBinaryType() })
@@ -175,9 +176,9 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         }
 
         private fun String.toBinaryType(): LibraryPathType = when (this) {
-            IdeaKotlinDependency.CLASSPATH_BINARY_TYPE -> LibraryPathType.BINARY
-            IdeaKotlinDependency.SOURCES_BINARY_TYPE -> LibraryPathType.SOURCE
-            IdeaKotlinDependency.DOCUMENTATION_BINARY_TYPE -> LibraryPathType.DOC
+            IdeaKpmDependency.CLASSPATH_BINARY_TYPE -> LibraryPathType.BINARY
+            IdeaKpmDependency.SOURCES_BINARY_TYPE -> LibraryPathType.SOURCE
+            IdeaKpmDependency.DOCUMENTATION_BINARY_TYPE -> LibraryPathType.DOC
             else -> LibraryPathType.EXCLUDED
         }
 

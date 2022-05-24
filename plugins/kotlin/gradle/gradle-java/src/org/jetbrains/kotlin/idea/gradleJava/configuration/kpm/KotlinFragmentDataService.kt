@@ -15,9 +15,9 @@ import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.createArguments
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinJsPlatformDetails
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinJvmPlatformDetails
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinNativePlatformDetails
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmJsPlatformDetails
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmJvmPlatformDetails
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmNativePlatformDetails
 import org.jetbrains.kotlin.idea.caches.project.isKpmModule
 import org.jetbrains.kotlin.idea.caches.project.refinesFragmentIds
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -102,7 +102,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
             val platform = when (fragmentDataNode.data.platform) {
                 KotlinPlatform.COMMON -> CommonPlatforms.defaultCommonPlatform
                 KotlinPlatform.JVM, KotlinPlatform.ANDROID -> fragmentDataNode.data.platformDetails
-                    .filterIsInstance<IdeaKotlinJvmPlatformDetails>()
+                    .filterIsInstance<IdeaKpmJvmPlatformDetails>()
                     .map { it.jvmTarget }
                     .singleOrNull()
                     ?.let { JvmTarget.valueOf(it) }
@@ -112,7 +112,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
                 // TODO should we select platform depending on isIr platform detail?
                 KotlinPlatform.JS -> JsPlatforms.defaultJsPlatform
                 KotlinPlatform.NATIVE -> fragmentDataNode.data.platformDetails
-                    .filterIsInstance<IdeaKotlinNativePlatformDetails>()
+                    .filterIsInstance<IdeaKpmNativePlatformDetails>()
                     .mapNotNull { KonanTarget.predefinedTargets[it.konanTarget] }
                     .ifNotEmpty { NativePlatforms.nativePlatformByTargets(this) }
                     ?: NativePlatforms.unspecifiedNativePlatform

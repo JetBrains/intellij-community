@@ -7,8 +7,8 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinFragment
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinProjectModel
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragment
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmProject
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 interface ModuleDataInitializer {
@@ -22,23 +22,23 @@ interface ModuleDataInitializer {
 
     interface Context {
         //TODO replace with Key-Value registry with proper visibility and immutability
-        var model: IdeaKotlinProjectModel?
+        var model: IdeaKpmProject?
         var jdkName: String?
         var moduleGroup: Array<String>?
         var mainModuleConfigPath: String?
         var mainModuleFileDirectoryPath: String?
-        var sourceSetToRunTasks: Map<IdeaKotlinFragment, Collection<ExternalSystemRunTask>>
+        var sourceSetToRunTasks: Map<IdeaKpmFragment, Collection<ExternalSystemRunTask>>
 
         companion object {
             @JvmStatic
             val EMPTY: Context
                 get() = object : Context {
-                    override var model: IdeaKotlinProjectModel? = null
+                    override var model: IdeaKpmProject? = null
                     override var jdkName: String? = null
                     override var moduleGroup: Array<String>? = null
                     override var mainModuleConfigPath: String? = null
                     override var mainModuleFileDirectoryPath: String? = null
-                    override var sourceSetToRunTasks: Map<IdeaKotlinFragment, Collection<ExternalSystemRunTask>> = emptyMap()
+                    override var sourceSetToRunTasks: Map<IdeaKpmFragment, Collection<ExternalSystemRunTask>> = emptyMap()
                 }
         }
     }

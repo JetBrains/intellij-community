@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.gradle.GradleBuild
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinProjectModel
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmProject
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 
-object IdeaKotlinProjectModelProvider : ProjectImportModelProvider {
+object IdeaKpmProjectProvider : ProjectImportModelProvider {
     override fun populateBuildModels(
         controller: BuildController,
         buildModel: GradleBuild,
@@ -19,8 +19,8 @@ object IdeaKotlinProjectModelProvider : ProjectImportModelProvider {
         projectModel: Model,
         modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
     ) {
-        controller.findModel(projectModel, IdeaKotlinProjectModel::class.java)?.apply {
-            modelConsumer.consume(this, IdeaKotlinProjectModel::class.java)
+        controller.findModel(projectModel, IdeaKpmProject::class.java)?.apply {
+            modelConsumer.consume(this, IdeaKpmProject::class.java)
         }
     }
 }
