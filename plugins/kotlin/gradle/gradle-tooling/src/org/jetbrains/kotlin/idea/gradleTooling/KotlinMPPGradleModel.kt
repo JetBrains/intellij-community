@@ -49,7 +49,7 @@ interface KotlinMPPGradleModel : KotlinSourceSetContainer, Serializable {
     val kotlinNativeHome: String
     val cacheAware: CompilerArgumentsCacheAware
 
-    @Deprecated(level = DeprecationLevel.ERROR, message = "Use KotlinMPPGradleModel#cacheAware instead")
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Use KotlinMPPGradleModel#cacheAware instead")
     val partialCacheAware: CompilerArgumentsCacheAware
     val kotlinImportingDiagnostics: KotlinImportingDiagnosticsContainer
 
