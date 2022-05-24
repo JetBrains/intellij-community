@@ -416,8 +416,10 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
   fun addDirsToIndex(dirNames: Collection<String>) {
     assert(withOptimizedMetadataEnabled)
     for (dirName in dirNames) {
+/* Android Studio: b/233762164
       val key = dirName.toByteArray(Charsets.UTF_8)
       indexWriter.add(IndexEntry(key = key, offset = -1, size = 0, keyHash = Xxh3.hash(key)))
+Android Studio: b/233762164 */  addDirEntry(dirName)
     }
   }
 
