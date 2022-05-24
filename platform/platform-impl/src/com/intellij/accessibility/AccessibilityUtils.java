@@ -4,6 +4,8 @@ package com.intellij.accessibility;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -11,6 +13,7 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.User32Ex;
 import com.sun.jna.platform.win32.WinDef.BOOLByReference;
 import com.sun.jna.platform.win32.WinDef.UINT;
+import org.jetbrains.annotations.NotNull;
 
 public final class AccessibilityUtils {
   public static void enableScreenReaderSupportIfNecessary() {
@@ -28,7 +31,7 @@ public final class AccessibilityUtils {
                                             Messages.getQuestionIcon());
       if (answer == Messages.YES) {
         AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED);
-        System.setProperty(GeneralSettings.SCREEN_READERS_DETECTED_PROPERTY, "true");
+        EnableScreenReaderSupportTask.scheduleEnable();
       }
     }
   }
@@ -74,4 +77,19 @@ public final class AccessibilityUtils {
     boolean retValue = User32Ex.INSTANCE.SystemParametersInfo(new UINT(0x0046), new UINT(0), isActive, new UINT(0));
     return retValue && isActive.getValue().booleanValue();
   }
+
+  public static class EnableScreenReaderSupportTask implements StartupActivity.Background {
+
+    private static volatile boolean enable = false;
+
+    public static void scheduleEnable() {
+      enable = true;
+    }
+
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (enable) GeneralSettings.getInstance().setSupportScreenReaders(true);
+    }
+  }
+
 }
