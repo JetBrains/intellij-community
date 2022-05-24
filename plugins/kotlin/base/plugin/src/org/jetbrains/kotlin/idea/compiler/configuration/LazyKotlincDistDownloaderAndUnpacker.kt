@@ -117,6 +117,12 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
         ) {
             return nameWithoutExtension.removePrefix("kotlin-maven-").removeSuffix("-$version") + "-compiler-plugin.jar"
         }
+        if (nameWithoutExtension.startsWith("kotlin-android-extensions-runtime")) {
+            return "android-extensions-runtime.jar"
+        }
+        if (nameWithoutExtension.startsWith("kotlin-android-extensions")) {
+            return "android-extensions-compiler.jar"
+        }
         return nameWithoutExtension.removeSuffix("-$version") + ".jar"
     }
 }
