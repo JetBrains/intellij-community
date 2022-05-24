@@ -53,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -85,7 +84,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myInlining = inlining;
     myFactory = valueFactory;
     myCodeFragment = codeFragment;
-    myTrapTracker = new TrapTracker(valueFactory, codeFragment);
+    myTrapTracker = new TrapTracker(valueFactory, JavaClassDef.typeConstraintFactory(codeFragment));
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {

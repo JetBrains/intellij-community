@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
-import com.intellij.codeInsight.Nullability
 import com.intellij.codeInspection.dataFlow.DfaNullability
+import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
@@ -12,9 +12,10 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.*
@@ -41,8 +42,14 @@ internal fun KotlinType?.toDfType(context: KtElement) : DfType {
     if (canBeNull()) {
         var notNullableType = makeNotNullable().toDfTypeNotNullable(context)
         if (notNullableType is DfPrimitiveType) {
-            notNullableType = SpecialField.UNBOX.asDfType(notNullableType)
-                .meet(DfTypes.typedObject(toPsiType(context), Nullability.UNKNOWN))
+            val cls = this.constructor.declarationDescriptor as? ClassDescriptor
+            val boxedType: DfType
+            if (cls != null) {
+                boxedType = TypeConstraints.exactClass(KtClassDef(cls, context)).asDfType()
+            } else {
+                boxedType = DfTypes.OBJECT_OR_NULL
+            }
+            notNullableType = SpecialField.UNBOX.asDfType(notNullableType).meet(boxedType)
         }
         return when (notNullableType) {
             is DfReferenceType -> {
@@ -64,7 +71,7 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
         is TypeAliasDescriptor -> {
             descriptor.expandedType.toDfType(context)
         }
-        is ClassDescriptor -> when (val fqNameUnsafe = descriptor.fqNameUnsafe) {
+        is ClassDescriptor -> when (descriptor.fqNameUnsafe) {
             FqNames._boolean -> DfTypes.BOOLEAN
             FqNames._byte -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
             FqNames._char -> DfTypes.intRange(LongRangeSet.range(Character.MIN_VALUE.code.toLong(), Character.MAX_VALUE.code.toLong()))
@@ -73,57 +80,63 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
             FqNames._long -> DfTypes.LONG
             FqNames._float -> DfTypes.FLOAT
             FqNames._double -> DfTypes.DOUBLE
-            FqNames.array ->
-                TypeConstraints.instanceOf(toPsiType(context) ?: return DfType.TOP).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
-            FqNames.any -> DfTypes.NOT_NULL_OBJECT
-            else -> {
-                if (fqNameUnsafe.shortNameOrSpecial().isSpecial) {
-                    val source = descriptor.source
-                    if (source is KotlinSourceElement) {
-                        val psi = source.psi
-                        if (psi is KtObjectDeclaration) {
-                            val bindingContext = psi.safeAnalyzeNonSourceRootCode()
-                            val superTypes = psi.superTypeListEntries
-                                .map { entry ->
-                                    val psiType = entry.typeReference?.getAbbreviatedTypeOrType(bindingContext)?.toPsiType(psi)
-                                    PsiUtil.resolveClassInClassTypeOnly(psiType)
-                                }
-                            return if (superTypes.contains(null))
-                                DfType.TOP
-                            else
-                                TypeConstraints.exactSubtype(psi, superTypes).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
-                        }
-                    }
-                }
-                val typeConstraint = when (val typeFqName = correctFqName(fqNameUnsafe)) {
-                    "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
-                    "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())
-                    "kotlin.LongArray" -> TypeConstraints.exact(PsiType.LONG.createArrayType())
-                    "kotlin.ShortArray" -> TypeConstraints.exact(PsiType.SHORT.createArrayType())
-                    "kotlin.CharArray" -> TypeConstraints.exact(PsiType.CHAR.createArrayType())
-                    "kotlin.BooleanArray" -> TypeConstraints.exact(PsiType.BOOLEAN.createArrayType())
-                    "kotlin.FloatArray" -> TypeConstraints.exact(PsiType.FLOAT.createArrayType())
-                    "kotlin.DoubleArray" -> TypeConstraints.exact(PsiType.DOUBLE.createArrayType())
-                    else -> {
-                        val psiClass =
-                            JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope) ?: return DfType.TOP
-                        if (descriptor.kind == ClassKind.OBJECT && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-                            TypeConstraints.singleton(psiClass)
-                        } else {
-                            TypeConstraints.exactClass(psiClass).instanceOf()
-                        }
-                    }
-                }
-                return typeConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            FqNames.array -> {
+                val elementType = getArrayElementType(context)?.constructor?.declarationDescriptor as? ClassDescriptor ?: return DfType.TOP
+                elementType.getTypeConstraint(context).arrayOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             }
+
+            FqNames.any -> DfTypes.NOT_NULL_OBJECT
+            else -> descriptor.getTypeConstraint(context).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
         }
+
         is TypeParameterDescriptor -> descriptor.upperBounds.map { type -> type.toDfType(context) }.fold(DfType.TOP, DfType::meet)
         else -> DfType.TOP
     }
 }
 
+private fun ClassDescriptor.getTypeConstraint(context: KtElement): TypeConstraint {
+    val fqNameUnsafe = fqNameUnsafe
+    if (fqNameUnsafe.shortNameOrSpecial().isSpecial) {
+        val source = source
+        if (source is KotlinSourceElement) {
+            val psi = source.psi
+            if (psi is KtObjectDeclaration) {
+                val bindingContext = psi.safeAnalyzeNonSourceRootCode()
+                val superTypes: List<KtClassDef?> = psi.superTypeListEntries
+                    .map { entry ->
+                        val classDescriptor = entry.typeReference?.getAbbreviatedTypeOrType(bindingContext)
+                            ?.constructor?.declarationDescriptor as? ClassDescriptor
+                        if (classDescriptor == null) null else KtClassDef(classDescriptor, psi)
+                    }
+                return if (superTypes.contains(null))
+                    TypeConstraints.TOP
+                else
+                    TypeConstraints.exactSubtype(psi, superTypes)
+            }
+        }
+    }
+    return when (correctFqName(fqNameUnsafe)) {
+        "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
+        "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())
+        "kotlin.LongArray" -> TypeConstraints.exact(PsiType.LONG.createArrayType())
+        "kotlin.ShortArray" -> TypeConstraints.exact(PsiType.SHORT.createArrayType())
+        "kotlin.CharArray" -> TypeConstraints.exact(PsiType.CHAR.createArrayType())
+        "kotlin.BooleanArray" -> TypeConstraints.exact(PsiType.BOOLEAN.createArrayType())
+        "kotlin.FloatArray" -> TypeConstraints.exact(PsiType.FLOAT.createArrayType())
+        "kotlin.DoubleArray" -> TypeConstraints.exact(PsiType.DOUBLE.createArrayType())
+        else -> {
+            val classDef = KtClassDef(this, context)
+            if (kind == ClassKind.OBJECT && classDef.isFinal) {
+                TypeConstraints.singleton(classDef)
+            } else {
+                TypeConstraints.exactClass(classDef).instanceOf()
+            }
+        }
+    }
+}
+
 // see org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap in kotlin compiler
-private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNameUnsafe.asString()) {
+internal fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNameUnsafe.asString()) {
     "kotlin.Any" -> CommonClassNames.JAVA_LANG_OBJECT
     "kotlin.String" -> CommonClassNames.JAVA_LANG_STRING
     "kotlin.CharSequence" -> CommonClassNames.JAVA_LANG_CHAR_SEQUENCE
@@ -134,6 +147,14 @@ private fun correctFqName(fqNameUnsafe: FqNameUnsafe) = when (val rawName = fqNa
     "kotlin.Enum" -> CommonClassNames.JAVA_LANG_ENUM
     "kotlin.Annotation" -> CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION
     "kotlin.Nothing" -> CommonClassNames.JAVA_LANG_VOID
+    "kotlin.Int" -> CommonClassNames.JAVA_LANG_INTEGER
+    "kotlin.Long" -> CommonClassNames.JAVA_LANG_LONG
+    "kotlin.Boolean" -> CommonClassNames.JAVA_LANG_BOOLEAN
+    "kotlin.Byte" -> CommonClassNames.JAVA_LANG_BYTE
+    "kotlin.Short" -> CommonClassNames.JAVA_LANG_SHORT
+    "kotlin.Float" -> CommonClassNames.JAVA_LANG_FLOAT
+    "kotlin.Double" -> CommonClassNames.JAVA_LANG_DOUBLE
+    "kotlin.Char" -> CommonClassNames.JAVA_LANG_CHARACTER
     "kotlin.collections.Iterable", "kotlin.collections.MutableIterable" -> CommonClassNames.JAVA_LANG_ITERABLE
     "kotlin.collections.Iterator", "kotlin.collections.MutableIterator" -> CommonClassNames.JAVA_UTIL_ITERATOR
     "kotlin.collections.Collection", "kotlin.collections.MutableCollection" -> CommonClassNames.JAVA_UTIL_COLLECTION
@@ -211,32 +232,17 @@ internal fun KotlinType.getArrayElementType(context: KtElement): KotlinType? {
     return type
 }
 
-internal fun KotlinType.toPsiType(context: KtElement): PsiType? {
-    val typeFqName = this.constructor.declarationDescriptor?.fqNameUnsafe ?: return null
-    val boxed = canBeNull()
-    fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
-    return when (typeFqName) {
-        FqNames._int -> PsiType.INT.orBoxed()
-        FqNames._long -> PsiType.LONG.orBoxed()
-        FqNames._short -> PsiType.SHORT.orBoxed()
-        FqNames._boolean -> PsiType.BOOLEAN.orBoxed()
-        FqNames._byte -> PsiType.BYTE.orBoxed()
-        FqNames._char -> PsiType.CHAR.orBoxed()
-        FqNames._double -> PsiType.DOUBLE.orBoxed()
-        FqNames._float -> PsiType.FLOAT.orBoxed()
-        FqNames.nothing -> PsiType.VOID.orBoxed()
-        FqNames.array -> getArrayElementType(context)?.toPsiType(context)?.createArrayType()
-        else -> when (val fqNameString = correctFqName(typeFqName)) {
-            "kotlin.ByteArray" -> PsiType.BYTE.createArrayType()
-            "kotlin.IntArray" -> PsiType.INT.createArrayType()
-            "kotlin.LongArray" -> PsiType.LONG.createArrayType()
-            "kotlin.ShortArray" -> PsiType.SHORT.createArrayType()
-            "kotlin.CharArray" -> PsiType.CHAR.createArrayType()
-            "kotlin.BooleanArray" -> PsiType.BOOLEAN.createArrayType()
-            "kotlin.FloatArray" -> PsiType.FLOAT.createArrayType()
-            "kotlin.DoubleArray" -> PsiType.DOUBLE.createArrayType()
-            else -> JavaPsiFacade.getElementFactory(context.project).createTypeByFQClassName(fqNameString, context.resolveScope)
-        }
+internal fun KotlinType.toPsiPrimitiveType(): PsiPrimitiveType {
+    return when (this.constructor.declarationDescriptor?.fqNameUnsafe) {
+        FqNames._int -> PsiType.INT
+        FqNames._long -> PsiType.LONG
+        FqNames._short -> PsiType.SHORT
+        FqNames._boolean -> PsiType.BOOLEAN
+        FqNames._byte -> PsiType.BYTE
+        FqNames._char -> PsiType.CHAR
+        FqNames._double -> PsiType.DOUBLE
+        FqNames._float -> PsiType.FLOAT
+        else -> throw IllegalArgumentException("Not a primitive analog: $this")
     }
 }
 

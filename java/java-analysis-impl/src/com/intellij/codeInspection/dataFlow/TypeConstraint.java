@@ -166,6 +166,14 @@ public interface TypeConstraint {
   }
 
   /**
+   * @return an exact type which is an array whose components are this exact type
+   * @see #getArrayComponentType()
+   */
+  default @NotNull TypeConstraint arrayOf() {
+    return TypeConstraints.TOP;
+  }
+
+  /**
    * @return an array component type for an array type; BOTTOM if this type is not always an array type
    */
   default @NotNull DfType getArrayComponentType() {
@@ -207,6 +215,16 @@ public interface TypeConstraint {
   }
 
   /**
+   * Convert type constraint to another factory based on fully-qualified names of classes
+   *
+   * @param factory
+   * @return converted type constraint that uses a supplied factory
+   */
+  default @NotNull TypeConstraint convert(TypeConstraints.TypeConstraintFactory factory) {
+    return this;
+  }
+
+  /**
    * @param type {@link DfType} to extract {@link TypeConstraint} from
    * @return an extracted type constraint
    */
@@ -245,6 +263,15 @@ public interface TypeConstraint {
      * @return true if the type represented by this constraint cannot have subtypes
      */
     boolean isFinal();
+
+    /**
+     * @return an exact type which is an array whose components are this exact type
+     * @see #getArrayComponentType()
+     */
+    @Override
+    default @NotNull Exact arrayOf() {
+      return new TypeConstraints.ExactArray(this);
+    }
 
     @Override
     default boolean isExact() {
@@ -342,6 +369,12 @@ public interface TypeConstraint {
     @Override
     default @NotNull String getPresentationText(@Nullable PsiType type) {
       return type != null && TypeConstraints.exact(type).equals(this) ? "" : "exactly " + toShortString();
+    }
+
+    @Override
+    @NotNull
+    default Exact convert(TypeConstraints.TypeConstraintFactory factory) {
+      return this;
     }
   }
 
@@ -629,6 +662,11 @@ public interface TypeConstraint {
     }
 
     @Override
+    public @NotNull TypeConstraint arrayOf() {
+      return instanceOfTypes().<TypeConstraint>map(Exact::arrayOf).reduce(TypeConstraint::meet).orElse(TypeConstraints.BOTTOM);
+    }
+
+    @Override
     public boolean isArray() {
       return instanceOfTypes().anyMatch(Exact::isArray);
     }
@@ -641,6 +679,13 @@ public interface TypeConstraint {
     @Override
     public @Nullable PsiElement getEnumConstant(int ordinal) {
       return myInstanceOf.size() == 1 ? myInstanceOf.iterator().next().getEnumConstant(ordinal) : null;
+    }
+
+    @Override
+    public @NotNull TypeConstraint convert(TypeConstraints.TypeConstraintFactory factory) {
+      Set<Exact> instanceOf = ContainerUtil.map2LinkedSet(myInstanceOf, exact -> exact.convert(factory));
+      Set<Exact> notInstanceOf = ContainerUtil.map2LinkedSet(myNotInstanceOf, exact -> exact.convert(factory));
+      return new Constrained(instanceOf, notInstanceOf);
     }
 
     @Override
