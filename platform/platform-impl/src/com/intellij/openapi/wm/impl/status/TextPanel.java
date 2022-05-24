@@ -49,7 +49,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
 
   @Override
   public Font getFont() {
-    return SystemInfo.isMac && !ExperimentalUI.isNewUI() ? JBUI.Fonts.label(11) : JBFont.label();
+    return SystemInfo.isMac && !ExperimentalUI.isNewUI() ? JBFont.small() : JBFont.label();
   }
 
   public void recomputeSize() {
