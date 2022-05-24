@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPa
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ import java.util.Arrays;
  * @author Konstantin Bulenkov
  */
 final class ManageRecentProjectsAction extends DumbAwareAction {
+  private static final int DEFAULT_POPUP_WIDTH = 300;
   private static final int SEPARATOR_HEIGHT = 1;
 
   @Override
@@ -57,6 +59,8 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
         panel.add(searchTextField);
         panel.add(separatorComponent);
         panel.add(scrollPane);
+
+        panel.setPreferredSize(JBUI.size(panel.getPreferredSize()).withWidth(DEFAULT_POPUP_WIDTH));
 
         return panel;
       }
