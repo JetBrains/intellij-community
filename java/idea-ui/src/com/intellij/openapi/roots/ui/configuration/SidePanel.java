@@ -125,11 +125,12 @@ public final class SidePanel extends JPanel {
 
       @Override
       protected JComponent createItemComponent() {
-        myExtraPanel = new NonOpaquePanel(new BorderLayout());
-
         if (ExperimentalUI.isNewUI()) {
           myExtraPanel = new SelectablePanel();
           PopupUtil.configSelectablePanel((SelectablePanel)myExtraPanel);
+        }
+        else {
+          myExtraPanel = new NonOpaquePanel(new BorderLayout());
         }
 
         myCountLabel = new SidePanelCountLabel();
