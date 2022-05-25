@@ -403,6 +403,10 @@ public class GradleExecutionHelper {
       settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
 
+    if (settings.isScanEnabled()) {
+      settings.withArgument(GradleConstants.ENABLE_SCAN_CMD_OPTION);
+    }
+
     setupLogging(settings, buildEnvironment);
 
     if (forTestLauncher) {

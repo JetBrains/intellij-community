@@ -67,7 +67,7 @@ fun <T : Any> buildGradleModel(
             )
         )
 
-        val executionSettings = GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
+        val executionSettings = GradleExecutionSettings(null, null, DistributionType.BUNDLED, false, false)
         GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings)
         val initScript = GradleExecutionHelper.generateInitScript(
             false, AbstractModelBuilderTest.getToolingExtensionClasses() +

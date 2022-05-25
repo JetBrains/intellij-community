@@ -136,7 +136,8 @@ public final class GradleManager
                                                                    settings.getServiceDirectoryPath(),
                                                                    distributionType,
                                                                    settings.getGradleVmOptions(),
-                                                                   settings.isOfflineWork());
+                                                                   settings.isOfflineWork(),
+                                                                   settings.isScanEnabled());
       String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
       if (!StringUtil.isEmpty(javaHome)) {
         LOG.info("Instructing gradle to use java from " + javaHome);

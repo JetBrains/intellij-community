@@ -218,7 +218,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     projectImportAction.setParallelModelsFetch(useParallelModelsFetch);
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
-      executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
+      executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false, false);
     }
 
     configureExecutionArgumentsAndVmOptions(executionSettings, resolverCtx, isBuildSrcProject);

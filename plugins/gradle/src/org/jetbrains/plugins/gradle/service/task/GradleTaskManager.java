@@ -98,7 +98,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
 
     GradleExecutionSettings effectiveSettings =
-      settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
+      settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false, false) : settings;
 
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     myCancellationMap.put(id, cancellationTokenSource);

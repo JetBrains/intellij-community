@@ -129,7 +129,8 @@ public final class GradleBuildSrcProjectsResolver {
           buildSrcProjectSettings = new GradleExecutionSettings(gradleHome,
                                                                 myMainBuildExecutionSettings.getServiceDirectory(),
                                                                 DistributionType.LOCAL,
-                                                                myMainBuildExecutionSettings.isOfflineWork());
+                                                                myMainBuildExecutionSettings.isOfflineWork(),
+                                                                myMainBuildExecutionSettings.isScanEnabled());
           buildSrcProjectSettings.setIdeProjectPath(myMainBuildExecutionSettings.getIdeProjectPath());
           buildSrcProjectSettings.setJavaHome(myMainBuildExecutionSettings.getJavaHome());
           buildSrcProjectSettings.setResolveModulePerSourceSet(myMainBuildExecutionSettings.isResolveModulePerSourceSet());
@@ -144,7 +145,7 @@ public final class GradleBuildSrcProjectsResolver {
           reuseTargetEnvironmentConfigurationProvider(buildSrcProjectSettings, myMainBuildExecutionSettings);
         }
         else {
-          buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false);
+          buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false, false);
         }
         includeRootBuildIncludedBuildsIfNeeded(buildSrcProjectSettings, compositeBuildData, buildPath);
       }

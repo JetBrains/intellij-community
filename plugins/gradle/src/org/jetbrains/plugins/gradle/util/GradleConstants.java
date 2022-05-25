@@ -36,6 +36,7 @@ public final class GradleConstants {
   @NotNull @NonNls public static final String HELP_TOPIC_TOOL_WINDOW = "reference.toolwindows.gradle";
 
   @NotNull @NonNls public static final String OFFLINE_MODE_CMD_OPTION = "--offline";
+  @NotNull @NonNls public static final String ENABLE_SCAN_CMD_OPTION = "--scan";
   @NotNull @NonNls public static final String INIT_SCRIPT_CMD_OPTION = "--init-script";
   @NotNull @NonNls public static final String INCLUDE_BUILD_CMD_OPTION = "--include-build";
 

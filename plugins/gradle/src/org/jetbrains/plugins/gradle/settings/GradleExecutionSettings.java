@@ -23,6 +23,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   @Nullable private final String myServiceDirectory;
   private final boolean myIsOfflineWork;
+  private final boolean myIsScanEnabled;
 
   @NotNull private final DistributionType myDistributionType;
   @Nullable private String wrapperPropertyFile;
@@ -37,19 +38,23 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
                                  @NotNull DistributionType distributionType,
-                                 boolean isOfflineWork) {
-    myGradleHome = gradleHome;
-    myServiceDirectory = serviceDirectory;
-    myDistributionType = distributionType;
-    myIsOfflineWork = isOfflineWork;
-    setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
+                                 boolean isOfflineWork,
+                                 boolean isScanEnabled) {
+    this(
+      gradleHome,
+      serviceDirectory,
+      distributionType,
+      null,
+      isOfflineWork,
+      isScanEnabled);
   }
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
                                  @NotNull DistributionType distributionType,
                                  @Nullable String daemonVmOptions,
-                                 boolean isOfflineWork) {
+                                 boolean isOfflineWork,
+                                 boolean isScanEnabled) {
     myGradleHome = gradleHome;
     myServiceDirectory = serviceDirectory;
     myDistributionType = distributionType;
@@ -57,6 +62,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
       withVmOptions(ParametersListUtil.parse(daemonVmOptions));
     }
     myIsOfflineWork = isOfflineWork;
+    myIsScanEnabled = isScanEnabled;
     setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }
 
@@ -90,6 +96,10 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public boolean isOfflineWork() {
     return myIsOfflineWork;
+  }
+
+  public boolean isScanEnabled() {
+    return myIsScanEnabled;
   }
 
   public boolean isResolveModulePerSourceSet() {
