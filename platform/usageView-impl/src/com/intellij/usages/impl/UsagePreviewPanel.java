@@ -78,14 +78,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     myIsEditor = isEditor;
   }
 
-
   public void setUsageView(@Nullable UsageViewImpl usageView) {
     myUsageView = usageView;
-  }
-
-  @Nullable
-  public UsageViewImpl getUsageView() {
-    return myUsageView;
   }
 
   @Nullable
