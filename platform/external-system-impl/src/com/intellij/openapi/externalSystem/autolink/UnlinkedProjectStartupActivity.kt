@@ -6,8 +6,9 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.LOG
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfiguredByPlatformProcessor
@@ -230,9 +230,8 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
   }
 
   private fun showNotificationWhenNewBuildFileCreated(project: Project, externalProjectPath: String) {
-    val asyncNewFilesListener = NewBuildFilesListener(project, externalProjectPath)
-    val fileManager = VirtualFileManager.getInstance()
-    fileManager.addAsyncFileListener(asyncNewFilesListener, project)
+    val listener = NewBuildFilesListener(project, externalProjectPath)
+    installAsyncVirtualFileListener(listener, project)
   }
 
   private fun ExternalSystemUnlinkedProjectAware.getBuildFiles(project: Project, externalProjectPath: String): List<VirtualFile> {
@@ -245,7 +244,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
   private inner class NewBuildFilesListener(
     private val project: Project,
     private val externalProjectPath: String
-  ) : AsyncFileChangeListenerBase() {
+  ) : VirtualFileChangesListener {
     private lateinit var buildFiles: MutableSet<VirtualFile>
 
     override fun init() {
