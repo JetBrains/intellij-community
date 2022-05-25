@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCollisionPassType
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
+import com.intellij.openapi.externalSystem.util.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.use
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
@@ -51,65 +51,50 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   private val projectTracker get() = AutoImportProjectTracker.getInstance(myProject).also { it.enableAutoImportInTests() }
   private val projectTrackerSettings get() = AutoImportProjectTrackerSettings.getInstance(myProject)
 
-  private fun ensureExistsParentDirectory(relativePath: String): VirtualFile {
-    return relativePath.split("/").dropLast(1)
-      .fold(myProjectRoot!!) { file, name -> file.findOrCreateChildDirectory(name) }
-  }
-
-  private fun VirtualFile.findOrCreateChildDirectory(name: String): VirtualFile {
-    val file = findChild(name) ?: createChildDirectory(null, name)
-    if (!file.isDirectory) throw IOException("Cannot create directory $name")
-    return file
-  }
-
-  private fun VirtualFile.findOrCreateChildFile(name: String): VirtualFile {
-    val file = findChild(name) ?: createChildData(null, name)
-    if (file.isDirectory) throw IOException("Cannot create file $name")
-    return file
-  }
+  protected val projectRoot get() = myProjectRoot!!
 
   protected fun createVirtualFile(relativePath: String) = runWriteAction {
-    val directory = ensureExistsParentDirectory(relativePath)
-    directory.createChildData(null, relativePath.split("/").last())
+    projectRoot.createFile(relativePath)
   }
 
   protected fun findOrCreateVirtualFile(relativePath: String) = runWriteAction {
-    val directory = ensureExistsParentDirectory(relativePath)
-    directory.findOrCreateChildFile(relativePath.split("/").last())
+    projectRoot.findOrCreateFile(relativePath)
+  }
+
+  protected fun findOrCreateDirectory(relativePath: String) = runWriteAction {
+    projectRoot.findOrCreateDirectory(relativePath)
+  }
+
+  protected fun findFile(relativePath: String) = runWriteAction {
+    requireNotNull(projectRoot.findFile(relativePath)) {
+      "File not found in VFS: $projectPath/$relativePath}."
+    }
   }
 
   protected fun createIoFile(relativePath: String): VirtualFile {
-    val file = getFile(relativePath)
-    refreshIoFiles(file.path)
+    val file = File(getAbsolutePath(relativePath))
+    file.refreshInLfs() // ensure that file is removed from VFS
     FileUtil.ensureExists(file.parentFile)
     FileUtil.ensureCanCreateFile(file)
     if (!file.createNewFile()) {
       throw IOException(CoreBundle.message("file.create.already.exists.error", parentPath, relativePath))
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+    return findFile(relativePath)
   }
-
-  protected fun findOrCreateDirectory(relativePath: String) = createProjectSubDir(relativePath)!!
-
-  private fun <R> runWriteAction(update: () -> R): R =
-    WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
 
   protected fun pathsOf(vararg files: VirtualFile): Set<String> {
     return files.mapTo(LinkedHashSet()) { it.path }
   }
 
-  private fun getPath(relativePath: String) = "$projectPath/$relativePath"
+  private fun getAbsolutePath(relativePath: String) = "$projectPath/$relativePath"
 
-  private fun getFile(relativePath: String) = File(getPath(relativePath))
+  private fun <R> runWriteAction(update: () -> R): R =
+    WriteCommandAction.runWriteCommandAction(myProject, Computable { update() })
 
   private fun VirtualFile.updateIoFile(action: File.() -> Unit) {
-    File(path).apply(action)
-    refreshIoFiles(path)
-  }
-
-  private fun refreshIoFiles(vararg paths: String) {
-    val localFileSystem = LocalFileSystem.getInstance()
-    localFileSystem.refreshIoFiles(paths.map { File(it) }, false, true, null)
+    val file = toNioPath().toFile()
+    file.action()
+    file.refreshInLfs()
   }
 
   protected fun VirtualFile.appendLineInIoFile(line: String) =
@@ -130,15 +115,11 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   protected fun VirtualFile.rename(name: String) =
     runWriteAction { rename(null, name) }
 
-  protected fun VirtualFile.copy(relativePath: String) =
+  protected fun VirtualFile.copy(name: String, parentRelativePath: String = ".") =
     runWriteAction {
-      val newFile = getFile(relativePath)
-      val parent = VfsUtil.findFileByIoFile(newFile.parentFile, true)!!
-      copy(null, parent, newFile.name)
+      val parent = projectRoot.findOrCreateDirectory(parentRelativePath)
+      copy(null, parent, name)
     }
-
-  protected fun VirtualFile.move(newParentRelativePath: String) =
-    move(findOrCreateDirectory(newParentRelativePath))
 
   protected fun VirtualFile.move(parent: VirtualFile) =
     runWriteAction { move(null, parent) }
@@ -224,7 +205,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   }
 
   protected fun registerSettingsFile(projectAware: MockProjectAware, relativePath: String) {
-    projectAware.registerSettingsFile(getPath(relativePath))
+    projectAware.registerSettingsFile(getAbsolutePath(relativePath))
   }
 
   protected fun register(projectAware: ExternalSystemProjectAware, activate: Boolean = true, parentDisposable: Disposable? = null) {
@@ -452,13 +433,13 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun registerSettingsFile(file: VirtualFile) = projectAware.registerSettingsFile(file.path)
 
-    fun registerSettingsFile(relativePath: String) = projectAware.registerSettingsFile(getPath(relativePath))
+    fun registerSettingsFile(relativePath: String) = projectAware.registerSettingsFile(getAbsolutePath(relativePath))
 
     fun ignoreSettingsFileWhen(file: VirtualFile, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) =
       projectAware.ignoreSettingsFileWhen(file.path, condition)
 
     fun ignoreSettingsFileWhen(relativePath: String, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) =
-      projectAware.ignoreSettingsFileWhen(getPath(relativePath), condition)
+      projectAware.ignoreSettingsFileWhen(getAbsolutePath(relativePath), condition)
 
     fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.onceDuringRefresh(action)
     fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.duringRefresh(times, action)
@@ -483,7 +464,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun createSettingsVirtualFile(relativePath: String): VirtualFile {
       registerSettingsFile(relativePath)
-      return findOrCreateVirtualFile(relativePath)
+      return createVirtualFile(relativePath)
     }
 
     fun withLinkedProject(fileRelativePath: String, test: SimpleTestBench.(VirtualFile) -> Unit) {

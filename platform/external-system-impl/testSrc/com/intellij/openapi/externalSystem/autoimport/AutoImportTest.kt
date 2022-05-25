@@ -16,7 +16,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.AlarmFactory
 import org.jetbrains.concurrency.AsyncPromise
 import org.junit.Test
-import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -398,9 +397,8 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 1, notified = false, event = "project refresh")
     }
 
-    with(File(projectPath, "settings.groovy")) {
-      writeText(readText().replace("hi", "hello"))
-    }
+    findFile("settings.groovy")
+      .replaceStringInIoFile("hi", "hello")
 
     state = simpleTest("settings.groovy", state = state) { settingsFile ->
       assertState(refresh = 1, notified = false, event = "register project with external modifications")
@@ -452,19 +450,19 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 2, notified = false, event = "create directory")
       scriptFile.move(dir)
       assertState(refresh = 2, notified = true, event = "move settings to directory")
-      scriptFile.move(myProjectRoot)
+      scriptFile.move(projectRoot)
       assertState(refresh = 2, notified = false, event = "revert move settings")
       scriptFile.move(dir1)
       assertState(refresh = 2, notified = true, event = "move settings to directory")
       dir1.move(dir)
       assertState(refresh = 2, notified = true, event = "move directory with settings to other directory")
-      scriptFile.move(myProjectRoot)
+      scriptFile.move(projectRoot)
       assertState(refresh = 2, notified = false, event = "revert move settings")
       scriptFile.move(dir)
       assertState(refresh = 2, notified = true, event = "move settings to directory")
       dir.rename("dir1")
       assertState(refresh = 2, notified = true, event = "rename directory with settings")
-      scriptFile.move(myProjectRoot)
+      scriptFile.move(projectRoot)
       assertState(refresh = 2, notified = false, event = "revert move settings")
 
       settingsFile.rename("configuration.groovy")
@@ -897,14 +895,17 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 4, settingsAccess = 11, notified = false, event = "revert config file rename")
 
       registerSettingsFile("my-dir/file1.config")
-      configFile1.move("my-dir")
-      assertState(refresh = 4, settingsAccess = 12, notified = true, event = "move config file")
+      val myDir = findOrCreateDirectory("my-dir")
+      // Implementation detail, settings file cache resets on any file creation
+      assertState(refresh = 4, settingsAccess = 12, notified = false, event = "created directory")
+      configFile1.move(myDir)
+      assertState(refresh = 4, settingsAccess = 13, notified = true, event = "move config file")
 
       configFile1.modify(INTERNAL)
-      assertState(refresh = 4, settingsAccess = 12, notified = true, event = "modify config file")
+      assertState(refresh = 4, settingsAccess = 13, notified = true, event = "modify config file")
 
-      configFile1.move(".")
-      assertState(refresh = 4, settingsAccess = 13, notified = false, event = "revert config file move")
+      configFile1.move(projectRoot)
+      assertState(refresh = 4, settingsAccess = 14, notified = false, event = "revert config file move")
     }
   }
 

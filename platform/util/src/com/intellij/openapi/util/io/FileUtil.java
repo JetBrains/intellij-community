@@ -126,6 +126,10 @@ public class FileUtil extends FileUtilRt {
     return isAncestor(ancestor.getPath(), file.getPath(), strict);
   }
 
+  public static boolean isAncestor(@NotNull Path ancestor, @NotNull Path file, boolean strict) {
+    return isAncestor(ancestor.toString(), file.toString(), strict);
+  }
+
   public static boolean isAncestor(@NotNull String ancestor, @NotNull String file, boolean strict) {
     return !ThreeState.NO.equals(isAncestorThreeState(ancestor, file, strict));
   }
