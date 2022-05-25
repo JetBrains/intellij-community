@@ -35,7 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtilsKt;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
@@ -170,7 +170,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
 
       private @Nullable Module extractModule(@NotNull ModuleEntity entity, @NotNull WorkspaceEntityStorage storage) {
-        return ModuleEntityUtilsKt.findModuleBridge(entity, storage);
+        return ModuleEntityUtils.findModuleBridge(entity, storage);
       }
 
       private @Nullable Module extractModule(@NotNull ContentRootEntity entity, @NotNull WorkspaceEntityStorage storage) {
