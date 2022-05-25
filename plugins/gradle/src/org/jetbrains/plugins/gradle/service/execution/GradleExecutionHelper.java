@@ -404,7 +404,23 @@ public class GradleExecutionHelper {
     }
 
     if (settings.isScanEnabled()) {
-      settings.withArgument(GradleConstants.ENABLE_SCAN_CMD_OPTION);
+      // TODO Extract the file only once
+      InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/scanInit.gradle");
+      if (stream != null) {
+        try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+          String script = StreamUtil.readText(reader);
+          File tempFile = writeToFileGradleInitScript(script, "scan-init");
+
+          settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+          settings.withArgument(GradleConstants.ENABLE_SCAN_CMD_OPTION);
+        }
+        catch (Exception e) {
+          LOG.warn("Can't generate IJ gradle test filter init script", e);
+        }
+      }
+      else {
+        LOG.error("Can't find test filter init script template");
+      }
     }
 
     setupLogging(settings, buildEnvironment);
