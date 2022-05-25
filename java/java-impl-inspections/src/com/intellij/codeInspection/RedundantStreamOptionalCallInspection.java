@@ -120,7 +120,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
             String message = JavaBundle.message("inspection.redundant.stream.optional.call.message", name) +
                              ": " + JavaBundle.message("inspection.redundant.stream.optional.call.explanation.map.flatMap");
             holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
-                                   new RemoveCallFix(name, "flatMap"));
+                                   new RemoveCallFix(name, "map"));
           }
         }
         if (!EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), call.getType())) return;
@@ -347,21 +347,24 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
 
   private static class RemoveCallFix implements LocalQuickFix {
     private final @NotNull String myMethodName;
-    private final @Nullable String myBindPreviousCallTo;
+    private final @Nullable String myBindPreviousCall;
 
     RemoveCallFix(@NotNull String methodName) {
       this(methodName, null);
     }
 
-    RemoveCallFix(@NotNull String methodName, @Nullable String bindPreviousCallTo) {
+    RemoveCallFix(@NotNull String methodName, @Nullable String bindPreviousCall) {
       myMethodName = methodName;
-      myBindPreviousCallTo = bindPreviousCallTo;
+      myBindPreviousCall = bindPreviousCall;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
+      if (myBindPreviousCall != null) {
+        return JavaBundle.message("inspection.redundant.stream.optional.call.fix.bind.name", myMethodName, myBindPreviousCall);
+      }
       return JavaBundle.message("inspection.redundant.stream.optional.call.fix.name", myMethodName);
     }
 
@@ -378,10 +381,10 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
-      if (myBindPreviousCallTo != null) {
+      if (myBindPreviousCall != null) {
         PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
         if (qualifierCall == null) return;
-        ExpressionUtils.bindCallTo(qualifierCall, myBindPreviousCallTo);
+        ExpressionUtils.bindCallTo(qualifierCall, myMethodName);
       }
       new CommentTracker().replaceAndRestoreComments(call, qualifier);
     }
