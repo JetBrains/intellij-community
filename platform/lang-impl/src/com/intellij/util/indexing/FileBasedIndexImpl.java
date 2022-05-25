@@ -91,8 +91,6 @@ import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -435,27 +433,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ID<K, V> name = extension.getName();
     int version = getIndexExtensionVersion(extension);
 
-    Path versionFile = IndexInfrastructure.getVersionFile(name);
-
     IndexVersion.IndexVersionDiff diff = IndexVersion.versionDiffers(name, version);
     versionRegistrationStatusSink.setIndexVersionDiff(name, diff);
     if (diff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
-      final boolean versionFileExisted = Files.exists(versionFile);
-
-      if (extension.hasSnapshotMapping() && versionFileExisted) {
-        FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name).toFile());
-      }
-      Path rootDir = IndexInfrastructure.getIndexRootDir(name);
-      if (versionFileExisted) {
-        FileUtil.deleteWithRenaming(rootDir.toFile());
-      }
+      FileUtil.deleteWithRenamingIfExists(IndexInfrastructure.getPersistentIndexRootDir(name));
+      FileUtil.deleteWithRenamingIfExists(IndexInfrastructure.getIndexRootDir(name));
       IndexVersion.rewriteVersion(name, version);
 
       try {
-        if (versionFileExisted) {
-          for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-            ex.onFileBasedIndexVersionChanged(name);
-          }
+        for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+          ex.onFileBasedIndexVersionChanged(name);
         }
       }
       catch (Exception e) {

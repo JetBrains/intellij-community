@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -106,23 +105,12 @@ public final class StubIndexImpl extends StubIndexEx {
 
     registrationResultSink.setIndexVersionDiff(indexKey, versionDiff);
     if (versionDiff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
-      Path versionFile = IndexInfrastructure.getVersionFile(indexKey);
-      boolean versionFileExisted = Files.exists(versionFile);
-      final String[] children = indexRootDir.toFile().list();
-      // rebuild only if there exists what to rebuild
-      boolean indexRootHasChildren = children != null && children.length > 0;
-      boolean needRebuild = !forceClean && (versionFileExisted || indexRootHasChildren);
-
-      if (indexRootHasChildren) {
-        FileUtil.deleteWithRenaming(indexRootDir.toFile());
-      }
-      IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
+      FileUtil.deleteWithRenamingIfExists(indexRootDir);
+      IndexVersion.rewriteVersion(indexKey, version);
 
       try {
-        if (needRebuild) {
-          for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-            ex.onStubIndexVersionChanged(indexKey);
-          }
+        for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+          ex.onStubIndexVersionChanged(indexKey);
         }
       }
       catch (Exception e) {
