@@ -128,7 +128,7 @@ public final class SidePanel extends JPanel {
         myExtraPanel = new NonOpaquePanel(new BorderLayout());
 
         if (ExperimentalUI.isNewUI()) {
-          myExtraPanel = SelectablePanel.wrap(new NonOpaquePanel(new BorderLayout()));
+          myExtraPanel = new SelectablePanel();
           PopupUtil.configSelectablePanel((SelectablePanel)myExtraPanel);
         }
 
