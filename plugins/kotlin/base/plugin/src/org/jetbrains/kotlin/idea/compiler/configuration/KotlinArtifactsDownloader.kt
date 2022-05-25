@@ -42,8 +42,8 @@ object KotlinArtifactsDownloader {
         }
 
         return getLazyDistDownloaderAndUnpacker(version).isUpToDate(version) ||
-                getLazyDistUnpacker(parsedVersion)?.let { unpacker ->
-                    KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)?.toFile()?.let { jar ->
+                getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
+                    getAllInOneOldFormatPackedDist(parsedVersion.rawVersion)?.let { jar ->
                         unpacker.isUpToDate(jar)
                     }
                 } ?: false
@@ -101,10 +101,16 @@ object KotlinArtifactsDownloader {
             return KotlinPluginLayout.instance.kotlinc
         }
 
+        getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
+            getAllInOneOldFormatPackedDist(version)?.let { packedDist ->
+                unpacker.getUnpackedIfUpToDateOrNull(packedDist)?.let { return it }
+            }
+        }
+
         val indicatorDownloadText = KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist")
         val context = LazyPomAndJarsDownloader.Context(project, indicator, indicatorDownloadText)
         return getLazyDistDownloaderAndUnpacker(version).lazyProduceDist(version, context)
-            ?: getLazyDistUnpacker(parsedVersion)?.let { unpacker ->
+            ?: getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
                 // Fallback to old "all-in-one jar" artifact (old "all-in-one jar" is available only for Kotlin < 1.7.20)
                 lazyDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version, indicator, indicatorDownloadText)?.let {
                     unpacker.lazyUnpack(it)
@@ -166,8 +172,8 @@ object KotlinArtifactsDownloader {
         return downloadedArtifacts.map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl) }
     }
 
-    private fun getLazyDistUnpacker(version: IdeKotlinVersion) =
-        if (isOldAllInOneDistFormatAvailable(version)) LazyZipUnpacker(getUnpackedKotlinDistPath(version.rawVersion)) else null
+    private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =
+        if (isAllInOneOldFormatDistFormatAvailable(version)) LazyZipUnpacker(getUnpackedKotlinDistPath(version.rawVersion)) else null
     private fun getLazyDistDownloaderAndUnpacker(version: String) = LazyKotlincDistDownloaderAndUnpacker(version)
 
     /**
@@ -175,7 +181,10 @@ object KotlinArtifactsDownloader {
      * - Old "all in one jar" dist [KotlinArtifacts.KOTLIN_DIST_ARTIFACT_ID]
      * - New "dist as all transitive dependencies of one meta pom" format [KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID]
      */
-    private fun isOldAllInOneDistFormatAvailable(version: IdeKotlinVersion) = version < IdeKotlinVersion.get("1.7.20")
+    private fun isAllInOneOldFormatDistFormatAvailable(version: IdeKotlinVersion) = version < IdeKotlinVersion.get("1.7.20")
+
+    private fun getAllInOneOldFormatPackedDist(version: String) =
+        KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)?.toFile()
 
     private fun getMavenRepos(project: Project): List<RemoteRepositoryDescription> =
         RemoteRepositoriesConfiguration.getInstance(project).repositories
