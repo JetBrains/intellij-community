@@ -86,32 +86,33 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    public boolean isAcceptable(Object element, PsiElement context) {
+    public boolean isAcceptable(Object __, PsiElement context) {
       UElement type = UastContextKt.toUElement(context, UElement.class);
       if (type == null) return false;
-      UAnnotation annotation = findAnnotationParent(type);
-      if (annotation == null || !myAnnotation.equals(annotation.getQualifiedName())) return false;
-      UNamedExpression uPair = UastUtils.getParentOfType(type, UNamedExpression.class);
-      if (uPair == null) return false;
-      String name = ObjectUtils.notNull(uPair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-      return myParameterName.equals(name);
-    }
-
-    private static UAnnotation findAnnotationParent(UElement element) {
-      for (int i = 0; i < 5; i++) {
+      UElement element = type.getUastParent();
+      boolean parameterFound = false;
+      for (int i = 0; i < 5 && element != null; i++) {
+        if (element instanceof UFile) {
+          return false;
+        }
+        if (element instanceof UNamedExpression) {
+          UNamedExpression uPair = (UNamedExpression)element;
+          String name = ObjectUtils.notNull(uPair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+          if (!myParameterName.equals(name)) {
+            return false;
+          }
+          parameterFound = true;
+        }
         if (element instanceof UDeclarationsExpression) {
-          return null;
+          return false;
         }
         if (element instanceof UAnnotation) {
-          return (UAnnotation)element;
+          UAnnotation annotation = (UAnnotation)element;
+          return parameterFound && myAnnotation.equals(annotation.getQualifiedName());
         }
-        UElement parent = element.getUastParent();
-        if (parent == null || parent instanceof UFile) {
-          return null;
-        }
-        element = parent;
+        element = element.getUastParent();
       }
-      return null;
+      return false;
     }
 
     @Override
