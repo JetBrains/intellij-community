@@ -2,19 +2,16 @@ package com.github.firsttimeinforever.mermaid.editor
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidFlowchartDocumentImpl
+import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidJourneyDocumentImpl
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidPieDocumentImpl
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidSequenceDocumentImpl
-import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.*
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 
 class MermaidCompletionContributor : CompletionContributor() {
@@ -54,13 +51,8 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
-      psiElement().withParent(
-        psiElement().afterSiblingSkipping(
-          not(psiElement(MermaidTokens.Pie.PIE)).andOr(not(psiElement(MermaidPieDocumentImpl::class.java))),
-          or(psiElement(MermaidTokens.Pie.PIE), psiElement(MermaidPieDocumentImpl::class.java))
-        )
-      ),
-      MermaidPieTitleCompletionProvider()
+      psiElement(),
+      MermaidTitleCompletionProvider(MermaidTokens.Pie.PIE, MermaidPieDocumentImpl::class.java)
     )
 
     extend(
@@ -74,12 +66,23 @@ class MermaidCompletionContributor : CompletionContributor() {
     extend(
       CompletionType.BASIC,
       psiElement().insideBlock(psiElement(MermaidTokens.Sequence.ALT)),
-      MermaidSequenceBranchCompletionProvider("else")
+      MermaidBranchCompletionProvider("else")
     )
     extend(
       CompletionType.BASIC,
       psiElement().insideBlock(psiElement(MermaidTokens.Sequence.PAR)),
-      MermaidSequenceBranchCompletionProvider("and")
+      MermaidBranchCompletionProvider("and")
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement(),
+      MermaidTitleCompletionProvider(MermaidTokens.Journey.JOURNEY, MermaidJourneyDocumentImpl::class.java)
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.Journey.JOURNEY))),
+      MermaidBranchCompletionProvider("section")
     )
   }
 
@@ -87,56 +90,20 @@ class MermaidCompletionContributor : CompletionContributor() {
     return with(object : PatternCondition<PsiElement>("insideBlock") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
         val parent = psiElement.parent
-        val children = parent.children
-        var i = listOf(*children).indexOf(psiElement)
-        while (--i >= 0) {
-          if (psiElement(MermaidTokens.END).accepts(children[i], context)) {
-            return false
-          }
-          if (pattern.accepts(children[i], context)) {
-            return true
+        if (parent != null) {
+          val children = parent.children
+          var i = listOf(*children).indexOf(psiElement)
+          while (--i >= 0) {
+            if (psiElement(MermaidTokens.END).accepts(children[i], context)) {
+              return false
+            }
+            if (pattern.accepts(children[i], context)) {
+              return true
+            }
           }
         }
         return false
       }
     })
-  }
-}
-
-class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters>() {
-  private val diagrams = listOf("pie", "journey", "flowchart", "sequenceDiagram")
-  override fun addCompletions(
-    parameters: CompletionParameters,
-    context: ProcessingContext,
-    result: CompletionResultSet
-  ) {
-    parameters.position.parentOfType<PsiFile>()?.let {
-      if (it.children.all { element ->
-          not(
-            or(
-              psiElement(MermaidTokens.Flowchart.FLOWCHART),
-              psiElement(MermaidTokens.Pie.PIE),
-              psiElement(MermaidTokens.Journey.JOURNEY),
-              psiElement(MermaidTokens.Sequence.SEQUENCE)
-            )
-          ).accepts(element)
-        }) {
-        result.addAllElements(diagrams.map { d -> createKeywordLookupElement(d) })
-      }
-    }
-  }
-
-  private fun createKeywordLookupElement(keyword: String): LookupElement {
-    val insertHandler = InsertHandler { ctx: InsertionContext, _: LookupElement? ->
-      val editor = ctx.editor
-      val document = editor.document
-      // attempt to fix bug with completion of first element in document
-      val lineStartOffset = document.getLineStartOffset(document.getLineNumber(ctx.startOffset))
-      document.deleteString(lineStartOffset, ctx.tailOffset)
-      EditorModificationUtil.insertStringAtCaret(editor, keyword)
-    }
-    return LookupElementBuilder
-      .create(keyword)
-      .withInsertHandler(insertHandler)
   }
 }

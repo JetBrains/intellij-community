@@ -12,7 +12,7 @@ import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
 
-abstract class MermaidLiveTemplateCompletionProvider(private val deleteIndent: Boolean = false) : CompletionProvider<CompletionParameters>() {
+abstract class MermaidLiveTemplateCompletionProvider(protected var deleteIndent: Boolean = false) : CompletionProvider<CompletionParameters>() {
   private val priority = 10.0
   
   protected fun createKeywordLookupElement(project: Project, keyword: String): LookupElement {
@@ -37,12 +37,18 @@ abstract class MermaidLiveTemplateCompletionProvider(private val deleteIndent: B
         val settings = CodeStyle.getSettings(editor)
         val indentOptions = settings.getIndentOptions(MermaidFileType)
 
-        val startOffset = if (deleteIndent) {
-          context.startOffset - indentOptions.INDENT_SIZE
-        } else {
-          context.startOffset
+        val startOffset = context.startOffset
+        val document = editor.document
+        document.deleteString(startOffset, context.tailOffset)
+
+        if (deleteIndent) {
+          val lineStartOffset = document.getLineStartOffset(document.getLineNumber(startOffset))
+          val currIndent = startOffset - lineStartOffset
+          if (currIndent > indentOptions.INDENT_SIZE ) {
+            document.deleteString(startOffset - indentOptions.INDENT_SIZE, startOffset)
+          }
         }
-        editor.document.deleteString(startOffset, context.tailOffset)
+
         templateManager.startTemplate(editor, template)
       } else {
         EditorModificationUtil.insertStringAtCaret(editor, " ")
