@@ -277,6 +277,8 @@ private val ARRAY_OF_METHODS = setOf(ArrayFqNames.ARRAY_OF_FUNCTION) +
         Name.identifier("emptyArray")
 
 fun KtCallExpression.isArrayOfMethod(): Boolean {
+    val functionName = calleeExpression?.text ?: return false
+    if (!ARRAY_OF_METHODS.any { it.asString() == functionName }) return false
     val resolvedCall = resolveToCall() ?: return false
     val descriptor = resolvedCall.candidateDescriptor
     return (descriptor.containingDeclaration as? PackageFragmentDescriptor)?.fqName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
