@@ -37,7 +37,11 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
             .union(kotlinSourceSets)
 
-        val cachedArgsInfo = if (compileKotlinTask.isCompilerArgumentAware)
+        val cachedArgsInfo = if (compileKotlinTask.isCompilerArgumentAware
+            //TODO hotfix for KTIJ-21807.
+            // Remove after proper implementation of org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile#setupCompilerArgs
+            && !compileKotlinTask.isKotlinNativeCompileTask //TODO hotfix for KTIJ-21807. Replace after
+        )
             buildCachedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper)
         else
             buildSerializedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper, logger)
@@ -71,6 +75,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
         }
 
         private const val COMPILER_ARGUMENT_AWARE_CLASS = "org.jetbrains.kotlin.gradle.internal.CompilerArgumentAware"
+        private const val KOTLIN_NATIVE_COMPILE_CLASS = "org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile"
 
         private fun buildCompilationDependencies(
             importingContext: MultiplatformModelImportingContext,
@@ -98,6 +103,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
 
         private val Task.isCompilerArgumentAware: Boolean
             get() = javaClass.classLoader.loadClassOrNull(COMPILER_ARGUMENT_AWARE_CLASS)?.isAssignableFrom(javaClass) ?: false
+        private val Task.isKotlinNativeCompileTask: Boolean
+            get() = javaClass.classLoader.loadClassOrNull(KOTLIN_NATIVE_COMPILE_CLASS)?.isAssignableFrom(javaClass) ?: false
 
     }
 }
