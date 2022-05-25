@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.AppTopics;
@@ -127,14 +127,14 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        resetOnRootsSchanged();
+        resetOnRootsChanged();
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
-                         (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> resetOnRootsSchanged());
+                         (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> resetOnRootsChanged());
   }
 
-  private void resetOnRootsSchanged() {
+  private void resetOnRootsChanged() {
     myFilesToCheck.addAll(myEditedGeneratedFiles);
     myEditedGeneratedFiles.clear();
     myCheckingQueue.cancelAndRequest();
