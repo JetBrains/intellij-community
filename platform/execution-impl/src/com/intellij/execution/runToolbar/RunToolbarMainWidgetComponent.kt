@@ -4,10 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.runToolbar.data.RWSlotManagerState
 import com.intellij.execution.runToolbar.data.RWStateListener
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -146,6 +143,9 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
     val slotManager = RunToolbarSlotManager.getInstance(project)
     DataManager.registerDataProvider(component, DataProvider { key ->
       when {
+        RunToolbarProcessData.RW_SLOT.`is`(key) -> {
+          slotManager.mainSlotData.id
+        }
         RunToolbarData.RUN_TOOLBAR_DATA_KEY.`is`(key) -> {
           slotManager.mainSlotData
         }

@@ -7,6 +7,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.compareTypesForUi
+import com.intellij.execution.runToolbar.RunToolbarProcessData
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
@@ -119,11 +120,14 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
 
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
+        val compoundSettings = RunManagerImpl.getInstanceImpl(project).findSettings(this)
+
         val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
         for ((configuration, target) in getConfigurationsWithEffectiveRunTargets()) {
           val settings = RunManagerImpl.getInstanceImpl(project).findSettings(configuration) ?: continue
-          ExecutionUtil.runConfiguration(settings, executor, target, groupId)
-        }
+          ExecutionUtil.doRunConfiguration(settings, executor, target, groupId,
+                                           null, RunToolbarProcessData.prepareBaseSettingCustomization(compoundSettings))}
+
       }
       null
     }

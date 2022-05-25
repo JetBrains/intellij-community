@@ -25,9 +25,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     e.project?.let { project ->
       if (canRun(e)) {
         getSelectedConfiguration(e)?.let {
-          e.runToolbarData()?.startWaitingForAProcess(project, it, executor.id)
-
-          ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)
+           ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)
         }
       }
     }

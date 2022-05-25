@@ -31,16 +31,6 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
 
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
-  override fun actionPerformed(event: AnActionEvent) {
-    event.environment()?.let {
-      it.runnerAndConfigurationSettings?.let { settings ->
-        event.runToolbarData()?.startWaitingForAProcess(it.project, settings, it.executor.id)
-      }
-      super.actionPerformed(event)
-    }
-
-  }
-
   override fun getEnvironment(event: AnActionEvent): ExecutionEnvironment? {
     return event.environment()
   }

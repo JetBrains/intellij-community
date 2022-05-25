@@ -11,6 +11,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.impl.ExecutionManagerImplKt;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runToolbar.*;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
@@ -49,6 +50,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class ExecutorRegistryImpl extends ExecutorRegistry {
@@ -622,16 +624,27 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   public static final class RunnerHelper {
     public static void run(@NotNull Project project,
-                            @Nullable RunConfiguration configuration,
-                            @Nullable RunnerAndConfigurationSettings settings,
-                            @NotNull DataContext dataContext,
-                            @NotNull Executor executor) {
+                           @Nullable RunConfiguration configuration,
+                           @Nullable RunnerAndConfigurationSettings settings,
+                           @NotNull DataContext dataContext,
+                           @NotNull Executor executor) {
+
+      runSubProcess(project, configuration, settings, dataContext, executor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
+    }
+
+    public static void runSubProcess(@NotNull Project project,
+                                     @Nullable RunConfiguration configuration,
+                                     @Nullable RunnerAndConfigurationSettings settings,
+                                     @NotNull DataContext dataContext,
+                                     @NotNull Executor executor,
+                                     @Nullable Consumer<ExecutionEnvironment> environmentCustomization) {
+
       if (configuration instanceof CompoundRunConfiguration) {
         RunManager runManager = RunManager.getInstance(project);
         for (SettingsAndEffectiveTarget settingsAndEffectiveTarget : ((CompoundRunConfiguration)configuration)
           .getConfigurationsWithEffectiveRunTargets()) {
           RunConfiguration subConfiguration = settingsAndEffectiveTarget.getConfiguration();
-          run(project, subConfiguration, runManager.findSettings(subConfiguration), dataContext, executor);
+          runSubProcess(project, subConfiguration, runManager.findSettings(subConfiguration), dataContext, executor, environmentCustomization);
         }
       }
       else {
@@ -639,7 +652,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (builder == null) {
           return;
         }
-        ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(dataContext).build());
+        ExecutionEnvironment environment = builder.activeTarget().dataContext(dataContext).build();
+        if(environmentCustomization != null) environmentCustomization.accept(environment);
+        ExecutionManager.getInstance(project).restartRunProfile(environment);
       }
     }
 

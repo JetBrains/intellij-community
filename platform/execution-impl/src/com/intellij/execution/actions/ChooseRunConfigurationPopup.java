@@ -378,7 +378,10 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunnerAndConfigurationSettings config = getValue();
-          RunManager.getInstance(project).setSelectedConfiguration(config);
+
+          final RunManager manager = RunManager.getInstance(project);
+
+          if (!manager.isRunWidgetActive()) RunManager.getInstance(project).setSelectedConfiguration(config);
           MacroManager.getInstance().cacheMacrosPreview(context);
           ExecutionUtil.doRunConfiguration(config, executor, null, null, context);
         }
