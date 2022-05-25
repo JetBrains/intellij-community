@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -55,7 +56,9 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
         }
         else {
           mainPanel = JBUI.Panels.simplePanel().withBorder(JBUI.Borders.empty(13, 12)).withBackground(getProjectsBackground());
-          RecentProjectFilteringTree recentProjectTree = RecentProjectPanelComponentFactory.createComponent(parentDisposable);
+          RecentProjectFilteringTree recentProjectTree = RecentProjectPanelComponentFactory.createComponent(
+            parentDisposable, ProjectCollectors.all
+          );
           JComponent treeComponent = recentProjectTree.getComponent();
           JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(treeComponent, true);
           scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

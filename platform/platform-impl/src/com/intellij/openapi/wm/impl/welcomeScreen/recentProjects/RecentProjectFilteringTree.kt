@@ -55,11 +55,12 @@ import javax.swing.tree.TreePath
 
 class RecentProjectFilteringTree(
   treeComponent: Tree,
-  parentDisposable: Disposable
+  parentDisposable: Disposable,
+  collectors: List<() -> List<RecentProjectTreeItem>>
 ) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
   ProjectManager.getInstance().defaultProject,
   treeComponent,
-  DefaultMutableTreeNode(RootItem)
+  DefaultMutableTreeNode(RootItem(collectors))
 ) {
   init {
     treeComponent.apply {

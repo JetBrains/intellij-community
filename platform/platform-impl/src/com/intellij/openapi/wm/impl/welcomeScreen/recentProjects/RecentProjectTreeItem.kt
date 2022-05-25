@@ -103,15 +103,19 @@ data class CloneableProjectItem(
 }
 
 // The root node is required for the filtering tree
-object RootItem : RecentProjectTreeItem {
+class RootItem(private val collectors: List<() -> List<RecentProjectTreeItem>>) : RecentProjectTreeItem {
   override fun displayName(): String = "" // Not visible in tree
 
-  override fun children(): List<RecentProjectTreeItem> {
-    val projects = mutableListOf<RecentProjectTreeItem>().apply {
-      addAll(CloneableProjectsService.getInstance().collectCloneableProjects())
-      addAll(RecentProjectListActionProvider.getInstance().collectProjects())
-    }
+  override fun children(): List<RecentProjectTreeItem> = collectors.flatMap { collector -> collector() }
+}
 
-    return projects
-  }
+object ProjectCollectors {
+  @JvmField
+  val recentProjectsCollector: () -> List<RecentProjectTreeItem> = { RecentProjectListActionProvider.getInstance().collectProjects() }
+
+  @JvmField
+  val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = { CloneableProjectsService.getInstance().collectCloneableProjects() }
+
+  @JvmField
+  val all = listOf(cloneableProjectsCollector, recentProjectsCollector)
 }

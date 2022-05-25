@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager;
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory;
 import com.intellij.ui.*;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,7 +37,9 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     Disposable disposable = Disposer.newDisposable();
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
-    RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(disposable);
+    RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(
+      disposable, List.of(ProjectCollectors.recentProjectsCollector)
+    );
     Tree recentProjectTree = recentProjectFilteringTree.getTree();
     SearchTextField searchTextField = recentProjectFilteringTree.installSearchField();
     SeparatorComponent separatorComponent = new SeparatorComponent(SEPARATOR_HEIGHT, WelcomeScreenUIManager.getSeparatorColor(), null);
