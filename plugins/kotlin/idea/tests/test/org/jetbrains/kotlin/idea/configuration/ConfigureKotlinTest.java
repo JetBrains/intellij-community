@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration;
 
 import com.intellij.jarRepository.RepositoryLibraryType;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
@@ -10,8 +11,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
@@ -132,6 +135,11 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
         KotlinCommonCompilerArgumentsHolder.Companion.getInstance(myProject).update(settings -> {
             settings.setLanguageVersion(LanguageVersion.KOTLIN_1_6.getVersionString());
             return null;
+        });
+
+        // Emulate project root change, as after changing Kotlin language settings in the preferences
+        WriteAction.runAndWait(() -> {
+            ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
         });
 
         assertEquals(LanguageVersion.KOTLIN_1_6, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
