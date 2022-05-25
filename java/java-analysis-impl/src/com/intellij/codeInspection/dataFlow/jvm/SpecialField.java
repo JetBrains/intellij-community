@@ -426,7 +426,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
       Integer constValue = fieldValue.getConstantOfType(Integer.class);
       if (constValue != null) {
         TypeConstraint qualifier = TypeConstraint.fromDfType(qualifierType);
-        PsiElement constant = qualifier.getEnumConstant(constValue);
+        PsiEnumConstant constant = qualifier.getEnumConstant(constValue);
         if (constant != null) {
           return DfTypes.referenceConstant(constant, TypeConstraint.fromDfType(qualifierType));
         }

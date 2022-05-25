@@ -405,7 +405,7 @@ public final class TypeConstraints {
     }
 
     @Override
-    public @Nullable PsiElement getEnumConstant(int ordinal) {
+    public @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
       return myClass.getEnumConstant(ordinal);
     }
 

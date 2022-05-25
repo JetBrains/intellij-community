@@ -210,7 +210,7 @@ public interface TypeConstraint {
     return false;
   }
 
-  default @Nullable PsiElement getEnumConstant(int ordinal) {
+  default @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
     return null;
   }
 
@@ -677,7 +677,7 @@ public interface TypeConstraint {
     }
 
     @Override
-    public @Nullable PsiElement getEnumConstant(int ordinal) {
+    public @Nullable PsiEnumConstant getEnumConstant(int ordinal) {
       return myInstanceOf.size() == 1 ? myInstanceOf.iterator().next().getEnumConstant(ordinal) : null;
     }
 
