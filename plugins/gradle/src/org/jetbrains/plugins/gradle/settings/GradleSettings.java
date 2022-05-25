@@ -33,7 +33,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   implements PersistentStateComponent<GradleSettings.MyState> {
 
   private boolean isOfflineMode = false;
-  private boolean isScanEnabled = true;
+  private boolean isScanEnabled = false;
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);

@@ -38,6 +38,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet = true;
   private boolean resolveExternalAnnotations = true;
+  private boolean isScansEnabled = false;
   @Nullable private CompositeBuild myCompositeBuild;
 
   @Nullable
@@ -96,6 +97,14 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   public void setResolveExternalAnnotations(boolean resolveExternalAnnotations) {
     this.resolveExternalAnnotations = resolveExternalAnnotations;
+  }
+
+  public boolean isScansEnabled() {
+    return isScansEnabled;
+  }
+
+  public void setScansEnabled(boolean scansEnabled) {
+    isScansEnabled = scansEnabled;
   }
 
   @OptionTag(tag = "compositeConfiguration", nameAttribute = "")
