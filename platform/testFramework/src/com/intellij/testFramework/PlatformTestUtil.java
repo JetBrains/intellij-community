@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StoreReloadManager;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -281,7 +282,10 @@ public final class PlatformTestUtil {
 
   private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
     long took = getMillisSince(startTimeMillis);
-    assert took <= timeout : String.format("the waiting takes too long. Expected to take no more than: %d ms but took: %d ms", timeout, took);
+    if (took > timeout) {
+      assert false : String.format("the waiting takes too long. Expected to take no more than: %d ms but took: %d ms\nThread dump: %s",
+                                   timeout, took, ThreadDumper.dumpThreadsToString());
+    }
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
