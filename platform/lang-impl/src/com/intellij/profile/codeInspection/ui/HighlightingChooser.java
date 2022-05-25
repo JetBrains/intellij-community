@@ -43,7 +43,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
     final var attributes = ColorSettingsUtil.getErrorTextAttributes();
     String displayName = key.getExternalName();
     for (Pair<TextAttributesKey, @Nls String> pair: attributes) {
-      if (key == pair.first) {
+      if (key.equals(pair.first)) {
         displayName = pair.second;
         break;
       }

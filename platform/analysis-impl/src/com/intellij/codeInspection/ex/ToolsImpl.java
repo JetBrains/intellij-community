@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class ToolsImpl implements Tools {
   @NonNls static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
@@ -505,7 +502,7 @@ public final class ToolsImpl implements Tools {
   public TextAttributesKey getTextAttributesKey(NamedScope scope, Project project) {
     if (myTools != null && scope != null) {
       for (ScopeToolState state : myTools) {
-        if (state.getScopeName().equals(scope.getScopeId())) {
+        if (Objects.equals(state.getScopeName(), scope.getScopeId())) {
           return state.getTextAttributesKey();
         }
       }

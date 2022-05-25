@@ -1198,7 +1198,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (profile.getErrorLevel(desc.getKey(), desc.getScope(), project) != desc.getLevel()) {
       return true;
     }
-    if (profile.getTextAttributesKey(desc.getKey(), desc.getScope(), project) != desc.getTextAttributesKey()) {
+    if (!Objects.equals(profile.getTextAttributesKey(desc.getKey(), desc.getScope(), project),
+                        desc.getTextAttributesKey())) {
       return true;
     }
     final List<Descriptor> descriptors = toolDescriptors.getNonDefaultDescriptors();
@@ -1209,7 +1210,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (profile.getErrorLevel(descriptor.getKey(), descriptor.getScope(), project) != descriptor.getLevel()) {
         return true;
       }
-      if (profile.getTextAttributesKey(descriptor.getKey(), descriptor.getScope(), project) != descriptor.getTextAttributesKey()) {
+      if (!Objects.equals(profile.getTextAttributesKey(descriptor.getKey(), descriptor.getScope(), project),
+                          descriptor.getTextAttributesKey())) {
         return true;
       }
     }
