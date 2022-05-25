@@ -113,10 +113,9 @@ class HighlightAction extends DumbAwareAction {
   private final Consumer<TextAttributesKey> myActionPerformed;
 
   HighlightAction(@Nls String name, TextAttributesKey attributes, Consumer<TextAttributesKey> actionPerformed) {
+    super(name);
     myAttributesKey = attributes;
     myActionPerformed = actionPerformed;
-    Presentation presentation = getTemplatePresentation();
-    presentation.setText(name);
   }
 
   @Override
