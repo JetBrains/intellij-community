@@ -28,42 +28,43 @@ internal class RasterizedImageDataLoader(private val path: String,
                                          private val originalClassLoaderRef: WeakReference<ClassLoader>,
                                          private val cacheKey: Int,
                                          private val imageFlags: Int) : ImageDataLoader {
-  override fun loadImage(filters: List<ImageFilter?>, scaleContext: ScaleContext, isDark: Boolean): Image? {
+  override fun loadImage(filters: List<ImageFilter>, scaleContext: ScaleContext, isDark: Boolean): Image? {
     val classLoader = classLoaderRef.get() ?: return null
-
-    // do not use cache
-    var flags = ImageLoader.ALLOW_FLOAT_SCALING
-    if (isDark) {
-      flags = flags or ImageLoader.USE_DARK
-    }
-
     // use cache key only if path to image is not customized
     try {
-      if (originalPath === path) {
-        val isSvg = cacheKey != 0
+      val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+      val isSvg: Boolean
+      val image = if (originalPath === path) {
         // use cache key only if path to image is not customized
-        return loadRasterized(path = path,
-                              filters = filters,
-                              classLoader = classLoader,
-                              flags = flags,
-                              scaleContext = scaleContext,
-                              isSvg = isSvg,
-                              rasterizedCacheKey = cacheKey,
-                              imageFlags = imageFlags,
-                              patched = false)
+        isSvg = cacheKey != 0
+        loadRasterized(path = path,
+                       filters = filters,
+                       classLoader = classLoader,
+                       isDark = isDark,
+                       scaleContext = scaleContext,
+                       isSvg = isSvg,
+                       rasterizedCacheKey = cacheKey,
+                       imageFlags = imageFlags,
+                       isPatched = false)
       }
       else {
-        val isSvg = path.endsWith(".svg")
-        return loadRasterized(path = path,
-                              filters = filters,
-                              classLoader = classLoader,
-                              flags = flags,
-                              scaleContext = scaleContext,
-                              isSvg = isSvg,
-                              rasterizedCacheKey = 0,
-                              imageFlags = imageFlags,
-                              patched = true)
+        isSvg = path.endsWith(".svg")
+        loadRasterized(path = path,
+                       filters = filters,
+                       classLoader = classLoader,
+                       isDark = isDark,
+                       scaleContext = scaleContext,
+                       isSvg = isSvg,
+                       rasterizedCacheKey = 0,
+                       imageFlags = imageFlags,
+                       isPatched = true)
       }
+
+      if (start != -1L) {
+        IconLoadMeasurer.loadFromResources.end(start)
+        IconLoadMeasurer.addLoading(isSvg, start)
+      }
+      return image
     }
     catch (e: IOException) {
       logger<RasterizedImageDataLoader>().debug(e)
@@ -100,12 +101,12 @@ internal class RasterizedImageDataLoader(private val path: String,
 }
 
 internal fun createPatched(originalPath: String,
-                          originalClassLoaderRef: WeakReference<ClassLoader>,
-                          patched: Pair<String, ClassLoader?>,
-                          cacheKey: Int,
-                          imageFlags: Int): ImageDataLoader {
+                           originalClassLoaderRef: WeakReference<ClassLoader>,
+                           patched: Pair<String, ClassLoader?>,
+                           cacheKey: Int,
+                           imageFlags: Int): ImageDataLoader {
   val effectivePath = normalizePath(patched.first)
-  val effectiveClassLoaderRef: WeakReference<ClassLoader> = patched.second?.let(::WeakReference) ?: originalClassLoaderRef
+  val effectiveClassLoaderRef = patched.second?.let(::WeakReference) ?: originalClassLoaderRef
   return RasterizedImageDataLoader(path = effectivePath,
                                    classLoaderRef = effectiveClassLoaderRef,
                                    originalPath = originalPath,
@@ -120,23 +121,19 @@ private fun normalizePath(patchedPath: String): String {
 
 @Throws(IOException::class)
 private fun loadRasterized(path: String,
-                           filters: List<ImageFilter?>,
+                           filters: List<ImageFilter>,
                            classLoader: ClassLoader,
-                           @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+                           isDark: Boolean,
                            scaleContext: ScaleContext,
                            isSvg: Boolean,
                            rasterizedCacheKey: Int,
                            @MagicConstant(flagsFromClass = ImageDescriptor::class) imageFlags: Int,
-                           patched: Boolean): Image? {
-  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-
-  // Prefer retina images for HiDPI scale, because downscaling
-  // retina images provides a better result than up-scaling non-retina images.
+                           isPatched: Boolean): Image? {
+  // prefer retina images for HiDPI scale, because downscaling retina images provides a better result than up-scaling non-retina images
   val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
   val dotIndex = path.lastIndexOf('.')
   val name = if (dotIndex < 0) path else path.substring(0, dotIndex)
-  val scale = ImageLoader.adjustScaleFactor(flags and ImageLoader.ALLOW_FLOAT_SCALING == ImageLoader.ALLOW_FLOAT_SCALING, pixScale)
-  val isDark = flags and ImageLoader.USE_DARK == ImageLoader.USE_DARK
+  val scale = ImageLoader.adjustScaleFactor(true, pixScale)
   val isRetina = JBUIScale.isHiDPI(pixScale.toDouble())
   val imageScale: Float
   val ext = if (isSvg) "svg" else if (dotIndex < 0 || dotIndex == path.length - 1) "" else path.substring(dotIndex + 1)
@@ -162,69 +159,96 @@ private fun loadRasterized(path: String,
     }
   }
 
-  // todo remove it, not used
-  val originalUserSize = ImageLoader.Dimension2DDouble(0.0, 0.0)
-  if (patched) {
-    val retinaDark = Pair("$name@2x_dark.$ext", if (isSvg) scale else 2f)
-    val dark = Pair(name + "_dark." + ext, if (isSvg) scale else 1f)
-    val retina = Pair("$name@2x.$ext", if (isSvg) scale else 2f)
-    val plain = Pair(path, if (isSvg) scale else 1f)
-    val effectivePaths = if (isRetina && isDark) {
-      listOf(retinaDark, dark, retina, plain)
-    }
-    else if (isDark) {
-      listOf(dark, plain)
-    }
-    else {
-      if (isRetina) listOf(retina, plain) else listOf(plain)
-    }
-    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-    var image: Image? = null
-    var isUpScaleNeeded = !isSvg
-    for (effPath in effectivePaths) {
-      val pathToImage = effPath.first
-      val imgScale = effPath.second
-      image = if (isSvg) {
-        SVGLoader.loadFromClassResource(null, classLoader, pathToImage, rasterizedCacheKey, imgScale, isEffectiveDark,
-                                        originalUserSize)
-      }
-      else {
-        ImageLoader.loadPngFromClassResource(pathToImage, null, classLoader, imgScale.toDouble(), originalUserSize)
-      }
-      if (image != null) {
-        if (isUpScaleNeeded) {
-          isUpScaleNeeded = effPath === plain || effPath === dark
-        }
-        break
-      }
-    }
-    if (start != -1L) {
-      IconLoadMeasurer.loadFromResources.end(start)
-      IconLoadMeasurer.addLoading(isSvg, loadingStart)
-    }
-    return if (image == null) {
-      null
-    }
-    else ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext),
-                                  imageScale.toDouble(), isSvg)
+  if (isPatched) {
+    return loadPatched(name = name,
+                       ext = ext,
+                       isSvg = isSvg,
+                       scale = scale,
+                       path = path,
+                       isRetina = isRetina,
+                       isDark = isDark,
+                       classLoader = classLoader,
+                       isEffectiveDark = isEffectiveDark,
+                       filters = filters,
+                       scaleContext = scaleContext,
+                       imageScale = imageScale)
   }
   else {
-    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val image = if (isSvg) {
-      SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark,
-                                      originalUserSize)
+      SVGLoader.loadFromClassResource(resourceClass = null,
+                                      classLoader = classLoader, path = effectivePath,
+                                      rasterizedCacheKey = rasterizedCacheKey,
+                                      scale = imageScale,
+                                      isDark = isEffectiveDark)
     }
     else {
-      ImageLoader.loadPngFromClassResource(effectivePath, null, classLoader, imageScale.toDouble(), originalUserSize)
+      ImageLoader.loadPngFromClassResource(/* path = */ effectivePath, /* resourceClass = */ null, /* classLoader = */
+                                           classLoader, /* scale = */ imageScale.toDouble(), /* originalUserSize = */ null)
     }
-    if (start != -1L) {
-      IconLoadMeasurer.loadFromResources.end(start)
-      IconLoadMeasurer.addLoading(isSvg, loadingStart)
+
+    // do not use cache
+    var flags = ImageLoader.ALLOW_FLOAT_SCALING
+    if (isDark) {
+      flags = flags or ImageLoader.USE_DARK
     }
-    return if (image == null) {
-      null
-    }
-    else ImageLoader.convertImage(image, filters, flags, scaleContext, !isSvg, StartupUiUtil.isJreHiDPI(scaleContext),
-                                  imageScale.toDouble(), isSvg)
+
+    return ImageLoader.convertImage(image ?: return null, filters, flags, scaleContext, !isSvg, StartupUiUtil.isJreHiDPI(scaleContext),
+                                    imageScale, isSvg)
   }
+}
+
+private fun loadPatched(name: String,
+                        ext: String,
+                        isSvg: Boolean,
+                        scale: Float,
+                        path: String,
+                        isRetina: Boolean,
+                        isDark: Boolean,
+                        classLoader: ClassLoader,
+                        isEffectiveDark: Boolean,
+                        filters: List<ImageFilter>,
+                        scaleContext: ScaleContext,
+                        imageScale: Float): Image? {
+  val retinaDark = Pair("$name@2x_dark.$ext", if (isSvg) scale else 2f)
+  val dark = Pair("${name}_dark.$ext", if (isSvg) scale else 1f)
+  val retina = Pair("$name@2x.$ext", if (isSvg) scale else 2f)
+  val plain = Pair(path, if (isSvg) scale else 1f)
+  val effectivePaths = if (isRetina && isDark) {
+    listOf(retinaDark, dark, retina, plain)
+  }
+  else if (isDark) {
+    listOf(dark, plain)
+  }
+  else {
+    if (isRetina) listOf(retina, plain) else listOf(plain)
+  }
+
+  for (effPath in effectivePaths) {
+    val pathToImage = effPath.first
+    val imgScale = effPath.second
+    val image = if (isSvg) {
+      SVGLoader.loadFromClassResource(resourceClass = null,
+                                      classLoader = classLoader,
+                                      path = pathToImage,
+                                      rasterizedCacheKey = 0,
+                                      scale = imgScale,
+                                      isDark = isEffectiveDark)
+    }
+    else {
+      ImageLoader.loadPngFromClassResource(pathToImage, null, classLoader, imgScale.toDouble(), null)
+    }
+
+    if (image != null) {
+      // do not use cache
+      var flags = ImageLoader.ALLOW_FLOAT_SCALING
+      if (isDark) {
+        flags = flags or ImageLoader.USE_DARK
+      }
+
+      val isUpScaleNeeded = !isSvg && (effPath === plain || effPath === dark)
+      return ImageLoader.convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, StartupUiUtil.isJreHiDPI(scaleContext),
+                                      imageScale, isSvg)
+    }
+  }
+  return null
 }

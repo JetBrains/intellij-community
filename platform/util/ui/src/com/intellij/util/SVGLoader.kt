@@ -87,7 +87,7 @@ object SVGLoader {
                             rasterizedCacheKey: Int,
                             scale: Float,
                             isDark: Boolean,
-                            docSize: ImageLoader.Dimension2DDouble /*OUT*/): Image? {
+                            docSize: ImageLoader.Dimension2DDouble? = null /*OUT*/): Image? {
     var themeDigest: ByteArray?
     var data: ByteArray? = null
     val cache = SvgCache.prebuiltPersistentCache
