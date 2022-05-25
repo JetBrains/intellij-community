@@ -271,6 +271,18 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       panel.add(
         myEnableBuildScansCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.is.scans.enabled")),
         ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+
+      JBLabel myEnableBuildScansHintLabel = new JBLabel(
+        XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.is.scans.enabled.hint")),
+        UIUtil.ComponentStyle.SMALL);
+      myEnableBuildScansHintLabel.setIcon(AllIcons.General.BalloonWarning12);
+      myEnableBuildScansHintLabel.setVerticalTextPosition(SwingConstants.TOP);
+      myEnableBuildScansHintLabel.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
+
+      GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
+      constraints.insets.top = 0;
+      constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(myEnableBuildScansCheckBox);
+      panel.add(myEnableBuildScansHintLabel, constraints);
     });
   }
 

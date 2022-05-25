@@ -47,6 +47,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   private JCheckBox useMavenConfigCheckBox;
   private JBLabel mavenConfigWarningLabel;
   private JCheckBox enableBuildScansCheckBox;
+  private JBLabel enableBuildScansConsentLabel;
   private boolean isShowAdvancedSettingsCheckBox = false;
   private MavenGeneralSettings myInitialSettings;
 
