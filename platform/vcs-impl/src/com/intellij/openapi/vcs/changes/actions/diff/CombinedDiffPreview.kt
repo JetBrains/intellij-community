@@ -95,7 +95,7 @@ abstract class CombinedDiffPreview(private val tree: ChangesTree,
   override fun getCurrentName(): String? = model.selected?.presentableName
   override fun hasContent(): Boolean = model.requests.isNotEmpty()
 
-  private val ChangesTree.id: @NonNls String get() = javaClass.name + "@" + Integer.toHexString(hashCode())
+  protected val ChangesTree.id: @NonNls String get() = javaClass.name + "@" + Integer.toHexString(hashCode())
 }
 
 abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
