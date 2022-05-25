@@ -69,14 +69,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     List<UParameter> paramList = method.getUastParameters();
     if (!paramList.isEmpty()) {
-      final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       for (int i = 0; i < paramList.size(); i++) {
         UParameter param = paramList.get(i);
         if (param.getSourcePsi() != null) {
-          final RefParameter refParameter = getRefJavaManager().getParameterReference(param, i, this);
-          if (refParameter != null) {
-            refUtil.setIsFinal(refParameter, param.isFinal());
-          }
+          getRefJavaManager().getParameterReference(param, i, this);
         }
       }
     }
