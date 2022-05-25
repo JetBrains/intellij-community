@@ -421,6 +421,7 @@ class RecentProjectFilteringTree(
       private val projectProgressBarPanel = JBUI.Panels.simplePanel().apply {
         isOpaque = false
         border = JBUI.Borders.empty(8)
+        preferredSize = JBUI.size(preferredSize).withWidth(PROGRESS_BAR_WIDTH)
 
         add(projectProgressLabel, BorderLayout.NORTH)
         add(projectProgressBar, BorderLayout.SOUTH)
@@ -455,7 +456,7 @@ class RecentProjectFilteringTree(
           if (isProgressIndeterminate) {
             val progressBarUI = projectProgressBar.ui
             if (progressBarUI is DarculaProgressBarUI) {
-              progressBarUI.updateIndeterminateAnimationIndex(startMillis)
+              progressBarUI.updateIndeterminateAnimationIndex(START_MILLIS)
             }
           }
 
@@ -496,7 +497,8 @@ class RecentProjectFilteringTree(
       }
 
       companion object {
-        private const val startMillis = 0L
+        private const val START_MILLIS = 0L
+        private const val PROGRESS_BAR_WIDTH = 200
       }
     }
   }
