@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -87,6 +88,9 @@ class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstra
 
     override fun toString(): String = qualifiedName
 
+    private fun correctFqName(fqNameUnsafe: FqNameUnsafe): String =
+        JavaToKotlinClassMap.mapKotlinToJava(fqNameUnsafe)?.asFqNameString() ?: fqNameUnsafe.asString()
+
     companion object {
         fun getClassConstraint(context: KtElement, name: FqNameUnsafe): TypeConstraint.Exact {
             val descriptor = context.findModuleDescriptor().resolveClassByFqName(name.toSafe(), NoLookupLocation.FROM_IDE)
@@ -95,27 +99,22 @@ class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstra
         }
 
         fun fromJvmClassName(context: KtElement, jvmClassName: String): TypeConstraints.ClassDef? {
-            var corrected: String? = null
+            var fqName = FqName.fromSegments(jvmClassName.split(Regex("[$/]")))
             if (jvmClassName.startsWith("java/")) {
-                val fqn = jvmClassName.replace('/', '.')
-                corrected = kotlinToJavaClass.entries.firstOrNull { (_, javaClass) -> javaClass == fqn }?.key
+                fqName = JavaToKotlinClassMap.mapJavaToKotlin(fqName)?.asSingleFqName() ?: fqName
             }
-
-            val name = FqName.fromSegments(if (corrected == null) jvmClassName.split(Regex("[$/]")) else corrected.split('.'))
-            val descriptor = context.findModuleDescriptor().resolveClassByFqName(name, NoLookupLocation.FROM_IDE)
+            val descriptor = context.findModuleDescriptor().resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE)
             return if (descriptor == null) null else KtClassDef(descriptor, context)
 
         }
 
         fun typeConstraintFactory(context: KtElement): TypeConstraints.TypeConstraintFactory {
             return TypeConstraints.TypeConstraintFactory { fqn ->
-                val corrected: String
+                var fqName = FqName.fromSegments(fqn.split("."))
                 if (fqn.startsWith("java.")) {
-                    corrected = kotlinToJavaClass.entries.firstOrNull { (_, javaClass) -> javaClass == fqn }?.key ?: fqn
-                } else {
-                    corrected = fqn
+                    fqName = JavaToKotlinClassMap.mapJavaToKotlin(fqName)?.asSingleFqName() ?: fqName
                 }
-                getClassConstraint(context, FqName.fromSegments(corrected.split('.')).toUnsafe())
+                getClassConstraint(context, fqName.toUnsafe())
             }
         }
     }

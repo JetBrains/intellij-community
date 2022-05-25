@@ -18,6 +18,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -36,49 +37,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
-
-internal val kotlinToJavaClass = mapOf(
-    "kotlin.Any" to CommonClassNames.JAVA_LANG_OBJECT,
-    "kotlin.String" to CommonClassNames.JAVA_LANG_STRING,
-    "kotlin.CharSequence" to CommonClassNames.JAVA_LANG_CHAR_SEQUENCE,
-    "kotlin.Throwable" to CommonClassNames.JAVA_LANG_THROWABLE,
-    "kotlin.Exception" to CommonClassNames.JAVA_LANG_EXCEPTION,
-    "kotlin.RuntimeException" to CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION,
-    "kotlin.IndexOutOfBoundsException" to "java.lang.IndexOutOfBoundsException",
-    "kotlin.ClassCastException" to "java.lang.ClassCastException",
-    "kotlin.ArithmeticException" to "java.lang.ArithmeticException",
-    "kotlin.NullPointerException" to CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION,
-    "kotlin.Cloneable" to CommonClassNames.JAVA_LANG_CLONEABLE,
-    "kotlin.Number" to CommonClassNames.JAVA_LANG_NUMBER,
-    "kotlin.Comparable" to CommonClassNames.JAVA_LANG_COMPARABLE,
-    "kotlin.Enum" to CommonClassNames.JAVA_LANG_ENUM,
-    "kotlin.Annotation" to CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION,
-    "kotlin.Nothing" to CommonClassNames.JAVA_LANG_VOID,
-    "kotlin.Int" to CommonClassNames.JAVA_LANG_INTEGER,
-    "kotlin.Long" to CommonClassNames.JAVA_LANG_LONG,
-    "kotlin.Boolean" to CommonClassNames.JAVA_LANG_BOOLEAN,
-    "kotlin.Byte" to CommonClassNames.JAVA_LANG_BYTE,
-    "kotlin.Short" to CommonClassNames.JAVA_LANG_SHORT,
-    "kotlin.Float" to CommonClassNames.JAVA_LANG_FLOAT,
-    "kotlin.Double" to CommonClassNames.JAVA_LANG_DOUBLE,
-    "kotlin.Char" to CommonClassNames.JAVA_LANG_CHARACTER,
-    "kotlin.collections.Iterable" to CommonClassNames.JAVA_LANG_ITERABLE,
-    "kotlin.collections.MutableIterable" to CommonClassNames.JAVA_LANG_ITERABLE,
-    "kotlin.collections.Iterator" to CommonClassNames.JAVA_UTIL_ITERATOR,
-    "kotlin.collections.MutableIterator" to CommonClassNames.JAVA_UTIL_ITERATOR,
-    "kotlin.collections.Collection" to CommonClassNames.JAVA_UTIL_COLLECTION,
-    "kotlin.collections.MutableCollection" to CommonClassNames.JAVA_UTIL_COLLECTION,
-    "kotlin.collections.List" to CommonClassNames.JAVA_UTIL_LIST,
-    "kotlin.collections.MutableList" to CommonClassNames.JAVA_UTIL_LIST,
-    "kotlin.collections.ListIterator" to "java.util.ListIterator",
-    "kotlin.collections.MutableListIterator" to "java.util.ListIterator",
-    "kotlin.collections.Set" to CommonClassNames.JAVA_UTIL_SET,
-    "kotlin.collections.MutableSet" to CommonClassNames.JAVA_UTIL_SET,
-    "kotlin.collections.Map" to CommonClassNames.JAVA_UTIL_MAP,
-    "kotlin.collections.MutableMap" to CommonClassNames.JAVA_UTIL_MAP,
-    "kotlin.collections.MapEntry" to CommonClassNames.JAVA_UTIL_MAP_ENTRY,
-    "kotlin.collections.MutableMapEntry" to CommonClassNames.JAVA_UTIL_MAP_ENTRY
-)
 
 internal fun KotlinType?.toDfType(context: KtElement): DfType {
     if (this == null) return DfType.TOP
@@ -158,7 +116,7 @@ private fun ClassDescriptor.getTypeConstraint(context: KtElement): TypeConstrain
             }
         }
     }
-    return when (correctFqName(fqNameUnsafe)) {
+    return when (fqNameUnsafe.asString()) {
         "kotlin.ByteArray" -> TypeConstraints.exact(PsiType.BYTE.createArrayType())
         "kotlin.IntArray" -> TypeConstraints.exact(PsiType.INT.createArrayType())
         "kotlin.LongArray" -> TypeConstraints.exact(PsiType.LONG.createArrayType())
@@ -176,12 +134,6 @@ private fun ClassDescriptor.getTypeConstraint(context: KtElement): TypeConstrain
             }
         }
     }
-}
-
-// see org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap in kotlin compiler
-internal fun correctFqName(fqNameUnsafe: FqNameUnsafe): String {
-    val rawName = fqNameUnsafe.asString()
-    return kotlinToJavaClass.getOrDefault(rawName, rawName)
 }
 
 internal fun KotlinType?.fqNameEquals(fqName: String): Boolean {
