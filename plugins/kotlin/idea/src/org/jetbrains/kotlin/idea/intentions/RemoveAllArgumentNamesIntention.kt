@@ -53,7 +53,7 @@ class RemoveAllArgumentNamesIntention : SelfTargetingIntention<KtCallElement>(
             return when {
                 isVararg && argumentExpr is KtCollectionLiteralExpression ->
                     argumentExpr.getInnerExpressions().map { psiFactory.createArgument(it) }
-                isVararg && argumentExpr is KtCallExpression && argumentExpr.isArrayOfMethod() ->
+                isVararg && argumentExpr is KtCallExpression && argumentExpr.isArrayOfFunction() ->
                     argumentExpr.valueArguments.map { psiFactory.createArgument(it.getArgumentExpression()) }
                 else ->
                     listOf(psiFactory.createArgument(argumentExpr, null, isVararg))
