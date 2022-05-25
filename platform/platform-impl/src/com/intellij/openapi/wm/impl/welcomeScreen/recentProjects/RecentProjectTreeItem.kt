@@ -34,15 +34,7 @@ sealed interface RecentProjectTreeItem {
   fun children(): List<RecentProjectTreeItem>
 
   fun removeItem(event: AnActionEvent) {
-    val exitCode = Messages.showYesNoDialog(
-      IdeBundle.message("dialog.message.remove.0.from.recent.projects.list", displayName()),
-      IdeBundle.message("dialog.title.remove.recent.project"),
-      Messages.getQuestionIcon()
-    )
-
-    if (exitCode == Messages.OK) {
-      RemoveSelectedProjectsAction().actionPerformed(event)
-    }
+    RemoveSelectedProjectsAction().actionPerformed(event)
   }
 }
 
