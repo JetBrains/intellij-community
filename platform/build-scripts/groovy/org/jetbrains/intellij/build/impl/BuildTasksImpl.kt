@@ -169,7 +169,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = patchIdeaPropertiesFile(context)
-      val builder = getOsDistributionBuilder(os = currentOs, ideaProperties = propertiesFile, context = context)
+      val builder = getOsDistributionBuilder(os = currentOs, ideaProperties = propertiesFile, context = context)!!
       builder.copyFilesForOsDistribution(targetDirectory, arch)
       context.bundledRuntime.extractTo(prefix = BundledRuntimeImpl.getProductPrefix(context),
                                        os = currentOs,
@@ -386,8 +386,8 @@ private fun buildOsSpecificDistributions(context: BuildContext): List<Distributi
       return null
     }
 
+    val builder = getOsDistributionBuilder(os = os, ideaProperties = propertiesFile, context = context) ?: return null
     return BuildTaskRunnable("${os.osId} ${arch.name}") {
-      val builder = getOsDistributionBuilder(os = os, ideaProperties = propertiesFile, context = context)
       val osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
       builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
       DistributionForOsTaskResult(os, arch, osAndArchSpecificDistDirectory)
@@ -1009,14 +1009,14 @@ private fun checkClassVersion( targetFile: Path, context: BuildContext) {
   }
 }
 
-fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder {
+fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context: BuildContext): OsSpecificDistributionBuilder? {
   return when (os) {
     OsFamily.WINDOWS -> WindowsDistributionBuilder(context = context,
-                                                   customizer = context.windowsDistributionCustomizer!!,
+                                                   customizer = context.windowsDistributionCustomizer ?: return null,
                                                    ideaProperties = ideaProperties,
                                                    patchedApplicationInfo = context.applicationInfo.toString())
     OsFamily.LINUX -> LinuxDistributionBuilder(context = context,
-                                               customizer = context.linuxDistributionCustomizer!!,
+                                               customizer = context.linuxDistributionCustomizer ?: return null,
                                                ideaProperties = ideaProperties)
     OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer, ideaProperties)
   }
