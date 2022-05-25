@@ -89,7 +89,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
     val fileName = "${context.productProperties.baseFileName}64.vmoptions"
     @Suppress("SpellCheckingInspection")
     val vmOptions = computeVmOptions(context.applicationInfo.isEAP, context.productProperties) + listOf("-Dsun.tools.attach.tmp.only=true")
-    Files.writeString(distBinDir.resolve(fileName), vmOptions.joinToString(separator = "\n"), StandardCharsets.US_ASCII)
+    Files.writeString(distBinDir.resolve(fileName), vmOptions.joinToString(separator = "\n") + "\n", StandardCharsets.US_ASCII)
   }
 
   private fun generateReadme(unixDistPath: Path) {
