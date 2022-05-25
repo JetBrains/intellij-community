@@ -46,6 +46,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   private JCheckBox showDialogWithAdvancedSettingsCheckBox;
   private JCheckBox useMavenConfigCheckBox;
   private JBLabel mavenConfigWarningLabel;
+  private JCheckBox enableGradleBuildScansCheckBox;
   private boolean isShowAdvancedSettingsCheckBox = false;
   private MavenGeneralSettings myInitialSettings;
 
@@ -111,6 +112,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
 
     data.setShowDialogWithAdvancedSettings(showDialogWithAdvancedSettingsCheckBox.isSelected());
     data.setUseMavenConfig(useMavenConfigCheckBox.isSelected());
+    data.setEnableBuildScans(enableGradleBuildScansCheckBox.isSelected());
 
     data.endUpdate();
 
@@ -137,6 +139,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
 
     showDialogWithAdvancedSettingsCheckBox.setSelected(data.isShowDialogWithAdvancedSettings());
     useMavenConfigCheckBox.setSelected(data.isUseMavenConfig());
+    enableGradleBuildScansCheckBox.setSelected(data.isEnableBuildScans());
   }
 
   @Nls
@@ -175,6 +178,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     watcher.registerComponent("failPolicy", failPolicyCombo);
     watcher.registerComponent("showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
     watcher.registerComponent("useMavenConfigCheckBox", useMavenConfigCheckBox);
+    watcher.registerComponent("enableGradleBuildScans", enableGradleBuildScansCheckBox);
   }
 
   private boolean isModifiedNotOverridableData(MavenGeneralSettings data) {

@@ -41,6 +41,7 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean alwaysUpdateSnapshots = false;
   private boolean showDialogWithAdvancedSettings = false;
   private boolean useMavenConfig = false;
+  private boolean enableBuildScans = false;
   private String threads;
 
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
@@ -334,6 +335,10 @@ public class MavenGeneralSettings implements Cloneable {
     return useMavenConfig;
   }
 
+  public boolean isEnableBuildScans() {
+    return enableBuildScans;
+  }
+
   public void setUseMavenConfig(boolean value) {
     if (!Comparing.equal(this.useMavenConfig, value)) {
       this.useMavenConfig = value;
@@ -341,6 +346,12 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
+  public void setEnableBuildScans(boolean value) {
+    if (!Comparing.equal(this.enableBuildScans, value)) {
+      this.enableBuildScans = value;
+      changed();
+    }
+  }
   public boolean isAlwaysUpdateSnapshots() {
     return alwaysUpdateSnapshots;
   }
@@ -401,6 +412,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
     if (useMavenConfig != that.useMavenConfig) return false;
+    if (enableBuildScans != that.enableBuildScans) return false;
     if (workOffline != that.workOffline) return false;
     if (!checksumPolicy.equals(that.checksumPolicy)) return false;
     if (!failureBehavior.equals(that.failureBehavior)) return false;
@@ -421,6 +433,7 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + (printErrorStackTraces ? 1 : 0);
     result = 31 * result + (usePluginRegistry ? 1 : 0);
     result = 31 * result + (useMavenConfig ? 1 : 0);
+    result = 31 * result + (enableBuildScans ? 1 : 0);
     result = 31 * result + (nonRecursive ? 1 : 0);
     result = 31 * result + outputLevel.hashCode();
     result = 31 * result + checksumPolicy.hashCode();
