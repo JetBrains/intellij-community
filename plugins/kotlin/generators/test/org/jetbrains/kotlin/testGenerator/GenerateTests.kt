@@ -89,10 +89,7 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibr
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
 import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingLocalInspectionTest
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
+import org.jetbrains.kotlin.idea.fir.inspections.*
 import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
@@ -1214,6 +1211,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFe10BindingLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/inspectionsLocal/addOperatorModifier", pattern = pattern)
+        }
+    }
+
+    testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
+        testClass<AbstractFe10BindingQuickFixTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
+            model("testData/quickfix/addVarianceModifier", pattern = pattern)
         }
     }
 
