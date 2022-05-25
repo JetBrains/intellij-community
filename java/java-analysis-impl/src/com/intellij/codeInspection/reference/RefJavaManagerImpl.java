@@ -358,12 +358,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           if (element instanceof PsiJavaModule) {
             visitJavaModule((PsiJavaModule)element);
           }
-          else if (element instanceof PsiFunctionalExpression) {
-            RefElement refElement = myRefManager.getReference(element);
-            if (refElement != null) {
-              myRefManager.buildReferences(refElement);
-            }
-          }
         }
 
         private void visitJavaModule(PsiJavaModule module) {
@@ -478,7 +472,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     }
 
     @Override
-    public boolean visitLambdaExpression(@NotNull ULambdaExpression node) {
+    public boolean visitExpression(@NotNull UExpression node) {
       RefElement refElement = myRefManager.getReference(node.getSourcePsi());
       if (refElement != null) {
         myRefManager.buildReferences(refElement);
