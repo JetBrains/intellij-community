@@ -545,7 +545,7 @@ class KtSymbolBasedValueParameterDescriptor(
         context.noImplementation()
 
     override fun getOverriddenDescriptors(): Collection<ValueParameterDescriptor> {
-        return containingDeclaration.overriddenDescriptors.map { valueParameters[index] }
+        return containingDeclaration.overriddenDescriptors.map { it.valueParameters[index] }
     }
 
     override val isCrossinline: Boolean
