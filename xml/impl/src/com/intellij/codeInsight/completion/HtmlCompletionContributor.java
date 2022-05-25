@@ -182,7 +182,7 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   @Contract("null->false")
   private static boolean shouldTryDeselectingFirstPopupItem(@Nullable Lookup lookup) {
     PsiFile file = doIfNotNull(lookup, Lookup::getPsiFile);
-    if (!(file instanceof HtmlFileImpl)) {
+    if (file == null || !isHtmlElementInTextCompletionEnabledForFile(file)) {
       return false;
     }
     PsiElement element = lookup.getPsiElement();
@@ -226,7 +226,13 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   @ApiStatus.Internal
   public static boolean canProvideHtmlElementInTextCompletion(@NotNull CompletionParameters parameters) {
     // Do not provide HTML text completions in multi view files like PHP
-    return ContainerUtil.and(parameters.getOriginalFile().getViewProvider().getAllFiles(), f -> f instanceof HtmlFileImpl);
+    final List<PsiFile> psiFiles = parameters.getOriginalFile().getViewProvider().getAllFiles();
+    return ContainerUtil.exists(psiFiles, f -> f instanceof HtmlFileImpl) &&
+           ContainerUtil.and(psiFiles, f -> isHtmlElementInTextCompletionEnabledForFile(f));
+  }
+
+  static boolean isHtmlElementInTextCompletionEnabledForFile(@NotNull PsiFile file) {
+    return HtmlInTextCompletionEnabler.EP_NAME.getExtensionList().stream().anyMatch(enabler -> enabler.isEnabledInFile(file));
   }
 
   private static CompletionSorter withoutLiveTemplatesWeigher(@Nullable CompletionSorter sorter,
