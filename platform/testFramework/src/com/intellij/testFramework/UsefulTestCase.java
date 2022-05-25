@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -74,32 +74,31 @@ import static org.junit.Assume.assumeTrue;
 
 /**
  * This class is compatible with both JUnit 3 and JUnit 4. To use JUnit 4, just annotate your test subclass
- * with @RunWith(JUnit4.class) or any other (like Parametrized.class), and you are all set.
- *
- * Don't annotate the JUnit 3 setUp()/tearDown() methods as @Before/@After, and don't call them from other @Before/@After methods.
- * Also don't define @Rule's calling runBare(), just subclassing this class (directly or indirectly) is enough. <p/>
- *
+ * with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}), and you are all set.
+ * <p>
+ * Don't annotate the JUnit 3 {@linkplain #setUp()}/{@linkplain #tearDown()} methods as {@code @Before}/{@code @After}, and don't call them from other {@code @Before}/{@code @After} methods.
+ * <p>
+ * Don't define {@code @Rule}s calling {@linkplain #runBare()}, just subclassing this class (directly or indirectly) is enough.
+ * <p>
  * The execution order is the following:
- * <pre{@code
- *
- *   - (JUnit 4 only) #checkShouldRunTest(Description) that can be used to ignore tests with meaningful message
- *   - #shouldRunTest() is also called (both JUnit 3 and JUnit 4)
- *
- *   - #setUp(), usually overridden so that it initializes classes in order from base to specific
- *
- *       - (JUnit 4 only) any @Rule fields, then @Rule methods
- *       - (JUnit 4 only) any @Before methods
- *
- *           - the testXxx() method (JUnit 3), or the @Test method (JUnit 4)
- *
- *       - (JUnit 4 only) any @After methods
- *       - (JUnit 4 only) any @Rule methods, then @Rule fields, cleanup
- *
- *   - #tearDown(), usually overridden in the reverse order: from specific to base
- * } </pre>
- *
- * Note that @Rule, @Before and @After methods execute within the same context/thread as the @Test method,
- * which may differ from how setUp()/tearDown() are executed.
+ * <ul>
+ *   <li><em>(JUnit 4 only)</em> {@linkplain #checkShouldRunTest(Description)} that can be used to ignore tests with meaningful message
+ *   <li>{@linkplain #shouldRunTest()} is also called (both JUnit 3 and JUnit 4)
+ *   <li>{@linkplain #setUp()}, usually overridden so that it initializes classes in order from base to specific
+ *     <ul>
+ *       <li><em>(JUnit 4 only)</em> any {@code @Rule} fields, then {@code @Rule} methods
+ *       <li><em>(JUnit 4 only)</em> any {@code @Before} methods
+ *         <ul>
+ *           <li>the testXxx() method (JUnit 3), or the {@code @Test} method (JUnit 4)
+ *         </ul>
+ *       <li><em>(JUnit 4 only)</em> any {@code @After} methods
+ *       <li><em>(JUnit 4 only)</em> any {@code @Rule} methods, then {@code @Rule} fields, cleanup
+ *     </ul>
+ *   <li>{@linkplain #tearDown()}, usually overridden in the reverse order: from specific to base
+ * </ul>
+ * <p>
+ * Note that {@code @Rule}, {@code @Before} and {@code @After} methods execute within the same context/thread as the @Test method,
+ * which may differ from how {@linkplain #setUp()}/{@linkplain #tearDown()} are executed.
  */
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
