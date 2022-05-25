@@ -138,8 +138,8 @@ import java.util.List;
  * </ul>
  */
 public abstract class RefEntityImpl extends UserDataHolderBase implements RefEntity, WritableRefEntity {
-  private volatile WritableRefEntity myOwner;
-  private List<RefEntity> myChildren;  // guarded by this
+  private WritableRefEntity myOwner; // guarded by this
+  private List<RefEntity> myChildren; // guarded by this
   private final String myName;
   protected long myFlags; // guarded by this
   protected final RefManagerImpl myManager;
@@ -168,12 +168,12 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
   }
 
   @Override
-  public WritableRefEntity getOwner() {
+  public synchronized WritableRefEntity getOwner() {
     return myOwner;
   }
 
   @Override
-  public void setOwner(@Nullable final WritableRefEntity owner) {
+  public synchronized void setOwner(@Nullable final WritableRefEntity owner) {
     myOwner = owner;
   }
 

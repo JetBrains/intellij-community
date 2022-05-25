@@ -124,12 +124,14 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       if (field != null) addChild(field);
     }
     RefMethod varargConstructor = null;
+    boolean constructorSeen = false;
     for (UMethod uMethod : uMethods) {
       RefMethod refMethod = ObjectUtils.tryCast(getRefManager().getReference(uMethod.getSourcePsi()), RefMethod.class);
 
       if (refMethod != null) {
         addChild(refMethod);
         if (uMethod.isConstructor()) {
+          constructorSeen = true;
           final List<UParameter> parameters = uMethod.getUastParameters();
           if (!parameters.isEmpty()|| uMethod.getVisibility() != UastVisibility.PRIVATE) {
             utilityClass = false;
@@ -170,7 +172,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    if (!isInterface() && !isAnonymous() && !isEnum() && getConstructors().isEmpty()) {
+    if (!isInterface() && !isAnonymous() && !isEnum() && !constructorSeen) {
       setDefaultConstructor(new RefImplicitConstructorImpl(this));
     }
 
@@ -348,6 +350,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized @NotNull Set<RefClass> getSubClasses() {
+    LOG.assertTrue(isInitialized());
     if (myDerivedReferences == null) return EMPTY_CLASS_SET;
     return StreamEx.of(myDerivedReferences).select(RefClass.class).toSet();
   }
@@ -382,11 +385,13 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized @NotNull List<RefMethod> getConstructors() {
+    LOG.assertTrue(isInitialized());
     return StreamEx.of(getChildren()).select(RefMethod.class).filter(RefMethod::isConstructor).toList();
   }
 
   @Override
   public List<RefField> getFields() {
+    LOG.assertTrue(isInitialized());
     return ContainerUtil.filterIsInstance(getChildren(), RefField.class);
   }
 

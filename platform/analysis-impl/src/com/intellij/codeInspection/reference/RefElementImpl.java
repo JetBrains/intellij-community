@@ -115,6 +115,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
+  public synchronized @NotNull List<RefEntity> getChildren() {
+    LOG.assertTrue(isInitialized());
+    return super.getChildren();
+  }
+
+  @Override
   public boolean isReachable() {
     return checkFlag(IS_REACHABLE_MASK);
   }
