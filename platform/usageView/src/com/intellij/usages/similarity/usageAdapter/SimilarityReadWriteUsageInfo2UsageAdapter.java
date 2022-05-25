@@ -48,12 +48,12 @@ public class SimilarityReadWriteUsageInfo2UsageAdapter extends ReadWriteAccessUs
   }
 
   @Override
-  public @NotNull List<UsageGroup> getUsageGroupData() {
+  public @NotNull List<? extends UsageGroup> getUsageGroupData() {
     return myGroups;
   }
 
   @Override
-  public void addUsageGroupData(@NotNull List<UsageGroup> groups) {
+  public void addUsageGroupData(@NotNull List<? extends UsageGroup> groups) {
     myGroups.addAll(groups);
   }
 }

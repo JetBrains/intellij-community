@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * This interface marks UsageInfo2UsageAdapter implementation as a subject of clustering
+ * This interface marks {@link com.intellij.usages.UsageInfo2UsageAdapter} implementation as a subject of clustering
  */
 @ApiStatus.Experimental
 public interface SimilarityUsage {
@@ -33,12 +33,10 @@ public interface SimilarityUsage {
    *
    * @return list of usage {@link UsageGroup} obtained from {@link com.intellij.usages.rules.UsageGroupingRule}
    */
-  @NotNull List<UsageGroup> getUsageGroupData();
+  @NotNull List<? extends UsageGroup> getUsageGroupData();
 
   /**
-   * This method is use for adding group data
-   *
-   * @param groups
+   * This method is used for adding group data calculated on usage view tree building
    */
-  void addUsageGroupData(@NotNull List<UsageGroup> groups);
+  void addUsageGroupData(@NotNull List<? extends UsageGroup> groups);
 }
