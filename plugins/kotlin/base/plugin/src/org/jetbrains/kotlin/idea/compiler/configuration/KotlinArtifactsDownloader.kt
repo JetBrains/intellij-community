@@ -42,11 +42,11 @@ object KotlinArtifactsDownloader {
         }
 
         return getLazyDistDownloaderAndUnpacker(version).isUpToDate(version) ||
-                run {
-                    val jar = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)?.toFile()
-                        ?: return false
-                    isOldAllInOneDistFormatAvailable(parsedVersion) && getLazyDistUnpacker(version).isUpToDate(jar)
-                }
+                getLazyDistUnpacker(parsedVersion)?.let { unpacker ->
+                    KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)?.toFile()?.let { jar ->
+                        unpacker.isUpToDate(jar)
+                    }
+                } ?: false
     }
 
     fun getKotlinJpsPluginJarPath(version: String): File {
@@ -104,13 +104,10 @@ object KotlinArtifactsDownloader {
         val indicatorDownloadText = KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist")
         val context = LazyPomAndJarsDownloader.Context(project, indicator, indicatorDownloadText)
         return getLazyDistDownloaderAndUnpacker(version).lazyProduceDist(version, context)
-            ?: run {
-                if (isOldAllInOneDistFormatAvailable(parsedVersion)) {
-                    // Fallback to old "all-in-one jar" artifact (old "all-in-one jar" is available only for Kotlin < 1.7.20)
-                    lazyDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version, indicator, indicatorDownloadText)
-                        ?.let { getLazyDistUnpacker(version).lazyUnpack(it) }
-                } else {
-                    null
+            ?: getLazyDistUnpacker(parsedVersion)?.let { unpacker ->
+                // Fallback to old "all-in-one jar" artifact (old "all-in-one jar" is available only for Kotlin < 1.7.20)
+                lazyDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version, indicator, indicatorDownloadText)?.let {
+                    unpacker.lazyUnpack(it)
                 }
             }
     }
@@ -169,7 +166,8 @@ object KotlinArtifactsDownloader {
         return downloadedArtifacts.map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl) }
     }
 
-    private fun getLazyDistUnpacker(version: String) = LazyZipUnpacker(getUnpackedKotlinDistPath(version))
+    private fun getLazyDistUnpacker(version: IdeKotlinVersion) =
+        if (isOldAllInOneDistFormatAvailable(version)) LazyZipUnpacker(getUnpackedKotlinDistPath(version.rawVersion)) else null
     private fun getLazyDistDownloaderAndUnpacker(version: String) = LazyKotlincDistDownloaderAndUnpacker(version)
 
     /**
