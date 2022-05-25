@@ -1,0 +1,40 @@
+<!--
+  Copyright 2020 Thomas Rosenau
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  -->
+
+<idea-plugin url="https://github.com/ThomasR/intellij-diff-plugin">
+  <id>de.thomasrosenau.diffplugin</id>
+  <name>Diff / Patch File Support</name>
+  <category>Languages</category>
+  <vendor email="thomasr@fantasymail.de" url="https://github.com/ThomasR/">Thomas Rosenau</vendor>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType language="Diff" name="Diff/Patch" extensions="diff;patch"
+        implementationClass="de.thomasrosenau.diffplugin.DiffFileType" />
+    <lang.parserDefinition language="Diff"
+        implementationClass="de.thomasrosenau.diffplugin.parser.DiffParserDefinition" />
+    <lang.syntaxHighlighterFactory language="Diff"
+        implementationClass="de.thomasrosenau.diffplugin.highlighter.DiffSyntaxHighlighterFactory" />
+    <colorSettingsPage implementation="de.thomasrosenau.diffplugin.highlighter.DiffColorSettingsPage" />
+    <lang.foldingBuilder language="Diff" implementationClass="de.thomasrosenau.diffplugin.DiffFoldingBuilder" />
+    <stripTrailingSpacesFilterFactory
+        implementation="de.thomasrosenau.diffplugin.DontStripTrailingSpacesFilterFactory" />
+    <lang.psiStructureViewFactory language="Diff"
+        implementationClass="de.thomasrosenau.diffplugin.DiffStructureViewFactory" />
+  </extensions>
+
+</idea-plugin>

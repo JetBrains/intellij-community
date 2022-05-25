@@ -1,0 +1,4 @@
+Windows Registry Editor Version 5.00
+# see https://stackoverflow.com/questions/16428098/groovy-shell-warning-could-not-open-create-prefs-root-node
+[HKEY_LOCAL_MACHINE\Software\JavaSoft\Prefs]
+[HKEY_LOCAL_MACHINE\Software\WOW6432Node\JavaSoft\Prefs]
