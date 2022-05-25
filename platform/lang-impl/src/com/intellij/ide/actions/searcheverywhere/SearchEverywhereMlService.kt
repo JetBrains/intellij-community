@@ -27,7 +27,7 @@ abstract class SearchEverywhereMlService {
 
   abstract fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double
 
-  abstract fun onSessionStarted(project: Project?)
+  abstract fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
 
   abstract fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
                                keysTyped: Int, backspacesTyped: Int, searchQuery: String,
