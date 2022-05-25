@@ -90,6 +90,7 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdl
 import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
+import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingLocalInspectionTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
 import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
@@ -1206,6 +1207,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFe10BindingIntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/intentions/conventionNameCalls", pattern = pattern)
+        }
+    }
+
+    testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
+        testClass<AbstractFe10BindingLocalInspectionTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("testData/inspectionsLocal/addOperatorModifier", pattern = pattern)
         }
     }
 
