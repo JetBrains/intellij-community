@@ -472,23 +472,24 @@ class RecentProjectFilteringTree(
             projectCloneStatusPanel.isEnabled = true
             projectProgressLabel.text = taskInfo.actionTitle
             projectIconLabel.icon = icon
+            toolTipText = taskInfo.actionTooltipText
           }
           CloneStatus.FAILURE -> {
             projectCloneStatusPanel.isVisible = false
             projectCloneStatusPanel.isEnabled = false
             projectPathLabel.text = taskInfo.failedTitle
             projectIconLabel.icon = IconUtil.desaturate(icon)
+            toolTipText = null
           }
           CloneStatus.CANCEL -> {
             projectCloneStatusPanel.isVisible = false
             projectCloneStatusPanel.isEnabled = false
             projectPathLabel.text = taskInfo.canceledTitle
             projectIconLabel.icon = IconUtil.desaturate(icon)
+            toolTipText = null
           }
           else -> {}
         }
-
-        toolTipText = taskInfo.actionTooltipText
 
         return this
       }
