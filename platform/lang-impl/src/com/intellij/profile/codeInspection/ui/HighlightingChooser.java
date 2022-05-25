@@ -109,22 +109,22 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
 }
 
 class HighlightAction extends DumbAwareAction {
-  private final TextAttributesKey myAttributesKey;
+  private final TextAttributesKey myEditorAttributesKey;
   private final Consumer<TextAttributesKey> myActionPerformed;
 
   HighlightAction(@Nls String name, TextAttributesKey attributes, Consumer<TextAttributesKey> actionPerformed) {
     super(name);
-    myAttributesKey = attributes;
+    myEditorAttributesKey = attributes;
     myActionPerformed = actionPerformed;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    myActionPerformed.accept(myAttributesKey);
+    myActionPerformed.accept(myEditorAttributesKey);
   }
 
-  public TextAttributesKey getAttributesKey() {
-    return myAttributesKey;
+  public TextAttributesKey getEditorAttributesKey() {
+    return myEditorAttributesKey;
   }
 }
 
@@ -183,7 +183,7 @@ class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.Acti
       final var action = value.getAction();
       if (action instanceof HighlightAction) {
         final var highlightAction = (HighlightAction)action;
-        final var attributes = myColorsScheme.getAttributes(highlightAction.getAttributesKey());
+        final var attributes = myColorsScheme.getAttributes(highlightAction.getEditorAttributesKey());
         myTextComponent.setText(action.getTemplateText(), attributes, false);
         myTextComponent.setSize(myTextComponent.getPreferredSize());
         return myTextPanel;

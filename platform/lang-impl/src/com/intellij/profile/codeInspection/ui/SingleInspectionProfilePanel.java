@@ -853,9 +853,9 @@ public class SingleInspectionProfilePanel extends JPanel {
             final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
             for (final InspectionConfigTreeNode.Tool node : nodes) {
               final NamedScope scope = node.getDefaultDescriptor().getScope();
-              final boolean doUpdate = myProfile.getTextAttributesKey(node.getKey(), scope, project) != key;
+              final boolean doUpdate = myProfile.getEditorAttributesKey(node.getKey(), scope, project) != key;
               if (doUpdate) {
-                myProfile.setTextAttributesKey(node.getKey().toString(), key.toString(), null, project);
+                myProfile.setEditorAttributesKey(node.getKey().toString(), key.toString(), null, project);
                 toUpdate.add(node);
               }
             }
@@ -867,7 +867,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           highlightingChooser.getTemplatePresentation(),
           ActionPlaces.UNKNOWN
         );
-        final TextAttributesKey key = ScopesAndSeveritiesTable.getTextAttributesKey(
+        final TextAttributesKey key = ScopesAndSeveritiesTable.getEditorAttributesKey(
           ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()),
           project
         );
@@ -1198,8 +1198,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (profile.getErrorLevel(desc.getKey(), desc.getScope(), project) != desc.getLevel()) {
       return true;
     }
-    if (!Objects.equals(profile.getTextAttributesKey(desc.getKey(), desc.getScope(), project),
-                        desc.getTextAttributesKey())) {
+    if (!Objects.equals(profile.getEditorAttributesKey(desc.getKey(), desc.getScope(), project),
+                        desc.getEditorAttributesKey())) {
       return true;
     }
     final List<Descriptor> descriptors = toolDescriptors.getNonDefaultDescriptors();
@@ -1210,8 +1210,8 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (profile.getErrorLevel(descriptor.getKey(), descriptor.getScope(), project) != descriptor.getLevel()) {
         return true;
       }
-      if (!Objects.equals(profile.getTextAttributesKey(descriptor.getKey(), descriptor.getScope(), project),
-                          descriptor.getTextAttributesKey())) {
+      if (!Objects.equals(profile.getEditorAttributesKey(descriptor.getKey(), descriptor.getScope(), project),
+                          descriptor.getEditorAttributesKey())) {
         return true;
       }
     }

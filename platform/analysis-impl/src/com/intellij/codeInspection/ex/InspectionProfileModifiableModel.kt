@@ -55,7 +55,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
             else {
               tools.addTool(scope, toolWrapper, state.isEnabled, state.level)
             }
-            state.textAttributesKey?.externalName?.let { tool.setTextAttributesKey(it) }
+            state.editorAttributesKey?.externalName?.let { tool.setEditorAttributesKey(it) }
           }
         }
         tools.isEnabled = toolList.isEnabled

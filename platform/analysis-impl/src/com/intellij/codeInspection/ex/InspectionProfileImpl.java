@@ -692,8 +692,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return getTools(shortName, element != null ? element.getProject() : null).getAttributesKey(element);
   }
 
-  public void setTextAttributesKey(@NotNull String shortName, @NotNull String externalName, String scopeName, @Nullable Project project) {
-    getTools(shortName, project).setTextAttributesKey(externalName, scopeName);
+  public void setEditorAttributesKey(@NotNull String shortName, @NotNull String externalName, String scopeName, @Nullable Project project) {
+    getTools(shortName, project).setEditorAttributesKey(externalName, scopeName);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
   
@@ -860,9 +860,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Transient
-  public @Nullable TextAttributesKey getTextAttributesKey(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
+  public @Nullable TextAttributesKey getEditorAttributesKey(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
     ToolsImpl tools = getToolsOrNull(key.toString(), project);
-    return tools != null ? tools.getTextAttributesKey(scope, project) : null;
+    return tools != null ? tools.getEditorAttributesKey(scope, project) : null;
   }
 
   public ScopeToolState addScope(@NotNull InspectionToolWrapper<?,?> toolWrapper,
@@ -884,9 +884,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  public void setTextAttributeKey(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull TextAttributesKey attributesKey, String scopeName, Project project) {
+  public void setEditorAttributeKey(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull TextAttributesKey attributesKey, String scopeName, Project project) {
     for (HighlightDisplayKey key : keys) {
-      setTextAttributesKey(key.toString(), attributesKey.toString(), scopeName, project);
+      setEditorAttributesKey(key.toString(), attributesKey.toString(), scopeName, project);
     }
   }
 

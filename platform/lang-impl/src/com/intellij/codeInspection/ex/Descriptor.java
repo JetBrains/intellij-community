@@ -26,7 +26,7 @@ public class Descriptor {
   private final HighlightDisplayLevel myLevel;
   @Nullable
   private final NamedScope myScope;
-  private final TextAttributesKey myTextAttributesKey;
+  private final TextAttributesKey myEditorAttributesKey;
   private final ScopeToolState myState;
   @NotNull
   private final InspectionProfileModifiableModel myInspectionProfile;
@@ -43,7 +43,7 @@ public class Descriptor {
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.getGeneralGroupName()} : groupPath;
     myShortName = tool.getShortName();
     myScope = state.getScope(project);
-    myTextAttributesKey = state.getTextAttributesKey();
+    myEditorAttributesKey = state.getEditorAttributesKey();
     final HighlightDisplayKey key = HighlightDisplayKey.findOrRegister(myShortName, myText);
     myLevel = inspectionProfile.getErrorLevel(key, myScope, project);
     myEnabled = inspectionProfile.isToolEnabled(key, myScope, project);
@@ -88,8 +88,8 @@ public class Descriptor {
     return myLevel;
   }
 
-  public TextAttributesKey getTextAttributesKey() {
-    return myTextAttributesKey;
+  public TextAttributesKey getEditorAttributesKey() {
+    return myEditorAttributesKey;
   }
 
   @Nullable

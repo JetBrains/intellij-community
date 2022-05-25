@@ -17,20 +17,20 @@ import java.util.List;
 
 public class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKey> {
 
-  private final List<Pair<TextAttributesKey, @Nls String>> myTextAttributes;
+  private final List<Pair<TextAttributesKey, @Nls String>> myEditorAttributesKey;
 
   public static final TextAttributesKey EDIT_HIGHLIGHTING = TextAttributesKey.createTextAttributesKey("-");
 
 
-  public HighlightingRenderer(List<Pair<TextAttributesKey, @Nls String>> textAttributes) {
-    super(textAttributes.stream().map(pair -> pair.first).toArray(TextAttributesKey[]::new));
-    myTextAttributes = textAttributes;
+  public HighlightingRenderer(List<Pair<TextAttributesKey, @Nls String>> editorAttributesKey) {
+    super(editorAttributesKey.stream().map(pair -> pair.first).toArray(TextAttributesKey[]::new));
+    myEditorAttributesKey = editorAttributesKey;
   }
 
   @Override
   protected String getTextFor(@NotNull TextAttributesKey value) {
     String text = value.getExternalName();
-    for (Pair<TextAttributesKey, @Nls String> pair: myTextAttributes) {
+    for (Pair<TextAttributesKey, @Nls String> pair: myEditorAttributesKey) {
       if (value == pair.first) {
         text = pair.second;
         break;

@@ -111,7 +111,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     severityColumn.setCellEditor(renderer);
 
     final TableColumn highlightingColumn = columnModel.getColumn(HIGHLIGHTING_COLUMN);
-    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getTextAttributeKeysAndNames());
+    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames());
     highlightingColumn.setCellRenderer(highlightingRenderer);
     highlightingColumn.setCellEditor(highlightingRenderer);
 
@@ -226,11 +226,11 @@ public class ScopesAndSeveritiesTable extends JBTable {
   }
 
   @NotNull
-  public static TextAttributesKey getTextAttributesKey(final @NotNull List<? extends ScopeToolState> scopeToolStates, @NotNull Project project) {
+  public static TextAttributesKey getEditorAttributesKey(final @NotNull List<? extends ScopeToolState> scopeToolStates, @NotNull Project project) {
     TextAttributesKey previousValue = null;
     final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(project);
     for (final ScopeToolState scopeToolState : scopeToolStates) {
-      TextAttributesKey key = scopeToolState.getTextAttributesKey();
+      TextAttributesKey key = scopeToolState.getEditorAttributesKey();
       if (key == null) {
         final var severity = scopeToolState.getLevel().getSeverity();
         key = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
@@ -244,7 +244,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     return previousValue != null ? previousValue : MIXED_FAKE_KEY;
   }
 
-  private static ArrayList<Pair<TextAttributesKey, @Nls String>> getTextAttributeKeysAndNames() {
+  private static ArrayList<Pair<TextAttributesKey, @Nls String>> getEditorAttributesKeysAndNames() {
     final var textAttributes = ColorSettingsUtil.getErrorTextAttributes();
     textAttributes.add(new Pair<>(EDIT_HIGHLIGHTING, InspectionsBundle.message("inspection.edit.highlighting.action")));
     return textAttributes;
@@ -377,7 +377,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
         return MIXED_FAKE_KEY;
       }
-      return getTextAttributesKey(existedScopesStatesAndNonExistNames.myExistedStates, myProject);
+      return getEditorAttributesKey(existedScopesStatesAndNonExistNames.myExistedStates, myProject);
     }
 
     @Nullable
@@ -463,7 +463,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
         if (value == EDIT_HIGHLIGHTING) return;
         final TextAttributesKey key = (TextAttributesKey)value;
         final String scopeName = rowIndex == lastRowIndex() ? null : getScopeName(rowIndex);
-        myInspectionProfile.setTextAttributeKey(myKeys, key, scopeName, myProject);
+        myInspectionProfile.setEditorAttributeKey(myKeys, key, scopeName, myProject);
       }
       else if (columnIndex == SCOPE_ENABLED_COLUMN) {
         final NamedScope scope = getScope(rowIndex);
