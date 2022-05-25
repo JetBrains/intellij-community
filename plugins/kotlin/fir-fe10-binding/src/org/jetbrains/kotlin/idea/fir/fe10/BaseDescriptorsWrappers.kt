@@ -5,14 +5,17 @@ package org.jetbrains.kotlin.idea.fir.fe10
 import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.AbstractReceiverParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ReceiverParameterDescriptorImpl
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -163,6 +166,8 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: FE10BindingContex
     protected fun noImplementation(): Nothing = context.noImplementation("ktSymbol = $ktSymbol")
     protected fun implementationPostponed(): Nothing = context.implementationPostponed("ktSymbol = $ktSymbol")
     protected fun implementationPlanned(): Nothing = context.implementationPlanned("ktSymbol = $ktSymbol")
+
+    override fun toString(): String = this.javaClass.getSimpleName() + " " + this.getName()
 }
 
 class KtSymbolBasedAnnotationDescriptor(

@@ -33,6 +33,9 @@ interface FE10BindingContext {
     val ktAnalysisSessionFacade: KtAnalysisSessionFe10BindingHolder
     val moduleDescriptor: ModuleDescriptor
 
+    // This property used to disable some logic used locally for debug purposes
+    val enableLogging: Boolean get() = false
+
     /**
      * Legend:
      *  - where was decided, that KtSymbolBased descriptor is not support method, noImplementation() method is called.
