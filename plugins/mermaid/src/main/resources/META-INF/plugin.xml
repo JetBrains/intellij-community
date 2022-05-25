@@ -26,5 +26,8 @@
 
     <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
     <liveTemplateContext implementation="com.github.firsttimeinforever.mermaid.editor.MermaidContextType"/>
+
+
+    <lineIndentProvider implementation="com.github.firsttimeinforever.mermaid.lang.formatter.MermaidLineIndentProvider"/>
   </extensions>
 </idea-plugin>
