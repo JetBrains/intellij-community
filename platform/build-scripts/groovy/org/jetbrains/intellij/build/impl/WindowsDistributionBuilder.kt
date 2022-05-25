@@ -70,26 +70,26 @@ internal class WindowsDistributionBuilder(
     generateVMOptions(distBinDir)
     buildWinLauncher(targetPath)
     customizer.copyAdditionalFiles(context, targetPath.toString())
-    val nativeFiles = ArrayList<Path>()
-    for (nativeRoot in listOf(distBinDir, pty4jNativeDir)) {
-      Files.find(nativeRoot, Integer.MAX_VALUE, BiPredicate { file, attributes ->
-        if (attributes.isRegularFile) {
-          val path = file.toString()
-          if (path.endsWith(".exe") || path.endsWith(".dll")) {
-            nativeFiles.add(file)
+
+    context.executeStep(spanBuilder = spanBuilder("sign windows"), stepId = BuildOptions.WIN_SIGN_STEP) {
+      val nativeFiles = ArrayList<Path>()
+      for (nativeRoot in listOf(distBinDir, pty4jNativeDir)) {
+        Files.find(nativeRoot, Integer.MAX_VALUE, BiPredicate { file, attributes ->
+          if (attributes.isRegularFile) {
+            val path = file.toString()
+            path.endsWith(".exe") || path.endsWith(".dll")
           }
+          else {
+            false
+          }
+        }).use { stream ->
+          stream.forEach(nativeFiles::add)
         }
-        false
-      })
-    }
+      }
 
-    customizer.getBinariesToSign(context).mapTo(nativeFiles) { targetPath.resolve(it) }
-
-    if (!nativeFiles.isEmpty()) {
-      context.executeStep(
-        spanBuilder = spanBuilder("sign").setAttribute(AttributeKey.stringArrayKey("files"), nativeFiles.map(Path::toString)),
-        stepId = BuildOptions.WIN_SIGN_STEP
-      ) {
+      Span.current().setAttribute(AttributeKey.stringArrayKey("files"), nativeFiles.map(Path::toString))
+      customizer.getBinariesToSign(context).mapTo(nativeFiles) { targetPath.resolve(it) }
+      if (nativeFiles.isNotEmpty()) {
         context.signFiles(nativeFiles, BuildOptions.WIN_SIGN_OPTIONS)
       }
     }
