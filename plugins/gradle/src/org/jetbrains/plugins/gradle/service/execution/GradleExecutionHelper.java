@@ -403,7 +403,7 @@ public class GradleExecutionHelper {
       settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
 
-    if (settings.isScanEnabled()) {
+    if (settings.isScansEnabled()) {
       // TODO Extract the file only once
       InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/scanInit.gradle");
       if (stream != null) {

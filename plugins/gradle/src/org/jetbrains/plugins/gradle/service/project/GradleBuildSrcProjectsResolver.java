@@ -130,7 +130,7 @@ public final class GradleBuildSrcProjectsResolver {
                                                                 myMainBuildExecutionSettings.getServiceDirectory(),
                                                                 DistributionType.LOCAL,
                                                                 myMainBuildExecutionSettings.isOfflineWork(),
-                                                                myMainBuildExecutionSettings.isScanEnabled());
+                                                                myMainBuildExecutionSettings.isScansEnabled());
           buildSrcProjectSettings.setIdeProjectPath(myMainBuildExecutionSettings.getIdeProjectPath());
           buildSrcProjectSettings.setJavaHome(myMainBuildExecutionSettings.getJavaHome());
           buildSrcProjectSettings.setResolveModulePerSourceSet(myMainBuildExecutionSettings.isResolveModulePerSourceSet());

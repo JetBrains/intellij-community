@@ -23,7 +23,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   @Nullable private final String myServiceDirectory;
   private final boolean myIsOfflineWork;
-  private final boolean myIsScanEnabled;
+  private final boolean myIsScansEnabled;
 
   @NotNull private final DistributionType myDistributionType;
   @Nullable private String wrapperPropertyFile;
@@ -39,14 +39,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
                                  @Nullable String serviceDirectory,
                                  @NotNull DistributionType distributionType,
                                  boolean isOfflineWork,
-                                 boolean isScanEnabled) {
+                                 boolean isScansEnabled) {
     this(
       gradleHome,
       serviceDirectory,
       distributionType,
       null,
       isOfflineWork,
-      isScanEnabled);
+      isScansEnabled);
   }
 
   public GradleExecutionSettings(@Nullable String gradleHome,
@@ -54,7 +54,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
                                  @NotNull DistributionType distributionType,
                                  @Nullable String daemonVmOptions,
                                  boolean isOfflineWork,
-                                 boolean isScanEnabled) {
+                                 boolean isScansEnabled) {
     myGradleHome = gradleHome;
     myServiceDirectory = serviceDirectory;
     myDistributionType = distributionType;
@@ -62,7 +62,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
       withVmOptions(ParametersListUtil.parse(daemonVmOptions));
     }
     myIsOfflineWork = isOfflineWork;
-    myIsScanEnabled = isScanEnabled;
+    myIsScansEnabled = isScansEnabled;
     setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }
 
@@ -98,8 +98,8 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     return myIsOfflineWork;
   }
 
-  public boolean isScanEnabled() {
-    return myIsScanEnabled;
+  public boolean isScansEnabled() {
+    return myIsScansEnabled;
   }
 
   public boolean isResolveModulePerSourceSet() {

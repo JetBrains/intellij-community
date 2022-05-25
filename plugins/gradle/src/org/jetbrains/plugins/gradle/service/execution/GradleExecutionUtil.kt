@@ -59,7 +59,7 @@ private class EnsureInstalledWrapperExecutionTask(
       getDistributionType(),
       settings.gradleVmOptions,
       settings.isOfflineWork,
-      settings.isScanEnabled
+      settings.isScansEnabled
     )
     val jdkProvider = ExternalSystemJdkProvider.getInstance()
     executionSettings.javaHome = jdkProvider.internalJdk.homePath
