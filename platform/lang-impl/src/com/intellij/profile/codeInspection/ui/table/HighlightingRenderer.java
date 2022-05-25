@@ -1,10 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
-import com.intellij.application.options.colors.ColorAndFontOptions;
-import com.intellij.application.options.colors.ColorSettingsUtil;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
@@ -21,13 +17,14 @@ import java.util.List;
 
 public class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKey> {
 
-  private static List<Pair<TextAttributesKey, String>> myTextAttributes;
+  private final List<Pair<TextAttributesKey, @Nls String>> myTextAttributes;
 
   public static final TextAttributesKey EDIT_HIGHLIGHTING = TextAttributesKey.createTextAttributesKey("-");
 
 
-  public HighlightingRenderer() {
-    super(getAttributeKeys());
+  public HighlightingRenderer(List<Pair<TextAttributesKey, @Nls String>> textAttributes) {
+    super(textAttributes.stream().map(pair -> pair.first).toArray(TextAttributesKey[]::new));
+    myTextAttributes = textAttributes;
   }
 
   @Override
@@ -51,14 +48,6 @@ public class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKe
   @Override
   protected ListSeparator getSeparatorAbove(TextAttributesKey value) {
     return value == EDIT_HIGHLIGHTING ? new ListSeparator() : null;
-  }
-
-  private static TextAttributesKey[] getAttributeKeys() {
-    myTextAttributes = ColorSettingsUtil.getErrorTextAttributes();
-    myTextAttributes.add(new Pair<>(EDIT_HIGHLIGHTING, InspectionsBundle.message("inspection.edit.highlighting.action")));
-    return myTextAttributes.stream()
-      .map(pair -> pair.first)
-      .toArray(TextAttributesKey[]::new);
   }
 
   @Override
