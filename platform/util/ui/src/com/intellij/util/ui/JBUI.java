@@ -1413,7 +1413,10 @@ public final class JBUI {
       }
 
       static int rowHeight() {
-        return getInt("Tree.rowHeight", JBUIScale.scale(24));
+        int defaultHeight = JBUIScale.scale(24);
+        int result = getInt("Tree.rowHeight", defaultHeight);
+        // Linux doesn't support rowHeight now, use default value. See IDEA-234112
+        return result <= 0 ? defaultHeight : result;
       }
 
       final class Selection {
