@@ -165,16 +165,41 @@ public final class UiInspectorUtil {
         String ourFqn = jvmFqn.replace('$', '.');
         Object result = findClass.invoke(getInstance.invoke(null, project), ourFqn, GlobalSearchScope.allScope(project));
         if (result == null) {
-          // if provided jvmFqn is anonymous class, try to find containing class
+          // if provided jvmFqn is anonymous class, try to find containing class and then find anonymous class inside
           String[] parts = jvmFqn.split("\\$\\d+");
           String containingClassJvmFqn = parts[0];
           String containingClassOurFqn = containingClassJvmFqn.replace('$', '.');
-          result = findClass.invoke(getInstance.invoke(null, project), containingClassOurFqn, GlobalSearchScope.allScope(project));
+          Object containingClass = findClass.invoke(getInstance.invoke(null, project),
+                                                    containingClassOurFqn, GlobalSearchScope.allScope(project));
+          if (containingClass instanceof PsiElement) {
+            result = findAnonymousClass((PsiElement)containingClass, jvmFqn);
+            if (result == null) {
+              result = containingClass;
+            }
+          }
         }
         if (result instanceof PsiElement) {
           return (PsiElement)result;
         }
       }
+    }
+    catch (Exception ignore) {
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement findAnonymousClass(@NotNull PsiElement containingClass, @NotNull String jvmFqn) {
+    try {
+      Class<?> searchContributor = Class.forName("com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor");
+      Method getPathToAnonymousClass = searchContributor.getDeclaredMethod("pathToAnonymousClass", String.class);
+      getPathToAnonymousClass.setAccessible(true);
+      String path = (String)getPathToAnonymousClass.invoke(null, jvmFqn);
+      if (path == null) {
+        return null;
+      }
+      Method getElement = searchContributor.getDeclaredMethod("getElement", PsiElement.class, String.class);
+      return (PsiElement)getElement.invoke(null, containingClass, path);
     }
     catch (Exception ignore) {
     }
