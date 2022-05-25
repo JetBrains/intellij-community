@@ -6,7 +6,7 @@ import com.intellij.util.ProcessingContext
 
 class MermaidSequenceCompletionProvider : MermaidLiveTemplateCompletionProvider() {
   private val keywords = listOf("loop", "alt", "opt", "par", "rect")
-  
+
   override fun addCompletions(
     parameters: CompletionParameters,
     context: ProcessingContext,
@@ -17,7 +17,8 @@ class MermaidSequenceCompletionProvider : MermaidLiveTemplateCompletionProvider(
   }
 }
 
-class MermaidSequenceBranchCompletionProvider(private val branch: String) : MermaidLiveTemplateCompletionProvider() {
+class MermaidSequenceBranchCompletionProvider(private val branch: String) :
+  MermaidLiveTemplateCompletionProvider(deleteIndent = true) {
   override fun addCompletions(
     parameters: CompletionParameters,
     context: ProcessingContext,
