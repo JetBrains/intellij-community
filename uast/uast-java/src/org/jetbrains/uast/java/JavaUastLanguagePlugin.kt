@@ -163,14 +163,14 @@ internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?
 internal inline fun <reified ActualT : UElement, P : PsiElement> Array<out Class<out UElement>>.el(arg1: P,
                                                                                                    arg2: UElement?,
                                                                                                    ctor: (P, UElement?) -> UElement?): UElement? {
-  return if (isAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
+  return if (hasAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
 }
 
 internal inline fun <reified ActualT : UElement, P : PsiElement> Array<out Class<out UElement>>.expr(arg1: P, arg2: UElement?, ctor: (P, UElement?) -> UExpression?): UExpression? {
-  return if (isAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
+  return if (hasAssignableFrom(ActualT::class.java)) ctor(arg1, arg2) else null
 }
 
-internal fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
+internal fun Array<out Class<out UElement>>.hasAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
 
 internal object JavaConverter {
 
@@ -300,8 +300,8 @@ internal object JavaConverter {
       return sequenceOf(requiredTypes.expr<UCallExpression,PsiMethodCallExpression>(element, givenParent, ::JavaUCallExpression)).filterNotNull()
     }
 
-    if (!requiredTypes.isAssignableFrom(UQualifiedReferenceExpression::class.java) &&
-        !requiredTypes.isAssignableFrom(UCallExpression::class.java)) return emptySequence()
+    if (!requiredTypes.hasAssignableFrom(UQualifiedReferenceExpression::class.java) &&
+        !requiredTypes.hasAssignableFrom(UCallExpression::class.java)) return emptySequence()
 
 
     val expr = JavaUCompositeQualifiedExpression(element, givenParent).apply {
