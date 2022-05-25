@@ -102,7 +102,8 @@ object CodeWithMeClientDownloader {
 
     val hostBuildNumber = buildNumberRegex.find(clientBuildVersion)!!.value
     val platformSuffix = when {
-      SystemInfo.isLinux -> "-no-jbr.tar.gz"
+      SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
+      SystemInfo.isLinux && CpuArch.isArm64() -> "-no-jbr-aarch64.tar.gz"
       SystemInfo.isWindows -> ".win.zip"
       SystemInfo.isMac && CpuArch.isIntel64() -> "-no-jdk.sit"
       SystemInfo.isMac && CpuArch.isArm64() -> "-no-jdk-aarch64.sit"
