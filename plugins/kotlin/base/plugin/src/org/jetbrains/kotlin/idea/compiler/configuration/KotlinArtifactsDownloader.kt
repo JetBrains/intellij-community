@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_LOCATION_PREFIX
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
@@ -112,7 +112,7 @@ object KotlinArtifactsDownloader {
         return getLazyDistDownloaderAndUnpacker(version).lazyProduceDist(version, context)
             ?: getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
                 // Fallback to old "all-in-one jar" artifact (old "all-in-one jar" is available only for Kotlin < 1.7.20)
-                lazyDownloadMavenArtifact(project, KOTLIN_DIST_ARTIFACT_ID, version, indicator, indicatorDownloadText)?.let {
+                lazyDownloadMavenArtifact(project, OLD_KOTLIN_DIST_ARTIFACT_ID, version, indicator, indicatorDownloadText)?.let {
                     unpacker.lazyUnpack(it)
                 }
             }
@@ -178,13 +178,13 @@ object KotlinArtifactsDownloader {
 
     /**
      * Prior to 1.7.20, two formats were possible:
-     * - Old "all in one jar" dist [KotlinArtifacts.KOTLIN_DIST_ARTIFACT_ID]
+     * - Old "all in one jar" dist [KotlinArtifacts.OLD_KOTLIN_DIST_ARTIFACT_ID]
      * - New "dist as all transitive dependencies of one meta pom" format [KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID]
      */
     private fun isAllInOneOldFormatDistFormatAvailable(version: IdeKotlinVersion) = version < IdeKotlinVersion.get("1.7.20")
 
     private fun getAllInOneOldFormatPackedDist(version: String) =
-        KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)?.toFile()
+        KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, OLD_KOTLIN_DIST_ARTIFACT_ID, version)?.toFile()
 
     private fun getMavenRepos(project: Project): List<RemoteRepositoryDescription> =
         RemoteRepositoriesConfiguration.getInstance(project).repositories

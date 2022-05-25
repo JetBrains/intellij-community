@@ -10,7 +10,11 @@ import java.io.File
 class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     companion object {
         @NlsSafe const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
-        @NlsSafe const val KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
+        @Deprecated(
+            "Deprecated because new \"meta pom\" format (KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) should be used. " +
+                    "This constant should be used only for keeping backwards compatibility with the old format"
+        )
+        @NlsSafe const val OLD_KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
         @NlsSafe const val KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID = "kotlin-dist-for-jps-meta"
         @NlsSafe const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
         val KOTLIN_DIST_LOCATION_PREFIX = File(PathManager.getSystemPath(), "kotlin-dist-for-ide")

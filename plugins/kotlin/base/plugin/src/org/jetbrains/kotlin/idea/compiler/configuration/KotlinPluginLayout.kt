@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.artifacts.*
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import java.io.File
 import java.nio.file.Files
@@ -87,7 +87,7 @@ private class KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout() {
     }
 
     override val kotlinc: File by lazy {
-        val distJar = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion)
+        val distJar = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, OLD_KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion)
         LazyZipUnpacker(KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")).lazyUnpack(distJar.toFile())
     }
 
