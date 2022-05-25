@@ -28,7 +28,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     setLayout(new VerticalLayout(0));
     TitlePanel titlePanel = new TitlePanel();
     titlePanel.getLabel().setHorizontalAlignment(SwingConstants.LEFT);
-    titlePanel.setText(UsageViewBundle.message("label.similar.usages"));
+    titlePanel.setText(UsageViewBundle.message("similar.usages.tab.title"));
     add(titlePanel);
     Disposer.register(parent, this);
   }
@@ -67,7 +67,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     header.add(link);
     if (usageInfo == originalUsage) {
       final SimpleColoredComponent component = new SimpleColoredComponent();
-      component.append(UsageViewBundle.message("label.the.original.usage"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      component.append(UsageViewBundle.message("similar.usages.the.original.usage.label"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       header.add(component);
     }
     final Color color = new JBColor(Gray.xCD, Gray.x51);

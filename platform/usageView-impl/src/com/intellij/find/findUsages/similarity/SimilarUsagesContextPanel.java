@@ -125,7 +125,7 @@ public class SimilarUsagesContextPanel extends UsageContextPanelBase {
 
     @Override
     public @NotNull String getTabTitle() {
-      return UsageViewBundle.message("similar.usages.tab");
+      return UsageViewBundle.message("similar.usages.tab.name");
     }
   }
 }

@@ -127,7 +127,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private @NotNull ActionLink createOpenSimilarUsagesActionLink(UsageInfo info, @NotNull Set<SimilarityUsage> usagesToRender) {
-    final ActionLink actionLink = new ActionLink(UsageViewBundle.message("show.0.similar.usages", usagesToRender.size() - 1), e -> {
+    final ActionLink actionLink = new ActionLink(UsageViewBundle.message("similar.usages.show.0.similar.usages.title", usagesToRender.size() - 1), e -> {
       myIsShowingSimilarUsages = true;
       ActivityTracker.getInstance().inc();
       final SimilarUsagesComponent mySimilarComponent = new SimilarUsagesComponent(info, this);
@@ -200,7 +200,8 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private void addMostCommonUsagesForSelectedGroups(@NotNull Collection<Collection<? extends UsageGroup>> selectedGroups) {
     Ref<List<UsageCluster>> sortedClusters = new Ref<>();
     Task.Backgroundable loadMostCommonUsagePatternsTask =
-      new Task.Backgroundable(myProject, UsageViewBundle.message("loading.most.common.usage.patterns")) {
+      new Task.Backgroundable(myProject, UsageViewBundle.message(
+        "similar.usages.loading.most.common.usage.patterns.progress.title")) {
         @Override
         public void onSuccess() {
           if (!sortedClusters.isNull()) {

@@ -47,7 +47,8 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
                                                 @NotNull PsiFile file,
                                                 @NotNull Project project,
                                                 @NotNull Ref<PsiFile> featuresDump) {
-    ProgressManager.getInstance().run(new Task.Modal(project, UsageViewBundle.message("action.calculating.usage.features"), true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, UsageViewBundle.message(
+      "similar.usages.show.usage.features.action.calculating.usage.features.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Bag features = new Bag();
