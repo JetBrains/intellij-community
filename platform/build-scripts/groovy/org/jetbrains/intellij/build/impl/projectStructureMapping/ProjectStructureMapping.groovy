@@ -88,6 +88,7 @@ final class ProjectStructureMapping {
         writer.writeEndObject()
       }
       writer.writeEndArray()
+      writer.close()
     }
   }
 
