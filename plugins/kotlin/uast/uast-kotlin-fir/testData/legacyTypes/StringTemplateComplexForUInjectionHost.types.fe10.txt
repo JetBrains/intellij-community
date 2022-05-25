@@ -59,7 +59,7 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] : PsiType:Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                     USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
-                    USimpleNameReferenceExpression (identifier = baz) [baz]
+                    USimpleNameReferenceExpression (identifier = baz) [baz] : PsiType:Unit
                 UDeclarationsExpression [var template1: java.lang.String = simpleForTemplate()]
                     ULocalVariable (name = template1) [var template1: java.lang.String = simpleForTemplate()]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] : PsiType:String
@@ -72,3 +72,47 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] : PsiType:String
                                 UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
                                 USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] : PsiType:String
+        UMethod (name = baz) [public static final fun baz() : void {...}]
+            UBlockExpression [{...}] : PsiType:void
+                UDeclarationsExpression [var trimA: java.lang.String = "\n" + "        text=text" + "\n" + "    ".trimIndent()]
+                    ULocalVariable (name = trimA) [var trimA: java.lang.String = "\n" + "        text=text" + "\n" + "    ".trimIndent()]
+                        UQualifiedReferenceExpression ["\n" + "        text=text" + "\n" + "    ".trimIndent()] : PsiType:String
+                            UPolyadicExpression (operator = +) ["\n" + "        text=text" + "\n" + "    "] : PsiType:String
+                                ULiteralExpression (value = "\n") ["\n"] : PsiType:String
+                                ULiteralExpression (value = "        text=text") ["        text=text"] : PsiType:String
+                                ULiteralExpression (value = "\n") ["\n"] : PsiType:String
+                                ULiteralExpression (value = "    ") ["    "] : PsiType:String
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimIndent()] : PsiType:String
+                                UIdentifier (Identifier (trimIndent)) [UIdentifier (Identifier (trimIndent))]
+                                USimpleNameReferenceExpression (identifier = trimIndent, resolvesTo = null) [trimIndent] : PsiType:String
+                UDeclarationsExpression [var trimB: java.lang.String = "\n" + "        | margined" + "\n" + "    ".trimMargin()]
+                    ULocalVariable (name = trimB) [var trimB: java.lang.String = "\n" + "        | margined" + "\n" + "    ".trimMargin()]
+                        UQualifiedReferenceExpression ["\n" + "        | margined" + "\n" + "    ".trimMargin()] : PsiType:String
+                            UPolyadicExpression (operator = +) ["\n" + "        | margined" + "\n" + "    "] : PsiType:String
+                                ULiteralExpression (value = "\n") ["\n"] : PsiType:String
+                                ULiteralExpression (value = "        | margined") ["        | margined"] : PsiType:String
+                                ULiteralExpression (value = "\n") ["\n"] : PsiType:String
+                                ULiteralExpression (value = "    ") ["    "] : PsiType:String
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimMargin()] : PsiType:String
+                                UIdentifier (Identifier (trimMargin)) [UIdentifier (Identifier (trimMargin))]
+                                USimpleNameReferenceExpression (identifier = trimMargin, resolvesTo = null) [trimMargin] : PsiType:String
+                UDeclarationsExpression [var c: boolean = "bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()]
+                    ULocalVariable (name = c) [var c: boolean = "bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()]
+                        UBinaryExpression (operator = ==) ["bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()] : PsiType:boolean
+                            ULiteralExpression (value = "bar") ["bar"] : PsiType:String
+                            UQualifiedReferenceExpression ["\n" + "        margin=text" + "\n" + "    ".trimIndent()] : PsiType:String
+                                UPolyadicExpression (operator = +) ["\n" + "        margin=text" + "\n" + "    "] : PsiType:String
+                                    ULiteralExpression (value = "\n") ["\n"] : PsiType:String
+                                    ULiteralExpression (value = "        margin=text") ["        margin=text"] : PsiType:String
+                                    ULiteralExpression (value = "\n") ["\n"] : PsiType:String
+                                    ULiteralExpression (value = "    ") ["    "] : PsiType:String
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimIndent()] : PsiType:String
+                                    UIdentifier (Identifier (trimIndent)) [UIdentifier (Identifier (trimIndent))]
+                                    USimpleNameReferenceExpression (identifier = trimIndent, resolvesTo = null) [trimIndent] : PsiType:String
+                UDeclarationsExpression [var concat: java.lang.String = "abc" + "cde" + "efg"]
+                    ULocalVariable (name = concat) [var concat: java.lang.String = "abc" + "cde" + "efg"]
+                        UBinaryExpression (operator = +) ["abc" + "cde" + "efg"] : PsiType:String
+                            UBinaryExpression (operator = +) ["abc" + "cde"] : PsiType:String
+                                ULiteralExpression (value = "abc") ["abc"] : PsiType:String
+                                ULiteralExpression (value = "cde") ["cde"] : PsiType:String
+                            ULiteralExpression (value = "efg") ["efg"] : PsiType:String
