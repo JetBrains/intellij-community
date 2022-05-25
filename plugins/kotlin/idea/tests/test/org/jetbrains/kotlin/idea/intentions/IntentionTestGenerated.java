@@ -4958,6 +4958,31 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/doubleNegation.kt");
         }
 
+        @TestMetadata("hasBreak.kt")
+        public void testHasBreak() throws Exception {
+            runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasBreak.kt");
+        }
+
+        @TestMetadata("hasContinue.kt")
+        public void testHasContinue() throws Exception {
+            runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasContinue.kt");
+        }
+
+        @TestMetadata("hasReturn.kt")
+        public void testHasReturn() throws Exception {
+            runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasReturn.kt");
+        }
+
+        @TestMetadata("hasThrow.kt")
+        public void testHasThrow() throws Exception {
+            runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasThrow.kt");
+        }
+
+        @TestMetadata("hasThrow2.kt")
+        public void testHasThrow2() throws Exception {
+            runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasThrow2.kt");
+        }
+
         @TestMetadata("inapplicableOperator.kt")
         public void testInapplicableOperator() throws Exception {
             runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/inapplicableOperator.kt");
