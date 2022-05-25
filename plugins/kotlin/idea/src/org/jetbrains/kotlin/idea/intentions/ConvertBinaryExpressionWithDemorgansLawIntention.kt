@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi2ir.deparenthesize
 
 class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
@@ -70,6 +71,10 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
             var remainingExpression: KtExpression = expression
             while (true) {
                 if (remainingExpression !is KtBinaryExpression) break
+
+                if (KtPsiUtil.deparenthesize(remainingExpression.left) is KtStatementExpression ||
+                    KtPsiUtil.deparenthesize(remainingExpression.right) is KtStatementExpression
+                ) return null
 
                 val operation = remainingExpression.operationToken
                 if (operation != KtTokens.ANDAND && operation != KtTokens.OROR) break
