@@ -29,7 +29,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.castSafelyTo
@@ -85,7 +84,7 @@ class RecentProjectFilteringTree(
       cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
       rowHeight = 0 // Fix tree renderer size on macOS
       background = WelcomeScreenUIManager.getProjectsBackground()
-      toggleClickCount = 1
+      toggleClickCount = 0
 
       setExpandableItemsEnabled(false)
     }
@@ -175,7 +174,7 @@ class RecentProjectFilteringTree(
     override fun mousePressed(mouseEvent: MouseEvent) {
       super.mousePressed(mouseEvent)
 
-      if (mouseEvent.isConsumed || EditSourceOnDoubleClickHandler.isToggleEvent(tree, mouseEvent)) {
+      if (mouseEvent.isConsumed) {
         return
       }
 
@@ -183,13 +182,20 @@ class RecentProjectFilteringTree(
       val treePath = TreeUtil.getPathForLocation(tree, point.x, point.y) ?: return
       val item = TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, treePath) ?: return
 
+      // Avoid double-clicking an arrow button
+      if (item is ProjectsGroupItem && intersectWithArrowIcon(point)) {
+        return
+      }
+
       if (intersectWithActionIcon(point)) {
         when (item) {
           is CloneableProjectItem -> cancelCloneProject(item.cloneableProject)
           else -> invokePopup(mouseEvent.component, point.x, point.y)
         }
       }
-      else activateItem(mouseEvent, item)
+      else if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
+        activateItem(tree, item)
+      }
 
       mouseEvent.consume()
     }
@@ -197,6 +203,15 @@ class RecentProjectFilteringTree(
     override fun invokePopup(component: Component, x: Int, y: Int) {
       val group = ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup") as ActionGroup
       ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).component.show(component, x, y)
+    }
+
+    private fun intersectWithArrowIcon(point: Point): Boolean {
+      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+      val bounds = tree.getRowBounds(row)
+      val icon = AllIcons.Ide.Notification.Expand
+      val iconBounds = Rectangle(0, bounds.y + (bounds.height - icon.iconHeight) / 2, icon.iconWidth, icon.iconHeight)
+
+      return iconBounds.contains(point)
     }
 
     private fun intersectWithActionIcon(point: Point): Boolean {
@@ -498,6 +513,10 @@ class RecentProjectFilteringTree(
     private fun activateItem(tree: Tree) {
       val node = tree.lastSelectedPathComponent.castSafelyTo<DefaultMutableTreeNode>() ?: return
       val item = node.userObject.castSafelyTo<RecentProjectTreeItem>() ?: return
+      activateItem(tree, item)
+    }
+
+    private fun activateItem(tree: Tree, item: RecentProjectTreeItem) {
       when (item) {
         is RecentProjectItem -> {
           val actionEvent = createActionEvent(tree)
