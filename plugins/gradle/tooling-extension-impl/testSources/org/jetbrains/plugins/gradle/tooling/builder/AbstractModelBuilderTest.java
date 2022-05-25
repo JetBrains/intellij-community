@@ -153,7 +153,7 @@ public abstract class AbstractModelBuilderTest {
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
                                                                                         ContainerUtil.<Class<?>>set(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
-      GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
+      GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false, false);
       GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
