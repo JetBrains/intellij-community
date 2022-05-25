@@ -40,12 +40,12 @@ public class SimilarityUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter imp
   }
 
   @Override
-  public @NotNull List<UsageGroup> getUsageGroupData() {
+  public @NotNull List<? extends UsageGroup> getUsageGroupData() {
     return myGroups;
   }
 
   @Override
-  public void addUsageGroupData(@NotNull List<UsageGroup> groups) {
+  public void addUsageGroupData(@NotNull List<? extends UsageGroup> groups) {
     myGroups.addAll(groups);
   }
 
