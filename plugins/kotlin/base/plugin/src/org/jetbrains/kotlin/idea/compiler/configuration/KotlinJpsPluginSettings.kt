@@ -151,7 +151,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 return
             }
 
-            val ok = KotlinArtifactsDownloader.downloadMissingJpsPluginDependencies(
+            val ok = KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
                 project = project,
                 jpsVersion = rawVersion,
                 indicator = progressIndicator,

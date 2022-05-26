@@ -54,7 +54,7 @@ object KotlinArtifactsDownloader {
      * @return **true** if all dependencies are ready
      */
     @Synchronized // Avoid manipulations with the same files from different threads
-    fun downloadMissingJpsPluginDependencies(
+    fun lazyDownloadMissingJpsPluginDependencies(
         project: Project,
         jpsVersion: String,
         indicator: ProgressIndicator,
