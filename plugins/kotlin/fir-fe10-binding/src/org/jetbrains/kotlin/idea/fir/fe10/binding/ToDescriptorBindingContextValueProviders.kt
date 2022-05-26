@@ -3,11 +3,10 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.fir.fe10.*
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -31,6 +30,8 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.TYPE_PARAMETER, this::getTypeParameter)
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.FUNCTION, this::getFunction)
         bindingContext.registerDeclarationToDescriptorByKey(BindingContext.CONSTRUCTOR, this::getConstructor)
+        bindingContext.registerDeclarationToDescriptorByKey(BindingContext.VARIABLE, this::getVariable)
+        bindingContext.registerDeclarationToDescriptorByKey(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, this::getPrimaryConstructorParameter)
 
 
         bindingContext.registerGetterByKey(BindingContext.DECLARATION_TO_DESCRIPTOR, this::getDeclarationToDescriptor)
@@ -65,6 +66,25 @@ internal class ToDescriptorBindingContextValueProviders(bindingContext: KtSymbol
         }
 
         return KtSymbolBasedConstructorDescriptor(ktConstructorSymbol, KtSymbolBasedClassDescriptor(containerClass, context))
+    }
+
+    private fun getVariable(key: PsiElement): VariableDescriptor? {
+        if (key !is KtVariableDeclaration) return null
+
+        if (key is KtProperty) {
+            val symbol = context.withAnalysisSession { key.getVariableSymbol() }
+            if (symbol !is KtPropertySymbol) context.implementationPlanned("Local property not supported: $symbol")
+            return KtSymbolBasedPropertyDescriptor(symbol, context)
+        } else {
+            context.implementationPostponed("Destruction declaration is not supported yet: $key")
+        }
+    }
+
+    private fun getPrimaryConstructorParameter(key: PsiElement): PropertyDescriptor? {
+        val parameter = key.safeAs<KtParameter>() ?: return null
+        val parameterSymbol = context.withAnalysisSession { parameter.getParameterSymbol() }
+        val propertySymbol = parameterSymbol.safeAs<KtValueParameterSymbol>()?.generatedPrimaryConstructorProperty ?: return null
+        return KtSymbolBasedPropertyDescriptor(propertySymbol, context)
     }
 
     private fun getDeclarationToDescriptor(key: PsiElement): DeclarationDescriptor? {
