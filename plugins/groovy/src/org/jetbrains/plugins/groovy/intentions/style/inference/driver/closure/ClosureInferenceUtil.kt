@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -123,7 +123,7 @@ fun extractSignature(innerParameter: PsiParameter,
   val options = arrayOptionsAttribute.mapNotNull { (it as? PsiLiteral)?.stringValue() }.toTypedArray()
   val invokedMethod = resolveResult.candidate?.method ?: return null
   val collectingSubstitutor = CollectingGroovyInferenceSession.getContextSubstitutor(resolveResult, nearestCall)
-  return hintProcessor.inferExpectedSignatures(invokedMethod, collectingSubstitutor, options).singleOrNull() ?: return null
+  return hintProcessor.inferExpectedSignatures(invokedMethod, collectingSubstitutor, options).singleOrNull()
 }
 
 fun collectClosureParamsDependencies(innerParameter: PsiParameter,

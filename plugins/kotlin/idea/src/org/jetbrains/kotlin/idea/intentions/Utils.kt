@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -88,10 +88,8 @@ val KtQualifiedExpression.callExpression: KtCallExpression?
 val KtQualifiedExpression.calleeName: String?
     get() = (callExpression?.calleeExpression as? KtNameReferenceExpression)?.text
 
-fun KtQualifiedExpression.toResolvedCall(bodyResolveMode: BodyResolveMode): ResolvedCall<out CallableDescriptor>? {
-    val callExpression = callExpression ?: return null
-    return callExpression.resolveToCall(bodyResolveMode) ?: return null
-}
+fun KtQualifiedExpression.toResolvedCall(bodyResolveMode: BodyResolveMode): ResolvedCall<out CallableDescriptor>? =
+    callExpression?.resolveToCall(bodyResolveMode)
 
 fun KtExpression.isExitStatement(): Boolean = when (this) {
     is KtContinueExpression, is KtBreakExpression, is KtThrowExpression, is KtReturnExpression -> true

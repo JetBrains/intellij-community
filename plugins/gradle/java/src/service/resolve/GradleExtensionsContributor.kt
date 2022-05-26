@@ -41,7 +41,7 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
       val project = psiElement.project
       val virtualFile = psiElement.containingFile?.originalFile?.virtualFile ?: return null
       val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile)
-      return GradleExtensionsSettings.getInstance(project).getExtensionsFor(module) ?: return null
+      return GradleExtensionsSettings.getInstance(project).getExtensionsFor(module)
     }
   }
 }
