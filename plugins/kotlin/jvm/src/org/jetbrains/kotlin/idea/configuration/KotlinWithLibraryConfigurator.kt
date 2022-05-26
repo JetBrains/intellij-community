@@ -365,7 +365,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         RepositoryAddLibraryAction.addLibraryToModule(
             RepositoryLibraryDescription.findDescription(libraryJarDescriptor.repositoryLibraryProperties),
             module,
-            kotlinStdlibVersion ?: KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion,
+            kotlinStdlibVersion ?: KotlinPluginLayout.standaloneCompilerVersion.artifactVersion,
             scope,
             /* downloadSources = */ true,
             /* downloadJavaDocs = */ true

@@ -61,7 +61,7 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
         get() = RepositoryLibraryProperties(
             KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
             mavenArtifactId,
-            KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion,
+            KotlinPluginLayout.standaloneCompilerVersion.artifactVersion,
             true,
             emptyList()
         )

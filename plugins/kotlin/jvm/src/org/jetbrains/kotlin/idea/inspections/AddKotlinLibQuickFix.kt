@@ -35,7 +35,7 @@ class AddReflectionQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, 
     override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor.create(
         "org.jetbrains.kotlin",
         "kotlin-reflect",
-        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion
     )
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -54,7 +54,7 @@ class AddScriptRuntimeQuickFix(element: KtElement) : AddKotlinLibQuickFix(
     override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor.create(
         "org.jetbrains.kotlin",
         "kotlin-script-runtime",
-        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion
     )
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -71,7 +71,7 @@ class AddTestLibQuickFix(element: KtElement) : AddKotlinLibQuickFix(element, Lib
     override fun getLibraryDescriptor(module: Module) = MavenExternalLibraryDescriptor.create(
         "org.jetbrains.kotlin",
         "kotlin-test",
-        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+        getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion
     )
 
     companion object : KotlinSingleIntentionActionFactory() {

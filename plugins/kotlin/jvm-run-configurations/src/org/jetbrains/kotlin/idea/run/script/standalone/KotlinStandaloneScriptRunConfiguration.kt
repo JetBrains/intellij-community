@@ -171,7 +171,7 @@ private class ScriptCommandLineState(
         params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
         params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(filePath))
         params.programParametersList.prepend("-script")
-        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinPluginLayout.instance.kotlinc.absolutePath))
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinPluginLayout.kotlinc.absolutePath))
         params.programParametersList.prepend("-kotlin-home")
 
         val module = scriptVFile.module(environment.project)

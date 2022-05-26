@@ -32,7 +32,7 @@ object KotlinTestUtils {
 
     @JvmStatic
     fun runTest(test: DoTest, testCase: TestCase, @TestDataFile testDataFile: String) {
-        KotlinPluginLayout.instance.kotlinc // to initialize dist
+        KotlinPluginLayout.kotlinc // to initialize dist
         withSystemProperty("jps.testData.js-ir-runtime", AdditionalKotlinArtifacts.jsIrRuntimeDir.absolutePath) {
             KotlinTestUtils.runTest(test, testCase, testDataFile)
         }

@@ -98,7 +98,7 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
 
                 answer.createActionLabel(actionLabelText) {
                     ApplicationManager.getApplication().invokeLater {
-                        val newArtifactVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion
+                        val newArtifactVersion = KotlinPluginLayout.standaloneCompilerVersion.artifactVersion
                         updateLibraries(project, newArtifactVersion, badRuntimeLibraries)
                     }
                 }

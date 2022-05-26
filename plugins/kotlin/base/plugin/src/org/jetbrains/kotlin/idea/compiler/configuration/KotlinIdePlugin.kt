@@ -33,13 +33,13 @@ object KotlinIdePlugin {
     val isSnapshot: Boolean
 
     val isRelease: Boolean
-        get() = !isSnapshot && KotlinPluginLayout.instance.standaloneCompilerVersion.isRelease
+        get() = !isSnapshot && KotlinPluginLayout.standaloneCompilerVersion.isRelease
 
     val isPreRelease: Boolean
         get() = !isRelease
 
     val isDev: Boolean
-        get() = !isSnapshot && KotlinPluginLayout.instance.standaloneCompilerVersion.isDev
+        get() = !isSnapshot && KotlinPluginLayout.standaloneCompilerVersion.isDev
 
     fun getPluginDescriptor(): IdeaPluginDescriptor = PluginManagerCore.getPlugin(id) ?: error("Kotlin IDE plugin ($id) disappeared")
 

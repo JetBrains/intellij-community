@@ -21,7 +21,7 @@ private const val noArgAnnotationName = "HelloNoArg"
 class TestNoArgForLightClass : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinProjectDescriptorWithFacet(KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion, multiPlatform = false)
+        KotlinProjectDescriptorWithFacet(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, multiPlatform = false)
 
     override fun setUp() {
         super.setUp()

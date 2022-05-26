@@ -37,7 +37,7 @@ object KotlinArtifactConstants {
 }
 
 object KotlinArtifacts {
-    private val kotlincLibDirectory: File = File(KotlinPluginLayout.instance.kotlinc, "lib")
+    private val kotlincLibDirectory: File = File(KotlinPluginLayout.kotlinc, "lib")
 
     @JvmStatic
     val jetbrainsAnnotations: File = File(kotlincLibDirectory, KotlinArtifactNames.JETBRAINS_ANNOTATIONS)

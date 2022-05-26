@@ -335,7 +335,7 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     if (languageVersion != null || apiVersion != null || jvmTarget != null || options != null) {
         configureLanguageAndApiVersion(
             project, module,
-            languageVersion ?: KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion,
+            languageVersion ?: KotlinPluginLayout.standaloneCompilerVersion.languageVersion,
             apiVersion
         )
 
@@ -417,7 +417,7 @@ fun runAll(
 private fun rollbackCompilerOptions(project: Project, module: Module, removeFacet: Boolean) {
     KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = DEFAULT_ADDITIONAL_ARGUMENTS }
 
-    val bundledKotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+    val bundledKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
 
     KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
         this.languageVersion = bundledKotlinVersion.languageVersion.versionString
@@ -457,7 +457,7 @@ fun withCustomLanguageAndApiVersion(
     try {
         body()
     } finally {
-        val bundledCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+        val bundledCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
 
         if (removeFacet) {
             KotlinCommonCompilerArgumentsHolder.getInstance(project)

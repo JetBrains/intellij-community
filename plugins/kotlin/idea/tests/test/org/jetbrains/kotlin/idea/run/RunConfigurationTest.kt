@@ -52,7 +52,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
         configureProject()
         val configuredModule = defaultConfiguredModule
 
-        val languageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        val languageVersion = KotlinPluginLayout.standaloneCompilerVersion.languageVersion
         withCustomLanguageAndApiVersion(project, module, languageVersion, apiVersion = null) {
             val runConfiguration = createConfigurationFromMain(project, "some.main")
             val javaParameters = getJavaRunParameters(runConfiguration)

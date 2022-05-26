@@ -156,7 +156,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         public static Collection<String> loadVersions(String minimumVersion) throws Exception {
         List<String> versions = new ArrayList<>();
 
-        IdeKotlinVersion kotlinCompilerVersion = KotlinPluginLayout.getInstance().getStandaloneCompilerVersion();
+        IdeKotlinVersion kotlinCompilerVersion = KotlinPluginLayout.getStandaloneCompilerVersion();
         String kotlinArtifactVersion = kotlinCompilerVersion.getArtifactVersion();
 
         RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(kotlinCompilerVersion);

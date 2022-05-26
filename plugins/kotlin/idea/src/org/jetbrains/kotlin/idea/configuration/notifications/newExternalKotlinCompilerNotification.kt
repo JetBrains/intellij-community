@@ -34,11 +34,11 @@ class ExternalKotlinCompilerProjectDataImportListener(private val project: Proje
 
 @RequiresBackgroundThread
 fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
-    val bundledCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+    val bundledCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
     if (!bundledCompilerVersion.isRelease) return
 
     fun findExternalVersion() =
-        (findLatestExternalKotlinCompilerVersion(project) ?: KotlinPluginLayout.instance.standaloneCompilerVersion).kotlinVersion
+        (findLatestExternalKotlinCompilerVersion(project) ?: KotlinPluginLayout.standaloneCompilerVersion).kotlinVersion
 
     val bundledKotlinVersion = bundledCompilerVersion.kotlinVersion
     if (!newExternalKotlinCompilerShouldBePromoted(bundledKotlinVersion, ::findExternalVersion)) return

@@ -15,7 +15,7 @@ import java.time.LocalDate
 internal fun showEapSurveyNotification(project: Project) {
     if (LocalDate.now() > LocalDate.of(/* year = */ 2022, /* month = */ 5, /* dayOfMonth = */ 8)) return
 
-    val compilerVersion = KotlinPluginLayout.instance.ideCompilerVersion
+    val compilerVersion = KotlinPluginLayout.ideCompilerVersion
     if (compilerVersion.kotlinVersion != KotlinVersion(major = 1, minor = 7, patch = 0)) return
     if (compilerVersion.kind != IdeKotlinVersion.Kind.Beta(number = 1)) return
 

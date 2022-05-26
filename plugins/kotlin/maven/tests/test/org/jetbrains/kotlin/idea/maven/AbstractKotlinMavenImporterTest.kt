@@ -2076,7 +2076,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             with(facetSettings("myModule3")) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-                Assert.assertEquals(KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion, languageLevel)
+                Assert.assertEquals(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, languageLevel)
                 Assert.assertEquals(LanguageVersion.KOTLIN_1_1, apiLevel)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals(
@@ -3425,7 +3425,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 }
 
 fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
-    val kotlincDirectory = KotlinPluginLayout.instance.kotlinc
+    val kotlincDirectory = KotlinPluginLayout.kotlinc
     require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
     return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(kotlincDirectory)}"
 }

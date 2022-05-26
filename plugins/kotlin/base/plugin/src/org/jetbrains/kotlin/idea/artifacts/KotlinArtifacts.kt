@@ -15,7 +15,7 @@ class KotlinArtifacts private constructor(val kotlincDirectory: File) {
         @get:JvmStatic
         @Deprecated("Use 'org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts' instead")
         val instance: KotlinArtifacts by lazy {
-            KotlinArtifacts(KotlinPluginLayout.instance.kotlinc)
+            KotlinArtifacts(KotlinPluginLayout.kotlinc)
         }
     }
 

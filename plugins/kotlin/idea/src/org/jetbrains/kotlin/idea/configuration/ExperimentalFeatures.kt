@@ -83,7 +83,7 @@ class ExperimentalFeaturesPanel : JPanel(VerticalLayout(5)) {
 
     companion object {
         fun shouldBeShown(): Boolean {
-            val kotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+            val kotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
             return kotlinVersion.isPreRelease && kotlinVersion.kind !is IdeKotlinVersion.Kind.ReleaseCandidate
         }
     }

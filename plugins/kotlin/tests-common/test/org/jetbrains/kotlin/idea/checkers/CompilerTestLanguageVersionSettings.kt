@@ -74,13 +74,13 @@ fun parseLanguageVersionSettings(directives: Directives): CompilerTestLanguageVe
     }
 
     val apiVersion = when (apiVersionString) {
-        null -> KotlinPluginLayout.instance.standaloneCompilerVersion.apiVersion
+        null -> KotlinPluginLayout.standaloneCompilerVersion.apiVersion
         "LATEST" -> ApiVersion.LATEST
         else -> ApiVersion.parse(apiVersionString) ?: error("Unknown API version: $apiVersionString")
     }
 
     val languageVersion = maxOf(
-        KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion,
+        KotlinPluginLayout.standaloneCompilerVersion.languageVersion,
         LanguageVersion.fromVersionString(apiVersion.versionString)!!
     )
 
@@ -90,7 +90,7 @@ fun parseLanguageVersionSettings(directives: Directives): CompilerTestLanguageVe
 }
 
 fun defaultLanguageVersionSettings(): CompilerTestLanguageVersionSettings {
-    val bundledKotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+    val bundledKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
     return CompilerTestLanguageVersionSettings(
         initialLanguageFeatures = emptyMap(),
         bundledKotlinVersion.apiVersion,

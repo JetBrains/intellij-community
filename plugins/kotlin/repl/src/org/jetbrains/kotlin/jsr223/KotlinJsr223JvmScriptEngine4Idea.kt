@@ -34,7 +34,7 @@ class KotlinJsr223JvmScriptEngine4Idea(
 ) : KotlinJsr223JvmScriptEngineBase(factory) {
 
     private val daemon by lazy {
-        val libPath = KotlinPathsFromHomeDir(KotlinPluginLayout.instance.kotlinc)
+        val libPath = KotlinPathsFromHomeDir(KotlinPluginLayout.kotlinc)
         val classPath = libPath.classPath(KotlinPaths.ClassPaths.CompilerWithScripting)
         assert(classPath.all { it.toPath().exists() })
         val compilerId = CompilerId.makeCompilerId(classPath)

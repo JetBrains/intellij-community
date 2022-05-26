@@ -59,7 +59,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     public void testNewLibrary() {
         doTestSingleJvmModule();
 
-        String kotlinVersion = KotlinPluginLayout.getInstance().getStandaloneCompilerVersion().getArtifactVersion();
+        String kotlinVersion = KotlinPluginLayout.getStandaloneCompilerVersion().getArtifactVersion();
 
         ModuleRootManager.getInstance(getModule()).orderEntries().forEachLibrary(library -> {
             assertSameElements(
@@ -159,7 +159,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     public void testProjectWithFacetWithRuntime11WithLanguageLevel10() {
         assertEquals(LanguageVersion.KOTLIN_1_0, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
         assertEquals(
-                KotlinPluginLayout.getInstance().getStandaloneCompilerVersion().getLanguageVersion(),
+                KotlinPluginLayout.getStandaloneCompilerVersion().getLanguageVersion(),
                 LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(myProject).getLanguageVersion()
         );
     }

@@ -42,7 +42,7 @@ class LazyKotlinJpsPluginClasspathDownloader(private val version: String) :
 
     fun getDownloadedIfUpToDateOrEmpty() =
         if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) {
-            KotlinPluginLayout.instance.jpsPluginClasspath
+            KotlinPluginLayout.jpsPluginClasspath
         } else {
             newDownloader.getDownloadedIfUpToDateOrEmpty().takeIf { it.isNotEmpty() }
                 ?: oldDownloader?.getDownloadedIfUpToDateOrEmpty()

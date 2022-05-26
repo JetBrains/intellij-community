@@ -54,7 +54,7 @@ class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDe
 
     private inner class MyVisitor : VersionFinder() {
         override fun onFound(kotlinPluginVersion: IdeKotlinVersion, kotlinPluginStatement: GrCallExpression) {
-            val latestSupportedLanguageVersion = KotlinPluginLayout.instance.ideCompilerVersion.languageVersion
+            val latestSupportedLanguageVersion = KotlinPluginLayout.ideCompilerVersion.languageVersion
             val projectLanguageVersion = kotlinPluginVersion.languageVersion
 
             if (latestSupportedLanguageVersion < projectLanguageVersion || projectLanguageVersion < LanguageVersion.FIRST_SUPPORTED) {

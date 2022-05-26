@@ -46,7 +46,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val propertyKey = LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
         val propertiesComponent = PropertiesComponent.getInstance()
 
-        val kotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+        val kotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
         val notificationText = KotlinBundle.message(
             "kotlin.external.compiler.updates.notification.content.0",
             kotlinVersion.kotlinVersion,

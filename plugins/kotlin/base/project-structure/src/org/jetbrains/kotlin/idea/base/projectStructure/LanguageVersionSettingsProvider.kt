@@ -95,7 +95,7 @@ class LanguageVersionSettingsProvider(private val project: Project) {
         val arguments = KotlinCommonCompilerArgumentsHolder.getInstance(project).settings
 
         val languageVersion = LanguageVersion.fromVersionString(arguments.languageVersion)
-            ?: KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+            ?: KotlinPluginLayout.standaloneCompilerVersion.languageVersion
 
         val languageVersionForApiVersion = LanguageVersion.fromVersionString(arguments.apiVersion) ?: languageVersion
         val apiVersion = ApiVersion.createByLanguageVersion(languageVersionForApiVersion)
@@ -183,7 +183,7 @@ class LanguageVersionSettingsProvider(private val project: Project) {
 
             val kotlinVersion = LanguageVersion.fromVersionString(arguments.languageVersion)?.toKotlinVersion()
                 ?: settings.languageLevel?.toKotlinVersion()
-                ?: KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion
+                ?: KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion
 
             // TODO definitely wrong implementation, merge state properly
             analysisFlags[JvmAnalysisFlags.javaTypeEnhancementState] =

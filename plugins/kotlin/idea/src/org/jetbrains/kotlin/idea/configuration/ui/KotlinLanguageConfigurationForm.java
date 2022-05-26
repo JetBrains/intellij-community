@@ -46,7 +46,7 @@ public class KotlinLanguageConfigurationForm {
             currentVersion.setText(pluginVersion);
         }
 
-        currentAnalyzerVersion.setText(KotlinPluginLayout.getInstance().getIdeCompilerVersion().getRawVersion());
+        currentAnalyzerVersion.setText(KotlinPluginLayout.getIdeCompilerVersion().getRawVersion());
 
         currentVersion.setBackground(pluginVersionPanel.getBackground());
         currentAnalyzerVersion.setBackground(analyzerVersionPanel.getBackground());

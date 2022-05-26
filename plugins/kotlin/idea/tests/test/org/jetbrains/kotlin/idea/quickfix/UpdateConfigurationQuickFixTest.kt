@@ -91,7 +91,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals("1.1", KotlinCommonCompilerArgumentsHolder.getInstance(project).settings.apiVersion)
 
         val actualVersion = getRuntimeLibraryVersion(myFixture.module)?.kotlinVersion
-        assertEquals(KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion, actualVersion)
+        assertEquals(KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion, actualVersion)
     }
 
     fun testIncreaseLangLevelFacet_10() {
@@ -108,7 +108,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         assertEquals(LanguageVersion.KOTLIN_1_1, module.languageVersionSettings.languageVersion)
 
         val actualVersion = getRuntimeLibraryVersion(myFixture.module)
-        assertEquals(KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion, actualVersion?.artifactVersion)
+        assertEquals(KotlinPluginLayout.standaloneCompilerVersion.artifactVersion, actualVersion?.artifactVersion)
     }
 
     fun testAddKotlinReflect() {
@@ -135,7 +135,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
         val sources = kotlinRuntime!!.getFiles(OrderRootType.SOURCES)
         assertContainsElements(
             sources.map { it.name },
-            "kotlin-reflect-${KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion}-sources.jar"
+            "kotlin-reflect-${KotlinPluginLayout.standaloneCompilerVersion.artifactVersion}-sources.jar"
         )
     }
 
@@ -174,7 +174,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { resetProjectSettings(KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion) },
+            ThrowableRunnable { resetProjectSettings(KotlinPluginLayout.standaloneCompilerVersion.languageVersion) },
             ThrowableRunnable {
                 FacetManager.getInstance(module).getFacetByType(KotlinFacetType.TYPE_ID)?.let {
                     FacetUtil.deleteFacet(it)

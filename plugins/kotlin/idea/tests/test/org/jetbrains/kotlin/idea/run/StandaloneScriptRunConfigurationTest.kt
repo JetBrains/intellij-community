@@ -62,7 +62,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         val programParametersList = javaParameters.programParametersList.list
 
         programParametersList.checkParameter("-script") { it.contains("simpleScript.kts") }
-        programParametersList.checkParameter("-kotlin-home") { it == KotlinPluginLayout.instance.kotlinc.absolutePath }
+        programParametersList.checkParameter("-kotlin-home") { it == KotlinPluginLayout.kotlinc.absolutePath }
 
         Assert.assertTrue(!programParametersList.contains("-cp"))
 

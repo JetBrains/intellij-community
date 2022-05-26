@@ -44,7 +44,7 @@ class KotlinProjectDescriptorWithFacet(
         val KOTLIN_10 = KotlinProjectDescriptorWithFacet(LanguageVersion.KOTLIN_1_0)
         val KOTLIN_11 = KotlinProjectDescriptorWithFacet(LanguageVersion.KOTLIN_1_1)
         val KOTLIN_STABLE_WITH_MULTIPLATFORM =
-            KotlinProjectDescriptorWithFacet(KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion, multiPlatform = true)
+            KotlinProjectDescriptorWithFacet(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, multiPlatform = true)
     }
 }
 

@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.maven.PomFile
 
 class DifferentKotlinMavenVersionInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java),
     PluginVersionDependentInspection {
-    private val idePluginVersion by lazy { KotlinPluginLayout.instance.ideCompilerVersion.languageVersion }
+    private val idePluginVersion by lazy { KotlinPluginLayout.ideCompilerVersion.languageVersion }
 
     override var testVersionMessage: String? = null
         @TestOnly set

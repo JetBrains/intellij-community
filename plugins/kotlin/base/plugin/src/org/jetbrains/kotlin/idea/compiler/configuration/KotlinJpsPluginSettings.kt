@@ -39,7 +39,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         val rawBundledVersion: String get() = bundledVersion.rawVersion
 
         @JvmStatic
-        val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.instance.standaloneCompilerVersion
+        val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.standaloneCompilerVersion
 
         @JvmStatic
         val jpsMinimumSupportedVersion: KotlinVersion = IdeKotlinVersion.get("1.5.10").kotlinVersion

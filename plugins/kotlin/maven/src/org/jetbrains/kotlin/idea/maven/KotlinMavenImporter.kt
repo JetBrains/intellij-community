@@ -284,7 +284,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     )
 
     private val MavenPlugin.compilerVersion: IdeKotlinVersion
-        get() = version?.let(IdeKotlinVersion::opt) ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+        get() = version?.let(IdeKotlinVersion::opt) ?: KotlinPluginLayout.standaloneCompilerVersion
 
     private fun MavenProject.findKotlinMavenPlugin(): MavenPlugin? = findPlugin(
         KotlinMavenConfigurator.GROUP_ID,

@@ -46,7 +46,7 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
         private const val KOTLIN_COMPILER_VERSION_TAG = "kotlin.compiler.version"
 
         private fun getKotlinVersionFromCompiler(): Version? {
-            val kotlinCompilerVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+            val kotlinCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
             val kotlinArtifactVersion = kotlinCompilerVersion.takeUnless { it.isSnapshot }?.artifactVersion ?: return null
             return Version.fromString(kotlinArtifactVersion)
         }

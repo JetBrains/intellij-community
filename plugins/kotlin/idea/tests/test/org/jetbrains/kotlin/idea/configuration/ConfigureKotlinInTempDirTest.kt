@@ -154,7 +154,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     fun testNoKotlincExistsNoSettingsLatestRuntime() {
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
-        val expectedLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        val expectedLanguageVersion = KotlinPluginLayout.standaloneCompilerVersion.languageVersion
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(expectedLanguageVersion, myProject.languageVersionSettings.languageVersion)
         application.saveAll()
@@ -164,7 +164,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
-        val expectedLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+        val expectedLanguageVersion = KotlinPluginLayout.standaloneCompilerVersion.languageVersion
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(expectedLanguageVersion, myProject.languageVersionSettings.languageVersion)
         KotlinCommonCompilerArgumentsHolder.getInstance(project).update {

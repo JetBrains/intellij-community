@@ -37,7 +37,7 @@ class KotlinPluginLayoutTest : UsefulTestCase() {
             Computable {
                 KotlinArtifactsDownloader.downloadMavenArtifacts(
                     @Suppress("DEPRECATION") OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-                    KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion,
+                    KotlinPluginLayout.standaloneCompilerVersion.rawVersion,
                     myFixture.project,
                     ProgressManager.getInstance().progressIndicator,
                     additionalMavenRepos = listOf(

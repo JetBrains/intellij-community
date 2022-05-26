@@ -36,7 +36,7 @@ internal class KotlinBundledRefresher : StartupActivity.DumbAware {
 
         if (KotlinIdePlugin.version != installedKotlinVersion) {
             // Force refresh jar handlers
-            requestKotlinDistRefresh(KotlinPluginLayout.instance.kotlinc.toPath())
+            requestKotlinDistRefresh(KotlinPluginLayout.kotlinc.toPath())
 
             propertiesComponent.setValue(INSTALLED_KOTLIN_VERSION, KotlinIdePlugin.version)
         }

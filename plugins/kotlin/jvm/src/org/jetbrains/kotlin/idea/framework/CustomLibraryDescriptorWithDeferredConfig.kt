@@ -53,7 +53,7 @@ abstract class CustomLibraryDescriptorWithDeferredConfig(
 
         if (isNewProject) {
             KotlinCommonCompilerArgumentsHolder.getInstance(module.project).update {
-                val bundledLanguageVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.languageVersion
+                val bundledLanguageVersion = KotlinPluginLayout.standaloneCompilerVersion.languageVersion
                 languageVersionView = VersionView.Specific(bundledLanguageVersion)
                 apiVersionView = VersionView.Specific(bundledLanguageVersion)
             }

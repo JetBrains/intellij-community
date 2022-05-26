@@ -121,7 +121,7 @@ class KotlinConsoleKeeper(val project: Project) {
 
             with(javaParameters.programParametersList) {
                 add("-kotlin-home")
-                val kotlinHome = KotlinPluginLayout.instance.kotlinc
+                val kotlinHome = KotlinPluginLayout.kotlinc
                 check(kotlinHome.exists()) { "Kotlin compiler is not found" }
                 add(CompositeParameterTargetedValue().addPathPart(kotlinHome.toPath().absolutePathString()))
             }

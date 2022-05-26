@@ -21,7 +21,7 @@ class KotlinMigrationProjectService(val project: Project) : Disposable {
 
     private fun updateState(languageVersion: LanguageVersion?, apiVersion: ApiVersion?) {
         val newState = if (languageVersion == null || apiVersion == null) {
-            val bundledKotlinVersion = KotlinPluginLayout.instance.standaloneCompilerVersion
+            val bundledKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
             MigrationState(
                 languageVersion = languageVersion ?: bundledKotlinVersion.languageVersion,
                 apiVersion = apiVersion ?: bundledKotlinVersion.apiVersion,

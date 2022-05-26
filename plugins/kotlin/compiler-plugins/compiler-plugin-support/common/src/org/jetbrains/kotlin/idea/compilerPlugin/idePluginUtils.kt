@@ -24,7 +24,7 @@ class CompilerPluginSetup(val options: List<PluginOption>, val classpath: List<S
 }
 
 fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
-    val kotlincDirectory = KotlinPluginLayout.instance.kotlinc
+    val kotlincDirectory = KotlinPluginLayout.kotlinc
     require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
     return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(kotlincDirectory)}"
 }

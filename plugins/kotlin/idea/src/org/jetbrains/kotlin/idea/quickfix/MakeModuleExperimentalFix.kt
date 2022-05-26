@@ -39,7 +39,7 @@ open class MakeModuleExperimentalFix(
 
     private val experimentalPrefix = when {
         module.toDescriptor()?.annotationExists(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == false -> "-Xuse-experimental"
-        KotlinPluginLayout.instance.standaloneCompilerVersion.kotlinVersion.isAtLeast(1, 6, 0) -> "-opt-in"
+        KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion.isAtLeast(1, 6, 0) -> "-opt-in"
         else -> "-Xopt-in"
     }
 

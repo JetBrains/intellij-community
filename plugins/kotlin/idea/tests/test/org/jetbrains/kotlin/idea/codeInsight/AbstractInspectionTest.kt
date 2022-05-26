@@ -109,7 +109,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
 
                         file.extension == "gradle" -> {
                             val text = FileUtil.loadFile(file, true)
-                            val kgpArtifactVersion = KotlinPluginLayout.instance.standaloneCompilerVersion.artifactVersion
+                            val kgpArtifactVersion = KotlinPluginLayout.standaloneCompilerVersion.artifactVersion
                             val fileText = text.replace("\$PLUGIN_VERSION", kgpArtifactVersion)
                             configureByText(file.name, fileText)!!
                         }

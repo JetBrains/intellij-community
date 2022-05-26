@@ -69,7 +69,7 @@ fun getDefaultVersion(
         .addReleaseVersionIfNecessary(coerceRuntimeLibraryVersionToReleased)
         .minOrNull()
 
-    return libVersion ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+    return libVersion ?: KotlinPluginLayout.standaloneCompilerVersion
 }
 
 fun getDefaultLanguageLevel(
@@ -79,7 +79,7 @@ fun getDefaultLanguageLevel(
 ): LanguageVersion = getDefaultVersion(module, explicitVersion, coerceRuntimeLibraryVersionToReleased).languageVersion
 
 private fun Iterable<IdeKotlinVersion>.addReleaseVersionIfNecessary(shouldAdd: Boolean): Iterable<IdeKotlinVersion> =
-    if (shouldAdd) this + KotlinPluginLayout.instance.standaloneCompilerVersion else this
+    if (shouldAdd) this + KotlinPluginLayout.standaloneCompilerVersion else this
 
 fun getRuntimeLibraryVersion(module: Module): IdeKotlinVersion? {
     val settingsProvider = KotlinFacetSettingsProvider.getInstance(module.project) ?: return null
@@ -89,5 +89,5 @@ fun getRuntimeLibraryVersion(module: Module): IdeKotlinVersion? {
 }
 
 fun getRuntimeLibraryVersionOrDefault(module: Module): IdeKotlinVersion {
-    return getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.instance.standaloneCompilerVersion
+    return getRuntimeLibraryVersion(module) ?: KotlinPluginLayout.standaloneCompilerVersion
 }
