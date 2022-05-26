@@ -4,16 +4,16 @@ package org.jetbrains.kotlin.idea.jps
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClasspathDownloader
 
 class KotlinJpsClasspathProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getClassPath(): List<String> {
         val jpsPluginClasspath = KotlinJpsPluginSettings.jpsVersion(project)
-            ?.let { KotlinArtifactsDownloader.getKotlinJpsPluginJarPath(it) }
-            ?: KotlinPluginLayout.instance.jpsPluginJar
+            ?.let { LazyKotlinJpsPluginClasspathDownloader(it).getDownloadedIfUpToDateOrEmpty() }
+            ?: KotlinPluginLayout.instance.jpsPluginClasspath
 
-        return listOf(jpsPluginClasspath.canonicalPath, PathUtil.getJarPathForClass(com.intellij.util.PathUtil::class.java))
+        return jpsPluginClasspath.map { it.canonicalPath } + listOf(PathUtil.getJarPathForClass(com.intellij.util.PathUtil::class.java))
     }
 }

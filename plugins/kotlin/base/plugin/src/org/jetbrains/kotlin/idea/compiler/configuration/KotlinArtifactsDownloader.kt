@@ -13,13 +13,14 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_LOCATION_PREFIX
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_KOTLIN_DIST_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.LazyZipUnpacker
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
+import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
@@ -49,39 +50,27 @@ object KotlinArtifactsDownloader {
                 } ?: false
     }
 
-    fun getKotlinJpsPluginJarPath(version: String): File {
-        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
-            return KotlinPluginLayout.instance.jpsPluginJar
-        }
-
-        return KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version).toFile()
-    }
-
     /**
      * @return **true** if all dependencies are ready
      */
+    @Synchronized // Avoid manipulations with the same files from different threads
     fun downloadMissingJpsPluginDependencies(
         project: Project,
         jpsVersion: String,
         indicator: ProgressIndicator,
         onError: (String) -> Unit,
     ): Boolean {
-        lazyDownloadMavenArtifact(
-            project,
-            KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-            jpsVersion,
-            indicator,
-            KotlinBasePluginBundle.message("progress.text.downloading.kotlin.jps.plugin"),
-        ) ?: return false.also {
+        val context = LazyKotlinJpsPluginClasspathDownloader.Context(project, indicator)
+        val jpsPluginClasspath = LazyKotlinJpsPluginClasspathDownloader(jpsVersion).lazyDownload(context)
+        if (jpsPluginClasspath.isEmpty()) {
             onError(failedToDownloadMavenArtifact(project, KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, jpsVersion))
+            return false
         }
 
-        lazyDownloadAndUnpackKotlincDist(
-            project,
-            jpsVersion,
-            indicator,
-        ) ?: return false.also {
+        val unpackedDist = lazyDownloadAndUnpackKotlincDist(project, jpsVersion, indicator)
+        if (unpackedDist == null) {
             onError(failedToDownloadMavenArtifact(project, KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, jpsVersion))
+            return false
         }
 
         return true
@@ -91,11 +80,7 @@ object KotlinArtifactsDownloader {
      * @see isKotlinDistInitialized
      */
     @Synchronized // Avoid manipulations with the same files from different threads
-    fun lazyDownloadAndUnpackKotlincDist(
-        project: Project,
-        version: String,
-        indicator: ProgressIndicator,
-    ): File? {
+    fun lazyDownloadAndUnpackKotlincDist(project: Project, version: String, indicator: ProgressIndicator): File? {
         val parsedVersion = IdeKotlinVersion.get(version)
         if (parsedVersion == KotlinPluginLayout.instance.standaloneCompilerVersion) {
             return KotlinPluginLayout.instance.kotlinc
@@ -108,35 +93,29 @@ object KotlinArtifactsDownloader {
         }
 
         val indicatorDownloadText = KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist")
-        val context = LazyKotlinMavenArtifactDownloader.DownloadContext(project, indicator, indicatorDownloadText)
-        return getLazyDistDownloaderAndUnpacker(version).lazyProduceDist(context)
+        return getLazyDistDownloaderAndUnpacker(version).lazyProduceDist(DownloadContext(project, indicator, indicatorDownloadText))
             ?: getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
                 // Fallback to old "all-in-one jar" artifact (old "all-in-one jar" is available only for Kotlin < 1.7.20)
-                lazyDownloadMavenArtifact(project, OLD_KOTLIN_DIST_ARTIFACT_ID, version, indicator, indicatorDownloadText)?.let {
+                lazyDownloadOldKotlinDistMavenArtifact(project, version, indicator, indicatorDownloadText)?.let {
                     unpacker.lazyUnpack(it)
                 }
             }
     }
 
     @Synchronized // Avoid manipulations with the same files from different threads
-    fun lazyDownloadMavenArtifact(
+    private fun lazyDownloadOldKotlinDistMavenArtifact(
         project: Project,
-        artifactId: String,
         version: String,
         indicator: ProgressIndicator,
         @Nls indicatorDownloadText: String,
     ): File? {
-        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion &&
-            artifactId == KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
-        ) {
-            return KotlinPluginLayout.instance.jpsPluginJar
-        }
-        fun getExpectedMavenArtifactPath() = KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version)?.toFile()
+        fun getExpectedMavenArtifactPath() =
+            KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, OLD_KOTLIN_DIST_ARTIFACT_ID, version)?.toFile()
         getExpectedMavenArtifactPath()?.takeIf { it.exists() }?.let {
             return it
         }
         indicator.text = indicatorDownloadText
-        val artifacts = downloadMavenArtifacts(artifactId, version, project, indicator)
+        val artifacts = downloadMavenArtifacts(OLD_KOTLIN_DIST_ARTIFACT_ID, version, project, indicator)
         if (artifacts.isEmpty()) {
             return null
         }
@@ -155,6 +134,7 @@ object KotlinArtifactsDownloader {
         project: Project,
         indicator: ProgressIndicator,
         artifactIsPom: Boolean = false,
+        additionalMavenRepos: List<RemoteRepositoryDescription> = emptyList(),
     ): List<File> {
         check(isUnitTestMode() || !EventQueue.isDispatchThread()) {
             "Don't call downloadMavenArtifact on UI thread"
@@ -165,7 +145,7 @@ object KotlinArtifactsDownloader {
             /* includeTransitiveDependencies = */ true,
         )
 
-        val repos = getMavenRepos(project)
+        val repos = getMavenRepos(project) + additionalMavenRepos
         val downloadedArtifacts =
             JarRepositoryManager.loadDependenciesSync(project, prop, false, false, null, repos, indicator)
 
@@ -174,6 +154,7 @@ object KotlinArtifactsDownloader {
 
     private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =
         if (isAllInOneOldFormatDistFormatAvailable(version)) LazyZipUnpacker(getUnpackedKotlinDistPath(version.rawVersion)) else null
+
     private fun getLazyDistDownloaderAndUnpacker(version: String) = LazyKotlincDistDownloaderAndUnpacker(version)
 
     /**

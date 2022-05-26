@@ -31,6 +31,7 @@ class LazyKotlinMavenArtifactDownloader(
 
     fun getDownloadedIfUpToDateOrEmpty() = getOutputIfUpToDateOrEmpty(Unit)
     fun lazyDownload(downloadContext: DownloadContext) = lazyProduceOutput(Unit, downloadContext)
+    fun isUpToDate() = isUpToDate(Unit)
 
     data class DownloadContext(
         val project: Project,

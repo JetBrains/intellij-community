@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.artifacts.*
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import java.io.File
@@ -24,9 +25,9 @@ sealed class KotlinPluginLayout {
     abstract val kotlinc: File
 
     /**
-     * Location of the JPS plugin, compatible with the bundled Kotlin compiler distribution.
+     * Location of the JPS plugin and all its dependencies jars
      */
-    abstract val jpsPluginJar: File
+    abstract val jpsPluginClasspath: List<File>
 
     /**
      * Version of the stand-alone compiler (artifacts in the 'kotlinc/' directory of the Kotlin plugin).
@@ -66,6 +67,10 @@ sealed class KotlinPluginLayout {
             assert(layout.standaloneCompilerVersion <= layout.ideCompilerVersion)
             return@lazy layout
         }
+
+        val KOTLIN_JPS_PLUGIN_CLASSPATH = listOf(
+            "lib/jps/kotlin-jps-plugin.jar" to KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+        )
     }
 }
 
@@ -75,7 +80,10 @@ private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot
     }
 
     override val kotlinc: File by lazy { resolve("kotlinc") }
-    override val jpsPluginJar: File by lazy { resolve("lib/jps/kotlin-jps-plugin.jar") }
+
+    override val jpsPluginClasspath: List<File> by lazy {
+        KOTLIN_JPS_PLUGIN_CLASSPATH.map { (jar, _) -> resolve(jar) }
+    }
 
     private fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }
 }
@@ -91,11 +99,9 @@ private class KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout() {
         LazyZipUnpacker(KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")).lazyUnpack(distJar.toFile())
     }
 
-    override val jpsPluginJar: File by lazy {
-        KotlinMavenUtils.findArtifactOrFail(
-            KOTLIN_MAVEN_GROUP_ID,
-            KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-            bundledJpsVersion
-        ).toFile()
+    override val jpsPluginClasspath: List<File> by lazy {
+        KOTLIN_JPS_PLUGIN_CLASSPATH.map { (_, artifactId) ->
+            KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, artifactId, bundledJpsVersion).toFile()
+        }
     }
 }
