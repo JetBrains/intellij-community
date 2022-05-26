@@ -780,8 +780,17 @@ public class SwitchBlockHighlightingModel {
         }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
-      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED) && selectorClass.hasModifierProperty(ABSTRACT)) {
-        checkSealedClassCompleteness(selectorClass, elements, results);
+      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED)) {
+        final HighlightInfo info;
+        if (elements.isEmpty()) {
+          info = createCompletenessInfoForSwitch(false);
+        }
+        else {
+          info = checkSealedClassCompleteness(selectorClass, elements);
+        }
+        if (info != null) {
+          results.add(info);
+        }
       }
       else {
         results.add(createCompletenessInfoForSwitch(!elements.isEmpty()));
@@ -796,57 +805,55 @@ public class SwitchBlockHighlightingModel {
       QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteDefaultFix(myFile, info));
     }
 
-    private void checkSealedClassCompleteness(@NotNull PsiClass selectorClass,
-                                              @NotNull List<PsiCaseLabelElement> elements,
-                                              @NotNull List<HighlightInfo> results) {
+    @Nullable
+    private HighlightInfo checkSealedClassCompleteness(@NotNull PsiClass selectorClass,
+                                                       @NotNull List<PsiCaseLabelElement> elements) {
       Set<PsiClass> missingClasses;
-      LinkedHashMap<PsiClass, PsiPattern> patternClasses = null;
-      if (elements.isEmpty()) {
-        missingClasses = Collections.emptySet();
-      }
-      else {
-        patternClasses = new LinkedHashMap<>();
-        for (PsiCaseLabelElement element : elements) {
-          PsiPattern patternLabelElement = ObjectUtils.tryCast(element, PsiPattern.class);
-          if (patternLabelElement == null) continue;
-          PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
-          if (patternClass != null) {
-            patternClasses.put(patternClass, patternLabelElement);
-          }
+      LinkedHashMap<PsiClass, PsiPattern> patternClasses = new LinkedHashMap<>();
+      for (PsiCaseLabelElement element : elements) {
+        PsiPattern patternLabelElement = ObjectUtils.tryCast(element, PsiPattern.class);
+        if (patternLabelElement == null) continue;
+        PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
+        if (patternClass != null) {
+          patternClasses.put(patternClass, patternLabelElement);
         }
-        Queue<PsiClass> nonVisited = new ArrayDeque<>();
-        nonVisited.add(selectorClass);
-        Set<PsiClass> visited = new SmartHashSet<>();
-        missingClasses = new SmartHashSet<>();
-        while (!nonVisited.isEmpty()) {
-          PsiClass psiClass = nonVisited.peek();
-          if (psiClass.hasModifierProperty(SEALED) && psiClass.hasModifierProperty(ABSTRACT)) {
-            for (PsiClass permittedClass : getPermittedClasses(psiClass)) {
-              if (!visited.add(permittedClass)) continue;
-              PsiPattern pattern = patternClasses.get(permittedClass);
-              if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
-                                      TypeConversionUtil.areTypesConvertible(mySelectorType, TypeUtils.getType(permittedClass))) ||
-                  pattern != null && !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
-                nonVisited.add(permittedClass);
-              }
+      }
+      Queue<PsiClass> nonVisited = new ArrayDeque<>();
+      nonVisited.add(selectorClass);
+      Set<PsiClass> visited = new SmartHashSet<>();
+      missingClasses = new LinkedHashSet<>();
+      while (!nonVisited.isEmpty()) {
+        PsiClass psiClass = nonVisited.peek();
+        if (psiClass.hasModifierProperty(SEALED) && (psiClass.hasModifierProperty(ABSTRACT) ||
+                                                     psiClass.equals(selectorClass))) {
+          for (PsiClass permittedClass : getPermittedClasses(psiClass)) {
+            if (!visited.add(permittedClass)) continue;
+            PsiPattern pattern = patternClasses.get(permittedClass);
+            if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
+                                    TypeConversionUtil.areTypesConvertible(mySelectorType, TypeUtils.getType(permittedClass))) ||
+                pattern != null && !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
+              nonVisited.add(permittedClass);
             }
           }
-          else {
-            visited.add(psiClass);
-            missingClasses.add(psiClass);
-          }
-          nonVisited.poll();
         }
-        if (missingClasses.isEmpty()) return;
+        else {
+          visited.add(psiClass);
+          missingClasses.add(psiClass);
+        }
+        nonVisited.poll();
       }
-      HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
-      if (!missingClasses.isEmpty()) {
-        List<String> allNames = collectLabelElementNames(elements, missingClasses, patternClasses);
-        Set<String> missingCases = ContainerUtil.map2Set(missingClasses, PsiClass::getQualifiedName);
-        IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
-        QuickFixAction.registerQuickFixAction(info, fix);
+      if (!selectorClass.hasModifierProperty(ABSTRACT)) {
+        missingClasses.add(selectorClass);
       }
-      results.add(info);
+      else if (missingClasses.isEmpty()) {
+        return null;
+      }
+      HighlightInfo info = createCompletenessInfoForSwitch(true);
+      List<String> allNames = collectLabelElementNames(elements, missingClasses, patternClasses);
+      Set<String> missingCases = ContainerUtil.map2Set(missingClasses, PsiClass::getQualifiedName);
+      IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
+      QuickFixAction.registerQuickFixAction(info, fix);
+      return info;
     }
 
     @NotNull
@@ -861,7 +868,7 @@ public class SwitchBlockHighlightingModel {
           result.add(result.lastIndexOf(pattern.getText()) + 1, className);
         }
         else {
-          pattern = ContainerUtil.find(patternClasses.values(), who -> JavaPsiPatternUtil.dominates(who, TypeUtils.getType(aClass)));
+          pattern = ContainerUtil.find(patternClasses.values(), who -> JavaPsiPatternUtil.isTotalForType(who, TypeUtils.getType(aClass)));
           if (pattern != null) {
             result.add(result.indexOf(pattern.getText()), aClass.getQualifiedName());
           }
