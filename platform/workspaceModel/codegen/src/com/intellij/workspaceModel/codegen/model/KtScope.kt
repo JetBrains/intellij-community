@@ -132,7 +132,7 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
       ktClass.isData() -> WsData
       ktClass.isEnum() -> WsEnum
       ktClass.isSealed() -> WsSealed
-      ktClass.isInterface() -> WsPsiEntityInterface
+      ktClass.isInterface() && workspaceEntitySuperType != null -> WsPsiEntityInterface
       else -> null
     }
     return KtScope(this, KtInterface(module, this,
