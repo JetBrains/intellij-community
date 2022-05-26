@@ -75,11 +75,13 @@ class MermaidLineIndentProvider : LineIndentProvider {
             MermaidTokens.Sequence.ALT,
             MermaidTokens.Sequence.PAR,
             MermaidTokens.Sequence.RECT,
-            MermaidTokens.Sequence.MESSAGE
+            MermaidTokens.Sequence.MESSAGE,
+            MermaidTokens.ClassDiagram.CLASS_DIAGRAM,
+            MermaidTokens.OPEN_CURLY
           )
         ) {
           return getIndentString(editor, position.getStartOffset(), true)
-        } else if (position.isAt(MermaidTokens.END)) {
+        } else if (position.isAtAnyOf(MermaidTokens.END, MermaidTokens.CLOSE_CURLY)) {
           return getIndentString(editor, position.getStartOffset(), false)
         } else if (position.isAt(MermaidTokens.TITLE_VALUE)) {
           position.moveBeforeOptionalMix(MermaidTokens.TITLE_VALUE, MermaidTokens.TITLE, MermaidTokens.WHITE_SPACE)

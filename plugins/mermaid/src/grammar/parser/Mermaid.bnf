@@ -14,6 +14,7 @@
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Journey.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Sequence.*'
+    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.*'
   ]
   generateTokens=false
 }
@@ -25,6 +26,7 @@ private diagram ::= pieHeader pieDocument
 	| JOURNEY journeyDocument
 	| flowchartHeader flowchartDocument
 	| SEQUENCE sequenceDocument
+	| CLASS_DIAGRAM classDocument
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
@@ -138,6 +140,54 @@ linkStatement ::= LINK identifier MESSAGE
 
 elseSections ::= sequenceDocument [ELSE [MESSAGE] elseSections]
 parSections ::= sequenceDocument [AND [MESSAGE] parSections]
+
+
+classDocument ::= classLines
+private classLines ::= classLine [classLines]
+classLine ::= classDiagramStatement [EOL] | EOL
+private classDiagramStatement ::= DIRECTION DIR
+  | classStatement
+  | relationStatement
+  | memberStatement
+  | annotationStatement
+	| directive
+  | comment
+
+classStatement ::= CLASS ID [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR ID] [OPEN_CURLY members CLOSE_CURLY]
+
+memberStatement ::= ID COLON attrOrMethod
+
+relationStatement ::= ID relation ID [COLON LABEL]
+
+annotationStatement ::= annotation ID
+annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
+
+private members ::= memberLine [members]
+memberLine ::= (attrOrMethod | annotation | directive | comment) [EOL] | EOL
+attrOrMethod ::= [visibilityAtStart] (method | attribute)
+visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
+visibilityAtEnd ::= STAR | DOLLAR
+
+attribute ::= (attrType attrName visibilityAtEnd?) | (attrName [COLON attrType])
+method ::= attrName ROUND_START [attribute] ROUND_END [visibilityAtEnd] [attrType]
+attrType ::= ID (TILDA GENERIC_TYPE TILDA)?
+attrName ::= ID
+
+
+relation ::= [cardinality] [relationTypeLeft] lineType [relationTypeRight] [cardinality]
+cardinality ::= string
+
+relationTypeLeft ::= AGGREGATION
+    | EXTENSION_START
+    | COMPOSITION
+    | DEPENDENCY_START
+
+relationTypeRight ::= AGGREGATION
+    | EXTENSION_END
+    | COMPOSITION
+    | DEPENDENCY_END
+
+lineType ::= LINE | DOTTED_LINE
 
 comment ::= LINE_COMMENT [COMMENT_TEXT]
 

@@ -14,7 +14,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 
 class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters>() {
-  private val diagrams = listOf("pie", "journey", "flowchart", "sequenceDiagram")
+  private val diagrams = listOf("pie", "journey", "flowchart", "sequenceDiagram", "classDiagram")
   override fun addCompletions(
     parameters: CompletionParameters,
     context: ProcessingContext,
@@ -118,7 +118,7 @@ class MermaidFlowchartCompletionProvider : MermaidLiveTemplateCompletionProvider
   }
 }
 
-class MermaidFlowchartDirectionCompletionProvider :
+class MermaidDirectionCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("LR", "RL", "TB", "BT", "TD", "BR", "<", ">", "^", "v"))
 
 class MermaidPieShowDataCompletionProvider : MermaidSimpleCompletionProvider(listOf("showData"))
@@ -135,3 +135,20 @@ class MermaidSequenceCompletionProvider : MermaidLiveTemplateCompletionProvider(
     result.addAllElements(keywords.map { createKeywordLookupElement(project, it) })
   }
 }
+
+class MermaidClassDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(listOf("class", "direction"))
+
+class MermaidClassDiagramCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+  private val keywords = listOf("<<", "~")
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
+  ) {
+    val project = parameters.originalFile.project
+    result.addAllElements(keywords.map { createKeywordLookupElement(project, it) })
+  }
+}
+
+class MermaidClassDiagramAnnotationCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("interface", "abstract", "service", "enumeration"))

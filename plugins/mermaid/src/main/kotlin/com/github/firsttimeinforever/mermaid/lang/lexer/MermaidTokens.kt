@@ -38,6 +38,12 @@ object MermaidTokens {
   val CLOSE_CURLY = MermaidToken("CLOSE_CURLY")
 
   @JvmField
+  val ROUND_START = MermaidToken("ROUND_START")
+
+  @JvmField
+  val ROUND_END = MermaidToken("ROUND_END")
+
+  @JvmField
   val SEMICOLON = MermaidToken("SEMICOLON")
 
   @JvmField
@@ -85,6 +91,33 @@ object MermaidTokens {
   @JvmField
   val END = MermaidToken("END")
 
+  @JvmField
+  val CLASS = MermaidToken("CLASS")
+
+  @JvmField
+  val TILDA = MermaidToken("TILDA")
+
+  @JvmField
+  val DIRECTION = MermaidToken("DIRECTION")
+
+  @JvmField
+  val DIR = MermaidToken("DIR")
+
+  @JvmField
+  val POUND = MermaidToken("POUND")
+
+  @JvmField
+  val STAR = MermaidToken("STAR")
+
+  @JvmField
+  val DOLLAR = MermaidToken("DOLLAR")
+
+  @JvmField
+  val STYLE_SEPARATOR = MermaidToken("STYLE_SEPARATOR")
+
+  @JvmField
+  val LABEL = MermaidToken("LABEL")
+
   object Pie {
     @JvmField
     val PIE = MermaidToken("Pie.PIE")
@@ -118,19 +151,10 @@ object MermaidTokens {
     val FLOWCHART = MermaidToken("Flowchart.FLOWCHART")
 
     @JvmField
-    val DIR = MermaidToken("Flowchart.DIR")
-
-    @JvmField
     val SQUARE_START = MermaidToken("Flowchart.SQUARE_START")
 
     @JvmField
     val SQUARE_END = MermaidToken("Flowchart.SQUARE_END")
-
-    @JvmField
-    val ROUND_START = MermaidToken("Flowchart.ROUND_START")
-
-    @JvmField
-    val ROUND_END = MermaidToken("Flowchart.ROUND_END")
 
     @JvmField
     val STADIUM_START = MermaidToken("Flowchart.STADIUM_START")
@@ -208,9 +232,6 @@ object MermaidTokens {
     val SUBGRAPH = MermaidToken("SUBGRAPH")
 
     @JvmField
-    val DIRECTION = MermaidToken("DIRECTION")
-
-    @JvmField
     val LINK_STYLE = MermaidToken("LINK_STYLE")
 
     @JvmField
@@ -227,12 +248,6 @@ object MermaidTokens {
 
     @JvmField
     val CLASS_DEF = MermaidToken("CLASS_DEF")
-
-    @JvmField
-    val CLASS = MermaidToken("CLASS")
-
-    @JvmField
-    val STYLE_SEPARATOR = MermaidToken("STYLE_SEPARATOR")
 
     @JvmField
     val DEFAULT = MermaidToken("DEFAULT")
@@ -325,5 +340,46 @@ object MermaidTokens {
 
     @JvmField
     val LINKS = MermaidToken("Sequence.LINKS")
+  }
+
+  object ClassDiagram {
+    @JvmField
+    val CLASS_DIAGRAM = MermaidToken("CLASS_DIAGRAM")
+
+    @JvmField
+    val ANNOTATION_START = MermaidToken("ANNOTATION_START")
+
+    @JvmField
+    val ANNOTATION_END = MermaidToken("ANNOTATION_END")
+
+    @JvmField
+    val ANNOTATION_VALUE = MermaidToken("ANNOTATION_VALUE")
+
+    @JvmField
+    val GENERIC_TYPE = MermaidToken("GENERIC_TYPE")
+
+    @JvmField
+    val EXTENSION_START = MermaidToken("EXTENSION_START")
+
+    @JvmField
+    val EXTENSION_END = MermaidToken("EXTENSION_END")
+
+    @JvmField
+    val DEPENDENCY_START = MermaidToken("DEPENDENCY_START")
+
+    @JvmField
+    val DEPENDENCY_END = MermaidToken("DEPENDENCY_END")
+
+    @JvmField
+    val COMPOSITION = MermaidToken("COMPOSITION")
+
+    @JvmField
+    val AGGREGATION = MermaidToken("AGGREGATION")
+
+    @JvmField
+    val LINE = MermaidToken("LINE")
+
+    @JvmField
+    val DOTTED_LINE = MermaidToken("DOTTED_LINE")
   }
 }

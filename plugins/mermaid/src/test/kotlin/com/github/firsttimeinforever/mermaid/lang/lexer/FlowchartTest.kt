@@ -1,26 +1,29 @@
 package com.github.firsttimeinforever.mermaid.lang.lexer
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ALIAS
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLASS
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DIR
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DIRECTION
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.END
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.CLASS_DEF
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.LINK_STYLE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.STYLE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.STYLE_OPT
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.SUBGRAPH
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.END
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.DIRECTION
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.STYLE_TARGET
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.STYLE_VAL
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.LINK_STYLE
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.SEMICOLON
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.CLASS
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.CLASS_DEF
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.STYLE_SEPARATOR
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.SUBGRAPH
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ID
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ROUND_END
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ROUND_START
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.SEMICOLON
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.STYLE_SEPARATOR
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
 
 class FlowchartTest: MermaidLexerTestCase() {
@@ -32,7 +35,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 20, "Start"),
@@ -52,7 +55,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 18, "id1"),
@@ -80,7 +83,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 18, "id1"),
@@ -101,7 +104,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
@@ -121,7 +124,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
@@ -141,7 +144,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "LR"),
+      Token(DIR, 10, 12, "LR"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
@@ -161,7 +164,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "LR"),
+      Token(DIR, 10, 12, "LR"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
@@ -182,7 +185,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
@@ -202,7 +205,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
@@ -232,7 +235,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
@@ -263,7 +266,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "LR"),
+      Token(DIR, 10, 12, "LR"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "a"),
@@ -290,7 +293,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "LR"),
+      Token(DIR, 10, 12, "LR"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
@@ -336,7 +339,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TB"),
+      Token(DIR, 10, 12, "TB"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 17, "c1"),
@@ -426,7 +429,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "LR"),
+      Token(DIR, 10, 12, "LR"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(SUBGRAPH, 15, 23, "subgraph"),
@@ -436,7 +439,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 28, 32, "    "),
       Token(DIRECTION, 32, 41, "direction"),
       Token(WHITE_SPACE, 41, 42, " "),
-      Token(Flowchart.DIR, 42, 44, "TB"),
+      Token(DIR, 42, 44, "TB"),
       Token(EOL, 44, 45, "\n"),
       Token(WHITE_SPACE, 45, 49, "    "),
       Token(SUBGRAPH, 49, 57, "subgraph"),
@@ -446,7 +449,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 61, 69, "        "),
       Token(DIRECTION, 69, 78, "direction"),
       Token(WHITE_SPACE, 78, 79, " "),
-      Token(Flowchart.DIR, 79, 81, "RL"),
+      Token(DIR, 79, 81, "RL"),
       Token(EOL, 81, 82, "\n"),
       Token(WHITE_SPACE, 82, 90, "        "),
       Token(ID, 90, 92, "i1"),
@@ -465,7 +468,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 123, 131, "        "),
       Token(DIRECTION, 131, 140, "direction"),
       Token(WHITE_SPACE, 140, 141, " "),
-      Token(Flowchart.DIR, 141, 143, "BT"),
+      Token(DIR, 141, 143, "BT"),
       Token(EOL, 143, 144, "\n"),
       Token(WHITE_SPACE, 144, 152, "        "),
       Token(ID, 152, 154, "i2"),
@@ -508,7 +511,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "LR"),
+      Token(DIR, 10, 12, "LR"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "q"),
@@ -540,18 +543,18 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "LR"),
+      Token(DIR, 10, 12, "LR"),
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 18, "id1"),
-      Token(Flowchart.ROUND_START, 18, 19, "("),
+      Token(ROUND_START, 18, 19, "("),
       Token(ALIAS, 19, 24, "Start"),
-      Token(Flowchart.ROUND_END, 24, 25, ")"),
+      Token(ROUND_END, 24, 25, ")"),
       Token(Flowchart.ARROW, 25, 28, "-->"),
       Token(ID, 28, 31, "id2"),
-      Token(Flowchart.ROUND_START, 31, 32, "("),
+      Token(ROUND_START, 31, 32, "("),
       Token(ALIAS, 32, 36, "Stop"),
-      Token(Flowchart.ROUND_END, 36, 37, ")"),
+      Token(ROUND_END, 36, 37, ")"),
       Token(EOL, 37, 38, "\n"),
       Token(WHITE_SPACE, 38, 40, "  "),
       Token(EOL, 40, 41, "\n"),
@@ -663,7 +666,7 @@ class FlowchartTest: MermaidLexerTestCase() {
     val expected = listOf(
       Token(Flowchart.FLOWCHART, 0, 9, "flowchart"),
       Token(WHITE_SPACE, 9, 10, " "),
-      Token(Flowchart.DIR, 10, 12, "TD"),
+      Token(DIR, 10, 12, "TD"),
       Token(WHITE_SPACE, 12, 13, " "),
       Token(LINE_COMMENT, 13, 15, "%%"),
       Token(COMMENT_TEXT, 15, 31, " This is comment"),

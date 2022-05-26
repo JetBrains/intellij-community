@@ -28,10 +28,10 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement().afterLeaf(
         or(
           psiElement(MermaidTokens.Flowchart.FLOWCHART),
-          psiElement(MermaidTokens.Flowchart.DIRECTION)
+          psiElement(MermaidTokens.DIRECTION)
         )
       ),
-      MermaidFlowchartDirectionCompletionProvider()
+      MermaidDirectionCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
@@ -83,6 +83,28 @@ class MermaidCompletionContributor : CompletionContributor() {
       CompletionType.BASIC,
       psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.Journey.JOURNEY))),
       MermaidBranchCompletionProvider("section")
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterSiblingSkipping(
+        not(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)),
+        psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)
+      ),
+      MermaidClassDiagramSimpleCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      or(
+        psiElement().insideBlock(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)),
+        psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)))
+      ),
+      MermaidClassDiagramCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterLeaf(psiElement(MermaidTokens.ClassDiagram.ANNOTATION_START)),
+      MermaidClassDiagramAnnotationCompletionProvider()
     )
   }
 

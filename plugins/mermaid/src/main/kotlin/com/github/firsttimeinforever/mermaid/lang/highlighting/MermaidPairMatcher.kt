@@ -13,10 +13,9 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
     private class MyPairedBraceMatcher : PairedBraceMatcher {
       private val pairs = arrayOf(
         BracePair(MermaidTokens.OPEN_CURLY, MermaidTokens.CLOSE_CURLY, true),
+        BracePair(MermaidTokens.ROUND_START, MermaidTokens.ROUND_END, true),
 
-        BracePair(MermaidTokens.Flowchart.SUBGRAPH, MermaidTokens.END, true),
         BracePair(MermaidTokens.Flowchart.SQUARE_START, MermaidTokens.Flowchart.SQUARE_END, true),
-        BracePair(MermaidTokens.Flowchart.ROUND_START, MermaidTokens.Flowchart.ROUND_END, true),
         BracePair(MermaidTokens.Flowchart.STADIUM_START, MermaidTokens.Flowchart.STADIUM_END, true),
         BracePair(MermaidTokens.Flowchart.SUBROUTINE_START, MermaidTokens.Flowchart.SUBROUTINE_END, true),
         BracePair(MermaidTokens.Flowchart.CYLINDER_START, MermaidTokens.Flowchart.CYLINDER_END, true),
@@ -29,6 +28,9 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Flowchart.TRAP_START, MermaidTokens.Flowchart.TRAP_END, true),
         BracePair(MermaidTokens.Flowchart.INV_TRAP_START, MermaidTokens.Flowchart.INV_TRAP_END, true),
         BracePair(MermaidTokens.Flowchart.DOUBLE_CIRCLE_START, MermaidTokens.Flowchart.DOUBLE_CIRCLE_END, true),
+        BracePair(MermaidTokens.Flowchart.SEP, MermaidTokens.Flowchart.SEP, true),
+
+        BracePair(MermaidTokens.ClassDiagram.ANNOTATION_START, MermaidTokens.ClassDiagram.ANNOTATION_END, false),
       )
 
       override fun getPairs(): Array<BracePair> = pairs
