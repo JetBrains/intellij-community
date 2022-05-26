@@ -520,7 +520,7 @@ class KtSymbolBasedValueParameterDescriptor(
 
     override fun getTypeParameters(): List<TypeParameterDescriptor> = emptyList()
 
-    override fun getReturnType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
+    override fun getReturnType(): KotlinType = this.getType()
 
     override fun getValueParameters(): List<ValueParameterDescriptor> = emptyList()
     override fun hasStableParameterNames(): Boolean = false
@@ -530,7 +530,15 @@ class KtSymbolBasedValueParameterDescriptor(
 
     override fun getVisibility(): DescriptorVisibility = DescriptorVisibilities.LOCAL
 
-    override fun getType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
+    // for old FE it should return ArrayType in case of vararg
+    override fun getType(): KotlinType {
+        val elementType = ktSymbol.returnType.toKotlinType(context)
+        if (!ktSymbol.isVararg) return elementType
+
+        // copy from org.jetbrains.kotlin.resolve.DescriptorResolver.getVarargParameterType
+        val primitiveArrayType = context.builtIns.getPrimitiveArrayKotlinTypeByPrimitiveKotlinType(elementType)
+        return primitiveArrayType ?: context.builtIns.getArrayType(Variance.OUT_VARIANCE, elementType)
+    }
     override fun getContainingDeclaration(): CallableDescriptor = containingDeclaration
     override fun getPackageFqNameIfTopLevel(): FqName = error("Couldn't be top-level")
 
@@ -539,7 +547,7 @@ class KtSymbolBasedValueParameterDescriptor(
     override val varargElementType: KotlinType?
         get() {
             if (!ktSymbol.isVararg) return null
-            return context.builtIns.getArrayElementType(type)
+            return type
         }
 
     override fun cleanCompileTimeInitializerCache() {}
