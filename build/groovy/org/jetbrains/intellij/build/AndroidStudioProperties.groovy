@@ -190,6 +190,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       {
         icoPath = "$projectHome/adt-branding/src/artwork/androidstudio.ico"
         icoPathForEAP = "$projectHome/adt-branding/src/artwork/preview/androidstudio.ico"
+        zipArchiveWithBundledJre = false
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
         fileAssociations = [".java", ".groovy", ".kt"]
       }
@@ -224,7 +225,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        buildTarGzWithoutBundledRuntime = false
+        buildOnlyBareTarGz = true
         iconPngPath = "$projectHome/adt-branding/src/artwork/icon_AS_128.png"
         iconPngPathForEAP = "$projectHome/adt-branding/src/artwork/preview/icon_AS_128.png"
       }
