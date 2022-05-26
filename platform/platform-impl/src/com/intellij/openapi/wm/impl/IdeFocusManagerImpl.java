@@ -49,6 +49,7 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
   public void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable) {
     getGlobalInstance().doWhenFocusSettlesDown(runnable);
   }
+
   @Override
   @Nullable
   public Component getFocusedDescendantFor(@NotNull final Component comp) {
