@@ -24,7 +24,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>PsiElement(ID)
     >>>PsiWhiteSpace
-    >>>PsiElement(Sequence.AS)
+    >>>PsiElement(AS)
     >>>PsiWhiteSpace
     >>>Element(ID_ALIAS)
     >>>>PsiElement(ALIAS)
@@ -38,7 +38,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>>Element(IDENTIFIER)
     >>>>PsiElement(ID)
     >>>PsiWhiteSpace
-    >>>PsiElement(Sequence.AS)
+    >>>PsiElement(AS)
     >>>PsiWhiteSpace
     >>>Element(ID_ALIAS)
     >>>>PsiElement(ALIAS)
@@ -145,9 +145,9 @@ class SequenceTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
     >>>Element(NOTE_STATEMENT)
-    >>>>PsiElement(Sequence.NOTE)
+    >>>>PsiElement(NOTE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(Sequence.RIGHT_OF)
+    >>>>PsiElement(RIGHT_OF)
     >>>>PsiWhiteSpace
     >>>>Element(IDENTIFIER)
     >>>>>PsiElement(ID)
@@ -169,7 +169,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
     >>>Element(NOTE_STATEMENT)
-    >>>>PsiElement(Sequence.NOTE)
+    >>>>PsiElement(NOTE)
     >>>>PsiWhiteSpace
     >>>>PsiElement(Sequence.OVER)
     >>>>PsiWhiteSpace

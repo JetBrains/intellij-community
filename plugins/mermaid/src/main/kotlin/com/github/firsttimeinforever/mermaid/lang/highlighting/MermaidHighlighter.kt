@@ -40,7 +40,6 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.Flowchart.STYLE_OPT,
       MermaidTokens.Flowchart.CLASS_DEF -> arrayOf(MermaidTextAttributes.keyword)
 
-      MermaidTokens.Flowchart.ARROW,
       MermaidTokens.Flowchart.START_ARROW -> arrayOf(MermaidTextAttributes.operationSign)
 
       MermaidTokens.Flowchart.STYLE_VAL -> arrayOf(MermaidTextAttributes.string)
@@ -56,12 +55,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.Sequence.SEQUENCE,
       MermaidTokens.Sequence.PARTICIPANT,
       MermaidTokens.Sequence.ACTOR,
-      MermaidTokens.Sequence.AS,
       MermaidTokens.Sequence.ACTIVATE,
       MermaidTokens.Sequence.DEACTIVATE,
-      MermaidTokens.Sequence.NOTE,
-      MermaidTokens.Sequence.RIGHT_OF,
-      MermaidTokens.Sequence.LEFT_OF,
       MermaidTokens.Sequence.OVER,
       MermaidTokens.Sequence.LOOP,
       MermaidTokens.Sequence.ALT,
@@ -102,9 +97,14 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       MermaidTokens.ClassDiagram.LINE,
       MermaidTokens.ClassDiagram.DOTTED_LINE -> arrayOf(MermaidTextAttributes.operationSign)
 
-      MermaidTokens.ClassDiagram.ANNOTATION_START,
-      MermaidTokens.ClassDiagram.ANNOTATION_VALUE,
-      MermaidTokens.ClassDiagram.ANNOTATION_END -> arrayOf(MermaidTextAttributes.constant)
+      else -> null
+    }
+  }
+
+  private fun getStateDiagramHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.StateDiagram.STATE_DIAGRAM,
+      MermaidTokens.StateDiagram.STATE -> arrayOf(MermaidTextAttributes.keyword)
 
       else -> null
     }
@@ -116,16 +116,22 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     val flowchartHighlighter = getFlowchartHighlights(tokenType)
     val sequenceHighlighter = getSequenceHighlights(tokenType)
     val classDiagramHighlights = getClassDiagramHighlights(tokenType)
+    val stateDiagramHighlights = getStateDiagramHighlights(tokenType)
     return pieHighlights
       ?: journeyHighlighter
       ?: flowchartHighlighter
       ?: sequenceHighlighter
       ?: classDiagramHighlights
+      ?: stateDiagramHighlights
       ?: when (tokenType) {
         MermaidTokens.END,
         MermaidTokens.TITLE,
         MermaidTokens.CLASS,
-        MermaidTokens.DIRECTION -> arrayOf(MermaidTextAttributes.keyword)
+        MermaidTokens.DIRECTION,
+        MermaidTokens.AS,
+        MermaidTokens.NOTE,
+        MermaidTokens.RIGHT_OF,
+        MermaidTokens.LEFT_OF -> arrayOf(MermaidTextAttributes.keyword)
 
         MermaidTokens.TITLE_VALUE,
         MermaidTokens.DOUBLE_QUOTE,
@@ -145,9 +151,13 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.STAR,
         MermaidTokens.POUND,
         MermaidTokens.DOLLAR,
-        MermaidTokens.STYLE_SEPARATOR -> arrayOf(MermaidTextAttributes.operationSign)
+        MermaidTokens.STYLE_SEPARATOR,
+        MermaidTokens.ARROW -> arrayOf(MermaidTextAttributes.operationSign)
 
-        MermaidTokens.DIR -> arrayOf(MermaidTextAttributes.constant)
+        MermaidTokens.DIR,
+        MermaidTokens.ANNOTATION_START,
+        MermaidTokens.ANNOTATION_VALUE,
+        MermaidTokens.ANNOTATION_END -> arrayOf(MermaidTextAttributes.constant)
 
         else -> arrayOf(HighlighterColors.TEXT)
       }

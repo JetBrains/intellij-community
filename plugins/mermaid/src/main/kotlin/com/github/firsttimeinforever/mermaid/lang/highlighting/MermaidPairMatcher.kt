@@ -13,14 +13,14 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
     private class MyPairedBraceMatcher : PairedBraceMatcher {
       private val pairs = arrayOf(
         BracePair(MermaidTokens.OPEN_CURLY, MermaidTokens.CLOSE_CURLY, true),
-        BracePair(MermaidTokens.ROUND_START, MermaidTokens.ROUND_END, true),
+        BracePair(MermaidTokens.OPEN_ROUND, MermaidTokens.CLOSE_ROUND, true),
+        BracePair(MermaidTokens.OPEN_SQUARE, MermaidTokens.CLOSE_SQUARE, true),
 
-        BracePair(MermaidTokens.Flowchart.SQUARE_START, MermaidTokens.Flowchart.SQUARE_END, true),
         BracePair(MermaidTokens.Flowchart.STADIUM_START, MermaidTokens.Flowchart.STADIUM_END, true),
         BracePair(MermaidTokens.Flowchart.SUBROUTINE_START, MermaidTokens.Flowchart.SUBROUTINE_END, true),
         BracePair(MermaidTokens.Flowchart.CYLINDER_START, MermaidTokens.Flowchart.CYLINDER_END, true),
         BracePair(MermaidTokens.Flowchart.CIRCLE_START, MermaidTokens.Flowchart.CIRCLE_END, true),
-        BracePair(MermaidTokens.Flowchart.ASYMMETRIC_START, MermaidTokens.Flowchart.SQUARE_END, true),
+        BracePair(MermaidTokens.Flowchart.ASYMMETRIC_START, MermaidTokens.CLOSE_SQUARE, true),
         BracePair(MermaidTokens.Flowchart.DIAMOND_START, MermaidTokens.Flowchart.DIAMOND_END, true),
         BracePair(MermaidTokens.Flowchart.HEXAGON_START, MermaidTokens.Flowchart.HEXAGON_END, true),
         BracePair(MermaidTokens.Flowchart.TRAP_START, MermaidTokens.Flowchart.INV_TRAP_END, true),
@@ -30,7 +30,7 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Flowchart.DOUBLE_CIRCLE_START, MermaidTokens.Flowchart.DOUBLE_CIRCLE_END, true),
         BracePair(MermaidTokens.Flowchart.SEP, MermaidTokens.Flowchart.SEP, true),
 
-        BracePair(MermaidTokens.ClassDiagram.ANNOTATION_START, MermaidTokens.ClassDiagram.ANNOTATION_END, false),
+        BracePair(MermaidTokens.ANNOTATION_START, MermaidTokens.ANNOTATION_END, false),
       )
 
       override fun getPairs(): Array<BracePair> = pairs

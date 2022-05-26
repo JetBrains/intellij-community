@@ -1,6 +1,7 @@
 package com.github.firsttimeinforever.mermaid.lang.lexer
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ALIAS
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.AS
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_CURLY
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
@@ -12,8 +13,10 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ID
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.IGNORED
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.MINUS
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.NOTE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_CURLY
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.PLUS
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.RIGHT_OF
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.SEMICOLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.STRING_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Sequence
@@ -37,7 +40,7 @@ class SequenceTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 31, 32, " "),
       Token(ID, 32, 33, "B"),
       Token(WHITE_SPACE, 33, 34, " "),
-      Token(Sequence.AS, 34, 36, "as"),
+      Token(AS, 34, 36, "as"),
       Token(WHITE_SPACE, 36, 37, " "),
       Token(ALIAS, 37, 42, "Alice"),
       Token(WHITE_SPACE, 42, 43, " "),
@@ -48,7 +51,7 @@ class SequenceTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 52, 53, " "),
       Token(ID, 53, 54, "J"),
       Token(WHITE_SPACE, 54, 55, " "),
-      Token(Sequence.AS, 55, 57, "as"),
+      Token(AS, 55, 57, "as"),
       Token(WHITE_SPACE, 57, 58, " "),
       Token(ALIAS, 58, 62, "John"),
       Token(EOL, 62, 63, "\n"),
@@ -162,9 +165,9 @@ class SequenceTest : MermaidLexerTestCase() {
       Token(ID, 30, 34, "John"),
       Token(EOL, 34, 35, "\n"),
       Token(WHITE_SPACE, 35, 37, "  "),
-      Token(Sequence.NOTE, 37, 41, "Note"),
+      Token(NOTE, 37, 41, "Note"),
       Token(WHITE_SPACE, 41, 42, " "),
-      Token(Sequence.RIGHT_OF, 42, 50, "right of"),
+      Token(RIGHT_OF, 42, 50, "right of"),
       Token(WHITE_SPACE, 50, 51, " "),
       Token(ID, 51, 55, "John"),
       Token(COLON, 55, 56, ":"),
@@ -178,7 +181,7 @@ class SequenceTest : MermaidLexerTestCase() {
       Token(Sequence.MESSAGE, 84, 109, " Hello John, how are you?"),
       Token(EOL, 109, 110, "\n"),
       Token(WHITE_SPACE, 110, 112, "  "),
-      Token(Sequence.NOTE, 112, 116, "Note"),
+      Token(NOTE, 112, 116, "Note"),
       Token(WHITE_SPACE, 116, 117, " "),
       Token(Sequence.OVER, 117, 121, "over"),
       Token(WHITE_SPACE, 121, 122, " "),

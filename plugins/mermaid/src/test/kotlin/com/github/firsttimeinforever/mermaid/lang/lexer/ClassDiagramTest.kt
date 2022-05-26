@@ -1,12 +1,13 @@
 package com.github.firsttimeinforever.mermaid.lang.lexer
 
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ANNOTATION_END
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ANNOTATION_START
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ANNOTATION_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLASS
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_CURLY
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_ROUND
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.AGGREGATION
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.ANNOTATION_END
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.ANNOTATION_START
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.ANNOTATION_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.CLASS_DIAGRAM
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.COMPOSITION
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.DEPENDENCY_END
@@ -25,9 +26,8 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ID
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LABEL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.MINUS
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_CURLY
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_ROUND
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.PLUS
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ROUND_END
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ROUND_START
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.STAR
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.STRING_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.STYLE_SEPARATOR
@@ -67,9 +67,9 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 78, 79, " "),
       Token(PLUS, 79, 80, "+"),
       Token(ID, 80, 87, "deposit"),
-      Token(ROUND_START, 87, 88, "("),
+      Token(OPEN_ROUND, 87, 88, "("),
       Token(ID, 88, 94, "amount"),
-      Token(ROUND_END, 94, 95, ")")
+      Token(CLOSE_ROUND, 94, 95, ")")
     )
     doTest(content, expected)
   }
@@ -101,9 +101,9 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 53, 57, "    "),
       Token(PLUS, 57, 58, "+"),
       Token(ID, 58, 65, "deposit"),
-      Token(ROUND_START, 65, 66, "("),
+      Token(OPEN_ROUND, 65, 66, "("),
       Token(ID, 66, 72, "amount"),
-      Token(ROUND_END, 72, 73, ")"),
+      Token(CLOSE_ROUND, 72, 73, ")"),
       Token(WHITE_SPACE, 73, 74, " "),
       Token(ID, 74, 78, "bool"),
       Token(EOL, 78, 79, "\n"),
@@ -153,19 +153,19 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(EOL, 69, 70, "\n"),
       Token(WHITE_SPACE, 70, 74, "    "),
       Token(ID, 74, 83, "setPoints"),
-      Token(ROUND_START, 83, 84, "("),
+      Token(OPEN_ROUND, 83, 84, "("),
       Token(ID, 84, 88, "List"),
       Token(TILDA, 88, 89, "~"),
       Token(GENERIC_TYPE, 89, 92, "int"),
       Token(TILDA, 92, 93, "~"),
       Token(WHITE_SPACE, 93, 94, " "),
       Token(ID, 94, 100, "points"),
-      Token(ROUND_END, 100, 101, ")"),
+      Token(CLOSE_ROUND, 100, 101, ")"),
       Token(EOL, 101, 102, "\n"),
       Token(WHITE_SPACE, 102, 106, "    "),
       Token(ID, 106, 115, "getPoints"),
-      Token(ROUND_START, 115, 116, "("),
-      Token(ROUND_END, 116, 117, ")"),
+      Token(OPEN_ROUND, 115, 116, "("),
+      Token(CLOSE_ROUND, 116, 117, ")"),
       Token(WHITE_SPACE, 117, 118, " "),
       Token(ID, 118, 122, "List"),
       Token(TILDA, 122, 123, "~"),
@@ -195,14 +195,14 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 176, 177, " "),
       Token(PLUS, 177, 178, "+"),
       Token(ID, 178, 189, "setMessages"),
-      Token(ROUND_START, 189, 190, "("),
+      Token(OPEN_ROUND, 189, 190, "("),
       Token(ID, 190, 194, "List"),
       Token(TILDA, 194, 195, "~"),
       Token(GENERIC_TYPE, 195, 201, "string"),
       Token(TILDA, 201, 202, "~"),
       Token(WHITE_SPACE, 202, 203, " "),
       Token(ID, 203, 211, "messages"),
-      Token(ROUND_END, 211, 212, ")"),
+      Token(CLOSE_ROUND, 211, 212, ")"),
       Token(EOL, 212, 213, "\n"),
       Token(WHITE_SPACE, 213, 215, "  "),
       Token(ID, 215, 221, "Square"),
@@ -211,8 +211,8 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 223, 224, " "),
       Token(PLUS, 224, 225, "+"),
       Token(ID, 225, 236, "getMessages"),
-      Token(ROUND_START, 236, 237, "("),
-      Token(ROUND_END, 237, 238, ")"),
+      Token(OPEN_ROUND, 236, 237, "("),
+      Token(CLOSE_ROUND, 237, 238, ")"),
       Token(WHITE_SPACE, 238, 239, " "),
       Token(ID, 239, 243, "List"),
       Token(TILDA, 243, 244, "~"),
@@ -244,8 +244,8 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 48, 49, " "),
       Token(PLUS, 49, 50, "+"),
       Token(ID, 50, 68, "someAbstractMethod"),
-      Token(ROUND_START, 68, 69, "("),
-      Token(ROUND_END, 69, 70, ")"),
+      Token(OPEN_ROUND, 68, 69, "("),
+      Token(CLOSE_ROUND, 69, 70, ")"),
       Token(STAR, 70, 71, "*"),
       Token(EOL, 71, 72, "\n"),
       Token(WHITE_SPACE, 72, 74, "  "),
@@ -255,8 +255,8 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 87, 88, " "),
       Token(PLUS, 88, 89, "+"),
       Token(ID, 89, 105, "someStaticMethod"),
-      Token(ROUND_START, 105, 106, "("),
-      Token(ROUND_END, 106, 107, ")"),
+      Token(OPEN_ROUND, 105, 106, "("),
+      Token(CLOSE_ROUND, 106, 107, ")"),
       Token(DOLLAR, 107, 108, "$")
     )
     doTest(content, expected)
@@ -650,8 +650,8 @@ class ClassDiagramTest : MermaidLexerTestCase() {
       Token(WHITE_SPACE, 61, 65, "    "),
       Token(MINUS, 65, 66, "-"),
       Token(ID, 66, 72, "canEat"),
-      Token(ROUND_START, 72, 73, "("),
-      Token(ROUND_END, 73, 74, ")"),
+      Token(OPEN_ROUND, 72, 73, "("),
+      Token(CLOSE_ROUND, 73, 74, ")"),
       Token(EOL, 74, 75, "\n"),
       Token(WHITE_SPACE, 75, 77, "  "),
       Token(CLOSE_CURLY, 77, 78, "}")

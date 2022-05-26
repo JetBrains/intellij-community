@@ -14,7 +14,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 
 class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters>() {
-  private val diagrams = listOf("pie", "journey", "flowchart", "sequenceDiagram", "classDiagram")
+  private val diagrams = listOf("pie", "journey", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2")
   override fun addCompletions(
     parameters: CompletionParameters,
     context: ProcessingContext,
@@ -152,3 +152,8 @@ class MermaidClassDiagramCompletionProvider : MermaidLiveTemplateCompletionProvi
 
 class MermaidClassDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("interface", "abstract", "service", "enumeration"))
+
+class MermaidStateDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(listOf("state", "direction", "as", "note", "end"))
+
+class MermaidStateDiagramAnnotationCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("choice", "fork", "join"))

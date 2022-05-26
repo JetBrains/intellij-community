@@ -12,9 +12,9 @@ abstract class MermaidLexerTestCase: LightPlatformCodeInsightTestCase() {
   ) {
     override fun toString(): String {
       return when (type) {
-        MermaidTokens.EOL -> "Token($type, $start, $end, \"\\n\")"
-        MermaidTokens.DOUBLE_QUOTE -> "Token($type, $start, $end, \"\\\"\")"
-        else -> "Token($type, $start, $end, \"$text\")"
+        MermaidTokens.EOL -> "Token($type, $start, $end, \"\\n\"),"
+        MermaidTokens.DOUBLE_QUOTE -> "Token($type, $start, $end, \"\\\"\"),"
+        else -> "Token($type, $start, $end, \"$text\"),"
       }
     }
   }

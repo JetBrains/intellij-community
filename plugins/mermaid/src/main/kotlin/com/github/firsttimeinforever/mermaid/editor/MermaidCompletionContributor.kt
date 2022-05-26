@@ -103,8 +103,34 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
-      psiElement().afterLeaf(psiElement(MermaidTokens.ClassDiagram.ANNOTATION_START)),
+      and(
+        psiElement().afterLeaf(psiElement(MermaidTokens.ANNOTATION_START)),
+        or(
+          psiElement().insideBlock(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)),
+          psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)))
+        )
+      ),
       MermaidClassDiagramAnnotationCompletionProvider()
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterLeafSkipping(
+        not(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)),
+        psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)
+      ),
+      MermaidStateDiagramSimpleCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      and(
+        psiElement().afterLeaf(psiElement(MermaidTokens.ANNOTATION_START)),
+        or(
+          psiElement().insideBlock(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)),
+          psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)))
+        )
+      ),
+      MermaidStateDiagramAnnotationCompletionProvider()
     )
   }
 

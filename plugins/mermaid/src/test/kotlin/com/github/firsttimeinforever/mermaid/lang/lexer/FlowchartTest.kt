@@ -1,7 +1,10 @@
 package com.github.firsttimeinforever.mermaid.lang.lexer
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ALIAS
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ARROW
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLASS
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_ROUND
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.CLOSE_SQUARE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMA
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.COMMENT_TEXT
@@ -20,8 +23,8 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.SUBGRAPH
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ID
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ROUND_END
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ROUND_START
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_ROUND
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.OPEN_SQUARE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.SEMICOLON
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.STYLE_SEPARATOR
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
@@ -40,7 +43,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 20, "Start"),
       Token(WHITE_SPACE, 20, 21, " "),
-      Token(Flowchart.ARROW, 21, 24, "-->"),
+      Token(ARROW, 21, 24, "-->"),
       Token(WHITE_SPACE, 24, 25, " "),
       Token(ID, 25, 29, "Stop")
       )
@@ -59,18 +62,18 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 18, "id1"),
-      Token(Flowchart.SQUARE_START, 18, 19, "["),
+      Token(OPEN_SQUARE, 18, 19, "["),
       Token(ALIAS, 19, 24, "Start"),
-      Token(Flowchart.SQUARE_END, 24, 25, "]"),
+      Token(CLOSE_SQUARE, 24, 25, "]"),
       Token(WHITE_SPACE, 25, 26, " "),
-      Token(Flowchart.ARROW, 26, 29, "-->"),
+      Token(ARROW, 26, 29, "-->"),
       Token(WHITE_SPACE, 29, 30, " "),
       Token(ID, 30, 33, "id2"),
-      Token(Flowchart.SQUARE_START, 33, 34, "["),
+      Token(OPEN_SQUARE, 33, 34, "["),
       Token(DOUBLE_QUOTE, 34, 35, "\""),
       Token(ALIAS, 35, 39, "Stop"),
       Token(DOUBLE_QUOTE, 39, 40, "\""),
-      Token(Flowchart.SQUARE_END, 40, 41, "]")
+      Token(CLOSE_SQUARE, 40, 41, "]")
     )
     doTest(content, expected)
   }
@@ -87,11 +90,11 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 18, "id1"),
-      Token(Flowchart.SQUARE_START, 18, 19, "["),
+      Token(OPEN_SQUARE, 18, 19, "["),
       Token(DOUBLE_QUOTE, 19, 20, "\""),
       Token(ALIAS, 20, 49, "This is the (text) in the box"),
       Token(DOUBLE_QUOTE, 49, 50, "\""),
-      Token(Flowchart.SQUARE_END, 50, 51, "]")
+      Token(CLOSE_SQUARE, 50, 51, "]")
     )
     doTest(content, expected)
   }
@@ -110,7 +113,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(ID, 15, 16, "A"),
       Token(Flowchart.START_ARROW, 16, 18, "--"),
       Token(Flowchart.LINK_TEXT, 18, 37, " This is the text! "),
-      Token(Flowchart.ARROW, 37, 40, "---"),
+      Token(ARROW, 37, 40, "---"),
       Token(ID, 40, 41, "B")
     )
     doTest(content, expected)
@@ -130,7 +133,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(ID, 15, 16, "A"),
       Token(Flowchart.START_ARROW, 16, 18, "--"),
       Token(Flowchart.LINK_TEXT, 18, 37, " This is the text! "),
-      Token(Flowchart.ARROW, 37, 40, "-->"),
+      Token(ARROW, 37, 40, "-->"),
       Token(ID, 40, 41, "B")
     )
     doTest(content, expected)
@@ -148,7 +151,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
-      Token(Flowchart.ARROW, 16, 19, "---"),
+      Token(ARROW, 16, 19, "---"),
       Token(Flowchart.SEP, 19, 20, "|"),
       Token(Flowchart.LINK_TEXT, 20, 36, "This is the text"),
       Token(Flowchart.SEP, 36, 37, "|"),
@@ -168,7 +171,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
-      Token(Flowchart.ARROW, 16, 19, "-->"),
+      Token(ARROW, 16, 19, "-->"),
       Token(Flowchart.SEP, 19, 20, "|"),
       Token(Flowchart.LINK_TEXT, 20, 36, "This is the text"),
       Token(Flowchart.SEP, 36, 37, "|"),
@@ -191,7 +194,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(ID, 15, 16, "A"),
       Token(Flowchart.START_ARROW, 16, 18, "-."),
       Token(Flowchart.LINK_TEXT, 18, 37, " This is the text! "),
-      Token(Flowchart.ARROW, 37, 40, ".->"),
+      Token(ARROW, 37, 40, ".->"),
       Token(ID, 40, 41, "B")
     )
     doTest(content, expected)
@@ -214,13 +217,13 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(Flowchart.LINK_TEXT, 19, 22, " te"),
       Token(Flowchart.LINK_TEXT, 22, 23, "-"),
       Token(Flowchart.LINK_TEXT, 23, 27, "xt1 "),
-      Token(Flowchart.ARROW, 27, 30, "-->"),
+      Token(ARROW, 27, 30, "-->"),
       Token(WHITE_SPACE, 30, 31, " "),
       Token(ID, 31, 32, "B"),
       Token(WHITE_SPACE, 32, 33, " "),
       Token(Flowchart.START_ARROW, 33, 35, "--"),
       Token(Flowchart.LINK_TEXT, 35, 42, " text2 "),
-      Token(Flowchart.ARROW, 42, 45, "-->"),
+      Token(ARROW, 42, 45, "-->"),
       Token(WHITE_SPACE, 45, 46, " "),
       Token(ID, 46, 47, "C")
     )
@@ -244,11 +247,11 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(Flowchart.LINK_TEXT, 19, 22, " te"),
       Token(Flowchart.LINK_TEXT, 22, 23, "-"),
       Token(Flowchart.LINK_TEXT, 23, 27, "xt1 "),
-      Token(Flowchart.ARROW, 27, 30, "-->"),
+      Token(ARROW, 27, 30, "-->"),
       Token(WHITE_SPACE, 30, 31, " "),
       Token(ID, 31, 32, "B"),
       Token(WHITE_SPACE, 32, 33, " "),
-      Token(Flowchart.ARROW, 33, 36, "-->"),
+      Token(ARROW, 33, 36, "-->"),
       Token(Flowchart.SEP, 36, 37, "|"),
       Token(Flowchart.LINK_TEXT, 37, 42, "text2"),
       Token(Flowchart.SEP, 42, 43, "|"),
@@ -271,12 +274,12 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "a"),
       Token(WHITE_SPACE, 16, 17, " "),
-      Token(Flowchart.ARROW, 17, 20, "-->"),
+      Token(ARROW, 17, 20, "-->"),
       Token(WHITE_SPACE, 20, 21, " "),
       Token(ID, 21, 22, "b"),
       Token(Flowchart.AMPERSAND, 22, 25, " & "),
       Token(ID, 25, 26, "c"),
-      Token(Flowchart.ARROW, 26, 29, "-->"),
+      Token(ARROW, 26, 29, "-->"),
       Token(WHITE_SPACE, 29, 30, " "),
       Token(ID, 30, 31, "d")
     )
@@ -298,21 +301,21 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "A"),
       Token(WHITE_SPACE, 16, 17, " "),
-      Token(Flowchart.ARROW, 17, 21, "o--o"),
+      Token(ARROW, 17, 21, "o--o"),
       Token(WHITE_SPACE, 21, 22, " "),
       Token(ID, 22, 23, "B"),
       Token(EOL, 23, 24, "\n"),
       Token(WHITE_SPACE, 24, 26, "  "),
       Token(ID, 26, 27, "B"),
       Token(WHITE_SPACE, 27, 28, " "),
-      Token(Flowchart.ARROW, 28, 32, "<-->"),
+      Token(ARROW, 28, 32, "<-->"),
       Token(WHITE_SPACE, 32, 33, " "),
       Token(ID, 33, 34, "C"),
       Token(EOL, 34, 35, "\n"),
       Token(WHITE_SPACE, 35, 37, "  "),
       Token(ID, 37, 38, "C"),
       Token(WHITE_SPACE, 38, 39, " "),
-      Token(Flowchart.ARROW, 39, 43, "x--x"),
+      Token(ARROW, 39, 43, "x--x"),
       Token(WHITE_SPACE, 43, 44, " "),
       Token(ID, 44, 45, "D")
     )
@@ -343,7 +346,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 17, "c1"),
-      Token(Flowchart.ARROW, 17, 20, "-->"),
+      Token(ARROW, 17, 20, "-->"),
       Token(ID, 20, 22, "a2"),
       Token(EOL, 22, 23, "\n"),
       Token(WHITE_SPACE, 23, 25, "  "),
@@ -353,7 +356,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 37, 38, "\n"),
       Token(WHITE_SPACE, 38, 40, "  "),
       Token(ID, 40, 42, "a1"),
-      Token(Flowchart.ARROW, 42, 45, "-->"),
+      Token(ARROW, 42, 45, "-->"),
       Token(ID, 45, 47, "a2"),
       Token(EOL, 47, 48, "\n"),
       Token(WHITE_SPACE, 48, 50, "  "),
@@ -366,7 +369,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 68, 69, "\n"),
       Token(WHITE_SPACE, 69, 71, "  "),
       Token(ID, 71, 73, "b1"),
-      Token(Flowchart.ARROW, 73, 76, "-->"),
+      Token(ARROW, 73, 76, "-->"),
       Token(ID, 76, 78, "b2"),
       Token(EOL, 78, 79, "\n"),
       Token(WHITE_SPACE, 79, 81, "  "),
@@ -379,7 +382,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 101, 102, "\n"),
       Token(WHITE_SPACE, 102, 104, "  "),
       Token(ID, 104, 106, "c1"),
-      Token(Flowchart.ARROW, 106, 109, "-->"),
+      Token(ARROW, 106, 109, "-->"),
       Token(ID, 109, 111, "c2"),
       Token(EOL, 111, 112, "\n"),
       Token(WHITE_SPACE, 112, 114, "  "),
@@ -388,21 +391,21 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 118, 120, "  "),
       Token(ID, 120, 123, "one"),
       Token(WHITE_SPACE, 123, 124, " "),
-      Token(Flowchart.ARROW, 124, 127, "-->"),
+      Token(ARROW, 124, 127, "-->"),
       Token(WHITE_SPACE, 127, 128, " "),
       Token(ID, 128, 131, "two"),
       Token(EOL, 131, 132, "\n"),
       Token(WHITE_SPACE, 132, 134, "  "),
       Token(ID, 134, 139, "three"),
       Token(WHITE_SPACE, 139, 140, " "),
-      Token(Flowchart.ARROW, 140, 143, "-->"),
+      Token(ARROW, 140, 143, "-->"),
       Token(WHITE_SPACE, 143, 144, " "),
       Token(ID, 144, 147, "two"),
       Token(EOL, 147, 148, "\n"),
       Token(WHITE_SPACE, 148, 150, "  "),
       Token(ID, 150, 153, "two"),
       Token(WHITE_SPACE, 153, 154, " "),
-      Token(Flowchart.ARROW, 154, 157, "-->"),
+      Token(ARROW, 154, 157, "-->"),
       Token(WHITE_SPACE, 157, 158, " "),
       Token(ID, 158, 160, "c2")
     )
@@ -454,7 +457,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 82, 90, "        "),
       Token(ID, 90, 92, "i1"),
       Token(WHITE_SPACE, 92, 93, " "),
-      Token(Flowchart.ARROW, 93, 96, "-->"),
+      Token(ARROW, 93, 96, "-->"),
       Token(ID, 96, 98, "f1"),
       Token(EOL, 98, 99, "\n"),
       Token(WHITE_SPACE, 99, 103, "    "),
@@ -473,7 +476,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 144, 152, "        "),
       Token(ID, 152, 154, "i2"),
       Token(WHITE_SPACE, 154, 155, " "),
-      Token(Flowchart.ARROW, 155, 158, "-->"),
+      Token(ARROW, 155, 158, "-->"),
       Token(ID, 158, 160, "f2"),
       Token(EOL, 160, 161, "\n"),
       Token(WHITE_SPACE, 161, 165, "    "),
@@ -485,18 +488,18 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 175, 177, "  "),
       Token(ID, 177, 178, "A"),
       Token(WHITE_SPACE, 178, 179, " "),
-      Token(Flowchart.ARROW, 179, 182, "-->"),
+      Token(ARROW, 179, 182, "-->"),
       Token(WHITE_SPACE, 182, 183, " "),
       Token(ID, 183, 186, "TOP"),
       Token(WHITE_SPACE, 186, 187, " "),
-      Token(Flowchart.ARROW, 187, 190, "-->"),
+      Token(ARROW, 187, 190, "-->"),
       Token(WHITE_SPACE, 190, 191, " "),
       Token(ID, 191, 192, "B"),
       Token(EOL, 192, 193, "\n"),
       Token(WHITE_SPACE, 193, 195, "  "),
       Token(ID, 195, 197, "B1"),
       Token(WHITE_SPACE, 197, 198, " "),
-      Token(Flowchart.ARROW, 198, 201, "-->"),
+      Token(ARROW, 198, 201, "-->"),
       Token(WHITE_SPACE, 201, 202, " "),
       Token(ID, 202, 204, "B2")
     )
@@ -515,7 +518,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 16, "q"),
-      Token(Flowchart.ARROW, 16, 19, "-->"),
+      Token(ARROW, 16, 19, "-->"),
       Token(ID, 19, 20, "a"),
       Token(SEMICOLON, 20, 21, ";"),
       Token(ID, 21, 22, "w"),
@@ -547,14 +550,14 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(EOL, 12, 13, "\n"),
       Token(WHITE_SPACE, 13, 15, "  "),
       Token(ID, 15, 18, "id1"),
-      Token(ROUND_START, 18, 19, "("),
+      Token(OPEN_ROUND, 18, 19, "("),
       Token(ALIAS, 19, 24, "Start"),
-      Token(ROUND_END, 24, 25, ")"),
-      Token(Flowchart.ARROW, 25, 28, "-->"),
+      Token(CLOSE_ROUND, 24, 25, ")"),
+      Token(ARROW, 25, 28, "-->"),
       Token(ID, 28, 31, "id2"),
-      Token(ROUND_START, 31, 32, "("),
+      Token(OPEN_ROUND, 31, 32, "("),
       Token(ALIAS, 32, 36, "Stop"),
-      Token(ROUND_END, 36, 37, ")"),
+      Token(CLOSE_ROUND, 36, 37, ")"),
       Token(EOL, 37, 38, "\n"),
       Token(WHITE_SPACE, 38, 40, "  "),
       Token(EOL, 40, 41, "\n"),
@@ -608,7 +611,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(STYLE_SEPARATOR, 182, 185, ":::"),
       Token(STYLE_TARGET, 185, 194, "someclass"),
       Token(WHITE_SPACE, 194, 195, " "),
-      Token(Flowchart.ARROW, 195, 198, "-->"),
+      Token(ARROW, 195, 198, "-->"),
       Token(WHITE_SPACE, 198, 199, " "),
       Token(ID, 199, 200, "B"),
       Token(EOL, 200, 201, "\n"),
@@ -674,7 +677,7 @@ class FlowchartTest: MermaidLexerTestCase() {
       Token(WHITE_SPACE, 32, 34, "  "),
       Token(ID, 34, 39, "Start"),
       Token(WHITE_SPACE, 39, 40, " "),
-      Token(Flowchart.ARROW, 40, 43, "-->"),
+      Token(ARROW, 40, 43, "-->"),
       Token(WHITE_SPACE, 43, 44, " "),
       Token(ID, 44, 48, "Stop"),
       Token(WHITE_SPACE, 48, 49, " "),

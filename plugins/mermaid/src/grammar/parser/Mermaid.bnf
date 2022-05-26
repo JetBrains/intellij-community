@@ -15,6 +15,7 @@
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Flowchart.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Sequence.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.*'
+    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.StateDiagram.*'
   ]
   generateTokens=false
 }
@@ -27,6 +28,7 @@ private diagram ::= pieHeader pieDocument
 	| flowchartHeader flowchartDocument
 	| SEQUENCE sequenceDocument
 	| CLASS_DIAGRAM classDocument
+	| STATE_DIAGRAM stateDocument
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
@@ -70,13 +72,13 @@ vertex_statement ::= node_statement [link_statement vertex_statement]
 link_statement ::= START_ARROW LINK_TEXT ARROW | ARROW [SEP LINK_TEXT SEP]
 node_statement ::= vertex STYLE_SEPARATOR STYLE_TARGET | vertex [AMPERSAND node_statement]
 vertex ::= identifier [vertex_text]
-vertex_text ::= SQUARE_START ALIAS SQUARE_END
-							| ROUND_START ALIAS ROUND_END
+vertex_text ::= OPEN_SQUARE ALIAS CLOSE_SQUARE
+							| OPEN_ROUND ALIAS CLOSE_ROUND
 							| STADIUM_START ALIAS STADIUM_END
 							| SUBROUTINE_START ALIAS SUBROUTINE_END
 							| CYLINDER_START ALIAS CYLINDER_END
 							| CIRCLE_START ALIAS CIRCLE_END
-							| ASYMMETRIC_START ALIAS SQUARE_END
+							| ASYMMETRIC_START ALIAS CLOSE_SQUARE
 							| DIAMOND_START ALIAS DIAMOND_END
 							| HEXAGON_START ALIAS HEXAGON_END
 							| TRAP_START ALIAS INV_TRAP_END
@@ -168,8 +170,8 @@ attrOrMethod ::= [visibilityAtStart] (method | attribute)
 visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
 visibilityAtEnd ::= STAR | DOLLAR
 
-attribute ::= (attrType attrName visibilityAtEnd?) | (attrName [COLON attrType])
-method ::= attrName ROUND_START [attribute] ROUND_END [visibilityAtEnd] [attrType]
+attribute ::= attrType attrName [visibilityAtEnd] | attrName [COLON attrType]
+method ::= attrName OPEN_ROUND [attribute] CLOSE_ROUND [visibilityAtEnd] [attrType]
 attrType ::= ID (TILDA GENERIC_TYPE TILDA)?
 attrName ::= ID
 
@@ -188,6 +190,30 @@ relationTypeRight ::= AGGREGATION
     | DEPENDENCY_END
 
 lineType ::= LINE | DOTTED_LINE
+
+
+stateDocument ::= stateLines
+private stateLines ::= stateLine [stateLines]
+stateLine ::= stateDiagramStatement [EOL] | EOL
+private stateDiagramStatement ::= state_id [ COLON LABEL | ARROW state_id [COLON LABEL] ]
+  | STATE description AS state_id
+  | STATE state_id OPEN_CURLY innerStateDocument CLOSE_CURLY
+  | STATE state_id ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
+  | NOTE (RIGHT_OF | LEFT_OF) state_id noteContent
+  | MINUS MINUS
+  | DIRECTION DIR
+	| directive
+  | comment
+
+innerStateDocument ::= innerStateLines
+private innerStateLines ::= innerStateLine [innerStateLines]
+innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
+private innerStateDiagramStatement ::= stateDiagramStatement | MINUS MINUS
+
+state_id ::= ID | OPEN_SQUARE STAR CLOSE_SQUARE
+description ::= string
+private noteContent ::= (EOL NOTE_CONTENT)* [EOL] END
+  | COLON [NOTE_CONTENT]
 
 comment ::= LINE_COMMENT [COMMENT_TEXT]
 
