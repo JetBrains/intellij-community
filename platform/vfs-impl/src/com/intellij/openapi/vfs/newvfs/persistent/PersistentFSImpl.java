@@ -130,6 +130,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  @ApiStatus.Internal
+  public boolean isConnected() {
+    return myConnected.get();
+  }
+
   private @NotNull BulkFileListener getPublisher() {
     BulkFileListener publisher = myPublisher;
     if (publisher == null) {

@@ -56,7 +56,7 @@ public final class Main {
     "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme","inspectopedia-generator",
     "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter",
     "exit");
-  private static final List<String> GUI_COMMANDS = List.of("diff", "merge", "project-with-shared-caches");
+  private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;

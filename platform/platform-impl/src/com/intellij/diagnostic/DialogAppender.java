@@ -3,6 +3,8 @@ package com.intellij.diagnostic;
 
 import com.intellij.idea.Main;
 import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +46,7 @@ public final class DialogAppender extends Handler {
       ideaEvent = extractLoggingEvent(event.getMessage(), thrown);
     }
 
-    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && ((PersistentFSImpl)PersistentFS.getInstance()).isConnected()) {
       IdeaLoggingEvent queued;
       while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
       queueAppend(ideaEvent);
