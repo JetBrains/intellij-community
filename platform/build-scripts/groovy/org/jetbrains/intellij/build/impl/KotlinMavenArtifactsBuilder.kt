@@ -20,12 +20,12 @@ class KotlinMavenArtifactsBuilder(context: BuildContext) : MavenArtifactsBuilder
     val moduleName = module.name
     val names = moduleName.split("\\.".toRegex()).dropLastWhile(String::isEmpty)
     if (names.size < 2) {
-      buildContext.messages.error("Cannot generate Maven artifacts: incorrect module name \'$moduleName\'")
+      context.messages.error("Cannot generate Maven artifacts: incorrect module name \'$moduleName\'")
     }
 
     val groupId = "org.jetbrains.kotlin"
     val firstMeaningful = if (names.size > 2 && MODULE_GROUP_NAMES.contains(names[1])) 2 else 1
     val artifactId = names.drop(firstMeaningful).joinToString(separator = "-")
-    return MavenCoordinates(groupId, artifactId, buildContext.buildNumber)
+    return MavenCoordinates(groupId, artifactId, context.buildNumber)
   }
 }

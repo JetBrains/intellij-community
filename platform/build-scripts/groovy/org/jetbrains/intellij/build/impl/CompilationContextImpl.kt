@@ -6,6 +6,9 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.xml.dom.readXmlAsModel
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.ConsoleSpanExporter.Companion.setPathRoot
 import org.jetbrains.intellij.build.TracerProviderManager.flush
@@ -124,7 +127,6 @@ class CompilationContextImpl : CompilationContext {
       System.setProperty("kotlin.incremental.compilation", "true")
     }
     suppressWarnings(project)
-    exportModuleOutputProperties()
     flush()
     setPathRoot(paths.buildOutputDir)
     /**
@@ -155,21 +157,6 @@ class CompilationContextImpl : CompilationContext {
   fun setProjectOutputDirectory(outputDirectory: String) {
     val url = "file://${FileUtilRt.toSystemIndependentName(outputDirectory)}"
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
-  }
-
-  @Suppress("SpellCheckingInspection")
-  private fun exportModuleOutputProperties() {
-    // defines Ant properties which are used by jetbrains.antlayout.datatypes.IdeaModuleBase class to locate module outputs
-    // still used, please get rid of LayoutBuilder usages
-    for (module in project.modules) {
-      for (test in listOf(true, false)) {
-        for (it in listOfNotNull(module.name, getOldModuleName(module.name))) {
-          getOutputPath(module, test)?.let {outputPath ->
-            LayoutBuilder.getAnt().project.setProperty("module.${it}.output.${if (test) "test" else "main"}", outputPath)
-          }
-        }
-      }
-    }
   }
 
   private fun checkCompilationOptions() {
@@ -237,15 +224,11 @@ class CompilationContextImpl : CompilationContext {
   }
 
   override fun getModuleTestsOutputPath(module: JpsModule): String {
-    return getOutputPath(module, true)!!
-  }
-
-  private fun getOutputPath(module: JpsModule, forTests: Boolean): String? {
-    val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(module, forTests)
+    val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(module, true)
     if (outputDirectory == null) {
       messages.warning("Output directory for \'" + module.name + "\' isn\'t set")
     }
-    return outputDirectory?.absolutePath
+    return outputDirectory?.absolutePath!!
   }
 
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
@@ -321,7 +304,7 @@ class CompilationContextImpl : CompilationContext {
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
       printEnvironmentDebugInfo()
-      logFreeDiskSpace(buildMessages = messages, dir = projectHome, phase = "before downloading dependencies")
+      logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
       val model = loadProject(projectHome, kotlinBinaries, messages)
       val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
@@ -360,10 +343,11 @@ private fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries, messa
     File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
   val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
   JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)
-  messages.info("Loaded project " + projectHome.toString() +
-                ": " + model.project.modules.size.toString() +
-                " modules, " + model.project.libraryCollection.libraries.size.toString() +
-                " libraries")
+  Span.current().addEvent("project loaded", Attributes.of(
+    AttributeKey.stringKey("project"), projectHome.toString(),
+    AttributeKey.longKey("moduleCount"), model.project.modules.size.toLong(),
+    AttributeKey.longKey("libraryCount"), model.project.libraryCollection.libraries.size.toLong(),
+  ))
   return model as JpsModel
 }
 

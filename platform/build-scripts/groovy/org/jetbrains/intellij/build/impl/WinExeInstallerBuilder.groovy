@@ -10,11 +10,7 @@ import groovy.transform.CompileStatic
 import kotlin.Unit
 import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildContextKt
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.TraceManager
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
 
@@ -82,6 +78,7 @@ final class WinExeInstallerBuilder {
     context.messages.progress("Building Windows installer $outFileName")
 
     Path box = context.paths.tempDir.resolve("winInstaller")
+    //noinspection SpellCheckingInspection
     Path nsiConfDir = box.resolve("nsiconf")
     Files.createDirectories(nsiConfDir)
 

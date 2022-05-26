@@ -145,13 +145,18 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
 
   override fun runTestBuild() {
     checkProductProperties(context)
-    val projectStructureMapping = DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context)
+    val builderState = compileModulesForDistribution(context)
+
+    val mavenArtifactTask = createMavenArtifactTask(context, builderState)?.fork()
+
+    val projectStructureMapping = DistributionJARsBuilder(builderState).buildJARs(context)
     layoutShared(context)
     checkClassVersion(context.paths.distAllDir, context)
     if (context.productProperties.buildSourcesArchive) {
       buildSourcesArchive(projectStructureMapping, context)
     }
     buildOsSpecificDistributions(context)
+    mavenArtifactTask?.join()
   }
 
   override fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -655,28 +660,8 @@ private fun doBuildDistributions(context: BuildContext) {
   val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.getPluginModulesToPublish(), context)
   val distributionState = compileModulesForDistribution(context)
   logFreeDiskSpace("after compilation", context)
-  val mavenArtifacts = context.productProperties.mavenArtifacts
-  if (mavenArtifacts.forIdeModules ||
-      !mavenArtifacts.additionalModules.isEmpty() ||
-      !mavenArtifacts.squashedModules.isEmpty() ||
-      !mavenArtifacts.proprietaryModules.isEmpty()) {
-    context.executeStep("generate maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
-      val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
-      val moduleNames: MutableList<String> = ArrayList()
-      if (mavenArtifacts.forIdeModules) {
-        val bundledPlugins = java.util.Set.copyOf(context.productProperties.productLayout.bundledPluginModules)
-        moduleNames.addAll(distributionState.platformModules)
-        moduleNames.addAll(context.productProperties.productLayout.getIncludedPluginModules(bundledPlugins))
-      }
-      moduleNames.addAll(mavenArtifacts.additionalModules)
-      if (!moduleNames.isEmpty()) {
-        mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, mavenArtifacts.squashedModules, "maven-artifacts")
-      }
-      if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-        mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, emptyList(), "proprietary-maven-artifacts")
-      }
-    }
-  }
+
+  val mavenTask = createMavenArtifactTask(context, distributionState)?.fork()
 
   spanBuilder("build platform and plugin JARs").useWithScope {
     val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
@@ -698,10 +683,10 @@ private fun doBuildDistributions(context: BuildContext) {
     if (java.lang.Boolean.getBoolean("intellij.build.toolbox.litegen")) {
       @Suppress("SENSELESS_COMPARISON")
       if (context.buildNumber == null) {
-        context.messages.warning("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
+        Span.current().addEvent("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
       }
       else if (context.options.targetOs != BuildOptions.OS_ALL) {
-        context.messages.warning("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
+        Span.current().addEvent("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
       }
       else {
         context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
@@ -730,7 +715,39 @@ private fun doBuildDistributions(context: BuildContext) {
       }
     }
   }
+
+  mavenTask?.join()
   logFreeDiskSpace("after building distributions", context)
+}
+
+private fun createMavenArtifactTask(context: BuildContext, distributionState: DistributionBuilderState): ForkJoinTask<*>? {
+  val mavenArtifacts = context.productProperties.mavenArtifacts
+  val mavenTask = if (mavenArtifacts.forIdeModules ||
+                      !mavenArtifacts.additionalModules.isEmpty() ||
+                      !mavenArtifacts.squashedModules.isEmpty() ||
+                      !mavenArtifacts.proprietaryModules.isEmpty()) {
+    createSkippableTask(spanBuilder("generate maven artifacts"), BuildOptions.MAVEN_ARTIFACTS_STEP, context) {
+      val moduleNames = ArrayList<String>()
+      if (mavenArtifacts.forIdeModules) {
+        moduleNames.addAll(distributionState.platformModules)
+        val productLayout = context.productProperties.productLayout
+        moduleNames.addAll(productLayout.getIncludedPluginModules(productLayout.bundledPluginModules))
+      }
+
+      val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
+      moduleNames.addAll(mavenArtifacts.additionalModules)
+      if (!moduleNames.isEmpty()) {
+        mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, mavenArtifacts.squashedModules, "maven-artifacts")
+      }
+      if (!mavenArtifacts.proprietaryModules.isEmpty()) {
+        mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, emptyList(), "proprietary-maven-artifacts")
+      }
+    }
+  }
+  else {
+    null
+  }
+  return mavenTask
 }
 
 private fun checkProductProperties(context: BuildContext) {
@@ -930,12 +947,15 @@ private fun checkMandatoryPath(path: String, fieldName: String, messages: BuildM
 }
 
 private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
-  logFreeDiskSpace(context.messages, context.paths.buildOutputDir, phase)
+  logFreeDiskSpace(context.paths.buildOutputDir, phase)
 }
 
-internal fun logFreeDiskSpace(buildMessages: BuildMessages, dir: Path, phase: String) {
-  buildMessages.debug(
-    "Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).usableSpace)} (on disk containing $dir)")
+internal fun logFreeDiskSpace(dir: Path, phase: String) {
+  Span.current().addEvent("free disk space", Attributes.of(
+    AttributeKey.stringKey("phase"), phase,
+    AttributeKey.stringKey("usableSpace"), Formats.formatFileSize(Files.getFileStore(dir).usableSpace),
+    AttributeKey.stringKey("dir"), dir.toString(),
+  ))
 }
 
 private fun doBuildUpdaterJar(context: BuildContext, artifactName: String) {

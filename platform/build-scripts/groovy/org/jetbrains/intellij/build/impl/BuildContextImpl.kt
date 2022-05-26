@@ -76,7 +76,9 @@ class BuildContextImpl : BuildContext {
     }
     options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     if (!options.buildStepsToSkip.isEmpty()) {
-      messages.info("Build steps to be skipped: ${options.buildStepsToSkip.joinToString()}")
+      Span.current().addEvent("build steps to be skipped", Attributes.of(
+        AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip),
+      ))
     }
     configure(productProperties)
   }

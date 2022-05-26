@@ -16,10 +16,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
-import org.jetbrains.intellij.build.tasks.Source
-import org.jetbrains.intellij.build.tasks.ZipSource
-import org.jetbrains.intellij.build.tasks.addModuleSources
-import org.jetbrains.intellij.build.tasks.buildJars
+import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -28,10 +25,15 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
+import java.nio.file.FileSystems
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.function.IntConsumer
+
+val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val libsThatUsedInJps = java.util.Set.of(
@@ -261,7 +263,7 @@ class JarPackager private constructor(private val context: BuildContext) {
     for (moduleName in modules) {
       addModuleSources(moduleName, moduleNameToSize, context.getModuleOutputDir(context.findRequiredModule(moduleName)),
                        moduleOutputPatcher.getPatchedDir(moduleName), moduleOutputPatcher.getPatchedContent(moduleName),
-                       searchableOptionsDir, layout.moduleExcludes[moduleName], sourceList)
+                       searchableOptionsDir, layout.moduleExcludes.get(moduleName), sourceList)
     }
     for (libraryName in layout.projectLibrariesToUnpack.get(jarPath)) {
       val library = context.project.libraryCollection.findLibrary(libraryName)
@@ -449,7 +451,7 @@ private data class JarDescriptor(val jarFile: Path) {
 }
 
 private fun removeVersionFromJar(fileName: String): String {
-  val matcher = LayoutBuilder.JAR_NAME_WITH_VERSION_PATTERN.matcher(fileName)
+  val matcher = JAR_NAME_WITH_VERSION_PATTERN.matcher(fileName)
   return if (matcher.matches()) "${matcher.group(1)}.jar" else fileName
 }
 
@@ -494,4 +496,47 @@ private fun isLibraryMergeable(libName: String): Boolean {
          !libName.startsWith("junit", ignoreCase = true) &&
          !libName.startsWith("cucumber-", ignoreCase = true) &&
          !libName.contains("groovy", ignoreCase = true)
+}
+
+internal val commonModuleExcludes = java.util.List.of(
+  FileSystems.getDefault().getPathMatcher("glob:**/icon-robots.txt"),
+  FileSystems.getDefault().getPathMatcher("glob:icon-robots.txt"),
+  FileSystems.getDefault().getPathMatcher("glob:.unmodified"),
+  // compilation cache on TC
+  FileSystems.getDefault().getPathMatcher("glob:.hash"),
+  FileSystems.getDefault().getPathMatcher("glob:classpath.index"),
+)
+
+private fun addModuleSources(moduleName: String,
+                             moduleNameToSize: MutableMap<String, Int>,
+                             moduleOutputDir: Path,
+                             modulePatches: Collection<Path>,
+                             modulePatchContents: Map<String, ByteArray>,
+                             searchableOptionsRootDir: Path,
+                             extraExcludes: Collection<String>,
+                             sourceList: MutableList<Source>) {
+  val sizeConsumer = IntConsumer {
+    moduleNameToSize.merge(moduleName, it) { oldValue, value -> oldValue + value }
+  }
+
+  for (entry in modulePatchContents) {
+    sourceList.add(InMemoryContentSource(entry.key, entry.value, sizeConsumer))
+  }
+  // must be before module output to override
+  for (moduleOutputPatch in modulePatches) {
+    sourceList.add(DirSource(moduleOutputPatch, Collections.emptyList(), sizeConsumer))
+  }
+
+  val searchableOptionsModuleDir = searchableOptionsRootDir.resolve(moduleName)
+  if (Files.exists(searchableOptionsModuleDir)) {
+    sourceList.add(DirSource(searchableOptionsModuleDir, Collections.emptyList(), sizeConsumer))
+  }
+
+  val excludes = if (extraExcludes.isEmpty()) {
+    commonModuleExcludes
+  }
+  else {
+    commonModuleExcludes.plus(extraExcludes.map { FileSystems.getDefault().getPathMatcher("glob:$it") })
+  }
+  sourceList.add(DirSource(dir = moduleOutputDir, excludes = excludes, sizeConsumer = sizeConsumer))
 }

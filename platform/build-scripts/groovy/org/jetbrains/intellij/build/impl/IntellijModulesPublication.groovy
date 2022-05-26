@@ -120,7 +120,7 @@ final class IntellijModulesPublication {
   }
 
   private def transitiveModuleDependencies(JpsModule module, Collection<JpsModule> result) {
-    MavenArtifactsBuilder.scopedDependencies(module)
+    MavenArtifactsBuilder.scopedDependencies$intellij_platform_buildScripts(module)
       .findAll { it.key instanceof JpsModuleDependency }
       .each {
         def dependencyModule = (it.key as JpsModuleDependency).module

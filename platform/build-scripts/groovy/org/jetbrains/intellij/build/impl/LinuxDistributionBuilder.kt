@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
@@ -61,7 +63,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
         Files.copy(iconPngPath, distBinDir.resolve(context.productProperties.baseFileName + ".png"), StandardCopyOption.REPLACE_EXISTING)
       }
       generateVMOptions(distBinDir)
-      UnixScriptBuilder.generateScripts(context, extraJarNames, distBinDir, OsFamily.LINUX)
+      generateUnixScripts(context, extraJarNames, distBinDir, OsFamily.LINUX)
       generateReadme(targetPath)
       generateVersionMarker(targetPath, context)
       RepairUtilityBuilder.bundle(context, OsFamily.LINUX, arch, targetPath)
@@ -109,6 +111,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
 
   private fun generateVMOptions(distBinDir: Path) {
     val fileName = "${context.productProperties.baseFileName}64.vmoptions"
+
     @Suppress("SpellCheckingInspection")
     val vmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties) +
                     listOf("-Dsun.tools.attach.tmp.only=true")
@@ -337,4 +340,120 @@ fun copyFileSymlinkAware(source: Path, target: Path, vararg options: CopyOption)
     }
   }
   Files.copy(source, target, *optionsList.toTypedArray())
+}
+
+
+internal const val REMOTE_DEV_SCRIPT_FILE_NAME = "remote-dev-server.sh"
+
+internal fun generateUnixScripts(context: BuildContext,
+                                 extraJarNames: List<String>,
+                                 distBinDir: Path,
+                                 osFamily: OsFamily) {
+  val classPathJars = context.bootClassPathJarNames + extraJarNames
+  var classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars.get(0)}\""
+  for (i in 1 until classPathJars.size) {
+    classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars.get(i)}\""
+  }
+
+  val additionalJvmArguments = context.getAdditionalJvmArguments().toMutableList()
+  if (!context.xBootClassPathJarNames.isEmpty()) {
+    val bootCp = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$IDE_HOME/lib/${it}" }
+    additionalJvmArguments.add("\"-Xbootclasspath/a:$bootCp\"")
+  }
+  val additionalJvmArgs = additionalJvmArguments.joinToString(separator = " ")
+  val baseName = context.productProperties.baseFileName
+
+  val vmOptionsPath = when (osFamily) {
+    OsFamily.LINUX -> distBinDir.resolve("${baseName}64.vmoptions")
+    OsFamily.MACOS -> distBinDir.resolve("${baseName}.vmoptions")
+    else -> throw IllegalStateException("Unknown OsFamily")
+  }
+
+  val defaultXmxParameter = try {
+    Files.readAllLines(vmOptionsPath).firstOrNull { it.startsWith("-Xmx") }
+  }
+  catch (e: NoSuchFileException) {
+    throw IllegalStateException("File '$vmOptionsPath' should be already generated at this point", e)
+  } ?: throw IllegalStateException("-Xmx was not found in '$vmOptionsPath'")
+
+  val isRemoteDevEnabled = context.productProperties.productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+
+  Files.createDirectories(distBinDir)
+  val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
+
+  when (osFamily) {
+    OsFamily.LINUX -> {
+      val scriptName = "$baseName.sh"
+      Files.newDirectoryStream(sourceScriptDir).use {
+        for (file in it) {
+          val fileName = file.fileName.toString()
+          if (!isRemoteDevEnabled && fileName == REMOTE_DEV_SCRIPT_FILE_NAME) {
+            continue
+          }
+
+          val target = distBinDir.resolve(if (fileName == "executable-template.sh") scriptName else fileName)
+          copyScript(sourceFile = file,
+                     targetFile = target,
+                     vmOptionsFileName = baseName,
+                     additionalJvmArgs = additionalJvmArgs,
+                     defaultXmxParameter = defaultXmxParameter,
+                     classPath = classPath,
+                     scriptName = scriptName,
+                     context = context)
+        }
+      }
+      copyInspectScript(context, distBinDir)
+    }
+    OsFamily.MACOS -> {
+      copyScript(sourceFile = sourceScriptDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
+                 targetFile = distBinDir.resolve(REMOTE_DEV_SCRIPT_FILE_NAME),
+                 vmOptionsFileName = baseName,
+                 additionalJvmArgs = additionalJvmArgs,
+                 defaultXmxParameter = defaultXmxParameter,
+                 classPath = classPath,
+                 scriptName = baseName,
+                 context = context)
+    }
+    else -> {
+      throw IllegalStateException("Unsupported OsFamily: $osFamily")
+    }
+  }
+}
+
+private fun copyScript(sourceFile: Path,
+                       targetFile: Path,
+                       vmOptionsFileName: String,
+                       additionalJvmArgs: String,
+                       defaultXmxParameter: String,
+                       classPath: String,
+                       scriptName: String,
+                       context: BuildContext) {
+  val sourceFileLf = Files.createTempFile(context.paths.tempDir, sourceFile.fileName.toString(), "")
+  try {
+    // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
+    // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
+    Files.writeString(sourceFileLf, Files.readString(sourceFile).replace("\r", ""))
+
+    substituteTemplatePlaceholders(
+      inputFile = sourceFileLf,
+      outputFile = targetFile,
+      placeholder = "__",
+      values = listOf(
+        Pair("product_full", context.applicationInfo.productName),
+        Pair("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
+        Pair("product_vendor", context.applicationInfo.shortCompanyName),
+        Pair("product_code", context.applicationInfo.productCode),
+        Pair("vm_options", vmOptionsFileName),
+        Pair("system_selector", context.systemSelector),
+        Pair("ide_jvm_args", additionalJvmArgs),
+        Pair("ide_default_xmx", defaultXmxParameter.trim()),
+        Pair("class_path", classPath),
+        Pair("script_name", scriptName),
+      ),
+      mustUseAllPlaceholders = false
+    )
+  }
+  finally {
+    Files.delete(sourceFileLf)
+  }
 }

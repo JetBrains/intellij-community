@@ -5,7 +5,7 @@ import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 
-abstract class BuildMessageLoggerBase(private val parallelTaskId: String?) : BuildMessageLogger() {
+abstract class BuildMessageLoggerBase : BuildMessageLogger() {
   private var indent = 0
 
   override fun processMessage(message: LogMessage) {
@@ -35,9 +35,8 @@ abstract class BuildMessageLoggerBase(private val parallelTaskId: String?) : Bui
   protected open fun shouldBePrinted(kind: LogMessage.Kind) = true
 
   private fun printMessage(message: String) {
-    val taskPrefix = if (parallelTaskId == null) "" else "[$parallelTaskId] "
     message.lineSequence().forEach {
-      printLine(" ".repeat(indent) + taskPrefix + it)
+      printLine(" ".repeat(indent) + it)
     }
   }
 

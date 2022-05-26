@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtilRt
-import org.apache.tools.ant.Main
 import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -65,16 +64,6 @@ object BuildUtils {
   @JvmStatic
   val realSystemOut: PrintStream // No longer works in recent Ant 1.9.x and 1.10
     get() {
-      try {
-        // if the build script is running under Ant or AntBuilder it may replace the standard System.out
-        val result = Main::class.java.getDeclaredField("out")
-        result.isAccessible = true
-        // No longer works in recent Ant 1.9.x and 1.10
-        return result.get(null) as PrintStream
-      }
-      catch (ignored: Throwable) {
-      }
-
       try {
         val aClass = BuildUtils::class.java.classLoader.loadClass("org.jetbrains.jps.gant.GantWithClasspathTask")
         val result = aClass.getDeclaredField("out")

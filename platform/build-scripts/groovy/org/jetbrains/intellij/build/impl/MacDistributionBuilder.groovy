@@ -123,7 +123,7 @@ final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
       customizer.copyAdditionalFiles(context, macDistDir, arch)
     }
 
-    UnixScriptBuilder.generateScripts(context, Collections.<String>emptyList(), macDistDir.resolve("bin"), OsFamily.MACOS)
+    LinuxDistributionBuilderKt.generateUnixScripts(context, Collections.<String>emptyList(), macDistDir.resolve("bin"), OsFamily.MACOS)
   }
 
   @Override

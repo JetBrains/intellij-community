@@ -135,12 +135,12 @@ class ProductModulesLayout {
   /**
    * @return list of all modules which output is included into the plugin's JARs
    */
-  fun getIncludedPluginModules(enabledPluginModules: Set<String>): Collection<String> {
+  fun getIncludedPluginModules(enabledPluginModules: Collection<String>): Collection<String> {
     val result = LinkedHashSet<String>()
     result.addAll(enabledPluginModules)
-    result.addAll(allNonTrivialPlugins
-                    .filter { enabledPluginModules.contains(it.mainModule) }
-                    .flatMap { it.getIncludedModuleNames() })
+    allNonTrivialPlugins.asSequence()
+      .filter { enabledPluginModules.contains(it.mainModule) }
+      .flatMapTo(result) { it.getIncludedModuleNames() }
     return result
   }
 

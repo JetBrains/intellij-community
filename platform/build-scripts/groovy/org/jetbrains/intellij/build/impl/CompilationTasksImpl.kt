@@ -7,6 +7,7 @@ import com.intellij.util.io.Decompressor
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
@@ -112,11 +113,15 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
       cleanOutput(context)
     }
     else {
-      context.messages.info("cleanOutput step was skipped")
+      Span.current().addEvent("skip output cleaning", Attributes.of(
+        AttributeKey.stringKey("dir"), context.projectOutputDirectory.toString(),
+      ))
     }
 
     if (context.options.useCompiledClassesFromProjectOutput) {
-      context.messages.info("Compiled classes reused from \'${context.projectOutputDirectory}\'")
+      Span.current().addEvent("compiled classes reused", Attributes.of(
+        AttributeKey.stringKey("dir"), context.projectOutputDirectory.toString(),
+      ))
     }
     else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
       CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)

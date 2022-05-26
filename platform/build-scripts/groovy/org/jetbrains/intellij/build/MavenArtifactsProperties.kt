@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
-
-import java.util.function.BiPredicate
+import java.nio.file.Path
 
 /**
  * Specifies how Maven artifacts for IDE modules should be generated.
@@ -44,7 +42,7 @@ class MavenArtifactsProperties {
   /**
    * A predicate which returns {@code true} for modules which sources should be published as Maven artifacts.
    */
-  var publishSourcesFilter: BiPredicate<JpsModule, BuildContext> = BiPredicate { module, context ->
-    module.contentRootsList.urls.all { FileUtil.isAncestor(context.paths.communityHome, JpsPathUtil.urlToPath(it), false) }
+  var publishSourcesFilter: (JpsModule, BuildContext) -> Boolean = { module, context ->
+    module.contentRootsList.urls.all { Path.of(JpsPathUtil.urlToPath(it)).startsWith(context.paths.communityHomeDir) }
   }
 }

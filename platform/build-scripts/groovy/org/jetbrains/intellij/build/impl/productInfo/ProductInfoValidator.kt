@@ -7,14 +7,14 @@ import com.intellij.util.lang.ImmutableZipFile
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import kotlinx.serialization.decodeFromString
-import org.apache.tools.tar.TarInputStream
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.OsFamily
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.zip.GZIPInputStream
 
 /**
  * Checks that product-info.json file located in `archivePath` archive in `pathInArchive` subdirectory is correct
@@ -105,7 +105,7 @@ private fun archiveContainsEntry(archiveFile: Path, entryPath: String): Boolean 
   }
   else if (fileName.endsWith(".tar.gz")) {
     Files.newInputStream(archiveFile).use {
-      val inputStream = TarInputStream(GZIPInputStream(it, 32 * 1024))
+      val inputStream = TarArchiveInputStream(GzipCompressorInputStream(it))
       val altEntryPath = "./$entryPath"
       while (true) {
         val entry = inputStream.nextEntry ?: break
@@ -127,8 +127,7 @@ private fun loadEntry(archiveFile: Path, entryPath: String): ByteArray? {
     }
   }
   else if (fileName.endsWith(".tar.gz")) {
-    Files.newInputStream(archiveFile).use {
-      val inputStream = TarInputStream(GZIPInputStream(it, 32 * 1024))
+    TarArchiveInputStream(GzipCompressorInputStream(Files.newInputStream(archiveFile))).use { inputStream ->
       val altEntryPath = "./$entryPath"
       while (true) {
         val entry = inputStream.nextEntry ?: break

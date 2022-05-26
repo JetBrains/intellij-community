@@ -3,15 +3,17 @@ package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.containers.Stack
-import org.apache.tools.ant.DefaultLogger
-import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.LayoutBuilder
+import java.io.BufferedWriter
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 import java.util.*
+import java.util.function.Consumer
 
 class BuildMessagesImpl private constructor(private val logger: BuildMessageLogger,
                                             private val debugLogger: DebugLogger,
@@ -21,37 +23,15 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 
   companion object {
     fun create(): BuildMessagesImpl {
-      val antProject = LayoutBuilder.getAnt().project
-      val key = "IntelliJBuildMessages"
-      antProject.getReference<BuildMessagesImpl>(key)?.let {
-        return it
-      }
-
       val underTeamCity = System.getenv("TEAMCITY_VERSION") != null
-      disableAntLogging(antProject)
       val mainLoggerFactory = if (underTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
       val debugLogger = DebugLogger()
-      val loggerFactory: (String?, AntTaskLogger) -> BuildMessageLogger = { taskName, logger ->
-        CompositeBuildMessageLogger(listOf(mainLoggerFactory.apply(taskName, logger), debugLogger.createLogger(taskName)))
+      val loggerFactory: () -> BuildMessageLogger = {
+        CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger()))
       }
-      val antTaskLogger = AntTaskLogger(antProject)
-      val messages = BuildMessagesImpl(logger = loggerFactory(null, antTaskLogger),
-                                       debugLogger = debugLogger,
-                                       parentInstance = null)
-      antTaskLogger.defaultHandler = messages
-      antProject.addBuildListener(antTaskLogger)
-      antProject.addReference(key, messages)
-      return messages
-    }
-    /**
-     * default Ant logging doesn't work well with parallel tasks, so we use our own [AntTaskLogger] instead
-     */
-    private fun disableAntLogging(project: Project) {
-      for (it in project.buildListeners) {
-        if (it is DefaultLogger) {
-          it.setMessageOutputLevel(Project.MSG_ERR)
-        }
-      }
+      return BuildMessagesImpl(logger = loggerFactory(),
+                               debugLogger = debugLogger,
+                               parentInstance = null)
     }
   }
 
@@ -91,12 +71,12 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     processMessage(LogMessage(LogMessage.Kind.DEBUG, message))
   }
 
-  fun setDebugLogPath(path: Path?) {
-    debugLogger.outputFile = path
+  fun setDebugLogPath(path: Path) {
+    debugLogger.setOutputFile(path)
   }
 
-  val debugLogFile: Path
-    get() = debugLogger.outputFile
+  val debugLogFile: Path?
+    get() = debugLogger.getOutputFile()
 
   override fun error(message: String) {
     try {
@@ -180,5 +160,67 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
       //Until it is fixed we need to delay delivering of messages from the tasks running in parallel until all tasks have been finished.
       delayedMessages.add(message)
     }
+  }
+}
+
+/**
+ * Used to print debug-level log message to a file in the build output. It firstly prints messages to a temp file and copies it to the real
+ * file after the build process cleans up the output directory.
+ */
+private class DebugLogger {
+  private val tempFile: Path = Files.createTempFile("intellij-build", ".log")
+  private var output: BufferedWriter
+  private var outputFile: Path? = null
+  private val loggers = ArrayList<PrintWriterBuildMessageLogger>()
+
+  init {
+    Files.createDirectories(tempFile.parent)
+    output = Files.newBufferedWriter(tempFile)
+  }
+
+  @Synchronized
+  fun setOutputFile(outputFile: Path) {
+    this.outputFile = outputFile
+    output.close()
+    Files.createDirectories(outputFile.parent)
+    if (Files.exists(tempFile)) {
+      Files.move(tempFile, outputFile, StandardCopyOption.REPLACE_EXISTING)
+    }
+    output = Files.newBufferedWriter(outputFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+    for (logger in loggers) {
+      logger.setOutput(output)
+    }
+  }
+
+  @Synchronized
+  fun getOutputFile() = outputFile
+
+  @Synchronized
+  fun createLogger(): BuildMessageLogger {
+    val logger = PrintWriterBuildMessageLogger(output = output, disposer = loggers::remove)
+    loggers.add(logger)
+    return logger
+  }
+}
+
+private class PrintWriterBuildMessageLogger(
+  private var output: BufferedWriter,
+  private val disposer: Consumer<PrintWriterBuildMessageLogger>,
+) : BuildMessageLoggerBase() {
+  @Synchronized
+  fun setOutput(output: BufferedWriter) {
+    this.output = output
+  }
+
+  @Override
+  @Synchronized
+  override fun printLine(line: String) {
+    output.write(line)
+    output.write("\n")
+    output.flush()
+  }
+
+  override fun dispose() {
+    disposer.accept(this)
   }
 }

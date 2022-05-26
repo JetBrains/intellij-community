@@ -21,5 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
+    <orderEntry type="library" name="org.codehaus.groovy:groovy-ant" level="project" />
+    <orderEntry type="library" name="Ant" level="project" />
   </component>
 </module>

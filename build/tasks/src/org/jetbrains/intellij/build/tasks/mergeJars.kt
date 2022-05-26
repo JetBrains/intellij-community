@@ -8,11 +8,8 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tracer
-import java.nio.file.FileSystems
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.util.*
 import java.util.concurrent.ForkJoinTask
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
@@ -45,7 +42,10 @@ data class ZipSource(val file: Path,
   }
 }
 
-data class DirSource(val dir: Path, val excludes: List<PathMatcher> = emptyList(), override val sizeConsumer: IntConsumer? = null) : Source {
+data class DirSource(val dir: Path,
+                     val excludes: List<PathMatcher> = emptyList(),
+                     override val sizeConsumer: IntConsumer? = null,
+                     val prefix: String = "") : Source {
   override fun toString(): String {
     val shortPath = if (dir.startsWith(USER_HOME)) {
       "~/" + USER_HOME.relativize(dir)
@@ -147,8 +147,8 @@ fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false,
               }
             })
             val normalizedDir = source.dir.toAbsolutePath().normalize()
-            archiver.setRootDir(normalizedDir, "")
-            compressDir(normalizedDir, archiver, excludes = source.excludes.takeIf { it.isNotEmpty() })
+            archiver.setRootDir(normalizedDir, source.prefix)
+            compressDir(normalizedDir, archiver, excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty))
           }
 
           is InMemoryContentSource -> {
@@ -239,47 +239,4 @@ private fun checkName(name: String,
          !name.startsWith("META-INF/INDEX.LIST") &&
          (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
          uniqueNames.add(name)
-}
-
-private val commonModuleExcludes = java.util.List.of(
-  FileSystems.getDefault().getPathMatcher("glob:**/icon-robots.txt"),
-  FileSystems.getDefault().getPathMatcher("glob:icon-robots.txt"),
-  FileSystems.getDefault().getPathMatcher("glob:.unmodified"),
-  // compilation cache on TC
-  FileSystems.getDefault().getPathMatcher("glob:.hash"),
-  FileSystems.getDefault().getPathMatcher("glob:classpath.index"),
-)
-
-fun addModuleSources(moduleName: String,
-                     moduleNameToSize: MutableMap<String, Int>,
-                     moduleOutputDir: Path,
-                     modulePatches: Collection<Path>,
-                     modulePatchContents: Map<String, ByteArray>,
-                     searchableOptionsRootDir: Path,
-                     extraExcludes: Collection<String>,
-                     sourceList: MutableList<Source>) {
-  val sizeConsumer = IntConsumer {
-    moduleNameToSize.merge(moduleName, it) { oldValue, value -> oldValue + value }
-  }
-
-  for (entry in modulePatchContents) {
-    sourceList.add(InMemoryContentSource(entry.key, entry.value, sizeConsumer))
-  }
-  // must be before module output to override
-  for (moduleOutputPatch in modulePatches) {
-    sourceList.add(DirSource(moduleOutputPatch, Collections.emptyList(), sizeConsumer))
-  }
-
-  val searchableOptionsModuleDir = searchableOptionsRootDir.resolve(moduleName)
-  if (Files.exists(searchableOptionsModuleDir)) {
-    sourceList.add(DirSource(searchableOptionsModuleDir, Collections.emptyList(), sizeConsumer))
-  }
-
-  val excludes = if (extraExcludes.isEmpty()) {
-    commonModuleExcludes
-  }
-  else {
-    commonModuleExcludes.plus(extraExcludes.map { FileSystems.getDefault().getPathMatcher("glob:$it") })
-  }
-  sourceList.add(DirSource(dir = moduleOutputDir, excludes = excludes, sizeConsumer = sizeConsumer))
 }

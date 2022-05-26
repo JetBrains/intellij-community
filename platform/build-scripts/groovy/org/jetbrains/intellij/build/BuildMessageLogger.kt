@@ -2,9 +2,7 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.BuildUtils
-import org.jetbrains.intellij.build.impl.logging.AntTaskLogger
 import org.jetbrains.intellij.build.impl.logging.BuildMessageLoggerBase
-import java.util.function.BiFunction
 
 abstract class BuildMessageLogger {
   abstract fun processMessage(message: LogMessage)
@@ -36,10 +34,10 @@ class CompositeBuildMessageLogger(private val loggers: List<BuildMessageLogger>)
   }
 }
 
-class ConsoleBuildMessageLogger(parallelTaskId: String?) : BuildMessageLoggerBase(parallelTaskId) {
+class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
   companion object {
     @JvmField
-    val FACTORY: BiFunction<String?, AntTaskLogger, BuildMessageLogger> = BiFunction { taskName, _ -> ConsoleBuildMessageLogger(taskName) }
+    val FACTORY: () -> BuildMessageLogger = ::ConsoleBuildMessageLogger
 
     private val out = BuildUtils.realSystemOut
   }

@@ -4,10 +4,8 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.google.gson.Gson
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Trinity
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
@@ -15,14 +13,12 @@ import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpHead
 import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.impl.BuildHelperKt
-import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
@@ -60,17 +56,16 @@ final class CompilationPartsUtil {
     //endregion
 
     def incremental = context.options.incrementalCompilation
+    Path zipsLocationDir = Path.of(zipsLocation)
     if (!incremental) {
-      FileUtil.delete(new File(zipsLocation))
+      NioFiles.deleteRecursively(zipsLocationDir)
     }
-    FileUtil.ensureExists(new File(zipsLocation))
+    Files.createDirectories(zipsLocationDir)
 
     List<PackAndUploadContext> contexts = new ArrayList<PackAndUploadContext>(2048)
 
     File root = context.getProjectOutputDirectory().toFile().getAbsoluteFile()
     List<File> subRoots = root.listFiles().toList().collect { it.absoluteFile } // production, test
-    Path zipsLocationDir = Path.of(zipsLocation)
-    Files.createDirectories(zipsLocationDir)
     for (File subRoot : subRoots) {
       Files.createDirectories(zipsLocationDir.resolve(subRoot.name))
 
@@ -110,7 +105,7 @@ final class CompilationPartsUtil {
 
   private static void upload(String zipsLocation,BuildMessages messages, List<PackAndUploadContext> contexts) {
     String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
-    if (StringUtil.isEmptyOrSpaces(serverUrl)) {
+    if (Strings.isEmptyOrSpaces(serverUrl)) {
       messages.error("Compile Parts archive server url is not defined. \n" +
                      "Please set 'intellij.compile.archive.url' system property.")
       return
@@ -120,7 +115,7 @@ final class CompilationPartsUtil {
 
     String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
     String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
-    if (StringUtil.isEmptyOrSpaces(branch)) {
+    if (Strings.isEmptyOrSpaces(branch)) {
       messages.error("Unable to determine current git branch, assuming 'master'. \n" +
                      "Please set '$intellijCompileArtifactsBranchProperty' system property")
       return
@@ -224,15 +219,14 @@ final class CompilationPartsUtil {
     executor.reportErrors(messages)
 
     // Save and publish metadata file
-    def metadataFile = new File("$zipsLocation/metadata.json")
-    FileUtil.writeToFile(metadataFile, metadataJson)
-    messages.artifactBuilt(metadataFile.absolutePath)
+    Path metadataFile = Path.of("$zipsLocation/metadata.json")
+    Files.createDirectories(metadataFile.parent)
+    Files.writeString(metadataFile, metadataJson)
+    messages.artifactBuilt(metadataFile.toString())
 
     def gzippedMetadataFile = new File(zipsLocation, "metadata.json.gz")
     new GZIPOutputStream(gzippedMetadataFile.newOutputStream()).withCloseable { OutputStream outputStream ->
-      metadataFile.newInputStream().withCloseable { InputStream inputStream ->
-        FileUtil.copy(inputStream, outputStream)
-      }
+      Files.copy(metadataFile, outputStream)
     }
     messages.artifactBuilt(gzippedMetadataFile.absolutePath)
   }
@@ -246,8 +240,7 @@ final class CompilationPartsUtil {
     boolean forInstallers = System.getProperty('intellij.fetch.compiled.classes.for.installers', 'false').toBoolean()
     CompilationPartsMetadata metadata
     try {
-      metadata = new Gson().fromJson(FileUtil.loadFile(metadataFile, CharsetToolkit.UTF8),
-                                     CompilationPartsMetadata.class)
+      metadata = new Gson().fromJson(Files.readString(metadataFile.toPath()), CompilationPartsMetadata.class)
     }
     catch (Exception e) {
       messages.error("Failed to parse metadata file content: $e.message", e)
@@ -257,7 +250,7 @@ final class CompilationPartsUtil {
     Path cache = persistentCache == null ? classesOutput.parent : Path.of(persistentCache).toAbsolutePath().normalize()
     Path tempDownloadsStorage = cache.resolve("idea-compile-parts-v2")
 
-    Set<String> upToDate = ContainerUtil.newConcurrentSet()
+    Set<String> upToDate = Collections.newSetFromMap(new ConcurrentHashMap<>())
 
     List<FetchAndUnpackContext> contexts = new ArrayList<FetchAndUnpackContext>(metadata.files.size())
     new TreeMap<String, String>(metadata.files).each { entry ->
@@ -277,7 +270,7 @@ final class CompilationPartsUtil {
     messages.block("Check previously unpacked directories") {
       long start = System.nanoTime()
       contexts.each { ctx ->
-        def out = ctx.output
+        Path out = ctx.output
         if (!Files.exists(out)) return
         executor.submit {
           if (Files.isDirectory(out)) {
@@ -301,7 +294,7 @@ final class CompilationPartsUtil {
               messages.debug("There's no .hash file in output directory '$ctx.name'")
             }
           }
-          FileUtil.delete(out)
+          NioFiles.deleteRecursively(out)
           return
         }
       }
@@ -317,7 +310,7 @@ final class CompilationPartsUtil {
             def name = "$subroot.name/$module.name".toString()
             if (!expectedDirectories.contains(name)) {
               messages.info("Removing stalled directory '$name'")
-              FileUtil.delete(module)
+              NioFiles.deleteRecursively(module.toPath())
             }
           }
         }
@@ -342,7 +335,7 @@ final class CompilationPartsUtil {
           def file = ctx.jar
           if (Files.exists(file) && ctx.hash != computeHash(file)) {
             messages.info("File $file has unexpected hash, will refetch")
-            FileUtil.delete(file)
+            Files.deleteIfExists(file)
           }
           if (!Files.exists(file)) {
             toDownload.add(ctx)
@@ -376,7 +369,7 @@ final class CompilationPartsUtil {
               if (lastAccessTime > epoch && lastAccessTime < daysAgo) {
                 count++
                 bytes += attr.size()
-                FileUtil.delete(file)
+                Files.deleteIfExists(file)
               }
             }
                    } as Consumer<Path>)
@@ -397,7 +390,7 @@ final class CompilationPartsUtil {
       String prefix = metadata.prefix
       String serverUrl = metadata.serverUrl
 
-      Set<Pair<FetchAndUnpackContext, Integer>> failed = ContainerUtil.newConcurrentSet()
+      Set<Pair<FetchAndUnpackContext, Integer>> failed = Collections.newSetFromMap(new ConcurrentHashMap<>())
 
       if (!toDownload.isEmpty()) {
         def httpClient = HttpClientBuilder.create()
@@ -438,9 +431,9 @@ final class CompilationPartsUtil {
                 failed.add(Pair.create(ctx, response.getStatusLine().getStatusCode()))
               }
               else {
-                new BufferedInputStream(response.getEntity().getContent()).withCloseable { bis ->
-                  new BufferedOutputStream(Files.newOutputStream(ctx.jar)).withCloseable { bos ->
-                    FileUtil.copy(bis, bos)
+                response.getEntity().getContent().withCloseable { bis ->
+                  Files.newOutputStream(ctx.jar).withCloseable { out ->
+                    bis.transferTo(out)
                   }
                 }
               }
@@ -473,7 +466,7 @@ final class CompilationPartsUtil {
     messages.block("Verify downloaded archives") {
       long start = System.nanoTime()
       // todo: retry download if hash verification failed
-      Set<Trinity<Path, String, String>> failed = ContainerUtil.newConcurrentSet()
+      Set<Trinity<Path, String, String>> failed = Collections.newSetFromMap(new ConcurrentHashMap<>())
 
       toDownload.each { ctx ->
         executor.submit {
@@ -546,6 +539,8 @@ final class CompilationPartsUtil {
     })
   }
 
+  private static final Base64.Encoder digestEncoder = Base64.urlEncoder.withoutPadding()
+
   private static String computeHash(Path file) {
     if (file == null || !Files.exists(file)) {
       return null
@@ -553,12 +548,10 @@ final class CompilationPartsUtil {
 
     MessageDigest messageDigest = MessageDigest.getInstance("SHA-256")
     Files.copy(file, new DigestOutputStream(messageDigest))
-    def digest = messageDigest.digest()
-    def hex = StringUtil.toHexString(digest)
-    return hex
+    return digestEncoder.encodeToString(messageDigest.digest())
   }
 
-  private static class DigestOutputStream extends OutputStream {
+  private static final class DigestOutputStream extends OutputStream {
     private final MessageDigest myDigest
 
     DigestOutputStream(MessageDigest digest) {
@@ -615,12 +608,6 @@ final class CompilationPartsUtil {
     def start = System.nanoTime()
     try {
       return body()
-    }
-    catch (IntelliJBuildException e) {
-      throw e
-    }
-    catch (BuildException e) {
-      throw new IntelliJBuildException(name, e.message, e.cause)
     }
     finally {
       def time = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)

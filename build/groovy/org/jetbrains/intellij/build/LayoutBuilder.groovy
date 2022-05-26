@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl
-
+package org.jetbrains.intellij.build
 
 import com.intellij.util.PathUtilRt
+import groovy.ant.AntBuilder
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.tools.ant.AntClassLoader
-import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.JarPackager
+import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -18,13 +20,9 @@ import java.util.function.Function
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-/**
- * Use this class to pack output of modules and libraries into JARs and lay out them by directories. It delegates the actual work to
- * {@link jetbrains.antlayout.tasks.LayoutTask}.
- */
 @CompileStatic
 final class LayoutBuilder {
-  public static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
+  private static final Pattern JAR_NAME_WITH_VERSION_PATTERN = ~/(.*)-\d+(?:\.\d+)*\.jar*/
 
   static final AntBuilder ant = new AntBuilder()
   private final CompilationContext context
@@ -225,7 +223,7 @@ final class LayoutBuilder {
      */
     void moduleLibrary(String moduleName, String libraryName, Function<String, String> nameMapper = Function.identity()) {
       JpsModule module = findModule(moduleName)
-      JpsLibrary library = module.libraryCollection.libraries.find {JarPackager.getLibraryName(it) == libraryName}
+      JpsLibrary library = module.libraryCollection.libraries.find { JarPackager.getLibraryName(it) == libraryName}
       if (library == null) {
         throw new IllegalArgumentException("Cannot find library $libraryName in '$moduleName' module")
       }
