@@ -256,14 +256,14 @@ fun fetchAndUnpackCompiledClasses(messages: BuildMessages, classesOutput: Path, 
   val cache = if (persistentCache == null) classesOutput.parent else Path.of(persistentCache).toAbsolutePath().normalize()
   val tempDownloadsStorage = cache.resolve("idea-compile-parts-v2")
 
-  val contexts = metadata.files.mapTo(ArrayList(metadata.files.size)) { entry ->
+  val items = metadata.files.mapTo(ArrayList(metadata.files.size)) { entry ->
     FetchAndUnpackContext(name = entry.key,
                           hash = entry.value,
                           output = classesOutput.resolve(entry.key),
                           saveHash = !forInstallers,
                           jar = tempDownloadsStorage.resolve("${entry.key}/${entry.value}.jar"))
   }
-  contexts.sortBy { it.name }
+  items.sortBy { it.name }
 
   var verifyTime = 0L
 
@@ -271,7 +271,7 @@ fun fetchAndUnpackCompiledClasses(messages: BuildMessages, classesOutput: Path, 
 
   spanBuilder("check previously unpacked directories").useWithScope { span ->
     val start = System.nanoTime()
-    ForkJoinTask.invokeAll(contexts.map { item ->
+    ForkJoinTask.invokeAll(items.map { item ->
       ForkJoinTask.adapt {
         val out = item.output
         val hashFile = out.resolve(".hash")
@@ -344,10 +344,10 @@ fun fetchAndUnpackCompiledClasses(messages: BuildMessages, classesOutput: Path, 
 
   messages.reportStatisticValue("compile-parts:up-to-date:count", upToDate.size.toString())
 
-  val toUnpack = ArrayList<FetchAndUnpackContext>(contexts.size)
+  val toUnpack = ArrayList<FetchAndUnpackContext>(items.size)
   val toDownload = spanBuilder("check previously downloaded archives").useWithScope { span ->
     val start = System.nanoTime()
-    val result = ForkJoinTask.invokeAll(contexts.mapNotNull { item ->
+    val result = ForkJoinTask.invokeAll(items.mapNotNull { item ->
       if (upToDate.contains(item.name)) {
         return@mapNotNull null
       }
@@ -377,7 +377,7 @@ fun fetchAndUnpackCompiledClasses(messages: BuildMessages, classesOutput: Path, 
     var count = 0
     var bytes = 0L
     try {
-      val preserve = HashSet(contexts.map { it.jar })
+      val preserve = HashSet(items.map { it.jar })
       val epoch = FileTime.fromMillis(0)
       val daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
       Files.createDirectories(tempDownloadsStorage)
