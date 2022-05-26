@@ -94,7 +94,7 @@ private class CopyDirectoryVisitor(private val sourceDir: Path,
   }
 }
 
-internal fun deleteDir(startDir: Path) {
+fun deleteDir(startDir: Path) {
   Files.walkFileTree(startDir, object : SimpleFileVisitor<Path>() {
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       deleteFile(file)

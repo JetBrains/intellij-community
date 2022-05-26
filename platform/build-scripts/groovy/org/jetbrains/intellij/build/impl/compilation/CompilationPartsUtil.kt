@@ -1,606 +1,657 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.gson.Gson
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.Trinity
+import com.intellij.diagnostic.telemetry.forkJoinTask
+import com.intellij.diagnostic.telemetry.use
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.io.Decompressor
-import groovy.transform.CompileStatic
-import org.apache.http.HttpStatus
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpHead
-import org.apache.http.impl.client.HttpClientBuilder
-import org.jetbrains.annotations.NotNull
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+import net.jpountz.lz4.LZ4Factory
+import net.jpountz.lz4.LZ4FrameInputStream
+import net.jpountz.xxhash.XXHashFactory
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.TraceManager
-import org.jetbrains.intellij.build.impl.BuildHelperKt
-import java.nio.file.FileVisitOption
-import java.nio.file.Files
-import java.nio.file.Path
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.io.deleteDir
+import org.jetbrains.intellij.build.io.zip
+import java.io.IOException
+import java.io.OutputStream
+import java.math.BigInteger
+import java.net.HttpURLConnection
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
+import java.security.Provider
+import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.function.Consumer
-import java.util.function.Predicate
 import java.util.zip.GZIPOutputStream
+import kotlin.io.path.name
 
-@CompileStatic
-final class CompilationPartsUtil {
-  static void packAndUploadToServer(CompilationContext context, String zipsLocation) {
-    upload(zipsLocation, context.messages, pack(context, zipsLocation))
+fun packAndUploadToServer(context: CompilationContext, zipsLocation: Path) {
+  val contexts = spanBuilder("pack classes").useWithScope {
+    packCompilationResult(context, zipsLocation)
   }
+  spanBuilder("upload packed classes to the server").useWithScope {
+    upload(zipsLocation, context.messages, contexts)
+  }
+}
 
-  @SuppressWarnings('GrUnnecessaryPublicModifier')
-  public static List<PackAndUploadContext> pack(CompilationContext context, String zipsLocation) {
-    BuildMessages messages = context.messages
+private fun packCompilationResult(context: CompilationContext, zipsLocation: Path): List<PackAndUploadItem> {
+  val incremental = context.options.incrementalCompilation
+  if (!incremental) {
+    NioFiles.deleteRecursively(zipsLocation)
+  }
+  Files.createDirectories(zipsLocation)
 
-    messages.progress("Packing classes and uploading them to the server")
-
-    def incremental = context.options.incrementalCompilation
-    Path zipsLocationDir = Path.of(zipsLocation)
-    if (!incremental) {
-      NioFiles.deleteRecursively(zipsLocationDir)
+  val items = ArrayList<PackAndUploadItem>(2048)
+  val span = Span.current()
+  // production, test
+  for (subRoot in Files.newDirectoryStream(context.projectOutputDirectory).use(DirectoryStream<Path>::toList)) {
+    if (!Files.isDirectory(subRoot)) {
+      continue
     }
-    Files.createDirectories(zipsLocationDir)
 
-    List<PackAndUploadContext> contexts = new ArrayList<PackAndUploadContext>(2048)
+    val subRootName = subRoot.name
+    Files.createDirectories(zipsLocation.resolve(subRootName))
 
-    File root = context.getProjectOutputDirectory().toFile().getAbsoluteFile()
-    List<File> subRoots = root.listFiles().toList().collect { it.absoluteFile } // production, test
-    for (File subRoot : subRoots) {
-      Files.createDirectories(zipsLocationDir.resolve(subRoot.name))
-
-      def modules = subRoot.listFiles().toList().collect { it.absoluteFile }
-      for (File module : modules) {
-        def files = module.list()
-        if (files == null || files.size() == 0) {
-          // Skip empty directories
+    Files.newDirectoryStream(subRoot).use { subRootStream ->
+      for (module in subRootStream) {
+        val name = "$subRootName/${module.name}"
+        try {
+          if (isModuleOutputDirEmpty(module)) {
+            span.addEvent("skip empty module", Attributes.of(
+              AttributeKey.stringKey("name"), name,
+            ))
+            continue
+          }
+        }
+        catch (ignore: FileSystemException) {
           continue
         }
 
         if (context.findModule(module.name) == null) {
-          messages.warning("Skipping module output from missing in project module: ${module.name}")
+          span.addEvent("skip module output from missing in project module", Attributes.of(
+            AttributeKey.stringKey("module"), module.name,
+          ))
           continue
         }
 
-        String name = "${subRoot.name}/${module.name}".toString()
-        PackAndUploadContext ctx = new PackAndUploadContext(module, name, "$zipsLocation/${name}.jar".toString())
-        contexts.add(ctx)
+        items.add(PackAndUploadItem(output = module, name = name, archive = zipsLocation.resolve("$name.jar")))
       }
     }
-
-    messages.block("Building zip archives") {
-      runUnderStatisticsTimer(messages, 'compile-parts:pack:time') {
-        contexts.each { PackAndUploadContext ctx ->
-          executor.submit {
-            packItem(context, ctx)
-          }
-        }
-
-        executor.waitForAllComplete(messages)
-      }
-      executor.reportErrors(messages)
-    }
-    contexts
   }
 
-  private static void upload(String zipsLocation,BuildMessages messages, List<PackAndUploadContext> contexts) {
-    String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
-    if (Strings.isEmptyOrSpaces(serverUrl)) {
-      messages.error("Compile Parts archive server url is not defined. \n" +
-                     "Please set 'intellij.compile.archive.url' system property.")
-      return
-    }
-
-    Map<String, String> hashes = new ConcurrentHashMap<String, String>(2048)
-
-    String intellijCompileArtifactsBranchProperty = 'intellij.build.compiled.classes.branch'
-    String branch = System.getProperty(intellijCompileArtifactsBranchProperty)
-    if (Strings.isEmptyOrSpaces(branch)) {
-      messages.error("Unable to determine current git branch, assuming 'master'. \n" +
-                     "Please set '$intellijCompileArtifactsBranchProperty' system property")
-      return
-    }
-
-    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    messages.info("Will use up to $executorThreadsCount threads for uploading")
-
-    def executor = new NamedThreadPoolExecutor('Compile Parts Pack', executorThreadsCount)
-    executor.prestartAllCoreThreads()
-
-    // TODO: Remove hardcoded constant
-    String uploadPrefix = "intellij-compile/v2".toString()
-
-    messages.block("Compute archives checksums") {
-      runUnderStatisticsTimer(messages, 'compile-parts:checksum:time') {
-        contexts.each { PackAndUploadContext ctx ->
-          executor.submit {
-            String hash = computeHash(Path.of(ctx.archive))
-            hashes.put(ctx.name, hash)
-          }
+  spanBuilder("build zip archives").useWithScope {
+    runUnderStatisticsTimer(context.messages, "compile-parts:pack:time") {
+      ForkJoinTask.invokeAll(items.map { item ->
+        forkJoinTask(spanBuilder("pack").setAttribute("name", item.name)) {
+          // we compress the whole file using LZ4
+          zip(targetFile = item.archive, dirs = mapOf(item.output to ""), compress = false, overwrite = true)
         }
-        executor.waitForAllComplete(messages)
+      })
+    }
+  }
+  return items
+}
+
+private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
+  Files.newDirectoryStream(moduleOutDir).use {
+    for (child in it) {
+      if (!child.endsWith("classpath.index") && !child.endsWith(".unmodified") && !child.endsWith(".DS_Store")) {
+        return false
       }
     }
+  }
+  return true
+}
 
-    // Prepare metadata for writing into file
-    CompilationPartsMetadata m = new CompilationPartsMetadata()
-    m.serverUrl = serverUrl
-    m.branch = branch
-    m.prefix = uploadPrefix
-    m.files = new TreeMap<String, String>(hashes)
-    String metadataJson = new Gson().toJson(m)
+// TODO: Remove hardcoded constant
+private const val uploadPrefix = "intellij-compile/v2"
 
-    messages.block("Uploading archives") {
-      AtomicInteger uploadedCount = new AtomicInteger()
-      AtomicLong uploadedBytes = new AtomicLong()
-      AtomicInteger reusedCount = new AtomicInteger()
-      AtomicLong reusedBytes = new AtomicLong()
+private fun upload(zipsLocation: Path, messages: BuildMessages, contexts: List<PackAndUploadItem>) {
+  val serverUrlPropertyName = "intellij.build.compiled.classes.server.url"
+  val serverUrl = System.getProperty(serverUrlPropertyName)?.trimEnd('/')
+  check(!serverUrl.isNullOrBlank()) {
+    "Compile Parts archive server url is not defined. \nPlease set $serverUrlPropertyName system property."
+  }
 
-      runUnderStatisticsTimer(messages, 'compile-parts:upload:time') {
-        CompilationPartsUploader uploader = new CompilationPartsUploader(serverUrl, messages)
+  val artifactBranchPropertyName = "intellij.build.compiled.classes.branch"
+  val branch = System.getProperty(artifactBranchPropertyName)
+  check(!branch.isNullOrBlank()) {
+    messages.error("Unable to determine current git branch, assuming 'master'. \nPlease set '$artifactBranchPropertyName' system property")
+  }
 
-        Set<String> alreadyUploaded = new HashSet<>()
-        boolean fallbackToHeads
-        def files = uploader.getFoundAndMissingFiles(metadataJson)
-        if (files != null) {
-          messages.info("Successfully fetched info about already uploaded files")
-          alreadyUploaded.addAll(files.found)
-          fallbackToHeads = false
+  val hashes = spanBuilder("compute archives checksums").useWithScope {
+    runUnderStatisticsTimer(messages, "compile-parts:checksum:time") {
+      ForkJoinTask.invokeAll(contexts.map { item ->
+        ForkJoinTask.adapt(Callable { item.name to computeHash(item.archive)!! })
+      }).associateTo(TreeMap()) { it.rawResult }
+    }
+  }
+
+  val httpClient = createHttpClient("Parts Uploader")
+
+  // prepare metadata for writing into file
+  val metadataJson = Json.encodeToString(CompilationPartsMetadata(
+    serverUrl = serverUrl,
+    branch = branch,
+    prefix = uploadPrefix,
+    files = hashes,
+  ))
+
+  spanBuilder("upload archives").useWithScope {
+    uploadArchives(messages = messages,
+                   serverUrl = serverUrl,
+                   metadataJson = metadataJson,
+                   httpClient = httpClient,
+                   contexts = contexts,
+                   hashes = hashes)
+  }
+
+  // save and publish metadata file
+  val metadataFile = zipsLocation.resolve("metadata.json")
+  Files.createDirectories(metadataFile.parent)
+  Files.writeString(metadataFile, metadataJson)
+  messages.artifactBuilt(metadataFile.toString())
+
+  val gzippedMetadataFile = zipsLocation.resolve("metadata.json.gz")
+  GZIPOutputStream(Files.newOutputStream(gzippedMetadataFile)).use { outputStream ->
+    Files.copy(metadataFile, outputStream)
+  }
+  messages.artifactBuilt(gzippedMetadataFile.toString())
+}
+
+private fun uploadArchives(messages: BuildMessages,
+                           serverUrl: String,
+                           metadataJson: String,
+                           httpClient: OkHttpClient,
+                           contexts: List<PackAndUploadItem>,
+                           hashes: TreeMap<String, String>) {
+  val uploadedCount = AtomicInteger()
+  val uploadedBytes = AtomicLong()
+  val reusedCount = AtomicInteger()
+  val reusedBytes = AtomicLong()
+
+  runUnderStatisticsTimer(messages, "compile-parts:upload:time") {
+    val alreadyUploaded = HashSet<String>()
+    val fallbackToHeads = try {
+      val files = spanBuilder("fetch info about already uploaded files").use {
+        getFoundAndMissingFiles(metadataJson, serverUrl, httpClient)
+      }
+      alreadyUploaded.addAll(files.found)
+      false
+    }
+    catch (e: Throwable) {
+      Span.current().addEvent("failed to fetch info about already uploaded files, will fallback to HEAD requests")
+      true
+    }
+
+    ForkJoinTask.invokeAll(contexts.mapNotNull { item ->
+      if (alreadyUploaded.contains(item.name)) {
+        reusedCount.getAndIncrement()
+        reusedBytes.getAndAdd(Files.size(item.archive))
+        return@mapNotNull null
+      }
+
+      forkJoinTask(spanBuilder("upload archive").setAttribute("name", item.name)) {
+        val hash = hashes.get(item.name)
+        // do not use `.lz4` extension - server uses hard-coded `.jar` extension
+        // see https://jetbrains.team/p/iji/repositories/intellij-compile-artifacts/files/d91706d68b22502de56c78cdd6218eab3b395b3f/main-server/batch-files-checker/main.go?tab=source&line=62
+        if (uploadFile(url = "$serverUrl/$uploadPrefix/${item.name}/${hash}.jar",
+                       file = item.archive,
+                       useHead = fallbackToHeads,
+                       span = Span.current(),
+                       httpClient = httpClient)) {
+          uploadedCount.getAndIncrement()
+          uploadedBytes.getAndAdd(Files.size(item.archive))
         }
         else {
-          messages.warning("Failed to fetch info about already uploaded files, will fallback to HEAD requests")
-          fallbackToHeads = true
+          reusedCount.getAndIncrement()
+          reusedBytes.getAndAdd(Files.size(item.archive))
         }
-
-        // Upload with higher threads count
-        executor.setMaximumPoolSize(executorThreadsCount * 2)
-        executor.prestartAllCoreThreads()
-
-        contexts.each { PackAndUploadContext ctx ->
-          if (alreadyUploaded.contains(ctx.name)) {
-            reusedCount.getAndIncrement()
-            reusedBytes.getAndAdd(new File(ctx.archive).size())
-            return
-          }
-
-          executor.submit {
-            Path archiveFile = Path.of(ctx.archive)
-
-            String hash = hashes.get(ctx.name)
-            def path = "$uploadPrefix/${ctx.name}/${hash}.jar".toString()
-
-            if (uploader.upload(path, archiveFile, fallbackToHeads)) {
-              uploadedCount.getAndIncrement()
-              uploadedBytes.getAndAdd(archiveFile.size())
-            }
-            else {
-              reusedCount.getAndIncrement()
-              reusedBytes.getAndAdd(archiveFile.size())
-            }
-          }
-        }
-
-        executor.waitForAllComplete(messages)
-
-        CloseStreamUtil.closeStream(uploader)
       }
-
-      messages.info("Upload complete: reused ${reusedCount.get()} parts, uploaded ${uploadedCount.get()} parts")
-      messages.reportStatisticValue('compile-parts:reused:bytes', reusedBytes.get().toString())
-      messages.reportStatisticValue('compile-parts:reused:count', reusedCount.get().toString())
-      messages.reportStatisticValue('compile-parts:uploaded:bytes', uploadedBytes.get().toString())
-      messages.reportStatisticValue('compile-parts:uploaded:count', uploadedCount.get().toString())
-      messages.reportStatisticValue('compile-parts:total:bytes', (reusedBytes.get() + uploadedBytes.get()).toString())
-      messages.reportStatisticValue('compile-parts:total:count', (reusedCount.get() + uploadedCount.get()).toString())
-    }
-
-    executor.close()
-
-    executor.reportErrors(messages)
-
-    // Save and publish metadata file
-    Path metadataFile = Path.of("$zipsLocation/metadata.json")
-    Files.createDirectories(metadataFile.parent)
-    Files.writeString(metadataFile, metadataJson)
-    messages.artifactBuilt(metadataFile.toString())
-
-    def gzippedMetadataFile = new File(zipsLocation, "metadata.json.gz")
-    new GZIPOutputStream(gzippedMetadataFile.newOutputStream()).withCloseable { OutputStream outputStream ->
-      Files.copy(metadataFile, outputStream)
-    }
-    messages.artifactBuilt(gzippedMetadataFile.absolutePath)
+    })
   }
 
-  static void fetchAndUnpackCompiledClasses(BuildMessages messages, Path classesOutput, BuildOptions options) {
-    def metadataFile = new File(options.pathToCompiledClassesArchivesMetadata)
-    if (!metadataFile.isFile()) {
-      messages.error("Cannot fetch compiled classes: metadata file not found at '$options.pathToCompiledClassesArchivesMetadata'")
-      return
-    }
-    boolean forInstallers = System.getProperty('intellij.fetch.compiled.classes.for.installers', 'false').toBoolean()
-    CompilationPartsMetadata metadata
-    try {
-      metadata = new Gson().fromJson(Files.readString(metadataFile.toPath()), CompilationPartsMetadata.class)
-    }
-    catch (Exception e) {
-      messages.error("Failed to parse metadata file content: $e.message", e)
-      return
-    }
-    String persistentCache = System.getProperty('agent.persistent.cache')
-    Path cache = persistentCache == null ? classesOutput.parent : Path.of(persistentCache).toAbsolutePath().normalize()
-    Path tempDownloadsStorage = cache.resolve("idea-compile-parts-v2")
+  messages.info("Upload complete: reused ${reusedCount.get()} parts, uploaded ${uploadedCount.get()} parts")
+  messages.reportStatisticValue("compile-parts:reused:bytes", reusedBytes.get().toString())
+  messages.reportStatisticValue("compile-parts:reused:count", reusedCount.get().toString())
+  messages.reportStatisticValue("compile-parts:uploaded:bytes", uploadedBytes.get().toString())
+  messages.reportStatisticValue("compile-parts:uploaded:count", uploadedCount.get().toString())
+  messages.reportStatisticValue("compile-parts:total:bytes", (reusedBytes.get() + uploadedBytes.get()).toString())
+  messages.reportStatisticValue("compile-parts:total:count", (reusedCount.get() + uploadedCount.get()).toString())
+}
 
-    Set<String> upToDate = Collections.newSetFromMap(new ConcurrentHashMap<>())
+fun fetchAndUnpackCompiledClasses(messages: BuildMessages, classesOutput: Path, options: BuildOptions) {
+  val metadataFile = options.pathToCompiledClassesArchivesMetadata?.let { Path.of(it) }
+  check(metadataFile != null && !Files.isRegularFile(metadataFile)) {
+    "Cannot fetch compiled classes: metadata file not found at ${options.pathToCompiledClassesArchivesMetadata}"
+  }
 
-    List<FetchAndUnpackContext> contexts = new ArrayList<FetchAndUnpackContext>(metadata.files.size())
-    new TreeMap<String, String>(metadata.files).each { entry ->
-      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, classesOutput.resolve(entry.key), !forInstallers))
-    }
+  val forInstallers = System.getProperty("intellij.fetch.compiled.classes.for.installers", "false").toBoolean()
+  val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
+  val persistentCache = System.getProperty("agent.persistent.cache")
+  val cache = if (persistentCache == null) classesOutput.parent else Path.of(persistentCache).toAbsolutePath().normalize()
+  val tempDownloadsStorage = cache.resolve("idea-compile-parts-v2")
 
-    //region Prepare executor
-    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    messages.info("Will use up to $executorThreadsCount threads for downloading, verifying and unpacking")
+  val contexts = metadata.files.mapTo(ArrayList(metadata.files.size)) { entry ->
+    FetchAndUnpackContext(name = entry.key,
+                          hash = entry.value,
+                          output = classesOutput.resolve(entry.key),
+                          saveHash = !forInstallers,
+                          jar = tempDownloadsStorage.resolve("${entry.key}/${entry.value}.jar"))
+  }
+  contexts.sortBy { it.name }
 
-    def executor = new NamedThreadPoolExecutor('Compile Parts', executorThreadsCount)
-    executor.prestartAllCoreThreads()
-    //endregion
+  var verifyTime = 0L
 
-    long verifyTime = 0l
+  val upToDate = Collections.newSetFromMap<String>(ConcurrentHashMap())
 
-    messages.block("Check previously unpacked directories") {
-      long start = System.nanoTime()
-      contexts.each { ctx ->
-        Path out = ctx.output
-        if (!Files.exists(out)) return
-        executor.submit {
-          if (Files.isDirectory(out)) {
-            def hashFile = out.resolve(".hash")
-            if (Files.exists(hashFile) && Files.isRegularFile(hashFile)) {
-              try {
-                String actual = Files.readString(hashFile)
-                if (actual == ctx.hash) {
-                  upToDate.add(ctx.name)
-                  return
-                }
-                else {
-                  messages.info("Output directory '$ctx.name' hash mismatch, expected '$ctx.hash', got '$actual'")
-                }
-              }
-              catch (Throwable e) {
-                messages.warning("Output directory '$ctx.name' hash calculation failed: $e.message")
-              }
-            }
-            else {
-              messages.debug("There's no .hash file in output directory '$ctx.name'")
-            }
-          }
+  spanBuilder("check previously unpacked directories").useWithScope { span ->
+    val start = System.nanoTime()
+    ForkJoinTask.invokeAll(contexts.map { item ->
+      ForkJoinTask.adapt {
+        val out = item.output
+        val hashFile = out.resolve(".hash")
+        if (!Files.isRegularFile(hashFile)) {
+          span.addEvent("no .hash file in output directory", Attributes.of(
+            AttributeKey.stringKey("name"), item.name,
+          ))
           NioFiles.deleteRecursively(out)
-          return
+          return@adapt
+        }
+
+        try {
+          val actual = Files.readString(hashFile)
+          if (actual == item.hash) {
+            upToDate.add(item.name)
+          }
+          else {
+            span.addEvent("output directory hash mismatch", Attributes.of(
+              AttributeKey.stringKey("name"), item.name,
+              AttributeKey.stringKey("expected"), item.hash,
+              AttributeKey.stringKey("actual"), actual,
+            ))
+            NioFiles.deleteRecursively(out)
+          }
+        }
+        catch (e: Throwable) {
+          span.addEvent("output directory hash calculation failed", Attributes.of(
+            AttributeKey.stringKey("name"), item.name,
+          ))
+          span.recordException(e, Attributes.of(
+            AttributeKey.stringKey("name"), item.name,
+          ))
+          NioFiles.deleteRecursively(out)
         }
       }
-      executor.submit {
-        // Remove stalled directories not present in metadata
-        def expectedDirectories = new HashSet<String>(metadata.files.keySet())
-        // We need to traverse with depth 2 since first level is [production,test]
-        def subroots = (classesOutput.toFile().listFiles() ?: new File[0]).toList().findAll { it.directory }.collect { it.absoluteFile }
-        for (File subroot : subroots) {
-          def modules = subroot.listFiles()
-          if (modules == null) continue
-          for (File module : modules) {
-            def name = "$subroot.name/$module.name".toString()
-            if (!expectedDirectories.contains(name)) {
-              messages.info("Removing stalled directory '$name'")
-              NioFiles.deleteRecursively(module.toPath())
+    } + forkJoinTask(spanBuilder("remove stalled directories not present in metadata")
+                       .setAttribute(AttributeKey.stringArrayKey("keys"),
+                                     java.util.List.copyOf(metadata.files.keys))) {
+      val expectedDirectories = HashSet(metadata.files.keys)
+      // we need to traverse with depth 2 since first level is [production,test]
+      val stalledDirs = mutableListOf<Path>()
+      Files.newDirectoryStream(classesOutput).use { rootStream ->
+        for (subRoot in rootStream) {
+          if (!Files.isDirectory(subRoot)) {
+            continue
+          }
+
+          try {
+            Files.newDirectoryStream(subRoot).use { subRootStream ->
+              for (module in subRootStream) {
+                val name = "${subRoot.name}/${module.name}"
+                if (!expectedDirectories.contains(name)) {
+                  stalledDirs.add(module)
+                }
+              }
             }
           }
+          catch (ignore: NoSuchFileException) {
+          }
         }
       }
-      executor.waitForAllComplete(messages)
-      verifyTime += TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+
+      ForkJoinTask.invokeAll(stalledDirs.map { dir ->
+        forkJoinTask(spanBuilder("delete stalled dir").setAttribute("dir", dir.toString())) { deleteDir(dir) }
+      })
     }
+    )
+    verifyTime += TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+  }
 
-    messages.reportStatisticValue('compile-parts:up-to-date:count', upToDate.size().toString())
-    executor.reportErrors(messages)
+  messages.reportStatisticValue("compile-parts:up-to-date:count", upToDate.size.toString())
 
-    List<FetchAndUnpackContext> toUnpack = new ArrayList<FetchAndUnpackContext>(contexts.size())
-    Deque<FetchAndUnpackContext> toDownload = new ConcurrentLinkedDeque<FetchAndUnpackContext>()
+  val toUnpack = ArrayList<FetchAndUnpackContext>(contexts.size)
+  val toDownload = spanBuilder("check previously downloaded archives").useWithScope { span ->
+    val start = System.nanoTime()
+    val result = ForkJoinTask.invokeAll(contexts.mapNotNull { item ->
+      if (upToDate.contains(item.name)) {
+        return@mapNotNull null
+      }
 
-    messages.block("Check previously downloaded archives") {
-      long start = System.nanoTime()
-      contexts.each { ctx ->
-        ctx.jar = tempDownloadsStorage.resolve("${ctx.name}/${ctx.hash}.jar")
-        if (upToDate.contains(ctx.name)) return
-        toUnpack.add(ctx)
-        executor.submit {
-          def file = ctx.jar
-          if (Files.exists(file) && ctx.hash != computeHash(file)) {
-            messages.info("File $file has unexpected hash, will refetch")
+      val file = item.jar
+      toUnpack.add(item)
+      ForkJoinTask.adapt(Callable {
+        when {
+          !Files.exists(file) -> item
+          item.hash == computeHash(file) -> null
+          else -> {
+            span.addEvent("file has unexpected hash, will refetch", Attributes.of(
+              AttributeKey.stringKey("file"), "${item.name}/${item.hash}.jar",
+            ))
             Files.deleteIfExists(file)
+            item
           }
-          if (!Files.exists(file)) {
-            toDownload.add(ctx)
-          }
-          return
         }
-      }
-      executor.waitForAllComplete(messages)
-      verifyTime += TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+      })
+    }).mapNotNull { it.rawResult }
+    verifyTime += TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+    result
+  }
 
-      executor.reportErrors(messages)
-    }
-
-    messages.block("Cleanup outdated compiled classes archives") {
-      long start = System.nanoTime()
-      int count = 0
-      long bytes = 0
-      try {
-        def preserve = new HashSet<Path>(contexts.collect { it.jar })
-        def epoch = FileTime.fromMillis(0)
-        def daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
-        Files.createDirectories(tempDownloadsStorage)
-        // We need to traverse with depth 3 since first level is [production, test], second level is module name, third is file.
-        Files
-          .walk(tempDownloadsStorage, 3, FileVisitOption.FOLLOW_LINKS)
-          .filter({ !preserve.contains(it) } as Predicate<Path>)
-          .forEach({ Path file ->
-            BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class)
-            if (attr.isRegularFile()) {
-              def lastAccessTime = attr.lastAccessTime()
+  spanBuilder("cleanup outdated compiled classes archives").useWithScope {
+    val start = System.nanoTime()
+    var count = 0
+    var bytes = 0L
+    try {
+      val preserve = HashSet(contexts.map { it.jar })
+      val epoch = FileTime.fromMillis(0)
+      val daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
+      Files.createDirectories(tempDownloadsStorage)
+      // We need to traverse with depth 3 since first level is [production, test], second level is module name, third is file.
+      Files.walk(tempDownloadsStorage, 3, FileVisitOption.FOLLOW_LINKS).use { stream ->
+        stream
+          .filter { !preserve.contains(it) }
+          .forEach { file ->
+            val attr = Files.readAttributes(file, BasicFileAttributes::class.java)
+            if (attr.isRegularFile) {
+              val lastAccessTime = attr.lastAccessTime()
               if (lastAccessTime > epoch && lastAccessTime < daysAgo) {
                 count++
                 bytes += attr.size()
                 Files.deleteIfExists(file)
               }
             }
-                   } as Consumer<Path>)
-      }
-      catch (Throwable e) {
-        messages.warning("Failed to cleanup outdated archives: $e.message")
-      }
-
-      messages.reportStatisticValue('compile-parts:cleanup:time',
-                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-      messages.reportStatisticValue('compile-parts:removed:bytes', bytes.toString())
-      messages.reportStatisticValue('compile-parts:removed:count', count.toString())
-    }
-
-    messages.block("Fetch compiled classes archives") {
-      long start = System.nanoTime()
-
-      String prefix = metadata.prefix
-      String serverUrl = metadata.serverUrl
-
-      Set<Pair<FetchAndUnpackContext, Integer>> failed = Collections.newSetFromMap(new ConcurrentHashMap<>())
-
-      if (!toDownload.isEmpty()) {
-        def httpClient = HttpClientBuilder.create()
-          .setUserAgent('Parts Downloader')
-          .setMaxConnTotal(20)
-          .setMaxConnPerRoute(10)
-          .build()
-
-        String urlWithPrefix = "$serverUrl/$prefix/".toString()
-
-        // First let's check for initial redirect (mirror selection)
-        messages.block("Mirror selection") {
-          def head = new HttpHead(urlWithPrefix)
-          head.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build())
-          httpClient.execute(head).withCloseable { response ->
-            int statusCode = response.getStatusLine().getStatusCode()
-            def locationHeader = response.getFirstHeader("location")
-            if ((statusCode == HttpStatus.SC_MOVED_TEMPORARILY ||
-                 statusCode == HttpStatus.SC_MOVED_PERMANENTLY ||
-                 statusCode == HttpStatus.SC_TEMPORARY_REDIRECT ||
-                 statusCode == HttpStatus.SC_SEE_OTHER)
-              && locationHeader != null) {
-              urlWithPrefix = locationHeader.getValue()
-              messages.info("Redirected to mirror: " + urlWithPrefix)
-            }
-            else {
-              messages.info("Will use origin server: " + urlWithPrefix)
-            }
           }
-        }
-
-        toDownload.each { ctx ->
-          executor.submit {
-            Files.createDirectories(ctx.jar.parent)
-            def get = new HttpGet("${urlWithPrefix}${ctx.name}/${ctx.jar.fileName}")
-            httpClient.execute(get).withCloseable { response ->
-              if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                failed.add(Pair.create(ctx, response.getStatusLine().getStatusCode()))
-              }
-              else {
-                response.getEntity().getContent().withCloseable { bis ->
-                  Files.newOutputStream(ctx.jar).withCloseable { out ->
-                    bis.transferTo(out)
-                  }
-                }
-              }
-            }
-          }
-        }
-        executor.waitForAllComplete(messages)
-
-        CloseStreamUtil.closeStream(httpClient)
       }
-
-      messages.reportStatisticValue('compile-parts:download:time',
-                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-
-      long downloadedBytes = toDownload.collect { it.jar.size() }.sum(0l) as long
-
-      messages.reportStatisticValue('compile-parts:downloaded:bytes', downloadedBytes.toString())
-      messages.reportStatisticValue('compile-parts:downloaded:count', toDownload.size().toString())
-
-      if (!failed.isEmpty()) {
-        failed.each { pair ->
-          messages.warning("Failed to fetch '${pair.first.name}/${pair.first.jar.fileName}', status code: ${pair.second}".toString())
-        }
-        messages.error("Failed to fetch ${failed.size()} file${failed.size() != 1 ? 's' : ''}, see details above")
-      }
-
-      executor.reportErrors(messages)
+    }
+    catch (e: Throwable) {
+      messages.warning("Failed to cleanup outdated archives: ${e.message}")
     }
 
-    messages.block("Verify downloaded archives") {
-      long start = System.nanoTime()
-      // todo: retry download if hash verification failed
-      Set<Trinity<Path, String, String>> failed = Collections.newSetFromMap(new ConcurrentHashMap<>())
-
-      toDownload.each { ctx ->
-        executor.submit {
-          def computed = computeHash(ctx.jar)
-          def expected = ctx.hash
-          if (expected != computed) {
-            failed.add(Trinity.create(ctx.jar, expected, computed))
-          }
-          return
-        }
-      }
-      executor.waitForAllComplete(messages)
-
-      verifyTime += TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
-      messages.reportStatisticValue('compile-parts:verify:time', verifyTime.toString())
-      if (!failed.isEmpty()) {
-        failed.each { trinity ->
-          messages.warning("Downloaded file '$trinity.first' hash mismatch, expected '$trinity.second', got '$trinity.third'")
-        }
-        messages.error("Hash mismatch for ${failed.size()} downloaded files, see details above")
-      }
-
-      executor.reportErrors(messages)
-    }
-
-    messages.block("Unpack compiled classes archives") {
-      long start = System.nanoTime()
-      toUnpack.each { ctx ->
-        executor.submit {
-          unpack(ctx)
-        }
-      }
-      executor.waitForAllComplete(messages)
-
-      messages.reportStatisticValue('compile-parts:unpacked:bytes', toUnpack.collect { it.jar.size() }.sum(0l).toString())
-      messages.reportStatisticValue('compile-parts:unpacked:count', toUnpack.size().toString())
-      messages.reportStatisticValue('compile-parts:unpack:time',
-                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-
-      executor.reportErrors(messages)
-    }
-
-    executor.close()
-
-    executor.reportErrors(messages)
+    messages.reportStatisticValue("compile-parts:cleanup:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+    messages.reportStatisticValue("compile-parts:removed:bytes", bytes.toString())
+    messages.reportStatisticValue("compile-parts:removed:count", count.toString())
   }
 
-  private static void unpack(FetchAndUnpackContext ctx) {
-    BuildHelperKt.span(TraceManager.spanBuilder("unpack").setAttribute("name", ctx.name), new Runnable() {
-      @Override
-      void run() {
-        Files.createDirectories(ctx.output)
-        new Decompressor.Zip(ctx.jar).overwrite(true).extract(ctx.output)
-        if (ctx.saveHash) {
-          // Save actual hash
-          Files.writeString(ctx.output.resolve(".hash"), ctx.hash)
+  spanBuilder("fetch compiled classes archives").useWithScope { span ->
+    val start = System.nanoTime()
+
+    val prefix = metadata.prefix
+    val serverUrl = metadata.serverUrl
+
+    val failed = if (toDownload.isEmpty()) {
+      emptyList()
+    }
+    else {
+      val client = createHttpClient("Parts Downloader", followRedirects = false)
+      try {
+        download(serverUrl = serverUrl, prefix = prefix, toDownload = toDownload, client = client)
+      }
+      finally {
+        client.dispatcher.executorService.shutdown()
+        client.connectionPool.evictAll()
+      }
+    }
+
+    messages.reportStatisticValue("compile-parts:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+
+    val downloadedBytes = toDownload.sumOf { Files.size(it.jar) }
+
+    messages.reportStatisticValue("compile-parts:downloaded:bytes", downloadedBytes.toString())
+    messages.reportStatisticValue("compile-parts:downloaded:count", toDownload.size.toString())
+
+    if (!failed.isEmpty()) {
+      span.addEvent("failed to fetch", Attributes.of(
+        AttributeKey.stringArrayKey("items"), failed.map { "${it.first.name}/${it.first.jar.fileName}', status code: ${it.second}" }
+      ))
+      throw RuntimeException("failed to fetch ${failed.size} file${if (failed.size > 1) "s" else ""}, see details above or in a trace file")
+    }
+  }
+
+  spanBuilder("verify downloaded archives").useWithScope { span ->
+    val start = System.nanoTime()
+    // todo: retry download if hash verification failed
+    val failed = ForkJoinTask.invokeAll(toDownload.map { item ->
+      ForkJoinTask.adapt(Callable {
+        val computed = computeHash(item.jar)
+        val expected = item.hash
+        if (expected == computed) {
+          true
+        }
+        else {
+          span.addEvent("hash mismatch", Attributes.of(
+            AttributeKey.stringKey("name"), item.jar.name,
+            AttributeKey.stringKey("expected"), expected,
+            AttributeKey.stringKey("computed"), computed ?: "",
+          ))
+          false
+        }
+      })
+    }).filter { !it.rawResult }
+
+    verifyTime += TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+    messages.reportStatisticValue("compile-parts:verify:time", verifyTime.toString())
+    if (!failed.isEmpty()) {
+      messages.error("Hash mismatch for ${failed.size} downloaded files, see details above or in a trace file")
+    }
+  }
+
+  spanBuilder("unpack compiled classes archives").useWithScope {
+    val start = System.nanoTime()
+
+    ForkJoinTask.invokeAll(toUnpack.map { item ->
+      forkJoinTask(spanBuilder("unpack").setAttribute("name", item.name)) {
+        Files.createDirectories(item.output)
+        Decompressor.Zip(item.jar).overwrite(true).extract(item.output)
+        if (item.saveHash) {
+          // save actual hash
+          Files.writeString(item.output.resolve(".hash"), item.hash)
         }
       }
     })
-  }
 
-  private static void packItem(CompilationContext compilationContext, PackAndUploadContext ctx) {
-    BuildHelperKt.span(TraceManager.spanBuilder("pack").setAttribute("name", ctx.name), new Runnable() {
-      @Override
-      void run() {
-        def destination = Path.of(ctx.archive)
-        Files.deleteIfExists(destination)
-        BuildHelperKt.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
-      }
-    })
-  }
-
-  private static final Base64.Encoder digestEncoder = Base64.urlEncoder.withoutPadding()
-
-  private static String computeHash(Path file) {
-    if (file == null || !Files.exists(file)) {
-      return null
-    }
-
-    MessageDigest messageDigest = MessageDigest.getInstance("SHA-256")
-    Files.copy(file, new DigestOutputStream(messageDigest))
-    return digestEncoder.encodeToString(messageDigest.digest())
-  }
-
-  private static final class DigestOutputStream extends OutputStream {
-    private final MessageDigest myDigest
-
-    DigestOutputStream(MessageDigest digest) {
-      this.myDigest = digest
-    }
-
-    @Override
-    void write(int b) throws IOException {
-      myDigest.update(b as byte)
-    }
-
-    @Override
-    void write(@NotNull byte[] b, int off, int len) throws IOException {
-      myDigest.update(b, off, len)
-    }
-
-    @Override
-    String toString() {
-      return "[Digest Output Stream] $myDigest"
-    }
-  }
-
-  @SuppressWarnings('GrUnnecessaryPublicModifier')
-  public static final class PackAndUploadContext {
-    final File output
-    final String archive
-    final String name
-
-    PackAndUploadContext(File output, String name, String archive) {
-      this.output = output
-      this.archive = archive
-      this.name = name
-    }
-  }
-
-  private static final class FetchAndUnpackContext {
-    final String name
-    final String hash
-    final Path output
-    final boolean saveHash
-
-    Path jar
-
-    FetchAndUnpackContext(String name, String hash, Path output, boolean saveHash) {
-      this.name = name
-      this.hash = hash
-      this.output = output
-      this.saveHash = saveHash
-    }
-  }
-
-  // based on org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl.block
-  private static <V> V runUnderStatisticsTimer(BuildMessages messages, String name, Closure<V> body) {
-    def start = System.nanoTime()
-    try {
-      return body()
-    }
-    finally {
-      def time = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
-      messages.reportStatisticValue(name, time.toString())
-    }
+    messages.reportStatisticValue("compile-parts:unpacked:bytes", toUnpack.sumOf { Files.size(it.jar) }.toString())
+    messages.reportStatisticValue("compile-parts:unpacked:count", toUnpack.size.toString())
+    messages.reportStatisticValue("compile-parts:unpack:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
   }
 }
+
+private fun download(serverUrl: String,
+                     prefix: String,
+                     toDownload: List<FetchAndUnpackContext>,
+                     client: OkHttpClient): List<Pair<FetchAndUnpackContext, Int>> {
+  var urlWithPrefix = "$serverUrl/$prefix/"
+  // first let's check for initial redirect (mirror selection)
+  spanBuilder("mirror selection").useWithScope { span ->
+    client.newCall(Request.Builder()
+                     .url(urlWithPrefix)
+                     .head()
+                     .build()).execute().use { response ->
+      val statusCode = response.code
+      val locationHeader = response.header("location")
+      if ((statusCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+           statusCode == HttpURLConnection.HTTP_MOVED_PERM ||
+           statusCode == 307 ||
+           statusCode == HttpURLConnection.HTTP_SEE_OTHER)
+          && locationHeader != null) {
+        urlWithPrefix = locationHeader
+        span.addEvent("redirected to mirror", Attributes.of(AttributeKey.stringKey("url"), urlWithPrefix))
+      }
+      else {
+        span.addEvent("origin server will be used", Attributes.of(AttributeKey.stringKey("url"), urlWithPrefix))
+      }
+    }
+  }
+
+  val lz4Decompressor = LZ4Factory.fastestJavaInstance().safeDecompressor()
+  val xxHash32 = XXHashFactory.fastestInstance().hash32()
+  return ForkJoinTask.invokeAll(toDownload.map { item ->
+    forkJoinTask(spanBuilder("download").setAttribute("name", item.name)) {
+      val jar = item.jar
+      Files.createDirectories(jar.parent)
+      client.newCall(Request.Builder()
+                       .url("${urlWithPrefix}${item.name}/${jar.fileName}")
+                       .build()).execute().use { response ->
+        if (!response.isSuccessful) {
+          Pair(item, response.code)
+        }
+        else {
+          // do not use files.copy - replace in place if exists
+          Files.newOutputStream(jar).use { output ->
+            LZ4FrameInputStream(response.body.byteStream(), lz4Decompressor, xxHash32).use { input ->
+              input.transferTo(output)
+            }
+        }
+        null
+        }
+      }
+    }
+  }).mapNotNull { it.rawResult }
+}
+
+private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
+
+private fun computeHash(file: Path): String? {
+  if (!Files.exists(file)) {
+    return null
+  }
+
+  val messageDigest = MessageDigest.getInstance("SHA-256", sunSecurityProvider)
+  Files.copy(file, DigestOutputStream(messageDigest))
+  return BigInteger(1, messageDigest.digest()).toString(36)
+}
+
+private class DigestOutputStream(private val digest: MessageDigest) : OutputStream() {
+  override fun write(b: Int) {
+    digest.update(b.toByte())
+  }
+
+  override fun write(b: ByteArray, off: Int, len: Int) {
+    digest.update(b, off, len)
+  }
+
+  override fun toString() = "[Digest Output Stream] $digest"
+}
+
+private data class PackAndUploadItem(
+  val output: Path,
+  val name: String,
+  val archive: Path,
+)
+
+// based on org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl.block
+private inline fun <V> runUnderStatisticsTimer(messages: BuildMessages, name: String, body: () -> V): V {
+  val start = System.nanoTime()
+  try {
+    return body()
+  }
+  finally {
+    val time = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+    messages.reportStatisticValue(name, time.toString())
+  }
+}
+
+private data class FetchAndUnpackContext(
+  val name: String,
+  val hash: String,
+  val output: Path,
+  val saveHash: Boolean,
+  val jar: Path
+)
+
+@Serializable
+private data class CheckFilesResponse(
+  val found: List<String> = emptyList(),
+  val missing: List<String> = emptyList()
+)
+
+private fun createHttpClient(userAgent: String, followRedirects: Boolean = true): OkHttpClient {
+  return OkHttpClient.Builder()
+    .addInterceptor { chain ->
+      chain.proceed(chain.request()
+                      .newBuilder()
+                      .header("User-Agent", userAgent)
+                      .build())
+    }
+    .addInterceptor { chain ->
+      val request = chain.request()
+      var response = chain.proceed(request)
+      var tryCount = 0
+      while (response.code >= 500 && tryCount < 3) {
+        response.close()
+        tryCount++
+        response = chain.proceed(request)
+      }
+      response
+    }
+    .followRedirects(followRedirects)
+    .build()
+}
+
+private val MEDIA_TYPE_JSON = "application/json".toMediaType()
+
+private fun getFoundAndMissingFiles(metadataJson: String, serverUrl: String, client: OkHttpClient): CheckFilesResponse {
+  val request = Request.Builder()
+    .url("$serverUrl/check-files")
+    .post(metadataJson.toRequestBody(MEDIA_TYPE_JSON))
+    .build()
+
+  return client.newCall(request).execute().use { response ->
+    if (!response.isSuccessful) {
+      throw IOException("Failed to check for found and missing files: $response")
+    }
+
+    Json.decodeFromStream(response.body.byteStream())
+  }
+}
+
+/**
+ * Configuration on which compilation parts to download and from where.
+ * <br/>
+ * URL for each part should be constructed like: <pre>${serverUrl}/${prefix}/${files.key}/${files.value}.jar</pre>
+ */
+@Serializable
+private data class CompilationPartsMetadata(
+  @SerialName("server-url") val serverUrl: String,
+  val branch: String,
+  val prefix: String,
+  /**
+   * Map compilation part path to a hash, for now SHA-256 is used.
+   * sha256(file) == hash, though that may be changed in the future.
+   */
+  val files: Map<String, String>,
+)

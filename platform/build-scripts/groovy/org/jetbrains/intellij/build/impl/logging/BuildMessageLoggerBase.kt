@@ -18,7 +18,7 @@ abstract class BuildMessageLoggerBase : BuildMessageLogger() {
          indent--
        }
       LogMessage.Kind.ARTIFACT_BUILT -> {
-        printMessage("Artifact built: $message.text")
+        printMessage("Artifact built: ${message.text}")
       }
       LogMessage.Kind.COMPILATION_ERRORS -> {
         val errorsString = (message as CompilationErrorsLogMessage).errorMessages.joinToString(separator = "\n")

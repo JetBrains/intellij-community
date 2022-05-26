@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.dependencies;
 
 import com.google.common.util.concurrent.Striped;
+import net.jpountz.lz4.LZ4FrameInputStream;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -11,14 +12,14 @@ import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesSpan
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTraceEventAttributes;
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTracer;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
@@ -146,6 +147,9 @@ final public class BuildDependenciesDownloader {
 
       return targetDirectory;
     }
+    catch (RuntimeException e) {
+      throw e;
+    }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -212,23 +216,38 @@ final public class BuildDependenciesDownloader {
                                         Collectors.joining(" ")));
     }
 
-    byte[] start;
-    try (InputStream stream = Files.newInputStream(archiveFile)) {
-      start = stream.readNBytes(2);
+    ByteBuffer start = ByteBuffer.allocate(4);
+    try (FileChannel channel = FileChannel.open(archiveFile)) {
+      channel.read(start, 0);
     }
-    if (start.length < 2) {
-      throw new IllegalStateException("File " + archiveFile + " is smaller than 2 bytes, could not be extracted");
+    start.flip();
+    if (start.remaining() < 4) {
+      throw new IllegalStateException("File " + archiveFile + " is smaller than 4 bytes, could not be extracted");
     }
 
     boolean stripRoot = Arrays.stream(options).anyMatch(opt -> opt == BuildDependenciesExtractOptions.STRIP_ROOT);
 
-    if (start[0] == (byte)0x50 && start[1] == (byte)0x4B) {
+    if (start.order(ByteOrder.LITTLE_ENDIAN).getInt(0) == 0x184D2204) {
+      Path unwrappedArchiveFile = archiveFile.getParent().resolve(archiveFile.getFileName() + ".unwrapped");
+      try {
+        try (OutputStream out = Files.newOutputStream(unwrappedArchiveFile)) {
+          try (LZ4FrameInputStream input = new LZ4FrameInputStream(Files.newInputStream(archiveFile))) {
+            input.transferTo(out);
+          }
+        }
+        BuildDependenciesUtil.extractZip(unwrappedArchiveFile, targetDirectory, stripRoot);
+      }
+      finally {
+        Files.deleteIfExists(unwrappedArchiveFile);
+      }
+    }
+    else if (start.get(0) == (byte)0x50 && start.get(1) == (byte)0x4B) {
       BuildDependenciesUtil.extractZip(archiveFile, targetDirectory, stripRoot);
     }
-    else if (start[0] == (byte)0x1F && start[1] == (byte)0x8B) {
+    else if (start.get(0) == (byte)0x1F && start.get(1) == (byte)0x8B) {
       BuildDependenciesUtil.extractTarGz(archiveFile, targetDirectory, stripRoot);
     }
-    else if (start[0] == (byte)0x42 && start[1] == (byte)0x5A) {
+    else if (start.get(0) == (byte)0x42 && start.get(1) == (byte)0x5A) {
       BuildDependenciesUtil.extractTarBz2(archiveFile, targetDirectory, stripRoot);
     }
     else {

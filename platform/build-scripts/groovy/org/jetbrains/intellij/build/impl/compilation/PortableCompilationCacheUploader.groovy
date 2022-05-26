@@ -203,7 +203,7 @@ final class PortableCompilationCacheUploader {
   }
 
   @CompileStatic
-  private static class Uploader extends CompilationPartsUploader {
+  private static final class Uploader extends CompilationPartsUploader {
     private Uploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
       super(serverUrl, messages)
     }

@@ -95,7 +95,6 @@ class JarPackager private constructor(private val context: BuildContext) {
       return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
     }
 
-    @JvmStatic
     fun pack(actualModuleJars: Map<String, List<String>>, outputDir: Path, context: BuildContext) {
       pack(actualModuleJars = actualModuleJars,
            outputDir = outputDir,
@@ -105,7 +104,6 @@ class JarPackager private constructor(private val context: BuildContext) {
            context = context)
     }
 
-    @JvmStatic
     fun pack(actualModuleJars: Map<String, List<String>>,
              outputDir: Path,
              layout: BaseLayout,

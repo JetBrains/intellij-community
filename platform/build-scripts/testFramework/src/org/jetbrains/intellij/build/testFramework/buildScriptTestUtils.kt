@@ -100,7 +100,7 @@ private fun testBuild(
   onFinish: (context: BuildContext) -> Unit,
   buildOptionsCustomizer: (BuildOptions) -> Unit,
 ) {
-  val buildContext = createBuildContext(
+  val context = createBuildContext(
     homePath = homePath,
     productProperties = productProperties,
     buildTools = buildTools,
@@ -110,7 +110,7 @@ private fun testBuild(
   )
 
   runTestBuild(
-    buildContext = buildContext,
+    buildContext = context,
     traceSpanName = traceSpanName,
     onFinish = onFinish,
   )

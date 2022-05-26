@@ -63,14 +63,14 @@ object DigestUtil {
 
   @JvmStatic
   @JvmOverloads
-  fun updateContentHash(digest: MessageDigest, path: Path, buffer: ByteArray = ByteArray(512 * 1024)) {
+  fun updateContentHash(digest: MessageDigest, file: Path, buffer: ByteArray = ByteArray(512 * 1024)) {
     try {
-      path.inputStream().use {
+      file.inputStream().use {
         updateContentHash(digest, it, buffer)
       }
     }
     catch (e: IOException) {
-      throw RuntimeException("Failed to read $path. ${e.message}", e)
+      throw RuntimeException("Failed to read $file. ${e.message}", e)
     }
   }
 

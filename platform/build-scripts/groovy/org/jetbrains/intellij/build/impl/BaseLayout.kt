@@ -22,7 +22,7 @@ open class BaseLayout {
   val moduleExcludes: MultiMap<String, String> = MultiMap.createLinked()
   @Suppress("SSBasedInspection")
   internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
-  internal val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
+  val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
   /** module name to name of the module library */
   val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
   /** JAR name -> name of project library which content should be unpacked */
@@ -80,8 +80,8 @@ open class BaseLayout {
 
 internal fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
 
-internal data class ModuleLibraryData(
+data class ModuleLibraryData(
   val moduleName: String,
   val libraryName: String,
-  val relativeOutputPath: String,
+  val relativeOutputPath: String = "",
 )

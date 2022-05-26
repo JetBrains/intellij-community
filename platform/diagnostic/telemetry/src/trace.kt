@@ -32,9 +32,9 @@ inline fun <T> createTask(spanBuilder: SpanBuilder, crossinline task: () -> T): 
  *
  * See [Span](https://opentelemetry.io/docs/reference/specification).
  */
-inline fun forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> Unit): ForkJoinTask<*> {
+inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () -> T): ForkJoinTask<T> {
   val context = Context.current()
-  return ForkJoinTask.adapt(Runnable {
+  return ForkJoinTask.adapt(Callable {
     val thread = Thread.currentThread()
     spanBuilder
       .setParent(context)

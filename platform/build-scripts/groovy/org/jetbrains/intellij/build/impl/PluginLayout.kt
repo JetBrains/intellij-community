@@ -120,9 +120,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
       val discoveredServiceFiles: MultiMap<String, Pair<String, Path>> = MultiMap.createLinkedSet()
 
       for (moduleName in moduleJars.get(mainJarName)) {
-        val path = context.findFileInModuleSources(moduleName, "META-INF/services")
-        if (path == null) continue
-
+        val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
         Files.list(path).use { stream ->
           stream
             .filter { Files.isRegularFile(it) }

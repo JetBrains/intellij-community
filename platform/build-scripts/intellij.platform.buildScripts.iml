@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -opt-in=kotlin.RequiresOptIn" />
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -opt-in=kotlin.RequiresOptIn -opt-in=kotlinx.serialization.ExperimentalSerializationApi" />
         </compilerSettings>
         <compilerArguments>
           <option name="jvmTarget" value="11" />
@@ -76,5 +76,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" scope="TEST" name="Ant" level="project" />
+    <orderEntry type="library" name="okhttp" level="project" />
+    <orderEntry type="library" name="lz4-java" level="project" />
   </component>
 </module>

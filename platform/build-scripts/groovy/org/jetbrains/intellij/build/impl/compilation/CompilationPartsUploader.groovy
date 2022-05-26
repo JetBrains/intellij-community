@@ -1,16 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.gson.Gson
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.apache.http.Consts
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.*
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPut
+import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.FileEntity
-import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.LaxRedirectStrategy
@@ -92,44 +93,6 @@ class CompilationPartsUploader implements Closeable {
     return true
   }
 
-  @CompileStatic
-  static class CheckFilesResponse {
-    List<String> found
-    List<String> missing
-
-    CheckFilesResponse() {
-    }
-  }
-
-  CheckFilesResponse getFoundAndMissingFiles(String metadataJson) {
-    String path = '/check-files'
-
-    CloseableHttpResponse response = null
-    String responseString = null
-    try {
-      String url = myServerUrl + StringUtil.trimStart(path, '/')
-      debug("POST " + url)
-
-      def request = new HttpPost(url)
-      request.setEntity(new StringEntity(metadataJson, ContentType.APPLICATION_JSON))
-
-      response = executeWithRetry(request)
-
-      responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
-
-      def parsedResponse = new Gson().fromJson(responseString, CheckFilesResponse.class)
-      return parsedResponse
-    }
-    catch (Exception e) {
-      def additionalMessage = responseString == null ? "" : "\nResponse: $responseString"
-      myMessages.warning("Failed to check for found and mising files ('$path'): ${e.message}" + additionalMessage)
-      return null
-    }
-    finally {
-      CloseStreamUtil.closeStream(response)
-    }
-  }
-
   @NotNull
   protected int doHead(String path) {
     CloseableHttpResponse response = null
@@ -143,22 +106,6 @@ class CompilationPartsUploader implements Closeable {
     }
     catch (Exception e) {
       throw new RuntimeException("Failed to HEAD $path: " + e.getMessage(), e)
-    }
-    finally {
-      CloseStreamUtil.closeStream(response)
-    }
-  }
-
-  @NotNull
-  protected void doDelete(String path) {
-    CloseableHttpResponse response = null
-    try {
-      String url = myServerUrl + StringUtil.trimStart(path, '/')
-      debug("DELETE " + url)
-      executeWithRetry(new HttpDelete(url))
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Failed to DELETE $path: " + e.getMessage(), e)
     }
     finally {
       CloseStreamUtil.closeStream(response)

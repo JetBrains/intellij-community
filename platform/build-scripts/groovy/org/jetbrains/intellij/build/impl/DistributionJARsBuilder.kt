@@ -604,7 +604,7 @@ class DistributionJARsBuilder {
     return classPath
   }
 
-  private fun generateProjectStructureMapping(context: BuildContext, pluginLayoutRoot: Path): List<DistributionFileEntry> {
+  internal fun generateProjectStructureMapping(context: BuildContext, pluginLayoutRoot: Path): List<DistributionFileEntry> {
     val moduleOutputPatcher = ModuleOutputPatcher()
     val libDirLayout = processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher,
                                                  platform = state.platform,
@@ -624,10 +624,6 @@ class DistributionJARsBuilder {
     }
     entries.addAll(libDirLayout.join())
     return entries
-  }
-
-  fun generateProjectStructureMapping(targetFile: Path, context: BuildContext, pluginLayoutRoot: Path) {
-    ProjectStructureMapping.writeReport(generateProjectStructureMapping(context, pluginLayoutRoot), targetFile, context.paths)
   }
 
   fun createBuildBundledPluginTask(plugins: Collection<PluginLayout>,

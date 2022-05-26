@@ -12,8 +12,8 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.impl.compilation.fetchAndUnpackCompiledClasses
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -124,7 +124,7 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
       ))
     }
     else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
-      CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
+      fetchAndUnpackCompiledClasses(messages = context.messages, classesOutput = context.projectOutputDirectory, options = context.options)
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(context.projectOutputDirectory, context)

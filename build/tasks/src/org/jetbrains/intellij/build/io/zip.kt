@@ -2,14 +2,25 @@
 package org.jetbrains.intellij.build.io
 
 import org.jetbrains.intellij.build.tasks.PackageIndexBuilder
+import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.util.*
+import java.util.zip.Deflater
+
+private val W_OVERWRITE = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
 
 // symlinks not supported but can be easily implemented - see CollectingVisitor.visitFile
-fun zip(targetFile: Path, dirs: Map<Path, String>, compress: Boolean, addDirEntries: Boolean = false) {
+fun zip(targetFile: Path,
+        dirs: Map<Path, String>,
+        compress: Boolean,
+        addDirEntries: Boolean = false,
+        overwrite: Boolean = false,
+        compressionLevel: Int = Deflater.DEFAULT_COMPRESSION) {
   // note - dirs contain duplicated directories (you cannot simply add directory entry on visit - uniqueness must be preserved)
   // anyway, directory entry are not added
-  writeNewZip(targetFile, compress) { zipCreator ->
+  Files.createDirectories(targetFile.parent)
+  ZipFileWriter(channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
+                deflater = if (compress) Deflater(compressionLevel, true) else null).use {
     val fileAdded: ((String) -> Boolean)?
     val dirNameSetToAdd: Set<String>
     if (addDirEntries) {
@@ -33,16 +44,14 @@ fun zip(targetFile: Path, dirs: Map<Path, String>, compress: Boolean, addDirEntr
       fileAdded = null
       dirNameSetToAdd = emptySet()
     }
-
-    val archiver = ZipArchiver(zipCreator, fileAdded)
+    val archiver = ZipArchiver(it, fileAdded)
     for ((dir, prefix) in dirs.entries) {
       val normalizedDir = dir.toAbsolutePath().normalize()
       archiver.setRootDir(normalizedDir, prefix)
       compressDir(normalizedDir, archiver, excludes = null)
     }
-
     if (dirNameSetToAdd.isNotEmpty()) {
-      addDirForResourceFiles(zipCreator, dirNameSetToAdd)
+      addDirForResourceFiles(it, dirNameSetToAdd)
     }
   }
 }

@@ -13,5 +13,6 @@
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="commons-codec" level="project" />
+    <orderEntry type="library" name="lz4-java" level="project" />
   </component>
 </module>

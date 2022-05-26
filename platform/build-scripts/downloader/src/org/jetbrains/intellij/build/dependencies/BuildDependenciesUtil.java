@@ -22,6 +22,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.FileChannel;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -125,10 +126,14 @@ public final class BuildDependenciesUtil {
   }
 
   public static void extractZip(Path archiveFile, Path target, boolean stripRoot) throws Exception {
-    try (ZipFile zipFile = new ZipFile(archiveFile.toFile(), "UTF-8")) {
+    // avoid extra createDirectories calls
+    Set<Path> createdDirs = new HashSet<>();
+    try (ZipFile zipFile = new ZipFile(FileChannel.open(archiveFile))) {
       EntryNameConverter converter = new EntryNameConverter(archiveFile, target, stripRoot);
 
-      for (ZipArchiveEntry entry : Collections.list(zipFile.getEntries())) {
+      Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+      while (entries.hasMoreElements()) {
+        ZipArchiveEntry entry = entries.nextElement();
         Path entryPath = converter.getOutputPath(entry.getName(), entry.isDirectory());
         if (entryPath == null) continue;
 
@@ -136,7 +141,10 @@ public final class BuildDependenciesUtil {
           Files.createDirectories(entryPath);
         }
         else {
-          Files.createDirectories(entryPath.getParent());
+          Path parent = entryPath.getParent();
+          if (createdDirs.add(parent)) {
+            Files.createDirectories(parent);
+          }
 
           try (InputStream is = zipFile.getInputStream(entry)) {
             Files.copy(is, entryPath);

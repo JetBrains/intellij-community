@@ -69,7 +69,7 @@ private val ISO_LOCAL_TIME = DateTimeFormatterBuilder()
   .toFormatter()
 
 private var rootPathsWithEndSlash = emptyList<String>()
-private val buildRootMacro = "\${buildRoot}${File.separatorChar.code}"
+private val buildRootMacro = "\${buildRoot}${File.separatorChar}"
 
 private fun writeSpan(sb: StringBuilder, span: SpanData, duration: Long, endEpochNanos: Long) {
   sb.append(span.name)
