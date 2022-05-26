@@ -41,7 +41,7 @@ object KotlinArtifactsDownloader {
             return true
         }
 
-        return getLazyDistDownloaderAndUnpacker(version).isUpToDate(version) ||
+        return getLazyDistDownloaderAndUnpacker(version).isUpToDate() ||
                 getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
                     getAllInOneOldFormatPackedDist(parsedVersion.rawVersion)?.let { jar ->
                         unpacker.isUpToDate(jar)
@@ -109,7 +109,7 @@ object KotlinArtifactsDownloader {
 
         val indicatorDownloadText = KotlinBasePluginBundle.message("progress.text.downloading.kotlinc.dist")
         val context = LazyPomAndJarsDownloader.Context(project, indicator, indicatorDownloadText)
-        return getLazyDistDownloaderAndUnpacker(version).lazyProduceDist(version, context)
+        return getLazyDistDownloaderAndUnpacker(version).lazyProduceDist(context)
             ?: getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
                 // Fallback to old "all-in-one jar" artifact (old "all-in-one jar" is available only for Kotlin < 1.7.20)
                 lazyDownloadMavenArtifact(project, OLD_KOTLIN_DIST_ARTIFACT_ID, version, indicator, indicatorDownloadText)?.let {

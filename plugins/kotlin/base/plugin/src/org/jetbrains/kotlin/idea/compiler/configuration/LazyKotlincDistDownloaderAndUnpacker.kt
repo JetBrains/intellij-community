@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.io.DigestUtil
 import org.jetbrains.kotlin.idea.artifacts.*
 import java.io.File
 import java.security.MessageDigest
@@ -12,7 +11,7 @@ import java.security.MessageDigest
 /**
  * This class represents the pipeline:
  * ```
- *                                kotlin version
+ *                                   Internet
  *                                      │
  *                     ┌────────────────┴────────────────┐
  *                     │                                 │
@@ -24,51 +23,52 @@ import java.security.MessageDigest
  *                                  jars are structured in "kotlinc dist layout"
  *                             (`./gradlew dist` in kotlin repo defines the layout)
  * ```
+ * For each Kotlin version separate pipeline is created (`uniquePipelineId` in [AbstractLazyFileOutputProducer])
+ *
  * It's important to declare the pom as an output (even thought it doesn't participate in further pipeline) because we want to re-calculate
  * the whole pipeline if the pom changes ([AbstractLazyFileOutputProducer] guarantees us that). It's convenient for the local testing
  * ("install to maven local -> test" development cycle)
  */
-class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<String, LazyPomAndJarsDownloader.Context> {
+class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, LazyPomAndJarsDownloader.Context> {
     private val downloader = LazyPomAndJarsDownloader(version)
     private val distLayoutProducer = LazyDistDirLayoutProducer(version, KotlinArtifactsDownloader.getUnpackedKotlinDistPath(version))
 
-    override fun isUpToDate(input: String): Boolean { // input is version
-        val downloaded = downloader.getOutputIfUpToDateOrEmpty(input)
+    override fun isUpToDate(input: Unit): Boolean {
+        val downloaded = downloader.getOutputIfUpToDateOrEmpty(Unit)
             .filter { it.extension == "jar" }
             .takeIf { it.isNotEmpty() }
             ?: return false
         return distLayoutProducer.isUpToDate(downloaded)
     }
 
-    override fun lazyProduceOutput(input: String, computationContext: LazyPomAndJarsDownloader.Context): List<File> {
-        val downloaded = downloader.lazyProduceOutput(input, computationContext)
+    override fun lazyProduceOutput(input: Unit, computationContext: LazyPomAndJarsDownloader.Context): List<File> {
+        val downloaded = downloader.lazyProduceOutput(Unit, computationContext)
             .filter { it.extension == "jar" }
             .takeIf { it.isNotEmpty() }
             ?: return emptyList()
         return listOf(distLayoutProducer.lazyProduceDist(downloaded))
     }
 
-    fun lazyProduceDist(input: String, context: LazyPomAndJarsDownloader.Context): File? {
-        return lazyProduceOutput(input, context).singleOrNull()
-    }
+    fun lazyProduceDist(context: LazyPomAndJarsDownloader.Context): File? = lazyProduceOutput(Unit, context).singleOrNull()
+    fun isUpToDate() = isUpToDate(Unit)
 }
 
-class LazyPomAndJarsDownloader(version: String) :
-    AbstractLazyFileOutputProducer<String, LazyPomAndJarsDownloader.Context>("${LazyPomAndJarsDownloader::class.java.name}-$version") {
+class LazyPomAndJarsDownloader(private val version: String) :
+    AbstractLazyFileOutputProducer<Unit, LazyPomAndJarsDownloader.Context>("${LazyPomAndJarsDownloader::class.java.name}-$version") {
 
-    override fun produceOutput(input: String, computationContext: Context): List<File> { // input is a version
+    override fun produceOutput(input: Unit, computationContext: Context): List<File> {
         computationContext.indicator.text = computationContext.indicatorDownloadText
         return KotlinArtifactsDownloader.downloadMavenArtifacts(
             KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID,
-            version = input,
+            version,
             computationContext.project,
             computationContext.indicator,
             artifactIsPom = true
         )
     }
 
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: String, buffer: ByteArray) {
-        input.byteInputStream().use { DigestUtil.updateContentHash(messageDigest, it, buffer) }
+    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: Unit, buffer: ByteArray) {
+        // The input is the Internet, we don't track it in this implementation
     }
 
     data class Context(val project: Project, val indicator: ProgressIndicator, @NlsContexts.ProgressText val indicatorDownloadText: String)
