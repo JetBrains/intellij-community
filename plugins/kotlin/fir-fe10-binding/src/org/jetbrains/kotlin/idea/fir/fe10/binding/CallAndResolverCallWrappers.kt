@@ -204,7 +204,12 @@ internal class FirWrapperResolvedCall(val firSimpleWrapperCall: FirSimpleWrapper
         if (parameterIndex == -1) error("Fir parameter not found :(")
 
         val parameterDescriptor = candidateDescriptor.valueParameters[parameterIndex]
-        return ArgumentMatchImpl(parameterDescriptor)
+        val argumentMatch = ArgumentMatchImpl(parameterDescriptor)
+        context.incorrectImplementation {
+            // I'm not sure, when we should have not success status
+            argumentMatch.recordMatchStatus(ArgumentMatchStatus.SUCCESS)
+        }
+        return argumentMatch
     }
 
     override fun getTypeArguments(): Map<TypeParameterDescriptor, KotlinType> = _typeArguments
