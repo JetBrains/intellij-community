@@ -4,20 +4,13 @@
     <file>TC.kt</file>
     <line>1</line>
     <entry_point TYPE="method" FQNAME="TC TC TC(java.lang.String name)" />
-    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
-  </problem>
-  
-  <problem>
-    <file>TC.kt</file>
-    <line>1</line>
-    <entry_point TYPE="method" FQNAME="TC java.lang.String name()" />
-    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+    <description>Constructor is never used.</description>
   </problem>
 
   <problem>
     <file>TC.kt</file>
     <line>1</line>
-    <entry_point TYPE="class" FQNAME="TC" />
-    <description>&amp;nbsp;Interface is not implemented.</description>
+    <entry_point TYPE="method" FQNAME="TC java.lang.String name()" />
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
   </problem>
 </problems>
