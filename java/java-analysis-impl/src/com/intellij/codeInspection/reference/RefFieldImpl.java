@@ -12,12 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
-  private static final int USED_FOR_READING_MASK = 0b1_00000000_00000000; // 17th bit
-  private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000; // 18th bit
+  private static final int USED_FOR_READING_MASK             = 0b1_00000000_00000000; // 17th bit
+  private static final int USED_FOR_WRITING_MASK             = 0b10_00000000_00000000; // 18th bit
   private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000; // 19th bit
-  private static final int IMPLICITLY_READ_MASK = 0b1000_00000000_00000000; // 20th bit
-  private static final int IMPLICITLY_WRITTEN_MASK = 0b10000_00000000_00000000; // 21st bit
-  private static final int IS_ENUM_CONSTANT = 0b100000_00000000_00000000; // 22nd bit
+  private static final int IMPLICITLY_READ_MASK              = 0b1000_00000000_00000000; // 20th bit
+  private static final int IMPLICITLY_WRITTEN_MASK           = 0b10000_00000000_00000000; // 21st bit
+  private static final int IS_ENUM_CONSTANT                  = 0b100000_00000000_00000000; // 22nd bit
 
   RefFieldImpl(UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
@@ -33,7 +33,13 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     LOG.assertTrue(psi != null);
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
-    this.setOwner((WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager));
+    RefElement owner = RefMethodImpl.findParentRef(psi, uElement, myManager);
+    this.setOwner((WritableRefEntity)owner);
+    if (owner instanceof RefClass && ((RefClass)owner).isRecord()) {
+      // record fields are always implicitly written in constructor and read in hashCode() & equals()
+      setUsedForReading(true);
+      setUsedForWriting(true);
+    }
   }
 
   @Deprecated

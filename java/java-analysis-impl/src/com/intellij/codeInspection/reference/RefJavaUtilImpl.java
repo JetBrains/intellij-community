@@ -167,7 +167,11 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            visitClass(((UObjectLiteralExpression)node).getDeclaration());
                          }
                          if (node.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-                           PsiMethod resolvedMethod = node.resolve();
+                           PsiElement resolvedMethod = node.resolve();
+                           if (resolvedMethod instanceof LightElement) {
+                             UElement uElement = UastContextKt.toUElement(resolvedMethod);
+                             resolvedMethod = uElement == null ? null : uElement.getSourcePsi();
+                           }
                            final List<UExpression> argumentList = node.getValueArguments();
                            RefMethod refConstructor = processNewLikeConstruct(resolvedMethod, argumentList);
 
@@ -295,9 +299,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        @Nullable
-                       private RefMethod processNewLikeConstruct(final PsiMethod javaConstructor, final List<UExpression> argumentList) {
+                       private RefMethod processNewLikeConstruct(PsiElement javaConstructor, List<UExpression> argumentList) {
                          if (javaConstructor == null) return null;
-                         RefMethodImpl refConstructor = (RefMethodImpl)refManager.getReference(javaConstructor.getOriginalElement());
+                         RefMethodImpl refConstructor =
+                           ObjectUtils.tryCast(refManager.getReference(javaConstructor.getOriginalElement()), RefMethodImpl.class);
                          refFrom.addReference(refConstructor, javaConstructor, decl, false, true, null);
 
                          for (UExpression arg : argumentList) {

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -96,7 +97,10 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
     if (element instanceof PsiMethod) {
       if (element instanceof SyntheticElement) {
-        return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+        Language language = element.getLanguage();
+        if (language.isKindOf("JSP") || language.isKindOf("JSPX")) {
+          return JavaAnalysisBundle.message("inspection.reference.jsp.holder.method.anonymous.name");
+        }
       }
       return PsiFormatUtil.formatMethod((PsiMethod)element,
                                         PsiSubstitutor.EMPTY,
