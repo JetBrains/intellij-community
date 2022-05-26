@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -40,25 +40,14 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection()
 
     companion object {
         fun KtQualifiedExpression.invertSelectorFunction(bindingContext: BindingContext? = null): KtQualifiedExpression? {
-            val callExpression = this.callExpression ?: return null
-            val calleeExpression = callExpression.calleeExpression ?: return null
-            val calleeText = calleeExpression.text
-            val isEmptyCall = calleeText == "isEmpty"
-            val isNotEmptyCall = calleeText == "isNotEmpty"
-            val isBlankCall = calleeText == "isBlank"
-            val isNotBlankCall = calleeText == "isNotBlank"
-
+            val callExpression = callExpression ?: return null
+            val fromFunctionName = callExpression.calleeExpression?.text ?: return null
+            val (fromFunctionFqNames, toFunctionName) = functionNames[fromFunctionName] ?: return null
             val context = bindingContext ?: analyze(BodyResolveMode.PARTIAL)
-            if (!isEmptyCall && !isNotEmptyCall && !isBlankCall && !isNotBlankCall) return null
-            if (isEmptyCall && isEmptyFunctions.none { callExpression.isCalling(FqName(it), context) }
-                || isNotEmptyCall && isNotEmptyFunctions.none { callExpression.isCalling(FqName(it), context) }
-                || isBlankCall && !callExpression.isCalling(FqName("kotlin.text.isBlank"), context)
-                || isNotBlankCall && !callExpression.isCalling(FqName("kotlin.text.isNotBlank"), context)) return null
-            val to = if (isEmptyCall) "isNotEmpty" else if (isNotEmptyCall) "isEmpty" else if (isBlankCall) "isNotBlank" else "isBlank"
-
+            if (fromFunctionFqNames.none { callExpression.isCalling(it, context) }) return null
             return KtPsiFactory(this).createExpressionByPattern(
-                "$0.$to()",
-                this.receiverExpression,
+                "$0.$toFunctionName()",
+                receiverExpression,
                 reformat = false
             ) as? KtQualifiedExpression
         }
@@ -101,6 +90,11 @@ private val packages = listOf(
     "kotlin.text"
 )
 
-private val isEmptyFunctions = packages.map { "$it.isEmpty" }
-
-private val isNotEmptyFunctions = packages.map { "$it.isNotEmpty" }
+private val functionNames: Map<String, Pair<List<FqName>, String>> by lazy {
+    mapOf(
+        "isEmpty" to Pair(packages.map { FqName("$it.isEmpty") }, "isNotEmpty"),
+        "isNotEmpty" to Pair(packages.map { FqName("$it.isNotEmpty") }, "isEmpty"),
+        "isBlank" to Pair(listOf(FqName("kotlin.text.isBlank")), "isNotBlank"),
+        "isNotBlank" to Pair(listOf(FqName("kotlin.text.isNotBlank")), "isBlank"),
+    )
+}
