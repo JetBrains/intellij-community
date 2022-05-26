@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
-import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
@@ -65,7 +64,6 @@ class RecentProjectFilteringTree(
       val filePathChecker = createFilePathChecker()
       Disposer.register(parentDisposable, filePathChecker)
 
-      setEmptyState(IdeBundle.message("empty.text.no.project.open.yet"))
       addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(this) }
       val mouseListener = ProjectActionMouseListener(this, projectActionButtonViewModel)
       addMouseListener(mouseListener)
