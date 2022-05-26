@@ -85,6 +85,7 @@ private class CombinedSimpleDiffHeader(blockId: CombinedPathBlockId, withBorder:
 
     val toolbar = ActionManager.getInstance().createActionToolbar("CombinedDiffBlockHeaderToolbar", toolbarGroup, true)
     toolbar.targetComponent = this
+    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     toolbar.component.background = UIUtil.getListBackground()
     toolbar.component.border = JBEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
     toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, false))
