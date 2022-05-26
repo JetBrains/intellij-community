@@ -11,7 +11,7 @@ import java.io.File
 
 object KotlinSerializationImportHandler {
     val PLUGIN_JPS_JAR: String by lazy {
-        KotlinArtifacts.instance.kotlinxSerializationCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+        KotlinArtifacts.kotlinxSerializationCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     }
 
     fun isPluginJarPath(path: String): Boolean {

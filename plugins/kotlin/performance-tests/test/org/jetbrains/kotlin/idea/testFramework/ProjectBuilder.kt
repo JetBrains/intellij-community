@@ -314,7 +314,7 @@ class SpecialLibraryDescription(name: String, private val library: SpecialLibrar
         when(library) {
             SpecialLibrary.KOTLIN_STDLIB ->
                 ConfigLibraryUtil.addLibrary(module, name) {
-                    addRoot(KotlinArtifacts.instance.kotlinStdlib, OrderRootType.CLASSES)
+                    addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
                 }
         }
     }

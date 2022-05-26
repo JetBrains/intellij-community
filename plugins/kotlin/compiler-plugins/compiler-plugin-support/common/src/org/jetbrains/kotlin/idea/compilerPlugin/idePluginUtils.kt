@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import java.io.File
 
@@ -24,10 +24,9 @@ class CompilerPluginSetup(val options: List<PluginOption>, val classpath: List<S
 }
 
 fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
-    require(this.startsWith(KotlinArtifacts.instance.kotlincDirectory)) {
-        "$this should start with ${KotlinArtifacts.instance.kotlincDirectory}"
-    }
-    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(KotlinArtifacts.instance.kotlincDirectory)}"
+    val kotlincDirectory = KotlinPluginLayout.instance.kotlinc
+    require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
+    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(kotlincDirectory)}"
 }
 
 fun modifyCompilerArgumentsForPlugin(

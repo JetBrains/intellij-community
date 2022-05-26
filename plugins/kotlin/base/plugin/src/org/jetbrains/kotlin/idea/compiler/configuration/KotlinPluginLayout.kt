@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts.downloadArtifact
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts.Companion.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts.Companion.OLD_KOTLIN_DIST_ARTIFACT_ID
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_KOTLIN_DIST_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -105,7 +106,7 @@ private class KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout() {
 
     override val kotlinc: File by lazy {
         val distJar = downloadArtifact(libraryFileName = KOTLINC_DIST_LIBRARY, artifactId = OLD_KOTLIN_DIST_ARTIFACT_ID)
-        LazyZipUnpacker(KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")).lazyUnpack(distJar)
+        LazyZipUnpacker(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")).lazyUnpack(distJar)
     }
 
     override val jpsPluginClasspath: List<File> by lazy {

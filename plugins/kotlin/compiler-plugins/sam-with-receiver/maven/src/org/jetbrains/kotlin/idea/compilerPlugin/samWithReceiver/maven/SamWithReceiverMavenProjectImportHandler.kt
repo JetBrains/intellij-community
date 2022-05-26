@@ -17,7 +17,7 @@ class SamWithReceiverMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId = SamWithReceiverCommandLineProcessor.PLUGIN_ID
     override val pluginName = "samWithReceiver"
     override val mavenPluginArtifactName = "kotlin-maven-sam-with-receiver"
-    override val pluginJarFileFromIdea = KotlinArtifacts.instance.samWithReceiverCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val pluginJarFileFromIdea = KotlinArtifacts.samWithReceiverCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
 
     override fun getOptions(
         mavenProject: MavenProject,

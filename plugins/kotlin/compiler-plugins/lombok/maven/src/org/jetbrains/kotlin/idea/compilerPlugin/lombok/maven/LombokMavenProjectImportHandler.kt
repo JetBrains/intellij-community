@@ -15,7 +15,7 @@ class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
     override val compilerPluginId: String = LombokCommandLineProcessor.PLUGIN_ID
     override val pluginName: String = MAVEN_SUBPLUGIN_NAME
     override val mavenPluginArtifactName: String = "kotlin-maven-lombok"
-    override val pluginJarFileFromIdea: String = KotlinArtifacts.instance.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val pluginJarFileFromIdea: String = KotlinArtifacts.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
 
     override fun getOptions(
         mavenProject: MavenProject,

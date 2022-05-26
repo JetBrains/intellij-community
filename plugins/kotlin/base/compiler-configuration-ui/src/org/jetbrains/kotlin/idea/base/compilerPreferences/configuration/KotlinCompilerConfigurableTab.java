@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.base.util.ProjectStructureUtils;
 import org.jetbrains.kotlin.cli.common.arguments.*;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants;
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle;
 import org.jetbrains.kotlin.idea.base.compilerPreferences.facet.DescriptionListCellRenderer;
 import org.jetbrains.kotlin.idea.compiler.configuration.*;
@@ -395,15 +395,15 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     private void fetchAvailableJpsCompilersAsync(Consumer<? super @NlsSafe @Nullable Collection<IdeKotlinVersion>> onFinish) {
         JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
-                        KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID, KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID))
+                        KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID, KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID))
                 .onProcessed(distVersions -> {
                     if (distVersions == null) {
                         onFinish.accept(null);
                         return;
                     }
                     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
-                                    KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID,
-                                    KotlinArtifacts.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID))
+                                    KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
+                                    KotlinArtifactConstants.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID))
                             .onProcessed(jpsClassPathVersions -> {
                                 if (jpsClassPathVersions == null) {
                                     onFinish.accept(null);

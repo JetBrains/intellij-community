@@ -14,7 +14,7 @@ import java.io.File
 class LombokGradleProjectImportHandler : AbstractCompilerPluginGradleImportHandler<LombokModel>() {
 
     override val modelKey: Key<LombokModel> = LombokGradleProjectResolverExtension.KEY
-    override val pluginJarFileFromIdea: String = KotlinArtifacts.instance.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val pluginJarFileFromIdea: String = KotlinArtifacts.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val compilerPluginId: String = LombokCommandLineProcessor.PLUGIN_ID
     override val pluginName: String = "lombok"
 

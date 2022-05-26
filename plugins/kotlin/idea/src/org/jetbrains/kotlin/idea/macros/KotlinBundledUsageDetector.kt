@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -91,4 +91,4 @@ class KotlinBundledUsageDetector(private val project: Project) {
 private val Project.detectorInstance: KotlinBundledUsageDetector get() = service()
 
 private val String.isStartsWithDistPrefix: Boolean
-    get() = File(JpsPathUtil.urlToPath(this)).startsWith(KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX)
+    get() = File(JpsPathUtil.urlToPath(this)).startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX)

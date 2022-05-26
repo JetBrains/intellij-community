@@ -17,8 +17,8 @@ import java.util.List;
 
 public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndLibraryProjectDescriptor {
     protected KotlinWithJdkAndRuntimeLightProjectDescriptor() {
-        super(Collections.singletonList(KotlinArtifacts.getInstance().getKotlinStdlib()),
-              Collections.singletonList(KotlinArtifacts.getInstance().getKotlinStdlibSources()));
+        super(Collections.singletonList(KotlinArtifacts.getKotlinStdlib()),
+              Collections.singletonList(KotlinArtifacts.getKotlinStdlibSources()));
     }
 
     public KotlinWithJdkAndRuntimeLightProjectDescriptor(
@@ -30,14 +30,14 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
 
     @NotNull
     public static final KotlinWithJdkAndRuntimeLightProjectDescriptor INSTANCE = new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            Arrays.asList(KotlinArtifacts.getInstance().getKotlinStdlib()),
-            Collections.singletonList(KotlinArtifacts.getInstance().getKotlinStdlibSources())
+            Arrays.asList(KotlinArtifacts.getKotlinStdlib()),
+            Collections.singletonList(KotlinArtifacts.getKotlinStdlibSources())
     );
 
     @NotNull
     public static final KotlinWithJdkAndRuntimeLightProjectDescriptor INSTANCE_WITH_STDLIB_JDK8 = new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            List.of(KotlinArtifacts.getInstance().getKotlinStdlib(), KotlinArtifacts.getInstance().getKotlinStdlibJdk8()),
-            List.of(KotlinArtifacts.getInstance().getKotlinStdlibSources(), KotlinArtifacts.getInstance().getKotlinStdlibJdk8Sources())
+            List.of(KotlinArtifacts.getKotlinStdlib(), KotlinArtifacts.getKotlinStdlibJdk8()),
+            List.of(KotlinArtifacts.getKotlinStdlibSources(), KotlinArtifacts.getKotlinStdlibJdk8Sources())
     );
 
     @NotNull
@@ -59,23 +59,23 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
 
     @NotNull
     public static final KotlinWithJdkAndRuntimeLightProjectDescriptor INSTANCE_WITH_KOTLIN_TEST = new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            Arrays.asList(KotlinArtifacts.getInstance().getKotlinStdlib(),
-                          KotlinArtifacts.getInstance().getKotlinTest()),
-            Collections.singletonList(KotlinArtifacts.getInstance().getKotlinStdlibSources())
+            Arrays.asList(KotlinArtifacts.getKotlinStdlib(),
+                          KotlinArtifacts.getKotlinTest()),
+            Collections.singletonList(KotlinArtifacts.getKotlinStdlibSources())
     );
 
     @NotNull
     public static final KotlinWithJdkAndRuntimeLightProjectDescriptor INSTANCE_WITH_SCRIPT_RUNTIME = new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            Arrays.asList(KotlinArtifacts.getInstance().getKotlinStdlib(),
-                          KotlinArtifacts.getInstance().getKotlinScriptRuntime()),
-            Collections.singletonList(KotlinArtifacts.getInstance().getKotlinStdlibSources())
+            Arrays.asList(KotlinArtifacts.getKotlinStdlib(),
+                          KotlinArtifacts.getKotlinScriptRuntime()),
+            Collections.singletonList(KotlinArtifacts.getKotlinStdlibSources())
     );
 
     @NotNull
     public static final KotlinWithJdkAndRuntimeLightProjectDescriptor INSTANCE_WITH_REFLECT = new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            Arrays.asList(KotlinArtifacts.getInstance().getKotlinStdlib(),
-                          KotlinArtifacts.getInstance().getKotlinReflect()),
-            Collections.singletonList(KotlinArtifacts.getInstance().getKotlinStdlibSources())
+            Arrays.asList(KotlinArtifacts.getKotlinStdlib(),
+                          KotlinArtifacts.getKotlinReflect()),
+            Collections.singletonList(KotlinArtifacts.getKotlinStdlibSources())
     );
 
     @NotNull

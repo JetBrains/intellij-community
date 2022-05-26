@@ -95,10 +95,10 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
             when (platform) {
                 is Jvm -> {
                     targetForJava = KotlinTestUtils.tmpDirForReusableFolder("java-lib")
-                    completeClasspath += listOf(KotlinArtifacts.instance.kotlinStdlib, KotlinArtifacts.instance.jetbrainsAnnotations, targetForJava)
+                    completeClasspath += listOf(KotlinArtifacts.kotlinStdlib, KotlinArtifacts.jetbrainsAnnotations, targetForJava)
                 }
                 is JavaScript -> {
-                    completeClasspath += KotlinArtifacts.instance.kotlinStdlibJs
+                    completeClasspath += KotlinArtifacts.kotlinStdlibJs
                 }
             }
         }
@@ -262,19 +262,17 @@ object KotlinCliCompilerFacade {
 
     @Synchronized
     private fun createCompilerClassLoader(): ClassLoader {
-        val artifacts = with (KotlinArtifacts.instance) {
-            listOf(
-                kotlinStdlib,
-                kotlinStdlibJdk7,
-                kotlinStdlibJdk8,
-                kotlinReflect,
-                kotlinCompiler,
-                kotlinScriptRuntime,
-                trove4j,
-                kotlinDaemon,
-                jetbrainsAnnotations
-            )
-        }
+        val artifacts = listOf(
+            KotlinArtifacts.kotlinStdlib,
+            KotlinArtifacts.kotlinStdlibJdk7,
+            KotlinArtifacts.kotlinStdlibJdk8,
+            KotlinArtifacts.kotlinReflect,
+            KotlinArtifacts.kotlinCompiler,
+            KotlinArtifacts.kotlinScriptRuntime,
+            KotlinArtifacts.trove4j,
+            KotlinArtifacts.kotlinDaemon,
+            KotlinArtifacts.jetbrainsAnnotations
+        )
 
         val urls = artifacts.map { it.toURI().toURL() }.toTypedArray()
         return URLClassLoader(urls, ClassLoader.getPlatformClassLoader())

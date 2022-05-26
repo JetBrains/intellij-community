@@ -36,7 +36,7 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
 
         val testName = getTestName(true).toLowerCase()
         val originalStdlibFile = if (testName.contains("latestruntime") || testName.endsWith("withstdlib"))
-            KotlinArtifacts.instance.kotlinStdlib
+            KotlinArtifacts.kotlinStdlib
         else
             null
 

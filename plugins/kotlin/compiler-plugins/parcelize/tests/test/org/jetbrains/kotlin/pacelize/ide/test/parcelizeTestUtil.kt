@@ -15,10 +15,10 @@ fun addParcelizeLibraries(module: Module) {
         addRoot(File(PathManager.getCommunityHomePath(), "android/android/testData/android.jar"), OrderRootType.CLASSES)
     }
     ConfigLibraryUtil.addLibrary(module, "parcelizeRuntime") {
-        addRoot(KotlinArtifacts.instance.parcelizeRuntime, OrderRootType.CLASSES)
+        addRoot(KotlinArtifacts.parcelizeRuntime, OrderRootType.CLASSES)
     }
     ConfigLibraryUtil.addLibrary(module, "androidExtensionsRuntime") {
-        addRoot(KotlinArtifacts.instance.androidExtensionsRuntime, OrderRootType.CLASSES)
+        addRoot(KotlinArtifacts.androidExtensionsRuntime, OrderRootType.CLASSES)
     }
 
 }

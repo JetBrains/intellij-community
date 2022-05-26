@@ -3412,11 +3412,11 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
             TestCase.assertEquals(
                 listOf(
-                    KotlinArtifacts.instance.allopenCompilerPlugin,
-                    KotlinArtifacts.instance.kotlinxSerializationCompilerPlugin,
-                    KotlinArtifacts.instance.lombokCompilerPlugin,
-                    KotlinArtifacts.instance.noargCompilerPlugin,
-                    KotlinArtifacts.instance.samWithReceiverCompilerPlugin,
+                    KotlinArtifacts.allopenCompilerPlugin,
+                    KotlinArtifacts.kotlinxSerializationCompilerPlugin,
+                    KotlinArtifacts.lombokCompilerPlugin,
+                    KotlinArtifacts.noargCompilerPlugin,
+                    KotlinArtifacts.samWithReceiverCompilerPlugin,
                 ).map { it.toJpsVersionAgnosticKotlinBundledPath() },
                 facetSettings.compilerArguments?.pluginClasspaths?.sorted()
             )
@@ -3425,8 +3425,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 }
 
 fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
-    require(this.startsWith(KotlinArtifacts.instance.kotlincDirectory)) {
-        "$this should start with ${KotlinArtifacts.instance.kotlincDirectory}"
-    }
-    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(KotlinArtifacts.instance.kotlincDirectory)}"
+    val kotlincDirectory = KotlinPluginLayout.instance.kotlinc
+    require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
+    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(kotlincDirectory)}"
 }

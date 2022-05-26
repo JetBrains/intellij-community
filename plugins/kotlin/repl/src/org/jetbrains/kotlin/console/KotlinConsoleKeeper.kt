@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerClasspathProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.version
@@ -120,12 +121,9 @@ class KotlinConsoleKeeper(val project: Project) {
 
             with(javaParameters.programParametersList) {
                 add("-kotlin-home")
-                val kotlinHome = KotlinArtifacts.instance.kotlincDirectory.toPath().also {
-                    check(it.exists()) {
-                        "Kotlinc directory does not exist"
-                    }
-                }.absolutePathString()
-                add(CompositeParameterTargetedValue().addPathPart(kotlinHome))
+                val kotlinHome = KotlinPluginLayout.instance.kotlinc
+                check(kotlinHome.exists()) { "Kotlin compiler is not found" }
+                add(CompositeParameterTargetedValue().addPathPart(kotlinHome.toPath().absolutePathString()))
             }
 
             return request to javaParameters.toCommandLine(request).build()

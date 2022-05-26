@@ -4,71 +4,125 @@ package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.io.File
 
-class KotlinArtifacts private constructor(val kotlincDirectory: File) {
-    companion object {
-        @NlsSafe
-        const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
+@ApiStatus.Internal
+object KotlinArtifactConstants {
+    @NlsSafe
+    const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
 
-        @Deprecated(
-            "Deprecated because new \"meta pom\" format (KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) should be used. " +
-                    "This constant should be used only for being possible to compile intellij repo"
-        )
-        @NlsSafe
-        const val OLD_KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
+    @Deprecated(
+        "Deprecated because new \"meta pom\" format (KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) should be used. " +
+                "This constant should be used only for being possible to compile intellij repo"
+    )
+    @NlsSafe
+    const val OLD_KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
 
-        @NlsSafe
-        const val KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID = "kotlin-dist-for-jps-meta"
+    @NlsSafe
+    const val KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID = "kotlin-dist-for-jps-meta"
 
-        @Deprecated(
-            "Deprecated because new KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID should be used. " +
-                    "This constant should be used only for being possible to compile intellij repo"
-        )
-        @NlsSafe
-        const val OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
+    @Deprecated(
+        "Deprecated because new KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID should be used. " +
+                "This constant should be used only for being possible to compile intellij repo"
+    )
+    @NlsSafe
+    const val OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
 
-        @NlsSafe
-        const val KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID = "kotlin-jps-plugin"
+    @NlsSafe
+    const val KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID = "kotlin-jps-plugin"
 
-        val KOTLIN_DIST_LOCATION_PREFIX = File(PathManager.getSystemPath(), "kotlin-dist-for-ide")
+    val KOTLIN_DIST_LOCATION_PREFIX: File = File(PathManager.getSystemPath(), "kotlin-dist-for-ide")
+}
 
-        @get:JvmStatic
-        val instance: KotlinArtifacts by lazy {
-            KotlinArtifacts(KotlinPluginLayout.instance.kotlinc)
-        }
-    }
+object KotlinArtifacts {
+    private val kotlincLibDirectory: File = File(KotlinPluginLayout.instance.kotlinc, "lib")
 
-    private val kotlincLibDirectory = File(kotlincDirectory, "lib")
+    @JvmStatic
+    val jetbrainsAnnotations: File = File(kotlincLibDirectory, KotlinArtifactNames.JETBRAINS_ANNOTATIONS)
 
-    val jetbrainsAnnotations = File(kotlincLibDirectory, KotlinArtifactNames.JETBRAINS_ANNOTATIONS)
-    val kotlinStdlib = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB)
-    val kotlinStdlibSources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_SOURCES)
-    val kotlinStdlibJdk7 = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7)
-    val kotlinStdlibJdk7Sources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7_SOURCES)
-    val kotlinStdlibJdk8 = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8)
-    val kotlinStdlibJdk8Sources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8_SOURCES)
-    val kotlinReflect = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_REFLECT)
-    val kotlinStdlibJs = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JS)
-    val kotlinTest = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST)
-    val kotlinTestJunit = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST_JUNIT)
-    val kotlinTestJs = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST_JS)
-    val kotlinMainKts = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_MAIN_KTS)
-    val kotlinScriptRuntime = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPT_RUNTIME)
-    val kotlinScriptingCommon = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMMON)
-    val kotlinScriptingJvm = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_JVM)
+    @JvmStatic
+    val kotlinStdlib: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB)
+
+    @JvmStatic
+    val kotlinStdlibSources: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_SOURCES)
+
+    @JvmStatic
+    val kotlinStdlibJdk7: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7)
+
+    @JvmStatic
+    val kotlinStdlibJdk7Sources: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7_SOURCES)
+
+    @JvmStatic
+    val kotlinStdlibJdk8: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8)
+
+    @JvmStatic
+    val kotlinStdlibJdk8Sources: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8_SOURCES)
+
+    @JvmStatic
+    val kotlinReflect: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_REFLECT)
+
+    @JvmStatic
+    val kotlinStdlibJs: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JS)
+
+    @JvmStatic
+    val kotlinTest: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST)
+
+    @JvmStatic
+    val kotlinTestJunit: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST_JUNIT)
+
+    @JvmStatic
+    val kotlinTestJs: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_TEST_JS)
+
+    @JvmStatic
+    val kotlinMainKts: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_MAIN_KTS)
+
+    @JvmStatic
+    val kotlinScriptRuntime: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPT_RUNTIME)
+
+    @JvmStatic
+    val kotlinScriptingCommon: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMMON)
+
+    @JvmStatic
+    val kotlinScriptingJvm: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_JVM)
+
+    @JvmStatic
     val kotlinCompiler: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_COMPILER)
+
+    @JvmStatic
     val lombokCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.LOMBOK_COMPILER_PLUGIN)
+
+    @JvmStatic
     val kotlinAnnotationsJvm: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_ANNOTATIONS_JVM)
-    val trove4j = File(kotlincLibDirectory, KotlinArtifactNames.TROVE4J)
-    val kotlinDaemon = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_DAEMON)
-    val kotlinScriptingCompiler = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER)
-    val kotlinScriptingCompilerImpl = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER_IMPL)
-    val allopenCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.ALLOPEN_COMPILER_PLUGIN)
-    val noargCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.NOARG_COMPILER_PLUGIN)
-    val samWithReceiverCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.SAM_WITH_RECEIVER_COMPILER_PLUGIN)
-    val kotlinxSerializationCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
-    val parcelizeRuntime = File(kotlincLibDirectory, KotlinArtifactNames.PARCELIZE_RUNTIME)
-    val androidExtensionsRuntime = File(kotlincLibDirectory, KotlinArtifactNames.ANDROID_EXTENSIONS_RUNTIME)
+
+    @JvmStatic
+    val trove4j: File = File(kotlincLibDirectory, KotlinArtifactNames.TROVE4J)
+
+    @JvmStatic
+    val kotlinDaemon: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_DAEMON)
+
+    @JvmStatic
+    val kotlinScriptingCompiler: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER)
+
+    @JvmStatic
+    val kotlinScriptingCompilerImpl: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER_IMPL)
+
+    @JvmStatic
+    val allopenCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.ALLOPEN_COMPILER_PLUGIN)
+
+    @JvmStatic
+    val noargCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.NOARG_COMPILER_PLUGIN)
+
+    @JvmStatic
+    val samWithReceiverCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.SAM_WITH_RECEIVER_COMPILER_PLUGIN)
+
+    @JvmStatic
+    val kotlinxSerializationCompilerPlugin: File = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
+
+    @JvmStatic
+    val parcelizeRuntime: File = File(kotlincLibDirectory, KotlinArtifactNames.PARCELIZE_RUNTIME)
+
+    @JvmStatic
+    val androidExtensionsRuntime: File = File(kotlincLibDirectory, KotlinArtifactNames.ANDROID_EXTENSIONS_RUNTIME)
 }

@@ -12,9 +12,12 @@ class MainKtsScriptDefinitionSource : ScriptDefinitionsProvider {
     override fun getDefinitionClasses(): Iterable<String> = emptyList()
 
     override fun getDefinitionsClassPath(): Iterable<File> {
-        return with(KotlinArtifacts.instance) {
-            listOf(kotlinMainKts, kotlinScriptRuntime, kotlinStdlib, kotlinReflect)
-        }
+        return listOf(
+            KotlinArtifacts.kotlinMainKts,
+            KotlinArtifacts.kotlinScriptRuntime,
+            KotlinArtifacts.kotlinStdlib,
+            KotlinArtifacts.kotlinReflect
+        )
     }
 
     override fun useDiscovery(): Boolean = true

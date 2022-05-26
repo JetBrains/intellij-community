@@ -111,7 +111,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             module.addDependency(
                 projectLibrary(
                     "script-runtime",
-                    classesRoot = VfsUtil.findFileByIoFile(KotlinArtifacts.instance.kotlinScriptRuntime, true)
+                    classesRoot = VfsUtil.findFileByIoFile(KotlinArtifacts.kotlinScriptRuntime, true)
                 )
             )
 
@@ -275,8 +275,8 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         return mapOf(
-          "runtime-classes" to KotlinArtifacts.instance.kotlinStdlib,
-          "runtime-source" to KotlinArtifacts.instance.kotlinStdlibSources,
+          "runtime-classes" to KotlinArtifacts.kotlinStdlib,
+          "runtime-source" to KotlinArtifacts.kotlinStdlibSources,
           "lib-classes" to libClasses,
           "lib-source" to libSrcDir,
           "module-classes" to moduleClasses,
@@ -287,9 +287,9 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
     protected fun getScriptingClasspath(): List<File> {
         return listOf(
-          KotlinArtifacts.instance.kotlinScriptRuntime,
-          KotlinArtifacts.instance.kotlinScriptingCommon,
-          KotlinArtifacts.instance.kotlinScriptingJvm
+          KotlinArtifacts.kotlinScriptRuntime,
+          KotlinArtifacts.kotlinScriptingCommon,
+          KotlinArtifacts.kotlinScriptingJvm
         )
     }
 

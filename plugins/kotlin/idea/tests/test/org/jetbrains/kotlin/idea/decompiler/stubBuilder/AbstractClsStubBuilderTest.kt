@@ -25,7 +25,7 @@ import java.io.File
 
 abstract class AbstractClsStubBuilderTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinJdkAndLibraryProjectDescriptor(
-        listOf(KotlinArtifacts.instance.kotlinAnnotationsJvm),
+        listOf(KotlinArtifacts.kotlinAnnotationsJvm),
         emptyList()
     )
 
@@ -82,7 +82,7 @@ abstract class AbstractClsStubBuilderTest : KotlinLightCodeInsightFixtureTestCas
             sources = listOf(File(sourcePath)),
             target = outDir,
             options = extraOptions,
-            classpath = listOf(KotlinArtifacts.instance.kotlinAnnotationsJvm)
+            classpath = listOf(KotlinArtifacts.kotlinAnnotationsJvm)
         ).compile()
 
         val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(outDir)!!

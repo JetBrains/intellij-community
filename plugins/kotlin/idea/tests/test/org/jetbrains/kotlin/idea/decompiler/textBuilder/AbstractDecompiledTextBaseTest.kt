@@ -72,7 +72,7 @@ abstract class AbstractDecompiledTextBaseTest(
 
     private fun getCompilationClasspath(directivesText: String): List<File> =
         if (InTextDirectivesUtils.isDirectiveDefined(directivesText, "STDLIB_JDK_8")) {
-            listOf(KotlinArtifacts.instance.kotlinStdlibJdk8)
+            listOf(KotlinArtifacts.kotlinStdlibJdk8)
         } else {
             emptyList()
         }

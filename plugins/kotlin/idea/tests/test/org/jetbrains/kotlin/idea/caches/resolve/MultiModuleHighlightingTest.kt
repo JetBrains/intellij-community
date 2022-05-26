@@ -235,7 +235,7 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         val jarForCompositeLibrary = KotlinCompilerStandalone(
             sources = listOf(File("$testDataPath${getTestName(true)}/compositeLibraryPart"))
         ).compile()
-        val stdlibJarForCompositeLibrary = KotlinArtifacts.instance.kotlinStdlib
+        val stdlibJarForCompositeLibrary = KotlinArtifacts.kotlinStdlib
         val jarForSourceDependentLibrary = KotlinCompilerStandalone(
             sources = listOf(File("$testDataPath${getTestName(true)}/sourceDependentLibrary"))
         ).compile()

@@ -54,7 +54,7 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
                 configurationKind,
                 TestJdkKind.MOCK_JDK,
                 getBackend(),
-                Collections.singletonList(KotlinArtifacts.getInstance().getJetbrainsAnnotations()),
+                Collections.singletonList(KotlinArtifacts.getJetbrainsAnnotations()),
                 ArraysKt.filterNotNull(javaSourceRoots),
                 Collections.emptyList()
         );

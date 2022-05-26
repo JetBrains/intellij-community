@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
-        moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.instance.kotlinStdlib.path)
+        moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.kotlinStdlib.path)
     }
 
     override fun setUp() {

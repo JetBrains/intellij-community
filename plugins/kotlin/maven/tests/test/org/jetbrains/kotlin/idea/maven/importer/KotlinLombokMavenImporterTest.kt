@@ -93,7 +93,7 @@ class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest() {
             )
             assertContain(
                 compilerArguments!!.pluginClasspaths!!.toList(),
-                KotlinArtifacts.instance.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+                KotlinArtifacts.lombokCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
             )
             assertEquals(
                 compilerArguments!!.pluginOptions!!.toList(),

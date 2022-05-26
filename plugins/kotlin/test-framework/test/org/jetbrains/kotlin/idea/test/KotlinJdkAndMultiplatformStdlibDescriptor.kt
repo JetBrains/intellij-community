@@ -20,8 +20,8 @@ class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val 
         }
 
         ConfigLibraryUtil.addLibrary(model, STDLIB_LIB_NAME) {
-            addRoot(KotlinArtifacts.instance.kotlinStdlib, OrderRootType.CLASSES)
-            addRoot(KotlinArtifacts.instance.kotlinStdlibSources, OrderRootType.SOURCES)
+            addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
+            addRoot(KotlinArtifacts.kotlinStdlibSources, OrderRootType.SOURCES)
         }
     }
 

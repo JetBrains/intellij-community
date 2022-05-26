@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.plugin.artifacts
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import java.io.File
 import java.net.URL

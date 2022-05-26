@@ -164,8 +164,8 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 is StdlibDependency -> {
                     when {
                         platform.isCommon() -> module.addLibrary(AdditionalKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
-                        platform.isJvm() -> module.addLibrary(KotlinArtifacts.instance.kotlinStdlib)
-                        platform.isJs() -> module.addLibrary(KotlinArtifacts.instance.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
+                        platform.isJvm() -> module.addLibrary(KotlinArtifacts.kotlinStdlib)
+                        platform.isJs() -> module.addLibrary(KotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
                         else -> error("Unknown platform $this")
                     }
                 }
@@ -176,8 +176,8 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                 }
                 is CoroutinesDependency -> module.enableCoroutines()
                 is KotlinTestDependency -> when {
-                    platform.isJvm() -> module.addLibrary(KotlinArtifacts.instance.kotlinTestJunit)
-                    platform.isJs() -> module.addLibrary(KotlinArtifacts.instance.kotlinTestJs, kind = KotlinJavaScriptLibraryKind)
+                    platform.isJvm() -> module.addLibrary(KotlinArtifacts.kotlinTestJunit)
+                    platform.isJs() -> module.addLibrary(KotlinArtifacts.kotlinTestJs, kind = KotlinJavaScriptLibraryKind)
                 }
             }
         }

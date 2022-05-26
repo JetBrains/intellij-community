@@ -102,7 +102,7 @@ public class KotlinTestUtils {
             @NotNull TestJdkKind jdkKind
     ) {
         return KotlinCoreEnvironment.createForTests(
-                disposable, newConfiguration(configurationKind, jdkKind, KotlinArtifacts.getInstance().getJetbrainsAnnotations()),
+                disposable, newConfiguration(configurationKind, jdkKind, KotlinArtifacts.getJetbrainsAnnotations()),
                 EnvironmentConfigFiles.JVM_CONFIG_FILES
         );
     }
@@ -300,24 +300,22 @@ public class KotlinTestUtils {
             configuration.put(JVMConfigurationKeys.JDK_HOME, getAtLeastJdk9Home());
         }
 
-        KotlinArtifacts artifacts = KotlinArtifacts.getInstance();
-
         if (configurationKind.getKotlinStdlib()) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, artifacts.getKotlinStdlib());
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, artifacts.getKotlinScriptRuntime());
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, artifacts.getKotlinTest());
-            configuration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, artifacts.getKotlinCompiler());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, KotlinArtifacts.getKotlinStdlib());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, KotlinArtifacts.getKotlinScriptRuntime());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, KotlinArtifacts.getKotlinTest());
+            configuration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, KotlinArtifacts.getKotlinCompiler());
         }
 
         if (configurationKind.getKotlinReflect()) {
-            JvmContentRootsKt.addJvmClasspathRoot(configuration, artifacts.getKotlinReflect());
+            JvmContentRootsKt.addJvmClasspathRoot(configuration, KotlinArtifacts.getKotlinReflect());
         }
 
         JvmContentRootsKt.addJvmClasspathRoots(configuration, classpath);
 
         configuration.put(
                 CLIConfigurationKeys.INTELLIJ_PLUGIN_ROOT,
-                KotlinArtifacts.getInstance().getKotlinCompiler().getAbsolutePath()
+                KotlinArtifacts.getKotlinCompiler().getAbsolutePath()
         );
 
         setupIdeaStandaloneExecution();

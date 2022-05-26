@@ -35,7 +35,7 @@ abstract class AbstractResolveByStubTest : KotlinLightCodeInsightFixtureTestCase
 
     // In compiler repo for these test MOCK_JDK is used which is currently 1.6 JDK
     override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
-        listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
+        listOf(KotlinArtifacts.kotlinStdlib), listOf(KotlinArtifacts.kotlinStdlibSources)
     ) {
         override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk16()
     }

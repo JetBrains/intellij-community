@@ -12,7 +12,7 @@ class SamWithReceiverGradleProjectImportHandler : AbstractAnnotationBasedCompile
     override val compilerPluginId = SamWithReceiverCommandLineProcessor.PLUGIN_ID
     override val pluginName = "sam-with-receiver"
     override val annotationOptionName = SamWithReceiverCommandLineProcessor.ANNOTATION_OPTION.optionName
-    override val pluginJarFileFromIdea = KotlinArtifacts.instance.samWithReceiverCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val pluginJarFileFromIdea = KotlinArtifacts.samWithReceiverCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val modelKey = SamWithReceiverProjectResolverExtension.KEY
 
     override fun getAnnotationsForPreset(presetName: String): List<String> {

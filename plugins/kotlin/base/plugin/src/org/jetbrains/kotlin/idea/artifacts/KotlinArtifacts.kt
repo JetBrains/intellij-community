@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.artifacts
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import java.io.File
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts.Companion.instance as KotlinArtifactsNew
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts as KotlinArtifactsNew
 
 @Suppress("unused")
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts' instead")

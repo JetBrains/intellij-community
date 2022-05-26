@@ -48,7 +48,7 @@ object ConfigLibraryUtil {
 
     fun configureKotlinStdlibJs(module: Module) {
         addLibrary(module, LIB_NAME_KOTLIN_STDLIB_JS, KotlinJavaScriptLibraryKind) {
-            addRoot(KotlinArtifacts.instance.kotlinStdlibJs, OrderRootType.CLASSES)
+            addRoot(KotlinArtifacts.kotlinStdlibJs, OrderRootType.CLASSES)
         }
     }
 
@@ -60,11 +60,11 @@ object ConfigLibraryUtil {
 
     fun configureKotlinRuntime(module: Module) {
         addLibrary(module, LIB_NAME_JAVA_RUNTIME) {
-            addRoot(KotlinArtifacts.instance.kotlinStdlib, OrderRootType.CLASSES)
+            addRoot(KotlinArtifacts.kotlinStdlib, OrderRootType.CLASSES)
         }
 
         addLibrary(module, LIB_NAME_KOTLIN_TEST) {
-            addRoot(KotlinArtifacts.instance.kotlinTest, OrderRootType.CLASSES)
+            addRoot(KotlinArtifacts.kotlinTest, OrderRootType.CLASSES)
         }
     }
 

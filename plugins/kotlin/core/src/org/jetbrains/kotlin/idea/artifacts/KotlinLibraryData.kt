@@ -10,25 +10,25 @@ enum class KotlinLibraryData(val libraryName: String, val kind: PersistentLibrar
     KOTLIN_STDLIB(
         libraryName = "kotlin-stdlib",
         kind = null,
-        classesRoot = KotlinArtifacts.instance.kotlinStdlib,
-        sourcesRoot = KotlinArtifacts.instance.kotlinStdlibSources
+        classesRoot = KotlinArtifacts.kotlinStdlib,
+        sourcesRoot = KotlinArtifacts.kotlinStdlibSources
     ),
     KOTLIN_STDLIB_JDK7(
         libraryName = "kotlin-stdlib-jdk7",
         kind = null,
-        classesRoot = KotlinArtifacts.instance.kotlinStdlibJdk7,
-        sourcesRoot = KotlinArtifacts.instance.kotlinStdlibJdk7Sources
+        classesRoot = KotlinArtifacts.kotlinStdlibJdk7,
+        sourcesRoot = KotlinArtifacts.kotlinStdlibJdk7Sources
     ),
     KOTLIN_STDLIB_JDK8(
         libraryName = "kotlin-stdlib-jdk8",
         kind = null,
-        classesRoot = KotlinArtifacts.instance.kotlinStdlibJdk8,
-        sourcesRoot = KotlinArtifacts.instance.kotlinStdlibJdk8Sources
+        classesRoot = KotlinArtifacts.kotlinStdlibJdk8,
+        sourcesRoot = KotlinArtifacts.kotlinStdlibJdk8Sources
     ),
     KOTLIN_STDLIB_JS(
         libraryName = "kotlin-stdlib-js",
         kind = KotlinJavaScriptLibraryKind,
-        classesRoot = KotlinArtifacts.instance.kotlinStdlibJs,
-        sourcesRoot = KotlinArtifacts.instance.kotlinStdlibSources
+        classesRoot = KotlinArtifacts.kotlinStdlibJs,
+        sourcesRoot = KotlinArtifacts.kotlinStdlibSources
     )
 }

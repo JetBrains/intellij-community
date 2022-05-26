@@ -12,7 +12,7 @@ class AllOpenGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginG
     override val compilerPluginId = AllOpenCommandLineProcessor.PLUGIN_ID
     override val pluginName = "allopen"
     override val annotationOptionName = AllOpenCommandLineProcessor.ANNOTATION_OPTION.optionName
-    override val pluginJarFileFromIdea = KotlinArtifacts.instance.allopenCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    override val pluginJarFileFromIdea = KotlinArtifacts.allopenCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val modelKey = AllOpenProjectResolverExtension.KEY
 
     override fun getAnnotationsForPreset(presetName: String): List<String> {

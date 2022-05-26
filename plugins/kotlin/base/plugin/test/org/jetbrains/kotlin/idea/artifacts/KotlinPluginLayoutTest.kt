@@ -8,12 +8,11 @@ import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 
-class KotlinLayoutTest : UsefulTestCase() {
+class KotlinPluginLayoutTest : UsefulTestCase() {
     private lateinit var myFixture: IdeaProjectTestFixture
 
     @Throws(Exception::class)
@@ -34,10 +33,10 @@ class KotlinLayoutTest : UsefulTestCase() {
     }
 
     fun `test hardcoded bundled kotlin jps plugin classpath is correct`() {
-        val expectedClasspath = ProgressManager.getInstance().runProcess(
+        val remoteArtifactClasspath = ProgressManager.getInstance().runProcess(
             Computable {
                 KotlinArtifactsDownloader.downloadMavenArtifacts(
-                    KotlinArtifacts.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+                    @Suppress("DEPRECATION") OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
                     KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion,
                     myFixture.project,
                     ProgressManager.getInstance().progressIndicator,
@@ -51,10 +50,7 @@ class KotlinLayoutTest : UsefulTestCase() {
                 )
             }, StandardProgressIndicatorBase()
         ).sorted()
-        TestCase.assertTrue(expectedClasspath.isNotEmpty())
-        val actualClasspath = KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH.map { (_, artifactId) -> artifactId }.sorted()
-        val message = "expected=\n${expectedClasspath.joinToString("\n")}\n\nactual=${actualClasspath.joinToString("\n")}"
-        TestCase.assertEquals(message, expectedClasspath.size, actualClasspath.size)
-        TestCase.assertTrue(message, expectedClasspath.zip(actualClasspath).all { (exp, act) -> exp.name.startsWith(act) })
+        assertEquals(1, remoteArtifactClasspath.size)
+        assertTrue(remoteArtifactClasspath[0].name.startsWith(@Suppress("DEPRECATION") OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
     }
 }

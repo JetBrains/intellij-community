@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.compiler.configuration
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.AbstractLazyFileOutputProducer
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducer
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import java.io.File
@@ -31,8 +32,8 @@ import java.security.MessageDigest
  * ("install to maven local -> test" development cycle)
  */
 internal class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, DownloadContext> {
-    private val downloader =
-        LazyKotlinMavenArtifactDownloader(KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version, artifactIsPom = true)
+    private val downloader = LazyKotlinMavenArtifactDownloader(KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version, artifactIsPom = true)
+
     private val distLayoutProducer = LazyDistDirLayoutProducer(version, KotlinArtifactsDownloader.getUnpackedKotlinDistPath(version))
 
     override fun isUpToDate(input: Unit): Boolean {

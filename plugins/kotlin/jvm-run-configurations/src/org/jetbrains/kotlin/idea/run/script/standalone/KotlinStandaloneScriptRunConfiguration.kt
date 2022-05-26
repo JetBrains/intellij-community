@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
@@ -160,7 +161,7 @@ private class ScriptCommandLineState(
         val scriptVFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
                 ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
-        params.classPath.add(KotlinArtifacts.instance.kotlinCompiler)
+        params.classPath.add(KotlinArtifacts.kotlinCompiler)
 
         val scriptClasspath = ScriptConfigurationManager.getInstance(environment.project).getScriptClasspath(scriptVFile)
         scriptClasspath.forEach {
@@ -170,7 +171,7 @@ private class ScriptCommandLineState(
         params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
         params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(filePath))
         params.programParametersList.prepend("-script")
-        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinArtifacts.instance.kotlincDirectory.absolutePath))
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinPluginLayout.instance.kotlinc.absolutePath))
         params.programParametersList.prepend("-kotlin-home")
 
         val module = scriptVFile.module(environment.project)

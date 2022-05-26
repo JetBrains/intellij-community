@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.junit.Assert
 
 private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
-    listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
+    listOf(KotlinArtifacts.kotlinStdlib), listOf(KotlinArtifacts.kotlinStdlibSources)
 ) {
     override fun configureModule(module: Module, model: ModifiableRootModel) {
         super.configureModule(module, model)

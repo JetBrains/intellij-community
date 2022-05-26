@@ -113,7 +113,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
         val appWasNull = ApplicationManager.getApplication() == null
         compilerConfiguration = createKotlinCompilerConfiguration(source)
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
-        compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, KotlinArtifacts.instance.kotlinCompiler)
+        compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, KotlinArtifacts.kotlinCompiler)
 
         val parentDisposable = Disposer.newDisposable()
         val kotlinCoreEnvironment =
@@ -176,13 +176,12 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
 val TEST_KOTLIN_MODEL_DIR = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
 private fun loadScriptingPlugin(configuration: CompilerConfiguration) {
-    val artifacts = KotlinArtifacts.instance
     val pluginClasspath = listOf(
-        artifacts.kotlinScriptingCompiler,
-        artifacts.kotlinScriptingCompilerImpl,
-        artifacts.kotlinScriptingCommon,
-        artifacts.kotlinScriptingJvm
-    ).map { it.absolutePath }
+        KotlinArtifacts.kotlinScriptingCompiler,
+        KotlinArtifacts.kotlinScriptingCompilerImpl,
+        KotlinArtifacts.kotlinScriptingCommon,
+        KotlinArtifacts.kotlinScriptingJvm
+    )
 
-    PluginCliParser.loadPluginsSafe(pluginClasspath, null, configuration)
+    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, null, configuration)
 }

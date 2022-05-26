@@ -39,7 +39,7 @@ class DebuggerTestCompilerFacility(
     private val jvmTarget: JvmTarget,
     private val useIrBackend: Boolean
 ) {
-    private val kotlinStdlibPath = KotlinArtifacts.instance.kotlinStdlib.absolutePath
+    private val kotlinStdlibPath = KotlinArtifacts.kotlinStdlib.absolutePath
 
     private val mainFiles: TestFilesByLanguageAndPlatform
     private val libraryFiles: TestFilesByLanguageAndPlatform

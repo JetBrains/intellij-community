@@ -11,12 +11,12 @@ abstract class AbstractSerializationPluginIdeDiagnosticTest : AbstractKotlinHigh
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinJdkAndLibraryProjectDescriptor(
             libraryFiles = listOf(
-                KotlinArtifacts.instance.kotlinStdlib,
+                KotlinArtifacts.kotlinStdlib,
                 getSerializationCoreLibraryJar()!!,
                 getSerializationJsonLibraryJar()!!
             ),
             librarySourceFiles = listOf(
-                KotlinArtifacts.instance.kotlinStdlibSources
+                KotlinArtifacts.kotlinStdlibSources
             )
         )
     }

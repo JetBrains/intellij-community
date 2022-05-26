@@ -13,7 +13,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ActionRunner
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfiguration
 import org.jetbrains.kotlin.idea.search.allScope
@@ -62,7 +62,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         val programParametersList = javaParameters.programParametersList.list
 
         programParametersList.checkParameter("-script") { it.contains("simpleScript.kts") }
-        programParametersList.checkParameter("-kotlin-home") { it == KotlinArtifacts.instance.kotlincDirectory.absolutePath }
+        programParametersList.checkParameter("-kotlin-home") { it == KotlinPluginLayout.instance.kotlinc.absolutePath }
 
         Assert.assertTrue(!programParametersList.contains("-cp"))
 

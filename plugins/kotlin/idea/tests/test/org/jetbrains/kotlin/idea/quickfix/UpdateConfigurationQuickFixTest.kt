@@ -142,7 +142,7 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
     private fun configureRuntime(path: String) {
         val name = if (path == "mockRuntime106") "kotlin-runtime.jar" else "kotlin-stdlib.jar"
         val sourcePath = when (path) {
-            "actualRuntime" -> KotlinArtifacts.instance.kotlinStdlib
+            "actualRuntime" -> KotlinArtifacts.kotlinStdlib
             else -> File(IDEA_TEST_DATA_DIR, "configuration/$path/$name")
         }
 

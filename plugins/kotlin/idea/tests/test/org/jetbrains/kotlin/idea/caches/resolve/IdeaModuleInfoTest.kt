@@ -792,11 +792,11 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
       kind = KotlinCommonLibraryKind
     )
 
-    private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", KotlinArtifacts.instance.kotlinStdlib.jarRoot)
+    private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", KotlinArtifacts.kotlinStdlib.jarRoot)
 
     private fun stdlibJs(): LibraryEx = projectLibrary(
       "kotlin-stdlib-js",
-      KotlinArtifacts.instance.kotlinStdlibJs.jarRoot,
+      KotlinArtifacts.kotlinStdlibJs.jarRoot,
       kind = KotlinJavaScriptLibraryKind
     )
 

@@ -62,7 +62,7 @@ class NavigationWithMultipleRuntimesTest : AbstractNavigationToSourceOrDecompile
     }
 
     override fun createProjectLib(libraryName: String, withSources: Boolean): Library {
-        val libraryJar = KotlinArtifacts.instance.kotlinStdlib.copyTo(File(createTempDirectory(), "$libraryName.jar"))
+        val libraryJar = KotlinArtifacts.kotlinStdlib.copyTo(File(createTempDirectory(), "$libraryName.jar"))
         val jarUrl = libraryJar.jarRoot
         return runWriteAction {
             val library = ProjectLibraryTable.getInstance(project).createLibrary(libraryName)
@@ -70,7 +70,7 @@ class NavigationWithMultipleRuntimesTest : AbstractNavigationToSourceOrDecompile
             modifiableModel.addRoot(jarUrl, OrderRootType.CLASSES)
             if (withSources) {
                 val sourcesJar =
-                    KotlinArtifacts.instance.kotlinStdlibSources.copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
+                    KotlinArtifacts.kotlinStdlibSources.copyTo(File(createTempDirectory(), "$libraryName-sources.jar"))
                 modifiableModel.addRoot(sourcesJar.jarRoot, OrderRootType.SOURCES)
             }
             modifiableModel.commit()

@@ -85,7 +85,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             assertNotNull(kotlinRuntimeLibrary)
 
             with(kotlinRuntimeLibrary!!.modifiableModel) {
-                addRoot(KotlinArtifacts.instance.kotlinStdlib.absolutePath, OrderRootType.CLASSES)
+                addRoot(KotlinArtifacts.kotlinStdlib.absolutePath, OrderRootType.CLASSES)
                 commit()
             }
         }
