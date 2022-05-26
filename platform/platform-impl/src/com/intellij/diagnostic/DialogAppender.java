@@ -3,8 +3,6 @@ package com.intellij.diagnostic;
 
 import com.intellij.idea.Main;
 import com.intellij.openapi.diagnostic.*;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +23,20 @@ public final class DialogAppender extends Handler {
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
+  private static volatile boolean ourDelay;
+
   private final Queue<IdeaLoggingEvent> myEarlyEvents = new ArrayDeque<>();
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
+
+  //TODO android update checker accesses project jdk, fix it and remove
+  public static void delayPublishingForcibly() {
+    ourDelay = true;
+  }
+
+  public static void stopForceDelaying() {
+    ourDelay = false;
+  }
 
   @Override
   public synchronized void publish(LogRecord event) {
@@ -46,7 +55,7 @@ public final class DialogAppender extends Handler {
       ideaEvent = extractLoggingEvent(event.getMessage(), thrown);
     }
 
-    if (LoadingState.COMPONENTS_LOADED.isOccurred() && ((PersistentFSImpl)PersistentFS.getInstance()).isConnected()) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() || ourDelay) {
       IdeaLoggingEvent queued;
       while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
       queueAppend(ideaEvent);
