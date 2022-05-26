@@ -45,7 +45,7 @@ class KtSymbolBasedBindingContext(val context: FE10BindingContext) : BindingCont
         }
 
         @Suppress("UNCHECKED_CAST")
-        val v = (getter as (K) -> V?)(key)
+        val v = if (key == null) null else (getter as (K) -> V?)(key)
 
         if (context.enableLogging) {
             val psiText = key.safeAs<PsiElement>()?.text ?: key
