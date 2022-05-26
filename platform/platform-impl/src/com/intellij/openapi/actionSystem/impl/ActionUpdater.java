@@ -117,6 +117,10 @@ final class ActionUpdater {
                         0 : Registry.intValue("actionSystem.update.actions.async.test.delay", 0);
   }
 
+  @NotNull String getPlace() {
+    return myPlace;
+  }
+
   private @Nullable Presentation updateActionReal(@NotNull AnAction action) {
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
@@ -317,9 +321,6 @@ final class ActionUpdater {
       }
     });
 
-    if (myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK)) {
-      cancelAllUpdates("fast-track requested by '" + myPlace + "'");
-    }
     if (myToolbarAction) {
       cancelOnUserActivity(promise, disposableParent);
     }

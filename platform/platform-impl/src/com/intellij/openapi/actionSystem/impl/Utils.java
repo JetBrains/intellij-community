@@ -130,7 +130,7 @@ public final class Utils {
                                                                           boolean isToolbarAction) {
     LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
-    List<AnAction> actions = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
+    List<AnAction> actions = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null, false);
     if (actions != null) {
       return Promises.resolvedCancellablePromise(actions);
     }
@@ -192,7 +192,7 @@ public final class Utils {
     if (async) {
       if (expander.allowsFastUpdate(project, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
         Set<String> missedKeys = new HashSet<>();
-        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
+        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add, isContextMenu);
         if (list != null && missedKeys.isEmpty()) {
           if (onProcessed != null) onProcessed.run();
           return list;
@@ -271,9 +271,13 @@ public final class Utils {
   static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull ActionUpdater updater,
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
-                                                             @Nullable Consumer<String> missedKeys) {
+                                                             @Nullable Consumer<String> missedKeys,
+                                                             boolean cancelAllUpdates) {
     int maxTime = Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
     if (maxTime < 1) return null;
+    if (cancelAllUpdates) {
+      ActionUpdater.cancelAllUpdates("fast-track requested by '" + updater.getPlace() + "'");
+    }
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
