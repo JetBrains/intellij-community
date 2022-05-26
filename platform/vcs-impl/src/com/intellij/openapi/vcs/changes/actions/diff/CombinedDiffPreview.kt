@@ -152,13 +152,15 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
       return
     }
 
-    selected = when {
+    val newSelected = when {
       selectedChanges.isEmpty() -> null
       selectedChange == null -> selectedChanges[0]
       else -> selectedChange
     }
 
-    selected?.let { context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, CombinedPathBlockId(it.filePath, it.fileStatus, it.tag)) }
+    newSelected?.let { context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, CombinedPathBlockId(it.filePath, it.fileStatus, it.tag)) }
+
+    selected = newSelected
   }
 
   internal fun getSelectedOrAllChangesStream(): Stream<out Wrapper> {
