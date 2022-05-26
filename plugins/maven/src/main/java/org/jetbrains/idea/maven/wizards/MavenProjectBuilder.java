@@ -152,7 +152,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     MavenUtil.setupProjectSdk(project);
 
 
-    if (Registry.is("maven.new.import")) {
+    if (MavenUtil.isLinearImportEnabled()) {
       Module dummyModule = createDummyModule(project);
       VirtualFile rootPath = LocalFileSystem.getInstance().findFileByNioFile(getRootPath());
       MavenImportingManager.getInstance(project).openProjectAndImport(
@@ -252,7 +252,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         modifiableModel.addContentEntry(contentRoot);
         modifiableModel.commit();
         renameModuleToProjectName(project, module, root);
-        if (MavenProjectImporter.isImportToWorkspaceModelEnabled()) {
+        if (MavenProjectImporter.isImportToWorkspaceModelEnabled() || MavenProjectImporter.isImportToTreeStructureEnabled()) {
           //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
           ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
         }

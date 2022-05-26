@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -7,8 +7,8 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,6 +18,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(TabNavigationActionBase.class);
@@ -76,19 +78,19 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
         editorManager.getCurrentWindow ();
       }
       if (currentWindow != null) {
-        final EditorWithProviderComposite[] editors = currentWindow.getEditors();
+        final List<EditorComposite> composites = currentWindow.getAllComposites();
         switch (myNavigationType) {
           case PREV:
           case NEXT:
-            presentation.setEnabled(editors.length > 1);
+            presentation.setEnabled(composites.size() > 1);
             break;
           case LAST:
-            int index = ArrayUtil.indexOf(editors, currentWindow.getSelectedEditor());
-            presentation.setEnabled(index < editors.length);
+            int index = composites.indexOf(currentWindow.getSelectedComposite());
+            presentation.setEnabled(index < composites.size());
             break;
             default:
               int targetIndex = myNavigationType.ordinal();
-              presentation.setEnabled(targetIndex < editors.length);
+              presentation.setEnabled(targetIndex < composites.size());
         }
       }
       return;

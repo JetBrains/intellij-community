@@ -4,6 +4,7 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -28,10 +29,18 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.function.BiPredicate;
 
 public class TryWithIdenticalCatchesInspection extends BaseInspection {
+  public boolean ignoreBlocksWithDifferentComments = true;
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    return InspectionOptionsPanel.singleCheckBox(
+      this, InspectionGadgetsBundle.message("try.with.identical.catches.checkbox.different.comments"), "ignoreBlocksWithDifferentComments");
+  }
 
   @Override
   public boolean isEnabledByDefault() {
@@ -67,7 +76,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     return new TryWithIdenticalCatchesVisitor();
   }
 
-  private static class TryWithIdenticalCatchesVisitor extends BaseInspectionVisitor {
+  private class TryWithIdenticalCatchesVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitTryStatement(PsiTryStatement statement) {
@@ -77,7 +86,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (sections == null) return;
 
       final boolean[][] canSwap = collectCanSwap(sections);
-      final CatchSectionIndices[] duplicateIndices = getCatchSectionIndices(sections, canSwap, CatchSectionWrapper::areDuplicates);
+      final CatchSectionIndices[] duplicateIndices = getCatchSectionIndices(
+        sections, canSwap, (s1, s2) -> CatchSectionWrapper.areDuplicates(s1, s2, ignoreBlocksWithDifferentComments));
       final CatchSectionIndices[] emptyIndices = isOnTheFly() ? getCatchSectionIndices(sections, canSwap, CatchSectionWrapper::areEmpty) : null;
       if (duplicateIndices == null && emptyIndices == null) return;
 
@@ -238,15 +248,13 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       return s1.myCodeBlock.isEmpty() && s2.myCodeBlock.isEmpty();
     }
 
-    static boolean areDuplicates(@NotNull CatchSectionWrapper s1, @NotNull CatchSectionWrapper s2) {
+    static boolean areDuplicates(@NotNull CatchSectionWrapper s1, @NotNull CatchSectionWrapper s2, boolean strictCommentMatch) {
       final boolean empty1 = s1.myCodeBlock.isEmpty();
       final boolean empty2 = s2.myCodeBlock.isEmpty();
       if (empty1 != empty2) return false;
 
       if (empty1) {
-        final List<String> comments1 = collectCommentTexts(s1.myCatchSection);
-        final List<String> comments2 = collectCommentTexts(s2.myCatchSection);
-        return comments1.equals(comments2);
+        return commentsMatch(s1, s2);
       }
 
       final Match match1 = s1.findDuplicate(s2);
@@ -257,7 +265,16 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (match2 == null) {
         return false;
       }
-      return ReturnValue.areEquivalent(match1.getReturnValue(), match2.getReturnValue());
+      if (!ReturnValue.areEquivalent(match1.getReturnValue(), match2.getReturnValue())) {
+        return false;
+      }
+      return !strictCommentMatch || commentsMatch(s1, s2);
+    }
+
+    private static boolean commentsMatch(@NotNull CatchSectionWrapper s1, @NotNull CatchSectionWrapper s2) {
+      final List<String> comments1 = collectCommentTexts(s1.myCatchSection);
+      final List<String> comments2 = collectCommentTexts(s2.myCatchSection);
+      return comments1.equals(comments2);
     }
 
     private Match findDuplicate(@NotNull CatchSectionWrapper section) {
@@ -390,14 +407,16 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new CollapseCatchSectionsFix((Boolean)infos[1]);
+    return new CollapseCatchSectionsFix((Boolean)infos[1], ignoreBlocksWithDifferentComments);
   }
 
   private static class CollapseCatchSectionsFix extends InspectionGadgetsFix {
     private final boolean myEmpty;
+    private final boolean myIgnoreBlocksWithDifferentComments;
 
-    CollapseCatchSectionsFix(boolean empty) {
+    CollapseCatchSectionsFix(boolean empty, boolean ignoreBlocksWithDifferentComments) {
       myEmpty = empty;
+      myIgnoreBlocksWithDifferentComments = ignoreBlocksWithDifferentComments;
     }
 
     @Override
@@ -408,7 +427,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      // smart psi pointer lost correct catch section when multiple catch sections were collapsed in batch mode
+      // smart psi pointer lost correct catch section when multiple catch sections were collapsed in batch mode,
       // so we need to re-calculate everything based on what exists at this point
       final PsiCatchSection catchSection = (PsiCatchSection)descriptor.getPsiElement();
       final PsiTryStatement tryStatement = (PsiTryStatement)catchSection.getParent();
@@ -424,7 +443,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
       final boolean[][] canSwap = collectCanSwap(sections);
       final CatchSectionIndices[] duplicatesIndices =
-        getCatchSectionIndices(sections, canSwap, myEmpty ? CatchSectionWrapper::areEmpty : CatchSectionWrapper::areDuplicates);
+        getCatchSectionIndices(sections, canSwap, myEmpty ? CatchSectionWrapper::areEmpty : (s1, s2) -> CatchSectionWrapper.areDuplicates(
+          s1, s2, myIgnoreBlocksWithDifferentComments));
       if (duplicatesIndices == null) return;
 
       final int collapseIntoIndex = duplicatesIndices[sectionIndex].myCollapseIntoIndex;

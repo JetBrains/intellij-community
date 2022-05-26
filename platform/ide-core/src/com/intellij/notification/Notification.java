@@ -243,6 +243,10 @@ public class Notification {
     return myListener;
   }
 
+  /**
+   * @deprecated Please use {@link #addAction(AnAction)} instead.
+   */
+  @Deprecated
   public @NotNull Notification setListener(@NotNull NotificationListener listener) {
     myListener = listener;
     return this;
@@ -341,8 +345,14 @@ public class Notification {
     if (myWhenExpired == null) {
       myWhenExpired = new ArrayList<>();
     }
-    myWhenExpired.add(whenExpired);
+    if (whenExpired != null) {
+      myWhenExpired.add(whenExpired);
+    }
     return this;
+  }
+
+  public void resetAllExpiredListeners() {
+    myWhenExpired = null;
   }
 
   public void hideBalloon() {

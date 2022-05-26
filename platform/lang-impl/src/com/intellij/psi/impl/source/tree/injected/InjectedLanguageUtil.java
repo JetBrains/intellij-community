@@ -193,20 +193,6 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return InjectedLanguageEditorUtil.getTopLevelEditor(editor);
   }
 
-  public static boolean isInInjectedLanguagePrefixSuffix(@NotNull final PsiElement element) {
-    PsiFile injectedFile = element.getContainingFile();
-    if (injectedFile == null) return false;
-    Project project = injectedFile.getProject();
-    InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(project);
-    if (!languageManager.isInjectedFragment(injectedFile)) return false;
-    TextRange elementRange = element.getTextRange();
-    List<TextRange> edibles = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
-    int combinedEdiblesLength = edibles.stream().mapToInt(TextRange::getLength).sum();
-
-    return combinedEdiblesLength != elementRange.getLength();
-  }
-
-
   public static int hostToInjectedUnescaped(DocumentWindow window, int hostOffset) {
     Place shreds = ((DocumentWindowImpl)window).getShreds();
     Segment hostRangeMarker = shreds.get(0).getHostRangeMarker();

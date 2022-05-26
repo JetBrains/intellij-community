@@ -73,7 +73,7 @@ class LessonManager {
     currentLessonExecutor = lessonExecutor
   }
 
-  internal fun lessonIsRunning(): Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
+  fun lessonIsRunning(): Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
 
   fun stopLesson() = stopLesson(false)
 

@@ -56,13 +56,13 @@
     <orderEntry type="library" name="intellij-coverage" level="project" />
     <orderEntry type="module-library">
       <library name="coverage-report" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:coverage-report:1.0.8">
+        <properties maven-id="org.jetbrains.intellij.deps:coverage-report:1.0.15">
           <exclude>
             <dependency maven-id="org.jetbrains:annotations" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.8/coverage-report-1.0.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.15/coverage-report-1.0.15.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.30/freemarker-2.3.30.jar!/" />
         </CLASSES>
         <JAVADOC />

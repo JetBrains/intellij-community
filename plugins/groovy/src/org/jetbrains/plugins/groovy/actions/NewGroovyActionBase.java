@@ -33,7 +33,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   }
 
   @Override
-  protected final PsiElement @NotNull [] invokeDialog(final Project project, final PsiDirectory directory) {
+  protected final PsiElement @NotNull [] invokeDialog(final @NotNull Project project, final @NotNull PsiDirectory directory) {
     MyInputValidator validator = new MyInputValidator(project, directory);
     Messages.showInputDialog(project, getDialogPrompt(), getDialogTitle(), Messages.getQuestionIcon(), "", validator);
 
@@ -55,7 +55,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   }
 
   @Override
-  protected PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement @NotNull [] create(@NotNull String newName, @NotNull PsiDirectory directory) throws Exception {
     return doCreate(newName, directory);
   }
 

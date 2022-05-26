@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins.auth
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.NotNull
 import java.net.URI
@@ -23,8 +23,9 @@ class PluginRepositoryAuthService {
     try {
       getAllCustomHeaders(connection.url.toString())
         .forEach { (k, v) -> connection.addRequestProperty(k, v) }
-    } catch (e: Exception) {
-      logger.error(e)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
     }
   }
 
@@ -39,7 +40,8 @@ class PluginRepositoryAuthService {
     if (!hasNoOrSingleContributor(domain, allContributors))
       return cancelWithWarning("Multiple contributors found for domain: $domain")
     if (allContributors.any { !handlesSingleDomain(it, domain) })
-      return cancelWithWarning("Contributor ${allContributors.find { !handlesSingleDomain(it, domain) }} tried to inject into multiple domains")
+      return cancelWithWarning(
+        "Contributor ${allContributors.find { !handlesSingleDomain(it, domain) }} tried to inject into multiple domains")
 
     val matchingContributor = allContributors.find { it.canHandleSafe(domain) }
     return matchingContributor
@@ -63,26 +65,26 @@ class PluginRepositoryAuthService {
     contributorToDomainCache[contributor] = url
   }
 
-  @NotNull
   private fun cancelWithWarning(message: String): Map<String, String> {
-    logger.warn(message)
+    LOG.warn(message)
     return emptyMap()
   }
+}
 
-  companion object {
-    val logger = thisLogger()
+private val LOG = logger<PluginRepositoryAuthService>()
 
-    fun PluginRepositoryAuthProvider.canHandleSafe(domain: String): Boolean =
-      withLogging(false) { canHandle(domain) }
-    fun PluginRepositoryAuthProvider.getCustomHeadersSafe(url: String): Map<String, String> =
-      withLogging(emptyMap()) { getAuthHeaders(url) }
+private fun PluginRepositoryAuthProvider.canHandleSafe(domain: String): Boolean = withLogging(false) { canHandle(domain) }
 
-    private inline fun <T> withLogging(default: T, f: () -> T): T = try {
-      f()
-    } catch (e: Exception) {
-      logger.error(e)
-      default
-    }
+private fun PluginRepositoryAuthProvider.getCustomHeadersSafe(url: String): Map<String, String> {
+  return withLogging(emptyMap()) { getAuthHeaders(url) }
+}
 
+private inline fun <T> withLogging(default: T, f: () -> T): T {
+  return try {
+    f()
+  }
+  catch (e: Exception) {
+    LOG.error(e)
+    default
   }
 }

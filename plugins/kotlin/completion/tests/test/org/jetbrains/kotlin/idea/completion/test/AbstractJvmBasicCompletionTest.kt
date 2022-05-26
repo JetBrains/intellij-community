@@ -19,4 +19,16 @@ abstract class AbstractJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestC
 
     override fun getPlatform() = JvmPlatforms.jvm16
     override fun defaultCompletionType() = CompletionType.BASIC
+
+    override fun configureFixture(testPath: String) {
+        // those classes are missing in mockJDK-1.7
+        with(myFixture) {
+            addCharacterCodingException()
+            addAppendable()
+            addHashSet()
+            addLinkedHashSet()
+        }
+
+        super.configureFixture(testPath)
+    }
 }

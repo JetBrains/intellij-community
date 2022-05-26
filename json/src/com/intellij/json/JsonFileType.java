@@ -4,7 +4,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -45,7 +44,6 @@ public class JsonFileType extends LanguageFileType{
     return DEFAULT_EXTENSION;
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     // TODO: add JSON icon instead

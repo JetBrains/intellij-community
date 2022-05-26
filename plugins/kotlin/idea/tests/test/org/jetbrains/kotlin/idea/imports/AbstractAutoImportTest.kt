@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import java.io.File
 
 abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() {

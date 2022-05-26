@@ -87,7 +87,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
         text = when {
           projectBasePath.isNullOrEmpty() -> config.userHome
           // TODO [run.targets] ideally we want to use '/' or '\' file separators based on the target's OS (which is not available yet)
-          else -> joinTargetPaths(config.userHome, PathUtil.getFileName(projectBasePath), fileSeparator = '/')
+          else -> joinTargetPaths(config.userHome, DEFAULT_VIRTUALENVS_DIR, PathUtil.getFileName(projectBasePath), fileSeparator = '/')
         }
       }
       addBrowseFolderListener(PySdkBundle.message("python.venv.location.chooser"), project, targetEnvironmentConfiguration,
@@ -225,7 +225,12 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       sdk.associateWithModule(module, newProjectPath)
     }
     project.excludeInnerVirtualEnv(sdk)
-    PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
+    if (isUnderLocalTarget) {
+      // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
+      // target (e.g. a path from SSH machine or a Docker image) ends up with a meaningless default for the local machine.
+      // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
+      PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
+    }
     return sdk
   }
 
@@ -248,5 +253,15 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
     if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
+  }
+
+  companion object {
+    /**
+     * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
+     * environments.
+     *
+     * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
+     */
+    private const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
   }
 }

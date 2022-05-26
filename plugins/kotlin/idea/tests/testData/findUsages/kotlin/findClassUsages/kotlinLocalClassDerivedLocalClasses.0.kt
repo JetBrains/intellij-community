@@ -13,3 +13,5 @@ fun foo() {
         class D : T()
     }
 }
+
+// FIR_COMPARISON

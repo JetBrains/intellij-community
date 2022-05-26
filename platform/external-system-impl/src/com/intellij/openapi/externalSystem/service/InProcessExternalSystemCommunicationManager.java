@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
@@ -9,6 +10,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Service(Service.Level.APP)
 public final class InProcessExternalSystemCommunicationManager implements ExternalSystemCommunicationManager {
   @SuppressWarnings("unchecked")
   @Nullable

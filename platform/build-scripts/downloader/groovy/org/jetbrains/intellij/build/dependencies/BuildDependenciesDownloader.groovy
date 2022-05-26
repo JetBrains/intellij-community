@@ -27,7 +27,8 @@ import java.util.stream.Collectors
 @CompileStatic
 final class BuildDependenciesDownloader {
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length"
-  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
+  private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
+    .version(HttpClient.Version.HTTP_1_1).build()
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
@@ -230,7 +231,26 @@ options:${getExtractOptionsShortString(options)}\n""".getBytes(StandardCharsets.
 
         HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile))
         if (response.statusCode() != 200) {
-          throw new IllegalStateException("Error downloading $uri: non-200 http status code ${response.statusCode()}")
+          StringBuilder builder = new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n")
+
+          Map<String, List<String>> headers = response.headers().map()
+          for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
+            for (String value : headers.get(headerName)) {
+              builder.append("Header: ").append(headerName).append(": ").append(value).append("\n")
+            }
+          }
+
+          builder.append("\n")
+          if (Files.exists(tempFile)) {
+            try (InputStream inputStream = Files.newInputStream(tempFile)) {
+              // yes, not trying to guess encoding
+              // string constructor should be exception free,
+              // so at worse we'll get some random characters
+              builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8))
+            }
+          }
+
+          throw new IllegalStateException(builder.toString())
         }
 
         long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElseGet { -1 }

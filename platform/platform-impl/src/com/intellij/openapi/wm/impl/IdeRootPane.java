@@ -26,6 +26,10 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.Toolba
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.toolWindow.ToolWindowButtonManager;
+import com.intellij.toolWindow.ToolWindowPane;
+import com.intellij.toolWindow.ToolWindowPaneNewButtonManager;
+import com.intellij.toolWindow.ToolWindowPaneOldButtonManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
@@ -62,7 +66,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
   private IdeRootPaneNorthExtension myStatusBarCentralWidget;
 
-  private ToolWindowsPane toolWindowPane;
+  private ToolWindowPane toolWindowPane;
   private JBPanel<?> myContentPane;
 
   private final boolean myGlassPaneInitialized;
@@ -72,7 +76,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private AbstractMenuFrameHeader myCustomFrameTitlePane;
   private CustomDecorationPath mySelectedEditorFilePath;
   private final boolean myDecoratedMenu;
-  private ToolWindowButtonManager toolWindowButtonManager;
+  private final ToolWindowButtonManager toolWindowButtonManager;
 
   protected IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
     if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
@@ -133,7 +137,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     updateMainMenuVisibility();
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       toolWindowButtonManager = new ToolWindowPaneNewButtonManager();
       toolWindowButtonManager.add(myContentPane);
     }
@@ -152,11 +156,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull Component createCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-    toolWindowPane = new ToolWindowsPane(frame, parentDisposable, toolWindowButtonManager);
+    toolWindowPane = new ToolWindowPane(frame, parentDisposable, toolWindowButtonManager);
     return toolWindowPane;
   }
 
-  public @NotNull ToolWindowsPane getToolWindowPane() {
+  public @NotNull ToolWindowPane getToolWindowPane() {
     return toolWindowPane;
   }
 
@@ -239,13 +243,17 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  final void initOrCreateToolbar(@NotNull Project project) {
+  public final void initOrCreateToolbar(@NotNull Project project) {
     if (getToolbarHolderDelegate() == null && ExperimentalUI.isNewToolbar()) {
-      ((MainToolbar)myToolbar).init(project);
+      JComponent toolbar = myToolbar;
+      // null if frame is reused (open project in an existing frame)
+      if (toolbar != null) {
+        ((MainToolbar)toolbar).init(project);
+        return;
+      }
     }
-    else {
-      updateToolbar();
-    }
+
+    updateToolbar();
   }
 
   final void updateToolbar() {
@@ -287,18 +295,19 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return null;
   }
 
-  private static void disposeIfNeeded(JComponent comp) {
-    if (!(comp instanceof Disposable)) {
+  private static void disposeIfNeeded(@NotNull JComponent component) {
+    if (!(component instanceof Disposable)) {
       return;
     }
 
-    Disposable d = (Disposable)comp;
+    Disposable d = (Disposable)component;
     if (!Disposer.isDisposed(d)) {
       Disposer.dispose(d);
     }
   }
 
-  protected void updateNorthComponents() {
+
+  public void updateNorthComponents() {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       northComponent.revalidate();
     }
@@ -347,7 +356,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected @NotNull IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
-    boolean addToolWindowsWidget = !ExperimentalUI.isNewToolWindowsStripes()
+    boolean addToolWindowsWidget = !ExperimentalUI.isNewUI()
                                    && !AccessibilityUtils.isScreenReaderDetected();
     return new IdeStatusBarImpl(frame, addToolWindowsWidget);
   }
@@ -362,14 +371,17 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void updateToolbarVisibility() {
-    if (myToolbar != null) {
-      UISettings uiSettings = UISettings.getShadowInstance();
-      boolean isNewToolbar = ExperimentalUI.isNewToolbar();
-      boolean visible = ((isNewToolbar && !MainToolbarKt.isToolbarInHeader(uiSettings))
-                         || (!isNewToolbar && uiSettings.getShowMainToolbar()))
-                        && !uiSettings.getPresentationMode();
-      myToolbar.setVisible(visible);
+    if (myToolbar == null) {
+      myToolbar = createToolbar();
+      myNorthPanel.add(myToolbar, 0);
     }
+
+    UISettings uiSettings = UISettings.getShadowInstance();
+    boolean isNewToolbar = ExperimentalUI.isNewToolbar();
+    boolean visible = ((isNewToolbar && !MainToolbarKt.isToolbarInHeader(uiSettings))
+                       || (!isNewToolbar && uiSettings.getShowMainToolbar()))
+                      && !uiSettings.getPresentationMode();
+    myToolbar.setVisible(visible);
   }
 
   private void updateStatusBarVisibility() {
@@ -401,9 +413,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     UISettings uiSettings = UISettings.getShadowInstance();
     if (ExperimentalUI.isNewToolbar()) {
       myStatusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project, it -> it instanceof StatusBarCentralWidget);
-      if (myStatusBarCentralWidget != null) {
-        myStatusBarCentralWidget.uiSettingsChanged(uiSettings);
-      }
     }
     else {
       myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
@@ -446,10 +455,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateToolbarVisibility();
     updateStatusBarVisibility();
     updateMainMenuVisibility();
-    if (myStatusBarCentralWidget != null && ExperimentalUI.isNewToolbar()) {
-      myStatusBarCentralWidget.uiSettingsChanged(uiSettings);
-    }
-    else {
+
+    if (!ExperimentalUI.isNewToolbar()) {
       for (IdeRootPaneNorthExtension component : myNorthComponents) {
         component.uiSettingsChanged(uiSettings);
       }

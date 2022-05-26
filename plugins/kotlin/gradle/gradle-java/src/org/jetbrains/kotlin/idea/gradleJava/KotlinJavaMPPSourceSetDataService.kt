@@ -20,15 +20,13 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourceSetData, Void>() {
     override fun getTargetDataKey() = GradleSourceSetData.KEY
 
-    private fun isTestModuleById(id: String, toImport: Collection<DataNode<GradleSourceSetData>>): Boolean =
-        toImport.firstOrNull { it.data.internalName == id }?.kotlinSourceSetData?.sourceSetInfo?.isTestModule ?: false
-
     override fun postProcess(
         toImport: MutableCollection<out DataNode<GradleSourceSetData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
     ) {
+        val isTestModuleById = toImport.associate { it.data.internalName to (it.kotlinSourceSetData?.sourceSetInfo?.isTestModule ?: false) }
         val testKotlinModules =
             toImport.filter { it.kotlinSourceSetData?.sourceSetInfo?.isTestModule ?: false }.map { modelsProvider.findIdeModule(it.data) }
                 .toSet()
@@ -44,7 +42,7 @@ class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourc
             val rootModel = modelsProvider.getModifiableRootModel(module)
 
             val moduleEntries = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>()
-            moduleEntries.filter { isTestModuleById(it.moduleName, toImport) }.forEach { moduleOrderEntry ->
+            moduleEntries.filter { isTestModuleById[it.moduleName] ?: false }.forEach { moduleOrderEntry ->
                 moduleOrderEntry.isProductionOnTestDependency = true
             }
             val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()

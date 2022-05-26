@@ -42,6 +42,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
@@ -226,7 +227,8 @@ final class BuildTasksImpl extends BuildTasks {
           Files.deleteIfExists(targetFile)
           // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
           BuildHelper.runApplicationStarter(context, context.paths.tempDir.resolve("builtinModules"), modules,
-                                            List.of("listBundledPlugins", targetFile.toString()))
+                                            List.of("listBundledPlugins", targetFile.toString()), Collections.emptyMap(),
+                                            null, TimeUnit.MINUTES.toMillis(10L), context.classpathCustomizer)
           if (Files.notExists(targetFile)) {
             context.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
           }
@@ -276,8 +278,6 @@ idea.fatal.error.notification=disabled
     buildContext.messages.block("copy files shared among all distributions", new Supplier<Void>() {
       @Override
       Void get() {
-        copyLogXml(buildContext)
-
         Path licenseOutDir = buildContext.paths.distAllDir.resolve("license")
         BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
         buildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("license"), licenseOutDir)
@@ -321,17 +321,6 @@ idea.fatal.error.notification=disabled
       "Cannot find '$normalizedRelativePath' neither in sources of '$buildContext.productProperties.applicationInfoModule'" +
       " nor in $buildContext.productProperties.brandingResourcePaths")
     return null
-  }
-
-  private static void copyLogXml(BuildContext buildContext) {
-    Path src = buildContext.paths.communityHomeDir.resolve("bin/log.xml")
-    Path dst = buildContext.paths.distAllDir.resolve("bin/log.xml")
-    Files.createDirectories(dst.parent)
-
-    String text = Files.readAllLines(src)
-      .findAll { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }
-      .join("\n")
-    Files.writeString(dst, text)
   }
 
   @NotNull
@@ -408,7 +397,8 @@ idea.fatal.error.notification=disabled
 
   private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Set<PluginLayout> pluginsToPublish) {
     DistributionJARsBuilder distBuilder = new DistributionJARsBuilder(buildContext, pluginsToPublish)
-    compileModules(distBuilder.getModulesForPluginsToPublish())
+    compileModules(distBuilder.getModulesForPluginsToPublish()
+                     + ["intellij.idea.community.build.tasks", "intellij.platform.images.build"])
 
     // we need this to ensure that all libraries which may be used in the distribution are resolved,
     // even if product modules don't depend on them (e.g. JUnit5)
@@ -429,7 +419,11 @@ idea.fatal.error.notification=disabled
       span.recordException(e)
       span.setStatus(StatusCode.ERROR, e.message)
 
-      TracerManager.finish()
+      try {
+        TracerManager.finish()
+      }
+      catch (Throwable ignore) {
+      }
       throw e
     }
     finally {
@@ -485,7 +479,7 @@ idea.fatal.error.notification=disabled
         else {
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"$BuildOptions.OS_NONE\"")
-          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish())
+          DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish(), context.classpathCustomizer)
           distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)?.fork()?.join()
         }
         return null

@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.formatter;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -71,6 +71,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @TestMetadata("UnfinishedLambdaInCodeAsVarInitiailzer.after.kt")
             public void testUnfinishedLambdaInCodeAsVarInitiailzer() throws Exception {
                 runTest("testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaInCodeAsVarInitiailzer.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaIsLastElement.after.kt")
+            public void testUnfinishedLambdaIsLastElement() throws Exception {
+                runTest("testData/editor/enterHandler/afterUnmatchedBrace/UnfinishedLambdaIsLastElement.after.kt");
             }
 
             @TestMetadata("UnfinishedLambdaWithCommentInCode.after.kt")

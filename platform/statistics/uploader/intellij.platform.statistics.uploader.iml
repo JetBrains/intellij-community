@@ -10,7 +10,6 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.config" exported="" />
     <orderEntry type="library" name="ap-validation" level="project" />
   </component>

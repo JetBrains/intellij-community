@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
+
 /**
  * @author Denis Zhdanov
  */
@@ -116,7 +118,7 @@ public class AttachExternalProjectAction extends DumbAwareAction {
     return virtualFile -> {
       if (!isSelectedFile.test(virtualFile)) {
         String name = externalSystemId.getReadableName();
-        String projectPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(virtualFile.getPath()));
+        String projectPath = getPresentablePath(virtualFile.getPath());
         String message = virtualFile.isDirectory()
                          ? JavaUiBundle.message("action.attach.external.project.warning.message.directory", projectPath, name)
                          : JavaUiBundle.message("action.attach.external.project.warning.message.file", projectPath, name);

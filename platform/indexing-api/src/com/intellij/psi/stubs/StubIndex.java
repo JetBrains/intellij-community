@@ -113,16 +113,20 @@ public abstract class StubIndex {
    * @return lazily reified iterator of VirtualFile's.
    */
   @NotNull
-  public abstract <Key> Iterator<VirtualFile> getContainingFilesIterator(
-      @NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey, @NotNull Project project, @NotNull GlobalSearchScope scope);
+  public abstract <Key> Iterator<VirtualFile> getContainingFilesIterator(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                                         @NotNull @NonNls Key dataKey,
+                                                                         @NotNull Project project,
+                                                                         @NotNull GlobalSearchScope scope);
 
   /**
    * @deprecated use {@link StubIndex#getContainingFilesIterator(StubIndexKey, Object, Project, GlobalSearchScope)}
    */
   @Deprecated
   @NotNull
-  public <Key> Set<VirtualFile> getContainingFiles(
-      @NotNull StubIndexKey<Key, ?> indexKey, @NotNull @NonNls Key dataKey, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                   @NotNull @NonNls Key dataKey,
+                                                   @NotNull Project project,
+                                                   @NotNull GlobalSearchScope scope) {
     return ContainerUtil.newHashSet(getContainingFilesIterator(indexKey, dataKey, project, scope));
   }
 

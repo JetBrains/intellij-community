@@ -454,7 +454,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
       myEndVOffset = endVOffset;
 
       myAnimator = new JBAnimator()
-        .setPeriod(4);
+        .setPeriod(4)
+        .setName("Scrolling Model Animator");
       myAnimator.animate(
         Animations
           .animation((fraction) -> {

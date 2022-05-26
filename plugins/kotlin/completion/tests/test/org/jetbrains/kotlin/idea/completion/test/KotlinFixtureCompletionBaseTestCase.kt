@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
 abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtureTestCase() {
@@ -20,27 +21,38 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
     protected abstract fun defaultCompletionType(): CompletionType
     protected open fun defaultInvocationCount(): Int = 0
 
+    protected open fun handleTestPath(path: String) = path
+    
     open fun doTest(testPath: String) {
-        val actualTestPath = testPath()
+        val actualTestPath = handleTestPath(testPath())
         configureFixture(actualTestPath)
 
         val fileText = FileUtil.loadFile(File(actualTestPath), true)
 
         withCustomCompilerOptions(fileText, project, module) {
-            assertTrue("\"<caret>\" is missing in file \"$actualTestPath\"", fileText.contains("<caret>"))
+            assertTrue("\"<caret>\" is missing in file \"$testPath\"", fileText.contains("<caret>"))
 
-            if (ExpectedCompletionUtils.shouldRunHighlightingBeforeCompletion(fileText)) {
-                myFixture.doHighlighting()
+            executeTest {
+                if (ExpectedCompletionUtils.shouldRunHighlightingBeforeCompletion(fileText)) {
+                    myFixture.doHighlighting()
+                }
+                testCompletion(
+                    fileText,
+                    getPlatform(),
+                    { completionType, count -> complete(completionType, count) },
+                    defaultCompletionType(),
+                    defaultInvocationCount(),
+                    ignoreProperties = ignoreProperties,
+                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.FIR_IDENTICAL
+                )
             }
-            testCompletion(
-                fileText,
-                getPlatform(),
-                { completionType, count -> complete(completionType, count) },
-                defaultCompletionType(),
-                defaultInvocationCount(),
-                additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + "FIR_COMPARISON"
-            )
         }
+    }
+
+    open val ignoreProperties: Collection<String> = emptyList()
+
+    protected open fun executeTest(test: () -> Unit) {
+        test()
     }
 
     protected open fun configureFixture(testPath: String) {

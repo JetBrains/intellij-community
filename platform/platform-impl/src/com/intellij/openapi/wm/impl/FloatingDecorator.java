@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -21,6 +22,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,8 +46,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   private static final int ANCHOR_BOTTOM=4;
   private static final int ANCHOR_RIGHT=8;
 
-  private static final int DELAY=15; // Delay between frames
-  private static final int TOTAL_FRAME_COUNT=7; // Total number of frames in animation sequence
+  private static final int DELAY = 15; // Delay between frames
+  private static final int TOTAL_FRAME_COUNT = 7; // Total number of frames in animation sequence
 
   private final MyUISettingsListener myUISettingsListener;
   private WindowInfo myInfo;
@@ -152,7 +154,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     super.dispose();
   }
 
-  void apply(@NotNull WindowInfo info) {
+  @ApiStatus.Internal
+  public void apply(@NotNull WindowInfo info) {
     LOG.assertTrue(info.getType() == ToolWindowType.FLOATING);
     myInfo = info;
     // set alpha mode

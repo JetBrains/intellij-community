@@ -1,0 +1,13 @@
+// "Add else branch" "true"
+sealed class Base {
+    class A : Base()
+    class B : Base()
+    class C : Base()
+}
+
+fun test(base: Base) {
+    when (base) {
+        is Base.A -> ""
+        else -> {<caret>}
+    }
+}

@@ -15,7 +15,7 @@ final class InjectedCodeFoldingPassFactory implements TextEditorHighlightingPass
 
   @Override
   @NotNull
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     return new InjectedCodeFoldingPass(file.getProject(), editor, file);
   }
 }

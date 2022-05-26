@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.codeInsight;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -77,6 +78,12 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     final PropertyInfo property = PropertyInfo.createPropertyInfo(field, project);
     LOG.assertTrue(property != null, "propertyInfo");
     new SearchUsagesTask(project, property).queue();
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    // As the action spawns the search which could be very long, let's disable preview here
+    return null;
   }
 
   private static class SearchUsagesTask extends Task.Modal {

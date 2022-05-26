@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpression
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
@@ -170,6 +172,9 @@ fun FqName.quoteSegmentsIfNeeded(): String {
 }
 
 fun FqName.quoteIfNeeded() = FqName(quoteSegmentsIfNeeded())
+
+fun CallableId.asFqNameWithRootPrefixIfNeeded() =
+    asSingleFqName().withRootPrefixIfNeeded()
 
 fun FqName.withRootPrefixIfNeeded(targetElement: KtElement? = null) =
     if (canAddRootPrefix() && targetElement?.canAddRootPrefix() != false)

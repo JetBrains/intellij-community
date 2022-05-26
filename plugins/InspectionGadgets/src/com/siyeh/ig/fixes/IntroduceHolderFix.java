@@ -15,9 +15,10 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -244,6 +245,6 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
     final PsiElement[] elements = rhs == null ? PsiElement.EMPTY_ARRAY : new PsiElement[] {rhs};
     final HashSet<PsiField> usedFields = new HashSet<>();
     final PsiClass targetClass = field.getContainingClass();
-    return ExtractMethodProcessor.canBeStatic(targetClass, expressionStatement, elements, usedFields) && usedFields.isEmpty();
+    return CommonJavaRefactoringUtil.canBeStatic(targetClass, expressionStatement, elements, usedFields) && usedFields.isEmpty();
   }
 }

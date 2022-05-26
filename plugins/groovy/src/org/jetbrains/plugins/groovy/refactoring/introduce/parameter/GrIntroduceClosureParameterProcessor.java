@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
@@ -49,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -59,10 +61,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy.OldReferencesResolver;
 import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.IntConsumer;
 
 /**
@@ -205,30 +204,32 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   }
 
   private static Collection<PsiReference> findUsagesForLocal(GrClosableBlock initializer, final GrVariable var) {
-    final Instruction[] flow = ControlFlowUtils.findControlFlowOwner(initializer).getControlFlow();
+    GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(initializer);
+    if (owner == null) return Collections.emptyList();
+    final GroovyControlFlow flow = ControlFlowUtils.getGroovyControlFlow(owner);
     final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, var);
 
     Instruction writeInstr = null;
 
     final PsiElement parent = initializer.getParent();
     if (parent instanceof GrVariable) {
-      writeInstr = ContainerUtil.find(flow, instruction -> instruction.getElement() == var);
+      writeInstr = ContainerUtil.find(flow.getFlow(), instruction -> instruction.getElement() == var);
     }
     else if (parent instanceof GrAssignmentExpression) {
       final GrReferenceExpression refExpr = (GrReferenceExpression)((GrAssignmentExpression)parent).getLValue();
-      final Instruction instruction = ContainerUtil.find(flow, instruction1 -> instruction1.getElement() == refExpr);
+      final Instruction instruction = ContainerUtil.find(flow.getFlow(), instruction1 -> instruction1.getElement() == refExpr);
 
       LOG.assertTrue(instruction != null);
       final BitSet prev = writes.get(instruction.num());
       if (prev.cardinality() == 1) {
-        writeInstr = flow[prev.nextSetBit(0)];
+        writeInstr = flow.getFlow()[prev.nextSetBit(0)];
       }
     }
 
     LOG.assertTrue(writeInstr != null);
 
     Collection<PsiReference> result = new ArrayList<>();
-    for (Instruction instruction : flow) {
+    for (Instruction instruction : flow.getFlow()) {
       if (!(instruction instanceof ReadWriteVariableInstruction)) continue;
       if (((ReadWriteVariableInstruction)instruction).isWrite()) continue;
 

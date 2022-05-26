@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
   </component>
   <component name="copyright">
     <Base>

@@ -277,10 +277,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
       e as WorkspaceEntityBase
       removeEntity(e.id)
 
-      if (LOG.isTraceEnabled) {
-        this.assertConsistency()
-        LOG.trace("After remove operation storage has no consistency issues")
-      }
+      // NB: This method is called from `createEntity` inside persistent id checking. It's possible that after the method execution
+      //  the store is in inconsistent state, so we can't call assertConsistency here.
     }
     finally {
       unlockWrite()
@@ -589,7 +587,9 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   internal fun entityDataById(id: EntityId): WorkspaceEntityData<out WorkspaceEntity>? = entitiesByType[id.clazz]?.get(id.arrayId)
 
   internal fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {
-    return entitiesByType[id.clazz]?.get(id.arrayId) ?: error("Cannot find an entity by id $id")
+    val entityFamily = entitiesByType[id.clazz] ?: error(
+      "Entity family doesn't exist or has no entities: ${id.clazz.findWorkspaceEntity()}")
+    return entityFamily.get(id.arrayId) ?: error("Cannot find an entity by id $id")
   }
 
   override fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>,

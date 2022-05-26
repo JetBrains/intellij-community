@@ -191,7 +191,7 @@ public class LineStatusMarkerDrawUtil {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     if (ExperimentalUI.isNewUI()) {
-      return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 3) * getEditorScale(editor))));
+      return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4) * getEditorScale(editor))));
     }
     int endX = gutter.getWhitespaceSeparatorOffset();
     return new IntPair(x, endX);
@@ -209,6 +209,10 @@ public class LineStatusMarkerDrawUtil {
         g.setColor(color);
         double width = x2 - x1;
         RectanglePainter2D.FILL.paint(g, x1, y1 + 1, width, y2 - y1 - 2, width);
+      } else if (borderColor != null) {
+        g.setColor(borderColor);
+        double width = x2 - x1;
+        RectanglePainter2D.DRAW.paint(g, x1, y1 + 1, width, y2 - y1 - 2, width);
       }
       return;
     }

@@ -54,7 +54,7 @@ public final class SPIFileType extends LanguageFileType implements FileTypeIdent
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.FileTypes.Text;
   }
 

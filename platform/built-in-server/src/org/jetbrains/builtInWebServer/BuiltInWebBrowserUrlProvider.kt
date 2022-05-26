@@ -10,13 +10,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.util.BuiltinWebServerAccess
 import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 import org.jetbrains.ide.BuiltInServerManager
-import java.io.IOException
 
 open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
   override fun canHandleElement(request: OpenInBrowserRequest): Boolean {
@@ -63,15 +61,6 @@ fun getBuiltInServerUrls(info: PathInfo,
   val effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
   val path = info.path
 
-  // Android Studio: BuiltinWebServerAccess
-  val userToken: String
-  try {
-    userToken = BuiltinWebServerAccess.getUserAuthenticationToken()
-  } catch (e: IOException) {
-    LOG.warn(String.format("Unable to get User authentication token for launching path '%s'", path), e);
-    return SmartList()
-  }
-
   val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
   val reloadMode = preferredReloadMode ?: WebBrowserManager.getInstance().webServerReloadMode
   val appendReloadOnSave = reloadMode != ReloadMode.DISABLED
@@ -82,19 +71,19 @@ fun getBuiltInServerUrls(info: PathInfo,
   if (appendReloadOnSave) queryBuilder.append(WebServerPageConnectionService.RELOAD_URL_PARAM).append('=').append(reloadMode.name)
   val query = queryBuilder.toString()
 
-  val urls = SmartList(Urls.newHttpUrl(authority, "/$userToken/${project.name}/$path"))
+  val urls = SmartList(Urls.newHttpUrl(authority, "/${project.name}/$path", query))
 
   val path2 = info.rootLessPathIfPossible
   if (path2 != null) {
-    urls.add(Urls.newHttpUrl(authority, '/' + userToken + '/' + project.name + '/' + path2))
+    urls.add(Urls.newHttpUrl(authority, '/' + project.name + '/' + path2, query))
   }
 
   val defaultPort = BuiltInServerManager.getInstance().port
   if (currentAuthority == null && defaultPort != effectiveBuiltInServerPort) {
     val defaultAuthority = "localhost:$defaultPort"
-    urls.add(Urls.newHttpUrl(defaultAuthority, "/$userToken/${project.name}/$path"))
+    urls.add(Urls.newHttpUrl(defaultAuthority, "/${project.name}/$path", query))
     if (path2 != null) {
-      urls.add(Urls.newHttpUrl(defaultAuthority, "/$userToken/${project.name}/$path2"))
+      urls.add(Urls.newHttpUrl(defaultAuthority, "/${project.name}/$path2", query))
     }
   }
 

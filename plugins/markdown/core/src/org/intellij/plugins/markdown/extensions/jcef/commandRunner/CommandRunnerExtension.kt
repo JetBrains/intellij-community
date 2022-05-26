@@ -22,13 +22,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
@@ -84,38 +82,50 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
 
   fun processCodeLine(rawCodeLine: String, insideFence: Boolean): String {
-    val project = panel.project
-    val file = panel.virtualFile
-    if (project != null && file != null && file.parent != null
-        && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations = !insideFence)
-    ) {
-      val hash = MarkdownUtil.md5(rawCodeLine, "")
-      hash2Cmd[hash] = rawCodeLine
-      val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
-      return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
-             "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
-             "</a>"
+    try {
+      val project = panel.project
+      val file = panel.virtualFile
+      if (project != null && file != null && file.parent != null
+          && matches(project, file.parent.canonicalPath, true, rawCodeLine.trim(), allowRunConfigurations = !insideFence)
+      ) {
+        val hash = MarkdownUtil.md5(rawCodeLine, "")
+        hash2Cmd[hash] = rawCodeLine
+        val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
+        return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
+               "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
+               "</a>"
+      }
+      else return ""
     }
-    else return ""
+    catch (e: Exception) {
+      LOG.warn(e)
+      return ""
+    }
   }
 
   fun processCodeBlock(codeFenceRawContent: String, language: String): String {
-    val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
-    val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull {
-      it.isApplicable(lang)
+    try {
+      val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
+      val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull {
+        it.isApplicable(lang)
+      }
+      if (runner == null) return ""
+
+      val hash = MarkdownUtil.md5(codeFenceRawContent, "")
+      hash2Cmd[hash] = codeFenceRawContent
+      val cssClass = "run-icon hidden code-block"
+
+      return "<a class='${cssClass}' href='#' role='button' " +
+             "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
+             "data-commandtype='block'" +
+             ">" +
+             "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_BLOCK_ICON)}'>" +
+             "</a>"
     }
-    if (runner == null) return ""
-
-    val hash = MarkdownUtil.md5(codeFenceRawContent, "")
-    hash2Cmd[hash] = codeFenceRawContent
-    val cssClass = "run-icon hidden code-block"
-
-    return "<a class='${cssClass}' href='#' role='button' " +
-           "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
-           "data-commandtype='block'" +
-           ">" +
-           "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_BLOCK_ICON)}'>" +
-           "</a>"
+    catch (e: Exception) {
+      LOG.warn(e)
+      return ""
+    }
   }
 
 
@@ -170,7 +180,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
       val virtualFile = panel.virtualFile ?: return null
-      if (panel.project?.let(MarkdownSettings::getInstance)?.isRunnerEnabled == false) {
+      if (!isExtensionEnabled()) {
         return null
       }
       return extensions.computeIfAbsent(virtualFile) { CommandRunnerExtension(panel, this) }
@@ -203,7 +213,13 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     private const val RUN_LINE_ICON = "run.png"
     private const val RUN_BLOCK_ICON = "runrun.png"
 
-    fun getRunnerByFile(file: VirtualFile?) : CommandRunnerExtension? {
+    const val extensionId = "MarkdownCommandRunnerExtension"
+
+    fun isExtensionEnabled(): Boolean {
+      return MarkdownExtensionsSettings.getInstance().extensionsEnabledState[extensionId] ?: true
+    }
+
+    fun getRunnerByFile(file: VirtualFile) : CommandRunnerExtension? {
       val provider = MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()
       return provider?.extensions?.get(file)
     }

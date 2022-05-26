@@ -15,7 +15,7 @@
                  description="The maximum length of the line to be highlighted by TextMate lexer."/>
 
     <fileType name="textmate" implementationClass="org.jetbrains.plugins.textmate.TextMateFileType" language="textmate" fieldName="INSTANCE"/>
-    <fileTypeDetector implementation="org.jetbrains.plugins.textmate.TextMateFileType$TextMateFileDetector" />
+    <fileTypeDetector implementation="org.jetbrains.plugins.textmate.TextMateFileType$TextMateFileDetector" order="last"/>
     <obsoleteStorage file="textmate_os.xml">
       <components>
         <component>TextMateSettings</component>

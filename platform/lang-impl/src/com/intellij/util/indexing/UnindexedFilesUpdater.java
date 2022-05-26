@@ -254,7 +254,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    boolean skipInitialRefresh = skipInitialRefresh();
+    boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    if (!isUnitTestMode && !skipInitialRefresh) {
       // full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       scheduleInitialVfsRefresh();
     }
@@ -334,7 +336,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       try {
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          indexUpdateRunner.indexFiles(myProject, fileSets, subTaskIndicator);
+          indexUpdateRunner.indexFiles(myProject, fileSets, subTaskIndicator, projectIndexingHistory);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
@@ -576,9 +578,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
-    ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
     try {
-      updateUnindexedFiles(projectIndexingHistory, indicator);
+      ((GistManagerImpl)GistManager.getInstance()).runWithMergingDependentCacheInvalidations(() ->
+         updateUnindexedFiles(projectIndexingHistory, indicator));
     }
     catch (Throwable e) {
       projectIndexingHistory.setWasInterrupted(true);
@@ -588,7 +590,6 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       throw e;
     }
     finally {
-      ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
       myIndex.filesUpdateFinished(myProject);
       myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
       projectIndexingHistory.finishTotalUpdatingTime();
@@ -634,6 +635,10 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
                                        ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
     return Math.max(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, getNumberOfIndexingThreads());
+  }
+
+  private static boolean skipInitialRefresh() {
+    return SystemProperties.getBooleanProperty("ij.indexes.skip.initial.refresh", false);
   }
 
   public static void indexProject(@NotNull Project project, boolean startSuspended, @Nullable @NonNls String indexingReason) {

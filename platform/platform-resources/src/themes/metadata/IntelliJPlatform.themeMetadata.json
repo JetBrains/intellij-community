@@ -244,6 +244,10 @@
       "key": "Editor.shortcutForeground"
     },
     {
+      "key": "Editor.searchFieldInsets",
+      "description": "Additional insets around editor search/replace fields in Experimental UI"
+    },
+    {
       "key": "EditorTabs.background",
       "description": "Background under all tabs in the editor. If value isn't specified the value of DefaultTabs.background will be used",
       "since": "2019.2"
@@ -511,6 +515,11 @@
       "description": "Badge color indicating the error status"
     },
     {
+      "key": "IconBadge.warningBackground",
+      "since": "2022.1",
+      "description": "Badge color indicating the warning status"
+    },
+    {
       "key": "IconBadge.infoBackground",
       "since": "2022.1",
       "description": "Badge color indicating the info status"
@@ -653,6 +662,10 @@
       "key": "NotificationsToolwindow.Notification.hoverBackground"
     },
     {
+      "key" : "OnePixelDivider.background",
+      "description": "One pixel divider color"
+    },
+    {
       "key": "Panel.mouseShortcutBackground",
       "description": "Background of mouse shortcut panel"
     },
@@ -764,6 +777,26 @@
       "key": "Plugins.tagForeground"
     },
     {
+      "key": "ComplexPopup.Header.background",
+      "description": "Complex popup (like Find in Files) header background (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.Header.insets",
+      "description": "Complex popup header insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.TextField.borderInsets",
+      "description": "Text fields (like search, replace) border insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.TextField.inputInsets",
+      "description": "Text fields input insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
       "key": "Popup.Advertiser.background",
       "description": "The hint text area at the bottom of a popup"
     },
@@ -779,6 +812,56 @@
       "key": "Popup.Advertiser.foreground"
     },
     {
+      "key": "Popup.Body.bottomInsetNoAd",
+      "description": "Popup body bottom inset if there is no advertiser (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Body.bottomInsetBeforeAd",
+      "description": "Popup body bottom inset before advertiser (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Body.topInsetNoHeader",
+      "description": "Popup body top inset if there is no header (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Header.activeForeground",
+      "description": "Text color in popup header when focused",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Header.inactiveForeground",
+      "description": "Text color in popup header when not focused",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.Header.insets",
+      "description": "Header insets (experimental UI only), default value is \"12,10,10,10\"",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.SearchField.borderInsets",
+      "description": "Search field border insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.SearchField.inputInsets",
+      "description": "Search field input insets (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.background",
+      "description": "Popup background (experimental UI only)",
+      "since": "2022.1"
+    },
+    {
+      "key": "Popup.borderWidth",
+      "description": "Popup border width",
+      "since": "2022.1"
+    },
+    {
       "key": "Popup.innerBorderColor"
     },
     {
@@ -792,6 +875,14 @@
     {
       "key": "Popup.separatorForeground",
       "description": "Text over the separator line in lists"
+    },
+    {
+      "key": "Popup.separatorInsets",
+      "description": "Insets around separator line (experimental UI only)"
+    },
+    {
+      "key": "Popup.separatorLabelInsets",
+      "description": "Insets around separator label (experimental UI only)"
     },
     {
       "key": "ProgressBar.failedColor",
@@ -1009,6 +1100,16 @@
     {
       "key": "SegmentedButton.selectedStartBorderColor",
       "description": "Gradient top color of a selected button border in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "SegmentedButton.selectedButtonColor",
+      "description": "Color of non-focused selected button in segmented button",
+      "since": "2022.1"
+    },
+    {
+      "key": "SegmentedButton.focusedSelectedButtonColor",
+      "description": "Color of focused selected button in segmented button",
       "since": "2022.1"
     },
     {

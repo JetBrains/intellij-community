@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.application.invokeLater
@@ -80,7 +80,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String, @NonNl
     hPanel.add(picture)
 
     rPanel.add(NonOpaquePanel().apply {
-      border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.instance.separatorColor)
+      border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.getInstance().separatorColor)
     })
     rPanel.add(rigid(0, 20))
     rPanel.add(hPanel)

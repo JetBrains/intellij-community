@@ -3,6 +3,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.visualLayer.VisualFormattingLayerService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorCoreUtil;
@@ -86,6 +87,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myWrapWhenTypingReachesRightMargin;
   private Boolean myShowIntentionBulb;
   private Boolean myShowingSpecialCharacters;
+  private Boolean myShowVisualFormattingLayer;
 
   private List<Integer> mySoftMargins;
 
@@ -770,4 +772,16 @@ public class SettingsImpl implements EditorSettings {
       fireEditorRefresh();
     }
   }
+
+  @Override
+  @Nullable
+  public Boolean isShowVisualFormattingLayer() {
+    return myShowVisualFormattingLayer;
+  }
+
+  @Override
+  public void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {
+    myShowVisualFormattingLayer = showVisualFormattingLayer;
+  }
+
 }

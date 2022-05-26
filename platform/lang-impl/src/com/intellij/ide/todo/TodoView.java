@@ -167,7 +167,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
           addAll(myAllTodos.createGroupByActionGroup());
         }
       };
-      ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
+      toolWindow.setAdditionalGearActions(group);
     }
 
     Content currentFileTodosContent = contentFactory.createContent(null, IdeBundle.message("title.todo.current.file"), false);

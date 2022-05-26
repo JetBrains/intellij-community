@@ -765,6 +765,22 @@ public final class IdeEventQueue extends EventQueue {
       ActivityTracker.getInstance().inc();
     }
     synchronized (myLock) {
+      restartIdleTimer();
+      if (isActivityInputEvent) {
+        myLastActiveTime = System.nanoTime();
+        for (Runnable activityListener : myActivityListeners) {
+          activityListener.run();
+        }
+      }
+    }
+  }
+
+  /**
+   * Notify the event queue that IDE shouldn't be considered idle at this moment.
+   */
+  @ApiStatus.Experimental
+  public void restartIdleTimer() {
+    synchronized (myLock) {
       myIdleRequestsAlarm.cancelAllRequests();
       for (Runnable idleListener : myIdleListeners) {
         final MyFireIdleRequest request = myListenerToRequest.get(idleListener);
@@ -773,12 +789,6 @@ public final class IdeEventQueue extends EventQueue {
         }
         else {
           myIdleRequestsAlarm.addRequest(request, request.getTimeout(), ModalityState.NON_MODAL);
-        }
-      }
-      if (isActivityInputEvent) {
-        myLastActiveTime = System.nanoTime();
-        for (Runnable activityListener : myActivityListeners) {
-          activityListener.run();
         }
       }
     }

@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.util.LinkNewProjectWizardStep
 import com.intellij.openapi.project.Project
@@ -15,7 +17,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
-import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicationProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.*
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.util.*
 
@@ -33,7 +35,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             buildSystemType: BuildSystemType,
             projectGroupId: String? = suggestGroupId(),
             artifactId: String? = projectName,
-            version: String? = "1.0-SNAPSHOT"
+            version: String? = "1.0-SNAPSHOT",
+            addSampleCode: Boolean = true
         ) {
             NewProjectWizardModuleBuilder()
                 .apply {
@@ -49,7 +52,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
                         BuildSystemPlugin.type.reference.setValue(buildSystemType)
 
-                        applyProjectTemplate(ConsoleApplicationProjectTemplate)
+                        applyProjectTemplate(ConsoleApplicationProjectTemplate(addSampleCode = addSampleCode))
                     }
                 }.commit(project, null, null)
         }
@@ -87,8 +90,16 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         override val buildSystemProperty by ::stepProperty
         override var buildSystem by ::step
 
+        override fun setupProject(project: Project) {
+            super.setupProject(project)
+
+            logBuildSystemFinished()
+        }
+
         init {
             data.putUserData(BuildSystemKotlinNewProjectWizardData.KEY, this)
+
+            buildSystemProperty.afterChange { logBuildSystemChanged() }
         }
     }
 }

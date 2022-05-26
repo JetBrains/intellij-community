@@ -23,7 +23,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   var type: String? = null
   lateinit var dependencies: List<ModuleDependencyItem>
 
-  @ExperimentalStdlibApi
   override fun getLinks(): Set<PersistentEntityId<*>> {
 
     return dependencies.mapNotNullTo(HashSet()) { dependency ->

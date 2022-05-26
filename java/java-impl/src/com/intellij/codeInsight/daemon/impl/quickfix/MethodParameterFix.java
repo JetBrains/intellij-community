@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaSpecialRefactoringProvider;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -84,12 +84,18 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
       }
 
       final PsiMethod finalMethod = method;
-      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project,
-                                                                        finalMethod,
-                                                                        false, null,
-                                                                        finalMethod.getName(),
-                                                                        finalMethod.getReturnType(),
-                                                                        getNewParametersInfo(finalMethod));
+      var provider = JavaSpecialRefactoringProvider.getInstance();
+      var processor = provider.getChangeSignatureProcessorWithCallback(
+        project,
+        finalMethod,
+        false,
+        null,
+        finalMethod.getName(),
+        finalMethod.getReturnType(),
+        getNewParametersInfo(finalMethod),
+        true,
+        null
+      );
 
       processor.run();
 

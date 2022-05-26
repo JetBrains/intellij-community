@@ -62,7 +62,7 @@ internal fun AnActionEvent.runToolbarData(): RunToolbarData? {
   return this.dataContext.runToolbarData()
 }
 
-internal fun DataContext.runToolbarData(): RunToolbarData? {
+fun DataContext.runToolbarData(): RunToolbarData? {
   return this.getData(RunToolbarData.RUN_TOOLBAR_DATA_KEY)
 }
 
@@ -82,7 +82,7 @@ internal fun AnActionEvent.isActiveProcess(): Boolean {
   return this.environment() != null
 }
 
-internal fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
+fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
   RunToolbarSlotManager.getInstance(project).startWaitingForAProcess(this, settings, executorId)
 }
 

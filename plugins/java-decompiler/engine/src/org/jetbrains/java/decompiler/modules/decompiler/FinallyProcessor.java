@@ -12,6 +12,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -24,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatemen
 import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
@@ -57,7 +59,7 @@ public class FinallyProcessor {
       Statement stat = stack.removeLast();
 
       Statement parent = stat.getParent();
-      if (parent != null && parent.type == Statement.TYPE_CATCH_ALL &&
+      if (parent != null && parent.type == StatementType.CATCH_ALL &&
           stat == parent.getFirst() && !parent.isCopied()) {
 
         CatchAllStatement fin = (CatchAllStatement)parent;
@@ -248,8 +250,8 @@ public class FinallyProcessor {
       // find finally exits
       if (blockStatement != null && blockStatement.getBlock() != null) {
         Statement handler = fstat.getHandler();
-        for (StatEdge edge : blockStatement.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL)) {
-          if (edge.getType() != StatEdge.TYPE_REGULAR && handler.containsStatement(blockStatement)
+        for (StatEdge edge : blockStatement.getSuccessorEdges(EdgeType.DIRECT_ALL)) {
+          if (edge.getType() != EdgeType.REGULAR && handler.containsStatement(blockStatement)
               && !handler.containsStatement(edge.getDestination())) {
             Boolean existingFlag = mapLast.get(blockStatement.getBlock());
             // note: the dummy node is also processed!
@@ -265,7 +267,7 @@ public class FinallyProcessor {
     }
 
     // empty finally block?
-    if (fstat.getHandler().type == Statement.TYPE_BASIC_BLOCK) {
+    if (fstat.getHandler().type == StatementType.BASIC_BLOCK) {
 
       boolean isEmpty = false;
       boolean isFirstLast = mapLast.containsKey(firstBasicBlock);
@@ -420,7 +422,7 @@ public class FinallyProcessor {
     do {
       Statement st = lst.get(index);
 
-      if (st.type == Statement.TYPE_BASIC_BLOCK) {
+      if (st.type == StatementType.BASIC_BLOCK) {
         index++;
       }
       else {

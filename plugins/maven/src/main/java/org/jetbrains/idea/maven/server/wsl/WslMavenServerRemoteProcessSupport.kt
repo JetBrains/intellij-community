@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport
 import org.jetbrains.idea.maven.server.WslMavenDistribution
 
@@ -21,7 +22,13 @@ internal class WslMavenServerRemoteProcessSupport(private val myWslDistribution:
     return WslMavenCmdState(myWslDistribution, myJdk, myOptions, myDistribution as WslMavenDistribution, myDebugPort, myProject, remoteHost)
   }
 
-  override fun getRemoteHost(): String = myWslDistribution.wslIp
+  override fun getRemoteHost(): String {
+    val ip = myWslDistribution.wslIp
+    if (ip == null) {
+      throw RuntimeException(SyncBundle.message("maven.sync.wsl.ip.cannot.resolve"));
+    }
+    return ip;
+  }
 
   override fun type() = "WSL"
 }

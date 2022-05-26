@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.util.findLabelAndCall
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.render
@@ -43,15 +43,19 @@ class ChangeToLabeledReturnFix(
         private fun findAccessibleLabels(bindingContext: BindingContext, position: KtReturnExpression): List<Name> {
             val result = mutableListOf<Name>()
             for (parent in position.parentsWithSelf) {
-                if (parent is KtFunctionLiteral) {
-                    val (label, call) = parent.findLabelAndCall()
-                    if (label != null) {
-                        result.add(label)
-                    }
+                when (parent) {
+                    is KtClassOrObject -> break
+                    is KtFunctionLiteral -> {
+                        val (label, call) = parent.findLabelAndCall()
+                        if (label != null) {
+                            result.add(label)
+                        }
 
-                    // check if the current function literal is inlined and stop processing outer declarations if it's not
-                    val callee = call?.calleeExpression as? KtReferenceExpression ?: break
-                    if (!InlineUtil.isInline(bindingContext[BindingContext.REFERENCE_TARGET, callee])) break
+                        // check if the current function literal is inlined and stop processing outer declarations if it's not
+                        val callee = call?.calleeExpression as? KtReferenceExpression ?: break
+                        if (!InlineUtil.isInline(bindingContext[BindingContext.REFERENCE_TARGET, callee])) break
+                    }
+                    else -> {}
                 }
             }
             return result

@@ -2,3 +2,4 @@
 package test
 
 <caret>protected val a: Int = 0
+

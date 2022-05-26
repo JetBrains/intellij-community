@@ -6,3 +6,4 @@ package pack
 data class A(val <caret>a: Int, val b: String)
 
 // FIR_IGNORE
+// FIR_COMPARISON_WITH_DISABLED_COMPONENTS

@@ -69,8 +69,9 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       String name = ApplicationNamesInfo.getInstance().getFullProductName();
       String version = ApplicationInfo.getInstance().getShortVersion();
       String content = IdeBundle.message("whats.new.notification.text", name, version, url);
-      UpdateChecker.getNotificationGroup()
+      UpdateChecker.getNotificationGroupForIdeUpdateResults()
         .createNotification(notificationTitle, content, NotificationType.INFORMATION)
+        .setDisplayId("ide.whats.new")
         .setListener(NotificationListener.URL_OPENING_LISTENER)
         .notify(project);
     }

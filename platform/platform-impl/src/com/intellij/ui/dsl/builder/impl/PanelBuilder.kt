@@ -196,7 +196,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component, dialogPanelConfig.spacing)
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
-          gaps = gaps, visualPaddings = getVisualPaddings(cell.viewComponent.origin))
+          gaps = gaps, visualPaddings = getVisualPaddings(cell.viewComponent.origin),
+          widthGroup = cell.widthGroup)
       }
       is PanelImpl -> {
         // todo visualPaddings

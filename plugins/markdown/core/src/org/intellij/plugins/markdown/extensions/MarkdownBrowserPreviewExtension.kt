@@ -11,8 +11,7 @@ import org.intellij.plugins.markdown.ui.preview.ResourceProvider
  */
 interface MarkdownBrowserPreviewExtension: Comparable<MarkdownBrowserPreviewExtension>, Disposable {
   /**
-   * The value on which the resource load order will be based on. Any non special extesnion
-   * should use [Priority.DEFAULT] value.
+   * The value on which the resource load order will be based on. Any non-special extension should use [Priority.DEFAULT] value.
    */
   enum class Priority(val value: Int) {
     BEFORE_ALL(4),
@@ -54,11 +53,10 @@ interface MarkdownBrowserPreviewExtension: Comparable<MarkdownBrowserPreviewExte
     fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension?
 
     companion object {
-      val extensionPointName: ExtensionPointName<Provider> = ExtensionPointName("org.intellij.markdown.browserPreviewExtensionProvider")
+      val EP = ExtensionPointName<Provider>("org.intellij.markdown.browserPreviewExtensionProvider")
 
-      @JvmStatic
       val all: List<Provider>
-        get() = extensionPointName.extensionList
+        get() = EP.extensionList
     }
   }
 }

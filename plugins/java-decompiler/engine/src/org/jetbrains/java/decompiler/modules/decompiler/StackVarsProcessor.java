@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionNode;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -166,7 +167,7 @@ public class StackVarsProcessor {
           (nd.type == DirectNodeType.INIT || nd.type == DirectNodeType.CONDITION || nd.type == DirectNodeType.INCREMENT)) {
         nd.exprents.add(null);
 
-        if (nd.statement.type == Statement.TYPE_DO) {
+        if (nd.statement.type == StatementType.DO) {
           DoStatement loop = (DoStatement)nd.statement;
 
           if (loop.getLoopType() == LoopType.FOR &&
@@ -281,8 +282,8 @@ public class StackVarsProcessor {
         if (right.type == Exprent.EXPRENT_NEW) {
           // new Object(); permitted
           NewExprent nexpr = (NewExprent)right;
-          if (nexpr.isAnonymous() || nexpr.getNewType().arrayDim > 0
-              || nexpr.getNewType().type != CodeConstants.TYPE_OBJECT) {
+          if (nexpr.isAnonymous() || nexpr.getNewType().getArrayDim() > 0
+              || nexpr.getNewType().getType() != CodeConstants.TYPE_OBJECT) {
             return new int[]{-1, changed};
           }
         }

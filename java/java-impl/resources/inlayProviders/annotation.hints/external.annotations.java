@@ -1,1 +1,3 @@
-@Deprecated public length(double x)
+class Test {
+  public void perform() {}
+}

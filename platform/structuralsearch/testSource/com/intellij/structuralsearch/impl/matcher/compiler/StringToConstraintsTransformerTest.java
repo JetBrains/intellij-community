@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.structuralsearch.MalformedPatternException;
@@ -234,8 +234,7 @@ public class StringToConstraintsTransformerTest extends LightPlatformTestCase {
   }
 
   public void testInvalidRegex() {
-    expectException("'T:{ ;", String.format("Invalid regular expression: Illegal repetition%n" +
-                              "{"));
+    expectException("'T:{ ;", "Invalid regular expression: Illegal repetition");
   }
 
   public void testNoSpacesSurroundingRegexNeeded() {
@@ -273,8 +272,7 @@ public class StringToConstraintsTransformerTest extends LightPlatformTestCase {
     try {
       test(criteria);
     } catch (MalformedPatternException e) {
-      final String message = e.getMessage();
-      assertEquals(exceptionMessage, message);
+      assertTrue(e.getMessage().startsWith(exceptionMessage));
     }
   }
 

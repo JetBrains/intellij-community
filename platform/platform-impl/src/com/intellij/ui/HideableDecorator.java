@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -11,10 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 /**
  * @author evgeny zakrevsky
@@ -164,14 +161,14 @@ public class HideableDecorator {
 
   private void registerMnemonic() {
     TextWithMnemonic text = TextWithMnemonic.parse(getTitle());
-    if (text.hasMnemonic()) {
+    int c = text.getMnemonicCode();
+    if (c != KeyEvent.VK_UNDEFINED) {
       myPanel.getActionMap().put(ACTION_KEY, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myOn) off(); else on();
         }
       });
-      char c = (char)text.getMnemonic();
       myPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(c, InputEvent.ALT_MASK, false), ACTION_KEY);
     }
   }

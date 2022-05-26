@@ -1,0 +1,38 @@
+UFile (package = ) [import java.lang.reflect.ParameterizedType...]
+    UImportStatement (isOnDemand = false) [import java.lang.reflect.ParameterizedType]
+    UImportStatement (isOnDemand = false) [import java.lang.reflect.Type]
+    UClass (name = ComplicatedTypesKt) [public final class ComplicatedTypesKt {...}]
+        UMethod (name = typeTokenOf) [static fun typeTokenOf() : java.lang.reflect.Type {...}]
+            UBlockExpression [{...}] : PsiType:Void
+                UDeclarationsExpression [var base: <ErrorType> = anonymous object : TypeBase<T>() {}]
+                    ULocalVariable (name = base) [var base: <ErrorType> = anonymous object : TypeBase<T>() {}]
+                        UObjectLiteralExpression [anonymous object : TypeBase<T>() {}] : PsiType:TypeBase<T>
+                            UClass (name = null) [final class null : TypeBase<T> {...}]
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
+                UDeclarationsExpression [var superType: java.lang.reflect.Type = <ErrorType>.java.genericSuperclass!!]
+                    ULocalVariable (name = superType) [var superType: java.lang.reflect.Type = <ErrorType>.java.genericSuperclass!!]
+                        UPostfixExpression (operator = !!) [<ErrorType>.java.genericSuperclass!!] : PsiType:Type
+                            UQualifiedReferenceExpression [<ErrorType>.java.genericSuperclass] : PsiType:Type
+                                UQualifiedReferenceExpression [<ErrorType>.java] : PsiType:<ErrorType>
+                                    UClassLiteralExpression [<ErrorType>] : PsiType:<ErrorType>
+                                    USimpleNameReferenceExpression (identifier = java) [java] : PsiType:<ErrorType>
+                                USimpleNameReferenceExpression (identifier = genericSuperclass) [genericSuperclass] : PsiType:Type
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [getGenericSuperclass()]
+                                        UIdentifier (Identifier (genericSuperclass)) [UIdentifier (Identifier (genericSuperclass))]
+                UReturnExpression [return (superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()!!] : PsiType:Void
+                    UPostfixExpression (operator = !!) [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()!!] : PsiType:Type
+                        UQualifiedReferenceExpression [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()] : PsiType:Type
+                            UQualifiedReferenceExpression [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments] : PsiType:Type[]
+                                UParenthesizedExpression [(superType as java.lang.reflect.ParameterizedType)] : PsiType:ParameterizedType
+                                    UBinaryExpressionWithType [superType as java.lang.reflect.ParameterizedType] : PsiType:ParameterizedType
+                                        USimpleNameReferenceExpression (identifier = superType) [superType] : PsiType:Type
+                                        UTypeReferenceExpression (name = java.lang.reflect.ParameterizedType) [java.lang.reflect.ParameterizedType]
+                                USimpleNameReferenceExpression (identifier = actualTypeArguments) [actualTypeArguments] : PsiType:Type[]
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [getActualTypeArguments()]
+                                        UIdentifier (Identifier (actualTypeArguments)) [UIdentifier (Identifier (actualTypeArguments))]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] : PsiType:Type
+                                UIdentifier (Identifier (first)) [UIdentifier (Identifier (first))]
+                                USimpleNameReferenceExpression (identifier = first, resolvesTo = null) [first] : PsiType:Type
+    UClass (name = TypeBase) [public class TypeBase {...}]
+        UAnnotation (fqName = kotlin.PublishedApi) [@kotlin.PublishedApi]
+        UMethod (name = TypeBase) [public fun TypeBase() = UastEmptyExpression]

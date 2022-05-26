@@ -93,6 +93,7 @@ fun performAction() {
   )
 }
 
+// external usage in [src/com/jetbrains/performancePlugin/commands/chain/generalCommandChain.kt]
 const val ACTION_ID = "CreateAllServicesAndExtensions"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")

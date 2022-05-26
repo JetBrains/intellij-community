@@ -44,6 +44,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +88,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       actualNames.add(m.getName());
     }
 
-    assertUnorderedElementsAreEqual(actualNames, expectedNames);
+    Assertions.assertThat(actualNames).containsExactlyInAnyOrder(expectedNames);
   }
 
   protected void assertModules(String... expectedNames) {

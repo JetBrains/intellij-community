@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider;
@@ -20,10 +20,14 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -59,8 +63,9 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
                                                      @NotNull String fileName,
                                                      @NotNull String fileText) {
     FileEditor editor = openTextInEditor(fixture, fileName, fileText);
-    return (EditorNotificationPanel)EditorNotificationsImpl.getNotificationPanels(editor)
-      .get(SdkSetupNotificationProvider.class);
+    Map<Class<? extends EditorNotificationProvider>, JComponent> panels = EditorNotificationsImpl.getNotificationPanels(editor);
+    assertThat(panels).isNotNull();
+    return (EditorNotificationPanel)panels.get(SdkSetupNotificationProvider.class);
   }
 
   static @NotNull FileEditor openTextInEditor(@NotNull JavaCodeInsightTestFixture fixture,

@@ -41,6 +41,7 @@ import static org.zmlx.hg4idea.HgNotificationIdsHolder.CHANGESETS_ERROR;
 
 /**
  * Common ancestor for HgIncomingCommand and HgOutgoingCommand - changeset commands which need connection to the server.
+ *
  * @author Kirill Likhodedov
  */
 public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
@@ -89,7 +90,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
                                                          public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                      @NotNull HyperlinkEvent event) {
                                                            ShowSettingsUtil.getInstance()
-                                                             .showSettingsDialog(project, HgProjectConfigurable.getDISPLAY_NAME());
+                                                             .showSettingsDialog(project, HgProjectConfigurable.class);
                                                          }
                                                        });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
@@ -97,5 +98,4 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
     }
     return result;
   }
-
 }

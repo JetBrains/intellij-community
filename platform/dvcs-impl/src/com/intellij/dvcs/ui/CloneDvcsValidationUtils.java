@@ -78,6 +78,14 @@ public final class CloneDvcsValidationUtils {
     return null;
   }
 
+  /**
+   * @deprecated use a more general method above
+   */
+  @Deprecated
+  public static @Nullable ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JTextField component) {
+    return checkDirectory(directoryPath, (JComponent) component);
+  }
+
   private static boolean isDirectoryEmpty(@NotNull Path directory) throws IOException {
     DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory);
     return !directoryStream.iterator().hasNext();

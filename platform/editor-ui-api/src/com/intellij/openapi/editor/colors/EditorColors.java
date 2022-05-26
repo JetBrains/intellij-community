@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.lang.Language;
@@ -20,6 +20,7 @@ public interface EditorColors {
   ColorKey LINE_NUMBERS_COLOR = ColorKey.createColorKey("LINE_NUMBERS_COLOR");
   ColorKey LINE_NUMBER_ON_CARET_ROW_COLOR = ColorKey.createColorKey("LINE_NUMBER_ON_CARET_ROW_COLOR");
   ColorKey ANNOTATIONS_COLOR = ColorKey.createColorKey("ANNOTATIONS_COLOR");
+  ColorKey ANNOTATIONS_LAST_COMMIT_COLOR = ColorKey.createColorKeyWithFallback("ANNOTATIONS_LAST_COMMIT_COLOR", ANNOTATIONS_COLOR);
   ColorKey READONLY_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_BACKGROUND");
   ColorKey READONLY_FRAGMENT_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_FRAGMENT_BACKGROUND");
   ColorKey WHITESPACES_COLOR = ColorKey.createColorKey("WHITESPACES");

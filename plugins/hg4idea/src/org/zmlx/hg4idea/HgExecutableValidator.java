@@ -33,7 +33,7 @@ public class HgExecutableValidator extends ExecutableValidator {
   @NotNull
   @Override
   protected String getConfigurableDisplayName() {
-    return HgProjectConfigurable.getDISPLAY_NAME();
+    return HgProjectConfigurable.getConfigurableDisplayName();
   }
 
   @Override

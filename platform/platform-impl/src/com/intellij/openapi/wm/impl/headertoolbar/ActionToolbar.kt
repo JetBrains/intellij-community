@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -60,4 +61,6 @@ private class MainToolbarLook : IdeaActionButtonLook() {
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
+
+  override fun getButtonArc() = JBValue.Float(0f)
 }

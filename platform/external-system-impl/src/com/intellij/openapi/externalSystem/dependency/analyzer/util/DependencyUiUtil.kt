@@ -54,8 +54,8 @@ internal abstract class AbstractDependencyList(
   private val dataProvider: DataProvider
 ) : JBList<DependencyGroup>(model), DataProvider {
 
-  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
-  private val dependencyGroupProperty = AtomicObservableProperty<DependencyGroup?>(null)
+  private val dependencyProperty = AtomicProperty<Dependency?>(null)
+  private val dependencyGroupProperty = AtomicProperty<DependencyGroup?>(null)
 
   fun bindDependency(property: ObservableMutableProperty<Dependency?>) = apply {
     dependencyProperty.bind(property)
@@ -88,8 +88,8 @@ internal abstract class AbstractDependencyTree(
   private val dataProvider: DataProvider
 ) : SimpleTree(model), DataProvider {
 
-  private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
-  private val dependencyGroupProperty = AtomicObservableProperty<DependencyGroup?>(null)
+  private val dependencyProperty = AtomicProperty<Dependency?>(null)
+  private val dependencyGroupProperty = AtomicProperty<DependencyGroup?>(null)
 
   fun bindDependency(property: ObservableMutableProperty<Dependency?>) = apply {
     dependencyProperty.bind(property)

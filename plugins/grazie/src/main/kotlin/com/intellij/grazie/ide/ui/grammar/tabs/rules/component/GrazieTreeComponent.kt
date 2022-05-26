@@ -117,11 +117,11 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
       val langNode = GrazieRulesTreeNode(lang)
       model.insertNodeInto(langNode, root, root.childCount)
 
-      rules.groupBy { it.category }.entries.sortedBy { it.key }.forEach { (category, rules) ->
+      rules.groupBy { it.category }.entries.sortedBy { it.key.lowercase() }.forEach { (category, rules) ->
         val categoryNode = GrazieRulesTreeNode(category)
         model.insertNodeInto(categoryNode, langNode, langNode.childCount)
 
-        rules.sortedBy { it.presentableName }.forEach { rule ->
+        rules.sortedBy { it.presentableName.lowercase() }.forEach { rule ->
           model.insertNodeInto(GrazieRulesTreeNode(rule), categoryNode, categoryNode.childCount)
         }
       }

@@ -1,12 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.typeann;
 
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
-import org.jetbrains.java.decompiler.struct.StructTypePath;
+import org.jetbrains.java.decompiler.struct.StructMember;
+import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.lang.annotation.Target;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TypeAnnotation {
   public static final int CLASS_TYPE_PARAMETER = 0x00;
@@ -34,16 +42,22 @@ public class TypeAnnotation {
 
   private final int targetType;
   private final TargetInfo targetInfo;
-  private final @NotNull List<StructTypePath> paths;
+  private final @NotNull List<StructTypePathEntry> paths;
   private final @NotNull AnnotationExprent annotation;
 
-  public TypeAnnotation(int targetType, TargetInfo targetInfo, @NotNull List<StructTypePath> paths, @NotNull AnnotationExprent annotation) {
+  public TypeAnnotation(
+    int targetType,
+    TargetInfo targetInfo,
+    @NotNull List<StructTypePathEntry> paths,
+    @NotNull AnnotationExprent annotation
+  ) {
     this.targetType = targetType;
     this.targetInfo = targetInfo;
     this.paths = paths;
     this.annotation = annotation;
   }
 
+  @MagicConstant(valuesFromClass = TypeAnnotation.class)
   public int getTargetType() {
     return targetType;
   }
@@ -52,19 +66,49 @@ public class TypeAnnotation {
     return targetInfo;
   }
 
-  /**
-   * @param dims The amount of dimensions if the annotated type is an array type, 0 otherwise.
-   * @return Whether the type annotations is top level.
-   */
-  public boolean isTopLevel(int dims) {
-    return (dims == 0 && paths.isEmpty()) || (dims == paths.size());
-  }
-
   public @NotNull AnnotationExprent getAnnotationExpr() {
     return annotation;
   }
 
-  public @NotNull List<StructTypePath> getPaths() {
+  public @NotNull List<StructTypePathEntry> getPaths() {
     return paths;
+  }
+
+  @Override
+  public String toString() {
+    return getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
+  }
+
+  public void writeTo(@NotNull StringBuilder sb) {
+    sb.append(this);
+    sb.append(' ');
+  }
+
+  public void writeTo(@NotNull TextBuffer sb) {
+    sb.append(toString());
+    sb.append(' ');
+  }
+
+  public static List<TypeAnnotation> listFrom(StructMember md) {
+    return Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
+      .flatMap(attrKey -> {
+        StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)md.getAttribute(attrKey);
+        if (attribute == null) {
+          return Stream.empty();
+        } else {
+          return attribute.getAnnotations().stream();
+        }
+      })
+      .collect(Collectors.toList());
+  }
+
+  public boolean isForDeepestArrayComponent(int arrayDim) {
+    StructTypePathEntry pathEntry = getPaths().stream().findFirst().orElse(null);
+    if (pathEntry == null && arrayDim == 0) return true;
+    if (pathEntry != null
+        && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId()
+        && getPaths().size() == arrayDim
+    ) return true;
+    return false;
   }
 }

@@ -134,7 +134,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         """Switch amongst GUI input hooks by name.
         """
         # Deferred import
-        if not INLINE_OUTPUT_SUPPORTED:
+        if gui != 'inline':
             from pydev_ipython.inputhook import enable_gui as real_enable_gui
             try:
                 return real_enable_gui(gui, app)

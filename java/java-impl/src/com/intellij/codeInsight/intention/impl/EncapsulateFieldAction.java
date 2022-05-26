@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
-import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
     }
 
     DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
-    new EncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, dataContext);
+    JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, dataContext);
   }
 
 

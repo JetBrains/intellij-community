@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -31,7 +31,7 @@ public final class PathManager {
   public static final String PROPERTY_SCRATCH_PATH = "idea.scratch.path";
   public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
-  public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.file";
+  public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.properties.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
 
   public static final String OPTIONS_DIRECTORY = "options";

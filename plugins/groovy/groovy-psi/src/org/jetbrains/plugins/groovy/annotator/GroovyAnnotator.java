@@ -81,6 +81,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -1313,20 +1314,22 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       myHolder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(closureArrow).textAttributes(GroovySyntaxHighlighter.CLOSURE_ARROW_AND_BRACES).create();
     }
 
-    if (TypeInferenceHelper.isTooComplexTooAnalyze(closure)) {
-      int startOffset = closure.getTextRange().getStartOffset();
-      int endOffset;
-      PsiElement arrow = closure.getArrow();
-      if (arrow != null) {
-        endOffset = arrow.getTextRange().getEndOffset();
+    if (!FunctionalExpressionFlowUtil.isFlatDFAAllowed()) {
+      if (TypeInferenceHelper.isTooComplexTooAnalyze(closure)) {
+        int startOffset = closure.getTextRange().getStartOffset();
+        int endOffset;
+        PsiElement arrow = closure.getArrow();
+        if (arrow != null) {
+          endOffset = arrow.getTextRange().getEndOffset();
+        }
+        else {
+          Document document = PsiDocumentManager.getInstance(closure.getProject()).getDocument(closure.getContainingFile());
+          if (document == null) return;
+          String text = document.getText();
+          endOffset = Math.min(closure.getTextRange().getEndOffset(), text.indexOf('\n', startOffset));
+        }
+        myHolder.newAnnotation(HighlightSeverity.WEAK_WARNING, GroovyBundle.message("closure.is.too.complex.to.analyze")).range(new TextRange(startOffset, endOffset)).create();
       }
-      else {
-        Document document = PsiDocumentManager.getInstance(closure.getProject()).getDocument(closure.getContainingFile());
-        if (document == null) return;
-        String text = document.getText();
-        endOffset = Math.min(closure.getTextRange().getEndOffset(), text.indexOf('\n', startOffset));
-      }
-      myHolder.newAnnotation(HighlightSeverity.WEAK_WARNING, GroovyBundle.message("closure.is.too.complex.to.analyze")).range(new TextRange(startOffset, endOffset)).create();
     }
   }
 

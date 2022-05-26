@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -1038,7 +1038,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
 
     // using older -source, -target and -bootclasspath options
-    if (languageLevel > 0) {
+    if (languageLevel > 0 && !options.contains(SOURCE_OPTION)) {
       options.add(SOURCE_OPTION);
       options.add(complianceOption(languageLevel));
     }

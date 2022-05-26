@@ -16,7 +16,6 @@ import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -62,18 +61,13 @@ public abstract class JavaHomeFinder {
     return suggestHomePaths(false);
   }
 
-  public static @NotNull List<String> suggestJavaPaths() {
-    JavaHomeFinderBasic javaFinder = getFinder(false, false);
-    return javaFinder == null ? Collections.emptyList() : new ArrayList<>(javaFinder.findExistingJdks());
-  }
-
   /**
    * Do the same as {@link #suggestHomePaths()} but always considers the embedded JRE,
    * for using in tests that are performed when the registry is not properly initialized
    * or that need the embedded JetBrains Runtime.
    */
   public static @NotNull List<String> suggestHomePaths(boolean forceEmbeddedJava) {
-    JavaHomeFinderBasic javaFinder = getFinder(true, forceEmbeddedJava);
+    JavaHomeFinderBasic javaFinder = getFinder(forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
     ArrayList<String> paths = new ArrayList<>(javaFinder.findExistingJdks());
@@ -85,11 +79,12 @@ public abstract class JavaHomeFinder {
     return forceEmbeddedJava || Registry.is("java.detector.enabled", true);
   }
 
-  private static JavaHomeFinderBasic getFinder(boolean checkDefaultLocations, boolean forceEmbeddedJava) {
+  private static JavaHomeFinderBasic getFinder(boolean forceEmbeddedJava) {
     if (!isDetectorEnabled(forceEmbeddedJava)) return null;
 
     SystemInfoProvider systemInfoProvider = new SystemInfoProvider();
 
+    boolean checkDefaultLocations = true;
     if (SystemInfo.isWindows) {
       return new JavaHomeFinderWindows(checkDefaultLocations, forceEmbeddedJava, true, true, systemInfoProvider);
     }

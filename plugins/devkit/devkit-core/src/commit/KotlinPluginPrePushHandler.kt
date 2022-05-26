@@ -12,10 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.vcs.log.VcsFullCommitDetails
-import git4idea.history.GitHistoryUtils
-import git4idea.push.GitPushSource
-import git4idea.push.GitPushTarget
-import git4idea.repo.GitRepositoryImpl
+import git4idea.config.GitSharedSettings
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Path
@@ -56,35 +53,26 @@ class KotlinPluginPrePushHandler(private val project: Project) : PrePushHandler 
     DevKitBundle.message("push.commit.handler.name")
 
   override fun handle(pushDetails: MutableList<PushInfo>, indicator: ProgressIndicator): PrePushHandler.Result {
-    if (!commitsShouldBeChecked())
+    if (!handlerIsApplicable())
       return PrePushHandler.Result.OK
 
-    val atLeastOneHasCommitsToEdit = pushDetails.any { hasCommitsToEdit(it, indicator.modalityState) }
+    for (details in pushDetails) { // for every VCS root
+      if (!details.isTargetBranchProtected() || !details.hasCommitsToEdit(indicator.modalityState))
+        continue
 
-    if (atLeastOneHasCommitsToEdit)
       return PrePushHandler.Result.ABORT_AND_CLOSE
+    }
 
     return PrePushHandler.Result.OK
   }
 
-  private fun hasCommitsToEdit(pushInfo: PushInfo, modalityState: ModalityState): Boolean {
-    val pushSpec = pushInfo.pushSpec
-    val sourceBranchName = (pushSpec.source as GitPushSource).branch.name
-    val remoteName = (pushSpec.target as GitPushTarget).branch.remote.name
-    val gitRepository = pushInfo.repository as GitRepositoryImpl
+  private fun PushInfo.isTargetBranchProtected(): Boolean {
+    val targetBranchName = pushSpec.target.presentation
+    return GitSharedSettings.getInstance(project).isBranchProtected(targetBranchName)
+  }
 
-    // We don't want bother people reminding them of commits which are already on remote. Being there means being on the safe side.
-    // This is the case when, for example, one rebased his dev branch on recent master and has now to push not only his/her commits but
-    // those that came from master as well.
-
-    val commitHashesOfInterest =
-      GitHistoryUtils.history(project, gitRepository.root, sourceBranchName, "--not", "--remotes=$remoteName", "--max-count=1000")
-        .map { it.id.toShortString() }.toSet()
-
-    val commitsToPush = pushInfo.commits // is a subset of those of interest (user decides what to push)
-
-    val commitsToWarnAbout = commitsToPush.asSequence()
-      .filter { it.id.toShortString() in commitHashesOfInterest }
+  private fun PushInfo.hasCommitsToEdit(modalityState: ModalityState): Boolean {
+    val commitsToWarnAbout = commits.asSequence()
       .filter(::breaksKotlinPluginMessageRules)
       .map { it.id.toShortString() to it.subject }
       .toList()
@@ -114,7 +102,7 @@ class KotlinPluginPrePushHandler(private val project: Project) : PrePushHandler 
     return true
   }
 
-  private fun commitsShouldBeChecked(): Boolean =
+  private fun handlerIsApplicable(): Boolean =
     Registry.`is`(HANDLER_ENABLED_KEY, true) && PsiUtil.isIdeaProject(project)
 
   private fun breaksKotlinPluginMessageRules(commit: VcsFullCommitDetails): Boolean {

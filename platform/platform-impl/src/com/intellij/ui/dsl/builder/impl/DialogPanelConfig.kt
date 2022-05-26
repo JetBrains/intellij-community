@@ -16,7 +16,8 @@ internal class DialogPanelConfig {
   var preferredFocusedComponent: JComponent? = null
   val validateCallbacks = mutableListOf<() -> ValidationInfo?>()
   val componentValidateCallbacks = linkedMapOf<JComponent, () -> ValidationInfo?>()
-  val customValidationRequestors = linkedMapOf<JComponent, MutableList<(() -> Unit) -> Unit>>()
+  val validationRequestors = mutableListOf<(() -> Unit) -> Unit>()
+  val componentValidationRequestors = linkedMapOf<JComponent, MutableList<(() -> Unit) -> Unit>>()
   val applyCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
   val resetCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
   val isModifiedCallbacks = linkedMapOf<JComponent?, MutableList<() -> Boolean>>()

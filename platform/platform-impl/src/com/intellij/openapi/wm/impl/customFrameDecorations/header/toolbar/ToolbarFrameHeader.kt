@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -48,10 +49,10 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     layout = GridBagLayout()
     val gb = GridBag().anchor(WEST)
 
-    updateLayout(UISettings.instance)
+    updateLayout(UISettings.getInstance())
 
-    productIcon.border = JBUI.Borders.empty(V, H)
-    add(productIcon, gb.nextLine().next().anchor(WEST))
+    productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
+    add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
     add(buttonPanes.getView(), gb.next().anchor(EAST))
 
@@ -118,17 +119,17 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
   fun createHeaderContent(): JPanel {
     val res = NonOpaquePanel(CardLayout())
-    res.border = JBUI.Borders.emptyLeft(15)
+    res.border = JBUI.Borders.empty()
 
     val menuPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(myMenuBar, gb.next())
+      add(myMenuBar, gb.next().insetLeft(JBUI.scale(20)))
       add(Box.createHorizontalGlue(), gb.next().weightx(1.0).fillCell())
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(myMenuButton, gb.next().insetRight(25))
-      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally())
+      add(myMenuButton, gb.next().insetLeft(JBUI.scale(20)))
+      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally().insetLeft(JBUI.scale(16)))
     }
 
     res.add(ShowMode.MENU.name, menuPnl)
@@ -177,8 +178,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
       DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)?.let { context ->
         val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
         JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, mainMenu, context, false, true,
-            false, null, 30, null)
+          .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, ActionPlaces.MAIN_MENU_IN_POPUP)
           .showUnderneathOf(button)
       }
     }

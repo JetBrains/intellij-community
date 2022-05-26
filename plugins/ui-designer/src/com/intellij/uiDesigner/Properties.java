@@ -44,10 +44,7 @@ public final class Properties {
         loadState(JDOMUtil.load(inputStream));
       }
     }
-    catch (JDOMException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       LOG.error(e);
     }
   }

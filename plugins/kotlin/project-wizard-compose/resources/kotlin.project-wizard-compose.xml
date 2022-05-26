@@ -1,0 +1,16 @@
+<idea-plugin package="org.jetbrains.kotlin.tools.composeProjectWizard">
+
+<!--  <extensionPoints>-->
+<!--    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.ideaWizardService" area="IDEA_PROJECT"-->
+<!--                    interface="org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService"-->
+<!--                    dynamic="true"/>-->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <moduleBuilder builderClass="org.jetbrains.kotlin.tools.composeProjectWizard.ComposeModuleBuilder"/>
+    <fileTemplateGroup implementation="org.jetbrains.kotlin.tools.composeProjectWizard.ComposeModuleTemplateGroup"/>
+    <registryKey key="compose.wizard.enabled"
+                 description="New Compose Project Wizard is enabled"
+                 defaultValue="false"
+                 restartRequired="false"/>
+  </extensions>
+</idea-plugin>

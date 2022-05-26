@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeTooltip;
@@ -215,7 +215,7 @@ public abstract class ContentLabel extends BaseLabel {
     setBorder(new EmptyBorder(0, left, 0, right));
     myIconWithInsetsWidth = rightIconWidth + right + left;
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets()));
       myIconWithInsetsWidth = rightIconWidth;
     }

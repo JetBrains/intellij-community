@@ -19,7 +19,6 @@ import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -46,7 +45,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private ObjectReference myThisObject;
   private SourcePosition mySourcePosition;
 
-  private Icon myIcon = JBUIScale.scaleIcon(EmptyIcon.create(6));
+  private Icon myIcon = EmptyIcon.ICON_16;
 
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame, @NotNull MethodsTracker tracker) {
     myFrame = frame;

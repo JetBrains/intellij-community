@@ -22,7 +22,7 @@ import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
-class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
+internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
   class CodeAnalyzerRestartListener: MarkdownSettings.ChangeListener {
     override fun settingsChanged(settings: MarkdownSettings) {
       val project = settings.project
@@ -30,6 +30,7 @@ class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
       val codeAnalyzer = DaemonCodeAnalyzerImpl.getInstance(project) ?: return
       val psiManager = PsiManager.getInstance(project)
       editorManager.openFiles
+        .asSequence()
         .filter { FileTypeRegistry.getInstance().isFileOfType(it, MarkdownFileType.INSTANCE) }
         .mapNotNull(psiManager::findFile)
         .forEach(codeAnalyzer::restart)

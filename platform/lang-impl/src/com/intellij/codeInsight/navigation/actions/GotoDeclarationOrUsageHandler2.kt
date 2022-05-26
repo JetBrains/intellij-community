@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
@@ -35,6 +36,11 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
     return gotoDeclarationOrUsages(file.project, editor, file, offset)?.ctrlMouseInfo()
   }
 
+  @JvmStatic
+  fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
+    return gotoDeclarationOrUsages(file.project, editor, file, offset)?.ctrlMouseData()
+  }
+
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration")
     if (navigateToLookupItem(project)) {
@@ -45,28 +51,29 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
     }
 
     val offset = editor.caretModel.offset
-    val actionResult: GTDUActionResult? = try {
-      underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
+    try {
+      val actionResult: GTDUActionResult? = underModalProgress(
+        project,
+        CodeInsightBundle.message("progress.title.resolving.reference")
+      ) {
         gotoDeclarationOrUsages(project, editor, file, offset)?.result()
+      }
+      when (actionResult) {
+        null -> notifyNowhereToGo(project, editor, file, offset)
+        is GTDUActionResult.GTD -> {
+          GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
+          gotoDeclaration(project, editor, actionResult.navigationActionResult)
+        }
+        is GTDUActionResult.SU -> {
+          GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
+          showUsages(project, editor, file, actionResult.targetVariants)
+        }
       }
     }
     catch (e: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotification(
         CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update")
       )
-      return
-    }
-
-    when (actionResult) {
-      null -> notifyNowhereToGo(project, editor, file, offset)
-      is GTDUActionResult.GTD -> {
-        GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
-        gotoDeclaration(project, editor, actionResult.navigationActionResult)
-      }
-      is GTDUActionResult.SU -> {
-        GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
-        showUsages(project, editor, file, actionResult.targetVariants)
-      }
     }
   }
 

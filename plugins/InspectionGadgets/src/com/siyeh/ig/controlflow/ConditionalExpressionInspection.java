@@ -28,8 +28,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -121,7 +121,8 @@ public class ConditionalExpressionInspection extends BaseInspection {
         if (initializer instanceof PsiArrayInitializerExpression) {
           final int conditionIdx = ArrayUtilRt.find(((PsiArrayInitializerExpression)initializer).getInitializers(), expression);
           if (conditionIdx >= 0) {
-            initializer = (PsiExpression)initializer.replace(RefactoringUtil.convertInitializerToNormalExpression(initializer, variable.getType()));
+            initializer = (PsiExpression)initializer.replace(
+              CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, variable.getType()));
             final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
             LOG.assertTrue(arrayInitializer != null, initializer.getText());
             expression = (PsiConditionalExpression)arrayInitializer.getInitializers()[conditionIdx];

@@ -26,6 +26,7 @@ open class AddAnnotationFix(
         val annotationCall = annotationFqName.shortName().asString() + annotationArguments
         return when (kind) {
             Kind.Self -> KotlinBundle.message("fix.add.annotation.text.self", annotationCall)
+            Kind.Constructor -> KotlinBundle.message("fix.add.annotation.text.constructor", annotationCall)
             is Kind.Declaration -> KotlinBundle.message("fix.add.annotation.text.declaration", annotationCall, kind.name ?: "?")
             is Kind.ContainingClass -> KotlinBundle.message("fix.add.annotation.text.containing.class", annotationCall, kind.name ?: "?")
         }
@@ -50,6 +51,7 @@ open class AddAnnotationFix(
 
     sealed class Kind {
         object Self : Kind()
+        object Constructor : Kind()
         class Declaration(val name: String?) : Kind()
         class ContainingClass(val name: String?) : Kind()
     }

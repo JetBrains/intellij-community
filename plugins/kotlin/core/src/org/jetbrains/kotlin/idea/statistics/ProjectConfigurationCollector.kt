@@ -76,7 +76,7 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.project.configuration", 5)
+        private val GROUP = EventLogGroup("kotlin.project.configuration", 6)
 
         private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
         private val platformField = EventFields.String("platform", composePlatformFields())

@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.DumbAwareAction
@@ -29,7 +30,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 
-class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable {
+class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable, Configurable.NoScroll {
 
   private class SettingsGroup(val groupRow: Row,
                               val title: String,

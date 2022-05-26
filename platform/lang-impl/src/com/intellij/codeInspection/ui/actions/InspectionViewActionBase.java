@@ -4,10 +4,7 @@ package com.intellij.codeInspection.ui.actions;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -29,7 +26,7 @@ public abstract class InspectionViewActionBase extends AnAction {
   }
 
   @Override
-  public final void update(@NotNull AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final InspectionResultsView view = getView(e);
     final boolean enabled = view != null && isEnabled(view, e);
     final Presentation presentation = e.getPresentation();

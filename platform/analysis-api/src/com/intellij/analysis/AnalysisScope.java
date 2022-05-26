@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.analysis;
 
@@ -574,9 +574,7 @@ public class AnalysisScope {
       files.freeze();
       myVFiles = files;
     }
-    else {
-      myFilesSet = null;
-    }
+    myFilesSet = null;
   }
 
   public boolean containsSources(boolean isTest) {

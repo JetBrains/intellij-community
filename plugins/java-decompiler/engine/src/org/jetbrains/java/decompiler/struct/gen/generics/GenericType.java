@@ -1,22 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GenericType {
+public class GenericType implements Type {
 
   public static final int WILDCARD_EXTENDS = 1;
   public static final int WILDCARD_SUPER = 2;
   public static final int WILDCARD_UNBOUND = 3;
   public static final int WILDCARD_NO = 4;
 
-  public final int type;
-  public final int arrayDim;
-  public final String value;
+  private final int type;
+  private final int arrayDim;
+  private final String value;
 
   private final List<GenericType> enclosingClasses = new ArrayList<>();
   private final List<GenericType> arguments = new ArrayList<>();
@@ -29,7 +30,7 @@ public class GenericType {
   }
 
   private GenericType(GenericType other, int arrayDim) {
-    this(other.type, arrayDim, other.value);
+    this(other.getType(), arrayDim, other.getValue());
     enclosingClasses.addAll(other.enclosingClasses);
     arguments.addAll(other.arguments);
     wildcards.addAll(other.wildcards);
@@ -95,6 +96,21 @@ public class GenericType {
     this.type = type;
     this.arrayDim = arrayDim;
     this.value = value;
+  }
+
+  @Override
+  public int getType() {
+    return type;
+  }
+
+  @Override
+  public int getArrayDim() {
+    return arrayDim;
+  }
+
+  @Override
+  public String getValue() {
+    return value;
   }
 
   private static String getNextClassSignature(String value) {
@@ -203,8 +219,8 @@ public class GenericType {
   }
 
   public GenericType decreaseArrayDim() {
-    assert arrayDim > 0 : this;
-    return new GenericType(this, arrayDim - 1);
+    assert getArrayDim() > 0 : this;
+    return new GenericType(this, getArrayDim() - 1);
   }
 
   public List<GenericType> getArguments() {

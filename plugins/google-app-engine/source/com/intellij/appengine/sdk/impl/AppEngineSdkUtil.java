@@ -33,8 +33,7 @@ public final class AppEngineSdkUtil {
   public static void saveWhiteList(File cachedWhiteList, Map<String, Set<String>> classesWhiteList) {
     try {
       FileUtil.createParentDirs(cachedWhiteList);
-      PrintWriter writer = new PrintWriter(cachedWhiteList);
-      try {
+      try (PrintWriter writer = new PrintWriter(cachedWhiteList)) {
         for (String packageName : classesWhiteList.keySet()) {
           writer.println("." + packageName);
           final Set<String> classes = classesWhiteList.get(packageName);
@@ -42,9 +41,6 @@ public final class AppEngineSdkUtil {
             writer.println(aClass);
           }
         }
-      }
-      finally {
-        writer.close();
       }
     }
     catch (IOException e) {
@@ -54,8 +50,7 @@ public final class AppEngineSdkUtil {
 
   public static Map<String, Set<String>> loadWhiteList(File input) throws IOException {
     Map<String, Set<String>> map = new HashMap<>();
-    BufferedReader reader = new BufferedReader(new FileReader(input));
-    try {
+    try (BufferedReader reader = new BufferedReader(new FileReader(input))) {
       String line;
       Set<String> currentClasses = new HashSet<>();
       map.put("", currentClasses);
@@ -69,9 +64,6 @@ public final class AppEngineSdkUtil {
           currentClasses.add(line);
         }
       }
-    }
-    finally {
-      reader.close();
     }
     return map;
   }

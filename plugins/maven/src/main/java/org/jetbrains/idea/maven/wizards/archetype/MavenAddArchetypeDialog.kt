@@ -2,9 +2,8 @@
 package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.comap
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
@@ -20,10 +19,10 @@ import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(project, true) {
 
   private val propertyGraph = PropertyGraph()
-  private val archetypeGroupIdProperty = propertyGraph.graphProperty { "" }
-  private val archetypeArtifactIdProperty = propertyGraph.graphProperty { "" }
-  private val archetypeVersionProperty = propertyGraph.graphProperty { "" }
-  private val catalogLocationProperty = propertyGraph.graphProperty { "" }
+  private val archetypeGroupIdProperty = propertyGraph.property("")
+  private val archetypeArtifactIdProperty = propertyGraph.property("")
+  private val archetypeVersionProperty = propertyGraph.property("")
+  private val catalogLocationProperty = propertyGraph.property("")
 
   var archetypeGroupId by archetypeGroupIdProperty
   var archetypeArtifactId by archetypeArtifactIdProperty
@@ -69,21 +68,21 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
   override fun createCenterPanel() = panel {
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.label")) {
       textField()
-        .bindText(archetypeGroupIdProperty.comap { it.trim() })
+        .bindText(archetypeGroupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateGroupId() }
         .validationOnApply { validateGroupId() }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.label")) {
       textField()
-        .bindText(archetypeArtifactIdProperty.comap { it.trim() })
+        .bindText(archetypeArtifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateArtifactId() }
         .validationOnApply { validateArtifactId() }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
       textField()
-        .bindText(archetypeVersionProperty.comap { it.trim() })
+        .bindText(archetypeVersionProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateVersion() }
         .validationOnApply { validateVersion() }
@@ -92,7 +91,7 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
       val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)
-        .bindText(catalogLocationProperty.comap { it.trim() })
+        .bindText(catalogLocationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateCatalogLocation() }

@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.codeInsight;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -226,6 +226,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("naming/property/inspectionData/inspections.test")
         public void testNaming_property_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/naming/property/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("nonExhaustiveWhenStatementMigration/inspectionData/inspections.test")
+        public void testNonExhaustiveWhenStatementMigration_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/nonExhaustiveWhenStatementMigration/inspectionData/inspections.test");
         }
 
         @TestMetadata("nullableBooleanElvis/inspectionData/inspections.test")

@@ -17,6 +17,10 @@ import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.runner.RunWith
+import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 @TestRoot("idea/tests")

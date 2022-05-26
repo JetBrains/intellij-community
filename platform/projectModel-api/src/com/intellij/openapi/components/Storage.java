@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.Application;
@@ -76,4 +76,7 @@ public @interface Storage {
    * Is exportable (Export Settings dialog) regardless of roaming type.
    */
   boolean exportable() default false;
+
+  @ApiStatus.Internal
+  boolean usePathMacroManager() default true;
 }

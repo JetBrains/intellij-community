@@ -544,4 +544,17 @@ public class InjectedLanguageUtilBase {
     enumerate(host, (injectedPsi, places) -> result.set(true));
     return result.get().booleanValue();
   }
+
+  public static boolean isInInjectedLanguagePrefixSuffix(@NotNull final PsiElement element) {
+    PsiFile injectedFile = element.getContainingFile();
+    if (injectedFile == null) return false;
+    Project project = injectedFile.getProject();
+    InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(project);
+    if (!languageManager.isInjectedFragment(injectedFile)) return false;
+    TextRange elementRange = element.getTextRange();
+    List<TextRange> edibles = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
+    int combinedEdiblesLength = edibles.stream().mapToInt(TextRange::getLength).sum();
+
+    return combinedEdiblesLength != elementRange.getLength();
+  }
 }

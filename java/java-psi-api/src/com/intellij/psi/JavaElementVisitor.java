@@ -451,4 +451,24 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitPatternVariable(PsiPatternVariable variable) {
     visitParameter(variable);
   }
+
+  public void visitSnippetTag(PsiSnippetDocTag snippetDocTag) {
+    visitInlineDocTag(snippetDocTag);
+  }
+
+  public void visitSnippetDocTagValue(PsiSnippetDocTagValue value) {
+    visitElement(value);
+  }
+
+  public void visitSnippetDocTagBody(PsiSnippetDocTagBody body) {
+    visitElement(body);
+  }
+
+  public void visitSnippetAttribute(PsiSnippetAttribute attribute) {
+    visitElement(attribute);
+  }
+
+  public void visitSnippetAttributeList(PsiSnippetAttributeList attributeList) {
+    visitElement(attributeList);
+  }
 }

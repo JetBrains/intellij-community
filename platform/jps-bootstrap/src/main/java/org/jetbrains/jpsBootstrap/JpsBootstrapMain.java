@@ -3,11 +3,15 @@
 package org.jetbrains.jpsBootstrap;
 
 import com.intellij.execution.CommandLineWrapperUtil;
+import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -17,11 +21,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "SameParameterValue"})
+@SuppressWarnings({"SameParameterValue"})
 public class JpsBootstrapMain {
 
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
@@ -51,7 +57,7 @@ public class JpsBootstrapMain {
       System.exit(0);
     }
     catch (Throwable t) {
-      fatal(ExceptionUtil.getThrowableText(t));
+      error(ExceptionUtil.getThrowableText(t));
       System.exit(1);
     }
   }
@@ -62,12 +68,13 @@ public class JpsBootstrapMain {
   private final String classNameToRun;
   private final String buildTargetXmx;
   private final Path jpsBootstrapWorkDir;
-  private final Path ideaHomePath;
   private final Path javaArgsFileTarget;
   private final List<String> mainArgsToRun;
   private final Properties additionalSystemProperties;
 
   public JpsBootstrapMain(String[] args) throws IOException {
+    initLogging();
+
     CommandLine cmdline;
     try {
       cmdline = (new DefaultParser()).parse(createCliOptions(), args, true);
@@ -87,7 +94,7 @@ public class JpsBootstrapMain {
     classNameToRun = freeArgs.get(1);
 
     if (!classNameToRun.endsWith("BuildTarget")) {
-      fatal("Class name must end with 'BuildTarget': " + classNameToRun +
+      throw new IllegalStateException("Class name must end with 'BuildTarget': " + classNameToRun +
         "\nThis is just a convention helping to find build targets in the monorepo");
     }
 
@@ -97,12 +104,16 @@ public class JpsBootstrapMain {
     JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(OPT_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
-    if (communityHomeString == null) fatal("Please set " + COMMUNITY_HOME_ENV + " environment variable");
+    if (communityHomeString == null) {
+      throw new IllegalStateException("Please set " + COMMUNITY_HOME_ENV + " environment variable");
+    }
 
     communityHome = Path.of(communityHomeString);
 
     Path communityCheckFile = communityHome.resolve("intellij.idea.community.main.iml");
-    if (!Files.exists(communityCheckFile)) fatal(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
+    if (!Files.exists(communityCheckFile)) {
+      throw new IllegalStateException(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
+    }
 
     Path riderHome = communityHome.getParent().getParent().resolve("Frontend");
     Path riderCheckFile = riderHome.resolve("Rider.iml");
@@ -112,16 +123,13 @@ public class JpsBootstrapMain {
 
     if (Files.exists(riderCheckFile)) {
       projectHome = riderHome;
-      ideaHomePath = ultimateHome;
     }
     else if (Files.exists(ultimateCheckFile)) {
       projectHome = ultimateHome;
-      ideaHomePath = ultimateHome;
     }
     else {
       warn("Ultimate repository is not detected by checking '" + ultimateCheckFile + "', using only community project");
       projectHome = communityHome;
-      ideaHomePath = communityHome;
     }
 
     jpsBootstrapWorkDir = communityHome.resolve("out").resolve("jps-bootstrap");
@@ -135,7 +143,9 @@ public class JpsBootstrapMain {
   }
 
   private void main() throws Throwable {
-    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome);
+    Path jdkHome = JpsBootstrapJdk.getJdkHome(communityHome);
+
+    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome);
     JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
     loadClasses(module, model);
@@ -144,20 +154,33 @@ public class JpsBootstrapMain {
     verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::fileDebugInfo).collect(Collectors.joining("\n  ")));
 
     writeJavaArgfile(moduleRuntimeClasspath);
+
+    if (underTeamCity) {
+      SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
+        "jps.bootstrap.java.executable", JpsBootstrapJdk.getJavaExecutable(jdkHome).toString());
+      System.out.println(setParameterServiceMessage.asString());
+    }
   }
 
   private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
+    Properties systemProperties = new Properties();
+
+    if (underTeamCity) {
+      systemProperties.putAll(getTeamCitySystemProperties());
+    }
+    systemProperties.putAll(additionalSystemProperties);
+
+    systemProperties.putIfAbsent("file.encoding", "UTF-8"); // just in case
+    systemProperties.putIfAbsent("java.awt.headless", "true");
+
+    // This is required only for accommodating KotlinBinaries.ensureKotlinJpsPluginIsAddedToClassPath
+    systemProperties.put("java.system.class.loader", "org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader");
+
     List<String> args = new ArrayList<>();
     args.add("-ea");
     args.add("-Xmx" + buildTargetXmx);
-    args.add("-Dfile.encoding=UTF-8"); // just in case
-    args.add("-Djava.awt.headless=true");
 
-    // This is required only for accommodating KotlinBinaries.ensureKotlinJpsPluginIsAddedToClassPath
-    args.add("-Djava.system.class.loader=org.jetbrains.intellij.build.impl.BuildScriptsSystemClassLoader");
-
-    args.addAll(systemPropertiesArgsFromTeamCityBuild());
-    args.addAll(convertPropertiesToCommandLineArgs(additionalSystemProperties));
+    args.addAll(convertPropertiesToCommandLineArgs(systemProperties));
 
     args.add("-classpath");
     args.add(StringUtil.join(moduleRuntimeClasspath, File.pathSeparator));
@@ -181,6 +204,9 @@ public class JpsBootstrapMain {
     boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
 
     String manifestJsonUrl = System.getenv(ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
+    if (manifestJsonUrl != null && manifestJsonUrl.isBlank()) {
+      manifestJsonUrl = null;
+    }
 
     if (runJpsBuild && manifestJsonUrl != null) {
       throw new IllegalStateException("Both env. variables are set, choose only one: " +
@@ -197,13 +223,15 @@ public class JpsBootstrapMain {
       }
     }
 
-    JpsBuild jpsBuild = new JpsBuild(ideaHomePath, model, jpsBootstrapWorkDir);
+    Set<JpsModule> modulesSubset = JpsProjectUtils.getRuntimeModulesClasspath(module);
+
+    JpsBuild jpsBuild = new JpsBuild(communityHome, model, jpsBootstrapWorkDir);
     if (manifestJsonUrl != null) {
       jpsBuild.resolveProjectDependencies();
       info("Downloading project classes from " + manifestJsonUrl);
-      ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome);
+      ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome, modulesSubset);
     } else {
-      jpsBuild.buildModule(module);
+      jpsBuild.buildModules(modulesSubset);
     }
   }
 
@@ -227,11 +255,6 @@ public class JpsBootstrapMain {
     }
   }
 
-  private static List<String> systemPropertiesArgsFromTeamCityBuild() throws IOException {
-    if (!underTeamCity) return Collections.emptyList();
-    return convertPropertiesToCommandLineArgs(getTeamCitySystemProperties());
-  }
-
   private static List<String> convertPropertiesToCommandLineArgs(Properties properties) {
     List<String> result = new ArrayList<>();
     for (String propertyName : properties.stringPropertyNames().stream().sorted().collect(Collectors.toList())) {
@@ -248,5 +271,24 @@ public class JpsBootstrapMain {
     formatter.setWidth(1000);
     formatter.printHelp("./jps-bootstrap.sh [jps-bootstrap options] MODULE_NAME CLASS_NAME [arguments_passed_to_CLASS_NAME's_main]", createCliOptions());
     System.exit(1);
+  }
+
+  private static void initLogging() {
+    java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+
+    for (Handler handler : rootLogger.getHandlers()) {
+      rootLogger.removeHandler(handler);
+    }
+    IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
+    ConsoleHandler consoleHandler = new ConsoleHandler();
+    consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, false));
+    consoleHandler.setLevel(java.util.logging.Level.WARNING);
+    rootLogger.addHandler(consoleHandler);
+  }
+
+  private static class SetParameterServiceMessage extends MessageWithAttributes {
+    public SetParameterServiceMessage(@NotNull String name, @NotNull String value) {
+      super(ServiceMessageTypes.BUILD_SET_PARAMETER, Map.of("name", name, "value", value));
+    }
   }
 }

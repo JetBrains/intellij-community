@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.highlighter;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -281,10 +281,5 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
     @TestMetadata("upperBoundViolatedInTypeAliasConstructorCall.kt")
     public void testUpperBoundViolatedInTypeAliasConstructorCall() throws Exception {
         runTest("testData/diagnosticMessage/upperBoundViolatedInTypeAliasConstructorCall.kt");
-    }
-
-    @TestMetadata("urlRender.kt")
-    public void testUrlRender() throws Exception {
-        runTest("testData/diagnosticMessage/urlRender.kt");
     }
 }

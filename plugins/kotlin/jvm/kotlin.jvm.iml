@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.repl" />
+    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />

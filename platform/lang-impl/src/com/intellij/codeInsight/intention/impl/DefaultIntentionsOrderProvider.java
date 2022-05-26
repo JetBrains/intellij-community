@@ -34,7 +34,7 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
     return getPriorityWeight(priority);
   }
 
-  private static int getWeight(@NotNull CachedIntentions context, @NotNull IntentionActionWithTextCaching action) {
+  public static int getWeight(@NotNull CachedIntentions context, @NotNull IntentionActionWithTextCaching action) {
     final int group = context.getGroup(action).getPriority();
     IntentionAction nonDelegatedAction = findNonDelegatedAction(action.getAction());
     if (nonDelegatedAction instanceof PriorityAction) {
@@ -55,7 +55,7 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
     return action;
   }
 
-  private static int getPriorityWeight(@Nullable Priority priority) {
+  public static int getPriorityWeight(@Nullable Priority priority) {
     if (priority == null) return 0;
     switch (priority) {
       case TOP:

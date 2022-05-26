@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons.*
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedIsKtLightClassForDecompiledDeclaration
+import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclarationBase
 import org.jetbrains.kotlin.idea.util.ifTrue
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -159,7 +159,7 @@ open class KotlinIconProviderBase : IconProvider(), DumbAware {
                     }
                 }
             }
-            is PsiClass -> providedIsKtLightClassForDecompiledDeclaration().ifTrue {
+            is PsiClass -> (this is KtLightClassForDecompiledDeclarationBase).ifTrue {
                 val origin = (this as? KtLightClass)?.kotlinOrigin
                 //TODO (light classes for decompiled files): correct presentation
                 if (origin != null) origin.getBaseIcon() else CLASS

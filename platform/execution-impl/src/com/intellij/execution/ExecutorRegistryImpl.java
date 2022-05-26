@@ -151,7 +151,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           }
         }
         else {
-          if (!process.isTemporaryProcess()) {
+          if (!process.isTemporaryProcess() && process.getShowInBar()) {
             ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
             ExecutorAction wrappedMainAction = new RunToolbarProcessMainAction(process, executor);
 

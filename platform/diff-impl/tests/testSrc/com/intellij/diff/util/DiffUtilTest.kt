@@ -163,7 +163,7 @@ class DiffUtilTest : DiffTestCase() {
       assertEquals(expectedLines, DiffUtil.getLines(document))
 
       val lineOffsets = LineOffsetsUtil.create(text)
-      assertEquals(expectedLines, DiffUtil.getLines(text, lineOffsets))
+      assertEquals(expectedLines, DiffRangeUtil.getLines(text, lineOffsets))
     }
 
     doTest("", listOf(""))

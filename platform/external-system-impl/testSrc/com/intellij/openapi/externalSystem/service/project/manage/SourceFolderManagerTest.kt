@@ -11,6 +11,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import junit.framework.TestCase
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
@@ -66,12 +71,42 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
       .containsExactly(folderUrl)
   }
 
-  private fun createModuleWithContentRoot(dir: File): Module {
+  fun `test update source folders execute within single storage diff`() {
+    val manager = SourceFolderManager.getInstance(project) as SourceFolderManagerImpl
+    val firstModuleFolder = createTempDir("foo")
+    val firstModule = createModuleWithContentRoot(firstModuleFolder, "foo")
+    val secondModuleFolder = createTempDir("bar")
+    val secondModule = createModuleWithContentRoot(secondModuleFolder, "bar")
+
+    var folderFile = File(firstModuleFolder, "newFolder")
+    FileUtil.createDirectory(folderFile)
+    val firstFolderUrl = VfsUtilCore.pathToUrl(folderFile.absolutePath)
+    manager.addSourceFolder(firstModule, firstFolderUrl, JavaSourceRootType.SOURCE)
+
+    folderFile = File(secondModuleFolder, "newFolder")
+    FileUtil.createDirectory(folderFile)
+    val secondFolderUrl = VfsUtilCore.pathToUrl(folderFile.absolutePath)
+    manager.addSourceFolder(secondModule, secondFolderUrl, JavaSourceRootType.SOURCE)
+
+    var notificationsCount = 0
+    val version = WorkspaceModel.getInstance(project).entityStorage.version
+    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        notificationsCount++
+      }
+    })
+    LocalFileSystem.getInstance().refresh(false)
+    manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
+    TestCase.assertTrue(notificationsCount == 1)
+    TestCase.assertTrue(version + 1 == WorkspaceModel.getInstance(project).entityStorage.version)
+  }
+
+  private fun createModuleWithContentRoot(dir: File, moduleName: String = "topModule"): Module {
     val moduleManager = ModuleManager.getInstance(project)
     val modifiableModel = moduleManager.modifiableModel
     val newModule: Module =
       try {
-        modifiableModel.newModule(dir.toPath().resolve("topModule").toAbsolutePath(), ModuleTypeId.JAVA_MODULE)
+        modifiableModel.newModule(dir.toPath().resolve(moduleName).toAbsolutePath(), ModuleTypeId.JAVA_MODULE)
       }
       finally {
         runWriteAction {

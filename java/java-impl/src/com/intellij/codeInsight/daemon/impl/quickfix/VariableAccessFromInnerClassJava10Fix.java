@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -159,7 +159,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
 
     @Nullable
     static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable) {
-      PsiElement varDeclarationStatement = RefactoringUtil.getParentStatement(variable, false);
+      PsiElement varDeclarationStatement = CommonJavaRefactoringUtil.getParentStatement(variable, false);
       if (varDeclarationStatement == null) return null;
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(varDeclarationStatement, PsiStatement.class);
       PsiDeclarationStatement nextDeclarationStatement = tryCast(nextStatement, PsiDeclarationStatement.class);

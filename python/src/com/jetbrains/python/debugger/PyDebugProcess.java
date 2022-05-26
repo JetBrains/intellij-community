@@ -1168,10 +1168,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
-  }
-
-  @Override
   public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
   }
 

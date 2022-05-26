@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
-import com.intellij.ide.NewProjectWizardLegacy;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -67,11 +66,6 @@ public final class GroovyAwareModuleBuilder extends JavaModuleBuilder {
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return ModuleWizardStep.EMPTY_ARRAY;
-  }
-
-  @Override
-  public boolean isAvailable() {
-    return NewProjectWizardLegacy.isAvailable();
   }
 
   @Override

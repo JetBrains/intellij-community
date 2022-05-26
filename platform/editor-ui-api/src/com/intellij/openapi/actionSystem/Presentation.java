@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
@@ -311,11 +311,17 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_SELECTED_ICON, old, mySelectedIcon);
   }
 
+  /**
+   * @return an extended key code for a mnemonic character, or {@code KeyEvent.VK_UNDEFINED} if mnemonic is not set
+   */
   public int getMnemonic() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
-    return textWithMnemonic == null ? 0 : textWithMnemonic.getMnemonic();
+    return textWithMnemonic == null ? 0 : textWithMnemonic.getMnemonicCode();
   }
 
+  /**
+   * @return a mnemonic index in the whole text, or {@code -1} if mnemonic is not set
+   */
   public int getDisplayedMnemonicIndex() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
     return textWithMnemonic == null ? -1 : textWithMnemonic.getMnemonicIndex();

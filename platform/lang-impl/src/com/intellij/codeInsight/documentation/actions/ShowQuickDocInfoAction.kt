@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("TestOnlyProblems") // KTIJ-19938
+
 package com.intellij.codeInsight.documentation.actions
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -11,7 +13,6 @@ import com.intellij.lang.documentation.ide.impl.DocumentationManager.Companion.i
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilBase
 

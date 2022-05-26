@@ -123,7 +123,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     });
   }
 
-  void queueDisposeHighlighterFor(@NotNull HighlightInfo info) {
+  void queueDisposeHighlighter(@NotNull HighlightInfo info) {
     RangeHighlighterEx highlighter = info.getHighlighter();
     if (highlighter == null) return;
     // that highlighter may have been reused for another info

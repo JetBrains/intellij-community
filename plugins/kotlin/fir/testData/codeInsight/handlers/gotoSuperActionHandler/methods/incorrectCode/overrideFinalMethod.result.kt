@@ -1,0 +1,1 @@
+KtNamedFunction: A.foo

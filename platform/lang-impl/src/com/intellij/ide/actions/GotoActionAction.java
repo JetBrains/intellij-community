@@ -101,7 +101,8 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
       if (action instanceof ActionGroup &&
           !(event.getPresentation().isPerformGroup() || ((ActionGroup)action).canBePerformed(context))) {
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-          event.getPresentation().getText(), (ActionGroup)action, context, false, null, -1);
+          event.getPresentation().getText(), (ActionGroup)action, context,
+          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false, null, -1, null, ActionPlaces.ACTION_SEARCH_INDUCED_POPUP);
         Window window = SwingUtilities.getWindowAncestor(component);
         if (window != null) {
           popup.showInCenterOf(window);

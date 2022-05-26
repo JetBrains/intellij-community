@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.psi.PsiElement
@@ -24,8 +24,8 @@ class GrStaticExpressionReference(element: GrReferenceExpression) : GroovyRefere
 
   private object Resolver : DependentResolver<GrStaticExpressionReference>() {
 
-    override fun doResolve(ref: GrStaticExpressionReference, incomplete: Boolean): Collection<GroovyResolveResult> {
-      return ref.element.doResolveStatic()?.let(::listOf) ?: emptyList()
+    override fun doResolve(ref: GrStaticExpressionReference, incomplete: Boolean): Array<GroovyResolveResult> {
+      return ref.element.doResolveStatic()?.let { it -> arrayOf(it) }?: GroovyResolveResult.EMPTY_ARRAY
     }
 
     override fun collectDependencies(ref: GrStaticExpressionReference, consumer: Consumer<in PsiPolyVariantReference>) {

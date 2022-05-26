@@ -5,9 +5,10 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiUtilCore
 
-internal fun PsiElement.hasType(type: IElementType) = node.elementType == type
-internal fun PsiElement.hasType(type: TokenSet) = node.elementType in type
+internal fun PsiElement.hasType(type: IElementType) = PsiUtilCore.getElementType(this) == type
+internal fun PsiElement.hasType(type: TokenSet) =  PsiUtilCore.getElementType(this) in type
 
-internal fun ASTNode.hasType(type: IElementType) = elementType == type
-internal fun ASTNode.hasType(type: TokenSet) = elementType in type
+internal fun ASTNode.hasType(type: IElementType) = PsiUtilCore.getElementType(this) == type
+internal fun ASTNode.hasType(type: TokenSet) = PsiUtilCore.getElementType(this) in type

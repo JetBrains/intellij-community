@@ -147,7 +147,7 @@ class ProjectSettingsTracker(
   }
 
   private inner class ProjectListener : ExternalSystemProjectListener {
-    private lateinit var settingsFilesCRC: Map<String, Long>
+    private var settingsFilesCRC: Map<String, Long> = emptyMap()
 
     override fun onProjectReloadStart() {
       applyChangesOperation.startTask()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Nullable;
@@ -6,9 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Supplier;
 
 /**
- * @deprecated Use {@link Supplier} instead.
+ * Deprecated. Use {@link java.util.function.Supplier} instead.
  */
-@Deprecated
 public interface Computable<T> extends Supplier<T> {
   T compute();
 

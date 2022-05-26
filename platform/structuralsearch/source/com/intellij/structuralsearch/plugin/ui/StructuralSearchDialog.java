@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -405,7 +405,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final String text = SSRBundle.message("search.target.label");
     final JLabel searchTargetLabel = new JLabel(text);
     searchTargetLabel.setLabelFor(myTargetComboBox);
-    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonic());
+    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonicCode());
 
     final JBCheckBox injected = new JBCheckBox(SSRBundle.message("search.in.injected.checkbox"));
     injected.setOpaque(false);
@@ -920,11 +920,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                         mySearchCriteriaEdit));
         }
       }
-      catch (UnsupportedPatternException e) {
-        removeMatchHighlights();
-        errors.add(new ValidationInfo(e.getMessage(), mySearchCriteriaEdit));
-      }
-      catch (NoMatchFoundException e) {
+      catch (UnsupportedPatternException | NoMatchFoundException e) {
         removeMatchHighlights();
         errors.add(new ValidationInfo(e.getMessage(), mySearchCriteriaEdit));
       }
@@ -932,10 +928,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         try {
           Replacer.checkReplacementPattern(getProject(), myConfiguration.getReplaceOptions());
         }
-        catch (UnsupportedPatternException e) {
-          errors.add(new ValidationInfo(e.getMessage(), myReplaceCriteriaEdit));
-        }
-        catch (MalformedPatternException e) {
+        catch (UnsupportedPatternException | MalformedPatternException e) {
           errors.add(new ValidationInfo(e.getMessage(), myReplaceCriteriaEdit));
         }
       }
@@ -1269,6 +1262,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       setTitle(getDefaultTitle());
       myReplacePanel.setVisible(myReplace);
       updateCenterPanelRowConstraints();
+      setUseLastConfiguration(true);
       loadConfiguration(myConfiguration);
       final Dimension size =
         DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, e.getProject());

@@ -253,8 +253,8 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val detachableMapper = masterMapper.branchOffDetachable(project.name == "buildSrc")
 
         val kotlinCompileTasks = target?.let { it.compilations ?: emptyList() }
-            ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
-            ?: (project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList())
+                ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
+                ?: (project.getAllTasks(false)[project]?.filter { it.javaClass.name in kotlinCompileTaskClasses } ?: emptyList())
 
         kotlinCompileTasks.forEach { compileTask ->
             if (compileTask.javaClass.name !in kotlinCompileTaskClasses) return@forEach

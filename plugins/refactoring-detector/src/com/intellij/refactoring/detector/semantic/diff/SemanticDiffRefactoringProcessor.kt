@@ -9,6 +9,7 @@ import com.intellij.diff.tools.combined.CombinedDiffViewer
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.refactoring.detector.RefactoringDetectorBundle
 import org.jetbrains.research.kotlinrminer.ide.KotlinRMiner
@@ -17,6 +18,8 @@ import org.jetbrains.research.refactorinsight.kotlin.impl.data.KotlinRefactoring
 class SemanticDiffRefactoringProcessor : DiffExtension() {
 
   override fun onViewerCreated(viewer: DiffViewer, context: DiffContext, request: DiffRequest) {
+    if (!Registry.`is`("enable.semantic.inlays.in.combined.diff")) return
+
     val project = context.project ?: return
     val combinedDiffViewer = viewer as? CombinedDiffViewer ?: return
     val combinedDiffRequest = request as? CombinedDiffRequest ?: return

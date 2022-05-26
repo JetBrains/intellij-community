@@ -2,5 +2,5 @@
 /**
  * @param <T>
  */
-class a<T> {
+public class a<T> {
 }

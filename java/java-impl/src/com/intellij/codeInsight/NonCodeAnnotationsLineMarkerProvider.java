@@ -14,7 +14,6 @@ import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
-import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.java.JavaBundle;
@@ -197,7 +196,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     private static boolean shouldShowInGutterPopup(IntentionAction action) {
       return action instanceof AnnotateIntentionAction ||
              action instanceof DeannotateIntentionAction ||
-             action instanceof EditContractIntention ||
+             action.getClass().getName().equals("com.intellij.codeInspection.dataFlow.EditContractIntention") ||
              action instanceof MakeInferredAnnotationExplicit ||
              action instanceof MakeExternalAnnotationExplicit;
     }

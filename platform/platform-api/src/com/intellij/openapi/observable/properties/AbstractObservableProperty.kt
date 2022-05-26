@@ -3,7 +3,9 @@ package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class AbstractObservableProperty<T> : ObservableProperty<T> {
 
   private val changeListeners = DisposableWrapperList<(T) -> Unit>()

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
@@ -62,6 +63,17 @@ data class ClientId(val value: String) {
       private set
 
     /**
+     * The ID for the owner of RD/CWM session.
+     * In case of CWM, it refers to [defaultLocalId].
+     * In case of RD, it refers to the controller ID.
+     *
+     * **Note:** returned value makes sense only for a host machine
+     */
+    @JvmStatic
+    var ownerId: ClientId = defaultLocalId
+      private set
+
+    /**
      * True if and only if the current [ClientId] is local to this process
      */
     @JvmStatic
@@ -95,6 +107,24 @@ data class ClientId(val value: String) {
     @JvmStatic
     val currentOrNull: ClientId?
       get() = getCachedService()?.clientIdValue?.let(::ClientId)
+
+    /**
+     * Overrides the ID of the owner of CWM/RD session.
+     */
+    @JvmStatic
+    @ApiStatus.Internal
+    fun overrideOwnerId(newId: ClientId, parentDisposable: Disposable) {
+      require(ownerId == defaultLocalId)
+      ownerId = newId
+      try {
+        Disposer.register(parentDisposable) {
+          ownerId = defaultLocalId
+        }
+      } catch (_: IncorrectOperationException) {
+        // The parent is already disposed
+        ownerId = defaultLocalId
+      }
+    }
 
     /**
      * Overrides the ID that is considered to be local to this process. Can be only invoked once.

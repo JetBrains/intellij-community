@@ -6,36 +6,38 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.EditorNotifications
+import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.util.findModule
 import org.jetbrains.kotlin.idea.util.sourceRoots
+import java.util.function.Function
+import javax.swing.JComponent
 
-class JavaOutsideModuleDetector(private val project: Project) : EditorNotifications.Provider<EditorNotificationPanel>() {
-    override fun getKey(): Key<EditorNotificationPanel> = KEY
+class JavaOutsideModuleDetector : EditorNotificationProvider {
 
-    override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor): EditorNotificationPanel? {
-        if (!FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE)) return null
-        val module = file.findModule(project) ?: return null
-        if (!module.isGradleModule()) return null
-        val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return null
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+        if (file.extension != JavaFileType.DEFAULT_EXTENSION && !FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE)) {
+            return CONST_NULL
+        }
+        val module = file.findModule(project)?.takeIf(Module::isGradleModule) ?: return CONST_NULL
+        val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return CONST_NULL
 
         val filePath = file.path
         val nonKotlinPath = module.sourceRoots.map { it.path } - facetSettings.pureKotlinSourceFolders
-        if (nonKotlinPath.any { filePath.startsWith(it) }) return null
-        return EditorNotificationPanel().apply {
-            text(KotlinJvmBundle.message("this.java.file.is.outside.of.java.source.roots.and.won.t.be.added.to.the.classpath"))
-            icon(AllIcons.General.Warning)
-        }
-    }
+        if (nonKotlinPath.any { filePath.startsWith(it) }) return CONST_NULL
 
-    companion object {
-        private val KEY = Key.create<EditorNotificationPanel>("JavaOutsideModuleDetector")
+        return Function {
+            EditorNotificationPanel(it).apply {
+                text(KotlinJvmBundle.message("this.java.file.is.outside.of.java.source.roots.and.won.t.be.added.to.the.classpath"))
+                icon(AllIcons.General.Warning)
+            }
+        }
     }
 }

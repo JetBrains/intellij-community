@@ -1,7 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
-import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
@@ -75,7 +76,7 @@ public class DominatorTreeExceptionFilter {
 
   private void buildExceptionRanges() {
     for (Statement stat : statement.getStats()) {
-      List<Statement> lstPreds = stat.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD);
+      List<Statement> lstPreds = stat.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
       if (!lstPreds.isEmpty()) {
 
         Set<Integer> set = new HashSet<>();

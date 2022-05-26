@@ -6,6 +6,8 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.util.xmlb.annotations.XMap
+import java.util.*
 
 @State(name = "RunToolbarSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class RunToolbarSettings(private val project: Project) : SimplePersistentStateComponent<RunToolbarState>(RunToolbarState()) {
@@ -13,14 +15,42 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
     fun getInstance(project: Project): RunToolbarSettings = project.service()
   }
 
-  fun getRunConfigurations(): List<RunnerAndConfigurationSettings> {
-    val runManager = RunManagerImpl.getInstanceImpl(project)
-    return state.installedItems.mapNotNull { runManager.getConfigurationById(it) }.toMutableList()
+  fun setConfigurations(map: Map<String, RunnerAndConfigurationSettings?>, slotOrder: List<String>) {
+    val slt = mutableMapOf<String, String>()
+    map.filter { it.value != null }.forEach{entry ->  entry.value?.let {
+      slt[entry.key] = it.uniqueID
+    }}
+
+    state.slots.clear()
+    state.slots.putAll(slt)
+
+    state.slotOrder.clear()
+    state.slotOrder.addAll(slotOrder)
   }
 
-  fun setRunConfigurations(list : List<RunnerAndConfigurationSettings>) {
-    state.installedItems.clear()
-    state.installedItems.addAll(list.map { it.uniqueID }.toMutableList())
+
+  fun getConfigurations(): Pair<List<String>, Map<String, RunnerAndConfigurationSettings>> {
+    val runManager = RunManagerImpl.getInstanceImpl(project)
+
+    var slotOrder = mutableListOf<String>()
+    val slt = mutableMapOf<String, RunnerAndConfigurationSettings>()
+
+    if(state.slots.isEmpty() || state.slotOrder.isEmpty()) {
+      state.installedItems.mapNotNull { runManager.getConfigurationById(it) }.forEach {
+        val uid = UUID.randomUUID().toString()
+        slotOrder.add(uid)
+        slt[uid] = it
+      }
+    } else {
+      state.slots.forEach { entry ->
+        runManager.getConfigurationById(entry.value)?.let {
+          slt[entry.key] = it
+        }
+      }
+      slotOrder = state.slotOrder
+    }
+
+    return Pair(slotOrder, slt)
   }
 
   fun getMoveNewOnTop(): Boolean {
@@ -41,8 +71,15 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
 }
 
 class RunToolbarState : BaseState() {
+  @Deprecated("Use slots map instead of installedItems")
   @get:XCollection
   val installedItems by list<String>()
+
+  @get:XCollection
+  val slotOrder by list<String>()
+
+  @get:XMap
+  var slots by map<String, String>()
 
   var moveNewOnTop by property(defaultValue = true)
   var updateMainBySelected by property(defaultValue = true)

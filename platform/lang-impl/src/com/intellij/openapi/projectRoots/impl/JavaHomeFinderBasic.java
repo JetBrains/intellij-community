@@ -11,7 +11,6 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,6 @@ public class JavaHomeFinderBasic {
   @SuppressWarnings("NonConstantLogger") private final Logger log = Logger.getInstance(getClass());
   private final List<Supplier<Set<String>>> myFinders = new ArrayList<>();
   private final JavaHomeFinder.SystemInfoProvider mySystemInfo;
-  private final Set<String> myPaths = ContainerUtil.newConcurrentSet();
 
   public JavaHomeFinderBasic(boolean checkDefaultLocations,
                              boolean forceEmbeddedJava,
@@ -55,10 +53,6 @@ public class JavaHomeFinderBasic {
 
   protected JavaHomeFinder.SystemInfoProvider getSystemInfo() {
     return mySystemInfo;
-  }
-
-  public String @NotNull [] getPaths() {
-    return ArrayUtil.toStringArray(myPaths);
   }
 
   private @NotNull Set<String> findInSpecifiedPaths(String[] paths) {
@@ -161,8 +155,6 @@ public class JavaHomeFinderBasic {
   }
 
   protected void scanFolder(@NotNull Path folder, boolean includeNestDirs, @NotNull Collection<? super String> result) {
-    myPaths.add(folder.toString());
-
     if (JdkUtil.checkForJdk(folder)) {
       result.add(folder.toAbsolutePath().toString());
       return;

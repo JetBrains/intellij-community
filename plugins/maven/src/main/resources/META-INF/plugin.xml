@@ -109,6 +109,8 @@
       <configurable instance="org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable"
                     id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="messages.MavenIndicesBundle"
                     nonDefaultProject="true"/>
+      <configurable instance="org.jetbrains.idea.maven.wizards.archetype.MavenCatalogsConfigurable"
+                    id="reference.settings.project.maven.archetype.catalogs"/>
     </projectConfigurable>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
@@ -307,6 +309,10 @@
 
     <registryKey key="maven.consumer.pom.support" defaultValue="false"
                  description="Enable Maven consumer pom support"/>
+
+    <registryKey key="maven.import.tree.structure" defaultValue="false"
+                 description="Enable experimental implementation of Maven import module tree structure with split main and test modules. See IDEA-85478 for details."/>
+
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>

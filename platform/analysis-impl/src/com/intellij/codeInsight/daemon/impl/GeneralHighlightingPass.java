@@ -71,8 +71,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   final EditorColorsScheme myGlobalScheme;
   private volatile NotNullProducer<HighlightVisitor[]> myHighlightVisitorProducer = this::cloneHighlightVisitors;
 
-  GeneralHighlightingPass(@NotNull Project project,
-                          @NotNull PsiFile file,
+  GeneralHighlightingPass(@NotNull PsiFile file,
                           @NotNull Document document,
                           int startOffset,
                           int endOffset,
@@ -80,7 +79,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                           @NotNull ProperTextRange priorityRange,
                           @Nullable Editor editor,
                           @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    super(project, document, getPresentableNameText(), file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
+    super(file.getProject(), document, getPresentableNameText(), file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
 

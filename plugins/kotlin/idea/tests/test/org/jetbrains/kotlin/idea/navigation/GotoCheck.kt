@@ -7,7 +7,7 @@ import com.intellij.ide.util.gotoByName.LanguageRef
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
 import kotlin.test.assertEquals

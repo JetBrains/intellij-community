@@ -150,8 +150,8 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             providerName = "providerName",
             totalNumberOfIndexedFiles = 444,
             totalNumberOfFilesFullyIndexedByExtensions = 33,
-            totalIndexingTime = JsonDuration(123),
-            contentLoadingTime = JsonDuration(456),
+            totalIndexingVisibleTime = JsonDuration(123),
+            contentLoadingVisibleTime = JsonDuration(456),
             numberOfTooLargeForIndexingFiles = 1,
             slowIndexedFiles = listOf(
               JsonFileProviderIndexStatistics.JsonSlowIndexedFile(

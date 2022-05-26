@@ -575,7 +575,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @return the index of the fragment, {@link #FRAGMENT_ICON} if the icon is at the offset, or -1 if nothing is there.
    */
   public int findFragmentAt(int x) {
-    float curX = myIpad.left;
+    float curX = myIpad.left; //added even if no icon, see com.intellij.ui.SimpleColoredComponent.doPaintText
     if (myBorder != null) {
       curX += myBorder.getBorderInsets(this).left;
     }
@@ -618,7 +618,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     if (myIcon != null && myIconOnTheRight) {
-      curX += myIconTextGap;
+      curX += myIconTextGap + myIpad.left;
       if (x >= curX && x < curX + myIcon.getIconWidth()) {
         return FRAGMENT_ICON;
       }

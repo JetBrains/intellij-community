@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
@@ -20,11 +21,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class TabbedPaneWrapper  {
+  private static final Logger LOG = Logger.getInstance(TabbedPaneWrapper.class);
   protected TabbedPane myTabbedPane;
   private JComponent myTabbedPaneHolder;
 
@@ -99,19 +97,31 @@ public class TabbedPaneWrapper  {
   /**
    * @see JTabbedPane#addTab(String, Icon, Component, String)
    */
-  public final synchronized void addTab(@TabTitle final String title, final Icon icon, final JComponent component, final @NlsContexts.Tooltip String tip) {
+  public final synchronized void addTab(@TabTitle final String title,
+                                        final Icon icon,
+                                        final @NotNull JComponent component,
+                                        final @NlsContexts.Tooltip String tip) {
     insertTab(title, icon, component, tip, myTabbedPane.getTabCount());
   }
 
   public final synchronized void addTab(@TabTitle final String title, final JComponent component) {
-    insertTab(title, null, component, null, myTabbedPane.getTabCount());
+    if (component != null) {
+      insertTab(title, null, component, null, myTabbedPane.getTabCount());
+    }
+    else {
+      LOG.error("Unable to insert a tab without component: " + title);
+    }
   }
 
-  public synchronized void insertTab(@TabTitle final String title, @Nullable Icon icon, final JComponent component, final @NlsContexts.Tooltip String tip, final int index) {
+  public synchronized void insertTab(@TabTitle final String title,
+                                     @Nullable Icon icon,
+                                     final @NotNull JComponent component,
+                                     final @NlsContexts.Tooltip String tip,
+                                     final int index) {
     myTabbedPane.insertTab(title, icon, createTabWrapper(component), tip, index);
   }
 
-  private TabWrapper createTabWrapper(JComponent component) {
+  private TabWrapper createTabWrapper(@NotNull JComponent component) {
     return myFactory.createTabWrapper(component);
   }
 
@@ -235,7 +245,7 @@ public class TabbedPaneWrapper  {
   /**
    * @see JTabbedPane#setComponentAt(int, Component)
    */
-  public final synchronized void setComponentAt(final int index, final JComponent component) {
+  public final synchronized void setComponentAt(final int index, final @NotNull JComponent component) {
     assertIsDispatchThread();
     myTabbedPane.setComponentAt(index, createTabWrapper(component));
   }

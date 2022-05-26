@@ -29,7 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
@@ -1698,7 +1698,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiType type = variable.getType();
       PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
       if (psiClass != null) {
-        PsiType typeToUse = psiClass.getUserData(ExtractLightMethodObjectHandler.REFERENCED_TYPE);
+        PsiType typeToUse = psiClass.getUserData(LightMethodObjectExtractedData.REFERENCED_TYPE);
         if (typeToUse != null) {
           type = typeToUse;
         }
@@ -1710,7 +1710,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Nullable
     private static PsiMethod getReferencedMethod(@NotNull JavaResolveResult resolveResult) {
       PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
-      PsiMethod methodToUseInstead = psiMethod == null ? null : psiMethod.getUserData(ExtractLightMethodObjectHandler.REFERENCE_METHOD);
+      PsiMethod methodToUseInstead = psiMethod == null ? null : psiMethod.getUserData(LightMethodObjectExtractedData.REFERENCE_METHOD);
       if (methodToUseInstead != null) {
         psiMethod = methodToUseInstead;
       }
@@ -1721,7 +1721,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Nullable
     private static PsiClass getClass(@NotNull PsiClassType classType) {
       PsiClass aClass = classType.resolve();
-      PsiType type = aClass == null ? null : aClass.getUserData(ExtractLightMethodObjectHandler.REFERENCED_TYPE);
+      PsiType type = aClass == null ? null : aClass.getUserData(LightMethodObjectExtractedData.REFERENCED_TYPE);
       if (type != null) {
         return PsiTypesUtil.getPsiClass(type);
       }
@@ -1733,14 +1733,14 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Contract("null -> null")
     private static PsiMethod getReferencedConstructor(@Nullable PsiMethod originalConstructor) {
       if (originalConstructor == null) return null;
-      PsiMethod methodToUseInstead = originalConstructor.getUserData(ExtractLightMethodObjectHandler.REFERENCE_METHOD);
+      PsiMethod methodToUseInstead = originalConstructor.getUserData(LightMethodObjectExtractedData.REFERENCE_METHOD);
       return methodToUseInstead == null ? originalConstructor : methodToUseInstead;
     }
 
     @NotNull
     private static PsiType getClassType(@NotNull PsiClassType expressionPsiType) {
       PsiClass aClass = expressionPsiType.resolve();
-      PsiType type = aClass == null ? null : aClass.getUserData(ExtractLightMethodObjectHandler.REFERENCED_TYPE);
+      PsiType type = aClass == null ? null : aClass.getUserData(LightMethodObjectExtractedData.REFERENCED_TYPE);
       return type != null ? type : expressionPsiType;
     }
   }

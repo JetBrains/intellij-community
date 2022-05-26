@@ -38,7 +38,7 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
 
   @Override
   @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.EXTERNAL_TOOLS) == null ? null : file.getTextRange();
     if (textRange == null || !externalAnnotatorsDefined(file)) {
       return null;
@@ -48,7 +48,7 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
 
   private static boolean externalAnnotatorsDefined(@NotNull PsiFile file) {
     for (Language language : file.getViewProvider().getLanguages()) {
-      final List<ExternalAnnotator<?,?>> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, file);
+      List<ExternalAnnotator<?,?>> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, file);
       if (!externalAnnotators.isEmpty()) {
         return true;
       }

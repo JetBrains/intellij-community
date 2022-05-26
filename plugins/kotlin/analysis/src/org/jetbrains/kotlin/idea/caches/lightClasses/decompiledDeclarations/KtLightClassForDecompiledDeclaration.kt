@@ -7,28 +7,27 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.PsiClassImplUtil
 import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.impl.PsiSuperMethodImplUtil
-import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.classes.KotlinClassInnerStuffCache
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.LightClassesLazyCreator
 import org.jetbrains.kotlin.asJava.classes.lazyPub
-import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
+import org.jetbrains.kotlin.idea.caches.lightClasses.decompiledDeclarations.KtLightEnumEntryForDecompiledDeclaration
+import org.jetbrains.kotlin.idea.caches.lightClasses.decompiledDeclarations.KtLightFieldForDecompiledDeclaration
+import org.jetbrains.kotlin.idea.caches.lightClasses.decompiledDeclarations.KtLightMethodForDecompiledDeclaration
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.idea.caches.lightClasses.decompiledDeclarations.*
 
 open class KtLightClassForDecompiledDeclaration(
     override val clsDelegate: PsiClass,
     private val clsParent: PsiElement,
     private val file: KtClsFile,
-    final override val kotlinOrigin: KtClassOrObject?
-) : KtLightElementBase(clsParent), PsiClass, KtLightClass, PsiExtensibleClass {
+    kotlinOrigin: KtClassOrObject?
+) : KtLightClassForDecompiledDeclarationBase(clsDelegate, clsParent, kotlinOrigin) {
 
     private val myInnersCache = KotlinClassInnerStuffCache(
         myClass = this,
@@ -59,13 +58,13 @@ open class KtLightClassForDecompiledDeclaration(
     override fun hasModifierProperty(name: String): Boolean =
         clsDelegate.hasModifierProperty(name)
 
-    override fun findMethodBySignature(patternMethod: PsiMethod?, checkBases: Boolean): PsiMethod? =
-        patternMethod?.let { PsiClassImplUtil.findMethodBySignature(this, it, checkBases) }
+    override fun findMethodBySignature(patternMethod: PsiMethod, checkBases: Boolean): PsiMethod? =
+        PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases)
 
-    override fun findMethodsBySignature(patternMethod: PsiMethod?, checkBases: Boolean): Array<PsiMethod?> =
-        patternMethod?.let { PsiClassImplUtil.findMethodsBySignature(this, it, checkBases) } ?: emptyArray()
+    override fun findMethodsBySignature(patternMethod: PsiMethod, checkBases: Boolean): Array<PsiMethod?> =
+        PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases)
 
-    override fun findMethodsAndTheirSubstitutorsByName(@NonNls name: String?, checkBases: Boolean): List<Pair<PsiMethod, PsiSubstitutor>> =
+    override fun findMethodsAndTheirSubstitutorsByName(@NonNls name: String, checkBases: Boolean): List<Pair<PsiMethod, PsiSubstitutor>> =
         PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases)
 
     override fun getImplementsList(): PsiReferenceList? = clsDelegate.implementsList
@@ -78,7 +77,7 @@ open class KtLightClassForDecompiledDeclaration(
 
     override fun getContainingClass(): PsiClass? = parent as? PsiClass
 
-    override fun isInheritorDeep(baseClass: PsiClass?, classToByPass: PsiClass?): Boolean = clsDelegate.isInheritorDeep(baseClass, classToByPass)
+    override fun isInheritorDeep(baseClass: PsiClass, classToByPass: PsiClass?): Boolean = clsDelegate.isInheritorDeep(baseClass, classToByPass)
 
     override fun getAllMethodsAndTheirSubstitutors(): List<Pair<PsiMethod?, PsiSubstitutor?>?> =
         PsiClassImplUtil.getAllWithSubstitutorsByMap<PsiMethod>(this, PsiClassImplUtil.MemberType.METHOD)

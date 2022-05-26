@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,11 +84,11 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
           }
 
           private boolean hasCaretIn(int start, int end) {
-            Editor activeEditor = getActiveEditor(document);
-            final List<Caret> carets = activeEditor == null ? Collections.emptyList() : activeEditor.getCaretModel().getAllCarets();
-            for (Caret caret : carets) {
-              int offset = caret.getOffset();
-              if (offset >= start && offset <= end) return true;
+            for (Editor activeEditor : getActiveEditors(document)) {
+              for (Caret caret : activeEditor.getCaretModel().getAllCarets()) {
+                int offset = caret.getOffset();
+                if (offset >= start && offset <= end) return true;
+              }
             }
             return false;
           }
@@ -136,17 +138,22 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       return;
     }
 
-    Editor activeEditor = getActiveEditor(document);
-
-    // when virtual space enabled, we can strip whitespace anywhere
-    boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
-
     TrailingSpacesOptions options = getOptions(document);
     if (options == null) return;
 
+    List<Editor> activeEditors = getActiveEditors(document);
+    List<Caret> carets = new ArrayList<>();
+    if (options.isChangedLinesOnly() && options.isStripTrailingSpaces()) {
+      for (Editor activeEditor : activeEditors) {
+        // when virtual space enabled, we can strip whitespace anywhere
+        if (!activeEditor.getSettings().isVirtualSpace()) {
+          carets.addAll(activeEditor.getCaretModel().getAllCarets());
+        }
+      }
+    }
+
     int[] caretLines;
-    if (activeEditor != null && options.isChangedLinesOnly() && options.isStripTrailingSpaces() && !isVirtualSpaceEnabled) {
-      List<Caret> carets = activeEditor.getCaretModel().getAllCarets();
+    if (!carets.isEmpty()) {
       caretLines = new int[carets.size()];
       for (int i = 0; i < carets.size(); i++) {
         Caret caret = carets.get(i);
@@ -159,11 +166,27 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     ((DocumentImpl)document).clearLineModificationFlagsExcept(caretLines);
   }
 
-  private static Editor getActiveEditor(@NotNull Document document) {
+  private static List<Editor> getActiveEditors(@NotNull Document document) {
+    Application application = ApplicationManager.getApplication();
+    // ignore caret placing when exiting
+    if (application.isDisposed()) {
+      return Collections.emptyList();
+    }
+    List<Editor> activeEditors = new ArrayList<>();
+    Editor localEditor = getActiveLocalEditor(document);
+    if (localEditor != null) {
+      activeEditors.add(localEditor);
+    }
+    for (ClientEditorManager manager : application.getServices(ClientEditorManager.class, false)) {
+      manager.editors().filter(e -> UIUtil.hasFocus(e.getComponent()) && e.getDocument() == document).forEach(activeEditors::add);
+    }
+    return activeEditors;
+  }
+
+  private static Editor getActiveLocalEditor(@NotNull Document document) {
     Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
-    // ignore caret placing when exiting
-    Editor activeEditor = ApplicationManager.getApplication().isDisposed() ? null : CommonDataKeys.EDITOR.getData(dataContext);
+    Editor activeEditor = CommonDataKeys.EDITOR.getData(dataContext);
     if (activeEditor != null && activeEditor.getDocument() != document) {
       activeEditor = null;
     }
@@ -177,9 +200,12 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     if (!(document instanceof DocumentImpl)) {
       return true;
     }
-    Editor activeEditor = getActiveEditor(document);
+    List<Editor> activeEditors = getActiveEditors(document);
 
-    final List<Caret> carets = activeEditor == null ? Collections.emptyList() : activeEditor.getCaretModel().getAllCarets();
+    final List<Caret> carets = new ArrayList<>();
+    for (Editor activeEditor : activeEditors) {
+      carets.addAll(activeEditor.getCaretModel().getAllCarets());
+    }
     final List<VisualPosition> visualCarets = new ArrayList<>(carets.size());
     int[] caretOffsets = new int[carets.size()];
     for (int i = 0; i < carets.size(); i++) {
@@ -189,10 +215,10 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     }
 
     boolean markAsNeedsStrippingLater = ((DocumentImpl)document)
-      .stripTrailingSpaces(getProject(document, activeEditor), inChangedLinesOnly, skipCaretLines ? caretOffsets : null);
+      .stripTrailingSpaces(getProject(document, activeEditors), inChangedLinesOnly, skipCaretLines ? caretOffsets : null);
 
-    if (activeEditor != null && !ShutDownTracker.isShutdownHookRunning()) {
-      activeEditor.getCaretModel().runBatchCaretOperation(() -> {
+    if (!activeEditors.isEmpty() && !ShutDownTracker.isShutdownHookRunning()) {
+      runBatchCaretOperation(activeEditors, () -> {
         for (int i = 0; i < carets.size(); i++) {
           Caret caret = carets.get(i);
           if (caret.isValid()) {
@@ -205,9 +231,28 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     return !markAsNeedsStrippingLater;
   }
 
+  private static void runBatchCaretOperation(@NotNull List<Editor> editors, @NotNull Runnable runnable) {
+    runBatchCaretOperation(editors, 0, runnable);
+  }
+
+  private static void runBatchCaretOperation(@NotNull List<Editor> editors, int startIndex, @NotNull Runnable runnable) {
+    if (startIndex >= editors.size()) {
+      runnable.run();
+      return;
+    }
+    editors.get(startIndex).getCaretModel().runBatchCaretOperation(() -> {
+      runBatchCaretOperation(editors, startIndex + 1, runnable);
+    });
+  }
+
   @Nullable
-  private static Project getProject(@NotNull Document document, @Nullable Editor editor) {
-    if (editor != null) return editor.getProject();
+  private static Project getProject(@NotNull Document document, @NotNull List<Editor> editors) {
+    for (Editor editor : editors) {
+      Project project = editor.getProject();
+      if (project != null) {
+        return project;
+      }
+    }
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
       return ProjectUtil.guessProjectForFile(file);
@@ -240,8 +285,8 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       if (file != null && file.isValid() && !Boolean.TRUE.equals(DISABLE_FOR_FILE_KEY.get(file))) {
         EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
         if (editorSettings != null) {
-          final Editor activeEditor = getActiveEditor(document);
-          final Project project = getProject(document, activeEditor);
+          final List<Editor> activeEditors = getActiveEditors(document);
+          final Project project = getProject(document, activeEditors);
           MyTrailingSpacesOptions currOptions = new MyTrailingSpacesOptions();
           if (project != null) {
             for (TrailingSpacesOptionsProvider provider : TrailingSpacesOptionsProvider.EP_NAME.getExtensionList()) {

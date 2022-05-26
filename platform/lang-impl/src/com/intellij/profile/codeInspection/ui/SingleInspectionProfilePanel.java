@@ -736,7 +736,8 @@ public class SingleInspectionProfilePanel extends JPanel {
           final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
           final String description = defaultDescriptor.loadDescription(); //NON-NLS
           try {
-            DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(DescriptionEditorPaneKt.toHTML(myDescription, description, false), myProfileFilter.getFilter()));
+            if (description == null) throw new NullPointerException();
+            DescriptionEditorPaneKt.readHTML(myDescription, SearchUtil.markup(description, myProfileFilter.getFilter()));
           }
           catch (Throwable t) {
             LOG.error("Failed to load description for: " +

@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.service.project.GradleNotification;
+import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -44,6 +45,7 @@ public class ConfigurationErrorEvent extends AbstractTestEvent {
     final String message = getConfigurationErrorMessage(configurationErrorMsg, openSettings);
     GradleNotification.NOTIFICATION_GROUP
       .createNotification(errorTitle, message, NotificationType.WARNING)
+      .setDisplayId(GradleNotificationIdsHolder.configurationError)
       .setListener(new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {

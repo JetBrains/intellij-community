@@ -18,7 +18,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +48,7 @@ public class JavaTryUnwrapper extends JavaUnwrapper {
         }
       }
     }
-    if (RefactoringUtil.isLoopOrIf(trySt.getParent())) {
+    if (CommonJavaRefactoringUtil.isLoopOrIf(trySt.getParent())) {
       trySt = BlockUtils.expandSingleStatementToBlockStatement(trySt);
     }
 

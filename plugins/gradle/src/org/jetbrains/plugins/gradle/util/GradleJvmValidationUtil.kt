@@ -21,6 +21,7 @@ import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.GradleNotification.NOTIFICATION_GROUP
+import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
 import org.jetbrains.plugins.gradle.util.GradleProperties.GradleProperty
 import java.io.File
 import java.nio.file.Path
@@ -105,6 +106,7 @@ private fun notifyInvalidGradleJvmInfo(project: Project, @NlsContexts.HintText n
     }
   }
   NOTIFICATION_GROUP.createNotification(notificationTitle, notificationContent, INFORMATION)
+    .setDisplayId(GradleNotificationIdsHolder.jvmInvalid)
     .setListener(hyperLinkProcessor)
     .notify(project)
 }

@@ -38,13 +38,24 @@ abstract class SuggestedRefactoringUI {
     return model.improvePresentation()
   }
 
-  data class NewParameterData @JvmOverloads constructor(
+  data class NewParameterData constructor(
     @Nls val presentableName: String,
     val valueFragment: PsiCodeFragment,
     val offerToUseAnyVariable: Boolean,
     @Nls(capitalization = Nls.Capitalization.Sentence) val placeholderText: String? = null,
-    val additionalData: NewParameterAdditionalData? = null
-  )
+    val additionalData: NewParameterAdditionalData? = null,
+    val suggestRename: Boolean = false
+  ) {
+    @Deprecated("For compatibility", level = DeprecationLevel.HIDDEN)
+    @JvmOverloads
+    constructor(
+      presentableName: @Nls String,
+      valueFragment: PsiCodeFragment,
+      offerToUseAnyVariable: Boolean,
+      placeholderText: @Nls(capitalization = Nls.Capitalization.Sentence) String? = null,
+      additionalData: NewParameterAdditionalData? = null,
+    ) : this(presentableName, valueFragment, offerToUseAnyVariable, placeholderText, additionalData, false)
+  }
 
   /**
    * Language-specific information to be stored in [NewParameterData].

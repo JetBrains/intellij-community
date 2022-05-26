@@ -13,7 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +79,7 @@ public class JavaEditablePostfixTemplate
     }
     else {
       PsiFile file = context.getContainingFile();
-      expressions = new ArrayList<>(IntroduceVariableBase.collectExpressions(file, document, Math.max(offset - 1, 0), false));
+      expressions = new ArrayList<>(CommonJavaRefactoringUtil.collectExpressions(file, document, Math.max(offset - 1, 0), false));
     }
 
 

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.Topic;
@@ -14,9 +13,9 @@ import java.awt.*;
 public abstract class EditorColorsManager {
   public static final Topic<EditorColorsListener> TOPIC = new Topic<>(EditorColorsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
-  @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
+  public static final @NonNls String DEFAULT_SCHEME_NAME = "Default";
 
-  @NonNls public static final String COLOR_SCHEME_FILE_EXTENSION = ".icls";
+  public static final @NonNls String COLOR_SCHEME_FILE_EXTENSION = ".icls";
 
   public static EditorColorsManager getInstance() {
     return ApplicationManager.getApplication().getService(EditorColorsManager.class);
@@ -24,19 +23,11 @@ public abstract class EditorColorsManager {
 
   public abstract void addColorsScheme(@NotNull EditorColorsScheme scheme);
 
-  /**
-   * @deprecated Does nothing, left for API compatibility.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void removeAllSchemes();
-
   public abstract EditorColorsScheme @NotNull [] getAllSchemes();
 
   public abstract void setGlobalScheme(EditorColorsScheme scheme);
 
-  @NotNull
-  public abstract EditorColorsScheme getGlobalScheme();
+  public abstract @NotNull EditorColorsScheme getGlobalScheme();
 
   public abstract EditorColorsScheme getScheme(@NotNull String schemeName);
 
@@ -46,27 +37,17 @@ public abstract class EditorColorsManager {
    * @deprecated use {@link #TOPIC} instead
    */
   @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final void addEditorColorsListener(@NotNull EditorColorsListener listener) {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, listener);
-  }
-
-  /**
-   * @deprecated use {@link #TOPIC} instead
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated
-  public final void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable) {
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(TOPIC, listener);
   }
 
   public abstract boolean isUseOnlyMonospacedFonts();
 
   public abstract void setUseOnlyMonospacedFonts(boolean b);
 
-  @NotNull
-  public EditorColorsScheme getSchemeForCurrentUITheme() {
+  public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
     return getGlobalScheme();
   }
 

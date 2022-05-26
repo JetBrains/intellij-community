@@ -8,8 +8,10 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.*;
@@ -137,32 +139,39 @@ public final class SwitchHelper {
             (index instanceof InvocationExprent && ((InvocationExprent)index).getName().equals("ordinal")));
   }
 
-  private static void removeTempVariableDeclarations(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
+  static void removeTempVariableDeclarations(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
     if (tempVarAssignments.isEmpty()) return;
     for (Statement statement : new HashSet<>(tempVarAssignments.values())) {
       Statement parent = statement;
       while (parent != null) {
         boolean removed = false;
-        Statement firstStatement = parent.getFirst();
-        if (firstStatement.type == Statement.TYPE_BASIC_BLOCK) {
-          for (int i = 0; i < firstStatement.getExprents().size(); i++) {
-            Exprent exprent = firstStatement.getExprents().get(i);
-            Exprent assignmentExprent = null;
-            if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-              assignmentExprent = exprent;
-              exprent = ((AssignmentExprent)exprent).getLeft();
-            }
-            if (exprent.type != Exprent.EXPRENT_VAR) continue;
-            VarExprent varExprent = (VarExprent)exprent;
-            if (varExprent.isDefinition() && tempVarAssignments.keySet().stream()
-              .anyMatch(expr -> expr.getIndex() == varExprent.getIndex() && expr.getVersion() == varExprent.getVersion())) {
-              firstStatement.getExprents().remove(assignmentExprent == null ? varExprent : assignmentExprent);
-              removed = true;
-              break;
-            }
-          }
-          if (removed) break;
+        List<Exprent> varExprents;
+        if (parent.getFirst().type == StatementType.BASIC_BLOCK) {
+          varExprents = parent.getFirst().getExprents();
         }
+        else if (parent.type == StatementType.TRY_CATCH) {
+          varExprents = parent.getVarDefinitions();
+        }
+        else {
+          varExprents = Collections.emptyList();
+        }
+        for (int i = 0; i < varExprents.size(); i++) {
+          Exprent exprent = varExprents.get(i);
+          Exprent assignmentExprent = null;
+          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+            assignmentExprent = exprent;
+            exprent = ((AssignmentExprent)exprent).getLeft();
+          }
+          if (exprent.type != Exprent.EXPRENT_VAR) continue;
+          VarExprent varExprent = (VarExprent)exprent;
+          if (varExprent.isDefinition() && tempVarAssignments.keySet().stream()
+            .anyMatch(expr -> expr.getIndex() == varExprent.getIndex() && expr.getVersion() == varExprent.getVersion())) {
+            varExprents.remove(assignmentExprent == null ? varExprent : assignmentExprent);
+            removed = true;
+            break;
+          }
+        }
+        if (removed) break;
         parent = parent.getParent();
       }
     }
@@ -175,7 +184,7 @@ public final class SwitchHelper {
 
     @NotNull
     Set<Object> findRealCaseValuesHashCodes(@NotNull SwitchStatement switchStatement) {
-      //noinspection SSBasedInspection,ConstantConditions
+      // noinspection SSBasedInspection
       return switchStatement.getCaseValues().stream()
         // We take only buckets that don't contain null value.
         // null value represents default branch and no temp variable is assigned there.
@@ -242,7 +251,7 @@ public final class SwitchHelper {
         SwitchStatement secondSwitch = null;
         Map<Integer, String> mappedCaseLabelValues = new HashMap<>();
         for (Statement statement : firstSwitch.getCaseStatements()) {
-          if (statement.type != Statement.TYPE_IF) {
+          if (statement.type != StatementType.IF) {
             Statement defaultStatement = firstSwitch.getDefaultEdge().getDestination();
             if (defaultStatement != statement) return null;
             continue;
@@ -266,10 +275,10 @@ public final class SwitchHelper {
 
           if (ifStatement.getLabelEdges().size() != 1) return null;
           Statement edgeDestination = ifStatement.getLabelEdges().iterator().next().getDestination();
-          if (edgeDestination.type == Statement.TYPE_SEQUENCE) {
+          if (edgeDestination.type == StatementType.SEQUENCE) {
             edgeDestination = edgeDestination.getFirst();
           }
-          if (edgeDestination.type != Statement.TYPE_SWITCH) return null;
+          if (edgeDestination.type != StatementType.SWITCH) return null;
           // the switch should be the same for all case labels
           if (secondSwitch != null && secondSwitch != edgeDestination) return null;
           secondSwitch = (SwitchStatement)edgeDestination;
@@ -296,7 +305,7 @@ public final class SwitchHelper {
         Map<Integer, IfStatement> ifBodyStatements = new HashMap<>();
         VarExprent tempVar = null;
         for (Statement statement : switchStatement.getCaseStatements()) {
-          if (statement.type != Statement.TYPE_IF) {
+          if (statement.type != StatementType.IF) {
             Statement defaultStatement = switchStatement.getDefaultEdge().getDestination();
             if (defaultStatement != statement) return null;
             continue;
@@ -379,9 +388,9 @@ public final class SwitchHelper {
         Exprent secondSwitchSelector = secondSwitch.getHeadExprent();
         if (secondSwitchSelector == null || secondSwitchSelector.type != Exprent.EXPRENT_SWITCH) return;
         Statement firstStatementInFirstSwitch = firstSwitch.getFirst();
-        if (firstStatementInFirstSwitch.type != Statement.TYPE_BASIC_BLOCK) return;
+        if (firstStatementInFirstSwitch.type != StatementType.BASIC_BLOCK) return;
         Statement firstStatementInSecondSwitch = secondSwitch.getFirst();
-        if (firstStatementInSecondSwitch.type != Statement.TYPE_BASIC_BLOCK) return;
+        if (firstStatementInSecondSwitch.type != StatementType.BASIC_BLOCK) return;
 
         for (List<Exprent> values : secondSwitch.getCaseValues()) {
           for (int i = 0; i < values.size(); i++) {
@@ -479,10 +488,10 @@ public final class SwitchHelper {
       }
 
       private static void removeOuterBreakEdge(@NotNull IfStatement ifStatement) {
-        List<StatEdge> ifStatementBreakEdges = ifStatement.getSuccessorEdges(StatEdge.TYPE_BREAK);
+        List<StatEdge> ifStatementBreakEdges = ifStatement.getSuccessorEdges(EdgeType.BREAK);
         if (ifStatementBreakEdges.size() != 1) return;
         Statement lastStatement = ifStatement.getStats().get(ifStatement.getStats().size() - 1);
-        List<StatEdge> lastStatementBreakEdges = lastStatement.getSuccessorEdges(StatEdge.TYPE_BREAK);
+        List<StatEdge> lastStatementBreakEdges = lastStatement.getSuccessorEdges(EdgeType.BREAK);
         if (lastStatementBreakEdges.size() != 1) return;
         StatEdge firstIfStatementBreakEdge = ifStatementBreakEdges.get(0);
         StatEdge lastStatementBreakEdge = lastStatementBreakEdges.get(0);

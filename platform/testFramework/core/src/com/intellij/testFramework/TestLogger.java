@@ -1,20 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.diagnostic.Log4jBasedLogger;
-import org.apache.log4j.Level;
+import com.intellij.openapi.diagnostic.JulLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.logging.Level;
 
-public final class TestLogger extends Log4jBasedLogger {
+public final class TestLogger extends JulLogger {
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"})
   TestLogger(@NotNull String category) {
-    super(org.apache.log4j.Logger.getLogger(category));
+    super(java.util.logging.Logger.getLogger(category));
   }
 
   static final class TestLoggerAssertionError extends AssertionError {
@@ -31,14 +31,14 @@ public final class TestLogger extends Log4jBasedLogger {
       }
 
       if (TestLoggerFactory.shouldSplitTestLogs()) {
-        TestLoggerFactory.log(Level.ERROR.toString(), myLogger.getName(), message, t);
+        TestLoggerFactory.log(Level.SEVERE.toString(), myLogger.getName(), message, t);
         for (String detail : details) {
-          TestLoggerFactory.log(Level.ERROR.toString(), myLogger.getName(), detail, null);
+          TestLoggerFactory.log(Level.SEVERE.toString(), myLogger.getName(), detail, null);
         }
       }
 
       message += DefaultLogger.attachmentsToString(t);
-      myLogger.info(message, t);
+      myLogger.log(Level.INFO, message, t);
 
       DefaultLogger.dumpExceptionsToStderr(message, t, details);
 
@@ -50,9 +50,9 @@ public final class TestLogger extends Log4jBasedLogger {
   public void warn(String message, @Nullable Throwable t) {
     if (LoggedErrorProcessor.getInstance().processWarn(myLogger.getName(), message, ensureNotControlFlow(t))) {
       if (TestLoggerFactory.shouldSplitTestLogs()) {
-        TestLoggerFactory.log(Level.WARN.toString(), myLogger.getName(), message, t);
+        TestLoggerFactory.log(Level.WARNING.toString(), myLogger.getName(), message, t);
       }
-      myLogger.warn(message, t);
+      myLogger.log(Level.WARNING, message, t);
     }
   }
 
@@ -81,7 +81,7 @@ public final class TestLogger extends Log4jBasedLogger {
   public void debug(String message, @Nullable Throwable t) {
     if (isDebugEnabled()) {
       super.debug(message, t);
-      TestLoggerFactory.log(Level.DEBUG.toString(), myLogger.getName(), message, t);
+      TestLoggerFactory.log(Level.FINE.toString(), myLogger.getName(), message, t);
     }
   }
 
@@ -89,7 +89,7 @@ public final class TestLogger extends Log4jBasedLogger {
   public void trace(String message) {
     if (isTraceEnabled()) {
       super.trace(message);
-      TestLoggerFactory.log(Level.TRACE.toString(), myLogger.getName(), message, null);
+      TestLoggerFactory.log(Level.FINER.toString(), myLogger.getName(), message, null);
     }
   }
 
@@ -97,7 +97,7 @@ public final class TestLogger extends Log4jBasedLogger {
   public void trace(@Nullable Throwable t) {
     if (isTraceEnabled()) {
       super.trace(t);
-      TestLoggerFactory.log(Level.TRACE.toString(), myLogger.getName(), null, t);
+      TestLoggerFactory.log(Level.FINER.toString(), myLogger.getName(), null, t);
     }
   }
 

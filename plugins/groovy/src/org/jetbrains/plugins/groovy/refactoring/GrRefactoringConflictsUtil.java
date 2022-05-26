@@ -64,7 +64,8 @@ public final class GrRefactoringConflictsUtil {
 
     for (GrMember member : membersToMove) {
       checkUsedElements(member, member, membersToMove, abstractMethods, targetClass, context, conflicts);
-      RefactoringConflictsUtil.checkAccessibilityConflicts(member, newVisibility, targetClass, membersToMove, conflicts, Conditions.alwaysTrue());
+      RefactoringConflictsUtilImpl
+        .checkAccessibilityConflictsAfterMove(member, newVisibility, targetClass, membersToMove, conflicts, Conditions.alwaysTrue());
     }
   }
 
@@ -87,7 +88,7 @@ public final class GrRefactoringConflictsUtil {
           GrExpression qualifier = refExpr.getQualifierExpression();
           PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(
             qualifier).getElement() : null);
-          RefactoringConflictsUtil.checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
+          RefactoringConflictsUtilImpl.analyzeAccessibilityAfterMove((PsiMember)refElement, context, accessClass, member, conflicts);
         }
       }
     }
@@ -96,14 +97,14 @@ public final class GrRefactoringConflictsUtil {
       final GrAnonymousClassDefinition anonymousClass = newExpression.getAnonymousClassDefinition();
       if (anonymousClass != null) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, moving, targetClass, false)) {
-          RefactoringConflictsUtil.checkAccessibility(anonymousClass, context, anonymousClass, member, conflicts);
+          RefactoringConflictsUtilImpl.analyzeAccessibilityAfterMove(anonymousClass, context, anonymousClass, member, conflicts);
         }
       }
       else {
         final PsiMethod refElement = newExpression.resolveMethod();
         if (refElement != null) {
           if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-            RefactoringConflictsUtil.checkAccessibility(refElement, context, null, member, conflicts);
+            RefactoringConflictsUtilImpl.analyzeAccessibilityAfterMove(refElement, context, null, member, conflicts);
           }
         }
       }
@@ -113,7 +114,7 @@ public final class GrRefactoringConflictsUtil {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-          RefactoringConflictsUtil.checkAccessibility((PsiMember)refElement, context, null, member, conflicts);
+          RefactoringConflictsUtilImpl.analyzeAccessibilityAfterMove((PsiMember)refElement, context, null, member, conflicts);
         }
       }
     }
@@ -140,7 +141,7 @@ public final class GrRefactoringConflictsUtil {
       ContainerUtil.collect(scopes.iterator(), new FilteringIterator.InstanceOf<>(GroovyPsiElement.class));
     analyzeModuleConflicts(project, groovyScopes, usages, vFile, conflicts);
     scopes.removeAll(groovyScopes);
-    RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
+    RefactoringConflictsUtil.getInstance().analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
   }
 
   public static void analyzeModuleConflicts(final Project project,

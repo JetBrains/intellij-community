@@ -2,14 +2,19 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffOpenedInNewWindow
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.EdtExecutorService
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.Nls
+import java.util.function.Supplier
 
 class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
@@ -25,11 +30,15 @@ class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
   private fun getTitle(project: Project, file: VirtualFile): @Nls String? {
     if (file !is ChainDiffVirtualFile) return null
-
-    return FileEditorManager.getInstance(project)
-      .getSelectedEditor(file)
-      ?.let { it as? DiffRequestProcessorEditor }
-      ?.processor?.activeRequest?.title
+    val supplier = Supplier<@NlsContexts.TabTitle String> {
+      FileEditorManager.getInstance(project)
+        .getSelectedEditor(file)
+        ?.let { it as? DiffRequestProcessorEditor }
+        ?.processor?.activeRequest?.title
+    }
+    if (EDT.isCurrentThreadEdt()) return supplier.get()
+    val future = EdtExecutorService.getInstance().submit(supplier::get, ModalityState.any())
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future)
   }
 
   private fun String.shorten(maxLength: Int = 30): @Nls String {

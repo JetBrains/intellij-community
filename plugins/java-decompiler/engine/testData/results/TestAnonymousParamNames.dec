@@ -1,7 +1,7 @@
 package pkg;
 
 public class TestAnonymousParamNames {
-   private final TestAnonymousParamNames.Clazz reference = new TestAnonymousParamNames.Clazz(0L, false) {
+   private final Clazz reference = new Clazz(0L, false) {
    };
 
    private class Clazz {

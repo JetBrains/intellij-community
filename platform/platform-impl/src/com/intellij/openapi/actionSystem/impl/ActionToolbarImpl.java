@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -31,8 +32,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.animation.AlphaAnimated;
+import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.animation.ShowHideAnimator;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -157,6 +158,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private JComponent myTargetComponent;
   private boolean myReservePlaceAutoPopupIcon = true;
   private boolean myShowSeparatorTitles;
+  private PopupHandler myPopupHandler;
   private Image myCachedImage;
 
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(this);
@@ -215,6 +217,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
+    if(isCustomizationSupported()) {
+      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+    }
+  }
+
+  protected Boolean isCustomizationSupported() {
+    return true;
   }
 
   @Override
@@ -384,6 +393,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
+  @Override
+  protected void addImpl(Component comp, Object constraints, int index) {
+    super.addImpl(comp, constraints, index);
+    if (myPopupHandler != null && !ContainerUtil.exists(comp.getMouseListeners(), listener -> listener instanceof PopupHandler)) {
+      UIUtil.uiTraverser(comp).traverse().forEach(component -> component.addMouseListener(myPopupHandler));
+    }
+  }
+
   final protected @NotNull JComponent getCustomComponent(@NotNull AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
@@ -440,7 +457,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                                                       @NotNull Presentation presentation,
                                                       @NotNull Dimension minimumSize) {
     if (action.displayTextInToolbar()) {
-      int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
+      int mnemonic = action.getTemplatePresentation().getMnemonic();
 
       ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
 

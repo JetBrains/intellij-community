@@ -239,6 +239,20 @@
       <reference ref="CollapseAll"/>
     </group>
 
+    <group id="Vcs.SavedPatches.ContextMenu"/>
+    <group id="Vcs.SavedPatches.ChangesBrowser.ContextMenu"/>
+
+    <action id="Vcs.Shelf.Apply" class="com.intellij.openapi.vcs.changes.savedPatches.ApplyShelfAction"/>
+    <action id="Vcs.Shelf.Pop" class="com.intellij.openapi.vcs.changes.savedPatches.PopShelfAction"/>
+    <action id="Vcs.Shelf.Drop" class="com.intellij.openapi.vcs.changes.savedPatches.DropShelfAction" use-shortcut-of="$Delete"/>
+
+    <group id="Vcs.Shelf.Operations.ContextMenu" class="com.intellij.openapi.vcs.changes.savedPatches.ShelfOperationsGroup">
+      <reference id="Vcs.Shelf.Apply"/>
+      <reference id="Vcs.Shelf.Pop"/>
+      <reference id="ShelveChanges.UnshelveWithDialog"/>
+      <reference ref="Vcs.Shelf.Drop"/>
+    </group>
+
     <!--a group for plugins to add their actions-->
     <group id="VcsHistoryActionsGroup"/>
     <group id="VcsHistoryActionsGroup.Toolbar"/>

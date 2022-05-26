@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
 import java.util.List;
 
 /**
@@ -44,6 +45,7 @@ public final class SystemInfo {
   public static final boolean isStudioJvm = isStudioJvm();
 
   public static final boolean isMetalRendering = isMac && Boolean.getBoolean("sun.java2d.metal");
+  public static final boolean isDCEVM = ManagementFactory.getRuntimeMXBean().getInputArguments().contains("-XX:+AllowEnhancedClassRedefinition");
 
   @SuppressWarnings("SpellCheckingInspection")
   private static boolean isCrostini() {

@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -90,7 +91,7 @@ private fun validateGradleProject(projectFilePath: String, project: Project): Va
   val localFileSystem = LocalFileSystem.getInstance()
   val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
   if (projectFile == null) {
-    val shortPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(projectFilePath), false)
+    val shortPath = getPresentablePath(projectFilePath)
     return ValidationInfo(ExternalSystemBundle.message("error.project.does.not.exist", "Gradle", shortPath))
   }
   val projectDirectory = if (projectFile.isDirectory) projectFile else projectFile.parent

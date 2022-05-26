@@ -17,6 +17,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -37,7 +38,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -86,21 +86,20 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     val panel = extension.panel
     if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
       CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
-        .thenAcceptAsync(
-          {
-            applyTo(it, panel, extension.layout)
-          it.forEach { it2 ->
-            if (it2.key == null) {
-              val comp = extension.layout.getLayoutComponent(it2.value)
-              if (comp != null) {
-                panel.remove(comp)
-              }
-            }
-          }
-          },
-          Executor {
-            ApplicationManager.getApplication().invokeLater(it, project.disposed)
-          })
+        .thenAcceptAsync({ placeToActionGroup ->
+                           applyTo(placeToActionGroup, panel, extension.layout)
+                           for ((place, actionGroup) in placeToActionGroup) {
+                             if (actionGroup == null) {
+                               val comp = extension.layout.getLayoutComponent(place)
+                               if (comp != null) {
+                                 panel.remove(comp)
+                               }
+                             }
+                           }
+                         }
+        ) {
+          ApplicationManager.getApplication().invokeLater(it, project.disposed)
+        }
         .exceptionally {
           LOG.error(it)
           null
@@ -108,34 +107,39 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     }
   }
 
-  /**
-   * Null key in the result map means that we need to clear the old panel that corresponded to the null group
-   */
   @RequiresBackgroundThread
-  private fun correctedToolbarActions(): Map<ActionGroup?, String> {
-    val toolbarGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
+  private fun correctedToolbarActions(): Map<String, ActionGroup?> {
+    val mainGroupName = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
+      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
+    }
+    else {
+      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
+    }
+    val toolbarGroup = CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
                        ?: return emptyMap()
     val children = toolbarGroup.getChildren(null)
+
     val leftGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) }
     val rightGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) }
     val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
-    val map = mutableMapOf<ActionGroup?, String>()
-    map[leftGroup as? ActionGroup] = BorderLayout.WEST
-    map[rightGroup as? ActionGroup] = BorderLayout.EAST
-    map[restGroup] = BorderLayout.CENTER
+
+    val map = mutableMapOf<String, ActionGroup?>()
+    map[BorderLayout.WEST] = leftGroup as? ActionGroup
+    map[BorderLayout.EAST] = rightGroup as? ActionGroup
+    map[BorderLayout.CENTER] = restGroup
 
     return map
   }
 
   @RequiresEdt
   private fun applyTo(
-    actions: Map<ActionGroup?, String>,
+    actions: Map<String, ActionGroup?>,
     component: JComponent,
     layout: BorderLayout
   ) {
     val actionManager = ActionManager.getInstance()
 
-    actions.mapKeys { (actionGroup, _) ->
+    actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
         actionManager.createActionToolbar(
           ActionPlaces.MAIN_TOOLBAR,
@@ -146,7 +150,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
       else {
         null
       }
-    }.forEach { (toolbar, layoutConstraints) ->
+    }.forEach { (layoutConstraints, toolbar) ->
       // We need to replace old component having the same constraints with the new one.
       if (toolbar != null) {
         layout.getLayoutComponent(component, layoutConstraints)?.let {
@@ -183,13 +187,16 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     }
   }
 
-  inner class CustomizeToolbarAction : AnAction(ActionsBundle.message("action.CustomizeToolbarAction.text")) {
+  inner class CustomizeToolbarAction : DumbAwareAction(ActionsBundle.message("action.CustomizeToolbarAction.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       object : DialogWrapper(project, true) {
         var customizeWidget = object : CustomizableActionsPanel() {
           override fun patchActionsTreeCorrespondingToSchema(root: DefaultMutableTreeNode?) {
             val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
             fillTreeFromActions(root, actionGroup)
+            for (i in 0 until myActionsTree.rowCount) {
+              myActionsTree.expandRow(i)
+            }
           }
 
           private fun fillTreeFromActions(root: DefaultMutableTreeNode?, actionGroup: ActionGroup?) {
@@ -247,7 +254,11 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
 
   private fun customizeMouseListener() = object : MouseAdapter() {
     override fun mouseClicked(e: MouseEvent?) {
+      if (!SwingUtilities.isRightMouseButton(e)) return
       if (e?.component == null) return
+      logger.trace("Customize toolbar mouse event. Component: " + e.component.javaClass + " click location: " + e.x + ", " + e.y +
+                   " toolbar bounds: " + this@NewToolbarRootPaneExtension.panel.bounds)
+
       val point = RelativePoint(e.component, Point(e.x, e.y))
       JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(CustomizeToolbarAction()),
                                                           DataManager.getInstance().getDataContext(e.component),

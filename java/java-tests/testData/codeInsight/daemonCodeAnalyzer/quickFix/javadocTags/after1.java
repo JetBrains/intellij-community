@@ -1,5 +1,5 @@
 // "Add tag @throws java.lang.Exception" "true"
-class a {
+public class a {
 /**
  * @throws Exception
  */

@@ -44,6 +44,7 @@ public final class ClassPathUtil {
       XmlDomReader.class,                                 // module 'intellij.platform.util.xmlDom'
       MinusculeMatcher.class,                             // module 'intellij.platform.util.text.matching'
       com.intellij.openapi.util.SystemInfoRt.class,       // module 'intellij.platform.util.rt'
+      com.intellij.diff.comparison.ComparisonUtil.class,  // module 'intellij.platform.util.diff'
       com.intellij.util.lang.UrlClassLoader.class,        // module 'intellij.platform.util.classLoader'
       Xx3UnencodedString.class,                           // intellij.platform.util.rt.java8 (required for classLoader)
       org.intellij.lang.annotations.Flow.class,           // jetbrains-annotations-java5

@@ -12,10 +12,15 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.DependencyUsageInfo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.computeActionsAsync
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -232,4 +237,24 @@ internal object UnifiedDependencySerializer : KSerializer<UnifiedDependency> {
         encodeSerializableElement(descriptor, 0, UnifiedCoordinatesSerializer, value.coordinates)
         value.scope?.let { encodeStringElement(descriptor, 1, it) }
     }
+}
+
+internal suspend fun generateOperationData(
+    moduleModels: List<ModuleModel>,
+    stable: PackagesToUpgrade,
+    repos: KnownRepositories.All,
+    onlyStable: Boolean,
+    project: Project
+) = moduleModels.associate { module ->
+    module.projectModule.nativeModule to (stable.upgradesByModule[module.projectModule.nativeModule]?.parallelMap { packageUpgradeInfo ->
+        val targetModule = TargetModules.from(module)
+        val operations = computeActionsAsync(
+            project, packageUpgradeInfo.packageModel, targetModule, repos.filterOnlyThoseUsedIn(targetModule), onlyStable
+        )
+        PackageSearchProjectService.AvailableUpdatesMap.OperationData(
+            packageUpgradeInfo,
+            operations,
+            operations.primaryOperations.await()
+        )
+    } ?: emptyList())
 }

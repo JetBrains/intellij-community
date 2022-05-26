@@ -445,6 +445,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>org.jetbrains.kotlin.idea.intentions.AddJvmInlineIntention</className>
+      <category>Kotlin</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveArgumentNameIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
@@ -2419,6 +2424,14 @@
                      level="ERROR"
                      language="kotlin"
                      key="inspection.prohibit.repeated.use.site.target.annotations.migration.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.NonExhaustiveWhenStatementMigrationInspection"
+                     groupPath="Kotlin"
+                     groupName="Migration"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.non.exhaustive.when.statement.migration.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.migration.WarningOnMainUnusedParameterMigrationInspection"
                      groupPath="Kotlin"

@@ -2054,7 +2054,7 @@
     <!--group.names.resource.management.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="resource" shortName="AutoCloseableResource" bundle="messages.InspectionGadgetsBundle"
                      key="auto.closeable.resource.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.resource.management.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.resource.management.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.resources.AutoCloseableResourceInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ChannelOpenedButNotSafelyClosed" shortName="ChannelResource" bundle="messages.InspectionGadgetsBundle"
                      key="channel.opened.not.closed.display.name" groupBundle="messages.InspectionsBundle"

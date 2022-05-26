@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -61,7 +62,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 
-public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog, FileLookup {
+public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
   public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
   private static final String RECENT_FILES_KEY = "file.chooser.recent.files";
 
@@ -192,7 +193,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private void registerTreeActionShortcut(String actionId) {
     final JTree tree = myFileSystemTree.getTree();
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    action.registerCustomShortcutSet(action.getShortcutSet(), tree, myDisposable);
+    action.registerCustomShortcutSet(action.getShortcutSet(), tree, getDisposable());
   }
 
   @Override
@@ -212,7 +213,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     JPanel panel = new MyPanel();
 
     myUiUpdater = new MergingUpdateQueue("FileChooserUpdater", 200, false, panel);
-    Disposer.register(myDisposable, myUiUpdater);
+    Disposer.register(getDisposable(), myUiUpdater);
     new UiNotifyConnector(panel, myUiUpdater);
 
     panel.setBorder(JBUI.Borders.empty());
@@ -241,23 +242,22 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myPath = new ComboBox<>(getRecentFiles().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
     myPath.setEditable(true);
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
-          label.setText(value);
-          VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
-          label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
-        }));
+      label.setText(value);
+      VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
+      label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
+    }));
 
-    myPathTextField = new FileTextFieldImpl.Vfs(
-      (JTextField)myPath.getEditor().getEditorComponent(),
-      FileChooserFactoryImpl.getMacroMap(), getDisposable(),
-      new LocalFsFinder.FileChooserFilter(myChooserDescriptor, myFileSystemTree)) {
+    JTextField pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
+    FileLookup.LookupFilter filter =
+      f -> myChooserDescriptor.isFileVisible(((LocalFsFinder.VfsFile)f).getFile(), myFileSystemTree.areHiddensShown());
+    myPathTextField = new FileTextFieldImpl(pathEditor, new LocalFsFinder(), filter, FileChooserFactoryImpl.getMacroMap(), getDisposable()) {
       @Override
-      protected void onTextChanged(final String newValue) {
+      protected void onTextChanged(String newValue) {
         myUiUpdater.cancelAllUpdates();
         updateTreeFromPath(newValue);
       }
     };
     myPathTextField.getField().setName("FileChooserDialogImpl.myPathTextField");  // Android Studio: for FileChooserDialogFixture
-    Disposer.register(myDisposable, myPathTextField);
 
     myNorthPanel = new JPanel(new BorderLayout());
     myNorthPanel.add(toolbarPanel, BorderLayout.NORTH);
@@ -360,7 +360,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myFileSystemTree = new FileSystemTreeImpl(myProject, myChooserDescriptor, internalTree, null, null, null);
     internalTree.setRootVisible(myChooserDescriptor.isTreeRootVisible());
     internalTree.setShowsRootHandles(true);
-    Disposer.register(myDisposable, myFileSystemTree);
+    Disposer.register(getDisposable(), myFileSystemTree);
 
     myFileSystemTree.addOkAction(this::doOKAction);
     JTree tree = myFileSystemTree.getTree();
@@ -373,7 +373,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       // myTreeIsUpdating makes no sense for AsyncTreeModel
       if (myTreeIsUpdating && myFileSystemTree.getTreeBuilder() == null) myTreeIsUpdating = false;
       updatePathFromTree(selection, false);
-    }, myDisposable);
+    }, getDisposable());
 
     new FileDrop(tree, new FileDrop.Target() {
       @Override

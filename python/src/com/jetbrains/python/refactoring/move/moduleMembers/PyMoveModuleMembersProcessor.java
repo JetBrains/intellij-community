@@ -34,7 +34,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
@@ -99,7 +98,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
       usagesByElement.putValue(((MyUsageInfo)usage).myMovedElement, usage);
     }
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      final PyFile destination = PyRefactoringUtil.getOrCreateFile(myDestination, myProject);
+      final PyFile destination = PyClassRefactoringUtil.getOrCreateFile(myDestination, myProject);
       CommonRefactoringUtil.checkReadOnlyStatus(myProject, destination);
       final LinkedHashSet<PsiFile> optimizeImportsTargets = Sets.newLinkedHashSet(mySourceFiles);
       for (final SmartPsiElementPointer<PsiNamedElement> pointer : myElements) {
@@ -162,4 +161,3 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     return PyBundle.message("refactoring.move.module.members");
   }
 }
-

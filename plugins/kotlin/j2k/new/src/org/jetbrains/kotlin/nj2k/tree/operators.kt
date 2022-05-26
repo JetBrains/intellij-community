@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.tree
 
@@ -63,6 +63,10 @@ interface JKOperatorToken {
         val LTLTEQ = JKJavaOperatorToken(JavaTokenType.LTLTEQ)
         val GTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTEQ)
         val GTGTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTGTEQ)
+
+        internal val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC)
+        internal val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
+        internal val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
 
         private val elementTypeToToken: Map<IElementType, JKOperatorToken> = mapOf(
             JavaTokenType.DIV to DIV,

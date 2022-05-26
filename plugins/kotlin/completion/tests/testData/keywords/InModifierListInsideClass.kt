@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 // for: KT-2170
 open class Foo {
     p<caret> val foo = 1

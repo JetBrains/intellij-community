@@ -1,29 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.impl.LightFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
 import org.jetbrains.annotations.Nls
 
-class LibraryIndexableFilesIteratorImpl(val libraryName: @NlsSafe String?,
-                                        val presentableLibraryName: @Nls String,
-                                        val classRootUrls: List<VirtualFilePointer>,
-                                        val sourceRootUrls: List<VirtualFilePointer>
-) : LibraryIndexableFilesIterator {
-
-  constructor(library: Library) : this(library.name, library.presentableName,
-                                       collectPointers(library, OrderRootType.CLASSES),
-                                       collectPointers(library, OrderRootType.SOURCES))
+class LibraryIndexableFilesIteratorImpl
+private constructor(val libraryName: @NlsSafe String?,
+                    val presentableLibraryName: @Nls String,
+                    val classRootUrls: List<VirtualFilePointer>,
+                    val sourceRootUrls: List<VirtualFilePointer>) : LibraryIndexableFilesIterator {
 
   override fun getDebugName() = "Library ${presentableLibraryName}"
 
@@ -60,5 +58,18 @@ class LibraryIndexableFilesIteratorImpl(val libraryName: @NlsSafe String?,
     private fun collectPointers(library: Library, rootType: OrderRootType) = library.rootProvider.getFiles(rootType).map {
       LightFilePointer(it)
     }
+
+    @RequiresReadLock
+    @JvmStatic
+    fun createIterator(library: Library): LibraryIndexableFilesIteratorImpl? =
+      if (library is LibraryEx && library.isDisposed)
+        null
+      else
+        LibraryIndexableFilesIteratorImpl(library.name, library.presentableName, collectPointers(library, OrderRootType.CLASSES),
+                                          collectPointers(library, OrderRootType.SOURCES))
+
+    @JvmStatic
+    fun createIteratorList(library: Library): List<IndexableFilesIterator> =
+      createIterator(library)?.run { listOf(this) } ?: emptyList()
   }
 }

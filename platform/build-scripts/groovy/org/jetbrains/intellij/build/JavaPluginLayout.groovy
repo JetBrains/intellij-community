@@ -74,6 +74,7 @@ final class JavaPluginLayout {
           "intellij.java.psi.impl",
           "intellij.java.impl",
           "intellij.java.impl.inspections",
+          "intellij.java.impl.refactorings",
           "intellij.jsp.spi",
           "intellij.java.uast",
           "intellij.java.structuralSearch",

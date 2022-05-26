@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTestCase() {

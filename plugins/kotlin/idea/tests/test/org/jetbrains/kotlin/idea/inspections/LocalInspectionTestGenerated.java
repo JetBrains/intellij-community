@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -5927,6 +5927,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("afterRightBrace.kt")
+            public void testAfterRightBrace() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace.kt");
+            }
+
+            @TestMetadata("afterRightBrace2.kt")
+            public void testAfterRightBrace2() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace2.kt");
+            }
+
+            @TestMetadata("afterRightBrace3.kt")
+            public void testAfterRightBrace3() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightBrace3.kt");
+            }
+
+            @TestMetadata("afterRightParenthesis.kt")
+            public void testAfterRightParenthesis() throws Exception {
+                runTest("testData/inspectionsLocal/liftOut/ifToAssignment/afterRightParenthesis.kt");
+            }
+
             @TestMetadata("cascadeIf.kt")
             public void testCascadeIf() throws Exception {
                 runTest("testData/inspectionsLocal/liftOut/ifToAssignment/cascadeIf.kt");
@@ -7524,6 +7544,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("scopeFunction5.kt")
         public void testScopeFunction5() throws Exception {
             runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/scopeFunction5.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration")
+    public static class NonExhaustiveWhenStatementMigration extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("boolean.kt")
+        public void testBoolean() throws Exception {
+            runTest("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration/boolean.kt");
+        }
+
+        @TestMetadata("enum.kt")
+        public void testEnum() throws Exception {
+            runTest("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration/enum.kt");
+        }
+
+        @TestMetadata("sealed.kt")
+        public void testSealed() throws Exception {
+            runTest("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration/sealed.kt");
+        }
+
+        @TestMetadata("sealed2.kt")
+        public void testSealed2() throws Exception {
+            runTest("testData/inspectionsLocal/nonExhaustiveWhenStatementMigration/sealed2.kt");
         }
     }
 
@@ -15471,9 +15519,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/typeAlias.kt");
         }
 
+        @TestMetadata("unusedClassExplicitApi.kt")
+        public void testUnusedClassExplicitApi() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedClassExplicitApi.kt");
+        }
+
         @TestMetadata("unusedEnumEntry.kt")
         public void testUnusedEnumEntry() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntry.kt");
+        }
+
+        @TestMetadata("unusedExtensionExplicitApi.kt")
+        public void testUnusedExtensionExplicitApi() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedExtensionExplicitApi.kt");
+        }
+
+        @TestMetadata("unusedFunctionExplicitApi.kt")
+        public void testUnusedFunctionExplicitApi() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedFunctionExplicitApi.kt");
         }
 
         @TestMetadata("usedEnumFunction.kt")

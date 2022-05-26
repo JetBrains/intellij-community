@@ -16,7 +16,6 @@
     <orderEntry type="library" name="grpc-stub" level="project" />
     <orderEntry type="library" name="grpc-protobuf" level="project" />
     <orderEntry type="library" name="grpc-kotlin-stub" level="project" />
-    <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.elevation.daemon" />
     <orderEntry type="module" module-name="intellij.platform.elevation.common" />
     <orderEntry type="module" module-name="intellij.platform.util" />

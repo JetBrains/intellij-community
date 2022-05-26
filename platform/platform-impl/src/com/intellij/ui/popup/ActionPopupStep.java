@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +95,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
     boolean enableMnemonics = showNumbers ||
                               honorActionMnemonics &&
-                              items.stream().anyMatch(actionItem -> actionItem.getAction().getTemplatePresentation().getMnemonic() != 0);
+                              PopupFactoryImpl.anyMnemonicsIn(items);
 
     return new ActionPopupStep(
       items, title, contextSupplier, actionPlace, enableMnemonics,
@@ -227,19 +228,25 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return !(item.getAction() instanceof ActionGroup) || item.isPerformGroup();
   }
 
-  public void performAction(@NotNull AnAction action, int modifiers) {
-    performAction(action, modifiers, null);
-  }
-
-  public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
-    DataContext dataContext = myContext.get();
+  @ApiStatus.Internal
+  public static void performAction(@NotNull Supplier<? extends DataContext> contextSupplier, @NotNull String actionPlace,
+                                   @NotNull AnAction action, int modifiers, @Nullable InputEvent inputEvent) {
+    DataContext dataContext = contextSupplier.get();
     AnActionEvent event = new AnActionEvent(
-      inputEvent, dataContext, myActionPlace, action.getTemplatePresentation().clone(),
+      inputEvent, dataContext, actionPlace, action.getTemplatePresentation().clone(),
       ActionManager.getInstance(), modifiers);
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
+  }
+
+  public void performAction(@NotNull AnAction action, int modifiers) {
+    performAction(action, modifiers, null);
+  }
+
+  public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
+    performAction(myContext, myActionPlace, action, modifiers, inputEvent);
   }
 
   @Override
@@ -249,7 +256,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   public boolean hasSubstep(final PopupFactoryImpl.ActionItem selectedValue) {
-    return selectedValue != null && selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
+    return selectedValue != null && selectedValue.isEnabled() &&
+           selectedValue.getAction() instanceof ActionGroup && !selectedValue.isSubstepSuppressed();
   }
 
   @Override

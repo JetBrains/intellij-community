@@ -1,0 +1,17 @@
+package test.pkg
+
+public final class SuspendKt {
+    public static final fun top() : int {
+        return <init>().inner()
+    }
+}
+
+public final class Context {
+    public final fun inner() : int {
+        return suspendPrivate()
+    }
+    private final fun suspendPrivate() : int {
+        return inner()
+    }
+    public fun Context() = UastEmptyExpression
+}

@@ -10,8 +10,10 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.SecondaryFunctionsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -127,7 +129,7 @@ public final class AssertProcessor {
       replaced = false;
 
       for (Statement st : statement.getStats()) {
-        if (st.type == Statement.TYPE_IF) {
+        if (st.type == StatementType.IF) {
           if (replaceAssertion(statement, (IfStatement)st, classname, key)) {
             replaced = true;
             break;
@@ -217,7 +219,7 @@ public final class AssertProcessor {
       sequence.setAllParent();
 
       for (int i = 0; i < sequence.getStats().size() - 1; i++) {
-        sequence.getStats().get(i).addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR,
+        sequence.getStats().get(i).addSuccessor(new StatEdge(EdgeType.REGULAR,
                                                              sequence.getStats().get(i), sequence.getStats().get(i + 1)));
       }
 

@@ -63,7 +63,7 @@ public final class LineMarkersUtil {
                 "); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
     }
 
-    for (final LineMarkerInfo<?> info : markers) {
+    for (LineMarkerInfo<?> info : markers) {
       PsiElement element = info.getElement();
       if (element == null) {
         continue;

@@ -199,6 +199,30 @@ public class PyFindUsagesTest extends PyTestCase {
                    .size());
   }
 
+  // PY-26881
+  public void testFunctionHasPyiStub() {
+    final Collection<UsageInfo> usages = findMultiFileUsages("lib.py");
+    assertEquals(2, usages.size());
+  }
+
+  // PY-26881
+  public void testClassHasPyiStub() {
+    final Collection<UsageInfo> usages = findMultiFileUsages("parent.py");
+    assertEquals(2, usages.size());
+  }
+
+  // PY-26881
+  public void testClassAttributeHasPyiStub() {
+    final Collection<UsageInfo> usages = findMultiFileUsages("parent.py");
+    assertEquals(3, usages.size());
+  }
+
+  // PY-26881
+  public void testChildClassAttributeHasPyiStub() {
+    final Collection<UsageInfo> usages = findMultiFileUsages("child.py");
+    assertEquals(2, usages.size());
+  }
+
   private Collection<UsageInfo> findMultiFileUsages(String filename) {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject("findUsages/" + testName, "");

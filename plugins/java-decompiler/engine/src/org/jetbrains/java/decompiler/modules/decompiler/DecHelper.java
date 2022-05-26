@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,7 +23,7 @@ public final class DecHelper {
     Set<Statement> intersection = null;
 
     for (Statement stat : lst) {
-      Set<Statement> setNew = stat.getNeighboursSet(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_FORWARD);
+      Set<Statement> setNew = stat.getNeighboursSet(EdgeType.EXCEPTION, EdgeDirection.FORWARD);
 
       if (intersection == null) {
         intersection = setNew;
@@ -39,7 +42,7 @@ public final class DecHelper {
     }
 
     for (Statement stat : handlers) {
-      if (!all.contains(stat) || !all.containsAll(stat.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD))) {
+      if (!all.contains(stat) || !all.containsAll(stat.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD))) {
         return false;
       }
     }
@@ -47,7 +50,7 @@ public final class DecHelper {
     // check for other handlers (excluding head)
     for (int i = 1; i < lst.size(); i++) {
       Statement stat = lst.get(i);
-      if (!stat.getPredecessorEdges(StatEdge.TYPE_EXCEPTION).isEmpty() && !handlers.contains(stat)) {
+      if (!stat.getPredecessorEdges(EdgeType.EXCEPTION).isEmpty() && !handlers.contains(stat)) {
         return false;
       }
     }
@@ -59,7 +62,7 @@ public final class DecHelper {
 
     Statement post = null;
 
-    Set<Statement> setDest = head.getNeighboursSet(StatEdge.TYPE_REGULAR, Statement.DIRECTION_FORWARD);
+    Set<Statement> setDest = head.getNeighboursSet(EdgeType.REGULAR, EdgeDirection.FORWARD);
 
     if (setDest.contains(head)) {
       return false;
@@ -74,7 +77,7 @@ public final class DecHelper {
       setDest.remove(post);
 
       for (Statement stat : setDest) {
-        if (stat.getLastBasicType() != Statement.LASTBASICTYPE_GENERAL) {
+        if (stat.getLastBasicType() != StatementType.GENERAL) {
           if (post == null) {
             post = stat;
             repeat = true;
@@ -86,7 +89,7 @@ public final class DecHelper {
         }
 
         // preds
-        Set<Statement> setPred = stat.getNeighboursSet(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD);
+        Set<Statement> setPred = stat.getNeighboursSet(EdgeType.REGULAR, EdgeDirection.BACKWARD);
         setPred.remove(head);
         if (setPred.contains(stat)) {
           return false;
@@ -105,7 +108,7 @@ public final class DecHelper {
         else if (setPred.size() == 1) {
           Statement pred = setPred.iterator().next();
           while (lst.contains(pred)) {
-            Set<Statement> setPredTemp = pred.getNeighboursSet(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD);
+            Set<Statement> setPredTemp = pred.getNeighboursSet(EdgeType.REGULAR, EdgeDirection.BACKWARD);
             setPredTemp.remove(head);
 
             if (!setPredTemp.isEmpty()) { // at most 1 predecessor
@@ -121,9 +124,9 @@ public final class DecHelper {
         }
 
         // succs
-        List<StatEdge> lstEdges = stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL);
+        List<StatEdge> lstEdges = stat.getSuccessorEdges(EdgeType.DIRECT_ALL);
         if (lstEdges.size() > 1) {
-          Set<Statement> setSucc = stat.getNeighboursSet(Statement.STATEDGE_DIRECT_ALL, Statement.DIRECTION_FORWARD);
+          Set<Statement> setSucc = stat.getNeighboursSet(EdgeType.DIRECT_ALL, EdgeDirection.FORWARD);
           setSucc.retainAll(setDest);
 
           if (setSucc.size() > 0) {
@@ -143,7 +146,7 @@ public final class DecHelper {
         else if (lstEdges.size() == 1) {
 
           StatEdge edge = lstEdges.get(0);
-          if (edge.getType() == StatEdge.TYPE_REGULAR) {
+          if (edge.getType() == EdgeType.REGULAR) {
             Statement statd = edge.getDestination();
             if (head == statd) {
               return false;
@@ -153,7 +156,7 @@ public final class DecHelper {
                 return false;
               }
               else {
-                Set<Statement> set = statd.getNeighboursSet(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD);
+                Set<Statement> set = statd.getNeighboursSet(EdgeType.REGULAR, EdgeDirection.BACKWARD);
                 if (set.size() > 1) {
                   post = statd;
                   repeat = true;
@@ -184,8 +187,8 @@ public final class DecHelper {
   }
 
   public static Set<Statement> getUniquePredExceptions(Statement head) {
-    Set<Statement> setHandlers = new HashSet<>(head.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_FORWARD));
-    setHandlers.removeIf(statement -> statement.getPredecessorEdges(StatEdge.TYPE_EXCEPTION).size() > 1);
+    Set<Statement> setHandlers = new HashSet<>(head.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.FORWARD));
+    setHandlers.removeIf(statement -> statement.getPredecessorEdges(EdgeType.EXCEPTION).size() > 1);
     return setHandlers;
   }
 

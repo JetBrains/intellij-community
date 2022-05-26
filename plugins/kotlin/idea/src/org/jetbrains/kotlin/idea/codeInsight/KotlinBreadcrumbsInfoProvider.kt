@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getValueArgumentsInParenthese
 import kotlin.reflect.KClass
 
 class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
-    override fun isShownByDefault(): Boolean = !UISettings.instance.showMembersInNavigationBar
+    override fun isShownByDefault(): Boolean = !UISettings.getInstance().showMembersInNavigationBar
 
     private abstract class ElementHandler<TElement : KtElement>(val type: KClass<TElement>) {
         abstract fun elementInfo(element: TElement): String

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 
 import java.io.File;
 import java.io.IOException;

@@ -13,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public final class SurroundWithUtil {
                 PsiExpressionStatement assignment = (PsiExpressionStatement)factory.createStatementFromText(name + "=x;", null);
                 assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(assignment);
                 PsiAssignmentExpression expr = (PsiAssignmentExpression)assignment.getExpression();
-                expr.getRExpression().replace(RefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType()));
+                expr.getRExpression().replace(CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType()));
                 assignment = (PsiExpressionStatement)block.addAfter(assignment, declaration);
                 array.add(assignment);
               }

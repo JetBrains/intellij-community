@@ -77,7 +77,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase i
   }
 
   @Override
-  protected String getActionName(final PsiDirectory directory, final String newName) {
+  protected @NotNull String getActionName(final @NotNull PsiDirectory directory, final @NotNull String newName) {
     return UIDesignerBundle.message("progress.creating.class", JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName(), newName);
   }
 

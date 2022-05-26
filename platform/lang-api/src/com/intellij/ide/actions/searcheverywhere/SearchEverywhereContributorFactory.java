@@ -18,6 +18,13 @@ public interface SearchEverywhereContributorFactory<Item> {
   SearchEverywhereContributor<Item> createContributor(@NotNull AnActionEvent initEvent);
 
   /**
+   * Returns 'true' if the contributor is available and should be created
+   */
+  default boolean isAvailable() {
+    return true;
+  }
+
+  /**
    * Not used and going to be deleted next releases.
    * @deprecated to be removed in IDEA 2022.2
    */

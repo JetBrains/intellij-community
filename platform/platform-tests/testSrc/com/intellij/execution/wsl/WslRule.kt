@@ -11,7 +11,7 @@ import org.junit.rules.ExternalResource
  * Depends on [com.intellij.testFramework.fixtures.TestFixtureRule], so make sure enable it before this class
  * @see WslTestBase
  */
-internal class WslRule : ExternalResource() {
+class WslRule : ExternalResource() {
   lateinit var wsl: WSLDistribution
     private set
 

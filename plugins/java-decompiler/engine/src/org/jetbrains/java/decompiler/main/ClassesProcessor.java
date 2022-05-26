@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -407,7 +407,7 @@ public class ClassesProcessor implements CodeConstants {
 
   private static void addClassNameToImport(ClassNode node, ImportCollector imp) {
     if (node.simpleName != null && node.simpleName.length() > 0) {
-      imp.getShortName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
+      imp.getNestedName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
     }
 
     for (ClassNode nd : node.nested) {

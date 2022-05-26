@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -158,7 +158,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     PsiElement nextElement;
     if (var == null) {
       terminal = new StreamCollectChainNoVar(streamChain, collector);
-      nextElement = RefactoringUtil.getParentStatement(streamChain, false);
+      nextElement = CommonJavaRefactoringUtil.getParentStatement(streamChain, false);
     }
     else {
       PsiDeclarationStatement declaration = tryCast(var.getParent(), PsiDeclarationStatement.class);

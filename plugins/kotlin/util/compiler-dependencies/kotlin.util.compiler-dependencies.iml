@@ -11,10 +11,12 @@
     <orderEntry type="library" name="kotlinc.kotlin-build-common-tests" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-dist" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-testdata" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-stdlib-minimal-for-test" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-gradle-statistics" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlin-script-runtime" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-script-util" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-jps-plugin-classpath" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />

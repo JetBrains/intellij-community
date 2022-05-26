@@ -14,9 +14,9 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-json" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.codehaus.groovy:groovy-nio" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-nio:2.5.14" />
+        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-nio:3.0.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-nio/2.5.14/groovy-nio-2.5.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-nio/3.0.9/groovy-nio-3.0.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -26,9 +26,9 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.codehaus.groovy:groovy-cli-commons" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-cli-commons:2.5.14" />
+        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-cli-commons:3.0.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-cli-commons/2.5.14/groovy-cli-commons-2.5.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-cli-commons/3.0.9/groovy-cli-commons-3.0.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

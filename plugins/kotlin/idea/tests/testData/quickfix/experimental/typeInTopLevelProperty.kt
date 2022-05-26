@@ -1,4 +1,4 @@
-// "Add '@TopMarker' annotation to 'topUserVal'" "true"
+// "Propagate '@TopMarker' annotation to 'topUserVal'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 

@@ -1,5 +1,5 @@
 public class Foo {
     void m(Object o) {
-        boolean <caret>foo = o instanceof String;
+        boolean <caret>b = o instanceof String;
     }
 }

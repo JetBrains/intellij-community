@@ -59,8 +59,13 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myEditor = editor;
     myRestrictRange = restrictRange;
     myHighlightInfoProcessor = highlightInfoProcessor;
-    if (file != null && InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
-      throw new IllegalArgumentException("File must be top-level but " + file + " is an injected fragment");
+    if (file != null) {
+      if (file.getProject() != project) {
+        throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is from an alien project (" + file.getProject()+") but expected: "+project);
+      }
+      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
+        throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is an injected fragment but expected top-level");
+      }
     }
   }
 

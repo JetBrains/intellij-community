@@ -166,7 +166,9 @@ public final class InheritanceImplUtil {
     return isInheritor(manager, aClass, baseClass, true, checkedClasses);
   }
 
-  public static boolean isInheritorDeep(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, @Nullable final PsiClass classToByPass) {
+  public static boolean isInheritorDeep(@NotNull PsiClass candidateClass,
+                                        @NotNull PsiClass baseClass,
+                                        @Nullable final PsiClass classToByPass) {
     if (baseClass instanceof PsiAnonymousClass) {
       return false;
     }

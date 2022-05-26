@@ -1,0 +1,11 @@
+// FIR_IDENTICAL
+/**
+ * @param <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>x<!> foo and <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>[baz]<!>
+ * @param <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>y<!> bar
+ * @return notALink here
+ */
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>x<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>y<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>): <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
+return <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>x<!> + <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>y<!>
+}
+
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>baz<!>() {}

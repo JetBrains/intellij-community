@@ -166,15 +166,10 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
       }
     });
 
-    // our LaF is required
-    ForkJoinTask<LafManager> lafTask = ForkJoinTask.adapt(() -> LafManager.getInstance()).fork();
     return () -> {
       if (ourInstance != null) {
         return;
       }
-
-      // we don't wait for it as part of prepareToShow because our task may be scheduled to be executed in EDT
-      lafTask.join();
 
       IdeFrame frame = EP.computeSafeIfAny(WelcomeFrameProvider::createFrame);
       if (frame == null) {

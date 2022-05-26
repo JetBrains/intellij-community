@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.views
 
 import com.intellij.icons.AllIcons
@@ -45,7 +45,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   init {
     isFocusable = false
-    background = UISettings.instance.backgroundColor
+    background = UISettings.getInstance().backgroundColor
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
     isOpaque = true
 
@@ -57,7 +57,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   }
 
   fun reinitMe(lesson: Lesson) {
-    with(UISettings.instance) {
+    with(UISettings.getInstance()) {
       border = EmptyBorder(northInset, 0, southInset, 0)
     }
 
@@ -68,14 +68,14 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
     add(createHeaderPanel(lesson))
     add(createSmallSeparator())
-    add(scaledRigid(UISettings.instance.panelWidth, JBUI.scale(4)))
+    add(scaledRigid(UISettings.getInstance().panelWidth, JBUI.scale(4)))
     initLessonPanel(lesson)
     scrollPane.alignmentX = LEFT_ALIGNMENT
     add(scrollPane)
   }
 
   fun updatePanelSize(viewAreaWidth: Int) {
-    val width = max(UISettings.instance.panelWidth, viewAreaWidth) - 2 * UISettings.instance.learnPanelSideOffset
+    val width = max(UISettings.getInstance().panelWidth, viewAreaWidth) - 2 * UISettings.getInstance().learnPanelSideOffset
     lessonMessagePane.preferredSize = null
     lessonMessagePane.setBounds(0, 0, width, 10000)
     lessonMessagePane.revalidate()
@@ -93,14 +93,14 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     shiftedFooter.layout = BoxLayout(shiftedFooter, BoxLayout.Y_AXIS)
     shiftedFooter.isFocusable = false
     shiftedFooter.isOpaque = false
-    shiftedFooter.border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.instance.separatorColor)
+    shiftedFooter.border = MatteBorder(JBUI.scale(1), 0, 0, 0, UISettings.getInstance().separatorColor)
 
     val footerContent = JPanel()
     footerContent.isOpaque = false
     footerContent.layout = BoxLayout(footerContent, BoxLayout.Y_AXIS)
     footerContent.add(rigid(0, 16))
     footerContent.add(JLabel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text")).also {
-      it.font = UISettings.instance.getFont(1).deriveFont(Font.BOLD)
+      it.font = UISettings.getInstance().getFont(1).deriveFont(Font.BOLD)
     })
     for (helpLink in lesson.helpLinks) {
       val text = helpLink.key
@@ -121,7 +121,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     footer.alignmentX = Component.LEFT_ALIGNMENT
     footer.isOpaque = false
     footer.layout = BoxLayout(footer, BoxLayout.Y_AXIS)
-    footer.border = UISettings.instance.lessonHeaderBorder
+    footer.border = UISettings.getInstance().lessonHeaderBorder
     return footer
   }
 
@@ -130,7 +130,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonPanel.layout = lessonPanelBoxLayout
     lessonPanel.isFocusable = false
     lessonPanel.isOpaque = true
-    with(UISettings.instance) {
+    with(UISettings.getInstance()) {
       lessonPanel.background = backgroundColor
       lessonPanel.border = EmptyBorder(0, learnPanelSideOffset, 0, learnPanelSideOffset)
     }
@@ -142,7 +142,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.margin = JBInsets.emptyInsets()
     lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(20), JBUI.scale(14))
 
-    lessonPanel.add(scaledRigid(UISettings.instance.panelWidth - 2 * UISettings.instance.learnPanelSideOffset, JBUI.scale(19)))
+    lessonPanel.add(scaledRigid(UISettings.getInstance().panelWidth - 2 * UISettings.getInstance().learnPanelSideOffset, JBUI.scale(19)))
     lessonPanel.add(createLessonNameLabel(lesson))
     lessonPanel.add(lessonMessagePane)
     lessonPanel.add(createButtonsPanel())
@@ -157,12 +157,12 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private fun createLessonNameLabel(lesson: Lesson): JLabel {
     val lessonNameLabel = JLabel()
     lessonNameLabel.name = "lessonNameLabel"
-    lessonNameLabel.border = UISettings.instance.lessonHeaderBorder
-    lessonNameLabel.font = UISettings.instance.getFont(5).deriveFont(Font.BOLD)
+    lessonNameLabel.border = UISettings.getInstance().lessonHeaderBorder
+    lessonNameLabel.font = UISettings.getInstance().getFont(5).deriveFont(Font.BOLD)
     lessonNameLabel.alignmentX = Component.LEFT_ALIGNMENT
     lessonNameLabel.isFocusable = false
     lessonNameLabel.text = lesson.name
-    lessonNameLabel.foreground = UISettings.instance.defaultTextColor
+    lessonNameLabel.foreground = UISettings.getInstance().defaultTextColor
     return lessonNameLabel
   }
 
@@ -173,9 +173,9 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
       LearningUiManager.resetModulesView()
     }
     moduleNameLabel.name = "moduleNameLabel"
-    moduleNameLabel.font = UISettings.instance.getFont(1)
+    moduleNameLabel.font = UISettings.getInstance().getFont(1)
     moduleNameLabel.text = "    ${lesson.module.name}"
-    moduleNameLabel.foreground = UISettings.instance.defaultTextColor
+    moduleNameLabel.foreground = UISettings.getInstance().defaultTextColor
     moduleNameLabel.isFocusable = false
 
     val linksPanel = JPanel()
@@ -215,7 +215,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     val headerPanel = VerticalBox()
     headerPanel.isOpaque = false
     headerPanel.alignmentX = LEFT_ALIGNMENT
-    headerPanel.border = UISettings.instance.lessonHeaderBorder
+    headerPanel.border = UISettings.getInstance().lessonHeaderBorder
     headerPanel.add(linksPanel)
     return headerPanel
   }
@@ -281,7 +281,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private fun createButtonsPanel(): JPanel {
     val buttonPanel = JPanel()
     buttonPanel.name = "buttonPanel"
-    buttonPanel.border = EmptyBorder(0, UISettings.instance.checkIndent - JButton().insets.left, 0, 0)
+    buttonPanel.border = EmptyBorder(0, UISettings.getInstance().checkIndent - JButton().insets.left, 0, 0)
     buttonPanel.isOpaque = false
     buttonPanel.isFocusable = false
     buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
@@ -412,6 +412,6 @@ private fun createSmallSeparator(): Component {
   separatorPanel.isOpaque = false
   separatorPanel.layout = BoxLayout(separatorPanel, BoxLayout.X_AXIS)
   separatorPanel.add(Box.createHorizontalGlue())
-  separatorPanel.border = MatteBorder(0, 0, JBUI.scale(1), 0, UISettings.instance.separatorColor)
+  separatorPanel.border = MatteBorder(0, 0, JBUI.scale(1), 0, UISettings.getInstance().separatorColor)
   return separatorPanel
 }

@@ -7,12 +7,17 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.externalProcessAuthHelper.ScriptGenerator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.ContainerUtil
+import externalApp.nativessh.NativeSshAskPassXmlRpcHandler
 import git4idea.commands.GitHandler
+import git4idea.editor.GitRebaseEditorXmlRpcHandler
+import git4idea.http.GitAskPassXmlRpcHandler
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -88,9 +93,27 @@ sealed class GitExecutable {
 
   data class Wsl(override val exePath: String,
                  val distribution: WSLDistribution)
-    : GitExecutable() {
+    : GitExecutable(), ScriptGenerator.CustomScriptCommandLineBuilder {
     override val id: String = "wsl-${distribution.id}"
     override val isLocal: Boolean = false
+    override fun buildJavaCmd(cmd: StringBuilder) {
+      val envs: List<String> = ContainerUtil.newArrayList(
+        NativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV,
+        NativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV,
+        GitAskPassXmlRpcHandler.IJ_ASK_PASS_HANDLER_ENV,
+        GitAskPassXmlRpcHandler.IJ_ASK_PASS_PORT_ENV,
+        GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV)
+      cmd.append("export WSLENV=")
+      cmd.append(StringUtil.join(envs,
+                                 { it: String -> "$it/w" }, ":"))
+      cmd.append("\n")
+
+      cmd.append('"')
+      val javaExecutable = File(String.format("%s\\bin\\java.exe", System.getProperty("java.home")))
+      cmd.append(convertFilePath(javaExecutable))
+      cmd.append('"')
+    }
+
     override fun toString(): String = "${distribution.presentableName}: $exePath"
 
     override fun convertFilePath(file: File): String {

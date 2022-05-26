@@ -27,9 +27,9 @@ import java.util.concurrent.ThreadLocalRandom
  *
  * All tests inherited from this class are required to have a token to access the Github server.
  * They are set up in Environment variables: <br></br>
- * `idea.test.github.host<br></br>
- * idea.test.github.token1<br></br> // token test user
- * idea.test.github.token2` // token user with configured test repositories
+ * `idea_test_github_host<br></br>
+ * idea_test_github_token1<br></br> // token test user
+ * idea_test_github_token2` // token user with configured test repositories
  *
  */
 abstract class GithubTest : GitPlatformTest() {
@@ -47,16 +47,16 @@ abstract class GithubTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    val host = GithubServerPath.from(System.getenv("idea.test.github.host"))
-    val token1 = System.getenv("idea.test.github.token1")
-    val token2 = System.getenv("idea.test.github.token2")
+    val host = GithubServerPath.from(System.getenv("idea_test_github_host") ?: System.getenv("idea.test.github.host"))
+    val token1 = System.getenv("idea_test_github_token1") ?: System.getenv("idea.test.github.token1")
+    val token2 = System.getenv("idea_test_github_token2") ?: System.getenv("idea.test.github.token2")
 
     assertNotNull(token1)
     assertNotNull(token2)
 
     authenticationManager = service()
 
-    organisation = System.getenv("idea.test.github.org")
+    organisation = System.getenv("idea_test_github_org") ?: System.getenv("idea.test.github.org")
     assertNotNull(organisation)
     mainAccount = createAccountData(host, token1)
     secondaryAccount = createAccountData(host, token2)

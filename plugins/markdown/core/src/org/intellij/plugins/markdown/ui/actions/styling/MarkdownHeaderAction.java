@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -89,12 +88,7 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
 
   @Nullable
   protected static PsiElement findParent(@NotNull PsiFile psiFile, @NotNull Caret caret) {
-    final Couple<PsiElement> elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
-
-    if (elements == null) {
-      return null;
-    }
-
+    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
     PsiElement first = elements.getFirst();
     PsiElement second = elements.getSecond();
     if (MarkdownPsiUtil.WhiteSpaces.isNewLine(first)) {

@@ -209,6 +209,9 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_INPLACE_COMMENTS")
   var showInplaceComments by property(false)
 
+  @get:OptionTag("SHOW_VISUAL_FORMATTING_LAYER")
+  var showVisualFormattingLayer: Boolean = false
+
   @Suppress("FunctionName")
   fun _incrementModificationCount() = incrementModificationCount()
 }

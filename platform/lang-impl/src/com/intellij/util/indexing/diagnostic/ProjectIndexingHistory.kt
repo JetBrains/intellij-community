@@ -30,6 +30,7 @@ interface ProjectIndexingHistory {
   val providerStatistics: List<JsonFileProviderIndexStatistics>
   val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
+  val visibleTimeToAllThreadsTimeRatio: Double
 }
 
 interface StatsPerFileType {
@@ -62,7 +63,7 @@ interface IndexingTimes {
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime
   val indexingDuration: Duration
-  val contentLoadingDuration: Duration
+  val contentLoadingVisibleDuration: Duration
   val pushPropertiesDuration: Duration
   val indexExtensionsDuration: Duration
   var creatingIteratorsDuration: Duration

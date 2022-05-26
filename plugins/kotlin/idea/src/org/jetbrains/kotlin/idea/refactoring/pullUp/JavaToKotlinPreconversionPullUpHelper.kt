@@ -154,8 +154,8 @@ class JavaToKotlinPreconversionPullUpHelper(
             for (usage in usages) {
                 val fieldDescriptor = usage.fieldDescriptor
                 val targetLightClass = (usage.reference?.resolve() as? PsiField)?.containingClass ?: return
-                val getter = targetLightClass.findMethodBySignature(fieldDescriptor.getterPrototype, false)
-                val setter = targetLightClass.findMethodBySignature(fieldDescriptor.setterPrototype, false)
+                val getter = targetLightClass.findMethodBySignature(fieldDescriptor.getterPrototype!!, false)
+                val setter = targetLightClass.findMethodBySignature(fieldDescriptor.setterPrototype!!, false)
 
                 EncapsulateFieldHelper.getHelper(usage.element!!.language)?.processUsage(usage, encapsulateFieldsDescriptor, setter, getter)
             }

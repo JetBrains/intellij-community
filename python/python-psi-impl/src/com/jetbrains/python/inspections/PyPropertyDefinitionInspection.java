@@ -80,11 +80,6 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
 
     @Override
-    public void visitPyFile(@NotNull PyFile node) {
-      super.visitPyFile(node);
-    }
-
-    @Override
     public void visitPyClass(final @NotNull PyClass node) {
       super.visitPyClass(node);
       // check property() and @property

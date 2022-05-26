@@ -38,7 +38,10 @@ public final class JUnitUtil {
   public static final String RULE_ANNOTATION = "org.junit.Rule";
   public static final String TEST5_PACKAGE_FQN = "org.junit.jupiter.api";
   public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
+  
   public static final String CUSTOM_TESTABLE_ANNOTATION = "org.junit.platform.commons.annotation.Testable";
+  public static final Set<String> CUSTOM_TESTABLE_ANNOTATION_LIST = Collections.singleton(CUSTOM_TESTABLE_ANNOTATION);
+  
   public static final String TEST5_FACTORY_ANNOTATION = "org.junit.jupiter.api.TestFactory";
   public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   public static final String RUN_WITH = "org.junit.runner.RunWith";
@@ -64,8 +67,6 @@ public final class JUnitUtil {
   public static final Collection<String> TEST5_STATIC_CONFIG_METHODS =
     ContainerUtil.immutableList(BEFORE_ALL_ANNOTATION_NAME, AFTER_ALL_ANNOTATION_NAME);
 
-  public static final Collection<String> TEST5_ANNOTATIONS =
-    ContainerUtil.immutableList(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION, CUSTOM_TESTABLE_ANNOTATION);
   public static final Collection<String> TEST5_JUPITER_ANNOTATIONS =
     ContainerUtil.immutableList(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION);
 
@@ -172,7 +173,7 @@ public final class JUnitUtil {
   private static boolean hasTestableMetaAnnotation(@NotNull PsiClass psiClass) {
     return JavaPsiFacade.getInstance(psiClass.getProject())
           .findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) != null &&
-           MetaAnnotationUtil.hasMetaAnnotatedMethods(psiClass,Collections.singleton(CUSTOM_TESTABLE_ANNOTATION));
+           MetaAnnotationUtil.hasMetaAnnotatedMethods(psiClass, CUSTOM_TESTABLE_ANNOTATION_LIST);
   }
 
   public static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
@@ -183,7 +184,7 @@ public final class JUnitUtil {
       }
     }
     else if (JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) != null && 
-             MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION)) || 
+             MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, CUSTOM_TESTABLE_ANNOTATION_LIST) ||
              hasTestableMetaAnnotation(psiClass)) {
       //no jupiter engine in the classpath
       return true;
@@ -302,21 +303,23 @@ public final class JUnitUtil {
       return true;
     }
 
-    if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
+    if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, CUSTOM_TESTABLE_ANNOTATION_LIST)) {
       return true;
     }
 
     if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
 
     return CachedValuesManager.getCachedValue(psiClass, () -> {
-      boolean hasAnnotation = false;
-      for (final PsiMethod method : psiClass.getAllMethods()) {
-        ProgressManager.checkCanceled();
-        if (!method.hasModifierProperty(PsiModifier.PRIVATE) &&
-            !method.hasModifierProperty(PsiModifier.STATIC) &&
-            MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
-          hasAnnotation = true;
-          break;
+      boolean hasAnnotation = AnnotationUtil.isAnnotated(psiClass, "org.junit.jupiter.api.extension.ExtendWith", 0);
+      if (!hasAnnotation) {
+        for (final PsiMethod method : psiClass.getAllMethods()) {
+          ProgressManager.checkCanceled();
+          if (!method.hasModifierProperty(PsiModifier.PRIVATE) &&
+              !method.hasModifierProperty(PsiModifier.STATIC) &&
+              MetaAnnotationUtil.isMetaAnnotated(method, CUSTOM_TESTABLE_ANNOTATION_LIST)) {
+            hasAnnotation = true;
+            break;
+          }
         }
       }
 
@@ -358,12 +361,12 @@ public final class JUnitUtil {
       return true;
     }
 
-    return MetaAnnotationUtil.isMetaAnnotated(method, includeCustom ? TEST5_ANNOTATIONS : TEST5_JUPITER_ANNOTATIONS);
+    return MetaAnnotationUtil.isMetaAnnotated(method, includeCustom ? CUSTOM_TESTABLE_ANNOTATION_LIST : TEST5_JUPITER_ANNOTATIONS);
   }
 
   private static boolean isExplicitlyTestAnnotated(PsiMethod method) {
     return TestUtils.isExplicitlyJUnit4TestAnnotated(method) ||
-           JUnitRecognizer.willBeAnnotatedAfterCompilation(method) || MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS);
+           JUnitRecognizer.willBeAnnotatedAfterCompilation(method) || MetaAnnotationUtil.isMetaAnnotated(method, CUSTOM_TESTABLE_ANNOTATION_LIST);
   }
 
   public static boolean isJUnit4TestAnnotated(PsiMethod method) {

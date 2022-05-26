@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.ConflictingFileTypeMappingTracker.ResolveConflictResult;
@@ -237,10 +236,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     File dir = createTempDirectory();
     File file = FileUtil.createTempFile(dir, "x", "xxx_xx_xx", true);
     VirtualFile virtualFile = getVirtualFile(file);
-    assertEquals(FileTypes.UNKNOWN, getFileType(virtualFile));
+    Assume.assumeTrue(UnknownFileType.INSTANCE.equals(myFileTypeManager.getFileTypeByFileName(virtualFile.getName())));
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
     PsiFile psi = getPsiManager().findFile(virtualFile);
-    assertTrue(psi instanceof PsiBinaryFile);
-    assertEquals(FileTypes.UNKNOWN, getFileType(virtualFile));
+    assertFalse(psi.toString(), psi instanceof PsiBinaryFile);
+    assertEquals(DetectedByContentFileType.INSTANCE, getFileType(virtualFile));
 
     setBinaryContent(virtualFile, "x_x_x_x".getBytes(StandardCharsets.UTF_8));
     assertEquals(FileTypes.PLAIN_TEXT, getFileType(virtualFile));
@@ -1063,7 +1063,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
 
       @Override
-      public @Nullable Icon getIcon() {
+      public Icon getIcon() {
         return null;
       }
 
@@ -1145,7 +1145,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getDisplayName() { return getClass().getName(); }
     @Override public @NotNull String getDescription() { return getDisplayName(); }
     @Override public @NotNull String getDefaultExtension() { return "hs"; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override  public boolean isBinary() { return false; }
   }
 
@@ -1250,7 +1250,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getName() { return NAME; }
     @Override public @NotNull String getDescription() { return ""; }
     @Override public @NotNull String getDefaultExtension() { return EXTENSION; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override public boolean isBinary() { return false; }
   }
 
@@ -1262,7 +1262,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override public @NotNull String getName() { return NAME; }
     @Override public @NotNull String getDescription() { return ""; }
     @Override public @NotNull String getDefaultExtension() { return "hs"; }
-    @Override public @Nullable Icon getIcon() { return null; }
+    @Override public Icon getIcon() { return null; }
     @Override public boolean isBinary() { return false; }
   }
 
@@ -1288,7 +1288,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     setBinaryContent(virtualFile, new byte[0]);
     myFileTypeManager.drainReDetectQueue();
-    assertEquals(UnknownFileType.INSTANCE, getFileType(virtualFile));
+    FileType type = getFileType(virtualFile);
+    assertFalse(type.toString(), type.isBinary()); // either PlainTextFile or DetectedByContent are fine
 
     setBinaryContent(virtualFile, "qwe\newq".getBytes(StandardCharsets.UTF_8));
     myFileTypeManager.drainReDetectQueue();

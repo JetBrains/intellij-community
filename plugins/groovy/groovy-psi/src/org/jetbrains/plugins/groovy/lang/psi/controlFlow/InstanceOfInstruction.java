@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.util.Pair;
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isThisRef;
@@ -36,10 +37,14 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isNullLiteral
  */
 public class InstanceOfInstruction extends InstructionImpl implements MixinTypeInstruction {
   private final ConditionInstruction myCondition;
+  private final Map<VariableDescriptor, Integer> myVariableIndex;
 
-  public InstanceOfInstruction(@NotNull GroovyPsiElement assertion, ConditionInstruction cond) {
+  public InstanceOfInstruction(@NotNull GroovyPsiElement assertion,
+                               ConditionInstruction cond,
+                               Map<VariableDescriptor, Integer> index) {
     super(assertion);
     myCondition = cond;
+    myVariableIndex = index;
   }
 
   @NotNull
@@ -137,12 +142,16 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     return null;
   }
 
-  @Nullable
   @Override
-  public VariableDescriptor getVariableDescriptor() {
+  public int getVariableDescriptor() {
     Pair<GrExpression, PsiType> instanceOf = getInstanceof();
-    if (instanceOf == null || !(instanceOf.first instanceof GrReferenceExpression)) return null;
-    return VariableDescriptorFactory.createDescriptor((GrReferenceExpression)instanceOf.first);
+    if (instanceOf == null || !(instanceOf.first instanceof GrReferenceExpression)) return 0;
+    VariableDescriptor descriptor = VariableDescriptorFactory.createDescriptor((GrReferenceExpression)instanceOf.first);
+    if (descriptor == null) {
+      return 0;
+    }
+    Integer descr = myVariableIndex.get(descriptor);
+    return descr == null ? 0 : descr;
   }
 
   @Nullable

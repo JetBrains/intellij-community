@@ -18,11 +18,7 @@ internal abstract class LinkGeneratingProvider(private val baseURI: URI?): Gener
       return destination
     }
     try {
-      val resolved = baseURI?.resolve(destination.toString()) ?: return destination
-      return when {
-        resolved.scheme != baseURI.scheme -> "${baseURI.scheme}:/${resolved}"
-        else -> resolved.toString()
-      }
+      return baseURI?.resolve(destination.toString())?.toString() ?: destination
     }
     catch (e: IllegalArgumentException) {
       return destination

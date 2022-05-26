@@ -83,5 +83,7 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" scope="TEST" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.externalProcessAuthHelper.rt" />
   </component>
 </module>

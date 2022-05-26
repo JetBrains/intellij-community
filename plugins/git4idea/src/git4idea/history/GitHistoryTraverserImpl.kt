@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.Disposable
@@ -26,7 +26,6 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitCommit
 import git4idea.GitUtil
-import git4idea.GitVcs
 import git4idea.history.GitHistoryTraverser.Traverse
 import git4idea.history.GitHistoryTraverser.TraverseCommitInfo
 import java.util.*
@@ -115,7 +114,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
 
   override fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata> =
     ids.groupBy { getRoot(it) }.map { (root, commits) ->
-      GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root, commits.map { toHash(it).asString() })
+      GitLogUtil.collectMetadata(project, root, commits.map { toHash(it).asString() })
     }.flatten()
 
 

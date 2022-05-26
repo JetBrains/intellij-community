@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +11,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public interface ConfigImportSettings {
-  void importFinished(@NotNull Path newConfigPath);
+  void importFinished(@NotNull Path newConfigPath, @Nullable String pathSelectorOfOtherIde);
 
   /**
    * If there are no configs for previous versions of this product,
@@ -34,19 +34,18 @@ public interface ConfigImportSettings {
   }
 
   /**
-   * @return true if bundled plugins should be downloaded from the plugin repository if they are missing
-   * in the current installation when importing settings from another product
+   * Allows to edit lists of plugins that are about to be migrated or downloaded during import
    */
-  default boolean shouldImportBundledPlugins() {
-    return false;
-  }
+  default void processPluginsToMigrate(@NotNull Path newConfigDir,
+                                       @NotNull Path oldConfigDir,
+                                       @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
 
   /**
-   * Determines whether bundled plugin from other product should be imported if bundled plugins importing enabled or not.
-   *
-   * @return true if plugin should be imported
+   * @param prefix is a platform prefix of {@code configDirectory}
+   * @return true if configDirectory should not be seen as import candidate while finding configuration directories
    */
-  default boolean shouldImport(@NotNull PluginId id, @Nullable String category) {
-    return true;
+  default boolean shouldNotBeSeenAsImportCandidate(Path configDirectory, @Nullable String prefix, @Nullable String productPrefixOtherIde) {
+    return false;
   }
 }

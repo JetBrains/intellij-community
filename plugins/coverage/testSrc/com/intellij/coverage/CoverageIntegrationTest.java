@@ -41,11 +41,11 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     assertEquals(1, barClassCoverage.coveredMethodCount);
     PackageAnnotator.PackageCoverageInfo barPackageCoverage = consumer.myPackageCoverage.get("foo.bar");
     assertEquals(2, barPackageCoverage.coveredLineCount);
-    assertEquals(4, barPackageCoverage.totalLineCount);
+    assertEquals(8, barPackageCoverage.totalLineCount);
     assertEquals(1, barPackageCoverage.coveredMethodCount);
-    assertEquals(3, barPackageCoverage.totalMethodCount);
+    assertEquals(7, barPackageCoverage.totalMethodCount);
     PackageAnnotator.ClassCoverageInfo uncoveredClassInfo = consumer.myClassCoverageInfo.get("foo.bar.UncoveredClass");
-    assertEquals(0, uncoveredClassInfo.totalMethodCount);
+    assertEquals(4, uncoveredClassInfo.totalMethodCount);
     assertEquals(0, uncoveredClassInfo.coveredMethodCount);
   }
 

@@ -24,7 +24,7 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testMethodQualifier() {
-    highlightTest(false);
+    highlightTest(false, false);
   }
 
   public void testIdenticalCatchUnrelatedExceptions() {
@@ -32,7 +32,7 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testIdenticalCatchThreeOutOfFour() {
-    doTest(true, false);
+    doTest(true, false, false);
   }
 
   public void testIdenticalCatchWithComments() {
@@ -44,7 +44,7 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testIdenticalCatchWithDifferentComments() {
-    doTest(false, true);
+    doTest(false, true, false);
   }
 
   public void testIdenticalCatchDifferentCommentStyle() {
@@ -56,23 +56,27 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testIdenticalNonemptyCatchWithDifferentCommentsProcessAll() {
-    doTest(true, true);
+    doTest(true, true, false);
   }
 
   public void testIdenticalNonemptyCatchWithDifferentCommentsProcessOne() {
-    doTest(false, true);
+    doTest(false, true, false);
+  }
+
+  public void testIdenticalNonemptyCatchWithDifferentCommentsStrict() {
+    highlightTest(true, true);
   }
 
   public void testCatchParameterRewritten() {
-    highlightTest(false);
+    highlightTest(false, false);
   }
 
   public void doTest() {
-    doTest(false, false);
+    doTest(false, false, false);
   }
 
-  public void doTest(boolean processAll, boolean checkInfos) {
-    highlightTest(checkInfos);
+  private void doTest(boolean processAll, boolean checkInfos, boolean strictComments) {
+    highlightTest(checkInfos, strictComments);
     String name = getTestName(false);
     if (processAll) {
       PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiTryStatement.class);
@@ -96,9 +100,11 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkResultByFile(PATH + name + ".after.java");
   }
 
-  private void highlightTest(boolean checkInfos) {
+  private void highlightTest(boolean checkInfos, boolean strictComments) {
     String name = getTestName(false);
-    myFixture.enableInspections(TryWithIdenticalCatchesInspection.class);
+    TryWithIdenticalCatchesInspection inspection = new TryWithIdenticalCatchesInspection();
+    inspection.ignoreBlocksWithDifferentComments = strictComments;
+    myFixture.enableInspections(inspection);
     myFixture.configureByFile(PATH + name + ".java");
     myFixture.checkHighlighting(true, checkInfos, false);
   }

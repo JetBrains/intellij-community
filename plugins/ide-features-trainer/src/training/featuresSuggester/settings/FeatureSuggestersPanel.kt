@@ -1,6 +1,5 @@
 package training.featuresSuggester.settings
 
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.ThreeStateCheckBox.State
@@ -21,7 +20,6 @@ class FeatureSuggestersPanel(
 ) : JPanel() {
   private val toggleAllCheckBox =
     ThreeStateCheckBox(FeatureSuggesterBundle.message("configurable.show.suggestions.checkbox"), State.SELECTED)
-  private val suggestingIntervalField = JTextField(3)
   private val actionPanels: List<SuggestingActionPanel> =
     suggesterIdToName.map { SuggestingActionPanel(it.key, it.value) }
 
@@ -58,18 +56,9 @@ class FeatureSuggestersPanel(
       if (toggleAllCheckBox.state != State.DONT_CARE) {
         val selected = toggleAllCheckBox.isSelected
         actionPanels.forEach { it.select(selected) }
-        suggestingIntervalField.isEnabled = selected
       }
     }
-
-    suggestingIntervalField.maximumSize = Dimension(49, 30)
-    val daysLabel = JBLabel(FeatureSuggesterBundle.message("configurable.days.label"))
-
-    panel.apply {
-      add(toggleAllCheckBox)
-      add(suggestingIntervalField)
-      add(daysLabel)
-    }
+    panel.add(toggleAllCheckBox)
     return panel
   }
 
@@ -109,20 +98,16 @@ class FeatureSuggestersPanel(
     }
     if (anySelected && anyNotSelected) {
       toggleAllCheckBox.state = State.DONT_CARE
-      suggestingIntervalField.isEnabled = true
     }
     else if (anySelected) {
       toggleAllCheckBox.isSelected = true
-      suggestingIntervalField.isEnabled = true
     }
     else if (anyNotSelected) {
       toggleAllCheckBox.isSelected = false
-      suggestingIntervalField.isEnabled = false
     }
   }
 
   fun loadFromSettings() {
-    suggestingIntervalField.text = settings.suggestingIntervalDays.toString()
     doWithActionPanels { panel ->
       val enabled = settings.isEnabled(panel.suggesterId)
       panel.select(enabled)
@@ -133,16 +118,6 @@ class FeatureSuggestersPanel(
     val panel = actionPanels.find { it.suggesterId == suggesterId }
                 ?: throw IllegalArgumentException("Unknown action name: $suggesterId")
     return panel.selected()
-  }
-
-  fun getSuggestingIntervalDays(): Int {
-    val interval = suggestingIntervalField.text.toIntOrNull()
-    return if (interval != null && interval >= 0) {
-      interval
-    }
-    else {
-      FeatureSuggesterSettings.DEFAULT_SUGGESTING_INTERVAL_DAYS
-    }
   }
 
   private class SuggestingActionPanel(val suggesterId: String, actionDisplayName: @Nls String) : JPanel() {

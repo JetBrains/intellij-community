@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,16 +18,14 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForModuleComputationTracker
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.SdkInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.completion.test.withServiceRegistered
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
@@ -36,13 +35,18 @@ import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
+import org.jetbrains.kotlin.idea.util.sourceRoots
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.ANNOTATION_OPTION
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.PLUGIN_ID
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
+import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.ThreadLocalRandom
+import kotlin.math.absoluteValue
 
 @RunWith(JUnit38ClassRunner::class)
 open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
@@ -230,37 +234,45 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         checkHighlightingInProject()
     }
 
-    fun testJvmExperimentalLibrary() {
-        val sources = listOf(File(testDataPath, getTestName(true) + "/lib"))
-        val extraOptions = listOf(
-            "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xexperimental=lib.ExperimentalAPI"
-        )
-
-        val lib = KotlinCompilerStandalone(sources, options = extraOptions).compile()
-
-        module("usage").addLibrary(lib)
-        checkHighlightingInProject()
-    }
-
-    fun testJsExperimentalLibrary() {
-        val sources = listOf(File(testDataPath, getTestName(true) + "/lib"))
-        val extraOptions = listOf(
-            "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xexperimental=lib.ExperimentalAPI"
-        )
-
-        val lib = KotlinCompilerStandalone(
-            sources,
-            platform = KotlinCompilerStandalone.Platform.JavaScript(MockLibraryFacility.MOCK_LIBRARY_NAME, "lib"),
-            options = extraOptions
+    fun testResolutionAnchorsAndBuiltins() {
+        val jarForCompositeLibrary = KotlinCompilerStandalone(
+            sources = listOf(File("$testDataPath${getTestName(true)}/compositeLibraryPart"))
+        ).compile()
+        val stdlibJarForCompositeLibrary = KotlinArtifacts.instance.kotlinStdlib
+        val jarForSourceDependentLibrary = KotlinCompilerStandalone(
+            sources = listOf(File("$testDataPath${getTestName(true)}/sourceDependentLibrary"))
         ).compile()
 
-        val usageModule = module("usage")
-        usageModule.makeJsModule()
-        usageModule.addLibrary(lib, kind = JSLibraryKind)
+        val dependencyModule = module("dependencyModule")
+        val anchorModule = module("anchor")
+        val sourceModule = module("sourceModule")
 
-        checkHighlightingInProject()
+        val sourceDependentLibraryName = "sourceDependentLibrary"
+        sourceModule.addMultiJarLibrary(listOf(stdlibJarForCompositeLibrary, jarForCompositeLibrary), "compositeLibrary")
+        sourceModule.addLibrary(jarForSourceDependentLibrary, sourceDependentLibraryName)
+        anchorModule.addDependency(dependencyModule)
+
+        val anchorMapping = mapOf(sourceDependentLibraryName to anchorModule.name)
+
+        withResolutionAnchors(anchorMapping) {
+            checkHighlightingInProject()
+            dependencyModule.modifyTheOnlySourceFile()
+            checkHighlightingInProject()
+        }
+    }
+
+    private fun Module.modifyTheOnlySourceFile() {
+        val sourceRoot = sourceRoots.singleOrNull() ?: error("Expected single source root in a test module")
+        assert(sourceRoot.isDirectory) { "Source root of a test module is not a directory" }
+        val ktFile = sourceRoot.children.singleOrNull()?.toPsiFile(project) as? KtFile
+            ?: error("Expected single .kt file in a test source module")
+
+        val stubFunctionName = "fn${System.currentTimeMillis()}_${ThreadLocalRandom.current().nextInt().toLong().absoluteValue}"
+        WriteCommandAction.runWriteCommandAction(project) {
+            ktFile.add(
+                KtPsiFactory(project).createFunction("fun $stubFunctionName() {}")
+            )
+        }
     }
 
     private fun Module.setupKotlinFacet(configure: KotlinFacetConfiguration.() -> Unit) = apply {
@@ -277,10 +289,4 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
         }
     }
 
-    private fun Module.makeJsModule() {
-        setupKotlinFacet {
-            settings.compilerArguments = K2JSCompilerArguments()
-            settings.targetPlatform = JSLibraryKind.compilerPlatform
-        }
-    }
 }

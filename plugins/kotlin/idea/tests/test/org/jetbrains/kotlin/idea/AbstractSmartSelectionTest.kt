@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.refactoring.getExpressionShortText
 import org.jetbrains.kotlin.idea.refactoring.getSmartSelectSuggestions
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
 @Suppress("DEPRECATION")
 abstract class AbstractSmartSelectionTest : KotlinLightCodeInsightFixtureTestCase() {

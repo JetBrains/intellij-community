@@ -2064,6 +2064,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new DupInstruction());
       processIncrementDecrement(expression, operand);
       addInstruction(new PopInstruction());
+      addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(expression)));
     } else {
       pushUnknown();
     }
@@ -2124,6 +2125,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             pushUnknown();
             addInstruction(new AssignInstruction(operand, null, JavaDfaValueFactory.getExpressionDfaValue(myFactory, operand)));
           }
+          addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(expression)));
         }
         else {
           PsiType type = expression.getType();
@@ -2394,7 +2396,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static final CallInliner[] INLINERS = {
-    new OptionalChainInliner(), new LambdaInliner(),
+    new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
     new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
     new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner()

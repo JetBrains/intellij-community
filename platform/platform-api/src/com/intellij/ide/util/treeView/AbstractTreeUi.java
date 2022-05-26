@@ -1744,7 +1744,7 @@ public class AbstractTreeUi {
     if (canYield()) {
       AsyncPromise<?> result = new AsyncPromise<Void>();
       pass.setCurrentNode(node);
-      boolean wasRun = yieldAndRun(new TreeRunnable("AbstractTreeUi.maybeYeild") {
+      boolean wasRun = yieldAndRun(new TreeRunnable("AbstractTreeUi.maybeYield") {
         @Override
         public void perform() {
           if (pass.isExpired()) {
@@ -1753,7 +1753,7 @@ public class AbstractTreeUi {
           }
 
           if (isRerunNeeded(pass)) {
-            runDone(new TreeRunnable("AbstractTreeUi.maybeYeild: rerun") {
+            runDone(new TreeRunnable("AbstractTreeUi.maybeYield: rerun") {
               @Override
               public void perform() {
                 if (!pass.isExpired()) {
@@ -1977,7 +1977,7 @@ public class AbstractTreeUi {
     return true;
   }
 
-  private boolean isYeildingNow() {
+  private boolean isYieldingNow() {
     return myYieldingNow;
   }
 
@@ -2010,7 +2010,7 @@ public class AbstractTreeUi {
   public String getStatus() {
     return "isReady=" + isReady() + "\n" +
            " isIdle=" + isIdle() + "\n" +
-           "  isYeildingNow=" + isYeildingNow() + "\n" +
+           "  isYeildingNow=" + isYieldingNow() + "\n" +
            "  isWorkerBusy=" + isWorkerBusy() + "\n" +
            "  hasUpdatingChildrenNow=" + hasUpdatingChildrenNow() + "\n" +
            "  isLoadingInBackgroundNow=" + isLoadingInBackgroundNow() + "\n" +
@@ -2037,7 +2037,7 @@ public class AbstractTreeUi {
   }
 
   public boolean isIdle() {
-    return !isYeildingNow() && !isWorkerBusy() && !hasUpdatingChildrenNow() && !isLoadingInBackgroundNow();
+    return !isYieldingNow() && !isWorkerBusy() && !hasUpdatingChildrenNow() && !isLoadingInBackgroundNow();
   }
 
   private void executeYieldingRequest(@NotNull Runnable runnable, @NotNull TreeUpdatePass pass) {
@@ -2134,7 +2134,7 @@ public class AbstractTreeUi {
 
     Runnable[] actions = myYieldingDoneRunnables.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
     for (Runnable each : actions) {
-      if (!isYeildingNow()) {
+      if (!isYieldingNow()) {
         myYieldingDoneRunnables.remove(each);
         each.run();
       }
@@ -2777,7 +2777,7 @@ public class AbstractTreeUi {
     if (descriptor == null) return;
 
 
-    if (isYeildingNow()) {
+    if (isYieldingNow()) {
       myPendingNodeActions.add(node);
       return;
     }
@@ -3388,7 +3388,7 @@ public class AbstractTreeUi {
       @Override
       public void perform() {
         try {
-          if (myProgress != null && ProgressManager.getGlobalProgressIndicator() != myProgress) {
+          if (myProgress != null && ProgressIndicatorProvider.getGlobalProgressIndicator() != myProgress) {
             ProgressManager.getInstance().runProcess(pooledThreadWithProgressRunnable, myProgress);
           }
           else {
@@ -3922,7 +3922,6 @@ public class AbstractTreeUi {
   }
 
   public void scrollSelectionToVisible(@Nullable Runnable onDone, boolean shouldBeCentered) {
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new TreeRunnable("AbstractTreeUi.scrollSelectionToVisible") {
       @Override
       public void perform() {
@@ -4069,7 +4068,6 @@ public class AbstractTreeUi {
             }
             else {
               // need this to prevent stack overflow if the tree is rather big and is "synchronous"
-              //noinspection SSBasedInspection
               SwingUtilities.invokeLater(this);
             }
           }
@@ -4180,7 +4178,6 @@ public class AbstractTreeUi {
     };
 
     if (breakCallChain && !isPassthroughMode()) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(expandRunnable);
     }
     else {
@@ -4210,7 +4207,7 @@ public class AbstractTreeUi {
       }
     }
 
-    if (isYeildingNow()) {
+    if (isYieldingNow()) {
       myYieldingDoneRunnables.add(done);
     }
     else {

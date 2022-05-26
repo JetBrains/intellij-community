@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.kdoc
 
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractKDocTypingTest : KotlinLightCodeInsightFixtureTestCase() {

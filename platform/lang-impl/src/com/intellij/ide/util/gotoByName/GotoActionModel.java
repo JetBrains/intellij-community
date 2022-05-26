@@ -755,7 +755,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       if (myUseListFont) {
         nameComponent.setFont(list.getFont());
       }
-      nameComponent.setBackground(bg);
+      nameComponent.setOpaque(false);
       panel.add(nameComponent, BorderLayout.CENTER);
 
       if (matchedValue instanceof String) { //...

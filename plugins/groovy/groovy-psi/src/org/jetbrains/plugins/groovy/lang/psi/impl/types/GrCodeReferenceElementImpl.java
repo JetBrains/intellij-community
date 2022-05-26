@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -182,8 +182,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       case REFERENCE:
         return referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
       case IMPORT_REFERENCE:
-        return (element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element)
-               || element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element);
+        return ((element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element))
+               || (element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element))
+               || (element instanceof PsiPackage && referencesPackage(element));
       default:
         throw new IllegalStateException();
     }

@@ -36,13 +36,9 @@ public abstract class ArtifactsDownloadingTestCase extends MavenMultiVersionImpo
     digest.update(FileUtil.loadFileBytes(jar));
     byte[] sha1 = digest.digest();
 
-    PrintWriter out = new PrintWriter(new File(dir, name + ".sha1"), StandardCharsets.UTF_8);
-    try {
+    try (PrintWriter out = new PrintWriter(new File(dir, name + ".sha1"), StandardCharsets.UTF_8)) {
       for (byte b : sha1) out.printf("%02x", b);
       out.println("  " + name);
-    }
-    finally {
-      out.close();
     }
   }
 }

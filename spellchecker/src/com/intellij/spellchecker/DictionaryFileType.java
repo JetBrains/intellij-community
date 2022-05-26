@@ -8,7 +8,6 @@ import com.intellij.spellchecker.util.SpellCheckerBundle;
 import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -42,7 +41,6 @@ public class DictionaryFileType implements FileType {
     return "dic";
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     return SpellcheckerIcons.Dictionary;

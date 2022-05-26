@@ -20,7 +20,7 @@ final class LineMarkersPassFactory implements TextEditorHighlightingPassFactory,
 
   @NotNull
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     TextRange restrictRange = FileStatusMap.getDirtyTextRange(editor, Pass.LINE_MARKERS);
     Document document = editor.getDocument();
     Project project = file.getProject();

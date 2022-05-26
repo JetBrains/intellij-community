@@ -799,6 +799,38 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertExcludePatterns("project", getExternalSystemConfigFileName());
   }
 
+  @Test
+  @TargetVersions("7.4+")
+  public void testJvmTestSuitesImported() throws Exception {
+    createDefaultDirs();
+    createProjectSubFile("src/integrationTest/java/A.java", "class A {}");
+    createProjectSubFile("src/integrationTest/resources/file.txt", "test data");
+    final GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
+      .withPlugin("java", null)
+      .withPlugin("jvm-test-suite", null)
+      .addPostfix(
+        "testing {",
+        "    suites { ",
+        "        test { ",
+        "            useJUnitJupiter() ",
+        "        }",
+        "        integrationTest(JvmTestSuite) { ",
+        "            dependencies {",
+        "                implementation project ",
+        "            }",
+        "        }",
+        "    }",
+        "}"
+      );
+
+    importProject(buildScript.generate());
+    assertDefaultGradleJavaProjectFolders("project");
+    final String testSourceSetModuleName = "project.integrationTest";
+    assertContentRoots(testSourceSetModuleName, getProjectPath() + "/src/integrationTest");
+    assertTestSources(testSourceSetModuleName, "java");
+    assertTestResources(testSourceSetModuleName, "resources");
+  }
+
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
     boolean isDelegatedBuild = GradleProjectSettings.isDelegatedBuildEnabled(myProject, getProjectPath());
     String[] excludes = isDelegatedBuild ? new String[]{".gradle", "build"} : new String[]{".gradle", "build", "out"};

@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.debugger.KotlinEditorTextProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.Assert
 
 abstract class AbstractSelectExpressionForDebuggerTest : KotlinLightCodeInsightFixtureTestCase() {

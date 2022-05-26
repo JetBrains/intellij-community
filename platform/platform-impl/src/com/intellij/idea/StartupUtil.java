@@ -39,10 +39,6 @@ import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.helpers.LogLog;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +72,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 
 @ApiStatus.Internal
 @SuppressWarnings("LoggerInitializedWithForeignClass")
@@ -171,8 +169,8 @@ public final class StartupUtil {
       return prepareSplash(args);
     }, forkJoinPool);
 
-    activity = activity.endAndStart("log4j configuration");
-    configureLog4j();
+    activity = activity.endAndStart("java.util.logging configuration");
+    configureJavaUtilLogging();
     activity = activity.endAndStart("eua and splash scheduling");
 
     CompletableFuture<Boolean> showEuaIfNeededFuture;
@@ -644,14 +642,14 @@ public final class StartupUtil {
     activity.end();
   }
 
-  private static void configureLog4j() {
+  private static void configureJavaUtilLogging() {
     Activity activity = StartUpMeasurer.startActivity("console logger configuration");
-    System.setProperty("log4j.defaultInitOverride", "true");  // suppresses Log4j "no appenders" warning
-    @SuppressWarnings("deprecation")
-    org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
-    if (!root.getAllAppenders().hasMoreElements()) {
-      root.setLevel(Level.WARN);
-      root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+    java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+    if (rootLogger.getHandlers().length == 0) {
+      rootLogger.setLevel(Level.WARNING);
+      ConsoleHandler consoleHandler = new ConsoleHandler();
+      consoleHandler.setLevel(Level.WARNING);
+      rootLogger.addHandler(consoleHandler);
     }
     activity.end();
   }
@@ -829,10 +827,6 @@ public final class StartupUtil {
     if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
-      // Disabling output to `System.err` seems to be the only way to avoid deadlock (https://youtrack.jetbrains.com/issue/IDEA-243708)
-      // with Log4j 1.x if an internal error happens during logging (e.g. a disk space issue).
-      // Should be revisited in case of migration to Log4j 2.
-      LogLog.setQuietMode(true);
     }
     return log;
   }

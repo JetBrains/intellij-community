@@ -14,8 +14,8 @@
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.gradle" />
     <orderEntry type="module" module-name="intellij.gradle.common" />
   </component>
 </module>

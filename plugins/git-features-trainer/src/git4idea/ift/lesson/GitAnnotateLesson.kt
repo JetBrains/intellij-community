@@ -19,9 +19,10 @@ import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
-import com.intellij.openapi.vcs.changes.ui.CommittedChangeListPanel
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import git4idea.ift.GitLessonsBundle
 import org.assertj.swing.core.MouseButton
 import org.assertj.swing.timing.Timeout
@@ -35,8 +36,6 @@ import training.util.LessonEndInfo
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
-import java.awt.event.KeyEvent
-import javax.swing.JEditorPane
 
 class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("git.annotate.lesson.name")) {
   override val existedFile = "git/martian_cat.yml"
@@ -219,9 +218,9 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     task {
       text(GitLessonsBundle.message("git.annotate.click.annotation"))
       highlightAnnotation(secondDiffSplitter, secondStateText, highlightRight = true)
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: JEditorPane ->
-        UIUtil.getParentOfType(CommittedChangeListPanel::class.java, ui) != null
-        && ui.text?.contains(partOfTargetCommitMessage) == true
+      triggerByUiComponentAndHighlight(highlightInside = false, usePulsation = true) { ui: CommitDetailsListPanel ->
+        val textPanel = UIUtil.findComponentOfType(ui, HtmlPanel::class.java)
+        textPanel?.text?.contains(partOfTargetCommitMessage) == true
       }
       restoreIfDiffClosed(openSecondDiffTaskId, secondDiffSplitter)
       test(waitEditorToBeReady = false) {
@@ -229,19 +228,19 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       }
     }
 
-    task {
+    task("HideActiveWindow") {
       before {
         if (backupRevisionsLocation == null) {
           backupRevisionsLocation = adjustPopupPosition(ChangeListViewerDialog.DIMENSION_SERVICE_KEY)
         }
       }
-      text(GitLessonsBundle.message("git.annotate.close.changes", code(editedPropertyName), LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
+      text(GitLessonsBundle.message("git.annotate.close.changes", code(editedPropertyName), action(it)))
       stateCheck {
         previous.ui?.isShowing != true
       }
       test(waitEditorToBeReady = false) {
         Thread.sleep(500)
-        invokeActionViaShortcut("ESCAPE")
+        actions(it)
       }
     }
 

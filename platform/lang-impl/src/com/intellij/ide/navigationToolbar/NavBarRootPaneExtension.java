@@ -80,18 +80,8 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     if (myWrapperPanel == null) {
       myWrapperPanel = new NavBarWrapperPanel(new BorderLayout()) {
         @Override
-        protected void paintComponent(Graphics g) {
-          super.paintComponent(g);
-        }
-
-        @Override
         public Insets getInsets() {
           return NavBarUIManager.getUI().getWrapperPanelInsets(super.getInsets());
-        }
-
-        @Override
-        public void addNotify() {
-          super.addNotify();
         }
       };
 

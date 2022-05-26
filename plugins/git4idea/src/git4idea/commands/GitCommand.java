@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +36,7 @@ public final class GitCommand {
   public static final GitCommand FETCH = read("fetch");  // fetch is a read-command, because it doesn't modify the index
   public static final GitCommand INIT = write("init");
   public static final GitCommand LOG = read("log");
+  public static final GitCommand SHORTLOG = read("shortlog");
   public static final GitCommand LS_FILES = readOptional("ls-files");
   public static final GitCommand LS_TREE = read("ls-tree");
   public static final GitCommand LS_REMOTE = read("ls-remote");

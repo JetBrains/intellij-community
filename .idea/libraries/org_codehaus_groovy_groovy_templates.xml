@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="org.codehaus.groovy:groovy-templates" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-templates:2.5.14" />
+    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-templates:3.0.9" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.5.14/groovy-templates-2.5.14.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.9/groovy-templates-3.0.9.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.5.14/groovy-templates-2.5.14-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.9/groovy-templates-3.0.9-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

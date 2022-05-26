@@ -7,6 +7,7 @@ import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
+import com.intellij.refactoring.extractMethodObject.LightMethodObjectExtractedData;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +64,7 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightRefactoring
     final PsiElement context = getFile().findElementAt(offset);
     final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
     final JavaCodeFragment fragment = fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
-    final ExtractLightMethodObjectHandler.ExtractedData extractedData =
+    final LightMethodObjectExtractedData extractedData =
       ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test", JavaSdkVersion.JDK_1_9);
     assertNotNull(extractedData);
     assertFalse(extractedData.useMagicAccessor());

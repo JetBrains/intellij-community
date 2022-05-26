@@ -10,7 +10,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.kotlin.idea.configuration.AbstractConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.AndroidStudioTestUtils
 import java.io.File
 

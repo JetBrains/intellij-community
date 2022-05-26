@@ -10,51 +10,68 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * @param isBlockPropagation if true then property changes propagation will be blocked through modified properties
+ * PropertyGraph is traces modifications inside observable properties. It creates graph of dependent properties.
+ *
+ * PropertyGraph can recognize and stop infinity updates between properties. For example, we have properties
+ * A -> B -> C -> A (-> depends on) and property A is modified. Then property graph detects this cycle, and it doesn't
+ * make last modification.
+ *
+ * PropertyGraph can block propagation through property, which was modified externally (outside PropertyGraph).
+ * It is needed for UI cases. For example, we have dependent properties id and name. When we modify property id, we put
+ * id's value into property name. But if we modify property name and after that try to modify id property then property
+ * name isn't modified automatically.
+ *
+ * @param isBlockPropagation if true then property changes propagation will be blocked through modified properties.
  */
 class PropertyGraph(debugName: String? = null, private val isBlockPropagation: Boolean = true) {
-  @Deprecated("Please recompile code", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  constructor(debugName: String? = null) : this(debugName, true)
 
   private val propagation = AnonymousParallelOperationTrace((if (debugName == null) "" else " of $debugName") + ": Graph propagation")
-  private val properties = ConcurrentHashMap<ObservableClearableProperty<*>, PropertyNode>()
+  private val properties = ConcurrentHashMap<ObservableProperty<*>, PropertyNode>()
   private val dependencies = ConcurrentHashMap<PropertyNode, CopyOnWriteArrayList<Dependency<*>>>()
   private val recursionGuard = RecursionManager.createGuard<PropertyNode>(PropertyGraph::class.java.name)
 
-  fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>) {
-    addDependency(child, parent) { reset() }
+  /**
+   * Creates graph simple builder property.
+   */
+  fun <T> property(initial: T): GraphProperty<T> = GraphPropertyImpl(this) { initial }
+
+  /**
+   * Creates graph builder property with lazy initialization.
+   */
+  fun <T> lazyProperty(initial: () -> T): GraphProperty<T> = GraphPropertyImpl(this, initial)
+
+  /**
+   * Creates dependency between [child] and [parent] properties.
+   * @param update, result of this function will be applied into [child] when [parent] is modified.
+   * @see PropertyGraph
+   */
+  fun <T> dependsOn(child: ObservableMutableProperty<T>, parent: ObservableProperty<*>, update: () -> T) {
+    val childNode = getOrRegisterNode(child)
+    val parentNode = getOrRegisterNode(parent)
+    dependencies.computeIfAbsent(parentNode) { CopyOnWriteArrayList() }
+      .add(Dependency(childNode, child, update))
   }
 
-  fun <T> dependsOn(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>, update: () -> T) {
-    addDependency(child, parent) { updateAndGet { update() } }
-  }
-
-  private fun <T> addDependency(child: AtomicProperty<T>, parent: ObservableClearableProperty<*>, update: AtomicProperty<T>.() -> Unit) {
-    val childNode = properties[child] ?: throw IllegalArgumentException("Unregistered child property")
-    val parentNode = properties[parent] ?: throw IllegalArgumentException("Unregistered parent property")
-    dependencies.putIfAbsent(parentNode, CopyOnWriteArrayList())
-    val children = dependencies.getValue(parentNode)
-    children.add(Dependency(childNode, child, update))
-  }
-
+  /**
+   * Registers callback on propagation process.
+   * @see PropertyGraph
+   */
   fun afterPropagation(listener: () -> Unit) {
     propagation.afterOperation(listener)
   }
 
-  fun register(property: ObservableClearableProperty<*>) {
-    val node = PropertyNode()
-    properties[property] = node
-    property.afterChange {
-      recursionGuard.doPreventingRecursion(node, false) {
-        propagation.task {
-          node.isPropagationBlocked = isBlockPropagation
-          propagateChange(node)
+  private fun getOrRegisterNode(property: ObservableProperty<*>): PropertyNode {
+    return properties.computeIfAbsent(property) {
+      PropertyNode().also { node ->
+        property.afterChange {
+          recursionGuard.doPreventingRecursion(node, false) {
+            propagation.task {
+              node.isPropagationBlocked = isBlockPropagation
+              propagateChange(node)
+            }
+          }
         }
       }
-    }
-    property.afterReset {
-      node.isPropagationBlocked = false
     }
   }
 
@@ -70,20 +87,32 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
     }
   }
 
+  @ApiStatus.Internal
+  fun register(property: ObservableProperty<*>) {
+    getOrRegisterNode(property)
+  }
+
   @TestOnly
-  fun isPropagationBlocked(property: ObservableClearableProperty<*>) =
+  fun isPropagationBlocked(property: ObservableProperty<*>) =
     properties.getValue(property).isPropagationBlocked
 
-  private inner class PropertyNode {
+  private class PropertyNode {
     @Volatile
     var isPropagationBlocked = false
   }
 
   private data class Dependency<T>(
     val node: PropertyNode,
-    val property: AtomicProperty<T>,
-    val update: AtomicProperty<T>.() -> Unit
+    private val property: ObservableMutableProperty<T>,
+    private val update: () -> T
   ) {
-    fun applyUpdate() = property.update()
+    fun applyUpdate() {
+      if (property is AtomicMutableProperty) {
+        property.updateAndGet { update() }
+      }
+      else {
+        property.set(update())
+      }
+    }
   }
 }

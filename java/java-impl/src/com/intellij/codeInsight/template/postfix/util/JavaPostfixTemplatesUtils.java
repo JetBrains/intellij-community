@@ -13,7 +13,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
@@ -85,8 +85,8 @@ public final class JavaPostfixTemplatesUtils {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
-        return new ArrayList<>(IntroduceVariableBase.collectExpressions(context.getContainingFile(), document,
-                                                                        Math.max(offset - 1, 0), false));
+        return new ArrayList<>(CommonJavaRefactoringUtil.collectExpressions(context.getContainingFile(), document,
+                                                                            Math.max(offset - 1, 0), false));
       }
 
       @NotNull

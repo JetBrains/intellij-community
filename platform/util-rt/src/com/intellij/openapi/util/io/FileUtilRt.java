@@ -1127,6 +1127,7 @@ public class FileUtilRt {
   }
 
   public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
+    //noinspection StringEquality
     if (path1 == path2) {
       return true;
     }

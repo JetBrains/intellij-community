@@ -2,7 +2,7 @@
 
 package sample
 
-expect interface <!LINE_MARKER("descr='Is subclassed by B [common-1] B [jvm]  Click or press ... to navigate'"), LINE_MARKER("descr='Has actuals in common'")!>A<!> {
+expect interface <!LINE_MARKER("descr='Has actuals in common'"), LINE_MARKER("descr='Is subclassed by B [common-1] B [jvm]  Click or press ... to navigate'")!>A<!> {
     fun <!LINE_MARKER("descr='Has actuals in common'")!>common_1_A<!>()
 }
 

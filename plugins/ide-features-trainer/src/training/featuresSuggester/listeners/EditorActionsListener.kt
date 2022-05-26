@@ -15,9 +15,11 @@ import training.featuresSuggester.asString
 import training.featuresSuggester.getSelection
 import training.featuresSuggester.handleAction
 import training.featuresSuggester.isActionsProcessingEnabled
+import training.featuresSuggester.settings.FeatureSuggesterSettings
 
 class EditorActionsListener : AnActionListener {
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+    FeatureSuggesterSettings.instance().updateWorkingDays()
     if (!isActionsProcessingEnabled || !action.isSupportedAction()) return
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val project = event.getData(CommonDataKeys.PROJECT) ?: return

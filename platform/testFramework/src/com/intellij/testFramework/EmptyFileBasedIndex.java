@@ -56,11 +56,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public void requestRebuild(@NotNull ID<?, ?> indexId) {
-    super.requestRebuild(indexId);
-  }
-
-  @Override
   public @NotNull <K, V> List<V> getValues(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter) {
     return Collections.emptyList();
   }
@@ -82,16 +77,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
-                                      @NotNull K dataKey,
-                                      @Nullable VirtualFile inFile,
-                                      @NotNull ValueProcessor<? super V> processor,
-                                      @NotNull GlobalSearchScope filter,
-                                      @Nullable IdFilter idFilter) {
-    return super.processValues(indexId, dataKey, inFile, processor, filter, idFilter);
-  }
-
-  @Override
   public <K, V> long getIndexModificationStamp(@NotNull ID<K, V> indexId, @NotNull Project project) {
     return 0;
   }
@@ -102,6 +87,16 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
                                                       @NotNull GlobalSearchScope filter,
                                                       @Nullable Condition<? super V> valueChecker,
                                                       @NotNull Processor<? super VirtualFile> processor) {
+    return true;
+  }
+
+  @Override
+  public <K, V> boolean processFilesContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                     @NotNull Collection<? extends K> dataKeys,
+                                                     @NotNull GlobalSearchScope filter,
+                                                     @Nullable IdFilter idFilter,
+                                                     @Nullable Condition<? super V> valueChecker,
+                                                     @NotNull Processor<? super VirtualFile> processor) {
     return true;
   }
 
@@ -141,14 +136,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   @Override
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project) {
     return true;
-  }
-
-  @Override
-  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId,
-                                    @NotNull Processor<? super K> processor,
-                                    @NotNull GlobalSearchScope scope,
-                                    @Nullable IdFilter idFilter) {
-    return super.processAllKeys(indexId, processor, scope, idFilter);
   }
 
   @Override

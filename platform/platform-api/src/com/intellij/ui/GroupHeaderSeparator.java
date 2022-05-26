@@ -2,21 +2,33 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 
 import java.awt.*;
 
 import static com.intellij.ui.paint.RectanglePainter.FILL;
-import static javax.swing.SwingConstants.*;
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
 public class GroupHeaderSeparator extends SeparatorWithText {
 
   private boolean myHideLine;
   private final Insets myLabelInsets;
+  private final JBInsets lineInsets;
 
-  public GroupHeaderSeparator(Insets insets) {myLabelInsets = insets;}
+  public GroupHeaderSeparator(Insets labelInsets) {
+    myLabelInsets = labelInsets;
+    if (ExperimentalUI.isNewUI()) {
+      lineInsets = JBUI.CurrentTheme.Popup.separatorInsets();
+      setBorder(JBUI.Borders.empty());
+      setFont(RelativeFont.BOLD.derive(JBFont.small()));
+    } else {
+      lineInsets = JBUI.insets(getVgap(), getHgap(), getVgap(), getHgap());
+    }
+  }
 
   public void setHideLine(boolean hideLine) {
     myHideLine = hideLine;
@@ -24,12 +36,14 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
   @Override
   protected Dimension getPreferredElementSize() {
-    Dimension size = new Dimension(Math.max(myPrefWidth, 0), 0);
-    if (!StringUtil.isEmpty(getCaption())) {
-      size = getLabelSize();
-      size.height += myLabelInsets.top + myLabelInsets.bottom;
+    Dimension size;
+    if (getCaption() == null) {
+      size = new Dimension(Math.max(myPrefWidth, 0), 0);
     }
-    if (!myHideLine) size.height += getVgap() + 1;
+    else {
+      size = getLabelSize(myLabelInsets);
+    }
+    if (!myHideLine) size.height += lineInsets.height() + 1;
 
     JBInsets.addTo(size, getInsets());
     return size;
@@ -44,7 +58,9 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
     if (!myHideLine) {
       paintLine(g, bounds);
-      bounds.y += getVgap() + 1;
+      int lineHeight = lineInsets.height() + 1;
+      bounds.y += lineHeight;
+      bounds.height -= lineHeight;
     }
 
     String caption = getCaption();
@@ -64,10 +80,10 @@ public class GroupHeaderSeparator extends SeparatorWithText {
     }
   }
 
-  private static void paintLine(Graphics g, Rectangle bounds) {
-    int x = bounds.x + getHgap();
-    int width = bounds.width - getHgap() * 2;
-    int y = bounds.y + getVgap();
+  private void paintLine(Graphics g, Rectangle bounds) {
+    int x = bounds.x + lineInsets.left;
+    int width = bounds.width - lineInsets.width();
+    int y = bounds.y + lineInsets.top;
     FILL.paint((Graphics2D)g, x, y, width, 1, null);
   }
 }

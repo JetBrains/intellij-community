@@ -17,6 +17,7 @@ public final class LanguageDocumentation extends LanguageExtension<Documentation
   /**
    * This method is left to preserve binary compatibility.
    */
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public DocumentationProvider forLanguage(@NotNull final Language l) {
     return super.forLanguage(l);

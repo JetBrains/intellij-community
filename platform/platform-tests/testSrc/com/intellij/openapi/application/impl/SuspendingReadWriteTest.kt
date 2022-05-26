@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
@@ -55,7 +55,7 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     }
     val job = launch(Dispatchers.Default) {
       assertFalse(constraint.isSatisfied())
-      cra(listOf(constraint)) {
+      cra(constraint) {
         assertTrue(constraint.isSatisfied())
       }
     }
@@ -114,7 +114,7 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
       }
     }
     val job = launch(Dispatchers.Default) {
-      cra(listOf(unsatisfiableConstraint)) {
+      cra(unsatisfiableConstraint) {
         fail("must not be called")
       }
     }
@@ -149,7 +149,7 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     runReadAction {
       runBlocking {
         try {
-          cra(listOf(unsatisfiableConstraint)) {
+          cra(unsatisfiableConstraint) {
             fail("must not be called")
           }
           fail("exception must be thrown")
@@ -160,13 +160,13 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     }
   }
 
-  protected abstract suspend fun <T> cra(constraints: List<ReadConstraint> = emptyList(), action: () -> T): T
+  protected abstract suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T
 }
 
 class NonBlocking : SuspendingReadWriteTest() {
 
-  override suspend fun <T> cra(constraints: List<ReadConstraint>, action: () -> T): T {
-    return constrainedReadAction(constraints, action)
+  override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
+    return constrainedReadAction(*constraints, action = action)
   }
 
   fun `test read action is cancelled by write but not restarted because finished`(): Unit = runBlocking {
@@ -188,7 +188,7 @@ class NonBlocking : SuspendingReadWriteTest() {
   }
 
   fun `test read action is cancelled by write and restarted`(): Unit = runBlocking {
-    val job = twoAttemptJob(this, emptyList())
+    val job = twoAttemptJob(this)
     runWriteAction {}
     withTimeout(TEST_TIMEOUT_MS) {
       while (job.isActive) {
@@ -199,7 +199,7 @@ class NonBlocking : SuspendingReadWriteTest() {
   }
 
   fun `test read action with constraints is cancelled by write and restarted`(): Unit = runBlocking {
-    val job = twoAttemptJob(this, listOf(ReadConstraint.inSmartMode(project)))
+    val job = twoAttemptJob(this, ReadConstraint.inSmartMode(project))
     val application = ApplicationManager.getApplication()
     val dumbService = DumbServiceImpl.getInstance(project)
     application.runWriteAction { // cancel attempt 0
@@ -217,12 +217,12 @@ class NonBlocking : SuspendingReadWriteTest() {
     }
   }
 
-  private fun twoAttemptJob(cs: CoroutineScope, constraints: List<ReadConstraint>): Job {
+  private fun twoAttemptJob(cs: CoroutineScope, vararg constraints: ReadConstraint): Job {
     val inRead = Semaphore(1)
     val beforeWrite = beforeWrite()
     val job = cs.launch(Dispatchers.Default) {
       var attempts = 0
-      constrainedReadAction(constraints) {
+      constrainedReadAction(*constraints) {
         inRead.up()
         beforeWrite.timeoutWaitUp()
         when (attempts) {
@@ -265,8 +265,8 @@ class NonBlocking : SuspendingReadWriteTest() {
 
 class Blocking : SuspendingReadWriteTest() {
 
-  override suspend fun <T> cra(constraints: List<ReadConstraint>, action: () -> T): T {
-    return constrainedReadActionBlocking(constraints, action)
+  override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
+    return constrainedReadActionBlocking(*constraints, action = action)
   }
 
   fun `test blocking read action is not cancelled by write`(): Unit = runBlocking {

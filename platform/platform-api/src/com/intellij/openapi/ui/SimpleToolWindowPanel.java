@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -141,7 +141,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
 
     myContent = c;
 
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       JScrollPane scrollPane = UIUtil.findComponentOfType(myContent, JScrollPane.class);
       AdjustmentListener listener = event -> {
         ClientProperty.put(myContent, SCROLLED_STATE, event.getAdjustable().getValue() != 0);
@@ -171,7 +171,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     if (myToolbar != null && myToolbar.getParent() == this && myContent != null && myContent.getParent() == this) {
       g.setColor(JBColor.border());
 
-      if (ExperimentalUI.isNewToolWindowsStripes()) {
+      if (ExperimentalUI.isNewUI()) {
         //don't draw line for scrolled content
         if (Boolean.FALSE.equals(ClientProperty.get(myContent, SCROLLED_STATE))) {
           return;

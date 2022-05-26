@@ -27,6 +27,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.charset.Charset
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -101,7 +102,7 @@ internal class SettingsSyncTest {
     runBlocking { componentStore.save() }
 
     assertSettingsPushed {
-      fileState(FileState("keymaps/$name.xml", keymap.writeScheme().toByteArray() , 0))
+      fileState("keymaps/$name.xml", String(keymap.writeScheme().toByteArray(), Charset.defaultCharset()))
     }
   }
 
@@ -140,7 +141,7 @@ internal class SettingsSyncTest {
 
     initSettingsSync()
 
-    UISettings.instance.initModifyAndSave {
+    UISettings.getInstance().initModifyAndSave {
       recentFilesLimit = 1000
     }
 
@@ -280,14 +281,13 @@ internal class SettingsSyncTest {
 
   internal class TestRemoteCommunicator : SettingsSyncRemoteCommunicator {
     var offline: Boolean = false
-    var updateNeeded: Boolean = false
     var updateResult: UpdateResult? = null
     var pushed: SettingsSnapshot? = null
     var startPushLatch: CountDownLatch? = null
     lateinit var pushedLatch: CountDownLatch
 
-    override fun isUpdateNeeded(): Boolean {
-      return updateNeeded
+    override fun checkServerState(): ServerState {
+      return ServerState.UpdateNeeded
     }
 
     override fun receiveUpdates(): UpdateResult {

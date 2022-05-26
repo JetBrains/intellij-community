@@ -64,6 +64,8 @@ open class DiffRequestProcessorEditor(
     processor.updateRequest()
   }
 
+  override fun getFilesToRefresh(): List<VirtualFile> = processor.activeRequest?.filesToRefresh ?: emptyList()
+
   private inner class MyPanel(component: JComponent) : JPanel(BorderLayout()) {
     init {
       add(component, BorderLayout.CENTER)

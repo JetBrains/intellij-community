@@ -1,13 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.*
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -613,5 +609,13 @@ foo${n}(a) {
       myFixture.psiManager.dropPsiCaches()
       (file.methods.last().block.statements.last() as GrExpression).type
     }).attempts(5).assertTiming()
+  }
+
+  void 'test complex DFA with a lot of closures'() {
+    fixture.configureByFile("stress/dfa.groovy")
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000, {
+      myFixture.psiManager.dropPsiCaches()
+      myFixture.doHighlighting()
+    }).attempts(10).assertTiming()
   }
 }

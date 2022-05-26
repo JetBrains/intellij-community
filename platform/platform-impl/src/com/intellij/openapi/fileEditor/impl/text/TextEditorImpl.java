@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -8,11 +8,14 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -46,10 +49,14 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   private final AsyncEditorLoader myAsyncLoader;
 
   TextEditorImpl(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
+    this(project, file, provider, createEditor(project, file));
+  }
+
+  TextEditorImpl(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider, @NotNull EditorImpl editor) {
     myProject = project;
     myFile = file;
     myChangeSupport = new PropertyChangeSupport(this);
-    myComponent = createEditorComponent(project, file);
+    myComponent = createEditorComponent(project, file, editor);
     applyTextEditorCustomizers();
 
     TransientEditorState state = myFile.getUserData(TRANSIENT_EDITOR_STATE_KEY);
@@ -94,8 +101,8 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @NotNull
-  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file) {
-    return new TextEditorComponent(project, file, this);
+  protected TextEditorComponent createEditorComponent(@NotNull Project project, @NotNull VirtualFile file, @NotNull EditorImpl editor) {
+    return new TextEditorComponent(project, file, this, editor);
   }
 
   @Override
@@ -242,5 +249,11 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     private void applyTo(@NotNull Editor editor) {
       editor.getSettings().setUseSoftWraps(softWrapsEnabled);
     }
+  }
+
+  private static EditorImpl createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    LOG.assertTrue(document != null);
+    return (EditorImpl)EditorFactory.getInstance().createEditor(document, project, EditorKind.MAIN_EDITOR);
   }
 }

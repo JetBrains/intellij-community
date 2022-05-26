@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
+import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
@@ -109,7 +110,7 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
     override fun getTargetDataKey() = GradleSourceSetData.KEY
 
     override fun postProcess(
-        toImport: Collection<out DataNode<GradleSourceSetData>>,
+        toImport: Collection<DataNode<GradleSourceSetData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
@@ -266,7 +267,9 @@ fun configureFacetByGradleModule(
     val kotlinGradleSourceSetDataNode = kotlinGradleProjectDataNode.findAll(KotlinGradleSourceSetData.KEY)
         .firstOrNull { it.data.sourceSetName == sourceSetName }
 
-    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion ?: return null
+    val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion
+        ?: KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode)
+        ?: return null
 
 
     // TODO there should be a way to figure out the correct platform version

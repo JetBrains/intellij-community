@@ -25,7 +25,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ipp.base.Intention;
@@ -59,7 +59,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     if (initializer == null) {
       return;
     }
-    final String initializerText = RefactoringUtil.convertInitializerToNormalExpression(initializer, field.getType()).getText();
+    final String initializerText = CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, field.getType()).getText();
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) {
       return;

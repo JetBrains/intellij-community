@@ -14,6 +14,7 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("introduce.variable.message")
   override val suggestingActionId = "IntroduceVariable"
   override val suggestingTipFileName = "IntroduceVariable.html"
+  override val minSuggestingIntervalDays = 14
 
   override val languages = listOf("JAVA", "kotlin", "Python", "ECMAScript 6")
 
@@ -30,7 +31,9 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
     }
 
     fun getDeclarationText(): String? {
-      return declaration?.text
+      return declaration?.let {
+        if (it.isValid) it.text else null
+      }
     }
   }
 
@@ -131,9 +134,9 @@ class IntroduceVariableSuggester : AbstractFeatureSuggester() {
   private fun SuggesterSupport.isVariableInserted(action: ChildReplacedAction): Boolean {
     if (extractedExprData == null) return false
     with(extractedExprData!!) {
-      return variableEditingFinished && declaration != null &&
-             action.newChild.text == getVariableName(declaration!!) &&
-             changedStatement === getTopmostStatementWithText(action.newChild, "")
+      return variableEditingFinished
+             && declaration.let { it != null && it.isValid && action.newChild.text == getVariableName(it) }
+             && changedStatement === getTopmostStatementWithText(action.newChild, "")
     }
   }
 }

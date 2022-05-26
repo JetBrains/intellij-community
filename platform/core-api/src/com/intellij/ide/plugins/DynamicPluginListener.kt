@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -9,6 +9,7 @@ class CannotUnloadPluginException(value: String) : ProcessCanceledException(Runt
 interface DynamicPluginListener {
   companion object {
     @JvmField
+    @Topic.AppLevel
     val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
   }
 

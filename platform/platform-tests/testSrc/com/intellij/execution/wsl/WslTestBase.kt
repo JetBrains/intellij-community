@@ -9,7 +9,7 @@ import org.junit.rules.RuleChain
 
 open class WslTestBase {
   private val testFixtureRule = TestFixtureRule()
-  private val wslRule = WslRule()
+  internal val wslRule = WslRule()
 
   protected val wsl: WSLDistribution get() = wslRule.wsl
   protected val testFixture: BareTestFixture get() = testFixtureRule.fixture

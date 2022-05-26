@@ -5,8 +5,21 @@
             interface="org.jetbrains.kotlin.idea.completion.KotlinCompletionExtension"/>
   </extensionPoints>
 
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.completion.LookupCancelWatcherListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+  </projectListeners>
+
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
+    <editorFactoryListener implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.completion.CompletionDummyIdentifierProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.completion.FE10CompletionDummyIdentifierProviderService"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.completion.handlers.SmartCompletionTailOffsetProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.completion.handlers.SmartCompletionTailOffsetProviderFE10Impl"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.LookupCancelService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.CompletionBindingContextProvider"/>

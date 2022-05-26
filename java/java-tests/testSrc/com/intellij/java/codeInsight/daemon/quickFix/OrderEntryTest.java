@@ -146,6 +146,14 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     doTest("A/src/x/DoTest4junit.java", false);
   }
 
+  public void testAddCheckerFrameworkTainted() {
+    doTest("A/src/x/AddCheckerFrameworkTainted.java", false);
+  }
+
+  public void testAddCheckerFrameworkUntainted() {
+    doTest("A/src/x/AddCheckerFrameworkUntainted.java", false);
+  }
+
   public void testExistingJunit() {
     doTest("B/src/y/AddExistingJunit.java", true);
   }

@@ -49,7 +49,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.KeyboardLayoutUtil;
+import com.intellij.util.text.matching.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -151,7 +151,7 @@ public final class IdeKeyEventDispatcher {
       }
     }
 
-    // http://www.jetbrains.net/jira/browse/IDEADEV-12372
+    // http://www.jetbrains.net/jira/browse/IDEADEV-12372 (a.k.a. IDEA-35760)
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
       if (id == KeyEvent.KEY_PRESSED) {
         myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
@@ -413,8 +413,11 @@ public final class IdeKeyEventDispatcher {
       setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
       return true;
     }
-    // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
+    // http://www.jetbrains.net/jira/browse/IDEADEV-12372 (a.k.a. IDEA-35760)
+    boolean isCandidateForAltGr = myLeftCtrlPressed &&
+                                  myRightAltPressed &&
+                                  focusOwner != null &&
+                                  ( (e.getModifiers() & ~InputEvent.SHIFT_MASK) == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK) );
     if (isCandidateForAltGr) {
       if (Registry.is("actionSystem.force.alt.gr", false)) {
         return false;

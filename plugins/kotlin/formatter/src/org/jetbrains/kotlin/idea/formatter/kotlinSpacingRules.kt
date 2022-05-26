@@ -261,6 +261,7 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
 
             // TYPEALIAS - TYPEALIAS is an exception
             between(TYPEALIAS, DECLARATIONS).blankLines(1)
+            before(TYPEALIAS).lineBreakInCode()
 
             // ENUM_ENTRY - ENUM_ENTRY is exception
             between(ENUM_ENTRY, DECLARATIONS).blankLines(1)
@@ -346,6 +347,8 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
             around(IN_KEYWORD).spaces(1)
             around(NOT_IN).spaces(1)
             aroundInside(IDENTIFIER, BINARY_EXPRESSION).spaces(1)
+
+            after(THROW_KEYWORD).spacesNoLineBreak(1)
 
             // before LPAR in constructor(): this() {}
             after(CONSTRUCTOR_DELEGATION_REFERENCE).spacing(0, 0, 0, false, 0)

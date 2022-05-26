@@ -3,17 +3,17 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.idea.maven.model.MavenArtifactNode
 import org.jetbrains.idea.maven.model.MavenArtifactState
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenId
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 
 class MavenDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
@@ -51,6 +51,8 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
 
   private fun createDependencyList(mavenProject: MavenProject): List<Dependency> {
     val root = DAModule(mavenProject.displayName)
+    val mavenId = mavenProject.mavenId
+    root.putUserData(MAVEN_ARTIFACT_ID, MavenId(mavenId.groupId, mavenId.artifactId, mavenId.version))
     val rootDependency = DADependency(root, scope(MavenConstants.SCOPE_COMPILE), null, emptyList())
     val result = mutableListOf<Dependency>()
     collectDependency(mavenProject.dependencyTree, rootDependency, result)
@@ -73,9 +75,16 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
   }
 
   private fun getDependencyData(mavenArtifactNode: MavenArtifactNode): Dependency.Data {
-    return DAArtifact(
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(mavenArtifactNode.artifact)
+    val daArtifact = DAArtifact(
       mavenArtifactNode.artifact.groupId, mavenArtifactNode.artifact.artifactId, mavenArtifactNode.artifact.version
     )
+    if (mavenProject != null) {
+      val daModule = DAModule(mavenProject.displayName)
+      daModule.putUserData(MAVEN_ARTIFACT_ID, MavenId(daArtifact.groupId, daArtifact.artifactId, daArtifact.version))
+      return daModule
+    }
+    return daArtifact
   }
 
   private fun getStatus(mavenArtifactNode: MavenArtifactNode): List<Dependency.Status> {
@@ -98,5 +107,6 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
 
   companion object {
     fun scope(name: @NlsSafe String) = DAScope(name, StringUtil.toTitleCase(name))
+    val MAVEN_ARTIFACT_ID = Key.create<MavenId>("MavenDependencyAnalyzerContributor.MavenId")
   }
 }

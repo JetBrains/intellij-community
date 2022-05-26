@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo() {
     takeHandler1 {
         takeHandler2({ ret<caret> })

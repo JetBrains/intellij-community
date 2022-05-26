@@ -2,6 +2,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
+import com.intellij.ide.util.gotoByName.GotoActionItemProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.util.Time.*
 
@@ -43,6 +44,11 @@ internal abstract class SearchEverywhereBaseActionFeaturesProvider
       PRIORITY to priority
     )
     addIfTrue(data, IS_HIGH_PRIORITY, isHighPriority(priority))
+
+    val actionText = GotoActionItemProvider.getActionText(element.value)
+    actionText?.let {
+      data.putAll(getNameMatchingFeatures(it, searchQuery))
+    }
     return getFeatures(data, currentTime, element)
   }
 

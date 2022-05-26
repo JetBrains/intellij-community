@@ -1,0 +1,16 @@
+<idea-plugin>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.ktQuickFixRegistrar"
+                    interface="org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixRegistrar"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.kotlin"
+                    interface="org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <ktQuickFixRegistrar implementation="org.jetbrains.kotlin.idea.quickfix.MainKtQuickFixRegistrar"/>
+  </extensions>
+
+</idea-plugin>

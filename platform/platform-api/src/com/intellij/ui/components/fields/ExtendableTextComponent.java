@@ -3,10 +3,10 @@ package com.intellij.ui.components.fields;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.Collection;
 import java.util.List;
 
@@ -50,8 +50,16 @@ public interface ExtendableTextComponent {
       return false;
     }
 
+    /**
+     * @deprecated Use {@link #getActionOnClick(InputEvent)} instead.
+     */
+    @Deprecated
     default Runnable getActionOnClick() {
       return null;
+    }
+
+    default Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
+      return getActionOnClick();
     }
 
     default @NlsContexts.Tooltip String getTooltip() {

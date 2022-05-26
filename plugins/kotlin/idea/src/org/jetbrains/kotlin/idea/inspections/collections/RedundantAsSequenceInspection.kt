@@ -25,8 +25,10 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class RedundantAsSequenceInspection : AbstractKotlinInspection() {
     companion object {
-        private val asSequenceFqName2 = FqName("kotlin.sequences.asSequence")
-        private val asSequenceFqName1 = FqName("kotlin.collections.asSequence")
+        private val allowedSequenceFunctionFqNames = listOf(
+            FqName("kotlin.sequences.asSequence"),
+            FqName("kotlin.collections.asSequence")
+        )
         private val terminations = collectionTerminationFunctionNames.associateWith { FqName("kotlin.sequences.$it") }
         private val transformationsAndTerminations =
             collectionTransformationFunctionNames.associateWith { FqName("kotlin.sequences.$it") } + terminations
@@ -38,7 +40,7 @@ class RedundantAsSequenceInspection : AbstractKotlinInspection() {
         if (callee.text != "asSequence") return
 
         val context = qualified.analyze(BodyResolveMode.PARTIAL)
-        if (!call.isCalling(asSequenceFqName1, context) && !call.isCalling(asSequenceFqName2, context)) {
+        if (!call.isCalling(allowedSequenceFunctionFqNames, context)) {
             return
         }
         val receiverType = qualified.receiverExpression.getType(context) ?: return

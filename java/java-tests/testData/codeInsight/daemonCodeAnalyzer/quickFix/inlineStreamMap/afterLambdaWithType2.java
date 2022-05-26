@@ -1,4 +1,4 @@
-// "Inline 'map' body into the next 'forEach' call" "true"
+// "Inline 'map()' body into the next 'forEach()' call" "true"
 import java.util.List;
 
 public class Main {

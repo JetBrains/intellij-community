@@ -7,4 +7,4 @@ import java.io.File
 fun f() {
 }
 
-// REF: (for File in kotlin.io).extension
+// REF: (for java.io.File in kotlin.io).extension

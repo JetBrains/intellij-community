@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo() {
     list.filter { it !i<caret> }
 }

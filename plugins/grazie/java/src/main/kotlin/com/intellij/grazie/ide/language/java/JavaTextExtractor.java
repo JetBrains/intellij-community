@@ -13,6 +13,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.PsiSnippetDocTag;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -32,7 +33,7 @@ public class JavaTextExtractor extends TextExtractor {
   private static final TokenSet EXCLUDED =
     TokenSet.create(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END, DOC_PARAMETER_REF);
   private static final TextContentBuilder javadocBuilder = TextContentBuilder.FromPsi
-    .withUnknown(e -> e instanceof PsiInlineDocTag)
+    .withUnknown(e -> e instanceof PsiInlineDocTag && !(e instanceof PsiSnippetDocTag))
     .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)))
     .removingIndents(" \t").removingLineSuffixes(" \t");
 

@@ -1,0 +1,6 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.maven.compilerPlugin">
+  <dependencies>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="kotlin.maven"/>
+  </dependencies>
+</idea-plugin>

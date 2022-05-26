@@ -34,6 +34,7 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,6 +59,10 @@ public final class BuildRunner {
 
   public void setBuilderParams(Map<String, String> builderParams) {
     myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
+  }
+
+  public @NotNull JpsProject loadModelAndGetJpsProject() throws IOException {
+    return myModelLoader.loadModel().getProject();
   }
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
@@ -166,6 +171,11 @@ public final class BuildRunner {
         }
       }
     }
+  }
+
+  public CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes) throws Exception {
+    final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
+    return createCompilationScope(pd, scopes, myFilePaths, forceClean, false);
   }
 
   private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes, Collection<String> paths,

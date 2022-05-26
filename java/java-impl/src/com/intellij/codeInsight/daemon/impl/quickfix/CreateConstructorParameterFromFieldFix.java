@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -33,7 +33,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -100,8 +100,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     Arrays.sort(constructors, new Comparator<>() {
       @Override
       public int compare(PsiMethod c1, PsiMethod c2) {
-        final PsiMethod cc1 = RefactoringUtil.getChainedConstructor(c1);
-        final PsiMethod cc2 = RefactoringUtil.getChainedConstructor(c2);
+        final PsiMethod cc1 = CommonJavaRefactoringUtil.getChainedConstructor(c1);
+        final PsiMethod cc2 = CommonJavaRefactoringUtil.getChainedConstructor(c2);
         if (cc1 == c2) return 1;
         if (cc2 == c1) return -1;
         if (cc1 == null) {
@@ -249,7 +249,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       if (param instanceof PsiParameter) {
         newParamInfos[i++] = ParameterInfoImpl.create(parameterList.getParameterIndex((PsiParameter)param))
           .withName(param.getName())
-          .withType(AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(param.getModifierList(), paramType))
+          .withType(paramType)
           .withDefaultValue(param.getName());
       } else {
         try {

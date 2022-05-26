@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.script
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.ComparisonFailure
 
 abstract class AbstractScriptConfigurationHighlightingTest : AbstractScriptConfigurationTest() {

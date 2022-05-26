@@ -1,4 +1,4 @@
-// "Inline 'mapToInt' body into the next 'flatMap' call" "true"
+// "Inline 'mapToInt()' body into the next 'flatMap()' call" "true"
 import java.util.List;
 import java.util.stream.IntStream;
 

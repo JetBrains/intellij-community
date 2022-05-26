@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector
+import org.jetbrains.kotlin.idea.framework.MAVEN_SYSTEM_ID
 
 class MavenDetector : BuildSystemTypeDetector {
     override fun detectBuildSystemType(module: Module): BuildSystemType? {
@@ -16,4 +18,8 @@ class MavenDetector : BuildSystemTypeDetector {
             null
         }
     }
+}
+
+fun Module.isMavenModule(): Boolean {
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(MAVEN_SYSTEM_ID, this)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -37,6 +37,8 @@ import java.util.List;
 public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
+  public static final List<@NlsSafe String> COMM_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,state,user,comm");
+  public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,state,user,command");
 
   public static ProcessInfo @NotNull [] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
@@ -159,9 +161,8 @@ public final class ProcessListUtil {
     // 12  S user ./command
     // 12  S user ./command argument list
 
-    return parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,comm"),
-                              commandOnly -> parseCommandOutput(Arrays.asList("/bin/ps", "-a", "-x", "-o", "pid,state,user,command"),
-                                                        full -> parseMacOutput(commandOnly, full)));
+    return parseCommandOutput(COMM_LIST_COMMAND,
+                              commandOnly -> parseCommandOutput(COMMAND_LIST_COMMAND, full -> parseMacOutput(commandOnly, full)));
   }
 
   public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
@@ -191,8 +192,16 @@ public final class ProcessListUtil {
 
   public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
+    if (commands == null) {
+      LOG.debug("Failed to parse commands output: ", commandOnly);
+      return null;
+    }
     List<MacProcessInfo> fulls = doParseMacOutput(full);
-    if (commands == null || fulls == null) return null;
+    if (fulls == null) {
+      LOG.debug("Failed to parse comm output: ", full);
+      return null;
+    }
+
 
     Int2ObjectMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
     for (MacProcessInfo each : commands) {

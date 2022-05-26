@@ -6,6 +6,7 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow
 import com.intellij.util.ArrayUtilRt
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl
 import java.util.*
+import kotlin.math.abs
 
 private val fakeRoot = InstructionImpl(null)
 
@@ -30,7 +31,10 @@ fun postOrder(flow: Array<Instruction>, reachable: Boolean): IntArray {
     val undiscovered = iterator.firstOrNull { !visited[it.num()] }
     if (undiscovered != null) {
       visited[undiscovered.num()] = true          // discover successor
-      stack.push(undiscovered to undiscovered.allSuccessors().sortedByDescending { it.num() }.iterator())
+      val successors = undiscovered
+        .allSuccessors()
+        .sortedByDescending { abs(it.num() - undiscovered.num()) } // cycles should be processed as early as possible
+      stack.push(undiscovered to successors.iterator())
     }
     else {
       stack.pop()

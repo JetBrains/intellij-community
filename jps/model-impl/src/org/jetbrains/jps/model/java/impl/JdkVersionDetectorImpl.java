@@ -186,7 +186,6 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
   private static class VersionOutputReader extends BaseOutputReader {
     private static final BaseOutputReader.Options OPTIONS = new BaseOutputReader.Options() {
       @Override public SleepingPolicy policy() { return SleepingPolicy.BLOCKING; }
-      @Override public boolean splitToLines() { return true; }
       @Override public boolean sendIncompleteLines() { return false; }
       @Override public boolean withSeparators() { return false; }
     };

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -29,7 +29,7 @@ internal class EditorTabsConfigurable : BoundSearchableConfigurable(
   private lateinit var myOneRowCheckbox: JCheckBox
 
   override fun createPanel(): DialogPanel {
-    val ui = UISettings.instance.state
+    val ui = UISettings.getInstance().state
     return panel {
       group(message("group.tab.appearance")) {
 
@@ -75,7 +75,7 @@ internal class EditorTabsConfigurable : BoundSearchableConfigurable(
           }
           row { checkBox(showPinnedTabsInASeparateRow).enabledIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)) }
         }
-        row { checkBox(useSmallFont).enableIfTabsVisible() }
+        row { checkBox(useSmallFont).enableIfTabsVisible() }.visible(!ExperimentalUI.isNewUI())
         row { checkBox(showFileIcon).enableIfTabsVisible() }
         row { checkBox(showFileExtension).enableIfTabsVisible() }
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
@@ -131,7 +131,7 @@ internal class EditorTabsConfigurable : BoundSearchableConfigurable(
     super.apply()
 
     if (uiSettingsChanged) {
-      UISettings.instance.fireUISettingsChanged()
+      UISettings.getInstance().fireUISettingsChanged()
     }
   }
 

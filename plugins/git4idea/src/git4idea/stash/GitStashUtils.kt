@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitStashUtils")
 
 package git4idea.stash
@@ -131,7 +131,7 @@ object GitStashOperations {
                                         Consumer { stashCommits.add(it) })
     if (stashCommits.isEmpty()) throw VcsException(GitBundle.message("stash.load.changes.error", root.name, hash.asString()))
     return Pair(stashCommits.first().getChanges(0), // returning changes to the branch head
-                stashCommits.subList(1, stashCommits.size))
+                stashCommits.drop(1))
   }
 
   @JvmStatic

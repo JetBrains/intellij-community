@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import com.intellij.toolWindow.ToolWindowPane;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +124,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    public @NotNull ToolWindowsPane getToolWindowPane() {
+    public @NotNull ToolWindowPane getToolWindowPane() {
       throw new IllegalStateException("Tool windows are unavailable in LightEdit");
     }
 
@@ -148,7 +149,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    protected void updateNorthComponents() {
+    public void updateNorthComponents() {
     }
 
     @Override

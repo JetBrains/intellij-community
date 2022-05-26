@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.highlighter.KotlinChangeLocalityDetector
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 private const val SCOPE_DIRECTIVE = "// SCOPE:"
 

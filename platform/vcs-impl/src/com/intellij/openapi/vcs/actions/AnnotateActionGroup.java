@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,17 @@ import java.util.Map;
 public class AnnotateActionGroup extends ActionGroup implements DumbAware {
   private final AnAction[] myActions;
 
+  /**
+   * @deprecated It is an internal API, try to avoid using it.
+   */
+  @Deprecated
   public AnnotateActionGroup(@NotNull List<AnnotationFieldGutter> gutters,
+                             @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
+    this(null, gutters, bgColorMap);
+  }
+
+  public AnnotateActionGroup(@Nullable FileAnnotation fileAnnotation,
+                             @NotNull List<AnnotationFieldGutter> gutters,
                              @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
     super(VcsBundle.message("annotate.action.view.group.text"), true);
     final List<AnAction> actions = new ArrayList<>();
@@ -40,6 +51,10 @@ public class AnnotateActionGroup extends ActionGroup implements DumbAware {
       actions.add(new ShowAnnotationColorsAction());
     }
     actions.add(new ShowShortenNames());
+    if (fileAnnotation != null) {
+      actions.add(Separator.getInstance());
+      actions.add(new AnnotateDiffOnHoverToggleAction(fileAnnotation));
+    }
     myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 

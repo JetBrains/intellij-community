@@ -48,16 +48,21 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
                     ImmediateConfigurable.Case(
                         KotlinBundle.message("hints.settings.lambda.return"),
                         "hints.lambda.return",
-                        settings::returnExpressions
+                        settings::returnExpressions,
+                        KotlinBundle.message("inlay.kotlin.lambdas.hints.hints.lambda.return")
                     ),
                     ImmediateConfigurable.Case(
                         KotlinBundle.message("hints.settings.lambda.receivers.parameters"),
                         "hints.lambda.receivers.parameters",
-                        settings::implicitReceiversAndParams
+                        settings::implicitReceiversAndParams,
+                        KotlinBundle.message("inlay.kotlin.lambdas.hints.hints.lambda.receivers.parameters")
                     )
                 )
         }
     }
+
+    override val description: String
+        get() = KotlinBundle.message("inlay.kotlin.lambdas.hints")
 
     override fun createSettings(): Settings = Settings()
 

@@ -90,7 +90,6 @@ internal class MultiplatformModelImportingContextImpl(
     override val dependencyResolver = DependencyResolverImpl(project, false, true, SourceSetCachedFinder(modelBuilderContext))
     override val dependencyMapper = KotlinDependencyMapper()
 
-
     /** see [initializeCompilations] */
     override lateinit var compilations: Collection<KotlinCompilation>
         private set

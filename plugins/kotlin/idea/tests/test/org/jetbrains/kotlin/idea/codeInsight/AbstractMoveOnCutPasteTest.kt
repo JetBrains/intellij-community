@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsEditorCook
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsProcessor
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
 abstract class AbstractMoveOnCutPasteTest : AbstractCopyPasteTest() {
     private val OPTIMIZE_IMPORTS_AFTER_CUT_DIRECTIVE = "// OPTIMIZE_IMPORTS_AFTER_CUT"

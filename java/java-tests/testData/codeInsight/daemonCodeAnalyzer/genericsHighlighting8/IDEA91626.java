@@ -4,14 +4,14 @@ class Test {
     }
 
     static void foo(final A<?> bar) {
-        bar._<error descr="Cannot resolve method '_(java.lang.String)'">("")</error>;
+        bar._<error descr="Cannot resolve method '_(String)'">("")</error>;
     }
     static void foo1(final A<? extends String> bar) {
-        bar._<error descr="Cannot resolve method '_(java.lang.String)'">("")</error>;
+        bar._<error descr="Cannot resolve method '_(String)'">("")</error>;
     }
 
     static void foo2(final A<? extends Integer> bar) {
-        bar._<error descr="Cannot resolve method '_(java.lang.String)'">("")</error>;
+        bar._<error descr="Cannot resolve method '_(String)'">("")</error>;
     }
 
 

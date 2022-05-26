@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
@@ -37,12 +38,48 @@ interface StatisticsEventLogger {
 
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
-                                             val sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
-                                             private val maxFileSize: String = "200KB") {
+                                             val sendFrequencyMs: Long,
+                                             private val maxFileSizeInBytes: Int) {
+
+  @Deprecated(message = "Use primary constructor instead")
+  constructor(recorderId: String,
+              version: Int,
+              sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
+              maxFileSize: String = "200KB") : this(recorderId, version, sendFrequencyMs, parseFileSize(maxFileSize))
 
   companion object {
     @JvmStatic
     val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
+    const val DEFAULT_MAX_FILE_SIZE_BYTES = 200 * 1024
+    val DEFAULT_SEND_FREQUENCY_MS = TimeUnit.HOURS.toMillis(1)
+
+    private val LOG = logger<StatisticsEventLoggerProvider>()
+
+    fun parseFileSize(maxFileSize: String): Int {
+      val length = maxFileSize.length
+      if (length < 3) {
+        LOG.warn("maxFileSize should contain measurement unit: $maxFileSize")
+        return DEFAULT_MAX_FILE_SIZE_BYTES
+      }
+      val value = maxFileSize.substring(0, length - 2)
+      val size = try {
+        value.toInt()
+      }
+      catch (e: NumberFormatException) {
+        LOG.warn("Unable to parse maxFileSize for FUS log file: $maxFileSize")
+        return DEFAULT_MAX_FILE_SIZE_BYTES
+      }
+      val multiplier = when (maxFileSize.substring(length - 2, length)) {
+        "KB" -> 1024
+        "MB" -> 1024 * 1024
+        "GB" -> 1024 * 1024 * 1024
+        else -> {
+          LOG.warn("Unable to parse measurement unit of maxFileSize for FUS log file: $maxFileSize")
+          return DEFAULT_MAX_FILE_SIZE_BYTES
+        }
+      }
+      return size * multiplier
+    }
   }
 
   open val logger: StatisticsEventLogger by lazy { createLogger() }
@@ -78,7 +115,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val isHeadless = app != null && app.isHeadlessEnvironment
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     val config = eventLogConfiguration.getOrCreate(recorderId)
-    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSize, isEap, eventLogConfiguration.build)
+    val writer = StatisticsEventLogFileWriter(recorderId, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(
@@ -94,7 +131,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
   }
 }
 
-internal class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1) {
+internal class EmptyStatisticsEventLoggerProvider(recorderId: String): StatisticsEventLoggerProvider(recorderId, 0, -1, DEFAULT_MAX_FILE_SIZE_BYTES) {
   override val logger: StatisticsEventLogger = EmptyStatisticsEventLogger()
 
   override fun isRecordEnabled() = false

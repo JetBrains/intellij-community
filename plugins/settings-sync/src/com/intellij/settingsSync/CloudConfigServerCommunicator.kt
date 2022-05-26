@@ -12,6 +12,7 @@ import com.jetbrains.cloudconfig.HeaderStorage
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.text.SimpleDateFormat
@@ -19,24 +20,38 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-private const val END_POINT = "https://stgn.cloudconfig.jetbrains.com/cloudconfig" // todo choose between production and staging via a system property
+private const val DEFAULT_URL = "https://cloudconfig.jetbrains.com/cloudconfig"
+private const val URL_PROPERTY = "idea.settings.sync.cloud.url"
 
 private const val TIMEOUT = 10000
 
-  internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
+
+internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val client get() = _client.value
   private val _client = lazy {
     val conf = createConfiguration()
-    CloudConfigFileClientV2(END_POINT, conf, DUMMY_ETAG_STORAGE, clientVersionContext)
+    CloudConfigFileClientV2(url.value, conf, DUMMY_ETAG_STORAGE, clientVersionContext)
+  }
+  private val url = lazy {
+    val explicitUrl = System.getProperty(URL_PROPERTY)
+    if (explicitUrl != null) {
+      LOG.info("Using URL from properties: $explicitUrl")
+      explicitUrl
+    }
+    else {
+      DEFAULT_URL
+    }
   }
 
   private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
   private val clientVersionContext = VersionContext()
 
-  // todo should be nullable, or null should be handled elsewhere (otherwise CloudConfigFileClientV2() fails)
-  private fun createConfiguration(): Configuration? {
-    val userId: String = SettingsSyncAuthService.getInstance().getUserData()?.id ?: return null
+  private fun createConfiguration(): Configuration {
+    val userId = SettingsSyncAuthService.getInstance().getUserData()?.id
+    if (userId == null) {
+      throw SettingsSyncAuthException("Authentication required")
+    }
     return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))
   }
 
@@ -52,40 +67,49 @@ private const val TIMEOUT = 10000
   private fun sendSnapshotFile(inputStream: InputStream) {
     val currentVersion = getCurrentVersion()
     LOG.info("Sending $SETTINGS_SYNC_SNAPSHOT_ZIP, current version: $currentVersion")
-    if (currentVersion != null) {
-      clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
-        client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
-      }
-    }
-    else {
-      // no version neither locally nor on the server => this is a fresh push => simply send the push
+    clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
       client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
     }
   }
 
   private fun getCurrentVersion(): String? {
     val rememberedVersion = currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
-    if (rememberedVersion != null) return rememberedVersion
+    if (rememberedVersion != null) {
+      return rememberedVersion
+    }
 
     // todo in this case we should update first and not just overwrite
-    val serverVersion = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
-    if (serverVersion != null) {
-      LOG.warn("Current version is null, using the version from the server: $serverVersion")
-      return serverVersion
+    val serverVersion = try {
+      client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
+    }
+    catch (e: FileNotFoundException) {
+      LOG.info("File not found on server")
+      null
     }
 
-    LOG.info("No settings file on the server")
-    return null
+    return if (serverVersion != null) {
+      LOG.warn("Current version is null, using the version from the server: $serverVersion")
+      serverVersion
+    }
+    else {
+      LOG.info("No settings file on the server")
+      null
+    }
+
   }
 
-  override fun isUpdateNeeded(): Boolean {
+  override fun checkServerState(): ServerState {
     try {
-      val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP).versionId
-      return version != currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]
+      val version = client.getLatestVersion(SETTINGS_SYNC_SNAPSHOT_ZIP)?.versionId
+      return if (version == currentVersionOfFiles[SETTINGS_SYNC_SNAPSHOT_ZIP]) ServerState.UpToDate else ServerState.UpdateNeeded
+    }
+    catch (e: FileNotFoundException) {
+      LOG.info("File not found on server, update is not needed")
+      return ServerState.FileNotExists
     }
     catch (e: Throwable) {
-      handleRemoteError(e)
-      return false
+      val message = handleRemoteError(e)
+      return ServerState.Error(message)
     }
   }
 
@@ -98,11 +122,11 @@ private const val TIMEOUT = 10000
         return UpdateResult.NoFileOnServer
       }
 
-      val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT_ZIP, UUID.randomUUID().toString())
+      val tempFile = FileUtil.createTempFile(SETTINGS_SYNC_SNAPSHOT, UUID.randomUUID().toString() + ".zip")
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
         val snapshot = extractZipFile(tempFile.toPath())
-        return UpdateResult.Success(snapshot)
+        return if (snapshot.isEmpty()) UpdateResult.NoFileOnServer else UpdateResult.Success(snapshot)
       }
       finally {
         FileUtil.delete(tempFile)
@@ -147,7 +171,7 @@ private const val TIMEOUT = 10000
     }
   }
 
-  private fun handleRemoteError(e: Throwable) : String {
+  private fun handleRemoteError(e: Throwable): String {
     val defaultMessage = "Error during communication with server"
     if (e is IOException) {
       LOG.warn(e)
@@ -159,45 +183,48 @@ private const val TIMEOUT = 10000
     }
   }
 
-    fun downloadSnapshot(): File? {
-      val stream = receiveSnapshotFile()
-      if (stream == null) {
-        LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
-        return null
-      }
-
-      try {
-        val currentDate = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(Date())
-        val tempFile = FileUtil.createTempFile("settings.sync.snapshot.$currentDate.zip", null)
-        FileUtil.writeToFile(tempFile, stream.readAllBytes())
-        return tempFile
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        return null
-      }
+  fun downloadSnapshot(): File? {
+    val stream = receiveSnapshotFile()
+    if (stream == null) {
+      LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
+      return null
     }
 
-    private inner class VersionContext : HeaderStorage {
-      private val contextVersionMap = mutableMapOf<String, String>()
-      private val lock = ReentrantLock()
+    try {
+      val currentDate = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(Date())
+      val tempFile = FileUtil.createTempFile("settings.sync.snapshot.$currentDate.zip", null)
+      FileUtil.writeToFile(tempFile, stream.readAllBytes())
+      return tempFile
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      return null
+    }
+  }
 
-      override fun get(path: String): String? {
-        return contextVersionMap[path]
-      }
+  private inner class VersionContext : HeaderStorage {
+    private val contextVersionMap = mutableMapOf<String, String>()
+    private val lock = ReentrantLock()
 
-      override fun store(path: String, value: String) {
-      contextVersionMap[path] = path
+    override fun get(path: String): String? {
+      return contextVersionMap[path]
     }
 
-    fun <T> doWithVersion(path: String, version: String, function: () -> T): T {
+    override fun store(path: String, value: String) {
+      contextVersionMap[path] = value
+    }
+
+    fun <T> doWithVersion(path: String, version: String?, function: () -> T): T {
       return lock.withLock {
-        contextVersionMap[path] = version
+        if (version != null) {
+          contextVersionMap[path] = version
+        }
+
         val result = function()
 
         val actualVersion: String? = contextVersionMap[path]
         if (actualVersion == null) {
-          LOG.error("Version not found for $path")
+          LOG.warn("Version not found for $path")
         }
         else {
           currentVersionOfFiles[path] = actualVersion

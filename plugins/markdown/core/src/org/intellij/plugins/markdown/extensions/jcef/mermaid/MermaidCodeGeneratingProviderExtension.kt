@@ -35,8 +35,6 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
     collector?.addAliveCachedFile(this, actualKey)
   }
 
-  override fun onLAFChanged() = Unit
-
   private fun escapeContent(content: String): String {
     return Base64.encode(content.toByteArray())
   }

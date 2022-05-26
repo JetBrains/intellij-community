@@ -1,14 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 
 internal class VirtualFileNameStore {
   private val generator = IntIdGenerator()
-  private val name2IdStore = CollectionFactory.createSmallMemoryFootprintMap<String, IdPerCount>()
   private val id2NameStore = Int2ObjectOpenHashMap<String>()
+  private val name2IdStore = run {
+    val checkSensitivityEnabled = Registry.`is`("ide.new.project.model.index.case.sensitivity", false)
+    if (checkSensitivityEnabled && !SystemInfoRt.isFileSystemCaseSensitive) return@run CollectionFactory.createCustomHashingStrategyMap<String, IdPerCount>(HashingStrategy.caseInsensitive())
+    return@run CollectionFactory.createSmallMemoryFootprintMap<String, IdPerCount>()
+  }
 
   fun generateIdForName(name: String): Int {
     val idPerCount = name2IdStore[name]

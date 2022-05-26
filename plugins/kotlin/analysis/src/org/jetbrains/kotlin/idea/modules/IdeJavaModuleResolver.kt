@@ -7,10 +7,35 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.impl.light.LightJavaModule
+import org.jetbrains.kotlin.load.java.structure.JavaAnnotation
+import org.jetbrains.kotlin.load.java.structure.impl.JavaAnnotationImpl
+import org.jetbrains.kotlin.load.java.structure.impl.convert
+import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
+import java.util.concurrent.ConcurrentHashMap
 
 class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
+    private val virtualFileFinder by lazy { VirtualFileFinder.getInstance(project) }
+
+    private val modulesAnnotationCache = ConcurrentHashMap<ClassId, List<JavaAnnotation>>()
+
+    override fun getAnnotationsForModuleOwnerOfClass(classId: ClassId): List<JavaAnnotation>? {
+        if (modulesAnnotationCache.containsKey(classId)) {
+            return modulesAnnotationCache[classId]
+        }
+
+        val virtualFile = virtualFileFinder.findVirtualFileWithHeader(classId) ?: return null
+        val moduleAnnotations = findJavaModule(virtualFile)?.annotations?.convert(::JavaAnnotationImpl)
+
+        if (moduleAnnotations != null && moduleAnnotations.size < MODULE_ANNOTATIONS_CACHE_SIZE) {
+            modulesAnnotationCache[classId] = moduleAnnotations
+        }
+
+        return moduleAnnotations
+    }
+
     private fun findJavaModule(file: VirtualFile): PsiJavaModule? = JavaModuleGraphUtil.findDescriptorByFile(file, project)
 
     override fun checkAccessibility(
@@ -48,4 +73,8 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
     // Returns whether or not [source] exports [packageName] to [target]
     private fun exports(source: PsiJavaModule, packageName: String, target: PsiJavaModule): Boolean =
         source is LightJavaModule || JavaModuleGraphUtil.exports(source, packageName, target)
+
+    companion object {
+        private const val MODULE_ANNOTATIONS_CACHE_SIZE = 10000
+    }
 }

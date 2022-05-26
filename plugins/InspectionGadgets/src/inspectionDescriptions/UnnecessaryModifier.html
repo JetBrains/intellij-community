@@ -4,7 +4,9 @@ Reports redundant modifiers and suggests to remove them.
 The resulting code will be shorter, but the behaviour and meaning will remain the same.
 <p>Example 1:</p>
 <pre><code>
-  class X {
+  // all code is implicitly strictfp under Java 17 and higher
+  strictfp class X {
+
     // inner enums are implicitly static
     static enum Inner {
         A, B, C

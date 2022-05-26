@@ -17,7 +17,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -212,7 +211,7 @@ public final class CodeInsightUtil {
 
   public static PsiExpression @NotNull [] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
     List<PsiExpression> array = new ArrayList<>();
-    addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
+    addExpressionOccurrences(CommonJavaRefactoringUtil.unparenthesizeExpression(expr), array, scope);
     if (expr.isPhysical()) {
       boolean found = false;
       for (PsiExpression psiExpression : array) {
@@ -230,7 +229,7 @@ public final class CodeInsightUtil {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiExpression) {
-        if (JavaPsiEquivalenceUtil.areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression((PsiExpression)child), expr)) {
+        if (JavaPsiEquivalenceUtil.areExpressionsEquivalent(CommonJavaRefactoringUtil.unparenthesizeExpression((PsiExpression)child), expr)) {
           array.add((PsiExpression)child);
           continue;
         }

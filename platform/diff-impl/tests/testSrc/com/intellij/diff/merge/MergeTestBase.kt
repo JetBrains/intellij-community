@@ -285,7 +285,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     fun Int.assertType(changeType: SidesState) {
       assertTrue(changeType != NONE)
       val change = change(this)
-      val actual = change.type
+      val actual = change.conflictType
       val isLeftChange = changeType != RIGHT
       val isRightChange = changeType != LEFT
       assertEquals(Pair(isLeftChange, isRightChange), Pair(actual.isChange(Side.LEFT), actual.isChange(Side.RIGHT)))

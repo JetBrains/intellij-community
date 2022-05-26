@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -16,6 +16,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -691,10 +692,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       .setBorderColor(layoutData.borderColor)
       .setBorderInsets(JBInsets.emptyInsets());
 
-    if (layoutData.fadeoutTime != 0) {
-      builder.setFadeoutTime(layoutData.fadeoutTime);
-    }
-
     Balloon balloon = builder.createBalloon();
 
     if (balloon instanceof BalloonImpl) {
@@ -712,6 +709,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       if (!layoutData.welcomeScreen) {
         balloonImpl.setActionProvider(new NotificationBalloonActionProvider(
           balloonImpl, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.getDisplayId()));
+      }
+
+      if (layoutData.fadeoutTime != 0) {
+        ((BalloonImpl)balloon).startSmartFadeoutTimer((int)layoutData.fadeoutTime);
       }
     }
     notification.setBalloon(balloon);
@@ -765,6 +766,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       if (actionsSize == 1) {
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());
+        button.setOpaque(false);
         actionPanel.addAction(button);
         button.addActionListener(e -> {
           NotificationCollector.getInstance()
@@ -1047,17 +1049,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return app.isUnitTestMode() || app.isCommandLine();
   }
 
-  static final class ProjectNotificationsComponent {
-    ProjectNotificationsComponent(@NotNull Project project) {
-      if (!isDummyEnvironment()) {
-        project.getMessageBus().connect().subscribe(Notifications.TOPIC, new MyNotificationListener(project));
-      }
-    }
-  }
-
   public static class DropDownAction extends LinkLabel<Void> {
-    Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
-
     public DropDownAction(@NlsContexts.LinkLabel String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
@@ -1067,17 +1059,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       setIcon(new Icon() {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
-          IconUtil.colorize((Graphics2D)g, myIcon, getTextColor()).paintIcon(c, g, x - 1, y + 1);
+          IconUtil.colorize((Graphics2D)g, AllIcons.Ide.Notification.DropTriangle, getTextColor()).paintIcon(c, g, x - 1, y + 1);
         }
 
         @Override
         public int getIconWidth() {
-          return myIcon.getIconWidth();
+          return AllIcons.Ide.Notification.DropTriangle.getIconWidth();
         }
 
         @Override
         public int getIconHeight() {
-          return myIcon.getIconHeight();
+          return AllIcons.Ide.Notification.DropTriangle.getIconHeight();
         }
       });
     }
@@ -1091,20 +1083,24 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   static final class MyNotificationListener implements Notifications {
-    private final Project myProject;
+    private final Project project;
 
     @SuppressWarnings("unused")
     MyNotificationListener() {
-      myProject = null;
+      project = null;
     }
 
+    @SuppressWarnings("unused")
     private MyNotificationListener(@Nullable Project project) {
-      myProject = project;
+      this.project = project;
+      if (isDummyEnvironment()) {
+        throw ExtensionNotApplicableException.create();
+      }
     }
 
     @Override
     public void notify(@NotNull Notification notification) {
-      ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).doNotify(notification, myProject);
+      ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).doNotify(notification, project);
     }
   }
 

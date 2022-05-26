@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.*
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
@@ -70,7 +71,7 @@ class MayBeConstantInspection : AbstractKotlinInspection() {
 
             val initializer = initializer
             // For some reason constant evaluation does not work for property.analyze()
-            val context = (initializer ?: this).analyze(BodyResolveMode.PARTIAL)
+            val context = (initializer ?: this).safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
             val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? VariableDescriptor ?: return NONE
             val type = propertyDescriptor.type
             if (!KotlinBuiltIns.isPrimitiveType(type) && !KotlinBuiltIns.isString(type)) return NONE

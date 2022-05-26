@@ -252,6 +252,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
+  public boolean areVcsesActivated() {
+    return myMappings.isActivated();
+  }
+
+  @Override
   public boolean hasAnyMappings() {
     return !myMappings.isEmpty();
   }
@@ -666,7 +671,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void fireDirectoryMappingsChanged() {
     if (myProject.isOpen() && !myProject.isDisposed()) {
-      myMappings.mappingsChanged();
+      myMappings.notifyMappingsChanged();
     }
   }
 

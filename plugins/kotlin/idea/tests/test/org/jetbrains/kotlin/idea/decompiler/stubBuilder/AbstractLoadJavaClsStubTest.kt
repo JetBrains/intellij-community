@@ -22,11 +22,12 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 import org.junit.Assert
+import java.io.File
 
 abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCase() {
     @Throws(Exception::class)
-    protected fun doTestCompiledKotlin(path: String) {
-        myFixture.configureByFile(path)
+    protected fun doTestCompiledKotlin(absoluteTestDataPath: String) {
+        myFixture.configureByFile(File(absoluteTestDataPath))
 
         val ktFile = myFixture.file as KtFile
         val analysisResult = ktFile.analyzeWithAllCompilerChecks()

@@ -17,6 +17,7 @@ class MuteBreakpointsSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("mute.breakpoints.message")
   override val suggestingActionId = "XDebugger.MuteBreakpoints"
   override val suggestingDocUrl = "https://www.jetbrains.com/help/idea/using-breakpoints.html#mute"
+  override val minSuggestingIntervalDays = 30
 
   override val languages = listOf(Language.ANY.id)
 

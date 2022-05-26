@@ -275,12 +275,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         base = preInitializedBaseLaf.getAndSet(null);
         if (base == null) {
           base = createBaseLaF();
-          base.initialize();
         }
       }
-      else {
-        base.initialize();
-      }
+      base.initialize();
     }
     catch (Throwable e) {
       log(e);

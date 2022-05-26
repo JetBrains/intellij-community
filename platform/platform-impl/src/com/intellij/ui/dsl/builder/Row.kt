@@ -111,7 +111,7 @@ interface Row {
                  maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Row
 
   /**
-   * Adds comment after the row with appropriate color and font size (macOS uses smaller font).
+   * Adds comment after the row with appropriate color and font size (macOS and Linux use smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
    * Links with href to http/https are automatically marked with additional arrow icon.
@@ -254,7 +254,7 @@ interface Row {
   fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP): Cell<JLabel>
 
   /**
-   * Adds comment with appropriate color and font size (macOS uses smaller font).
+   * Adds comment with appropriate color and font size (macOS and Linux use smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
    * Links with href to http/https are automatically marked with additional arrow icon.

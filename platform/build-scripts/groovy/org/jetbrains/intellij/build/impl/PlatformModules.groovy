@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -84,6 +84,8 @@ final class PlatformModules {
     "intellij.platform.elevation.client",
     "intellij.platform.elevation.common",
     "intellij.platform.elevation.daemon",
+    "intellij.platform.externalProcessAuthHelper",
+    "intellij.platform.refactoring",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.storage",
@@ -126,6 +128,7 @@ final class PlatformModules {
   public static final Map<String, PackMode> CUSTOM_PACK_MODE = Map.of(
     // jna uses native lib
     "jna", PackMode.STANDALONE_MERGED,
+    "lz4-java", PackMode.STANDALONE_MERGED,
     "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
     "intellij-coverage", PackMode.STANDALONE_SEPARATE,
     )
@@ -208,10 +211,15 @@ final class PlatformModules {
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
+      "intellij.platform.util.diff",
       "intellij.platform.util.xmlDom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",
-      "intellij.platform.boot"
+      "intellij.platform.boot",
+    ), productLayout, layout)
+
+    jar("externalProcess-rt.jar", List.of(
+      "intellij.platform.externalProcessAuthHelper.rt"
     ), productLayout, layout)
 
     jar(BaseLayout.APP_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)

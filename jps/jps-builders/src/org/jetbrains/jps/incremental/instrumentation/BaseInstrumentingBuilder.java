@@ -33,7 +33,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
     for (CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-        LOG.info("checking " + compiledClass + " by " + getClass());
+        LOG.debug("checking " + compiledClass + " by " + getClass());
       }
       final BinaryContent originalContent = compiledClass.getContent();
       final ClassReader reader = new FailSafeClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
@@ -45,7 +45,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
       final ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
       try {
         if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-          LOG.info("instrumenting " + compiledClass + " by " + getClass());
+          LOG.debug("instrumenting " + compiledClass + " by " + getClass());
         }
         final BinaryContent instrumented = instrument(context, compiledClass, reader, writer, finder);
         if (instrumented != null) {

@@ -5,18 +5,21 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.StructTypePath;
+import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -24,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -222,13 +226,13 @@ public class ExprProcessor implements CodeConstants {
   private static void collectCatchVars(Statement stat, FlattenStatementsHelper flatthelper, Map<String, VarExprent> map) {
     List<VarExprent> lst = null;
 
-    if (stat.type == Statement.TYPE_CATCH_ALL) {
+    if (stat.type == StatementType.CATCH_ALL) {
       CatchAllStatement catchall = (CatchAllStatement)stat;
       if (!catchall.isFinally()) {
         lst = catchall.getVars();
       }
     }
-    else if (stat.type == Statement.TYPE_TRY_CATCH) {
+    else if (stat.type == StatementType.TRY_CATCH) {
       lst = ((CatchStatement)stat).getVars();
     }
 
@@ -492,7 +496,7 @@ public class ExprProcessor implements CodeConstants {
             }
 
             InvocationExprent exprinv = new InvocationExprent(instr.opcode, invoke_constant, bootstrap_arguments, stack, offsets);
-            if (exprinv.getDescriptor().ret.type == CodeConstants.TYPE_VOID) {
+            if (exprinv.getDescriptor().ret.getType() == CodeConstants.TYPE_VOID) {
               exprList.add(exprinv);
             }
             else {
@@ -506,7 +510,7 @@ public class ExprProcessor implements CodeConstants {
           int dimensions = (instr.opcode == opc_new) ? 0 : (instr.opcode == opc_anewarray) ? 1 : instr.operand(1);
           VarType arrType = new VarType(pool.getPrimitiveConstant(instr.operand(0)).getString(), true);
           if (instr.opcode != opc_multianewarray) {
-            arrType = arrType.resizeArrayDim(arrType.arrayDim + dimensions);
+            arrType = arrType.resizeArrayDim(arrType.getArrayDim() + dimensions);
           }
           pushEx(stack, exprList, new NewExprent(arrType, stack, dimensions, offsets));
           break;
@@ -520,7 +524,7 @@ public class ExprProcessor implements CodeConstants {
           insertByOffsetEx(-2, stack, exprList, -1);
           break;
         case opc_dup_x2:
-          if (stack.getByOffset(-2).getExprType().stackSize == 2) {
+          if (stack.getByOffset(-2).getExprType().getStackSize() == 2) {
             insertByOffsetEx(-2, stack, exprList, -1);
           }
           else {
@@ -528,7 +532,7 @@ public class ExprProcessor implements CodeConstants {
           }
           break;
         case opc_dup2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
+          if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
             pushEx(stack, exprList, stack.getByOffset(-1).copy());
           }
           else {
@@ -537,7 +541,7 @@ public class ExprProcessor implements CodeConstants {
           }
           break;
         case opc_dup2_x1:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
+          if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
             insertByOffsetEx(-2, stack, exprList, -1);
           }
           else {
@@ -546,8 +550,8 @@ public class ExprProcessor implements CodeConstants {
           }
           break;
         case opc_dup2_x2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 2) {
-            if (stack.getByOffset(-2).getExprType().stackSize == 2) {
+          if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
+            if (stack.getByOffset(-2).getExprType().getStackSize() == 2) {
               insertByOffsetEx(-2, stack, exprList, -1);
             }
             else {
@@ -555,7 +559,7 @@ public class ExprProcessor implements CodeConstants {
             }
           }
           else {
-            if (stack.getByOffset(-3).getExprType().stackSize == 2) {
+            if (stack.getByOffset(-3).getExprType().getStackSize() == 2) {
               insertByOffsetEx(-3, stack, exprList, -2);
               insertByOffsetEx(-3, stack, exprList, -1);
             }
@@ -573,7 +577,7 @@ public class ExprProcessor implements CodeConstants {
           stack.pop();
           break;
         case opc_pop2:
-          if (stack.getByOffset(-1).getExprType().stackSize == 1) {
+          if (stack.getByOffset(-1).getExprType().getStackSize() == 1) {
             // Since value at the top of the stack is a value of category 1 (JVMS9 2.11.1)
             // we should remove one more item from the stack.
             // See JVMS9 pop2 chapter.
@@ -646,27 +650,20 @@ public class ExprProcessor implements CodeConstants {
     }
   }
 
-  public static String getTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    return getTypeName(type, true, typePathWriteStack);
+  public static String getTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+    return getTypeName(type, true, typePathWriteHelper);
   }
 
-  public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    int tp = type.type;
+  public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    int tp = type.getType();
     StringBuilder sb = new StringBuilder();
-    typePathWriteStack.removeIf(typeAnnotationWriteHelper -> {
-      StructTypePath path = typeAnnotationWriteHelper.getPaths().peek();
-      if (path == null && type.arrayDim == 0) { // nested type
-        typeAnnotationWriteHelper.writeTo(sb);
-        return true;
+    typeAnnWriteHelpers = typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      if (typeAnnWriteHelper.getAnnotation().isForDeepestArrayComponent(type.getArrayDim())) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
       }
-      if (path != null && path.getTypePathKind() == StructTypePath.Kind.ARRAY.getOpcode() &&
-        typeAnnotationWriteHelper.getPaths().size() == type.arrayDim
-      ) {
-        typeAnnotationWriteHelper.writeTo(sb);
-        return true;
-      }
-      return false;
-    });
+      return true;
+    }).collect(Collectors.toList());
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       sb.append(typeNames[tp]);
       return sb.toString();
@@ -686,87 +683,124 @@ public class ExprProcessor implements CodeConstants {
     else if (tp == CodeConstants.TYPE_OBJECT) {
       String ret;
       if (getShort) {
-        ret = DecompilerContext.getImportCollector().getShortName(type.value);
+        ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
       } else {
-        ret = buildJavaClassName(type.value);
+        ret = buildJavaClassName(type.getValue());
       }
-
       if (ret == null) {
         // FIXME: a warning should be logged
         return UNDEFINED_TYPE_STRING;
       }
-
       String[] nestedClasses = ret.split("\\.");
-      for (int i = 0; i < nestedClasses.length; i++) {
-        String nestedType = nestedClasses[i];
-        if (i != 0) { // first annotation is written already
-          checkNestedTypeAnnotation(sb, typePathWriteStack);
-        }
-
-        sb.append(nestedType);
-        if (i != nestedClasses.length - 1) sb.append(".");
-      }
-
+      writeNestedClass(sb, nestedClasses, typeAnnWriteHelpers);
       return sb.toString();
     }
 
     throw new RuntimeException("invalid type");
   }
 
-  public static void checkNestedTypeAnnotation(StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    typePathWriteStack.removeIf(typeAnnotationWriteHelper -> {
-      StructTypePath path = typeAnnotationWriteHelper.getPaths().peek();
-      if (path != null && path.getTypePathKind() == StructTypePath.Kind.NESTED.getOpcode()) {
+  public static void writeNestedClass(StringBuilder sb, String[] nestedClasses, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    List<ClassesProcessor.ClassNode> enclosingClasses = enclosingClassList();
+    for (int i = 0; i < nestedClasses.length; i++) {
+      String nestedType = nestedClasses[i];
+      boolean shouldWrite = true;
+      if (!enclosingClasses.isEmpty() && i != nestedClasses.length - 1) {
+        String enclosingType = enclosingClasses.remove(0).simpleName;
+        shouldWrite = !nestedType.equals(enclosingType);
+      }
+      if (i == 0) { // first annotation can be written already
+        if (!sb.toString().isEmpty()) shouldWrite= true; // write if annotation exists
+      } else {
+        List<TypeAnnotationWriteHelper> notWrittenTypeAnnotations = writeNestedTypeAnnotations(sb, typeAnnWriteHelpers);
+        shouldWrite |= (notWrittenTypeAnnotations.size() != typeAnnWriteHelpers.size());
+        typeAnnWriteHelpers = notWrittenTypeAnnotations;
+      }
+      if (shouldWrite) {
+        sb.append(nestedType);
+        if (i != nestedClasses.length - 1) sb.append(".");
+      }
+    }
+  }
+
+  public static List<ClassesProcessor.ClassNode> enclosingClassList() {
+    ClassesProcessor.ClassNode enclosingClass = (ClassesProcessor.ClassNode) DecompilerContext.getProperty(
+      DecompilerContext.CURRENT_CLASS_NODE
+    );
+    List<ClassesProcessor.ClassNode> enclosingClassList = new ArrayList<>(List.of(enclosingClass));
+    while (enclosingClass.parent != null) {
+      enclosingClass = enclosingClass.parent;
+      enclosingClassList.add(0, enclosingClass);
+    }
+    return enclosingClassList.stream()
+      .filter(classNode -> classNode.type != ClassesProcessor.ClassNode.CLASS_ANONYMOUS &&
+                           classNode.type != ClassesProcessor.ClassNode.CLASS_LAMBDA
+      ).collect(Collectors.toList());
+  }
+
+  /**
+   * @return Whether a nested type annotation was written.
+   */
+  public static List<TypeAnnotationWriteHelper> writeNestedTypeAnnotations(
+    StringBuilder sb,
+    List<TypeAnnotationWriteHelper> typePathWriteHelper
+  ) {
+    return typePathWriteHelper.stream().filter(typeAnnotationWriteHelper -> {
+      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getId()) {
         typeAnnotationWriteHelper.getPaths().pop();
         if (typeAnnotationWriteHelper.getPaths().isEmpty()) {
           typeAnnotationWriteHelper.writeTo(sb);
-          return true;
+          return false;
         }
       }
-      return false;
-    });
-  }
-
-  public static String getCastTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    return getCastTypeName(type, true, typePathWriteStack);
-  }
-
-  public static String getCastTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    List<TypeAnnotationWriteHelper> arrayPaths = new ArrayList<>();
-    List<TypeAnnotationWriteHelper> notArrayPath = typePathWriteStack.stream().filter(stack -> {
-      boolean isArrayPath = stack.getPaths().size() < type.arrayDim;
-      if (stack.getPaths().size() > type.arrayDim) {
-        for (int i = 0; i < type.arrayDim; i++) {
-          stack.getPaths().poll(); // remove all trailing
-        }
-      }
-      if (isArrayPath) {
-        arrayPaths.add(stack);
-      }
-      return !isArrayPath;
+      return true;
     }).collect(Collectors.toList());
-    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, notArrayPath));
-    writeArray(sb, type.arrayDim, arrayPaths);
+  }
+
+  public static String getCastTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteHelper) {
+    return getCastTypeName(type, true, typePathWriteHelper);
+  }
+
+  public static String getCastTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    List<TypeAnnotationWriteHelper> arrayTypeAnnWriteHelpers = arrayPath(type, typeAnnWriteHelpers);
+    List<TypeAnnotationWriteHelper> nonArrayTypeAnnWriteHelpers = nonArrayPath(type, typeAnnWriteHelpers);
+    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, nonArrayTypeAnnWriteHelpers));
+    writeArray(sb, type.getArrayDim(), arrayTypeAnnWriteHelpers);
     return sb.toString();
   }
 
-  public static void writeArray(StringBuilder sb, int arrayDim, List<TypeAnnotationWriteHelper> typePathWriteStack) {
-    for (int i = 0; i < arrayDim; i++) {
-      var ref = new Object() {
-        boolean firstIteration = true;
-      };
-      final int it = i;
-      typePathWriteStack.removeIf(writeHelper -> {
-        if (it == writeHelper.getPaths().size()) {
-          if (ref.firstIteration) {
-            sb.append(' ');
-            ref.firstIteration = false;
-          }
-          writeHelper.writeTo(sb);
-          return true;
+
+  public static List<TypeAnnotationWriteHelper> arrayPath(Type type, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    return typeAnnWriteHelpers.stream()
+      .filter(typeAnnWriteHelper -> typeAnnWriteHelper.getPaths().size() < type.getArrayDim())
+      .collect(Collectors.toList());
+  }
+
+  public static List<TypeAnnotationWriteHelper> nonArrayPath(Type type, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    return typeAnnWriteHelpers.stream().filter(stack -> {
+      boolean isArrayPath = stack.getPaths().size() < type.getArrayDim();
+      if (stack.getPaths().size() > type.getArrayDim()) {
+        for (int i = 0; i < type.getArrayDim(); i++) {
+          stack.getPaths().poll(); // remove all trailing
         }
-        return false;
-      });
+      }
+      return !isArrayPath;
+    }).collect(Collectors.toList());
+  }
+
+
+  public static void writeArray(StringBuilder sb, int arrayDim, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    for (int i = 0; i < arrayDim; i++) {
+      boolean firstIteration = true;
+      for (TypeAnnotationWriteHelper typeAnnotationWriteHelper : typeAnnWriteHelpers) {
+        if (i == typeAnnotationWriteHelper.getPaths().size()) {
+          if (firstIteration) {
+            sb.append(' ');
+            firstIteration = false;
+          }
+          typeAnnotationWriteHelper.writeTo(sb);
+        }
+      }
       sb.append("[]");
     }
   }
@@ -803,24 +837,23 @@ public class ExprProcessor implements CodeConstants {
   public static TextBuffer jmpWrapper(Statement stat, int indent, boolean semicolon, BytecodeMappingTracer tracer) {
     TextBuffer buf = stat.toJava(indent, tracer);
 
-    List<StatEdge> lstSuccs = stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL);
+    List<StatEdge> lstSuccs = stat.getSuccessorEdges(EdgeType.DIRECT_ALL);
     if (lstSuccs.size() == 1) {
       StatEdge edge = lstSuccs.get(0);
-      if (edge.getType() != StatEdge.TYPE_REGULAR && edge.explicit && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
+      if (edge.getType() != EdgeType.REGULAR && edge.explicit && edge.getDestination().type != StatementType.DUMMY_EXIT) {
         buf.appendIndent(indent);
 
-        switch (edge.getType()) {
-          case StatEdge.TYPE_BREAK:
-            addDeletedGotoInstructionMapping(stat, tracer);
-            buf.append("break");
-            break;
-          case StatEdge.TYPE_CONTINUE:
-            addDeletedGotoInstructionMapping(stat, tracer);
-            buf.append("continue");
+        if (EdgeType.BREAK.equals(edge.getType())) {
+          addDeletedGotoInstructionMapping(stat, tracer);
+          buf.append("break");
+        }
+        else if (EdgeType.CONTINUE.equals(edge.getType())) {
+          addDeletedGotoInstructionMapping(stat, tracer);
+          buf.append("continue");
         }
 
         if (edge.labeled) {
-          buf.append(" label").append(edge.closure.id.toString());
+          buf.append(" label").append(Integer.toString(edge.closure.id));
         }
         buf.append(";").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
@@ -886,16 +919,16 @@ public class ExprProcessor implements CodeConstants {
 
   public static ConstExprent getDefaultArrayValue(VarType arrType) {
     ConstExprent defaultVal;
-    if (arrType.type == CodeConstants.TYPE_OBJECT || arrType.arrayDim > 0) {
+    if (arrType.getType() == CodeConstants.TYPE_OBJECT || arrType.getArrayDim() > 0) {
       defaultVal = new ConstExprent(VarType.VARTYPE_NULL, null, null);
     }
-    else if (arrType.type == CodeConstants.TYPE_FLOAT) {
+    else if (arrType.getType() == CodeConstants.TYPE_FLOAT) {
       defaultVal = new ConstExprent(VarType.VARTYPE_FLOAT, 0f, null);
     }
-    else if (arrType.type == CodeConstants.TYPE_LONG) {
+    else if (arrType.getType() == CodeConstants.TYPE_LONG) {
       defaultVal = new ConstExprent(VarType.VARTYPE_LONG, 0L, null);
     }
-    else if (arrType.type == CodeConstants.TYPE_DOUBLE) {
+    else if (arrType.getType() == CodeConstants.TYPE_DOUBLE) {
       defaultVal = new ConstExprent(VarType.VARTYPE_DOUBLE, 0d, null);
     }
     else { // integer types
@@ -928,8 +961,8 @@ public class ExprProcessor implements CodeConstants {
       if (exprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)exprent).isBoxingCall()) {
         InvocationExprent invocationExprent = (InvocationExprent)exprent;
         exprent = invocationExprent.getParameters().get(0);
-        int paramType = invocationExprent.getDescriptor().params[0].type;
-        if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent)exprent).getConstType().type != paramType) {
+        int paramType = invocationExprent.getDescriptor().params[0].getType();
+        if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent)exprent).getConstType().getType() != paramType) {
           leftType = new VarType(paramType);
         }
       }
@@ -939,8 +972,8 @@ public class ExprProcessor implements CodeConstants {
 
     boolean cast =
       castAlways ||
-      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
-      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
+      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT)) ||
+      (castNull && rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
       (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
@@ -972,7 +1005,7 @@ public class ExprProcessor implements CodeConstants {
 
   private static boolean isIntConstant(Exprent exprent) {
     if (exprent.type == Exprent.EXPRENT_CONST) {
-      switch (((ConstExprent)exprent).getConstType().type) {
+      switch (((ConstExprent)exprent).getConstType().getType()) {
         case CodeConstants.TYPE_BYTE:
         case CodeConstants.TYPE_BYTECHAR:
         case CodeConstants.TYPE_SHORT:

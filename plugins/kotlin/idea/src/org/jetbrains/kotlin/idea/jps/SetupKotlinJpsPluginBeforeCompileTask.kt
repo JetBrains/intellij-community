@@ -14,11 +14,12 @@ import org.jetbrains.kotlin.idea.KotlinPluginMacros
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
 class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
     override fun execute(context: CompileContext): Boolean {
-        val version = KotlinJpsPluginSettings.getInstance(context.project).settings.version
+        val version = KotlinJpsPluginSettings.getInstance(context.project)?.settings?.version ?: return true
 
         val parsed = KotlinVersionVerbose.parse(version)
         if (parsed == null) {
@@ -44,7 +45,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
 
         val jpsPluginClassPathJar = KotlinPathsProvider.lazyDownloadMavenArtifact(
             context.project,
-            KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+            KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
             version,
             context.progressIndicator,
             beforeDownload = { context.progressIndicator.text = KotlinBundle.message("progress.text.downloading.kotlin.jps.plugin") },
@@ -80,13 +81,11 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
     }
 
     companion object {
-        const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
-
         @JvmStatic
         val jpsMinimumSupportedVersion
             get() = KotlinVersionVerbose.parse("1.5.10").let { it ?: error("JPS Minimum version is not valid") }.plainVersion
 
         fun getKotlinJpsClasspathLocation(version: String) =
-            KotlinPathsProvider.getExpectedMavenArtifactJarPath(KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version)
+            KotlinPathsProvider.getExpectedMavenArtifactJarPath(KotlinPluginLayout.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version)
     }
 }

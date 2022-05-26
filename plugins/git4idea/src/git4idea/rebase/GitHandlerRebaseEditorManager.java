@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
-import com.intellij.util.BuiltinWebServerAccess;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.editor.GitRebaseEditorXmlRpcHandler;
-import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,14 +41,6 @@ public final class GitHandlerRebaseEditorManager implements AutoCloseable {
     myHandlerId = myService.registerHandler(myHandler, myEditorHandler);
     myHandler.addCustomEnvironmentVariable(GIT_EDITOR_ENV, myService.getEditorCommand(myHandler.getExecutable()));
     myHandler.addCustomEnvironmentVariable(GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV, myHandlerId.toString());
-
-    // Android Studio: BuiltinWebServerAccess
-    try {
-      myHandler.addCustomEnvironmentVariable(
-        GitRebaseEditorXmlRpcHandler.IJ_EDITOR_TOKEN_ENV, BuiltinWebServerAccess.getUserAuthenticationToken());
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to set authentication for git rebase action", e);
-    }
   }
 
   @Override

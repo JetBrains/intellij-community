@@ -16,6 +16,7 @@
     <orderEntry type="library" scope="TEST" name="jb-jdi" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
@@ -39,6 +40,8 @@
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="Log4J" level="project" />
+    <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
   </component>
 </module>

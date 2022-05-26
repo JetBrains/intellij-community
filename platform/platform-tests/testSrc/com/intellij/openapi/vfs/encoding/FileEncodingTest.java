@@ -1002,7 +1002,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       @Override public @NotNull String getName() { return "my"; }
       @Override public @NotNull String getDescription() { return getName(); }
       @Override public @NotNull String getDefaultExtension() { return "my"; }
-      @Override public @Nullable Icon getIcon() { return null; }
+      @Override public Icon getIcon() { return null; }
 
       @Override
       public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
@@ -1109,7 +1109,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
       @Override public @NotNull String getName() { return "Test"; }
       @Override public @NotNull String getDescription() { return "Test"; }
       @Override public @NotNull String getDefaultExtension() { return ext; }
-      @Override public @Nullable Icon getIcon() { return null; }
+      @Override public Icon getIcon() { return null; }
       @Override public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) { return StandardCharsets.ISO_8859_1.name(); }
     }
     MyForcedFileType fileType = new MyForcedFileType();

@@ -17,7 +17,7 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -111,7 +111,7 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
         if (field != null) {
           if (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass)) {
             if (!m_ignoreStaticMethods || field.hasModifierProperty(PsiModifier.STATIC) ||
-                !RefactoringUtil.isInStaticContext(variable, aClass)) {
+                !CommonJavaRefactoringUtil.isInStaticContext(variable, aClass)) {
               return aClass;
             }
           }

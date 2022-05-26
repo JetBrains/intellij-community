@@ -5,6 +5,7 @@ import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -77,7 +78,6 @@ class MixedListFactory extends SEResultsListFactory {
           SearchEverywhereContributor<Object> contributor = model.getContributorForIndex(index);
           assert contributor != null : "Null contributor is not allowed here";
           ListCellRenderer<? super Object> renderer = myRenderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
-          //noinspection ConstantConditions
           component = renderer.getListCellRendererComponent(list, value, index, isSelected, true);
         }
 
@@ -87,6 +87,11 @@ class MixedListFactory extends SEResultsListFactory {
             ((JComponent)component).setBorder(JBUI.Borders.empty(1, 2));
           }
         }
+
+        if (ExperimentalUI.isNewUI()) {
+          component.setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : JBUI.CurrentTheme.Popup.BACKGROUND);
+        }
+
         AppUIUtil.targetToDevice(component, list);
         component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
 

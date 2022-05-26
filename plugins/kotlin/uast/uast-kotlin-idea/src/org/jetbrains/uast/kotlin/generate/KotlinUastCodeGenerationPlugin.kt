@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
+import org.jetbrains.kotlin.util.firstNotNullResult
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
@@ -26,7 +28,6 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
-import org.jetbrains.uast.kotlin.internal.toSourcePsiFakeAware
 
 class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     override val language: Language
@@ -78,6 +79,7 @@ private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != nul
 class KotlinUastElementFactory(project: Project) : UastElementFactory {
     private val psiFactory = KtPsiFactory(project)
 
+    @Suppress("UNUSED_PARAMETER")
     override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
         return psiFactory.createExpression(qualifiedName).let {
             when (it) {
@@ -187,6 +189,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory.createExpression("null").toUElementOfType()!!
     }
 
+    @Suppress("UNUSED_PARAMETER")
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
         return psiFactory.createExpression(value.toString()).toUElementOfType()!!
     }

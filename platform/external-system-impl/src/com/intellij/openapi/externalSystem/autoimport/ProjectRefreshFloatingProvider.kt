@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -10,8 +10,7 @@ import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.DisposableWrapperList
 
-class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
-
+internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
   override val autoHideable = false
 
   private val toolbarComponents = DisposableWrapperList<Pair<Project, FloatingToolbarComponent>>()
@@ -44,7 +43,7 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
     }
   }
 
-  class Listener : ExternalSystemProjectNotificationAware.Listener {
+  internal class Listener : ExternalSystemProjectNotificationAware.Listener {
     override fun onNotificationChanged(project: Project) {
       FloatingToolbarProvider.getProvider<ProjectRefreshFloatingProvider>()
         .updateToolbarComponents(project)

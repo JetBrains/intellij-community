@@ -12,6 +12,19 @@ object GradleKotlinTestUtils {
         val patch: Int,
         val classifier: String? = null
     ) {
+
+        val maturity: KotlinVersionMaturity = when {
+            isStable -> KotlinVersionMaturity.STABLE
+            isRC -> KotlinVersionMaturity.RC
+            isBeta -> KotlinVersionMaturity.BETA
+            isAlpha -> KotlinVersionMaturity.ALPHA
+            isMilestone -> KotlinVersionMaturity.MILESTONE
+            isSnapshot -> KotlinVersionMaturity.SNAPSHOT
+            isDev -> KotlinVersionMaturity.DEV
+            isWildcard -> KotlinVersionMaturity.WILDCARD
+            else -> throw IllegalArgumentException("Can't infer maturity of KotlinVersion $this")
+        }
+
         override fun toString(): String {
             return "$major.$minor.$patch" + if (classifier != null) "-$classifier" else ""
         }
@@ -24,7 +37,7 @@ object GradleKotlinTestUtils {
         val V_1_5_31 = KotlinVersion(1, 5, 31)
         val V_1_6_10 = KotlinVersion(1, 6, 10)
 
-        val LAST_SNAPSHOT = KotlinVersion(1, 6, 255,"SNAPSHOT")
+        val LAST_SNAPSHOT = KotlinVersion(1, 6, 255, "SNAPSHOT")
 
         val ALL_PUBLIC = listOf(
             V_1_3_30,

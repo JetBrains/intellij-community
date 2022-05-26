@@ -107,6 +107,20 @@ class LoadInvalidProjectTest {
     }
   }
 
+  @Test
+  fun `duplicating artifacts`() {
+    loadProjectAndCheckResults("duplicating-artifacts") { project ->
+      assertThat(LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.single().name).isEqualTo("foo")
+      assertThat(errors).isEmpty()
+
+      project.stateStore.save()
+      val expected = directoryContentOf(testDataRoot.resolve("duplicating-libraries-fixed"))
+          .mergeWith(directoryContentOf(testDataRoot.resolve ("common")))
+      val projectDir = project.stateStore.directoryStorePath!!.parent
+      projectDir.assertMatches(expected)
+    }
+  }
+
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
     return loadProjectAndCheckResults(listOf(testDataRoot.resolve("common"), testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
   }

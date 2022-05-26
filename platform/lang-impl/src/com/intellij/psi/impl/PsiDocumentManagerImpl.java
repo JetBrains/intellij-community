@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.AppTopics;
@@ -66,11 +66,12 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
       final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
       if (virtualFile != null && virtualFile.isValid()) {
         Collection<Project> projects = ProjectLocator.getInstance().getProjectsForFile(virtualFile);
-        if (!projects.isEmpty() && !projects.contains(myProject)) {
-          LOG.error("Trying to get PSI for an alien project. VirtualFile=" + virtualFile +
-                    ";\n myProject=" + myProject +
-                    ";\n projects returned: " + projects);
-        }
+        LOG.assertTrue(projects.isEmpty() || projects.contains(myProject), "Trying to get PSI for an alien project. VirtualFile=" +
+                                                                           virtualFile +
+                                                                           ";\n myProject=" +
+                                                                           myProject +
+                                                                           ";\n projects returned: " +
+                                                                           projects);
       }
     }
     return psiFile;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution;
 
@@ -154,9 +154,7 @@ public final class ExecutionHelper {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
 
-      //noinspection HardCodedStringLiteral
       final String stdOutTitle = "[Stdout]:";
-      //noinspection HardCodedStringLiteral
       final String stderrTitle = "[Stderr]:";
       final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
       try {
@@ -303,8 +301,9 @@ public final class ExecutionHelper {
   }
 
   static class ErrorViewPanel extends NewErrorTreeViewPanel {
-    ErrorViewPanel(final Project project) {
+    ErrorViewPanel(@NotNull Project project) {
       super(project, "reference.toolWindows.messages");
+      Disposer.register(project, this);
     }
 
     @Override

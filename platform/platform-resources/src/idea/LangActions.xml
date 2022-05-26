@@ -416,6 +416,7 @@
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction">
         <override-text place="MainMenu"/>
       </action>
+      <action id="SETextAction" class="com.intellij.find.impl.SETextContributor$Companion$SETextAction"/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GotoLine"/>
 
@@ -1461,6 +1462,15 @@
     <group id="ExtractMethodToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>
       <reference ref="TreeNodeExclusion"/>
+    </group>
+
+    <group id="InspectionToolWindow.Toolbar" searchable="false">
+      <action id="ExportInspectionResults" class="com.intellij.codeInspection.ui.actions.InspectionResultsExportAction"/>
+    </group>
+
+    <group id="InspectionToolWindow.ExportPopup" searchable="false">
+      <action id="ExportInspectionResultsToHTML" class="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
+      <action id="ExportInspectionResultsToXML" class="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
     </group>
 
     <group id="RunDashboardContentToolbar">

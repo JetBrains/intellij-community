@@ -57,8 +57,8 @@ class MavenSourcesGeneratedContext internal constructor(val resolvedContext: Mav
 class MavenImportedContext internal constructor(project: Project,
                                                 val modulesCreated: List<Module>,
                                                 val postImportTasks: List<MavenProjectsProcessorTask>?,
-                                                val initialContext: MavenInitialImportContext) : MavenImportContext(project,
-                                                                                                                    initialContext.indicator)
+                                                val readContext: MavenReadContext) : MavenImportContext(project,
+                                                                                                        readContext.indicator)
 
 class MavenImportFinishedContext internal constructor(val context: MavenImportedContext?,
                                                       val error: Throwable?,

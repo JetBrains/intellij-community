@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -167,13 +169,18 @@ interface Panel : CellBase<Panel> {
    */
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
 
+  /**
+   * Registers custom validation requestor for all components.
+   * @param validationRequestor gets callback (component validator) that should be subscribed on custom event.
+   */
+  fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Panel
 }
 
 @Deprecated("Use buttonsGroup(...) instead")
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
                                                noinline setter: (T) -> Unit,
-                                               @NlsContexts.BorderTitle title: String? = null,
+                                               title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), title, indent, init)
@@ -181,15 +188,15 @@ inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
 
 @Deprecated("Use buttonsGroup(...) instead")
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, @NlsContexts.BorderTitle title: String? = null,
+inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
-  buttonGroup(prop.toBinding(), title, indent, init)
+  buttonGroup(prop.toBindingInternal(), title, indent, init)
 }
 
 @Deprecated("Use buttonsGroup(...) instead")
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, @NlsContexts.BorderTitle title: String? = null,
+inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
   buttonGroup(binding, T::class.java, title, indent) {

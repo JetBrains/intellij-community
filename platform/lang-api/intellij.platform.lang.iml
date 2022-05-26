@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" exported="" />
   </component>
 </module>

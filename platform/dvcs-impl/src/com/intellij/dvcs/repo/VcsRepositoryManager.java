@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -33,9 +34,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * VcsRepositoryManager creates,stores and updates all Repositories information using registered {@link VcsRepositoryCreator}
+ * VcsRepositoryManager creates,stores and updates all repository's information using registered {@link VcsRepositoryCreator}
  * extension point in a thread safe way.
  */
+@Service(Service.Level.PROJECT)
 public final class VcsRepositoryManager implements Disposable {
   public static final ExtensionPointName<VcsRepositoryCreator> EP_NAME = new ExtensionPointName<>("com.intellij.vcsRepositoryCreator");
 
@@ -351,7 +353,7 @@ public final class VcsRepositoryManager implements Disposable {
   }
 
   public @NotNull String toString() {
-    return "RepositoryManager{myRepositories: " + myRepositories + '}'; // NON-NLS
+    return "RepositoryManager(repositories=" + myRepositories + ')'; // NON-NLS
   }
 
   @TestOnly

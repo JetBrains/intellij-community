@@ -46,12 +46,12 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
       if (Registry.`is`("ide.helptooltip.enabled")) {
         HelpTooltip.dispose(this)
         HelpTooltip()
-          .setTitle(VcsBundle.message("Vcs.Toolbar.ShowMoreActions.description"))
+          .setTitle(VcsBundle.message("action.Vcs.Toolbar.ShowMoreActions.description"))
           .setShortcut(shortcut)
           .installOn(this)
       }
       else {
-        toolTipText = VcsBundle.message("Vcs.Toolbar.ShowMoreActions.description", shortcutText, classesTabName)
+        toolTipText = VcsBundle.message("action.Vcs.Toolbar.ShowMoreActions.description", shortcutText, classesTabName)
       }
     }
 
@@ -76,15 +76,7 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object : ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-      override fun getInactiveTextColor(): Color {
-        return foreground
-      }
-
-      override fun getInsets(): Insets {
-        return JBInsets(0, 0, 0, 0)
-      }
-    }
+    return MyActionButtonWithText(this, presentation, place)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

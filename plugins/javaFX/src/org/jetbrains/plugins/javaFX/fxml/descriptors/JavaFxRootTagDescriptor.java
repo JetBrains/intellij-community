@@ -84,11 +84,6 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     }
 
     @Override
-    public boolean hasIdType() {
-      return false;
-    }
-
-    @Override
     public boolean isEnumerated() {
       return false;
     }

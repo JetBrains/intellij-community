@@ -19,7 +19,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -92,7 +92,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection
         if (ancestorField != null) {
           if (!m_ignoreInvisibleFields
               || ancestorField.hasModifierProperty(PsiModifier.STATIC)
-              || !RefactoringUtil.isInStaticContext(aClass, ancestorClass)) {
+              || !CommonJavaRefactoringUtil.isInStaticContext(aClass, ancestorClass)) {
             registerFieldError(field);
           }
         }

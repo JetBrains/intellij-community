@@ -52,7 +52,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
       listOf(
         JavaSelectLesson(),
-        SingleLineCommentLesson(ls("02.Comment.java.sample")),
+        CommentUncommentLesson(ls("02.Comment.java.sample"), blockCommentsAvailable = true),
         DuplicateLesson(ls("04.Duplicate.java.sample")),
         MoveLesson("run()", ls("05.Move.java.sample")),
         CollapseLesson(ls("06.Collapse.java.sample")),

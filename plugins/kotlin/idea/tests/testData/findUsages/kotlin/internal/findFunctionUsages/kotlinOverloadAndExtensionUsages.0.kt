@@ -1,6 +1,5 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: overloadUsages
-// FIR_IGNORE
 
 interface X<T> {
 }

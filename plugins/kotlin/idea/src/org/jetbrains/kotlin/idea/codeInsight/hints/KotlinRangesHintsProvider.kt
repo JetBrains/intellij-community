@@ -41,6 +41,9 @@ class KotlinRangesHintsProvider : KotlinAbstractHintsProvider<NoSettings>() {
             for (i in 5 downTo 0) {}
         }
     """.trimIndent()
+
+    override val description: String
+        get() = KotlinBundle.message("inlay.kotlin.ranges.hints")
 }
 
 internal fun KtBinaryExpression.isRangeExpression(): Boolean =

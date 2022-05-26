@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -257,8 +258,21 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public void useModuleOutput(String production, String test) {
     getCompilerExtension().inheritCompilerOutputPath(false);
-    getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
-    getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+    if (StringUtils.isEmpty(production) && StringUtils.isEmpty(test)) {
+      getCompilerExtension().inheritCompilerOutputPath(true);
+    }
+    else if (StringUtils.isEmpty(test)) {
+      getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
+      getCompilerExtension().setExcludeOutput(true);
+    }
+    else if (StringUtils.isEmpty(production)) {
+      getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+      getCompilerExtension().setExcludeOutput(true);
+    }
+    else {
+      getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
+      getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+    }
   }
 
   private CompilerModuleExtension getCompilerExtension() {

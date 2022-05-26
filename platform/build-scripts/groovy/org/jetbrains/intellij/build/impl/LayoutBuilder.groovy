@@ -37,13 +37,19 @@ final class LayoutBuilder {
 
     def contextLoaderRef = "GANT_CONTEXT_CLASS_LOADER"
     if (!ant.project.hasReference(contextLoaderRef)) {
-      ClassLoader contextLoader = getClass().getClassLoader()
-      if (!(contextLoader instanceof AntClassLoader)) {
-        contextLoader = new AntClassLoader(contextLoader, ant.project, null)
-      }
+      ClassLoader contextLoader = getAntClassLoader(ant)
       ant.project.addReference(contextLoaderRef, contextLoader)
       ant.taskdef(name: "layout", loaderRef: contextLoaderRef, classname: "jetbrains.antlayout.tasks.LayoutTask")
     }
+  }
+
+  /** this code is extracted to a method to work around Groovy compiler bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10457) */
+  private ClassLoader getAntClassLoader(AntBuilder ant) {
+    ClassLoader contextLoader = getClass().getClassLoader()
+    if (!(contextLoader instanceof AntClassLoader)) {
+      contextLoader = new AntClassLoader(contextLoader, ant.project, null)
+    }
+    contextLoader
   }
 
   /**

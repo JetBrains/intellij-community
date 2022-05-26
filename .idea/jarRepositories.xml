@@ -51,5 +51,10 @@
       <option name="name" value="download-pgp-verifier" />
       <option name="url" value="https://cache-redirector.jetbrains.com/download-pgp-verifier" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="b347f4c7-25d0-4d47-b584-0051406c9285" />
+      <option name="name" value="b347f4c7-25d0-4d47-b584-0051406c9285" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/ktor/eap" />
+    </remote-repository>
   </component>
 </project>

@@ -7,9 +7,9 @@ import groovy.transform.CompileStatic
 final class OpenedPackages {
 
   /**
-   * @return List of opened packages in format `--add-opens=PACKAGE=ALL-UNNAMED`
+   * @return List of JVM args for opened packages (JBR17+) in a format `--add-opens=PACKAGE=ALL-UNNAMED`
    * */
-  static final List<String> getPackages(CompilationContext compilationContext) {
+  static final List<String> getCommandLineArguments(CompilationContext compilationContext) {
     return compilationContext.paths.communityHomeDir
       .resolve("platform/build-scripts/resources/OpenedPackages.txt")
       .readLines()

@@ -146,11 +146,6 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
         initializedCheckBoxesState = getCheckboxesState(true);
     }
 
-    @Override
-    protected void init() {
-        super.init();
-    }
-
     private final BitSet initializedCheckBoxesState;
     private BitSet getCheckboxesState(boolean applyDefaults) {
 

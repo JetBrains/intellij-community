@@ -2,62 +2,62 @@ package pkg;
 
 class TestAnonymousClassConstructor {
    void innerPrivateString() {
-      TestAnonymousClassConstructor.InnerPrivateString var10001 = new TestAnonymousClassConstructor.InnerPrivateString("text") {// 5
+      InnerPrivateString var10001 = new InnerPrivateString("text") {// 5
       };
    }// 6
 
    void innerPrivate() {
-      TestAnonymousClassConstructor.InnerPrivate var10001 = new TestAnonymousClassConstructor.InnerPrivate(3L, 4) {// 9
+      InnerPrivate var10001 = new InnerPrivate(3L, 4) {// 9
       };
    }// 10
 
    void innerStaticPrivateString() {
-      TestAnonymousClassConstructor.InnerStaticPrivateString var10001 = new TestAnonymousClassConstructor.InnerStaticPrivateString("text") {// 13
+      InnerStaticPrivateString var10001 = new InnerStaticPrivateString("text") {// 13
       };
    }// 14
 
    void innerStaticPrivate() {
-      TestAnonymousClassConstructor.InnerStaticPrivate var10001 = new TestAnonymousClassConstructor.InnerStaticPrivate(3L, 4) {// 17
+      InnerStaticPrivate var10001 = new InnerStaticPrivate(3L, 4) {// 17
       };
    }// 18
 
    static void innerStaticPrivateStringStatic() {
-      TestAnonymousClassConstructor.InnerStaticPrivateString var10001 = new TestAnonymousClassConstructor.InnerStaticPrivateString("text") {// 21
+      InnerStaticPrivateString var10001 = new InnerStaticPrivateString("text") {// 21
       };
    }// 22
 
    static void innerStaticPrivateStatic() {
-      TestAnonymousClassConstructor.InnerStaticPrivate var10001 = new TestAnonymousClassConstructor.InnerStaticPrivate(3L, 4) {// 25
+      InnerStaticPrivate var10001 = new InnerStaticPrivate(3L, 4) {// 25
       };
    }// 26
 
    void innerPublicString() {
-      TestAnonymousClassConstructor.InnerPublicString var10001 = new TestAnonymousClassConstructor.InnerPublicString("text") {// 29
+      InnerPublicString var10001 = new InnerPublicString("text") {// 29
       };
    }// 30
 
    void innerPublic() {
-      TestAnonymousClassConstructor.InnerPublic var10001 = new TestAnonymousClassConstructor.InnerPublic(3L, 4) {// 33
+      InnerPublic var10001 = new InnerPublic(3L, 4) {// 33
       };
    }// 34
 
    void innerStaticPublicString() {
-      TestAnonymousClassConstructor.InnerStaticPublicString var10001 = new TestAnonymousClassConstructor.InnerStaticPublicString("text") {// 37
+      InnerStaticPublicString var10001 = new InnerStaticPublicString("text") {// 37
       };
    }// 38
 
    void innerStaticPublic() {
-      TestAnonymousClassConstructor.InnerStaticPublic var10001 = new TestAnonymousClassConstructor.InnerStaticPublic(3L, 4) {// 41
+      InnerStaticPublic var10001 = new InnerStaticPublic(3L, 4) {// 41
       };
    }// 42
 
    static void innerStaticPublicStringStatic() {
-      TestAnonymousClassConstructor.InnerStaticPublicString var10001 = new TestAnonymousClassConstructor.InnerStaticPublicString("text") {// 45
+      InnerStaticPublicString var10001 = new InnerStaticPublicString("text") {// 45
       };
    }// 46
 
    static void innerStaticPublicStatic() {
-      TestAnonymousClassConstructor.InnerStaticPublic var10001 = new TestAnonymousClassConstructor.InnerStaticPublic(3L, 4) {// 49
+      InnerStaticPublic var10001 = new InnerStaticPublic(3L, 4) {// 49
       };
    }// 50
 

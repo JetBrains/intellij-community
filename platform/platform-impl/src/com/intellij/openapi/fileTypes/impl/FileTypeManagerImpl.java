@@ -17,7 +17,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.*;
+import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -733,6 +736,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
+  @SuppressWarnings("DanglingJavadoc")
   @Override
   public @Nullable FileType getByFile(@NotNull VirtualFile file) {
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
@@ -758,6 +762,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
         return specialType;
       }
+    }
+
+    /**
+      {@link DetectedByContentFileType} is a special SpecialFileType (and not actual {@link FileTypeIdentifiableByVirtualFile} at that):
+      Its {@link DetectedByContentFileType#isMyFileType(VirtualFile)} has to be called after all other {@link FileTypeIdentifiableByVirtualFile#isMyFileType(VirtualFile)}
+      to avoid (mis)detecting some empty special file as DetectedByContentFileType
+     */
+    if (DetectedByContentFileType.isMyFileType(file)) {
+      return DetectedByContentFileType.INSTANCE;
     }
 
     FileType fileType = getFileTypeByFileName(file.getNameSequence());

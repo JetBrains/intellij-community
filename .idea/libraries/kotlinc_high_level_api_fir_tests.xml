@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="kotlinc.high-level-api-fir-tests" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-fir-tests-for-ide:1.6.10-release-952" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-tests-for-ide/1.6.10-release-952/high-level-api-fir-tests-for-ide-1.6.10-release-952.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-tests-for-ide/1.6.10-release-952/high-level-api-fir-tests-for-ide-1.6.10-release-952-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

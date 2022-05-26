@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -26,8 +26,9 @@ public class AbstractClassNamingConventionInspectionTest extends LightJavaInspec
   }
   
   public void testNested() {
+    addEnvironmentClass("package org.junit.platform.commons.annotation; @interface Testable{}");
     addEnvironmentClass("package org.junit.jupiter.api; public @interface Nested{}");
-    addEnvironmentClass("package org.junit.jupiter.api; public @interface Test{}");
+    addEnvironmentClass("package org.junit.jupiter.api; import org.junit.platform.commons.annotation.Testable; @Testable public @interface Test{}");
     doTest();
   }
 

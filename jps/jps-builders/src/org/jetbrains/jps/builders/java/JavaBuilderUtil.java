@@ -375,7 +375,10 @@ public final class JavaBuilderUtil {
   }
 
   public static boolean isForcedRecompilationAllJavaModules(CompileContext context) {
-    CompileScope scope = context.getScope();
+    return isForcedRecompilationAllJavaModules(context.getScope());
+  }
+
+  public static boolean isForcedRecompilationAllJavaModules(CompileScope scope) {
     return scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) &&
            scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.TEST);
   }

@@ -9,7 +9,7 @@ public class DummyExitStatement extends Statement {
   public Set<Integer> bytecode = null;  // offsets of bytecode instructions mapped to dummy exit
 
   public DummyExitStatement() {
-    super(Statement.TYPE_DUMMY_EXIT);
+    super(StatementType.DUMMY_EXIT);
   }
 
   public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {

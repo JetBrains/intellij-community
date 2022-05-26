@@ -30,11 +30,11 @@ object MarkdownExtensionsUtil {
   }
 
   inline fun <reified T: MarkdownBrowserPreviewExtension.Provider> findBrowserExtensionProvider(): T? {
-    return MarkdownBrowserPreviewExtension.Provider.all.find { it is T } as? T
+    return MarkdownBrowserPreviewExtension.Provider.EP.findExtension(T::class.java)
   }
 
   inline fun <reified T: CodeFenceGeneratingProvider> findCodeFenceGeneratingProvider(): T? {
-    return CodeFenceGeneratingProvider.all.find { it is T } as? T
+    return CodeFenceGeneratingProvider.EP_NAME.findExtension(T::class.java)
   }
 
   fun loadIcon(icon: Icon, format: String): ByteArray {

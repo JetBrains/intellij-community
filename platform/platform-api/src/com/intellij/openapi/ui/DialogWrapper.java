@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -232,6 +232,11 @@ public abstract class DialogWrapper {
     myPeer = parentComponent == null ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType)
                                      : createPeer(parentComponent, canBeParent);
     myCreateSouthSection = createSouth;
+    initResizeListener();
+    createDefaultActions();
+  }
+
+  protected final void initResizeListener() {
     Window window = myPeer.getWindow();
     if (window != null) {
       myResizeListener = new ComponentAdapter() {
@@ -247,7 +252,6 @@ public abstract class DialogWrapper {
       };
       window.addComponentListener(myResizeListener);
     }
-    createDefaultActions();
   }
 
   /**
@@ -310,6 +314,16 @@ public abstract class DialogWrapper {
     myCreateSouthSection = true;
     myPeer = createPeer(parent, canBeParent);
     createDefaultActions();
+  }
+
+  protected DialogWrapper(@NotNull PeerFactory peerFactory) {
+    myPeer = peerFactory.createPeer(this);
+    myCreateSouthSection = false;
+    createDefaultActions();
+  }
+
+  public interface PeerFactory {
+    @NotNull DialogWrapperPeer createPeer(@NotNull DialogWrapper dialogWrapper);
   }
 
   protected @NotNull @NlsContexts.Checkbox String getDoNotShowMessage() {

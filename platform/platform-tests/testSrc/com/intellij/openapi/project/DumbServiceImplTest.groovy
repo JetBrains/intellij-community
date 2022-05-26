@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
@@ -169,7 +170,8 @@ class DumbServiceImplTest extends BasePlatformTestCase {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
-              .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])), indicator)
+              .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])),
+                          indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", false))
           }
         }
         catch (ProcessCanceledException e) {

@@ -145,7 +145,9 @@
 
     "SegmentedButton": {
       "selectedStartBorderColor": "Grey5",
-      "selectedEndBorderColor": "Grey5"
+      "selectedEndBorderColor": "Grey5",
+      "selectedButtonColor": "Grey3",
+      "focusedSelectedButtonColor": "Blue6"
     },
 
     "ComboBox": {
@@ -182,6 +184,8 @@
       "underTabsBorderColor":"Grey3"
     },
 
+    "Editor.searchFieldInsets": "7,10,7,8",
+
     "Link": {
       "activeForeground": "Blue8",
       "hoverForeground": "Blue8",
@@ -211,11 +215,19 @@
     },
 
     "Popup": {
+      "Advertiser": {
+        "borderInsets": "6,20,6,20",
+        "foreground": "Grey7",
+        "fontSizeOffset": {
+          "os.default": -1,
+          "os.windows": 0
+        }
+      },
       "Header": {
         "activeBackground": "Grey2",
         "inactiveBackground": "Grey3"
       },
-      "Advertiser.foreground": "Grey7"
+      "borderWidth": 0.5
     },
 
     "CompletionPopup": {

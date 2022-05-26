@@ -41,7 +41,7 @@ if errorlevel 1 goto fail
 
 echo Downloading %JVM_URL% to %TARGET_DIR%%JVM_TEMP_FILE%
 if exist "%JVM_TEMP_FILE%" DEL /F "%JVM_TEMP_FILE%"
-"%POWERSHELL%" -nologo -noprofile -Command "Set-StrictMode -Version 3.0; $ErrorActionPreference = \"Stop\"; (New-Object Net.WebClient).DownloadFile('%JVM_URL%', '%JVM_TEMP_FILE%')"
+"%POWERSHELL%" -nologo -noprofile -Command "Set-StrictMode -Version 3.0; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $ErrorActionPreference = \"Stop\"; (New-Object Net.WebClient).DownloadFile('%JVM_URL%', '%JVM_TEMP_FILE%')"
 if errorlevel 1 goto fail
 
 rmdir /S /Q "%JVM_TARGET_DIR%"

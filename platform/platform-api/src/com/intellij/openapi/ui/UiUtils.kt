@@ -6,10 +6,19 @@ package com.intellij.openapi.ui
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.fields.ExtendableTextComponent
+import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.util.ui.ComponentWithEmptyText
+import org.jetbrains.annotations.NonNls
+import java.awt.Component
 import java.awt.event.*
+import java.io.File
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
@@ -63,6 +72,15 @@ fun JComponent.addKeyboardAction(keyStrokes: List<KeyStroke>, action: (ActionEve
   }
 }
 
+fun ExtendableTextField.addExtension(
+  icon: Icon,
+  hoverIcon: Icon = icon,
+  tooltip: @NlsContexts.Tooltip String? = null,
+  action: () -> Unit
+) {
+  addExtension(ExtendableTextComponent.Extension.create(icon, hoverIcon, tooltip, action))
+}
+
 fun <T> ListModel<T>.asSequence() = sequence<T> {
   for (i in 0 until size) {
     yield(getElementAt(i))
@@ -86,7 +104,23 @@ fun TreeModel.getTreePath(userObject: Any?): TreePath? =
 val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
 
+fun <C> C.setEmptyState(
+  text: @NlsContexts.StatusText String
+): C where C : Component, C : ComponentWithEmptyText = apply {
+  getAccessibleContext().accessibleName = text
+  emptyText.text = text
+}
+
 val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
   get() = model as CollectionComboBoxModel
 
 fun <T> Iterable<T>.naturalSorted() = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))
+
+fun getPresentablePath(path: @NonNls String): @NlsSafe String {
+  return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
+}
+
+@JvmOverloads
+fun getCanonicalPath(path: @NonNls String, removeLastSlash: Boolean = true): @NonNls String {
+  return FileUtil.toCanonicalPath(FileUtil.expandUserHome(path.trim()), File.separatorChar, removeLastSlash)
+}

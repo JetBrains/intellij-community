@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -42,7 +42,7 @@ import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -936,7 +936,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(new JavaPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
+    return new RunRefactoringAction(JavaRefactoringActionHandlerFactory.getInstance().createPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
       @NotNull
       @Override
       public Priority getPriority() {
@@ -1052,17 +1052,23 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
                                                                  @NotNull PsiType enclosingClassType) {
-    return new VariableTypeFix(receiverParameter, enclosingClassType) {
-      @Override
-      public @NotNull String getText() {
-        return QuickFixBundle.message("fix.receiver.parameter.type.text");
-      }
+    return new ReceiverParameterTypeFix(receiverParameter, enclosingClassType);
+  }
 
-      @Override
-      public @NotNull String getFamilyName() {
-        return QuickFixBundle.message("fix.receiver.parameter.type.family");
-      }
-    };
+  private final static class ReceiverParameterTypeFix extends SetVariableTypeFix {
+    private ReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter, @NotNull PsiType enclosingClassType) {
+      super(receiverParameter, enclosingClassType);
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return QuickFixBundle.message("fix.receiver.parameter.type.text");
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return QuickFixBundle.message("fix.receiver.parameter.type.family");
+    }
   }
 
   @Override
@@ -1133,5 +1139,10 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createSimplifyBooleanFix(@NotNull PsiExpression expression, boolean value) {
     return new SimplifyBooleanExpressionFix(expression, value);
+  }
+
+  @Override
+  public @NotNull IntentionAction createSetVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type) {
+    return new SetVariableTypeFix(variable, type);
   }
 }

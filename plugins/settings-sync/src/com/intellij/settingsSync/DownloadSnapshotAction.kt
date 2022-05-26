@@ -6,14 +6,13 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 
 class DownloadSnapshotAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val remoteCommunicator = service<SettingsSyncFacade>().getRemoteCommunicator() as CloudConfigServerCommunicator
+    val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator() as CloudConfigServerCommunicator
     object: Task.Backgroundable(e.project, SettingsSyncBundle.message("progress.title.downloading.settings.from.server"), false) {
       override fun run(indicator: ProgressIndicator) {
         val zipFile = remoteCommunicator.downloadSnapshot()
@@ -40,7 +39,7 @@ class DownloadSnapshotAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isSettingsSyncEnabled() &&
-                                         service<SettingsSyncFacade>().getRemoteCommunicator() is CloudConfigServerCommunicator
+    e.presentation.isEnabledAndVisible = SettingsSyncMain.isAvailable() &&
+                                         SettingsSyncMain.getInstance().getRemoteCommunicator() is CloudConfigServerCommunicator
   }
 }

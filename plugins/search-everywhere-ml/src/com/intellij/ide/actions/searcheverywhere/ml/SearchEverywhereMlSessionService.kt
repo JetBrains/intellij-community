@@ -68,7 +68,9 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
                                searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
-      getCurrentSession()?.onSearchRestart(project, previousElementsProvider, reason, tabId, keysTyped, backspacesTyped, searchQuery)
+      getCurrentSession()?.onSearchRestart(
+        project, experiment, reason, tabId, keysTyped, backspacesTyped, searchQuery, previousElementsProvider
+      )
     }
   }
 

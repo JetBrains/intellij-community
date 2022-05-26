@@ -18,6 +18,7 @@ class EditBreakpointSuggester : AbstractFeatureSuggester() {
   override val message = FeatureSuggesterBundle.message("edit.breakpoint.message")
   override val suggestingActionId = "com.intellij.xdebugger.impl.actions.EditBreakpointAction\$ContextAction"
   override val suggestingTipFileName = "BreakpointSpeedmenu.html"
+  override val minSuggestingIntervalDays = 30
 
   override val languages = listOf(Language.ANY.id)
 

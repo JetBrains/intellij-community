@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -18,17 +17,11 @@ import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.hasType
 
 class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
-
-  private fun commandRunnerExtensionEnabled(project: Project): Boolean {
-    return MarkdownSettings.getInstance(project).isRunnerEnabled
-  }
-
   override fun getInfo(element: PsiElement): Info? {
-    if (!commandRunnerExtensionEnabled(element.project) || !element.isValid) {
+    if (!CommandRunnerExtension.isExtensionEnabled() || !element.isValid) {
       return null
     }
     if (element.hasType(MarkdownTokenTypes.FENCE_LANG)) {

@@ -8,6 +8,9 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.YourKitProfilerService;
+import com.intellij.compiler.cache.CompilerCacheConfigurator;
+import com.intellij.compiler.cache.CompilerCacheStartupActivity;
+import com.intellij.compiler.cache.git.GitRepositoryUtil;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
@@ -168,7 +171,6 @@ public final class BuildManager implements Disposable {
   private final Executor myAutomakeTrigger = AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildManager Auto-Make Trigger", 1);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
-  private boolean myGeneratePortableCachesEnabled = false;
 
   private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
     @Override
@@ -919,13 +921,14 @@ public final class BuildManager implements Disposable {
         List<String> mappedPaths = ContainerUtil.map(paths, (p) -> pathMapper.apply(p));
         final CmdlineRemoteProto.Message.ControllerMessage params;
         if (isRebuild) {
-          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, Collections.emptyList(), userData, globals, null);
+          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, Collections.emptyList(), userData, globals, null, null);
         }
         else if (onlyCheckUpToDate) {
           params = CmdlineProtoUtil.createUpToDateCheckRequest(mappedProjectPath, scopes, mappedPaths, userData, globals, currentFSChanges);
         }
         else {
-          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, isMake ? Collections.emptyList() : mappedPaths, userData, globals, currentFSChanges);
+          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, isMake ? Collections.emptyList() : mappedPaths, userData, globals, currentFSChanges,
+                                                       isMake ? CompilerCacheConfigurator.getCacheDownloadSettings(project) : null);
         }
         if (!usingPreloadedProcess) {
           myMessageDispatcher.registerBuildMessageHandler(future, params);
@@ -1406,7 +1409,9 @@ public final class BuildManager implements Disposable {
     }
 
     // portable caches
-    if (isGeneratePortableCachesEnabled()) {
+    if (Registry.is("compiler.process.use.portable.caches")
+        && CompilerCacheConfigurator.isServerUrlConfigured(project)
+        && CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
       //cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
       //cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");
       cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");
@@ -1718,17 +1723,6 @@ public final class BuildManager implements Disposable {
     myBuildProcessDebuggingEnabled = buildProcessDebuggingEnabled;
     if (myBuildProcessDebuggingEnabled) {
       cancelAllPreloadedBuilds();
-    }
-  }
-
-  public boolean isGeneratePortableCachesEnabled() {
-    return myGeneratePortableCachesEnabled;
-  }
-
-  public void setGeneratePortableCachesEnabled(boolean generatePortableCachesEnabled) {
-    if (myGeneratePortableCachesEnabled != generatePortableCachesEnabled) {
-      myGeneratePortableCachesEnabled = generatePortableCachesEnabled;
-      clearState();
     }
   }
 

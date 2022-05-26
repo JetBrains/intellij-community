@@ -20,7 +20,7 @@ import com.intellij.testFramework.MapDataContext
 import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.checkers.languageVersionSettingsFromText
+import org.jetbrains.kotlin.idea.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.MainFunctionDetector
@@ -296,12 +296,14 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     }
                 }
 
+                val foundMainContainer = EntryPointContainerFinder.find(function)
+
                 if (isMainFunction) {
                     createConfigurationFromMain(project, function.fqName?.asString()!!).checkConfiguration()
 
                     assertNotNull(
                         "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                        KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                        foundMainContainer,
                     )
                 } else {
                     try {
@@ -315,12 +317,12 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     if (text.startsWith("// entryPointExists")) {
                         assertNotNull(
                             "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                            KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                            foundMainContainer,
                         )
                     } else {
                         assertNull(
                             "Kotlin configuration producer shouldn't produce configuration for ${function.fqName?.asString()}",
-                            KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                            foundMainContainer,
                         )
                     }
                 }

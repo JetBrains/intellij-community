@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.intentions.isFlexibleRecursive
-import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+import org.jetbrains.kotlin.idea.quickfix.getAddExclExclCallFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
@@ -44,7 +44,7 @@ class HasPlatformTypeInspection(
             if (expression != null &&
                 (!reportPlatformArguments || !TypeUtils.makeNotNullable(type).isFlexibleRecursive())
             ) {
-                return listOf(IntentionWrapper(AddExclExclCallFix(expression)))
+                return listOfNotNull(getAddExclExclCallFix(expression)?.let { IntentionWrapper(it, element.containingFile) })
             }
         }
 

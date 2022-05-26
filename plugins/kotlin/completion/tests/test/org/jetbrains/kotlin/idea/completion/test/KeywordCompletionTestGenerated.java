@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -626,6 +626,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("This.kt")
     public void testThis() throws Exception {
         runTest("testData/keywords/This.kt");
+    }
+
+    @TestMetadata("ThisInCompanion.kt")
+    public void testThisInCompanion() throws Exception {
+        runTest("testData/keywords/ThisInCompanion.kt");
     }
 
     @TestMetadata("ThisLabelPrefix.kt")

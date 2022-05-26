@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
@@ -28,8 +29,8 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Thread-safe.
  */
+@Service(Service.Level.APP)
 public final class ExternalSystemProcessingManager implements ExternalSystemTaskNotificationListener, Disposable {
-
   /**
    * We receive information about the tasks being enqueued to the slave processes which work directly with external systems here.
    * However, there is a possible situation when particular task has been sent to execution but remote side has not been responding

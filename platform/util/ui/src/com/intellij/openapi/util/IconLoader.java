@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -84,7 +84,9 @@ public final class IconLoader {
 
   @ApiStatus.Internal
   public static Icon loadCustomVersionOrScale(@NotNull ScalableIcon icon, float size) {
-    if (icon.getIconWidth() == size) return icon;
+    if (icon.getIconWidth() == size) {
+      return icon;
+    }
 
     Icon cachedIcon = icon;
     if (cachedIcon instanceof RetrievableIcon) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.newProject.steps;
 
-import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -39,11 +38,6 @@ public final class PythonBaseProjectGenerator extends PythonProjectGenerator<PyN
     return panel;
   }
 
-  @Override
-  public Object getProjectSettings() {
-    return new PyNewProjectSettings();
-  }
-
   @Nullable
   @Override
   public Icon getLogo() {
@@ -57,17 +51,6 @@ public final class PythonBaseProjectGenerator extends PythonProjectGenerator<PyN
     super.configureProject(project, baseDir, settings, module, synchronizer);
     PySdkExtKt.setPythonSdk(module, settings.getSdk());
     PyWelcomeGenerator.INSTANCE.welcomeUser(project, baseDir, module);
-  }
-
-  @NotNull
-  @Override
-  public ValidationResult validate(@NotNull String baseDirPath) {
-    /*if (PythonSdkType.isRemote(myProjectAction.findPythonSdk())) {
-      if (PythonRemoteInterpreterManager.getInstance() == null) {
-        return new ValidationResult(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
-      }
-    }*/
-    return ValidationResult.OK;
   }
 
   @Override

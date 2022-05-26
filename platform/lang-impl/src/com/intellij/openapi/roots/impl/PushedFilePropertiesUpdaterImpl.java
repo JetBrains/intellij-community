@@ -481,13 +481,8 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       else {
         statistics = null;
       }
-      ((GistManagerImpl)GistManager.getInstance()).startMergingDependentCacheInvalidations();
-      try {
-        myUpdater.performDelayedPushTasks(statistics);
-      }
-      finally {
-        ((GistManagerImpl)GistManager.getInstance()).endMergingDependentCacheInvalidations();
-      }
+      ((GistManagerImpl)GistManager.getInstance()).runWithMergingDependentCacheInvalidations(() ->
+        myUpdater.performDelayedPushTasks(statistics));
     }
 
     @Override

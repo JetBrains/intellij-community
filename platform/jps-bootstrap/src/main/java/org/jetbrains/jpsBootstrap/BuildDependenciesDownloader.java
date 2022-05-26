@@ -4,6 +4,7 @@ package org.jetbrains.jpsBootstrap;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -16,6 +17,9 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
@@ -89,19 +93,20 @@ final class BuildDependenciesDownloader {
     return targetFile;
   }
 
-  static Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
+  static Path extractFileToCacheLocation(Path communityRoot, Path archiveFile, BuildDependenciesExtractOptions... options) {
     try {
       Path cachePath = getDownloadCachePath(communityRoot);
 
-      String toHash = JPS_BOOTSTRAP_SALT + archiveFile.toString();
+      String toHash = JPS_BOOTSTRAP_SALT + archiveFile.toString() +
+        Arrays.stream(options).map(Enum::toString).sorted().collect(Collectors.joining("\n"));
       String directoryName = archiveFile.getFileName().toString() + "." + DigestUtils.sha256Hex(toHash).substring(0, 6) + ".d";
       Path targetDirectory = cachePath.resolve(directoryName);
       Path flagFile = cachePath.resolve(directoryName + ".flag");
-      extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile);
+      extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options);
 
       return targetDirectory;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
@@ -109,7 +114,7 @@ final class BuildDependenciesDownloader {
   private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory) throws IOException {
     // Increment this number to force all clients to extract content again
     // e.g. when some issues in extraction code were fixed
-    int codeVersion = 2;
+    int codeVersion = 3;
 
     long numberOfTopLevelEntries;
     try (Stream<Path> pathStream = Files.list(targetDirectory)) {
@@ -130,7 +135,7 @@ final class BuildDependenciesDownloader {
   }
 
   // assumes file at `archiveFile` is immutable
-  private static void extractFileWithFlagFileLocation(Path archiveFile, Path targetDirectory, Path flagFile) throws IOException {
+  private static void extractFileWithFlagFileLocation(Path archiveFile, Path targetDirectory, Path flagFile, BuildDependenciesExtractOptions... options) throws Exception {
     if (checkFlagFile(archiveFile, flagFile, targetDirectory)) {
       debug("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
 
@@ -154,7 +159,24 @@ final class BuildDependenciesDownloader {
     verbose(" * Extracting " + archiveFile + " to " + targetDirectory);
 
     Files.createDirectories(targetDirectory);
-    BuildDependenciesUtil.extractZip(archiveFile, targetDirectory);
+
+    byte[] start;
+    try (InputStream inputStream = Files.newInputStream(archiveFile)) {
+      start = inputStream.readNBytes(2);
+    }
+    if (start.length < 2) {
+      throw new IllegalStateException("File $archiveFile is smaller than 2 bytes, could not be extracted");
+    }
+
+    boolean stripRoot = Arrays.stream(options).anyMatch(opt -> opt == BuildDependenciesExtractOptions.STRIP_ROOT);
+
+    if (start[0] == (byte)0x50 && start[1] == (byte)0x4B) {
+      BuildDependenciesUtil.extractZip(archiveFile, targetDirectory, stripRoot);
+    } else if (start[0] == (byte)0x1F && start[1] == (byte)0x8B) {
+      BuildDependenciesUtil.extractTarGz(archiveFile, targetDirectory, stripRoot);
+    } else {
+      throw new IllegalStateException("Unknown archive format at $archiveFile. Currently only .tar.gz or .zip are supported");
+    }
 
     Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory));
     if (!checkFlagFile(archiveFile, flagFile, targetDirectory)) {
@@ -188,12 +210,32 @@ final class BuildDependenciesDownloader {
       HttpRequest request = HttpRequest.newBuilder()
         .GET()
         .uri(uri)
+        .version(HttpClient.Version.HTTP_1_1) // work-around a client bug for HTTP/2 when Host header is sent twice
         .setHeader("User-Agent", "Build Script Downloader")
         .build();
 
       HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
       if (response.statusCode() != 200) {
-        throw new IllegalStateException("Error downloading " + uri + ": non-200 http status code " + response.statusCode());
+        StringBuilder builder = new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
+
+        Map<String, List<String>> headers = response.headers().map();
+        for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
+          for (String value : headers.get(headerName)) {
+            builder.append("Header: ").append(headerName).append(": ").append(value).append("\n");
+          }
+        }
+
+        builder.append("\n");
+        if (Files.exists(tempFile)) {
+          try (InputStream inputStream = Files.newInputStream(tempFile)) {
+            // yes, not trying to guess encoding
+            // string constructor should be exception free,
+            // so at worse we'll get some random characters
+            builder.append(new String(inputStream.readNBytes(1024), StandardCharsets.UTF_8));
+          }
+        }
+
+        throw new IllegalStateException(builder.toString());
       }
 
       long contentLength = response.headers().firstValueAsLong(HTTP_HEADER_CONTENT_LENGTH).orElse(-1);
@@ -214,5 +256,22 @@ final class BuildDependenciesDownloader {
     finally {
       Files.deleteIfExists(tempFile);
     }
+  }
+
+  public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String packaging) {
+    return getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, null, packaging);
+  }
+
+  public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String classifier, String packaging) {
+    String result = mavenRepository;
+    if (!result.endsWith("/")) {
+      result += "/";
+    }
+
+    result += groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version +
+      (classifier != null ? "-$classifier" : "") +
+      "." + packaging;
+
+    return URI.create(result);
   }
 }

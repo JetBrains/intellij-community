@@ -30,7 +30,7 @@ public final class PlainTextFileType extends LanguageFileType implements PlainTe
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return AllIcons.FileTypes.Text;
   }
 

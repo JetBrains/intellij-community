@@ -108,19 +108,24 @@ private const val PYTHONPATH_ENV = "PYTHONPATH"
  */
 fun PythonExecution.applyHelperPackageToPythonPath(helperPackage: HelperPackage,
                                                    helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
+  return applyHelperPackageToPythonPath(helperPackage.pythonPathEntries, helpersAwareTargetRequest)
+}
+
+fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<String>,
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
   val localHelpersRootPath = PythonHelpersLocator.getHelpersRoot().absolutePath
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
   val targetUploadPath = helpersAwareTargetRequest.preparePyCharmHelpers()
   val targetPathSeparator = targetPlatform.platform.pathSeparator
-  val uploads = helperPackage.pythonPathEntries.map {
+  val uploads = pythonPathEntries.map {
     // TODO [Targets API] Simplify the paths resolution
     val relativePath = FileUtil.getRelativePath(localHelpersRootPath, it, Platform.current().fileSeparator)
                        ?: throw IllegalStateException("Helpers PYTHONPATH entry '$it' cannot be resolved" +
                                                       " against the root path of PyCharm helpers '$localHelpersRootPath'")
     Upload(it, targetUploadPath.getRelativeTargetPath(relativePath))
   }
-  val pythonPathEntries = uploads.map { it.targetPath }
-  val pythonPathValue = pythonPathEntries.joinToStringFunction(separator = targetPathSeparator.toString())
+  val pythonPathEntriesOnTarget = uploads.map { it.targetPath }
+  val pythonPathValue = pythonPathEntriesOnTarget.joinToStringFunction(separator = targetPathSeparator.toString())
   appendToPythonPath(pythonPathValue, targetPlatform)
   return uploads
 }

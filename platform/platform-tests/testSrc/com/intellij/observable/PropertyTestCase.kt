@@ -2,7 +2,6 @@
 package com.intellij.observable
 
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl
 import com.intellij.openapi.observable.properties.PropertyGraph
 import junit.framework.TestCase
 import org.junit.Assert
@@ -14,9 +13,8 @@ abstract class PropertyTestCase : TestCase() {
     propertyGraph = PropertyGraph()
   }
 
-  protected fun <T> property(initial: () -> T): GraphProperty<T> {
-    return GraphPropertyImpl(propertyGraph, initial)
-  }
+  protected fun <T> property(initial: () -> T): GraphProperty<T> =
+    propertyGraph.lazyProperty(initial)
 
   protected fun <T> assertProperty(property: GraphProperty<T>, value: T, isPropagationBlocked: Boolean) {
     Assert.assertEquals(isPropagationBlocked, propertyGraph.isPropagationBlocked(property))

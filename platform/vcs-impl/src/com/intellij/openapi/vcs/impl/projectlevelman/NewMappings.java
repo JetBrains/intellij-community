@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -95,29 +96,38 @@ public final class NewMappings implements Disposable {
     return !myActiveVcses.isEmpty();
   }
 
+  public boolean isActivated() {
+    return myActivated;
+  }
+
   public void activateActiveVcses() {
     synchronized (myUpdateLock) {
       if (myActivated) return;
       myActivated = true;
       LOG.debug("activated");
     }
-    updateActiveVcses();
+    updateActiveVcses(true);
     updateMappedRoots(true);
   }
 
   /**
    * @return {@link #myActivated} value
    */
-  private boolean updateActiveVcses() {
+  private boolean updateActiveVcses(boolean forceFireEvent) {
     MyVcsActivator activator =
       ReadAction.compute(() -> {
         synchronized (myUpdateLock) {
           return myActivated ? createVcsActivator() : null;
         }
       });
+
     if (activator != null) {
-      activator.activate();
+      boolean wasChanged = activator.activate();
+      if (forceFireEvent || wasChanged) {
+        notifyActiveVcsesChanged();
+      }
     }
+
     return activator != null;
   }
 
@@ -142,7 +152,7 @@ public final class NewMappings implements Disposable {
   public void updateMappedVcsesImmediately() {
     LOG.debug("updateMappingsImmediately");
 
-    if (!updateActiveVcses()) return;
+    if (!updateActiveVcses(false)) return;
 
     synchronized (myUpdateLock) {
       Disposer.dispose(myFilePointerDisposable);
@@ -153,7 +163,7 @@ public final class NewMappings implements Disposable {
 
       dumpMappedRootsToLog();
     }
-    mappingsChanged();
+    notifyMappingsChanged();
 
     scheduleMappedRootsUpdate();
   }
@@ -181,11 +191,11 @@ public final class NewMappings implements Disposable {
       dumpMappingsToLog();
     }
 
-    updateActiveVcses();
+    updateActiveVcses(false);
 
     updateMappedRoots(false);
 
-    mappingsChanged();
+    notifyMappingsChanged();
   }
 
   private void updateMappedRoots(boolean fireMappingsChangedEvent) {
@@ -216,7 +226,7 @@ public final class NewMappings implements Disposable {
       }
     }
 
-    if (fireMappingsChangedEvent && mappedRootsChanged) mappingsChanged();
+    if (fireMappingsChangedEvent && mappedRootsChanged) notifyMappingsChanged();
   }
 
   private void refreshMainMenu() {
@@ -407,9 +417,13 @@ public final class NewMappings implements Disposable {
     });
   }
 
-  public void mappingsChanged() {
+  public void notifyMappingsChanged() {
     BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
     myFileWatchRequestsManager.ping();
+  }
+
+  public void notifyActiveVcsesChanged() {
+    BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManagerEx.VCS_ACTIVATED).vcsesActivated(myActiveVcses);
   }
 
   private void dumpMappingsToLog() {
@@ -582,7 +596,7 @@ public final class NewMappings implements Disposable {
       myRemoveVcses = removeVcses;
     }
 
-    public void activate() {
+    public boolean activate() {
       for (AbstractVcs vcs : myAddVcses) {
         try {
           vcs.doActivate();
@@ -599,6 +613,7 @@ public final class NewMappings implements Disposable {
           LOG.error(e);
         }
       }
+      return !myAddVcses.isEmpty() || !myRemoveVcses.isEmpty();
     }
   }
 

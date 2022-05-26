@@ -23,7 +23,6 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 private val MPP_BUILDER_LOGGER = Logging.getLogger(KotlinMPPGradleModelBuilder::class.java)
 
 class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
-
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
         return ErrorMessageBuilder
             .create(project, e, "Gradle import errors")
@@ -48,7 +47,8 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             val importingContext =
                 MultiplatformModelImportingContextImpl(project, detachableCompilerArgumentsCacheMapper, modelBuilderContext)
 
-            importingContext.initializeSourceSets(buildSourceSets(importingContext) ?: return null)
+            val sourceSets = buildSourceSets(importingContext) ?: return null
+            importingContext.initializeSourceSets(sourceSets)
 
             val targets = buildTargets(importingContext, projectTargets)
             importingContext.initializeTargets(targets)
@@ -69,7 +69,9 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
                 partialCacheAware = detachableCompilerArgumentsCacheMapper.detachCacheAware()
-            )
+            ).apply {
+                kotlinImportingDiagnostics += collectDiagnostics(importingContext)
+            }
             return model
         } catch (throwable: Throwable) {
             project.logger.error("Failed building KotlinMPPGradleModel", throwable)
@@ -104,10 +106,14 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         val sourceSets =
             (getSourceSets(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList<Named>()
         val androidDeps = buildAndroidDeps(importingContext, kotlinExt.javaClass.classLoader)
-        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps)
 
-        val allSourceSetsProtosByNames = sourceSets.mapNotNull {
-            sourceSetProtoBuilder.buildComponent(it, importingContext)
+        val sourceSetProtoBuilder = KotlinSourceSetProtoBuilder(androidDeps, importingContext.project)
+
+        val allSourceSetsProtosByNames = sourceSets.mapNotNull { sourceSet ->
+            sourceSetProtoBuilder.buildComponent(
+                origin = sourceSet,
+                importingContext = importingContext
+            )
         }.associateBy { it.name }
 
         // Some performance optimisation: do not build metadata dependencies if source set is not common
@@ -216,5 +222,16 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             // in all other cases, in HMPP we shouldn't coerce anything
             else -> false
         }
+    }
+
+    companion object {
+        private val DEFAULT_IMPORTING_CHECKERS = listOf(OrphanSourceSetImportingChecker)
+
+        private fun KotlinMPPGradleModel.collectDiagnostics(importingContext: MultiplatformModelImportingContext): KotlinImportingDiagnosticsContainer =
+            mutableSetOf<KotlinImportingDiagnostic>().apply {
+                DEFAULT_IMPORTING_CHECKERS.forEach {
+                    it.check(this@collectDiagnostics, this, importingContext)
+                }
+            }
     }
 }

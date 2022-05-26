@@ -291,7 +291,7 @@ fun createEditor(language: Language,
                  project: Project,
                  updateHints: (editor: Editor) -> Any): EditorTextField {
   val fileType: FileType = language.associatedFileType ?: FileTypes.PLAIN_TEXT
-  val editorField = object : EditorTextField(null, project, fileType, false, false) {
+  val editorField = object : EditorTextField(null, project, fileType, true, false) {
     override fun createEditor(): EditorEx {
       val editor = super.createEditor()
       updateHints(editor)

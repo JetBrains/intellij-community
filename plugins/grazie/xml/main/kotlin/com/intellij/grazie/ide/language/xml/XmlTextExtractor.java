@@ -18,6 +18,7 @@ import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -98,7 +99,11 @@ public class XmlTextExtractor extends TextExtractor {
             return;
           }
         }
-        
+        if (each instanceof OuterLanguageElement) {
+          flushGroup(true);
+          unknownBefore = true;
+        }
+
         if (isText(PsiUtilCore.getElementType(each))) {
           group.add(each);
         }

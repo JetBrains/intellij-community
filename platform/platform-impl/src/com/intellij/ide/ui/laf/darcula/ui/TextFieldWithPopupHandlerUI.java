@@ -487,7 +487,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     JTextComponent component = getComponent();
     if (component != null) {
       IconHolder result = getIconHolder(component, event.getX(), event.getY());
-      Runnable action = result == null ? null : result.extension.getActionOnClick();
+      Runnable action = result == null ? null : result.extension.getActionOnClick(event);
       if (action == null) {
         setCursor(Cursor.TEXT_CURSOR);
       }
@@ -495,6 +495,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         setCursor(Cursor.HAND_CURSOR);
         if (run) {
           action.run();
+          //update icon after action is performed
+          getIconHolder(component, event.getX(), event.getY());
           event.consume();
         }
       }

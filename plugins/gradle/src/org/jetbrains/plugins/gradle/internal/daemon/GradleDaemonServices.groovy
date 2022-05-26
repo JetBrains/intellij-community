@@ -12,6 +12,7 @@ import com.intellij.util.Function
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.TObjectHashingStrategy
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import it.unimi.dsi.fastutil.Hash
@@ -197,5 +198,30 @@ class GradleDaemonServices {
       gradleUserHomes.add(StringUtil.notNullize(gradleUserHome))
     }
     gradleUserHomes
+  }
+
+  //these methods are added to work around compilation problems with Groovy 3: these methods get default implementation in GroovyObject interface,
+  //and stub generator doesn't add implementations for them, but here Groovy 2.4 library from intellij.gradle.toolingExtension module is used
+  //where default implementations are absent
+  Object invokeMethod(String name, Object args) {
+    return super.invokeMethod(name, args)
+  }
+
+  @CompileDynamic
+  Object getProperty(String propertyName) {
+    return super.getProperty(propertyName)
+  }
+
+  @CompileDynamic
+  void setProperty(String propertyName, Object newValue) {
+    super.setProperty(propertyName, newValue)
+  }
+
+  MetaClass getMetaClass() {
+    return super.getMetaClass()
+  }
+
+  void setMetaClass(MetaClass metaClass) {
+    super.setMetaClass(metaClass)
   }
 }

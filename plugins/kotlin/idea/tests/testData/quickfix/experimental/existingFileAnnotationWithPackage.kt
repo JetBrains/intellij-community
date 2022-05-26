@@ -1,4 +1,4 @@
-// "Add '@OptIn(B::class)' annotation to containing file 'existingFileAnnotationWithPackage.kt'" "true"
+// "Opt-in for 'B::class' on containing file 'existingFileAnnotationWithPackage.kt'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 @file:OptIn(A::class)

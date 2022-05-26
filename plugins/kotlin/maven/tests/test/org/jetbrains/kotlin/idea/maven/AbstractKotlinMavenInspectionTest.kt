@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenPluginPhaseInspection
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.keysToMap
 import java.io.File
 

@@ -24,12 +24,27 @@ class ConvertToConcatenatedStringIntention : SelfTargetingOffsetIndependentInten
         val quote = if (tripleQuoted) "\"\"\"" else "\""
         val entries = element.entries
 
-        val text = entries.filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
+        val entryStringList = entries
+            .filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
             .mapIndexed { index, entry ->
                 entry.toSeparateString(quote, convertExplicitly = (index == 0), isFinalEntry = (index == entries.lastIndex))
             }
-            .joinToString(separator = "+")
-            .replace("""$quote+$quote""", "")
+        val text = buildString {
+            entryStringList.forEachIndexed { index, entry ->
+                var toBeAppended = entry
+                val prevEntry = entryStringList.getOrNull(index - 1)
+                if (entry.startsWith(quote) && prevEntry?.endsWith(quote) == true) {
+                    toBeAppended = toBeAppended.removePrefix(quote)
+                } else if (prevEntry != null) {
+                    append("+")
+                }
+                val nextEntry = entryStringList.getOrNull(index + 1)
+                if (entry.endsWith(quote) && nextEntry?.startsWith(quote) == true) {
+                    toBeAppended = toBeAppended.removeSuffix(quote)
+                }
+                append(toBeAppended)
+            }
+        }
 
         val replacement = KtPsiFactory(element).createExpression(text)
         element.replace(replacement)

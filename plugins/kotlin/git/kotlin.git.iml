@@ -12,6 +12,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.common" />
+    <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="intellij.vcs.git" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.vcs.core" />
     <orderEntry type="module" module-name="intellij.platform.ide" />

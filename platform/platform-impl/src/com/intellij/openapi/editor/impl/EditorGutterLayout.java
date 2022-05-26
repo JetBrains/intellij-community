@@ -63,9 +63,9 @@ public class EditorGutterLayout {
         case ANNOTATIONS_AREA: mouseEventAreaType = EditorMouseEventArea.ANNOTATIONS_AREA; break;
 
         case LEFT_FREE_PAINTERS_AREA:
+        case RIGHT_FREE_PAINTERS_AREA:
         case ICONS_AREA: mouseEventAreaType = EditorMouseEventArea.LINE_MARKERS_AREA; break;
 
-        case RIGHT_FREE_PAINTERS_AREA:
         case GAP_AFTER_ICONS_AREA:
         case FOLDING_AREA:
         case VERTICAL_LINE_AREA: mouseEventAreaType = EditorMouseEventArea.FOLDING_OUTLINE_AREA; break;
@@ -112,12 +112,14 @@ public class EditorGutterLayout {
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth).showIf(this::isLineNumbersShown),
       area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth),
       areaGap()
-        .as(EditorMouseEventArea.LINE_NUMBERS_AREA)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
         .showIf(this::isLineNumbersShown),
 
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA),
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationGuttersSize),
       areaGap()
-        .as(EditorMouseEventArea.ANNOTATIONS_AREA)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
         .showIf(() -> myEditorGutter.isShowGapAfterAnnotations()),
 
       area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth),
@@ -135,6 +137,8 @@ public class EditorGutterLayout {
 
   private List<GutterArea> createExperimentalLayout() {
     return List.of(
+      area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA),
       areaGap()
         .as(EditorMouseEventArea.ANNOTATIONS_AREA)
         .showIf(() -> myEditorGutter.isShowGapAfterAnnotations()),

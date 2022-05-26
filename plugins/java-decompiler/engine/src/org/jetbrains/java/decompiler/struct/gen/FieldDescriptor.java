@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -23,10 +23,10 @@ public final class FieldDescriptor {
   }
 
   public String buildNewDescriptor(NewClassNameBuilder builder) {
-    if (type.type == CodeConstants.TYPE_OBJECT) {
-      String newClassName = builder.buildNewClassname(type.value);
+    if (type.getType() == CodeConstants.TYPE_OBJECT) {
+      String newClassName = builder.buildNewClassname(type.getValue());
       if (newClassName != null) {
-        return new VarType(type.type, type.arrayDim, newClassName).toString();
+        return new VarType(type.getType(), type.getArrayDim(), newClassName).toString();
       }
     }
 

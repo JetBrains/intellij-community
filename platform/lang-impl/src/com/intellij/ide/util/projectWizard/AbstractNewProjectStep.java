@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -188,12 +188,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
                                               @NotNull String locationString,
                                               @Nullable DirectoryProjectGenerator<T> generator,
                                               @NotNull T settings) {
-    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
-      .withBeforeOpenCallback((project) -> {
-        project.putUserData(CREATED_KEY, true);
-        return true;
-      });
-
+    OpenProjectTask options = OpenProjectTask.build()
+      .withProjectToClose(projectToClose)
+      .asNewProject().withRunConfigurators().withCreatedByWizard().withoutVfsRefresh()
+      .withBeforeOpenCallback(project -> { project.putUserData(CREATED_KEY, true); return true; });
     return doGenerateProject(projectToClose, locationString, generator, settings, options);
   }
 

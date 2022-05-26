@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -71,6 +71,34 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/autoImports")
     public abstract static class AutoImports extends AbstractQuickFixMultiFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/autoImports/invisible")
+        public static class Invisible extends AbstractQuickFixMultiFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("annotation.before.Main.kt")
+            public void testAnnotation() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/annotation.before.Main.kt");
+            }
+
+            @TestMetadata("class.before.Main.kt")
+            public void testClass() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/class.before.Main.kt");
+            }
+
+            @TestMetadata("fun.before.Main.kt")
+            public void testFun() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/fun.before.Main.kt");
+            }
+
+            @TestMetadata("property.before.Main.kt")
+            public void testProperty() throws Exception {
+                runTest("testData/quickfix/autoImports/invisible/property.before.Main.kt");
+            }
+        }
+
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/autoImports/kt21515")
         public static class Kt21515 extends AbstractQuickFixMultiFileTest {
@@ -349,6 +377,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/importFromRoot.before.Main.kt");
             }
 
+            @TestMetadata("importFunctionWithDefinitelyNotNullType.before.Main.kt")
+            public void testImportFunctionWithDefinitelyNotNullType() throws Exception {
+                runTest("testData/quickfix/autoImports/importFunctionWithDefinitelyNotNullType.before.Main.kt");
+            }
+
             @TestMetadata("importGetValueExtensionForDelegateWithLambda.before.Main.kt")
             public void testImportGetValueExtensionForDelegateWithLambda() throws Exception {
                 runTest("testData/quickfix/autoImports/importGetValueExtensionForDelegateWithLambda.before.Main.kt");
@@ -422,6 +455,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("importKotlinStaticPropertyOverloadedSetterFromJava.test")
             public void testImportKotlinStaticPropertyOverloadedSetterFromJava() throws Exception {
                 runTest("testData/quickfix/autoImports/importKotlinStaticPropertyOverloadedSetterFromJava.test");
+            }
+
+            @TestMetadata("importNullableTraitWithGenerics.before.Main.kt")
+            public void testImportNullableTraitWithGenerics() throws Exception {
+                runTest("testData/quickfix/autoImports/importNullableTraitWithGenerics.before.Main.kt");
             }
 
             @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
@@ -612,6 +650,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("noImportForPrivateClass.before.Main.kt")
             public void testNoImportForPrivateClass() throws Exception {
                 runTest("testData/quickfix/autoImports/noImportForPrivateClass.before.Main.kt");
+            }
+
+            @TestMetadata("noImportForPrivateFunction.before.Main.kt")
+            public void testNoImportForPrivateFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/noImportForPrivateFunction.before.Main.kt");
             }
 
             @TestMetadata("noImportInImports.before.Main.kt")

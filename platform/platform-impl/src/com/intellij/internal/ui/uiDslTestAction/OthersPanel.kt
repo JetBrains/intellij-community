@@ -33,5 +33,12 @@ internal class OthersPanel {
         }
       }
     }
+
+    group("Size groups") {
+      row {
+        button("Button", {}).widthGroup("group1")
+        button("A very long button", {}).widthGroup("group1")
+      }.rowComment("Buttons with the same widthGroup")
+    }
   }
 }

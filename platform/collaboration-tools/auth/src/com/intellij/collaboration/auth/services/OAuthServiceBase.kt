@@ -41,7 +41,7 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
     return result.isDone && !result.isCancelled && !result.isCompletedExceptionally
   }
 
-  private fun startAuthorization(request: OAuthRequest<T>) {
+  protected open fun startAuthorization(request: OAuthRequest<T>) {
     val authUrl = request.authUrlWithParameters.toExternalForm()
     BrowserUtil.browse(authUrl)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -10,7 +10,6 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
@@ -25,7 +24,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class VarExprent extends Exprent {
   public static final int STACK_BASE = 10000;
@@ -84,7 +86,7 @@ public class VarExprent extends Exprent {
     tracer.addMapping(bytecode);
 
     if (classDef) {
-      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(varType.value);
+      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(varType.getValue());
       new ClassWriter().classToJava(child, buffer, indent, tracer);
       tracer.incrementCurrentSourceLine(buffer.countLines());
     }
@@ -96,7 +98,7 @@ public class VarExprent extends Exprent {
       }
 
       if (definition) {
-        if (processor != null && processor.getVarFinal(varVersion) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
+        if (processor != null && processor.getVarFinal(varVersion) == VarProcessor.VAR_EXPLICIT_FINAL) {
           buffer.append("final ");
         }
         appendDefinitionType(buffer);
@@ -145,7 +147,7 @@ public class VarExprent extends Exprent {
               if (signature != null) {
                 GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                 if (descriptor != null) {
-                  buffer.append(GenericMain.getGenericCastTypeName(descriptor.type, java.util.Collections.emptyList()));
+                  buffer.append(GenericMain.getGenericCastTypeName(descriptor.type, Collections.emptyList()));
                   return;
                 }
               }
@@ -193,7 +195,7 @@ public class VarExprent extends Exprent {
       vt = processor.getVarType(getVarVersionPair());
     }
 
-    if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {
+    if (vt == null || (varType != null && varType.getType() != CodeConstants.TYPE_UNKNOWN)) {
       vt = varType;
     }
 

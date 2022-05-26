@@ -1,4 +1,4 @@
-// "Inline 'flatMap' body into the next 'forEach' call" "false"
+// "Inline 'flatMap()' body into the next 'forEach()' call" "false"
 import java.util.List;
 import java.util.stream.IntStream;
 

@@ -239,7 +239,6 @@ public final class BuildMain {
             }
             return;
           }
-
           case CONSTANT_SEARCH_RESULT: {
             // ignored, functionality deprecated
             return;

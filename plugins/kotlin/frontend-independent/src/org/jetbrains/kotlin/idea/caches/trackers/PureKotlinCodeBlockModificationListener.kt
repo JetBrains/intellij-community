@@ -23,6 +23,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -78,7 +79,8 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
         private inline fun isFormattingChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiWhiteSpace }
 
         private inline fun isStringLiteralChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) {
-            it?.elementType == KtTokens.REGULAR_STRING_PART && it?.psi?.findTopmostParentOfType<KtAnnotationEntry>() == null
+            it?.elementType == KtTokens.REGULAR_STRING_PART &&
+                    it?.psi?.parentOfTypes(KtAnnotationEntry::class, KtWhenCondition::class) == null
         }
 
         /**

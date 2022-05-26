@@ -1,8 +1,8 @@
 // WITH_STDLIB
 fun unrelatedTypes(obj : Any) {
     if (obj is X) {
-        if (<warning descr="Condition 'obj is Y' is always false">obj is Y</warning>) { }
-        if (<warning descr="Condition 'obj !is Y' is always true">obj !is Y</warning>) { }
+        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'">obj is Y</warning>) { }
+        if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'">obj !is Y</warning>) { }
     }
 }
 fun nullableTypes(obj : Any?) {
@@ -13,7 +13,7 @@ fun nullableTypes(obj : Any?) {
     }
 }
 fun nothing(obj : Any) {
-    if (<warning descr="Condition 'obj is Nothing' is always false">obj is Nothing</warning>) {}
+    if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'false'">obj is Nothing</warning>) {}
 }
 fun testAny(obj : Any) {
     if (obj is Int) {}

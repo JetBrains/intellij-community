@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -27,7 +27,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -100,7 +99,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     Path scriptTargetDir = scriptTarget.getParent();
     if (scriptTargetDir == null) throw new IllegalArgumentException("Invalid path: " + scriptTarget);
 
-    File starter = Restarter.getIdeStarter();
+    Path starter = Restarter.getIdeStarter();
     if (starter == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
 
     String interpreter = PathEnvironmentVariableUtil.findInPath("python3") != null ? "python3" :
@@ -114,7 +113,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       "$PYTHON$", interpreter,
       "$CONFIG_PATH$", PathManager.getConfigPath(),
       "$SYSTEM_PATH$", PathManager.getSystemPath(),
-      "$RUN_PATH$", starter.getPath());
+      "$RUN_PATH$", starter.toString());
     String launcherContents = StringUtil.convertLineSeparators(ExecUtil.loadTemplate(loader, "launcher.py", variables));
     Path scriptFile = ExecUtil.createTempExecutableScript("launcher", "", launcherContents).toPath();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.psi.PsiElement
@@ -9,9 +9,9 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrAllVarsInitializedPolicy
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo
@@ -70,8 +70,7 @@ class ReachingDefsTest extends LightJavaCodeInsightFixtureTestCase {
     GrStatement lastStatement = getStatement(end, owner)
 
     final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(firstStatement)
-    final ControlFlowBuilder flowBuilder = new ControlFlowBuilder(GrAllVarsInitializedPolicy.getInstance())
-    final Instruction[] flow = flowBuilder.buildControlFlow(flowOwner)
+    final GroovyControlFlow flow = ControlFlowBuilder.buildControlFlow(flowOwner, GrAllVarsInitializedPolicy.getInstance())
     final FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(firstStatement, lastStatement, flowOwner, flow)
 
     assertEquals(data.get(1), dumpInfo(fragmentVariableInfos).trim())

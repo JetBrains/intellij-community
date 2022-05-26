@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheBranchingImpl
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheHolder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
-import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.junit.Before
 import org.junit.Test
 import kotlin.random.Random

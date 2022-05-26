@@ -2,6 +2,7 @@
 package com.intellij.ide.feedback
 
 import com.intellij.icons.AllIcons
+import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.event.*
@@ -255,6 +256,7 @@ class RatingComponent : JComponent() {
   }
 
   companion object {
-    const val RATING_PROPERTY = "rating"
+    @Nls
+    const val RATING_PROPERTY = "rating" //NON-NLS
   }
 }

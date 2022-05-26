@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
@@ -26,8 +26,8 @@ import kotlin.math.min
 
 @ApiStatus.Internal
 internal class RecentLocationsDataModel(val project: Project,
-                                        val placesSupplier: Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>>?,
-                                        val placesRemover: Consumer<List<IdeDocumentHistoryImpl.PlaceInfo>>?) {
+                                        private val placesSupplier: Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>>?,
+                                        private val placesRemover: Consumer<List<IdeDocumentHistoryImpl.PlaceInfo>>?) {
 
   private val navigationPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, false)
 
@@ -91,7 +91,7 @@ internal class RecentLocationsDataModel(val project: Project,
       }
     }
     else {
-      val maxPlaces = UISettings.instance.recentLocationsLimit
+      val maxPlaces = UISettings.getInstance().recentLocationsLimit
       val places = ContainerUtil.reverse(if (changed) IdeDocumentHistory.getInstance(project).changePlaces
                                          else IdeDocumentHistory.getInstance(project).backPlaces)
       for (place in places) {

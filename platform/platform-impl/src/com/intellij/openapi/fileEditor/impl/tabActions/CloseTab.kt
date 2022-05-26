@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.tabActions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.UISettings.Companion.instance
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -39,7 +39,7 @@ class CloseTab(c: JComponent,
     val pinned = isPinned()
     e.presentation.icon = if (!pinned) AllIcons.Actions.Close else AllIcons.Actions.PinTab
     e.presentation.hoveredIcon = if (!pinned) AllIcons.Actions.CloseHovered else AllIcons.Actions.PinTab
-    e.presentation.isVisible = instance.showCloseButton || pinned
+    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned
     if (pinned && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
       e.presentation.text = ""
       shortcutSet = CustomShortcutSet.EMPTY;
@@ -78,7 +78,7 @@ class CloseTab(c: JComponent,
         window.closeAllExcept(file)
       }
       else {
-        if (window.findFileComposite(file) != null) {
+        if (window.getComposite(file) != null) {
           mgr.closeFile(file, window)
         }
       }

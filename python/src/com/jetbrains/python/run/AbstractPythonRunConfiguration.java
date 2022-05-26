@@ -30,7 +30,6 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -462,11 +461,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   /**
    * Adds test specs (like method, class, script, etc) to list of runner parameters.
-   *
-   * @deprecated this method has been moved to {@link com.jetbrains.python.testing.PythonTestCommandLineStateBase}
+   * <p>
+   * To be deprecated.
+   * <p>
+   * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addTestSpecsAsParameters(@NotNull final ParamsGroup paramsGroup, @NotNull final List<String> testSpecs) {
     // By default we simply add them as arguments
     paramsGroup.addParameters(testSpecs);

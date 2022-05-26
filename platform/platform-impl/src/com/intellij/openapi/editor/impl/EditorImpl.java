@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -78,7 +78,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.JdkConstants;
@@ -517,9 +516,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()
-        && SystemInfo.isMac && SystemInfo.isJetBrainsJvm
-        //todo[kb] JBR-4038
-        && !JavaVersion.current().isAtLeast(17)) {
+        && SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
       MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
     }
 

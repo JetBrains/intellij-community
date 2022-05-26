@@ -2,21 +2,24 @@
 
 package org.jetbrains.kotlin.idea.debugger
 
-import com.intellij.openapi.project.DumbService
 import com.intellij.debugger.impl.DebuggerUtilsImpl.getLocalVariableBorders
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.search.GlobalSearchScope
-import com.sun.jdi.LocalVariable
 import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
+import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil.findFilesWithExactPackage
 import org.jetbrains.kotlin.idea.stubindex.StaticFacadeIndexUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.util.*
@@ -59,6 +62,7 @@ object DebuggerUtils {
 
         for (scope in scopes) {
             val files = findFilesByNameInPackage(className, fileName, project, scope)
+                .filter { it.platform.isJvm() || it.platform.isCommon() }
 
             if (files.isEmpty()) {
                 continue
@@ -92,6 +96,9 @@ object DebuggerUtils {
         val extension = FileUtilRt.getExtension(fileName).lowercase(Locale.getDefault())
         return extension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
     }
+
+    fun String.getMethodNameWithoutMangling() =
+        substringBefore('-')
 
     fun isKotlinFakeLineNumber(location: Location): Boolean {
         // The compiler inserts a fake line number for single-line inline function calls with a

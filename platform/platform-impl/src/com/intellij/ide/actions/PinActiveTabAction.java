@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -11,8 +11,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;

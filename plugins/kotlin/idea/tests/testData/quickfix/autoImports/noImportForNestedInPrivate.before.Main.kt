@@ -1,4 +1,4 @@
-// "class org.jetbrains.kotlin.idea.quickfix.ImportFix" "false"
+// "Import" "false"
 // ACTION: Create local variable 'Nested'
 // ACTION: Create object 'Nested'
 // ACTION: Create parameter 'Nested'
@@ -9,3 +9,4 @@
 fun test() {
     <caret>Nested
 }
+/* IGNORE_FIR */

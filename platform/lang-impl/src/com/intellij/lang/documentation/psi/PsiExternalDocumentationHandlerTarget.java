@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.psi;
 
 import com.intellij.codeInsight.navigation.UtilKt;
@@ -66,7 +66,7 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
   }
 
   // static method ensures that this is not captured
-  private static @NotNull Supplier<@Nullable DocumentationResult> fetchComputable(
+  private static @NotNull Supplier<DocumentationResult.@Nullable Data> fetchComputable(
     @NotNull ExternalDocumentationHandler handler,
     @NotNull String url,
     @NotNull PsiElement context
@@ -74,7 +74,7 @@ final class PsiExternalDocumentationHandlerTarget implements DocumentationTarget
     return () -> {
       String text = handler.fetchExternalDocumentation(url, context);
       String ref = handler.extractRefFromLink(url);
-      return DocumentationResult.externalDocumentation(text, ref, url);
+      return DocumentationResult.documentation(text).anchor(ref).externalUrl(url);
     };
   }
 

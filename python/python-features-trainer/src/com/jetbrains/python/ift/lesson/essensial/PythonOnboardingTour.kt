@@ -39,8 +39,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.openapi.wm.impl.StripeButton
 import com.intellij.openapi.wm.impl.status.TextPanel
+import com.intellij.toolWindow.StripeButton
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -100,7 +100,7 @@ class PythonOnboardingTour :
   private val demoConfigurationName: String = "welcome"
   private val demoFileName: String = "$demoConfigurationName.py"
 
-  private val uiSettings get() = UISettings.instance
+  private val uiSettings get() = UISettings.getInstance()
 
   override val properties = LessonProperties(
     canStartInDumbMode = true,
@@ -129,7 +129,7 @@ class PythonOnboardingTour :
       useDelay = true
       configurations().forEach { runManager().removeConfiguration(it) }
 
-      val root = ProjectUtils.getProjectRoot(project)
+      val root = ProjectUtils.getCurrentLearningProjectRoot()
       if (root.findChild(demoFileName) == null) invokeLater {
         runWriteAction {
           root.createChildData(this, demoFileName)

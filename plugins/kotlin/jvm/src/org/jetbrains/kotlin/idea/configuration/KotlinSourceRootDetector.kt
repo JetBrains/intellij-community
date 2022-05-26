@@ -2,11 +2,9 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.DescendentBasedRootFilter
-import org.jetbrains.kotlin.idea.KotlinFileType
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
-class KotlinSourceRootDetector : DescendentBasedRootFilter(OrderRootType.SOURCES, false,  "sources", {
-  FileTypeRegistry.getInstance().isFileOfType(it, KotlinFileType.INSTANCE)
-})
+class KotlinSourceRootDetector : DescendentBasedRootFilter(OrderRootType.SOURCES, false, "sources", VirtualFile::isKotlinFileType)

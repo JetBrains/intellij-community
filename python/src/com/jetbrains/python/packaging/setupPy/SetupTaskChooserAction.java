@@ -46,9 +46,6 @@ public class SetupTaskChooserAction extends AnAction {
     popup.setShowListForEmptyPattern(true);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
-      @Override
-      public void onClose() {
-      }
 
       @Override
       public void elementChosen(Object element) {

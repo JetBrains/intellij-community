@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scratch
 
@@ -32,7 +32,7 @@ abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     }
 
     val ktScratchFile: KtFile?
-        get() = getPsiFile().safeAs()
+        get() = getPsiFile().safeAs<KtFile>()
 
     fun setModule(value: Module?) {
         module = value
@@ -84,6 +84,7 @@ interface ScratchFileListener {
     fun fileCreated(file: ScratchFile)
 
     companion object {
+        @Topic.ProjectLevel
         val TOPIC = Topic.create(
             "ScratchFileListener",
             ScratchFileListener::class.java

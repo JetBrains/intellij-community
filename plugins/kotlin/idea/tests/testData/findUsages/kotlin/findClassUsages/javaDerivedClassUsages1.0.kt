@@ -15,3 +15,5 @@ open class C : Y {
 open class Z : A() {
 
 }
+
+// FIR_COMPARISON

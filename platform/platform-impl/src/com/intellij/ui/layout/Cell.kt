@@ -116,6 +116,8 @@ interface CellBuilder<out T : JComponent> {
    * All components of the same group share will get the same BoundSize (min/preferred/max),
    * which is that of the biggest component in the group
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
   fun sizeGroup(name: String): CellBuilder<T>
   fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T>
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
@@ -421,6 +423,12 @@ abstract class Cell : BaseBuilder {
   @JvmOverloads
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated("Use Kotlin UI DSL Version 2")
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(prop, columns, range, null)
+  }
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range, step)
   }
@@ -432,10 +440,17 @@ abstract class Cell : BaseBuilder {
     return intTextField(PropertyBinding(getter, setter), columns, range, step)
   }
 
+
+  @JvmOverloads
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL Version 2")
+  fun intTextField(binding: PropertyBinding<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
+    return intTextField(binding, columns, range, null)
+  }
+
   /**
    * @param step allows changing value by up/down keys on keyboard
    */
-  @JvmOverloads
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(binding: PropertyBinding<Int>,

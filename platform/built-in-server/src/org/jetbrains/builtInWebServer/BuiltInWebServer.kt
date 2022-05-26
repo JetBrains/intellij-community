@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("HardCodedStringLiteral", "ReplaceGetOrSet")
 package org.jetbrains.builtInWebServer
 
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.*
 import com.intellij.util.io.DigestUtil.randomToken
@@ -123,8 +124,7 @@ private val STANDARD_COOKIE by lazy {
   // http://stackoverflow.com/questions/8134384/chrome-doesnt-create-cookie-for-domain-localhost-in-broken-https
   val cookie = DefaultCookie(productName + "-" + Integer.toHexString(configPath.hashCode()), token!!)
   cookie.isHttpOnly = true
-  // Android Studio: Using 90 days instead of 10 years
-  cookie.setMaxAge(TimeUnit.DAYS.toSeconds(90))
+  cookie.setMaxAge(TimeUnit.DAYS.toSeconds(365 * 10))
   cookie.setPath("/")
   cookie
 }
@@ -133,9 +133,6 @@ private val STANDARD_COOKIE by lazy {
 private val tokens = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
 fun acquireToken(): String {
-  // TODO: Use alternative token?
-  //return BuiltinWebServerAccess.getUserAuthenticationToken()
-
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
     token = randomToken()
@@ -298,7 +295,8 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
       ProjectUtil.focusProjectWindow(null, true)
 
       if (MessageDialogBuilder
-          .yesNo("", BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50)))
+          // escape - see https://youtrack.jetbrains.com/issue/IDEA-287428
+          .yesNo("", Strings.escapeXmlEntities(BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50))))
           .icon(Messages.getWarningIcon())
           .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
           .guessWindowAndAsk()) {

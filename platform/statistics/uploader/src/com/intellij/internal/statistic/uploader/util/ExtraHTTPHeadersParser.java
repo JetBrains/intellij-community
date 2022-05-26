@@ -46,7 +46,8 @@ public class ExtraHTTPHeadersParser {
       stringBuilder.append(v);
       stringBuilder.append(';');
     });
-    stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+    if (!headers.isEmpty())
+      stringBuilder.deleteCharAt(stringBuilder.length() - 1);
     return stringBuilder.toString();
   }
 }

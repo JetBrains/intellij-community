@@ -3,11 +3,9 @@ package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.core.JavaPsiBundle
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.wizard.getCanonicalPath
-import com.intellij.ide.wizard.getPresentablePath
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl
@@ -97,7 +95,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
 
     row(JavaUiBundle.message("project.structure.compiler.output")) {
       textFieldWithBrowseButton()
-        .bindText(compilerOutputProperty.transform(::getPresentablePath, ::getCanonicalPath))
+        .bindText(compilerOutputProperty.toUiPathProperty())
         .onIsModified {
           if (!myProjectConfigurable.isFrozen)
             LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).currentLevel = myLanguageLevelCombo.selectedLevel

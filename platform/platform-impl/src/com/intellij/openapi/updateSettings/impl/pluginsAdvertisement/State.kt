@@ -17,7 +17,7 @@ import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
-import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
+import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker

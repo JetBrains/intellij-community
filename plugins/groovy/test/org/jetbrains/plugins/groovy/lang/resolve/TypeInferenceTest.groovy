@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.RecursionManager
@@ -722,7 +722,7 @@ def foo(ii) {
   }
 
   void testIndexProperty() {
-    allowNestedContextOnce(testRootDisposable)
+    allowNestedContext(2, testRootDisposable)
     doTest('''\
 private void getCommonAncestor() {
     def c1 = [new File('a')]
@@ -1189,7 +1189,6 @@ for (a in b) {
   }
 
   void 'test no soe with write to iterated variable in cycle'() {
-    allowNestedContext(3, testRootDisposable)
     doTest '''\
 while (u) {
   for (a in b) {
@@ -1405,7 +1404,7 @@ def foo(def p) {
     }
     <caret>x
   }
-''', JAVA_LANG_INTEGER
+''', "[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]"
   }
 
   void 'test assignment inside closure 2'() {
@@ -1550,7 +1549,7 @@ def test(def x) {
 }''', JAVA_LANG_INTEGER
   }
 
-  void 'test assignment in nested closure'() {
+  void '_test assignment in nested closure'() {
     doTest '''
 def foo() {
     def y
@@ -1583,7 +1582,7 @@ static def foo(x) {
 
   void 'test assignment inside unknown closure'() {
     doTest '''
-def foo(x) {
+def foo() {
   def x = (Number)1
   def cl = {
     x = (String)1
@@ -1593,7 +1592,7 @@ def foo(x) {
 ''', "java.io.Serializable"
   }
 
-  void 'test CS with shared variables'() {
+  void '_test CS with shared variables'() {
     doTest '''
   @groovy.transform.CompileStatic
   def foo() {
@@ -1605,7 +1604,7 @@ def foo(x) {
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test infer LUB for shared variables'() {
+  void '_test infer LUB for shared variables'() {
     doTest '''
   class A{}
   class B extends A{}
@@ -1623,7 +1622,7 @@ def foo(x) {
 ''', "A"
   }
 
-  void 'test flow typing should not work for shared variables'() {
+  void '_test flow typing should not work for shared variables'() {
     doTest '''
   class A{}
   class B extends A{}
@@ -1641,7 +1640,7 @@ def foo(x) {
 ''', "A"
   }
 
-  void 'test cyclic dependency for shared variables'() {
+  void '_test cyclic dependency for shared variables'() {
     allowNestedContext(2, testRootDisposable)
     doTest '''
   class A{}
@@ -1665,7 +1664,7 @@ def foo(x) {
   }
 
 
-  void 'test non-shared variable depends on shared one'() {
+  void '_test non-shared variable depends on shared one'() {
     allowNestedContextOnce(testRootDisposable)
     doTest '''
   class A{}
@@ -1684,7 +1683,7 @@ def foo(x) {
 ''', "B"
   }
 
-  void 'test assignment to shared variable inside closure'() {
+  void '_test assignment to shared variable inside closure'() {
     doTest '''
   class A{}
   class B extends A{}
@@ -1700,7 +1699,7 @@ def foo(x) {
 ''', "A"
   }
 
-  void 'test assignment to shared variable inside closure with access from closure'() {
+  void '_test assignment to shared variable inside closure with access from closure'() {
     doTest '''
   class A{}
   class B extends A{}
@@ -1718,7 +1717,7 @@ def foo(x) {
 ''', "A"
   }
 
-  void 'test dependency on shared variable with assignment inside closure'() {
+  void '_test dependency on shared variable with assignment inside closure'() {
     allowNestedContextOnce(testRootDisposable)
     doTest '''
   class A{}
@@ -1737,7 +1736,6 @@ def foo(x) {
   }
 
   void 'test flow typing reachable through closure'() {
-    allowNestedContextOnce(testRootDisposable)
     doTest '''
   @groovy.transform.CompileStatic
   def foo() {
@@ -1749,42 +1747,6 @@ def foo(x) {
     x = ""
     cl()
   }''', JAVA_LANG_INTEGER
-  }
-
-  void 'test assignment inside dangling closure flushes subsequent types'() {
-    doTest '''
-class A {}
-class B extends A {}
-class C extends A {}
-
-def foo() {
-  def x = 1
-  def cl = {
-    x = new B()
-  }
-  x = new C()
-  <caret>x
-}''', "A"
-  }
-
-  void 'test assignment inside dangling closure affects unrelated flow'() {
-    doTest '''
-class A {}
-class B extends A {}
-class C extends A {}
-
-def foo() {
-  def x = 1
-  if (false) {
-    def cl = {
-      x = new B()
-    }
-  }
-  if (false) {
-    x = new C()
-    <caret>x
-  }
-}''', "A"
   }
 
   void 'test assignment inside dangling closure does not change type in parallel flow'() {
@@ -1821,7 +1783,7 @@ def foo() {
 }''', JAVA_LANG_INTEGER
   }
 
-  void 'test two dangling closures flush type together'() {
+  void '_test two dangling closures flush type together'() {
     doTest '''
 class A {}
 class D extends A{}
@@ -1841,7 +1803,7 @@ def foo() {
   }
 
 
-  void 'test two assignments inside single dangling closure'() {
+  void '_test two assignments inside single dangling closure'() {
     doTest '''
 class A {}
 class D extends A{}
@@ -1853,24 +1815,6 @@ def foo() {
   def cl = {
     x = new A()
     x = new C()
-  }
-  x = new B()
-  <caret>x  
-}''', "A"
-  }
-
-  void 'test assignment in nested dangling closure'() {
-    doTest '''
-class A {}
-class B extends A {}
-class C extends A {}
-
-def foo() {
-  def x = 1
-  def cl = {
-    def cl = {
-      x = new C()
-    }
   }
   x = new B()
   <caret>x  
@@ -1912,7 +1856,7 @@ class A {
   }
 
   void 'test cyclic flow with closure'() {
-    allowNestedContext(2, testRootDisposable)
+    allowNestedContext(3, testRootDisposable)
     doTest '''
 def x
 for (def i = 0; i < 10; i++) {
@@ -1926,7 +1870,7 @@ for (def i = 0; i < 10; i++) {
   }
 
   void 'test cycle with unknown closure'() {
-    allowNestedContext(2, testRootDisposable)
+    //allowNestedContext(2, testRootDisposable)
     doTest '''
 static  bar(Closure cl) {}
 
@@ -1938,7 +1882,7 @@ static def foo() {
 ''', JAVA_LANG_INTEGER
   }
 
-  void 'test no SOE in operator usage with shared variable'() {
+  void '_test no SOE in operator usage with shared variable'() {
     allowNestedContextOnce(testRootDisposable)
     doTest '''
 @groovy.transform.CompileStatic
@@ -1967,7 +1911,6 @@ private void foo(String expected) {
   }
 
   void 'test cache consistency for closures in cycle 2'() {
-    allowNestedContext(4, testRootDisposable)
     doTest '''
 interface J {}
 interface R extends J {}
@@ -2017,5 +1960,34 @@ protected void onLoadConfig (Map configSection) {
     if (configSection.presetMode != null)
       setPresetMode(p<caret>resetMode)
 }""", null
+  }
+
+  void 'test soe with large flow'() {
+    RecursionManager.disableAssertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+    allowNestedContext(4, testRootDisposable)
+    doTest """
+static _getTreeData() {
+    def filterData  = []
+    for (EcmQueryMaskStructureNode node: childNodes) {
+        def currentNodeFilter = null
+        filterData.e<caret>ach { filter ->
+            currentNodeFilter = filter
+        };
+        nodePerformance["getChildValues"] = prepareChildNodes(filterData, currentNodeFilter)
+    }
+
+}
+""", "java.util.ArrayList"
+  }
+
+  void 'test throw in closure'() {
+    doTest """
+static String rootDir(Path archive) {
+    return createTarGzInputStream(archive).withCloseable {
+        <caret>it.nextTarEntry?.name ?: { throw new IllegalStateException("Unable to read \$archive") }()
+    }
+}
+""", null
   }
 }

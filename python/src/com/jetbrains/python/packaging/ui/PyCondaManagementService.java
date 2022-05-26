@@ -90,10 +90,6 @@ public class PyCondaManagementService extends PyPackageManagementService {
     }
   }
 
-  @Override
-  public boolean canManageRepositories() {
-    return true;
-  }
 
   @Override
   public void fetchAllRepositories(@NotNull CatchingConsumer<? super List<String>, ? super Exception> consumer) {

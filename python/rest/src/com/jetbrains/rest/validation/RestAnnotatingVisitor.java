@@ -25,11 +25,7 @@ public class RestAnnotatingVisitor implements Annotator {
       try {
         annotator = cls.newInstance();
       }
-      catch (InstantiationException e) {
-        LOGGER.error(e);
-        continue;
-      }
-      catch (IllegalAccessException e) {
+      catch (InstantiationException | IllegalAccessException e) {
         LOGGER.error(e);
         continue;
       }

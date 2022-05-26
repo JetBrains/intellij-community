@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.tasks
@@ -25,10 +25,6 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
-import org.apache.log4j.ConsoleAppender
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
 import org.jetbrains.intellij.build.io.*
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -41,6 +37,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+import java.util.logging.*
 import java.util.zip.Deflater
 
 private val random by lazy { SecureRandom() }
@@ -222,7 +219,7 @@ private fun processFile(localFile: Path,
       CompletableFuture.allOf(
         runAsync { command.inputStream.transferTo(System.out) },
         runAsync { Files.copy(command.errorStream, logFile, StandardCopyOption.REPLACE_EXISTING) }
-      ).get(3, TimeUnit.HOURS)
+      ).get(6, TimeUnit.HOURS)
 
       command.join(1, TimeUnit.MINUTES)
     }
@@ -297,11 +294,16 @@ private fun downloadResult(remoteFile: String,
 }
 
 private val initLog by lazy {
-  System.setProperty("log4j.defaultInitOverride", "true")
-  val root = Logger.getRootLogger()
-  if (!root.allAppenders.hasMoreElements()) {
+  val root = Logger.getLogger("")
+  if (root.handlers.isEmpty()) {
     root.level = Level.INFO
-    root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
+    root.addHandler(ConsoleHandler().also {
+      it.formatter = object : Formatter() {
+        override fun format(record: LogRecord): String {
+          return record.message + System.lineSeparator()
+        }
+      }
+    })
   }
 }
 

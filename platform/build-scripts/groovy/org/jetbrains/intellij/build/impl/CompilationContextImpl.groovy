@@ -12,6 +12,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElementFactory
@@ -67,7 +68,7 @@ final class CompilationContextImpl implements CompilationContext {
     AntBuilder ant = new AntBuilder()
     def messages = BuildMessagesImpl.create(ant.project)
     communityHome = toCanonicalPath(communityHome)
-    if (["platform/build-scripts", "bin/log.xml", "build.txt"].any { !new File(communityHome, it).exists() }) {
+    if (["platform/build-scripts", "bin/idea.properties", "build.txt"].any { !new File(communityHome, it).exists() }) {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
@@ -90,6 +91,11 @@ final class CompilationContextImpl implements CompilationContext {
     // (see createCopyForProduct)
     JaegerJsonSpanExporter.setOutput(context.paths.logDir.resolve("trace.json"))
     messages.debugLogPath = context.paths.logDir.resolve("debug.log")
+
+    // This is not a proper place to initialize logging
+    // but this is the only place which is called in most build scripts
+    BuildMessagesHandler.initLogging(messages)
+
     return context
   }
 
@@ -208,7 +214,9 @@ final class CompilationContextImpl implements CompilationContext {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
     if (kotlinBinaries.isCompilerRequired()) {
-      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.kotlinCompilerHome/kotlinc")
+      def kotlinCompilerHome = kotlinBinaries.kotlinCompilerHome
+      System.setProperty("jps.kotlin.home", kotlinCompilerHome.toFile().absolutePath)
+      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "${kotlinCompilerHome}")
     }
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 

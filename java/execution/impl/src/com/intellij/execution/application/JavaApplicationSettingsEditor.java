@@ -69,7 +69,12 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     SettingsEditorFragment<ApplicationConfiguration, EditorTextField> mainClassFragment =
       new SettingsEditorFragment<>("mainClass", ExecutionBundle.message("application.configuration.main.class"), null, mainClass, 20,
                                    (configuration, component) -> component.setText(getQName(configuration.getMainClassName())),
-                                   (configuration, component) -> configuration.setMainClassName(getJvmName(component.getText())),
+                                   (configuration, component) -> {
+                                     String className = component.getText();
+                                     if (!className.equals(configuration.getMainClassName())) {
+                                       configuration.setMainClassName(getJvmName(className));
+                                     }
+                                   },
                                    configuration -> true);
     mainClassFragment.setHint(ExecutionBundle.message("application.configuration.main.class.hint"));
     mainClassFragment.setRemovable(false);

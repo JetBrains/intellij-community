@@ -10,15 +10,15 @@ import java.util.regex.Pattern
 
 object EventsSchemeBuilder {
 
-  val pluginInfoFields = hashSetOf(
-    FieldDescriptor("plugin", hashSetOf("{util#plugin}")),
-    FieldDescriptor("plugin_type", hashSetOf("{util#plugin_type}")),
-    FieldDescriptor("plugin_version", hashSetOf("{util#plugin_version}"))
+  val pluginInfoFields = setOf(
+    FieldDescriptor("plugin", setOf("{util#plugin}")),
+    FieldDescriptor("plugin_type", setOf("{util#plugin_type}")),
+    FieldDescriptor("plugin_version", setOf("{util#plugin_version}"))
   )
 
-  private val classValidationRuleNames = hashSetOf("class_name", "dialog_class", "quick_fix_class_name",
-                                                   "run_config_factory", "tip_info", "run_config_factory",
-                                                   "run_config_id", "facets_type", "registry_key")
+  private val classValidationRuleNames = setOf("class_name", "dialog_class", "quick_fix_class_name",
+                                               "run_config_factory", "tip_info", "run_config_factory",
+                                               "run_config_id", "facets_type", "registry_key")
   private val classValidationRules = classValidationRuleNames.map { "{util#$it}" }
 
   private fun fieldSchema(field: EventField<*>, fieldName: String, eventName: String, groupId: String): Set<FieldDescriptor> {
@@ -53,11 +53,8 @@ object EventsSchemeBuilder {
     }
   }
 
-  private fun buildFieldDescriptors(fieldName: String,
-                                    validationRules: List<String>,
-                                    fieldDataType: FieldDataType): HashSet<FieldDescriptor> {
-
-    val fields = hashSetOf(FieldDescriptor(fieldName, validationRules.toHashSet(), fieldDataType))
+  private fun buildFieldDescriptors(fieldName: String, validationRules: List<String>, fieldDataType: FieldDataType): Set<FieldDescriptor> {
+    val fields = mutableSetOf(FieldDescriptor(fieldName, validationRules.toSet(), fieldDataType))
     if (validationRules.any { it in classValidationRules }) {
       fields.addAll(pluginInfoFields)
     }
@@ -73,7 +70,7 @@ object EventsSchemeBuilder {
 
   private fun buildObjectEvenScheme(fieldName: String, fields: Array<out EventField<*>>,
                                     eventName: String, groupId: String): Set<FieldDescriptor> {
-    val fieldsDescriptors = hashSetOf<FieldDescriptor>()
+    val fieldsDescriptors = mutableSetOf<FieldDescriptor>()
     for (eventField in fields) {
       fieldsDescriptors.addAll(fieldSchema(eventField, fieldName + "." + eventField.name, eventName, groupId))
     }
@@ -105,6 +102,7 @@ object EventsSchemeBuilder {
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors))
+    result.sortBy(GroupDescriptor::id)
     return result
   }
 
@@ -117,7 +115,7 @@ object EventsSchemeBuilder {
       val group = collector.group ?: continue
       val eventsDescriptors = group.events.groupBy { it.eventId }
         .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
-        .toHashSet()
+        .toSet()
       val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
       result.add(groupDescriptor)
     }
@@ -135,15 +133,15 @@ object EventsSchemeBuilder {
     }
   }
 
-  private fun buildFields(events: List<BaseEventId>, eventName: String, groupId: String): HashSet<FieldDescriptor> {
+  private fun buildFields(events: List<BaseEventId>, eventName: String, groupId: String): Set<FieldDescriptor> {
     return events.flatMap { it.getFields() }
       .flatMap { field -> fieldSchema(field, field.name, eventName, groupId) }
       .groupBy { it.path }
       .map { (name, values) ->
         val type = defineDataType(values, name, eventName, groupId)
-        FieldDescriptor(name, values.flatMap { it.value }.toHashSet(), type)
+        FieldDescriptor(name, values.flatMap { it.value }.toSet(), type)
       }
-      .toHashSet()
+      .toSet()
   }
 
   private fun defineDataType(values: List<FieldDescriptor>, name: String, eventName: String, groupId: String): FieldDataType {

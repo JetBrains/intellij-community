@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.roots.ProjectRootUtilsKt;
 
@@ -26,9 +27,14 @@ public abstract class KotlinDestinationFolderComboBox extends DestinationFolderC
         if (sourceRootsInTargetDirOnly()) {
             Module module = ModuleUtilCore.findModuleForFile(initialTargetDirectory.getVirtualFile(), project);
             if (module != null) {
-                return ProjectRootUtilsKt.collectKotlinAwareDestinationSourceRoots(module);
+                List<VirtualFile> moduleSourceRoots = ProjectRootUtilsKt.collectKotlinAwareDestinationSourceRoots(module);
+                return ContainerUtil.filter(moduleSourceRoots, root -> targetDirIsInRoot(initialTargetDirectory, root));
             }
         }
         return getKotlinAwareDestinationSourceRoots(project);
+    }
+
+    private static boolean targetDirIsInRoot(PsiDirectory targetDir, VirtualFile root) {
+        return targetDir.getVirtualFile().getPath().startsWith(root.getPath());
     }
 }

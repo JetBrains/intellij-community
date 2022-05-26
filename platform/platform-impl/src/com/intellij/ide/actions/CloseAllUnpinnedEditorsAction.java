@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -6,12 +6,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import java.util.HashSet;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -42,8 +41,8 @@ public class CloseAllUnpinnedEditorsAction extends CloseEditorsActionBase {
     for (Pair<EditorComposite, EditorWindow> pair : filesToClose) {
       final EditorWindow window = pair.second;
       if (checked.add(window)) {
-        for (EditorWithProviderComposite e : window.getEditors()) {
-          if (e.isPinned()) {
+        for (EditorComposite composite : window.getAllComposites()) {
+          if (composite.isPinned()) {
             hasPinned = true;
           }
           else {

@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -12,7 +12,6 @@ import javax.swing.border.EmptyBorder
 
 @Suppress("MemberVisibilityCanBePrivate")
 internal class UISettings {
-
   //GENERAL UI SETTINGS
   val panelWidth: Int by lazy { JBUI.scale(460) }
 
@@ -95,11 +94,10 @@ internal class UISettings {
   val balloonIndent: Int get() = JBUI.scale(27)
 
   companion object {
-    val instance: UISettings
-      get() = ApplicationManager.getApplication().getService(UISettings::class.java)
+    fun getInstance(): UISettings = service<UISettings>()
 
     private fun Color.addAlpha(alpha: Double): Color {
-      return JBColor { Color(red, green, blue, (255 * alpha).toInt()) }
+      return JBColor.lazy { Color(red, green, blue, (255 * alpha).toInt()) }
     }
   }
 }

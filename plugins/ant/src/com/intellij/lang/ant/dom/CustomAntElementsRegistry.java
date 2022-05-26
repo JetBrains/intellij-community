@@ -240,14 +240,11 @@ public final class CustomAntElementsRegistry {
 
   public static PsiFile loadContentAsFile(Project project, InputStream stream, LanguageFileType fileType) throws IOException {
     final StringBuilder builder = new StringBuilder();
-    try {
+    try (stream) {
       int nextByte;
       while ((nextByte = stream.read()) >= 0) {
         builder.append((char)nextByte);
       }
-    }
-    finally {
-      stream.close();
     }
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     return factory.createFileFromText("_ant_dummy__." + fileType.getDefaultExtension(), fileType, builder, LocalTimeCounter.currentTime(), false, false);

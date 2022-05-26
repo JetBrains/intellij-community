@@ -1,8 +1,8 @@
 public class TestMethodReferenceSameName {
-   TestMethodReferenceSameName.R1 r;
+   R1 r;
 
    private void foo() {
-      TestMethodReferenceSameName.R1 var10000 = this.r;// 5
+      R1 var10000 = this.r;// 5
       (var10000::foo).run();
    }// 6
 

@@ -455,10 +455,5 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     protected boolean canCreateElement() {
       return true;
     }
-
-    @Override
-    protected Class<?> getType() {
-      return null;
-    }
   }
 }

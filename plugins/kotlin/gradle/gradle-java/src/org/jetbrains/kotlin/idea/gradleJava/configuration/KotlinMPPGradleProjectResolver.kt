@@ -51,7 +51,7 @@ import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
+import org.jetbrains.kotlin.util.firstNotNullResult
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -508,6 +508,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 kotlinNativeHome = mppModel.kotlinNativeHome
                 coroutines = mppModel.extraFeatures.coroutinesState
                 isHmpp = mppModel.extraFeatures.isHMPPEnabled
+                kotlinImportingDiagnosticsContainer = mppModel.kotlinImportingDiagnostics
                 mainModuleNode.createChild(KotlinGradleProjectData.KEY, this)
             }
             //TODO improve passing version of used multiplatform
@@ -690,10 +691,12 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         private fun gradlePathToQualifiedName(
             rootName: String,
             gradlePath: String
-        ): String = ((if (gradlePath.startsWith(":")) "$rootName." else "")
+        ): String? {
+            return ((if (gradlePath.startsWith(":")) "$rootName." else "")
                 + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
             .filter { s: String -> s.isNotEmpty() }
             .collect(Collectors.joining(".")))
+        }
 
         private fun getInternalModuleName(
             gradleModule: IdeaModule,
@@ -964,3 +967,4 @@ fun ProjectResolverContext.getMppModel(gradleModule: IdeaModule): KotlinMPPGradl
         mppModel
     }
 }
+

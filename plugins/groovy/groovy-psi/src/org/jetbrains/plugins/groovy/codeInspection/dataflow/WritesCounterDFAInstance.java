@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import com.intellij.psi.PsiElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,19 +34,21 @@ public final class WritesCounterDFAInstance implements DfaInstance<Object2IntMap
   }
 
   @Override
-  public void fun(@NotNull Object2IntMap<GrVariable> map, @NotNull Instruction instruction) {
-    if (!(instruction instanceof ReadWriteVariableInstruction)) return;
+  public Object2IntMap<GrVariable> fun(@NotNull Object2IntMap<GrVariable> map, @NotNull Instruction instruction) {
+    if (!(instruction instanceof ReadWriteVariableInstruction)) return map;
 
     final ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)instruction;
-    if (!rwInstruction.isWrite()) return;
+    if (!rwInstruction.isWrite()) return map;
 
     final GrVariable variable = getVariable(instruction.getElement());
-    if (variable == null) return;
+    if (variable == null) return map;
 
     int currentVal = map.getInt(variable);
-    if (currentVal == 2) return;
+    if (currentVal == 2) return map;
 
     if (currentVal == 0 || currentVal == 1 && !(variable.getParent() instanceof GrForInClause)) currentVal++;
-    map.put(variable, currentVal);
+    Object2IntMap<GrVariable> newMap = new Object2IntOpenHashMap<>(map);
+    newMap.put(variable, currentVal);
+    return newMap;
   }
 }

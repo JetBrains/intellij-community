@@ -4,46 +4,51 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 import org.jetbrains.kotlin.coroutines.isSuspendLambda
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
+import org.jetbrains.kotlin.resolve.isInlineClass
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 data class KotlinLambdaInfo(
     val parameterName: String,
     val callerMethodOrdinal: Int,
-    val callerMethodName: String,
     val parameterIndex: Int,
     val isSuspend: Boolean,
-    val isCallerMethodInline: Boolean,
     val isSam: Boolean,
     val isNoinline: Boolean,
-    val methodName: String
+    val isNameMangledInBytecode: Boolean,
+    val methodName: String,
+    val callerMethodInfo: CallableMemberInfo
 ) {
-    val isInline = isCallerMethodInline && !isNoinline && !isSam
+    val isInline = callerMethodInfo.isInline && !isNoinline && !isSam
 
     constructor(
         callerMethodDescriptor: CallableMemberDescriptor,
         parameterDescriptor: ValueParameterDescriptor,
         callerMethodOrdinal: Int,
+        isNameMangledInBytecode: Boolean,
         isSam: Boolean = false,
         methodName: String = OperatorNameConventions.INVOKE.asString()
     ) : this(
             parameterDescriptor.name.asString(),
             callerMethodOrdinal,
-            callerMethodDescriptor.getMethodName(),
             countParameterIndex(callerMethodDescriptor, parameterDescriptor),
             parameterDescriptor.isSuspendLambda,
-            InlineUtil.isInline(callerMethodDescriptor),
             isSam,
             parameterDescriptor.isNoinline,
-            methodName
+            isNameMangledInBytecode,
+            methodName,
+            CallableMemberInfo(callerMethodDescriptor)
         )
 
     fun getLabel() =
-        "$callerMethodName: $parameterName.$methodName()"
+        "${callerMethodInfo.name}: $parameterName.$methodName()"
 }
 
-private fun countParameterIndex(callerMethodDescriptor: CallableMemberDescriptor, parameterDescriptor: ValueParameterDescriptor) =
-    if (callerMethodDescriptor.extensionReceiverParameter == null)
-        parameterDescriptor.index
-    else
-        parameterDescriptor.index + 1
+private fun countParameterIndex(callerMethodDescriptor: CallableMemberDescriptor, parameterDescriptor: ValueParameterDescriptor): Int {
+    var resultIndex = parameterDescriptor.index
+    if (callerMethodDescriptor.extensionReceiverParameter != null)
+        resultIndex++
+    if (callerMethodDescriptor.containingDeclaration.isInlineClass())
+        resultIndex++
+
+    return resultIndex
+}

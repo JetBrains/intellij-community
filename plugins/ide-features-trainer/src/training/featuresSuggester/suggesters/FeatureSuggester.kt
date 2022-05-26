@@ -20,9 +20,11 @@ interface FeatureSuggester {
 
   fun getSuggestion(action: Action): Suggestion
 
-  fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean
+  fun isSuggestionNeeded(): Boolean
 
   val id: String
 
   val suggestingActionDisplayName: String
+
+  val minSuggestingIntervalDays: Int
 }

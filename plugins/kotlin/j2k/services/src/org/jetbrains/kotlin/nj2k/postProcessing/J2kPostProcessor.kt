@@ -99,13 +99,13 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
         },
 
         diagnosticBasedProcessing(
-            addExclExclFactoryNoImplicitReceiver(AddExclExclCallFix),
+            UnsafeCallExclExclFixFactory,
             Errors.UNSAFE_CALL,
             Errors.UNSAFE_INFIX_CALL,
             Errors.UNSAFE_OPERATOR_CALL
         ),
         diagnosticBasedProcessing(
-            addExclExclFactoryNoImplicitReceiver(MissingIteratorExclExclFixFactory),
+            MissingIteratorExclExclFixFactory,
             Errors.ITERATOR_ON_NULLABLE
         ),
         diagnosticBasedProcessing(
@@ -127,11 +127,11 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.REDUNDANT_PROJECTION
         ),
         diagnosticBasedProcessing(
-            AddModifierFix.createFactory(KtTokens.OVERRIDE_KEYWORD),
+            AddModifierFixMpp.createFactory(KtTokens.OVERRIDE_KEYWORD),
             Errors.VIRTUAL_MEMBER_HIDDEN
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveModifierFromListOwnerFactory(KtTokens.OPEN_KEYWORD),
+            RemoveModifierFix.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
             Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS, Errors.NON_FINAL_MEMBER_IN_OBJECT
         ),
         diagnosticBasedProcessing(
@@ -139,7 +139,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.INVISIBLE_MEMBER
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveModifierFactory(),
+            RemoveModifierFix.removeNonRedundantModifier,
             Errors.WRONG_MODIFIER_TARGET
         ),
         diagnosticBasedProcessing(

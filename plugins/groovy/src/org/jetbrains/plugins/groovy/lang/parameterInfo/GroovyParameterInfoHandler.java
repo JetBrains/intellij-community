@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -12,6 +12,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public GroovyPsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
-    return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    GroovyPsiElement place = findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    if (place == null) {
+      return null;
+    }
+    final List<Object> itemsToShow = collectParameterInfo(place);
+    context.setItemsToShow(ArrayUtil.toObjectArray(itemsToShow));
+    return place;
   }
 
   @Override
@@ -87,11 +94,16 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public void showParameterInfo(@NotNull GroovyPsiElement place, @NotNull CreateParameterInfoContext context) {
+    context.showHint(place, place.getTextRange().getStartOffset(), this);
+  }
+
+  @NotNull
+  @RequiresBackgroundThread
+  private static List<Object> collectParameterInfo(@NotNull GroovyPsiElement place) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
 
-    final List elementToShow = new ArrayList();
+    final List<Object> elementToShow = new ArrayList<>();
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
@@ -112,10 +124,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     else {
       elementToShow.addAll(Arrays.asList(variants));
     }
-    
+
     filterOutReflectedMethods(elementToShow);
-    context.setItemsToShow(ArrayUtil.toObjectArray(elementToShow));
-    context.showHint(place, place.getTextRange().getStartOffset(), this);
+    return elementToShow;
   }
 
   private static void addMethodAndClosureVariants(@NotNull List<Object> elementToShow, GroovyResolveResult @NotNull [] variants) {

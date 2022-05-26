@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.integration;
 
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
@@ -14,7 +15,6 @@ import com.intellij.tasks.youtrack.YouTrackIntellisense.HighlightRange;
 import com.intellij.tasks.youtrack.YouTrackRepository;
 import com.intellij.tasks.youtrack.YouTrackRepositoryType;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Level;
 
 import java.util.*;
 
@@ -41,8 +41,8 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     myRepository.setUsername("root");
     myRepository.setPassword(APPLICATION_PASSWORD);
 
-    Logger.getInstance(TaskResponseUtil.class).setLevel(Level.DEBUG);
-    Logger.getInstance("org.apache.http").setLevel(Level.DEBUG);
+    Logger.getInstance(TaskResponseUtil.class).setLevel(LogLevel.DEBUG);
+    Logger.getInstance("org.apache.http").setLevel(LogLevel.DEBUG);
   }
 
   public void testDefaultQueryResults() throws Exception {

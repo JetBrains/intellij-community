@@ -4,9 +4,10 @@ package git4idea.index.actions
 import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import git4idea.index.vfs.GitIndexVirtualFile
 
-class GitStageIndexFileMenuGroup : NonEmptyActionGroup() {
+class GitStageIndexFileMenuGroup : NonEmptyActionGroup(), UpdateInBackground {
   override fun update(event: AnActionEvent) {
     event.presentation.isVisible = childrenCount > 0 &&
                                    event.getData(CommonDataKeys.VIRTUAL_FILE) is GitIndexVirtualFile

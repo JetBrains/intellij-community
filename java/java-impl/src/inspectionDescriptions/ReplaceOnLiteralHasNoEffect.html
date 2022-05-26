@@ -1,12 +1,14 @@
 <html>
 <body>
-Reports string methods like <code>replace</code>, <code>replaceAll</code>, <code>replaceFirst</code>
-applied to the string literal where they have no effect because the search string is not found in the
-literal. This is redundant code and may indicate a programming error.
-<p>Example:</p>
-<pre>
-  "hello".replace("$value$", value); // replacement does nothing
-</pre>
+Reports calls to the string methods <code>replace()</code>, <code>replaceAll()</code> or <code>replaceFirst()</code> that have no effect.
+Such calls can be guaranteed to have no effect when the qualifier and search string are compile-time constants
+and the search string is not found in the qualifier.
+This is redundant code and may indicate a programming error.
+<p><b>Example:</b></p>
+<pre><code>
+  // replacement does nothing
+  "hello".replace("$value$", value);
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2022.1</small></p>
 </body>

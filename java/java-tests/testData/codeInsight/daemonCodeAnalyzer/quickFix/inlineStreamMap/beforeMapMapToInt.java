@@ -1,4 +1,4 @@
-// "Inline 'map' body into the next 'mapToInt' call" "true"
+// "Inline 'map()' body into the next 'mapToInt()' call" "true"
 import java.util.List;
 import java.util.stream.IntStream;
 

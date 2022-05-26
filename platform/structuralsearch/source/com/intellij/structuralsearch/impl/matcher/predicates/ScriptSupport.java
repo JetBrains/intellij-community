@@ -134,7 +134,7 @@ public class ScriptSupport {
     }
     catch (MultipleCompilationErrorsException e) {
       final ErrorCollector errorCollector = e.getErrorCollector();
-      @SuppressWarnings("unchecked") final List<Message> errors = errorCollector.getErrors();
+      final List<? extends Message> errors = errorCollector.getErrors();
       for (Message error : errors) {
         if (error instanceof SyntaxErrorMessage) {
           final SyntaxErrorMessage errorMessage = (SyntaxErrorMessage)error;

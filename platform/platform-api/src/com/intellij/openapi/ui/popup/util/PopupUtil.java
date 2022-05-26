@@ -16,11 +16,13 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
@@ -207,5 +209,21 @@ public final class PopupUtil {
         popup.showInCenterOf(component);
       }
     }
+  }
+
+  public static Border createComplexPopupTextFieldBorder() {
+    return JBUI.Borders.compound(JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets()),
+                                 JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 0,
+                                                         JBUI.CurrentTheme.ComplexPopup.TEXT_FIELD_SEPARATOR_HEIGHT, 0),
+                                 JBUI.Borders.empty(JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets()));
+  }
+
+  /**
+   * Creates insets with specified top/bottom insets and left/right insets from complex popup text filed
+   */
+  public static Insets createComplexPopupTextFieldInsets(int top, int bottom) {
+    Insets borderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets().getUnscaled();
+    Insets inputInsets = JBUI.CurrentTheme.ComplexPopup.textFieldInputInsets().getUnscaled();
+    return JBUI.insets(top, borderInsets.left + inputInsets.left, bottom, borderInsets.right + inputInsets.right);
   }
 }

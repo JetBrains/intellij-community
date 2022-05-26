@@ -13,16 +13,22 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +37,10 @@ import java.util.List;
 
 final class StubTreeLoaderImpl extends StubTreeLoader {
   private static final Logger LOG = Logger.getInstance(StubTreeLoaderImpl.class);
+  // todo remove once we don't need this for stub-ast mismatch debug info
+  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 3, true);
+  private static final byte IS_BINARY_MASK = 1;
+  private static final byte BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK = 1 << 1;
   private static volatile boolean ourStubReloadingProhibited;
 
   @Override
@@ -264,11 +274,63 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
-    return StubUpdatingIndex.readSavedIndexingStampInfo(file);
+    return readSavedIndexingStampInfo(file);
   }
 
   @Override
   protected boolean isTooLarge(@NotNull VirtualFile file) {
     return ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isTooLarge(file);
+  }
+
+  static void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
+    try (DataOutputStream stream = FSRecords.writeAttribute(fileId, INDEXED_STAMP)) {
+      if (indexingStampInfo == null) return;
+      DataInputOutputUtil.writeTIME(stream, indexingStampInfo.indexingFileStamp);
+      DataInputOutputUtil.writeLONG(stream, indexingStampInfo.indexingByteLength);
+
+      boolean lengthsAreTheSame = indexingStampInfo.indexingCharLength == indexingStampInfo.indexingByteLength;
+      byte flags = 0;
+      flags = BitUtil.set(flags, IS_BINARY_MASK, indexingStampInfo.isBinary);
+      flags = BitUtil.set(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK, lengthsAreTheSame);
+      stream.writeByte(flags);
+
+      if (!lengthsAreTheSame && !indexingStampInfo.isBinary) {
+        DataInputOutputUtil.writeINT(stream, indexingStampInfo.indexingCharLength);
+      }
+    }
+    catch (IOException e) {
+      StubUpdatingIndex.LOG.error(e);
+    }
+  }
+
+  @Nullable
+  static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
+    try (DataInputStream stream = INDEXED_STAMP.readAttribute(file)) {
+      if (stream == null || stream.available() <= 0) {
+        return null;
+      }
+      long stamp = DataInputOutputUtil.readTIME(stream);
+      long byteLength = DataInputOutputUtil.readLONG(stream);
+
+      byte flags = stream.readByte();
+      boolean isBinary = BitUtil.isSet(flags, IS_BINARY_MASK);
+      boolean readOnlyOneLength = BitUtil.isSet(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK);
+
+      int charLength;
+      if (isBinary) {
+        charLength = -1;
+      }
+      else if (readOnlyOneLength) {
+        charLength = (int)byteLength;
+      }
+      else {
+        charLength = DataInputOutputUtil.readINT(stream);
+      }
+      return new IndexingStampInfo(stamp, byteLength, charLength, isBinary);
+    }
+    catch (IOException e) {
+      StubUpdatingIndex.LOG.error(e);
+      return null;
+    }
   }
 }

@@ -16,3 +16,4 @@ fun bar(s: String) {}
 
 fun baz(f: () -> String) {
 }
+/* IGNORE_FIR */

@@ -148,12 +148,7 @@ public final class FormsInstrumenter extends FormsBuilder {
         // ignore non-IDEA forms
         continue;
       }
-      catch (UnexpectedFormElementException e) {
-        context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, e.getMessage(), formFile.getPath()));
-        LOG.info(e);
-        continue;
-      }
-      catch (UIDesignerException e) {
+      catch (UnexpectedFormElementException | UIDesignerException e) {
         context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, e.getMessage(), formFile.getPath()));
         LOG.info(e);
         continue;

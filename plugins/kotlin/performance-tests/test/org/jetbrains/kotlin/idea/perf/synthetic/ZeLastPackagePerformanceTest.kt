@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.perf.synthetic
 
 import org.jetbrains.kotlin.idea.perf.util.AbstractZeLastPackagePerformanceTest
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
 /**

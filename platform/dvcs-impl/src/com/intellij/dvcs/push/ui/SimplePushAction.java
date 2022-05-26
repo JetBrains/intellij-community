@@ -1,12 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public final class SimplePushAction extends PushActionBase {
+
+  private Predicate<VcsPushUi> condition;
+
   SimplePushAction() {
     super(DvcsBundle.message("action.complex.push"));
   }
@@ -23,6 +31,12 @@ public final class SimplePushAction extends PushActionBase {
 
   @Override
   protected void actionPerformed(@NotNull Project project, @NotNull VcsPushUi dialog) {
-    dialog.push(false);
+    if (condition == null || condition.test(dialog)) {
+      dialog.push(false);
+    }
+  }
+
+  void setCondition(@Nullable Predicate<VcsPushUi> condition) {
+    this.condition = condition;
   }
 }

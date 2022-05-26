@@ -51,8 +51,6 @@ final class DevBuildServerBootstrap {
       //noinspection SpellCheckingInspection
       command.add("-Dadditional.modules=" + additionalModules);
     }
-    //noinspection SpellCheckingInspection
-    command.add("-Dintellij.build.pycharm.shared.indexes=false");
 
     String extraSystemProperties = System.getenv("EXTRA_SYSTEM_PROPERTIES");
     if (extraSystemProperties != null && !extraSystemProperties.isEmpty()) {

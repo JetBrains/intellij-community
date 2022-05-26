@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes;
 
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,16 +21,20 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -507,6 +517,43 @@ public final class PyClassRefactoringUtil {
    */
   public static void optimizeImports(@NotNull final PsiFile file) {
     PyImportOptimizer.onlyRemoveUnused().processFile(file).run();
+  }
+
+  @NotNull
+  public static PyFile getOrCreateFile(String path, Project project) {
+    final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+    final PsiFile psi;
+    if (vfile == null) {
+      final File file = new File(path);
+      try {
+        final VirtualFile baseDir = project.getBaseDir();
+        final FileTemplateManager fileTemplateManager = FileTemplateManager.getInstance(project);
+        final FileTemplate template = fileTemplateManager.getInternalTemplate("Python Script");
+        final Properties properties = fileTemplateManager.getDefaultProperties();
+        properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
+        final String content = template.getText(properties);
+        psi = PyExtractSuperclassHelper.placeFile(project,
+                                                  StringUtil.notNullize(
+                                                    file.getParent(),
+                                                    baseDir != null ? baseDir
+                                                      .getPath() : "."
+                                                  ),
+                                                  file.getName(),
+                                                  content
+        );
+      }
+      catch (IOException e) {
+        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path), (Throwable)e);
+      }
+    }
+    else {
+      psi = PsiManager.getInstance(project).findFile(vfile);
+    }
+    if (!(psi instanceof PyFile)) {
+      throw new IncorrectOperationException(PyPsiBundle.message(
+        "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
+    }
+    return (PyFile)psi;
   }
 
   private static final class DynamicNamedElement extends LightElement implements PsiNamedElement {

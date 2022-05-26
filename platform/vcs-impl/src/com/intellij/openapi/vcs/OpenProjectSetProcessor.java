@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.impl.OpenProjectTask;
@@ -26,7 +26,7 @@ final class OpenProjectSetProcessor extends ProjectSetProcessor {
     for (Pair<String, String> entry : entries) {
       if ("project".equals(entry.getFirst())) {
         String path = root == null ? entry.getSecond() : (root + "/" + entry.getSecond());
-        context.project = ProjectUtil.openProject(Paths.get(path), OpenProjectTask.withProjectToClose(null));
+        context.project = ProjectUtil.openProject(Paths.get(path), OpenProjectTask.build().withProjectToClose(null));
         if (context.project != null) {
           runNext.run();
         }

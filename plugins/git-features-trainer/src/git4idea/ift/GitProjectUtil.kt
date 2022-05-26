@@ -22,7 +22,7 @@ object GitProjectUtil {
   private const val remoteProjectName = "RemoteLearningProject"
 
   fun restoreGitLessonsFiles(project: Project, branch: String) {
-    val learningProjectRoot = refreshAndGetProjectRoot(project)
+    val learningProjectRoot = refreshAndGetProjectRoot()
     val gitProjectRoot = invokeAndWaitIfNeeded {
       runWriteAction {
         ProjectLevelVcsManager.getInstance(project).directoryMappings = mutableListOf()
@@ -84,8 +84,8 @@ object GitProjectUtil {
     repository.update()
   }
 
-  private fun refreshAndGetProjectRoot(project: Project): VirtualFile {
-    val learningProjectPath = ProjectUtils.getProjectRoot(project).toNioPath()
+  private fun refreshAndGetProjectRoot(): VirtualFile {
+    val learningProjectPath = ProjectUtils.getCurrentLearningProjectRoot().toNioPath()
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learningProjectPath)
            ?: error("Learning project not found")
   }

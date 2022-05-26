@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleBuildScriptBuilderUtil")
 
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
@@ -43,4 +43,9 @@ fun getJunit4Version(): String {
 
 fun getJunit5Version(): String {
   return "5.8.1"
+}
+
+fun isSupportedGroovyApache(groovyVersion: String) : Boolean {
+  val majorVersion = groovyVersion.split(".").firstOrNull()?.let(Integer::valueOf) ?: 0
+  return majorVersion >= 4
 }

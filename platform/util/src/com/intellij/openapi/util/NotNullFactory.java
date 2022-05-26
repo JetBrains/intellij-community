@@ -4,7 +4,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * Deprecated. Use {@link java.util.function.Supplier} with {@code @NotNull} annotation on the type parameter instead.
  */
 @FunctionalInterface
 public interface NotNullFactory<T> extends Factory<T> {

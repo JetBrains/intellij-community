@@ -17,7 +17,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import java.io.File
 
 abstract class KotlinMultiFileTestCase : MultiFileTestCase() {

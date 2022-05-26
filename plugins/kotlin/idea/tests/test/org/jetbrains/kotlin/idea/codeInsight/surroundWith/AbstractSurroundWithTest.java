@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.*;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.*;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.io.File;
 import java.util.List;

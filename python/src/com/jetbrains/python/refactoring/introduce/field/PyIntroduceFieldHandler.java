@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.lang.ASTNode;
@@ -18,8 +18,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.FunctionUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -41,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Dennis.Ushakov
@@ -171,7 +170,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   }
 
   @NotNull
-  private static PsiElement addFieldToSetUp(PyClass clazz, final Function<String, PyStatement> callback) {
+  private static PsiElement addFieldToSetUp(PyClass clazz, Function<String, PyStatement> callback) {
     final PyFunction init = clazz.findMethodByName(PyNames.TESTCASE_SETUP_NAME, false, null);
     if (init != null) {
       return AddFieldQuickFix.appendToMethod(init, callback);
@@ -277,7 +276,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
 
     @Override
-    public PyStatement fun(String self_name) {
+    public PyStatement apply(String self_name) {
       if (PyNames.CANONICAL_SELF.equals(self_name)) {
         return (PyStatement)myDeclaration;
       }
@@ -352,7 +351,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
         WriteAction.run(() -> {
           final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
           assert initializer != null;
-          final Function<String, PyStatement> callback = FunctionUtil.constant(initializer);
+          final Function<String, PyStatement> callback = __ -> initializer;
           final PyClass pyClass = PyUtil.getContainingClassOrSelf(initializer);
           InitPlace initPlace = myPanel != null ? myPanel.getInitPlace() : myOperation.getInplaceInitPlace();
           if (initPlace == InitPlace.CONSTRUCTOR) {

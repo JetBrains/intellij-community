@@ -18,12 +18,6 @@
   <depends>Git4Idea</depends>
   <depends>com.intellij.modules.java</depends>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension"
-                    interface="com.intellij.jps.cache.client.JpsServerAuthExtension"
-                    dynamic="true"/>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
     <postStartupActivity implementation="com.intellij.jps.cache.JpsCacheStartupActivity"/>

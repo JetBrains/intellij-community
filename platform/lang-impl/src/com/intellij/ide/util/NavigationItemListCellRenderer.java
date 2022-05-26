@@ -54,6 +54,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
+    ((JComponent) leftCellRendererComponent).setOpaque(false);
     add(leftCellRendererComponent, BorderLayout.WEST);
 
     setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : listBg);
@@ -106,7 +107,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
         NavigationItem item = (NavigationItem)value;
         ItemPresentation presentation = item.getPresentation();
         assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
-          item.toString() + ", class " + item.getClass().getName();
+          item + ", class " + item.getClass().getName();
         String name = presentation.getPresentableText();
         assert name != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
                              item + ", class " + item.getClass().getName();

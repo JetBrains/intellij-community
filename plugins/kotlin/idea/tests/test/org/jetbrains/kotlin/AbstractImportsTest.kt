@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -64,7 +64,11 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 codeStyleSettings.PACKAGES_TO_USE_STAR_IMPORTS.addEntry(KotlinPackageEntry(it.trim(), true))
             }
 
-            val log = project.executeWriteCommand<String?>("") { doTest(file) }
+            val log = if (runTestInWriteCommand) {
+                project.executeWriteCommand<String?>("") { doTest(file) }
+            } else {
+                doTest(file)
+            }
 
             KotlinTestUtils.assertEqualsToFile(File("$testPath.after"), myFixture.file.text)
             if (log != null) {
@@ -86,4 +90,6 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
 
     protected open val nameCountToUseStarImportForMembersDefault: Int
         get() = 3
+
+    protected open val runTestInWriteCommand: Boolean = true
 }

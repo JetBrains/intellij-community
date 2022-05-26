@@ -1,15 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.editor;
 
-import git4idea.GitAppUtil;
-import git4idea.GitExternalApp;
+import externalApp.ExternalApp;
+import externalApp.ExternalAppUtil;
 
 import java.io.File;
 import java.util.Arrays;
 
 import static git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
 import static git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV;
-import static git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_TOKEN_ENV;
 
 /**
  * The rebase editor application, this editor is invoked by the git.
@@ -17,7 +16,7 @@ import static git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_TOKEN_ENV;
  * registered on the host passed as the first parameter. The application
  * exits with exit code returned from the service.
  */
-public class GitRebaseEditorApp implements GitExternalApp {
+public class GitRebaseEditorApp implements ExternalApp {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
@@ -38,10 +37,9 @@ public class GitRebaseEditorApp implements GitExternalApp {
         return;
       }
 
-      String handlerNo = GitAppUtil.getEnv(IJ_EDITOR_HANDLER_ENV);
-      // Android Studio: BuiltinWebServerAccess
-      String token = GitAppUtil.getEnv(IJ_EDITOR_TOKEN_ENV);
-      Integer response = GitAppUtil.sendXmlRequest(GitRebaseEditorXmlRpcHandler.RPC_METHOD_NAME, token, xmlRpcPort,
+      String handlerNo = ExternalAppUtil.getEnv(IJ_EDITOR_HANDLER_ENV);
+
+      Integer response = ExternalAppUtil.sendXmlRequest(GitRebaseEditorXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
                                                    handlerNo, args[1], new File("").getAbsolutePath());
       int exitCode = response != null ? response.intValue() : ERROR_EXIT_CODE;
 

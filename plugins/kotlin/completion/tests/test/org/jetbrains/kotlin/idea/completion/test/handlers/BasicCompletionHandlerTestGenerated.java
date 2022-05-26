@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.completion.test.handlers;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -226,6 +226,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("HigherOrderSuspendFunctionWithArgs.kt")
         public void testHigherOrderSuspendFunctionWithArgs() throws Exception {
             runTest("testData/handlers/basic/highOrderFunctions/HigherOrderSuspendFunctionWithArgs.kt");
+        }
+
+        @TestMetadata("InsertFunctionLiteralForLocalFunction.kt")
+        public void testInsertFunctionLiteralForLocalFunction() throws Exception {
+            runTest("testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
         }
 
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")
@@ -505,6 +510,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("TabReplace3.kt")
         public void testTabReplace3() throws Exception {
             runTest("testData/handlers/basic/parameterNameAndType/TabReplace3.kt");
+        }
+
+        @TestMetadata("TypeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/TypeAlias.kt");
         }
 
         @TestMetadata("TypeParameter.kt")
@@ -925,6 +935,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("testData/handlers/basic/ExtensionFunctionTypeVariable2.kt");
         }
 
+        @TestMetadata("ExtensionPropertyFromSameFile.kt")
+        public void testExtensionPropertyFromSameFile() throws Exception {
+            runTest("testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
+        }
+
         @TestMetadata("ExtensionReceiverTypeArg.kt")
         public void testExtensionReceiverTypeArg() throws Exception {
             runTest("testData/handlers/basic/ExtensionReceiverTypeArg.kt");
@@ -1018,6 +1033,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("KT36306.kt")
         public void testKT36306() throws Exception {
             runTest("testData/handlers/basic/KT36306.kt");
+        }
+
+        @TestMetadata("LocalFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("testData/handlers/basic/LocalFunction.kt");
         }
 
         @TestMetadata("NestedClassNameWithFileLevelConflict.kt")

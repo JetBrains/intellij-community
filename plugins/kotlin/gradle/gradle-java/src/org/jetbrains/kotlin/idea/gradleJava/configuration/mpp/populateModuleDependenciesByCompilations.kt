@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProject
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
 
-
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByCompilations(
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {

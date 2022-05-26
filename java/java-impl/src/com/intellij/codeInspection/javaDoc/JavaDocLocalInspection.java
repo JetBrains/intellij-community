@@ -41,7 +41,7 @@ import java.util.Hashtable;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class JavaDocLocalInspection extends LocalInspectionTool {
-  private static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
+  public static final ExtensionPointName<Condition<PsiMember>> EP_NAME = new ExtensionPointName<>("com.intellij.javaDocNotNecessary");
 
   public static final String SHORT_NAME = "JavaDoc";
   protected static final String NONE = "none";

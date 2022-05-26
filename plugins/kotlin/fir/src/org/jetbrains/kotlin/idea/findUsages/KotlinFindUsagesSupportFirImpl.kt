@@ -18,12 +18,11 @@ import org.jetbrains.kotlin.idea.frontend.api.analyseInModalWindow
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.refactoring.formatPsiClass
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 
 class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
@@ -73,19 +72,19 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
 
         val analyzeResult = analyseInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
             (declaration.getSymbol() as? KtCallableSymbol)?.let { callableSymbol ->
-                ((callableSymbol as? KtSymbolWithKind)?.getContainingSymbol() as? KtClassOrObjectSymbol)?.let { containingClass ->
-                    val overriddenSymbols = callableSymbol.getOverriddenSymbols(containingClass)
+                callableSymbol.originalContainingClassForOverride?.let { containingClass ->
+                    val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()
 
                     val renderToPsi = overriddenSymbols.mapNotNull {
                         it.psi?.let { psi ->
-                            psi to getClassDescription(psi, (it as? KtSymbolWithKind)?.getContainingSymbol())
+                            psi to getClassDescription(psi, it.originalContainingClassForOverride)
                         }
                     }
 
                     val filteredDeclarations =
                         if (ignore != null) renderToPsi.filter { ignore.contains(it.first) } else renderToPsi
 
-                    val renderedClass = containingClass.name.asString() //TODO render class
+                    val renderedClass = containingClass.name?.asString() ?: SpecialNames.ANONYMOUS_STRING //TODO render class
 
                     AnalyzedModel(renderedClass, filteredDeclarations.toMap())
                 }

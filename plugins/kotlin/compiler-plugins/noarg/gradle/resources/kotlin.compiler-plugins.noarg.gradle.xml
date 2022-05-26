@@ -4,7 +4,7 @@
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle-idea"/>
     <module name="kotlin.gradle.gradle-java"/>
-    <module name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle"/>
+    <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

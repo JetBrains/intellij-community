@@ -9,7 +9,7 @@ import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractNameSuggestionProviderTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun getSuggestNames(element: PsiElement): List<String> {

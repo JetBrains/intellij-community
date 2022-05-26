@@ -4,7 +4,9 @@ package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.completion.LookupElementListPresenter
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -45,6 +47,7 @@ internal class ChangeSignaturePopup(
 
   @Nls
   private val updateButtonText = RefactoringBundle.message("suggested.refactoring.update.button.text")
+
   @Nls
   private val nextButtonText = RefactoringBundle.message("suggested.refactoring.next.button.text")
 
@@ -91,14 +94,14 @@ internal class ChangeSignaturePopup(
             parameterValuesPage.defaultFocus()
           }
           else {
-            onOk(newParameterData.map { NewParameterValue.None })
+            onOk(newParameterData.map { data -> NewParameterInfo(data, data.presentableName, NewParameterValue.None) })
           }
         }
 
         Page.ParameterValues -> {
-          val values = parameterValuesPage!!.getValues()
-          if (values != null) {
-            onOk(values)
+          val updatedValues = parameterValuesPage!!.getUpdatedValues()
+          if (updatedValues != null) {
+            onOk(updatedValues)
           }
         }
       }
@@ -106,7 +109,7 @@ internal class ChangeSignaturePopup(
   }
 
   lateinit var onNext: () -> Unit
-  lateinit var onOk: (newParameterValues: List<NewParameterValue>) -> Unit
+  lateinit var onOk: (newParameterValues: List<NewParameterInfo>) -> Unit
 
   fun onEnter() {
     button.doClick()
@@ -133,6 +136,10 @@ internal class ChangeSignaturePopup(
                        (parameterValuesPage == null || parameterValuesPage.areAllValuesCorrect())
   }
 }
+
+data class NewParameterInfo(val newParameterData: SuggestedRefactoringUI.NewParameterData,
+                            val name: String,
+                            val value: NewParameterValue)
 
 private class SignatureChangesPage(
   signatureChangeModel: SignatureChangePresentationModel,
@@ -194,9 +201,32 @@ private class ParameterValuesPage(
   private val newParameterData: List<SuggestedRefactoringUI.NewParameterData>,
   private val onValueChanged: (ValidationInfo?) -> Unit
 ) : JPanel(BorderLayout()), Disposable {
-  private val textFields = mutableListOf<LanguageTextField>()
-  private val checkBoxes = mutableListOf<JCheckBox?>()
+  private val newParameterControls = mutableListOf<ParameterControls>()
   private val focusSequence = mutableListOf<() -> JComponent>()
+
+
+  private inner class ParameterControls(
+    val data: SuggestedRefactoringUI.NewParameterData,
+    val nameField: JTextField?,
+    val useAny: JCheckBox?,
+    val valueField: LanguageTextField) {
+
+    fun isLookupShown(): Boolean = (LookupManager.getActiveLookup(valueField.editor) as LookupElementListPresenter?)?.isShown ?: false
+    fun isValid(): Boolean = getValue() != null && isNameCorrect(nameField?.text)
+    fun toInfo(): NewParameterInfo? {
+      return if (!isValid()) null else NewParameterInfo(data, nameField?.text?:data.presentableName, getValue()!!)
+    }
+    fun getValue(): NewParameterValue? {
+      if (useAny != null && useAny.isSelected) return NewParameterValue.AnyVariable
+
+      if (refactoringSupport.ui.validateValue(data, null).let { it != null && !it.okEnabled }) return null
+
+      return when {
+        valueField.text.isBlank() -> NewParameterValue.None
+        else -> refactoringSupport.ui.extractValue(data.valueFragment)
+      }
+    }
+  }
 
   fun initialize() {
     val label = JLabel(RefactoringBundle.message("suggested.refactoring.parameter.values.label.text")).apply {
@@ -217,17 +247,48 @@ private class ParameterValuesPage(
     c.anchor = GridBagConstraints.LINE_START
     c.fill = GridBagConstraints.HORIZONTAL
     var isFirstCheckbox = true
+    val documentManager = PsiDocumentManager.getInstance(project)
     for (data in newParameterData) {
       c.gridx = 0
 
-      c.weightx = 0.0
+      c.weightx = 1.0
       c.insets = Insets(0, 0, 0, 0)
-      panel.add(JLabel("${data.presentableName}:").apply { font = editorFont }, c)
+      val nameComponent: JComponent
+      if (data.suggestRename) {
+        nameComponent = JTextField(data.presentableName).apply {
+          font = editorFont
+          preferredSize = Dimension(textFieldWidth / 2, preferredSize.height)
+        }
+        nameComponent.selectAll()
+        ComponentValidator(this@ParameterValuesPage)
+          .withValidator(
+            Supplier {
+              if (!isNameCorrect(nameComponent.text)) {
+                ValidationInfo(LangBundle.message("popup.title.inserted.identifier.valid"), nameComponent).also(onValueChanged)
+              }
+              else {
+                null.also(onValueChanged)
+              }
+            }
+          )
+          .installOn(nameComponent)
+          .andRegisterOnDocumentListener(nameComponent)
+          .andStartOnFocusLost()
+
+        focusSequence.add { nameComponent }
+      }
+      else {
+        nameComponent = JLabel(data.presentableName).apply { font = editorFont }
+      }
+      panel.add(nameComponent, c)
+      c.gridx++
+
+      c.weightx = 0.0
+      panel.add(JLabel("=").apply { font = editorFont })
       c.gridx++
 
       c.weightx = 1.0
       c.insets = Insets(0, 4, 0, 0)
-      val documentManager = PsiDocumentManager.getInstance(project)
       val document = documentManager.getDocument(data.valueFragment)!!
       val textField = MyTextField(language, project, document, data.placeholderText).apply {
         setPreferredWidth(textFieldWidth)
@@ -244,16 +305,15 @@ private class ParameterValuesPage(
           .andStartOnFocusLost()
       }
       panel.add(textField, c)
-      textFields.add(textField)
       focusSequence.add { textField.editor!!.contentComponent }
       c.gridx++
 
+      val checkBox: JCheckBox?
       if (data.offerToUseAnyVariable) {
         c.weightx = 0.0
         c.insets = Insets(0, 10, 0, 0)
-        val checkBox = JCheckBox(RefactoringBundle.message("suggested.refactoring.use.any.variable.checkbox.text"))
+        checkBox = JCheckBox(RefactoringBundle.message("suggested.refactoring.use.any.variable.checkbox.text"))
         panel.add(checkBox, c)
-        checkBoxes.add(checkBox)
         focusSequence.add { checkBox }
 
         checkBox.addItemListener {
@@ -267,8 +327,9 @@ private class ParameterValuesPage(
         isFirstCheckbox = false
       }
       else {
-        checkBoxes.add(null)
+        checkBox = null
       }
+      newParameterControls.add(ParameterControls(data, nameComponent as? JTextField, checkBox, textField))
 
       c.gridy++
     }
@@ -282,37 +343,23 @@ private class ParameterValuesPage(
   }
 
   fun isLookupShown(): Boolean {
-    return textFields.any {
-      (LookupManager.getActiveLookup(it.editor) as LookupElementListPresenter?)?.isShown ?: false
-    }
+    return newParameterControls.any(ParameterControls::isLookupShown)
   }
 
   fun areAllValuesCorrect(): Boolean {
-    return textFields.indices.all { getValue(it) != null }
+    return newParameterControls.all(ParameterControls::isValid)
   }
 
-  fun getValues(): List<NewParameterValue>? {
-    return textFields.indices.map { index -> getValue(index) ?: return null }
-  }
+  fun isNameCorrect(name: String?): Boolean = name == null || LanguageNamesValidation.isIdentifier(language, name, project)
 
   override fun dispose() {}
 
-  private fun getValue(index: Int): NewParameterValue? {
-    val checkBox = checkBoxes[index]
-    if (checkBox != null && checkBox.isSelected) return NewParameterValue.AnyVariable
-
-    val data = newParameterData[index]
-    if (refactoringSupport.ui.validateValue(data, null).let { it != null && !it.okEnabled }) return null
-
-    return when {
-      textFields[index].text.isBlank() -> NewParameterValue.None
-      else -> refactoringSupport.ui.extractValue(data.valueFragment)
-    }
+  fun getUpdatedValues(): List<NewParameterInfo>? {
+    return newParameterControls.map { it.toInfo() ?: return null }
   }
 
   private class MyTextField(language: Language, project: Project, document: Document, @Nls private val placeholderText: String?)
-    : LanguageTextField(language, project, "", { _, _, _ -> document }, true)
-  {
+    : LanguageTextField(language, project, "", { _, _, _ -> document }, true) {
     override fun createEditor(): EditorEx {
       return super.createEditor().apply {
         setPlaceholder(placeholderText ?: RefactoringBundle.message("suggested.refactoring.parameter.values.placeholder"))

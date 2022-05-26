@@ -18,11 +18,11 @@ public final class Statements {
     }
 
     switch (stat.type) {
-      case Statement.TYPE_SEQUENCE:
-      case Statement.TYPE_IF:
-      case Statement.TYPE_ROOT:
-      case Statement.TYPE_SWITCH:
-      case Statement.TYPE_SYNCHRONIZED:
+      case SEQUENCE:
+      case IF:
+      case ROOT:
+      case SWITCH:
+      case SYNCHRONIZED:
         return findFirstData(stat.getFirst());
       default:
         return null;

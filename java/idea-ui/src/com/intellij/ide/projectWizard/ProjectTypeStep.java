@@ -539,7 +539,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
       myContext.setProjectBuilder(builder);
       step.updateStep();
-      myOptionsPanel.add(step.getComponent(), card);
+      JComponent component = step.getComponent();
+      if (isNewWizard()) {
+        component = new JBScrollPane(component);
+        component.setBorder(JBUI.Borders.empty());
+      }
+
+      myOptionsPanel.add(component, card);
 
       myCustomSteps.put(card, step);
     }

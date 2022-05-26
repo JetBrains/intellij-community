@@ -7,8 +7,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.resources-fir" />
     <orderEntry type="module" module-name="kotlin.fir" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-api" />
-    <orderEntry type="module" module-name="kotlin.fir.frontend-fir" />
+    <orderEntry type="module" module-name="kotlin.fir.fir-fe10-binding" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" />
+    <orderEntry type="module" module-name="kotlin.fir.analysis-api-providers-ide-impl" />
   </component>
 </module>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -610,7 +610,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
 
     EditorWindow window = editorManager.getCurrentWindow();
-    EditorComposite composite = window != null ? window.findFileComposite(file) : null;
+    EditorComposite composite = window != null ? window.getComposite(file) : null;
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), window, composite != null && composite.isPreview(),
                          getCaretPosition(fileEditor), System.currentTimeMillis());
   }

@@ -49,7 +49,8 @@ private object ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots : Sc
         displayName(SCRIPT_DEFINITION_NAME)
         jvm {
             val kotlincLibraryName =
-                PathManager.getJarForClass(KotlinVersion::class.java)?.nameWithoutExtension ?: "kotlinc-lib"
+                PathManager.getJarForClass(KotlinVersion::class.java)?.nameWithoutExtension
+                    ?: error("unable to locate Kotlin standard library")
             // This approach works, but could be quite expensive, since it forces indexing of the whole IDEA classpath
             // more economical approach would be to list names (without versions and .jar extension) of all jars
             // required for the scripts after the kotlin stdlib/script-runtime, and set wholeClasspath to false

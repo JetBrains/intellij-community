@@ -25,14 +25,9 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 class KotlinLambdaAsyncMethodFilter(
     declaration: KtDeclaration?,
     callingExpressionLines: Range<Int>?,
-    private val info: KotlinLambdaInfo,
+    private val lambdaInfo: KotlinLambdaInfo,
     private val lambdaFilter: KotlinLambdaMethodFilter
-) : KotlinMethodFilter(
-    declaration,
-    false,
-    callingExpressionLines,
-    info.callerMethodName
-) {
+) : KotlinMethodFilter(declaration, callingExpressionLines, lambdaInfo.callerMethodInfo) {
     private var visitedLocations = 0
 
     override fun locationMatches(process: DebugProcessImpl, location: Location?, frameProxy: StackFrameProxyImpl?): Boolean {
@@ -48,7 +43,7 @@ class KotlinLambdaAsyncMethodFilter(
         // We failed to get the location inside lambda (it can happen for SAM conversions in IR backend).
         // So we fall back to ordinal check.
         if (locationInLambda == null) {
-            return visitedLocations == info.callerMethodOrdinal
+            return visitedLocations == lambdaInfo.callerMethodOrdinal
         }
         return lambdaFilter.locationMatches(process, locationInLambda)
     }
@@ -80,7 +75,7 @@ class KotlinLambdaAsyncMethodFilter(
     }
 
     private fun StackFrameProxyImpl.getLambdaReference(): ObjectReference? =
-        argumentValues.getOrNull(info.parameterIndex) as? ObjectReference
+        argumentValues.getOrNull(lambdaInfo.parameterIndex) as? ObjectReference
 
     private class KotlinLambdaInstanceBreakpoint(
         project: Project,

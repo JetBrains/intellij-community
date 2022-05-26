@@ -46,11 +46,6 @@ public class PyReferringObjectsValue extends PyDebugValue {
   }
 
   @Override
-  public boolean canNavigateToSource() {
-    return true;
-  }
-
-  @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
     if (myReferrersLoader == null) {

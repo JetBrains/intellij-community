@@ -218,7 +218,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
     myPanel = new JPanel(new BorderLayout());
     JScrollPane scrollPane = createScrollPane(myTree, true);
-    if (ExperimentalUI.isNewToolWindowsStripes()) {
+    if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
         Border border = event.getAdjustable().getValue() != 0 ? new CustomLineBorder(myToolbarInsets) : JBUI.Borders.empty(myToolbarInsets);
         myToolbar.getComponent().setBorder(border);
@@ -347,7 +347,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
       ToolWindow window = ProblemsView.getToolWindow(getProject());
       if (window instanceof ToolWindowEx) {
         ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.SecondaryActions");
-        ((ToolWindowEx)window).setAdditionalGearActions(group);
+        window.setAdditionalGearActions(group);
       }
     }
     visibilityChangedTo(selected);

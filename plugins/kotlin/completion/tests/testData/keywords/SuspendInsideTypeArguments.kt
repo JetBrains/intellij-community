@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class Su() {
     fun x() {
         mutableListOf<<caret>>()

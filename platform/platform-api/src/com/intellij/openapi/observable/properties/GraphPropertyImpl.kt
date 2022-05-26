@@ -1,15 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.observable.properties
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+@Suppress("DEPRECATION")
 class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: () -> T)
   : GraphProperty<T>, AtomicLazyProperty<T>(initial) {
 
-  override fun dependsOn(parent: ObservableClearableProperty<*>) {
-    propertyGraph.dependsOn(this, parent)
-  }
-
-  override fun dependsOn(parent: ObservableClearableProperty<*>, default: () -> T) {
-    propertyGraph.dependsOn(this, parent, default)
+  override fun dependsOn(parent: ObservableProperty<*>, update: () -> T) {
+    propertyGraph.dependsOn(this, parent, update)
   }
 
   override fun afterPropagation(listener: () -> Unit) {
@@ -21,11 +21,12 @@ class GraphPropertyImpl<T>(private val propertyGraph: PropertyGraph, initial: ()
   }
 
   companion object {
-    fun <T> PropertyGraph.graphProperty(initial: T) = graphProperty { initial }
+    @Deprecated("Please use PropertyGraph.property instead", ReplaceWith("property(initial)"))
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    fun <T> PropertyGraph.graphProperty(initial: T): GraphProperty<T> = property(initial)
 
-    fun <T> PropertyGraph.graphProperty(initial: () -> T): GraphProperty<T> = GraphPropertyImpl(this, initial)
-
-    fun <S, T> PropertyGraph.graphPropertyView(initial: () -> T, map: (S) -> T, comap: (T) -> S): GraphProperty<T> =
-      this.graphProperty { comap(initial()) }.transform(map, comap)
+    @Deprecated("Please use PropertyGraph.lazyProperty instead", ReplaceWith("lazyProperty(initial)"))
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    fun <T> PropertyGraph.graphProperty(initial: () -> T): GraphProperty<T> = lazyProperty(initial)
   }
 }

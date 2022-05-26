@@ -5,16 +5,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.AbstractStubIndex;
+import com.intellij.psi.stubs.CharSequenceHashStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.util.io.CharSequenceHashInlineKeyDescriptor;
-import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaFullClassNameIndex extends AbstractStubIndex<CharSequence, PsiClass> {
+public class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<PsiClass> {
   private static final JavaFullClassNameIndex ourInstance = new JavaFullClassNameIndex();
 
   public static JavaFullClassNameIndex getInstance() {
@@ -23,12 +21,7 @@ public class JavaFullClassNameIndex extends AbstractStubIndex<CharSequence, PsiC
 
   @Override
   public int getVersion() {
-    return 1;
-  }
-
-  @Override
-  public @NotNull KeyDescriptor<CharSequence> getKeyDescriptor() {
-    return new CharSequenceHashInlineKeyDescriptor();
+    return super.getVersion();
   }
 
   @NotNull

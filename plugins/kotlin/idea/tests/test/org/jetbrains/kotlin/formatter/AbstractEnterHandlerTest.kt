@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File

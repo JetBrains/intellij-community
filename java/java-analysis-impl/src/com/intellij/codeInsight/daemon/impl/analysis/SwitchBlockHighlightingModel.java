@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
@@ -276,7 +278,7 @@ public class SwitchBlockHighlightingModel {
     }
   }
 
-  @NotNull
+  @Nullable
   HighlightInfo createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
     String description = duplicateKey == myDefaultValue ? JavaErrorBundle.message("duplicate.default.switch.label") :
                          JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
@@ -316,6 +318,7 @@ public class SwitchBlockHighlightingModel {
     results.add(info);
   }
 
+  @Nullable
   HighlightInfo createCompletenessInfoForSwitch(boolean hasAnyCaseLabels) {
     String messageKey;
     boolean isSwitchExpr = myBlock instanceof PsiExpression;
@@ -347,6 +350,7 @@ public class SwitchBlockHighlightingModel {
     return null;
   }
 
+  @Nullable
   private static HighlightInfo createError(@NotNull PsiElement range, @NlsSafe @NotNull String message) {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
   }
@@ -553,7 +557,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     @Override
-    @NotNull
+    @Nullable
     HighlightInfo createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
       String description;
       if (duplicateKey == myDefaultValue) {
@@ -700,7 +704,8 @@ public class SwitchBlockHighlightingModel {
           if (isConstantLabelElement(next)) {
             PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
             assert constExpr != null;
-            if (JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType) &&
+            if ((PsiUtil.getLanguageLevel(constExpr).isAtLeast(LanguageLevel.JDK_18_PREVIEW) ||
+                JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType)) &&
                 JavaPsiPatternUtil.dominates(currPattern, constExpr.getType())) {
               result.put(next, currPattern);
             }
@@ -806,7 +811,9 @@ public class SwitchBlockHighlightingModel {
             for (PsiClass permittedClass : getPermittedClasses(psiClass)) {
               if (!visited.add(permittedClass)) continue;
               PsiPattern pattern = patternClasses.get(permittedClass);
-              if (pattern == null || !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
+              if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
+                                      TypeConversionUtil.areTypesConvertible(mySelectorType, TypeUtils.getType(permittedClass))) ||
+                  pattern != null && !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass))) {
                 nonVisited.add(permittedClass);
               }
             }
@@ -860,7 +867,7 @@ public class SwitchBlockHighlightingModel {
         GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
         return new ArrayList<>(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
       }
-      return ContainerUtil.map(permitsList.getReferencedTypes(), type -> type.resolve());
+      return Stream.of(permitsList.getReferencedTypes()).map(type -> type.resolve()).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     @Nullable
@@ -937,11 +944,9 @@ public class SwitchBlockHighlightingModel {
   /**
    * @param switchBlock switch statement/expression to check
    * @return a set of label elements that are duplicates. If a switch block contains patterns,
-   * then dominated patterns will be also included in the result set.
+   * then dominated label elements will be also included in the result set.
    */
-  @NotNull
-  public static Set<PsiElement> findSuspiciousLabelElements(@Nullable PsiSwitchBlock switchBlock) {
-    if (switchBlock == null) return Collections.emptySet();
+  public static @NotNull Set<PsiElement> findSuspiciousLabelElements(@NotNull PsiSwitchBlock switchBlock) {
     var switchModel = createInstance(PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
     if (switchModel == null) return Collections.emptySet();
     var labelElements = StreamEx.of(SwitchUtils.getSwitchBranches(switchBlock)).select(PsiCaseLabelElement.class).toList();
@@ -961,9 +966,8 @@ public class SwitchBlockHighlightingModel {
     List<PsiCaseLabelElement> dominanceCheckingCandidates = new SmartList<>();
     labelElements.forEach(label -> PatternsInSwitchBlockHighlightingModel.fillElementsToCheckDominance(dominanceCheckingCandidates, label));
     if (dominanceCheckingCandidates.isEmpty()) return result;
-    var dominatedPatterns =
-      StreamEx.ofKeys(patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern)
-        .filter(key -> key instanceof PsiPattern).toSet();
+    var dominatedPatterns = StreamEx.ofKeys(
+      patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern).toSet();
     result.addAll(dominatedPatterns);
 
     return result;

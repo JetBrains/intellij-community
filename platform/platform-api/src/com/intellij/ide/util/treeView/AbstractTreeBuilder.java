@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -12,7 +11,6 @@ import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -20,7 +18,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -40,7 +37,7 @@ import java.util.*;
 @Deprecated
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
-  @NonNls private static final String TREE_BUILDER = "TreeBuilder";
+  private static final @NonNls String TREE_BUILDER = "TreeBuilder";
   protected static final boolean DEFAULT_UPDATE_INACTIVE = true;
 
   public AbstractTreeBuilder(@NotNull JTree tree,
@@ -65,7 +62,7 @@ public class AbstractTreeBuilder implements Disposable {
   protected void init(@NotNull JTree tree,
                       @NotNull DefaultTreeModel treeModel,
                       AbstractTreeStructure treeStructure,
-                      @Nullable final Comparator<? super NodeDescriptor<?>> comparator,
+                      final @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                       final boolean updateIfInactive) {
 
     tree.putClientProperty(TREE_BUILDER, new WeakReference<>(this));
@@ -76,8 +73,7 @@ public class AbstractTreeBuilder implements Disposable {
     setPassthroughMode(isUnitTestingMode());
   }
 
-  @NotNull
-  protected AbstractTreeUi createUi() {
+  protected @NotNull AbstractTreeUi createUi() {
     return new AbstractTreeUi();
   }
 
@@ -95,22 +91,22 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.userSelect(new Object[]{element}, null, false, true);
   }
 
-  public final void select(final Object element, @Nullable final Runnable onDone) {
+  public final void select(final Object element, final @Nullable Runnable onDone) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.userSelect(new Object[]{element}, new UserRunnable(onDone), false, true);
   }
 
-  public final void select(final Object element, @Nullable final Runnable onDone, boolean addToSelection) {
+  public final void select(final Object element, final @Nullable Runnable onDone, boolean addToSelection) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.userSelect(new Object[]{element}, new UserRunnable(onDone), addToSelection, true);
   }
 
-  public final void select(final Object[] elements, @Nullable final Runnable onDone) {
+  public final void select(final Object[] elements, final @Nullable Runnable onDone) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.userSelect(elements, new UserRunnable(onDone), false, true);
   }
 
-  public final void select(final Object[] elements, @Nullable final Runnable onDone, boolean addToSelection) {
+  public final void select(final Object[] elements, final @Nullable Runnable onDone, boolean addToSelection) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.userSelect(elements, new UserRunnable(onDone), addToSelection, true);
   }
@@ -131,13 +127,11 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
 
-  @NotNull
-  static AbstractTreeNode<Object> createSearchingTreeNodeWrapper() {
+  static @NotNull AbstractTreeNode<Object> createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper();
   }
 
-  @Nullable
-  protected AbstractTreeUpdater createUpdater() {
+  protected @Nullable AbstractTreeUpdater createUpdater() {
     if (isDisposed()) return null;
 
     AbstractTreeUpdater updater = new AbstractTreeUpdater(this);
@@ -145,8 +139,7 @@ public class AbstractTreeBuilder implements Disposable {
     return updater;
   }
 
-  @Nullable
-  protected final AbstractTreeUpdater getUpdater() {
+  protected final @Nullable AbstractTreeUpdater getUpdater() {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.getUpdater();
   }
@@ -166,8 +159,7 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.addSubtreeToUpdate(node, afterUpdate);
   }
 
-  @Nullable
-  public final DefaultMutableTreeNode getRootNode() {
+  public final @Nullable DefaultMutableTreeNode getRootNode() {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.getRootNode();
   }
@@ -218,8 +210,7 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.setTreeStructure(structure);
   }
 
-  @Nullable
-  public Object getRootElement() {
+  public @Nullable Object getRootElement() {
     AbstractTreeStructure structure = getTreeStructure();
     return structure == null ? null : structure.getRootElement();
   }
@@ -237,23 +228,19 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.initRootNode();
   }
 
-  @NotNull
-  public final ActionCallback queueUpdate() {
+  public final @NotNull ActionCallback queueUpdate() {
     return queueUpdate(true);
   }
 
-  @NotNull
-  public final ActionCallback queueUpdate(boolean withStructure) {
+  public final @NotNull ActionCallback queueUpdate(boolean withStructure) {
     return queueUpdateFrom(getRootElement(), true, withStructure);
   }
 
-  @NotNull
-  public final ActionCallback queueUpdateFrom(final Object element, final boolean forceResort) {
+  public final @NotNull ActionCallback queueUpdateFrom(final Object element, final boolean forceResort) {
     return queueUpdateFrom(element, forceResort, true);
   }
 
-  @NotNull
-  public ActionCallback queueUpdateFrom(final Object element, final boolean forceResort, final boolean updateStructure) {
+  public @NotNull ActionCallback queueUpdateFrom(final Object element, final boolean forceResort, final boolean updateStructure) {
     AbstractTreeUi ui = getUi();
     if (ui == null) {
       return ActionCallback.REJECTED;
@@ -293,8 +280,7 @@ public class AbstractTreeBuilder implements Disposable {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Nullable
-  public DefaultMutableTreeNode getNodeForElement(@NotNull Object element) {
+  public @Nullable DefaultMutableTreeNode getNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.getNodeForElement(element, false);
   }
@@ -304,8 +290,7 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.doCleanUp();
   }
 
-  @Nullable
-  protected ProgressIndicator createProgressIndicator() {
+  protected @Nullable ProgressIndicator createProgressIndicator() {
     return null;
   }
 
@@ -341,8 +326,7 @@ public class AbstractTreeBuilder implements Disposable {
     return ui != null && ui.isNodeBeingBuilt(path);
   }
 
-  @Nullable
-  protected Object findNodeByElement(@NotNull Object element) {
+  protected @Nullable Object findNodeByElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.findNodeByElement(element);
   }
@@ -383,7 +367,7 @@ public class AbstractTreeBuilder implements Disposable {
     return true;
   }
 
-  protected void runBackgroundLoading(@NotNull final Runnable runnable) {
+  protected void runBackgroundLoading(final @NotNull Runnable runnable) {
     if (isDisposed()) return;
 
     final Application app = ApplicationManager.getApplication();
@@ -417,14 +401,12 @@ public class AbstractTreeBuilder implements Disposable {
     }
   }
 
-  @NotNull
-  public final ActionCallback getInitialized() {
+  public final @NotNull ActionCallback getInitialized() {
     AbstractTreeUi ui = getUi();
     return ui == null ? ActionCallback.REJECTED : ui.getInitialized();
   }
 
-  @NotNull
-  public final ActionCallback getReady(Object requestor) {
+  public final @NotNull ActionCallback getReady(Object requestor) {
     AbstractTreeUi ui = getUi();
     return ui == null ? ActionCallback.REJECTED : ui.getReady(requestor);
   }
@@ -443,31 +425,19 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.expandAll(onDone);
   }
 
-  @NotNull
-  public ActionCallback cancelUpdate() {
+  public @NotNull ActionCallback cancelUpdate() {
     AbstractTreeUi ui = getUi();
     return ui == null ? ActionCallback.REJECTED : ui.cancelUpdate();
   }
 
-  @NotNull
-  public ActionCallback batch(@NotNull Progressive progressive) {
+  public @NotNull ActionCallback batch(@NotNull Progressive progressive) {
     AbstractTreeUi ui = getUi();
     return ui == null ? ActionCallback.REJECTED : ui.batch(progressive);
   }
 
-  @NotNull
-  public Promise<Object> revalidateElement(@NotNull Object element) {
+  public @NotNull Promise<Object> revalidateElement(@NotNull Object element) {
     AbstractTreeStructure structure = getTreeStructure();
-    if (structure == null) {
-      return Promises.rejectedPromise();
-    }
-
-    AsyncPromise<Object> promise = new AsyncPromise<>();
-    structure
-      .revalidateElement(element)
-      .doWhenDone((Consumer<Object>)o -> promise.setResult(o))
-      .doWhenRejected(s -> promise.setError(s));
-    return promise;
+    return structure == null ? Promises.rejectedPromise() : Promises.resolvedPromise(structure.revalidateElement(element));
   }
 
   private static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
@@ -476,8 +446,7 @@ public class AbstractTreeBuilder implements Disposable {
     }
 
     @Override
-    @NotNull
-    public Collection<AbstractTreeNode<?>> getChildren() {
+    public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
       return Collections.emptyList();
     }
 
@@ -513,20 +482,17 @@ public class AbstractTreeBuilder implements Disposable {
     return ui != null && descriptor.update();
   }
 
-  @Nullable
-  public final DefaultTreeModel getTreeModel() {
+  public final @Nullable DefaultTreeModel getTreeModel() {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.getTreeModel();
   }
 
-  @NotNull
-  public final Set<Object> getSelectedElements() {
+  public final @NotNull Set<Object> getSelectedElements() {
     AbstractTreeUi ui = getUi();
     return ui == null ? Collections.emptySet() : ui.getSelectedElements();
   }
 
-  @NotNull
-  public final <T> Set<T> getSelectedElements(@NotNull Class<T> elementClass) {
+  public final @NotNull <T> Set<T> getSelectedElements(@NotNull Class<T> elementClass) {
     Set<T> result = new LinkedHashSet<>();
     for (Object o : getSelectedElements()) {
       Object each = transformElement(o);
@@ -547,19 +513,16 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.setCanYield(yield);
   }
 
-  @Nullable
-  public static AbstractTreeBuilder getBuilderFor(@NotNull JTree tree) {
+  public static @Nullable AbstractTreeBuilder getBuilderFor(@NotNull JTree tree) {
     Reference<AbstractTreeBuilder> ref = (Reference)tree.getClientProperty(TREE_BUILDER);
     return SoftReference.dereference(ref);
   }
 
-  @Nullable
-  public final <T> Object accept(@NotNull Class<?> nodeClass, @NotNull TreeVisitor<T> visitor) {
+  public final @Nullable <T> Object accept(@NotNull Class<?> nodeClass, @NotNull TreeVisitor<T> visitor) {
     return accept(nodeClass, getRootElement(), visitor);
   }
 
-  @Nullable
-  private <T> Object accept(@NotNull Class<?> nodeClass, Object element, @NotNull TreeVisitor<T> visitor) {
+  private @Nullable <T> Object accept(@NotNull Class<?> nodeClass, Object element, @NotNull TreeVisitor<T> visitor) {
     if (element == null) {
       return null;
     }

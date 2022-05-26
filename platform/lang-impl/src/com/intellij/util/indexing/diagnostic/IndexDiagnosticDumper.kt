@@ -65,6 +65,19 @@ class IndexDiagnosticDumper : Disposable {
       get() =
         SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.provider.root.paths", false)
 
+    /**
+     * Some processes may be done in multiple threads, like content loading,
+     * see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.doIndexFiles]
+     * Such processes have InAllThreads time and visible time, see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.indexFiles],
+     * [ProjectIndexingHistoryImpl.visibleTimeToAllThreadsTimeRatio], [IndexingFileSetStatistics]
+     *
+     * This property allows to provide more details on those times and ratio in html
+     */
+    @JvmStatic
+    val shouldProvideVisibleAndAllThreadsTimeInfo: Boolean
+      get() =
+        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.provide.visible.and.all.threads.time.info", false)
+
     @JvmStatic
     @TestOnly
     var shouldDumpInUnitTestMode: Boolean = false

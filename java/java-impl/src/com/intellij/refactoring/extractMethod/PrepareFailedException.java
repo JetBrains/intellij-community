@@ -39,11 +39,11 @@ public class PrepareFailedException extends Exception {
     return super.getMessage();
   }
 
-  PsiFile getFile() {
+  public PsiFile getFile() {
     return myContainingFile;
   }
 
-  TextRange getTextRange() {
+  public TextRange getTextRange() {
     return myTextRange;
   }
 }

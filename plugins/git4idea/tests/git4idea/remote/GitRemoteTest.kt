@@ -27,8 +27,8 @@ class GitRemoteTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    host = System.getenv("idea.test.github.host")
-    token = System.getenv("idea.test.github.token1")
+    host = System.getenv("idea_test_github_host") ?: System.getenv("idea.test.github.host")
+    token = System.getenv("idea_test_github_token1") ?: System.getenv("idea.test.github.token1")
 
     authenticator = TestAuthenticator()
     authTestService = service<GitHttpAuthService>() as GitHttpAuthTestService

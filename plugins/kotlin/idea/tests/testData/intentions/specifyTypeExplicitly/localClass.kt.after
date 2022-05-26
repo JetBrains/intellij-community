@@ -1,5 +1,5 @@
 class A {
-    private fun bar(): () -> Any<caret> = {
+    private fun bar(): () -> Any = {
         class Local()
         Local()
     }

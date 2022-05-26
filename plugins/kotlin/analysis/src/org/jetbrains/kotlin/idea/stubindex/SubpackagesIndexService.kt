@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -28,6 +29,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 class SubpackagesIndexService(private val project: Project): Disposable {
+
+    private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages", false)
 
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
@@ -68,15 +71,12 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         resetOtherLanguagesModificationTracker()
     }
 
-    private fun otherLanguagesModificationTracker() =
-        otherLanguagesModificationTracker ?: PsiModificationTracker.SERVICE.getInstance(project).forLanguages {
-            // PSI changes of Kotlin and Java languages are covered by [KotlinPackageModificationListener]
-            // changes in other languages could affect packages
-            !it.`is`(Language.ANY) && !it.`is`(KotlinLanguage.INSTANCE) && !it.`is`(JavaLanguage.INSTANCE)
-        }
-            .also {
-                otherLanguagesModificationTracker = it
+    private fun otherLanguagesModificationTracker(): ModificationTracker =
+        otherLanguagesModificationTracker ?: synchronized(this) {
+            otherLanguagesModificationTracker ?: run {
+                OtherLanguagesModificationTracker(project).also { otherLanguagesModificationTracker = it }
             }
+        }
 
     inner class SubpackagesIndex(allPackageFqNames: Collection<String>, val dependencies: Array<ModificationTracker>) {
         // a map from any existing package (in kotlin) to a set of subpackages (not necessarily direct) containing files
@@ -124,7 +124,7 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         }
 
         private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean {
-            return !fqName.isRoot && (isEmpty() ||
+            return enableSubpackageCaching && !fqName.isRoot && (isEmpty() ||
                     // fast check is reasonable when fqNames has more than 1 element
                     size > 1 && run {
                 val partialFqName = KotlinPartialPackageNamesIndex.toPartialFqName(fqName)
@@ -137,10 +137,11 @@ class SubpackagesIndexService(private val project: Project): Disposable {
             })
         }
 
-        private fun cachedPartialFqNames(scope: GlobalSearchScope): MutableMap<FqName, Boolean>? =
-            scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(dependencies) {
-                Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
-            }
+        private fun cachedPartialFqNames(scope: GlobalSearchScope): MutableMap<FqName, Boolean>? {
+            if (!enableSubpackageCaching) return null
+            val module = scope.safeAs<ModuleSourceScope>()?.module ?: return null
+            return module.cacheByProvider(*dependencies, provider = ::cachedPartialFqNamesProvider)
+        }
 
         fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
 
@@ -183,4 +184,32 @@ class SubpackagesIndexService(private val project: Project): Disposable {
             return project.getServiceSafe<SubpackagesIndexService>().cachedValue.value!!
         }
     }
+}
+
+// to avoid capture of extra field (esp. `dependencies`) into a provider lambda
+private fun cachedPartialFqNamesProvider() = Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
+
+
+private class OtherLanguagesModificationTracker(val project: Project): ModificationTracker {
+    private val delegate = PsiModificationTracker.SERVICE.getInstance(project).forLanguages {
+        // PSI changes of Kotlin and Java languages are covered by [KotlinPackageModificationListener]
+        // changes in other languages could affect packages
+        !it.`is`(Language.ANY) && !it.`is`(KotlinLanguage.INSTANCE) && !it.`is`(JavaLanguage.INSTANCE)
+    }
+
+    override fun getModificationCount(): Long = delegate.modificationCount
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as OtherLanguagesModificationTracker
+
+        return project == other.safeAs<OtherLanguagesModificationTracker>()?.project
+    }
+
+    override fun hashCode(): Int {
+        return project.hashCode()
+    }
+
 }

@@ -12,9 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public final class CachedXmlDocumentSet {
@@ -29,12 +27,8 @@ public final class CachedXmlDocumentSet {
       return null;
     }
 
-    InputStream inputStream = file.getInputStream();
-    try {
+    try (InputStream inputStream = file.getInputStream()) {
       return JDOMUtil.load(inputStream);
-    }
-    finally {
-      inputStream.close();
     }
   }
 
@@ -64,14 +58,5 @@ public final class CachedXmlDocumentSet {
       }
     }
     return file;
-  }
-
-  @NotNull
-  public List<String> getFilePaths() {
-    List<String> list = new ArrayList<>(nameToDir.size());
-    for (String name : nameToDir.keySet()) {
-      list.add(getParent(name) + '/' + name);
-    }
-    return list;
   }
 }

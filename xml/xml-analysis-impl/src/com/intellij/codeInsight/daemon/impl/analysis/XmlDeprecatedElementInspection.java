@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlDeprecationOwnerDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.intellij.lang.annotations.Language;
@@ -61,6 +62,10 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
 
   private static boolean checkDeprecated(@Nullable PsiMetaData metaData, Pattern pattern) {
     if (metaData == null) return false;
+    if (metaData instanceof XmlDeprecationOwnerDescriptor) {
+      return ((XmlDeprecationOwnerDescriptor)metaData).isDeprecated();
+    }
+    
     PsiElement declaration = metaData.getDeclaration();
     if (!(declaration instanceof XmlTag)) return false;
     XmlComment comment = XmlUtil.findPreviousComment(declaration);

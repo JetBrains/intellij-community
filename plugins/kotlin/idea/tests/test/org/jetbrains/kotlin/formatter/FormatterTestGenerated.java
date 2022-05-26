@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.formatter;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.test.TestRoot;
+import org.jetbrains.kotlin.idea.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -1282,6 +1282,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @TestMetadata("SuperListIndent.after.kt")
             public void testSuperListIndent() throws Exception {
                 runTest("testData/formatter/SuperListIndent.after.kt");
+            }
+
+            @TestMetadata("Throw.after.kt")
+            public void testThrow() throws Exception {
+                runTest("testData/formatter/Throw.after.kt");
             }
 
             @TestMetadata("TryCatchLineBreak.after.kt")

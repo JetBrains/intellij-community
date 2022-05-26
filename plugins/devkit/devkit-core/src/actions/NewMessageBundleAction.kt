@@ -38,7 +38,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 
 class NewMessageBundleAction : CreateElementActionBase(), UpdateInBackground {
-  override fun invokeDialog(project: Project, directory: PsiDirectory, elementsConsumer: Consumer<Array<PsiElement>>) {
+  override fun invokeDialog(project: Project, directory: PsiDirectory, elementsConsumer: Consumer<in Array<PsiElement>>) {
     val module = ModuleUtilCore.findModuleForPsiElement(directory) ?: return
     if (module.name.endsWith(".impl") && ModuleManager.getInstance(project).findModuleByName(module.name.removeSuffix(".impl")) != null) {
       Messages.showErrorDialog(project, DevKitBundle.message(
@@ -137,7 +137,7 @@ class NewMessageBundleAction : CreateElementActionBase(), UpdateInBackground {
     return DevKitBundle.message("action.DevKit.NewMessageBundle.error.title.cannot.create.new.message.bundle")
   }
 
-  override fun getActionName(directory: PsiDirectory?, newName: String?): String {
+  override fun getActionName(directory: PsiDirectory, newName: String): String {
     return DevKitBundle.message("action.DevKit.NewMessageBundle.action.name.create.new.message.bundle", newName)
   }
 }

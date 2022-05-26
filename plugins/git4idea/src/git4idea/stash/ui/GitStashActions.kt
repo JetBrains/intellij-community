@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesOperationsGroup
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 import git4idea.stash.GitStashOperations
 import git4idea.stash.GitStashTracker
 import git4idea.ui.StashInfo
@@ -54,4 +56,10 @@ class GitUnstashAsAction: GitSingleStashAction() {
     return false
   }
 
+}
+
+class GitStashOperationsGroup: SavedPatchesOperationsGroup() {
+  override fun isApplicable(patchObject: SavedPatchesProvider.PatchObject<*>): Boolean {
+    return patchObject.data is StashInfo
+  }
 }

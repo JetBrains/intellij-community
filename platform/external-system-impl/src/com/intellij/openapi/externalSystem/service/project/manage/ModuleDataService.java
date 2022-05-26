@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -31,20 +31,17 @@ import java.util.*;
  * @author Denis Zhdanov
  */
 @Order(ExternalSystemConstants.BUILTIN_MODULE_DATA_SERVICE_ORDER)
-public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
-
-  @NotNull
+public final class ModuleDataService extends AbstractModuleDataService<ModuleData> {
   @Override
-  public Key<ModuleData> getTargetDataKey() {
+  public @NotNull Key<ModuleData> getTargetDataKey() {
     return ProjectKeys.MODULE;
   }
 
-  @NotNull
   @Override
-  public Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<ModuleData>> toImport,
-                                                          @NotNull final ProjectData projectData,
-                                                          @NotNull final Project project,
-                                                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  public @NotNull Computable<Collection<Module>> computeOrphanData(final @NotNull Collection<? extends DataNode<ModuleData>> toImport,
+                                                                   final @NotNull ProjectData projectData,
+                                                                   final @NotNull Project project,
+                                                                   final @NotNull IdeModifiableModelsProvider modelsProvider) {
     return () -> {
       List<Module> orphanIdeModules = new SmartList<>();
 
@@ -99,9 +96,8 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
     settings.setAvailableProjects(projects);
   }
 
-  @NotNull
-  private static Set<String> detectRenamedProjects(@NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> currentInfo,
-                                                   @NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> oldInfo) {
+  private static @NotNull Set<String> detectRenamedProjects(@NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> currentInfo,
+                                                            @NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> oldInfo) {
     Map<String/* external config path */, String/* project name */> map = new HashMap<>();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : currentInfo.entrySet()) {
       map.put(entry.getKey().getPath(), entry.getKey().getName());

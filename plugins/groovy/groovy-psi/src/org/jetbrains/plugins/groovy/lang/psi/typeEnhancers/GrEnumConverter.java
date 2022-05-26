@@ -15,11 +15,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 
 public class GrEnumConverter extends GrTypeConverter {
 
-  @Override
-  public boolean isApplicableTo(@NotNull Position position) {
-    return position == Position.ASSIGNMENT || position == Position.RETURN_VALUE;
-  }
-
   @Nullable
   @Override
   public ConversionResult isConvertible(@NotNull PsiType targetType,

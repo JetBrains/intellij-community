@@ -63,7 +63,8 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         val firstModel = lang.value.first()
         val langNode: CheckedTreeNode
         val startFrom: Int
-        if ((lang.value.size == 1 || group.key.toString() == firstModel.name) && InlayGroup.OTHER_GROUP != group.key) {
+        if ((lang.value.size == 1 || group.key.toString() == firstModel.name && firstModel.language == sortedMap.firstKey()) &&
+            InlayGroup.OTHER_GROUP != group.key) {
           nodeToSelect = addModelNode(firstModel, groupNode, lastSelected, nodeToSelect)
           firstModel.isMergedNode = true
           langNode = groupNode.firstChild as CheckedTreeNode
@@ -109,7 +110,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       TreeUtil.selectNode(tree, nodeToSelect)
     }
 
-    val splitter = JBSplitter(false, "inlay.settings.proportion.key", 0.5f)
+    val splitter = JBSplitter(false, "inlay.settings.proportion.key", 0.45f)
     splitter.setHonorComponentsMinimumSize(false)
     splitter.firstComponent = ScrollPaneFactory.createScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
     splitter.secondComponent = rightPanel

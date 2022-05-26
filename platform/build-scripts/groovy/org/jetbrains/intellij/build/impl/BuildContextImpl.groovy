@@ -434,7 +434,7 @@ final class BuildContextImpl extends BuildContext {
     }
 
     if (options.bundledRuntimeVersion >= 17) {
-      jvmArgs.addAll(OpenedPackages.getPackages(this))
+      jvmArgs.addAll(OpenedPackages.getCommandLineArguments(this))
     }
 
     return jvmArgs

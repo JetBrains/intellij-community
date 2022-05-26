@@ -16,11 +16,16 @@
 package git4idea.branch
 
 import com.intellij.dvcs.branch.BranchType
+import git4idea.GitBranch
 
 enum class GitBranchType constructor(private val myName: String) : BranchType {
   LOCAL("LOCAL"), REMOTE("REMOTE");
 
   override fun getName(): String {
     return myName
+  }
+
+  companion object {
+    fun of(branch: GitBranch) = if (branch.isRemote) REMOTE else LOCAL
   }
 }

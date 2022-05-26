@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @ApiStatus.Internal
-public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T>, Iterable<T> {
+public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T>, Iterable<@Nullable T> {
   static final Logger LOG = Logger.getInstance(ExtensionPointImpl.class);
 
   // test-only
@@ -332,7 +332,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
-  private @NotNull Iterator<T> createIterator() {
+  private @NotNull Iterator<@Nullable T> createIterator() {
     int size;
     List<ExtensionComponentAdapter> adapters = getSortedAdapters();
     size = adapters.size();

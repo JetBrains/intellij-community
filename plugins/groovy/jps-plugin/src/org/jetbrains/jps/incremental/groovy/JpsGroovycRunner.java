@@ -69,7 +69,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
         return ExitCode.NOTHING_DONE;
       }
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-        LOG.info("forStubs=" + myForStubs);
+        LOG.debug("forStubs=" + myForStubs);
       }
 
       Map<T, String> finalOutputs = getCanonicalOutputs(context, chunk, builder);
@@ -141,7 +141,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     GroovycContinuation continuation = takeContinuation(context, chunk);
     if (continuation != null) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-        LOG.info("using continuation for " + chunk);
+        LOG.debug("using continuation for " + chunk);
       }
       return continuation.continueCompilation();
     }
@@ -206,7 +206,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     GroovycContinuation continuation = takeContinuation(context, chunk);
     if (continuation != null) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-        LOG.info("clearing continuation for " + chunk);
+        LOG.debug("clearing continuation for " + chunk);
       }
       continuation.buildAborted();
     }
@@ -221,7 +221,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     clearContinuation(context, chunk);
     if (continuation != null) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-        LOG.info("registering continuation for " + chunk);
+        LOG.debug("registering continuation for " + chunk);
       }
 
       Map<ModuleChunk, GroovycContinuation> map = CONTINUATIONS.get(context);
@@ -269,7 +269,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     final MultiMap<T, OutputItem> compiled = MultiMap.createLinkedSet();
     for (final OutputItem item : successfullyCompiled) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-        LOG.info("compiled=" + item);
+        LOG.debug("compiled=" + item);
       }
       R rd = findRoot(context, new File(item.sourcePath));
       if (rd != null) {
@@ -280,12 +280,12 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       }
       else {
         if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-          LOG.info("No java source root descriptor for the item found =" + item);
+          LOG.debug("No java source root descriptor for the item found =" + item);
         }
       }
     }
     if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-      LOG.info("Chunk " + chunk + " compilation finished");
+      LOG.debug("Chunk " + chunk + " compilation finished");
     }
     return compiled;
   }
@@ -385,7 +385,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
           try {
             final byte[] bytes = FileUtil.loadFileBytes(outputFile);
             if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-              LOG.info("registerCompiledClass " + outputFile + " from " + srcFile);
+              LOG.debug("registerCompiledClass " + outputFile + " from " + srcFile);
             }
             outputConsumer.registerCompiledClass(target, srcFile, outputFile, bytes);
             callback.associate(outputPath, sourcePath, new FailSafeClassReader(bytes));

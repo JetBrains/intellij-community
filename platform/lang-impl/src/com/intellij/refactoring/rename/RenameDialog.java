@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -47,7 +48,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-public class RenameDialog extends RefactoringDialog {
+public class RenameDialog extends RefactoringDialog implements RenameRefactoringDialog {
   private SuggestedNameInfo mySuggestedNameInfo;
   private JLabel myNameLabel;
   private NameSuggestionsField myNameSuggestionsField;
@@ -160,6 +161,7 @@ public class RenameDialog extends RefactoringDialog {
     validateButtons();
   }
 
+  @Override
   public String[] getSuggestedNames() {
     final LinkedHashSet<String> result = new LinkedHashSet<>();
     final String initialName = VariableInplaceRenameHandler.getInitialName();
@@ -314,6 +316,7 @@ public class RenameDialog extends RefactoringDialog {
     performRename(newName);
   }
 
+  @Override
   public void performRename(@NotNull String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
@@ -372,5 +375,10 @@ public class RenameDialog extends RefactoringDialog {
 
   private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("rename.title");
+  }
+
+  @Override
+  public void close() {
+    close(DialogWrapper.CANCEL_EXIT_CODE);
   }
 }

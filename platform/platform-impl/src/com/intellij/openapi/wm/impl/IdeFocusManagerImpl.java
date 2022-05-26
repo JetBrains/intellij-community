@@ -14,6 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @deprecated Use {@link IdeFocusManager}'s methods directly.
+ */
+@Deprecated
 public final class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   @NotNull

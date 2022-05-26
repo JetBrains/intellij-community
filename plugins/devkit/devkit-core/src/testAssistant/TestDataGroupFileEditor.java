@@ -112,12 +112,6 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements TextE
   }
 
   @Override
-  public void selectNotify() { }
-
-  @Override
-  public void deselectNotify() { }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override

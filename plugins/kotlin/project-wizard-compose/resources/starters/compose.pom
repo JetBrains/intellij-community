@@ -1,0 +1,26 @@
+<project>
+  <modelVersion>1.0.0</modelVersion>
+  <groupId>com.intellij</groupId>
+  <artifactId>compose-starter</artifactId>
+  <version>1.0</version>
+
+  <properties>
+    <java.version>11</java.version>
+    <kotlin.target>11</kotlin.target>
+    <gradle.version>7.3.3</gradle.version>
+    <kotlin.version>1.6.10</kotlin.version>
+    <compose.version>1.0.1</compose.version>
+    <agp.version>4.2.2</agp.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <artifactId>kotlin-gradle-plugin</artifactId>
+        <version>${kotlin.version}</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+</project>

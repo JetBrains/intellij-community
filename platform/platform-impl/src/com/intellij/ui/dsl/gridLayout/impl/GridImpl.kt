@@ -108,10 +108,53 @@ internal class GridImpl : Grid {
   }
 
   /**
+   * Collects PreCalculationData for all components (including sub-grids) and applies size groups
+   */
+  private fun collectPreCalculationData(): Map<JComponent, PreCalculationData> {
+    val result = mutableMapOf<JComponent, PreCalculationData>()
+    collectPreCalculationData(result)
+
+    val widthGroups = result.values.groupBy { it.constraints.widthGroup }
+    for ((widthGroup, preCalculationDataList) in widthGroups) {
+      if (widthGroup == null) {
+        continue
+      }
+      val maxWidth = preCalculationDataList.maxOf { it.calculatedPreferredSize.width }
+      for (preCalculationData in preCalculationDataList) {
+        preCalculationData.calculatedPreferredSize.width = maxWidth
+      }
+    }
+
+    return result
+  }
+
+  fun collectPreCalculationData(preCalculationDataMap: MutableMap<JComponent, PreCalculationData>) {
+    for (cell in cells) {
+      when (cell) {
+        is ComponentCell -> {
+          val component = cell.component
+          if (!component.isVisible) {
+            continue
+          }
+          val componentMinimumSize = component.minimumSize
+          val componentPreferredSize = component.preferredSize
+          preCalculationDataMap[component] = PreCalculationData(componentMinimumSize, componentPreferredSize, cell.constraints)
+        }
+
+        is GridCell -> {
+          cell.content.collectPreCalculationData(preCalculationDataMap)
+        }
+      }
+    }
+  }
+
+  /**
    * Calculates [layoutData] for preferred size
    */
   private fun calculatePreferredLayoutData() {
-    calculateLayoutDataStep1()
+    val preCalculationDataMap = collectPreCalculationData()
+
+    calculateLayoutDataStep1(preCalculationDataMap)
     calculateLayoutDataStep2(layoutData.preferredWidth)
     calculateLayoutDataStep3()
     calculateLayoutDataStep4(layoutData.preferredHeight)
@@ -121,7 +164,7 @@ internal class GridImpl : Grid {
   /**
    * Step 1 of [layoutData] calculations
    */
-  fun calculateLayoutDataStep1() {
+  fun calculateLayoutDataStep1(preCalculationDataMap: Map<JComponent, PreCalculationData>) {
     layoutData.columnsSizeCalculator.reset()
     val visibleCellsData = mutableListOf<LayoutCellData>()
     var columnsCount = 0
@@ -136,10 +179,8 @@ internal class GridImpl : Grid {
           if (!component.isVisible) {
             continue
           }
-          val componentMinimumSize = component.minimumSize
-          val componentPreferredSize = component.preferredSize
-          preferredSize = Dimension(max(componentMinimumSize.width, componentPreferredSize.width),
-            max(componentMinimumSize.height, componentPreferredSize.height))
+          val preCalculationData = preCalculationDataMap[component]
+          preferredSize = preCalculationData!!.calculatedPreferredSize
         }
 
         is GridCell -> {
@@ -147,7 +188,7 @@ internal class GridImpl : Grid {
           if (!grid.visible) {
             continue
           }
-          grid.calculateLayoutDataStep1()
+          grid.calculateLayoutDataStep1(preCalculationDataMap)
           preferredSize = Dimension(grid.layoutData.preferredWidth, 0)
         }
       }
@@ -586,6 +627,15 @@ private data class RowBaselineData(var maxAboveBaseline: Int = 0, var maxBelowBa
 
 private fun isSupportedBaseline(constraints: Constraints): Boolean {
   return constraints.baselineAlign && constraints.verticalAlign != VerticalAlign.FILL && constraints.height == 1
+}
+
+@ApiStatus.Internal
+internal class PreCalculationData(val minimumSize: Dimension, val preferredSize: Dimension, val constraints: Constraints) {
+
+  /**
+   * Preferred size based on minimum/preferred sizes and size groups
+   */
+  var calculatedPreferredSize = Dimension(max(minimumSize.width, preferredSize.width), max(minimumSize.height, preferredSize.height))
 }
 
 @ApiStatus.Internal

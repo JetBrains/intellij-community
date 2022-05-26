@@ -17,6 +17,10 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class VarProcessor {
+  public static final int VAR_NON_FINAL = 1;
+  public static final int VAR_EXPLICIT_FINAL = 2;
+  public static final int VAR_FINAL = 3;
+
   private final VarNamesCollector varNamesCollector = new VarNamesCollector();
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
@@ -118,7 +122,7 @@ public class VarProcessor {
   }
 
   public int getVarFinal(VarVersionPair pair) {
-    return varVersions == null ? VarTypeProcessor.VAR_FINAL : varVersions.getVarFinal(pair);
+    return varVersions == null ? VAR_FINAL : varVersions.getVarFinal(pair);
   }
 
   public void setVarFinal(VarVersionPair pair, int finalType) {

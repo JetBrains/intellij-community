@@ -15,6 +15,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assume;
 
 import javax.swing.*;
 import java.io.File;
@@ -194,6 +196,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     VirtualFile file = getFile("/src/Test.java");
     assertNotNull(file);
+    Assume.assumeTrue("JAVA".equals(file.getFileType().getName())); // otherwise, the folding'd be incorrect
     FileEditor[] editors = myManager.openFile(file, false);
     assertEquals(1, editors.length);
     assertTrue(editors[0] instanceof TextEditor);
@@ -228,12 +231,12 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new DumbAwareProvider(), myFixture.getTestRootDisposable());
     try {
       DumbServiceImpl.getInstance(getProject()).setDumb(true);
-      VirtualFile file = getFile("/src/foo.bar");
-      assertEquals(1, myManager.openFile(file, false).length);
+      VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+      FileEditor[] editors = myManager.openFile(file, false);
+      assertEquals(ContainerUtil.map(editors, ed-> ed + " of " + ed.getClass()).toString(), 1, editors.length);
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(2, myManager.getAllEditors(file).length);
-      //assertFalse(FileEditorManagerImpl.isDumbAware(editors[0]));
     }
     finally {
       DumbServiceImpl.getInstance(getProject()).setDumb(false);
@@ -502,6 +505,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
   public void testMustNotAllowToTypeIntoFileRenamedToUnknownExtension() throws Exception {
     File ioFile = IoTestUtil.createTestFile("test.txt", "");
+    FileUtil.writeToFile(ioFile, new byte[]{1,2,3,4,29}); // to convince IDEA it's binary when renamed to unknown extension
     VirtualFile file = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile));
     assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
     FileEditorManager.getInstance(getProject()).openFile(file, true);

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -119,9 +118,4 @@ fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow"
 fun isStashToolWindowEnabled(project: Project): Boolean {
   return stashToolWindowRegistryOption().asBoolean() &&
          ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { it.keyInstanceMethod == GitVcs.getKey() }
-}
-
-fun isStashToolWindowAvailable(project: Project): Boolean {
-  return isStashToolWindowEnabled(project) &&
-         project.serviceIfCreated<GitStashTracker>()?.isNotEmpty() == true
 }

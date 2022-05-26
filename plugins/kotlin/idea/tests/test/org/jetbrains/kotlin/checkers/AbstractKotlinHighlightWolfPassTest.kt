@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.checkers
 
-import com.intellij.codeInsight.problems.MockWolfTheProblemSolver
+import com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver
 import com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractKotlinHighlightWolfPassTest: KotlinLightCodeInsightFixtureTestCase() {
 
@@ -42,7 +42,7 @@ abstract class AbstractKotlinHighlightWolfPassTest: KotlinLightCodeInsightFixtur
 
     private fun prepareWolf(project: Project, parentDisposable: Disposable): MockWolfTheProblemSolver {
         val wolfTheProblemSolver = WolfTheProblemSolver.getInstance(project) as MockWolfTheProblemSolver
-        val theRealSolver = WolfTheProblemSolverImpl.createInstance(project)
+        val theRealSolver = WolfTheProblemSolverImpl.createTestInstance(project)
         wolfTheProblemSolver.setDelegate(theRealSolver)
         Disposer.register(parentDisposable, (theRealSolver as Disposable))
         return wolfTheProblemSolver

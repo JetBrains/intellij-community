@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,7 +20,10 @@ public final class AppCodeStyleSettingsManager extends CodeStyleSettingsManager 
   protected @NotNull Collection<CodeStyleSettings> enumSettings() {
     List<CodeStyleSettings> appSettings = new ArrayList<>();
     appSettings.add(CodeStyleSettings.getDefaults());
-    ObjectUtils.consumeIfNotNull(getMainProjectCodeStyle(), settings -> appSettings.add(settings));
+    CodeStyleSettings settings = getMainProjectCodeStyle();
+    if (settings != null) {
+      appSettings.add(settings);
+    }
     return appSettings;
   }
 }

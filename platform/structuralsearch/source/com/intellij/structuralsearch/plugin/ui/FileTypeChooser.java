@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.core.CoreBundle;
@@ -140,7 +140,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
     final String text = SSRBundle.message("search.dialog.file.type.label");
     final JLabel label = new JBLabel(text);
     label.setLabelFor(button);
-    button.setMnemonic(TextWithMnemonic.parse(text).getMnemonic());
+    button.setMnemonic(TextWithMnemonic.parse(text).getMnemonicCode());
 
     panel.add(label, BorderLayout.WEST);
     panel.add(button, BorderLayout.CENTER);

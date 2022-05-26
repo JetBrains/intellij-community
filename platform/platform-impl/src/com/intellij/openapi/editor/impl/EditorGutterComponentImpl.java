@@ -7,6 +7,7 @@ import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
@@ -20,6 +21,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId3;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -574,7 +576,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private Font getFontForText(String text, EditorFontType style) {
-    Font font = myEditor.getColorsScheme().getFont(style);
+    Font font = ExperimentalUI.isNewUI() ? JBFont.regular().deriveFont((float)myEditor.getFontSize())
+                                         : myEditor.getColorsScheme().getFont(style);
     return UIUtil.getFontWithFallbackIfNeeded(font, text);
   }
 
@@ -1520,7 +1523,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (ExperimentalUI.isNewEditorTabs()) {
       if (height > 0) {
         myAlphaContext.paintWithComposite(g, () -> {
-          Icon icon = scaleIcon(UIUtil.getTreeExpandedIcon());
+          Icon icon = scaleIcon(IconLoader.getIcon("expui/gutter/fold.svg", AllIcons.class));
           icon.paintIcon(this, g, (int)dxPoints[0], getFoldingIconY(visualLine, icon));
         });
       }
@@ -1557,7 +1560,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                                                 EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
                                                 centerX, centerY, width, width, StrokeType.CENTERED, sw);
     if (ExperimentalUI.isNewEditorTabs()) {
-      Icon icon = scaleIcon(UIUtil.getTreeCollapsedIcon());
+      Icon icon = scaleIcon(IconLoader.getIcon("/expui/gutter/unfold.svg", AllIcons.class));
       icon.paintIcon(this, g, (int)rect.getX(), getFoldingIconY(visualLine, icon));
       return;
     }
@@ -1836,7 +1839,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           }
         }
       }
-      showToolTip(toolTip, point, Balloon.Position.atRight);
+      showToolTip(toolTip, point, Balloon.Position.below);
     }
     else {
       computeTooltipInBackground(pointInfo);
@@ -1974,6 +1977,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         int line = getLineNumAtPoint(clickPoint);
 
         if (line >= 0 && line < myEditor.getDocument().getLineCount() && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED)) {
+          UIEventLogger.EditorAnnotationClicked.log(myEditor.getProject(), provider.getClass());
           action.doAction(line);
         }
       }
@@ -2308,7 +2312,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }
-        JPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup).getComponent();
+        JPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_ANNOTATIONS_AREA_POPUP, actionGroup).getComponent();
         menu.show(this, e.getX(), e.getY());
       }
     }

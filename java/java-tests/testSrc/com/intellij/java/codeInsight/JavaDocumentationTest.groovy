@@ -188,7 +188,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
       def doc = new JavaDocumentationProvider().generateRenderedDoc(method.getDocComment())
 
       def expected =
-      "<div class=\'content\'>  </div><table class=\'sections\'><tr><td valign=\'top\' class=\'section\'><p>Returns:</td><td valign=\'top\'><p> smth</td></table>"
+        '<div class=\'content\'> @return smth </div><table class=\'sections\'><tr><td valign=\'top\' class=\'section\'><p>Returns:</td><td valign=\'top\'><p> smth</td></table>'
 
       assert doc == expected
     })

@@ -11,6 +11,6 @@
     <plugin id="com.intellij.uiDesigner" />
     <plugin id="org.intellij.groovy" />
     <plugin id="org.editorconfig.editorconfigjetbrains" />
-    <plugin id="org.jetbrains.kotlin" min-version="&lt;ide.build.baseline&gt;-1.5.10" max-version="&lt;ide.build.baseline&gt;-1.5.99" />
+    <plugin id="org.jetbrains.kotlin" min-version="&lt;ide.build.baseline&gt;-1.5.10" max-version="&lt;ide.build.baseline&gt;-1.6.99" />
   </component>
 </project>

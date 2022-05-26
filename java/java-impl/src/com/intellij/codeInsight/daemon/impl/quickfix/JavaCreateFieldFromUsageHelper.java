@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     }
     while (parentClass instanceof PsiAnonymousClass);
 
-    return BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(targetClass, field, enclosingContext, null);
+    return CommonJavaRefactoringUtil.appendField(targetClass, field, enclosingContext, null);
   }
 
 }

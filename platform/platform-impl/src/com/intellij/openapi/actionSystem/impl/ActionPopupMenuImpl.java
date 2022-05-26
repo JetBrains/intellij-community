@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.diagnostic.IdeHeartbeatEventReporter;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -149,9 +150,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     @Override
     public void addNotify() {
       super.addNotify();
+      long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
+      IdeHeartbeatEventReporter.UILatencyLogger.POPUP_LATENCY.log(time, myPlace);
       //noinspection RedundantSuppression
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
-        long time = System.currentTimeMillis() - IdeEventQueue.getInstance().getPopupTriggerTime();
         //noinspection HardCodedStringLiteral
         new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms", NotificationType.INFORMATION).notify(null);
       }

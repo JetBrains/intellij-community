@@ -19,8 +19,8 @@ import org.jetbrains.annotations.TestOnly;
 public final class IdentifierHighlighterPassFactory {
   private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
 
-  public IdentifierHighlighterPass createHighlightingPass(@NotNull final PsiFile file,
-                                                          @NotNull final Editor editor,
+  public IdentifierHighlighterPass createHighlightingPass(@NotNull PsiFile file,
+                                                          @NotNull Editor editor,
                                                           @NotNull TextRange visibleRange) {
     if (!editor.isOneLineMode() &&
         CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&

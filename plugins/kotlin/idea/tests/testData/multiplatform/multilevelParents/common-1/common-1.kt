@@ -2,11 +2,11 @@
 
 package sample
 
-expect interface <!LINE_MARKER("descr='Is subclassed by B [common-1] B [common-2] Case_2_3  Click or press ... to navigate'"), LINE_MARKER("descr='Has actuals in common'")!>A<!> {
+expect interface <!LINE_MARKER("descr='Has actuals in common'"), LINE_MARKER("descr='Is subclassed by B [common-1] B [common-2] Case_2_3  Click or press ... to navigate'")!>A<!> {
     fun common_1_A()
 }
 
-expect interface <!LINE_MARKER("descr='Is subclassed by Case_2_3  Click or press ... to navigate'"), LINE_MARKER("descr='Has actuals in common'")!>B<!> : A {
+expect interface <!LINE_MARKER("descr='Has actuals in common'"), LINE_MARKER("descr='Is subclassed by Case_2_3  Click or press ... to navigate'")!>B<!> : A {
     fun <!LINE_MARKER("descr='Has actuals in common'")!>common_1_B<!>()
 }
 

@@ -2,11 +2,11 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAwareAction
 
-internal class CheckSuggestedPluginsAction : AnAction() {
+internal class CheckSuggestedPluginsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 

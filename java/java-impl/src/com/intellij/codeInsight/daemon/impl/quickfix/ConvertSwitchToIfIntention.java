@@ -15,7 +15,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
@@ -88,7 +88,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     if (switchExpression == null) {
       return;
     }
-    final PsiType switchExpressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(switchExpression);
+    final PsiType switchExpressionType = CommonJavaRefactoringUtil.getTypeByExpressionWithExpectedType(switchExpression);
     if (switchExpressionType == null) {
       return;
     }

@@ -347,14 +347,16 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
       holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"), unwrapFix);
     }
-    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labelReachability.keySet().iterator().next(), PsiSwitchBlock.class);
-    Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
+
     for (Map.Entry<PsiCaseLabelElement, ThreeState> entry : labelReachability.entrySet()) {
       if (entry.getValue() != ThreeState.NO) continue;
       PsiCaseLabelElement label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
+      PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
+      if (switchBlock == null || coveredSwitches.contains(switchBlock)) continue;
       // duplicate case label is a compilation error so no need to highlight by the inspection
-      if (!coveredSwitches.contains(labelStatement.getEnclosingSwitchBlock()) && !suspiciousElements.contains(label)) {
+      Set<PsiElement> suspiciousElements = SwitchBlockHighlightingModel.findSuspiciousLabelElements(switchBlock);
+      if (!suspiciousElements.contains(label)) {
         holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"),
                                new DeleteSwitchLabelFix(label));
       }

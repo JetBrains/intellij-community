@@ -1,3 +1,4 @@
+// IGNORE_FIR
 val header = { s: String, s1: String -> }
 fun header(name: String, value: Int) { }
 

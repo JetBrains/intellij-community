@@ -11,7 +11,6 @@ import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
-import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
 import java.nio.CharBuffer
@@ -118,13 +117,6 @@ fun HttpResponseStatus.response(request: HttpRequest? = null, description: Strin
 @JvmOverloads
 fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, description: String? = null, extraHeaders: HttpHeaders? = null) {
   createStatusResponse(this, request, description).send(channel, request, extraHeaders)
-}
-
-// Android Studio: BuiltinWebServerAccess
-fun sendUnauthorizedAuthenticate(context: ChannelHandlerContext, request: HttpRequest, realm: String) {
-  val response = createStatusResponse(HttpResponseStatus.UNAUTHORIZED, request, "Unauthorized")
-  response.headers().add("WWW-Authenticate", String.format("Basic realm=\"%s\"", realm))
-  response.send(context.channel(), request)
 }
 
 internal fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String? = null): HttpResponse {

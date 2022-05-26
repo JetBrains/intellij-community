@@ -30,6 +30,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   /**
    * This method is left to preserve binary compatibility.
    */
+  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public FoldingBuilder forLanguage(@NotNull Language l) {
     return super.forLanguage(l);

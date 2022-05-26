@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -114,26 +114,28 @@ public class JUnitConfigurationModel {
         testObject != JUnitConfiguration.TEST_DIRECTORY &&
         testObject != JUnitConfiguration.TEST_CATEGORY  &&
         testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
-      try {
-        data.METHOD_NAME = getJUnitTextValue(METHOD);
-        final PsiClass testClass;
-        if (!myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className)) {
-          JavaRunConfigurationModule configurationModule = new JavaRunConfigurationModule(myProject, true);
-          configurationModule.setModule(module);
-          testClass = configurationModule.findClass(className);
+      data.METHOD_NAME = getJUnitTextValue(METHOD);
+      if (!className.equals(replaceRuntimeClassName(data.getMainClassName()))) {
+        try {
+          final PsiClass testClass;
+          if (!myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className)) {
+            JavaRunConfigurationModule configurationModule = new JavaRunConfigurationModule(myProject, true);
+            configurationModule.setModule(module);
+            testClass = configurationModule.findClass(className);
+          }
+          else {
+            testClass = null;
+          }
+          if (testClass != null && testClass.isValid()) {
+            data.setMainClass(testClass);
+          }
+          else {
+            data.MAIN_CLASS_NAME = className;
+          }
         }
-        else {
-          testClass = null;
-        }
-        if (testClass != null && testClass.isValid()) {
-          data.setMainClass(testClass);
-        }
-        else {
+        catch (ProcessCanceledException | IndexNotReadyException e) {
           data.MAIN_CLASS_NAME = className;
         }
-      }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
-        data.MAIN_CLASS_NAME = className;
       }
     }
     else if (testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
@@ -186,11 +188,15 @@ public class JUnitConfigurationModel {
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     setTestType(data.TEST_OBJECT);
     setJUnitTextValue(ALL_IN_PACKAGE, data.getPackageName());
-    setJUnitTextValue(CLASS, data.getMainClassName() != null ? data.getMainClassName().replaceAll("\\$", "\\.") : "");
+    setJUnitTextValue(CLASS, replaceRuntimeClassName(data.getMainClassName()));
     setJUnitTextValue(METHOD, data.getMethodNameWithSignature());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
     setJUnitTextValue(DIR, data.getDirName());
     setJUnitTextValue(CATEGORY, data.getCategory());
+  }
+
+  private static String replaceRuntimeClassName(String mainClassName) {
+    return mainClassName.replaceAll("\\$", "\\.");
   }
 
   private void setJUnitTextValue(final int index, final String text) {

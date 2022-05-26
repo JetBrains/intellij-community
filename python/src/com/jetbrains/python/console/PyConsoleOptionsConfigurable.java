@@ -90,10 +90,6 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
       public void reset() {
         panel.reset();
       }
-
-      @Override
-      public void disposeUIResources() {
-      }
     };
   }
 

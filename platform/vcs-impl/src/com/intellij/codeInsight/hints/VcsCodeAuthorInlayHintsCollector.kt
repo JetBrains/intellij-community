@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsBundle.messagePointer
@@ -40,7 +41,7 @@ internal class VcsCodeAuthorInlayHintsCollector(
     if (!filter.invoke(element)) return true
 
     val range = getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-    val info = getCodeAuthorInfo(element.project, range, editor)
+    val info = PREVIEW_INFO_KEY.get(element.containingFile) ?: getCodeAuthorInfo(element.project, range, editor)
     val presentation = buildPresentation(element, info, editor).addContextMenu(element.project)
 
     sink.addCodeVisionElement(editor, range.startOffset, BlockInlayPriority.CODE_AUTHOR, presentation)
@@ -105,6 +106,14 @@ private class VcsCodeAuthorInfo(val mainAuthor: String?, val otherAuthorsCount: 
     val NEW_CODE: VcsCodeAuthorInfo = VcsCodeAuthorInfo(null, 0, true)
   }
 }
+
+private val PREVIEW_INFO_KEY = Key.create<VcsCodeAuthorInfo>("preview.author.info")
+
+fun addPreviewInfo(psiFile: PsiFile) {
+  psiFile.putUserData(PREVIEW_INFO_KEY, VcsCodeAuthorInfo("John Smith", 2, false))
+}
+
+fun hasPreviewInfo(psiFile: PsiFile) = PREVIEW_INFO_KEY.get(psiFile) != null
 
 private val VcsCodeAuthorInfo.isMultiAuthor: Boolean get() = otherAuthorsCount > 0
 

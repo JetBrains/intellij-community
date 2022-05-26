@@ -14,7 +14,8 @@ public class GenericTypeAnnotations {
     Map<? extends @C @D String, List<Object>> m8;
     Map<? extends String, @D @E List<Object>> m9;
     Map<? extends String, List<@E @F Object>> m10;
-    @A Map<@B ? extends @C String, @D List<@E Object>> m11;
+    @A Map<@B ? extends @C String, @L @D List<@E Object>> m11;
     @A Map<@A Object, @B List<@C Object>> m12() { return null; }
     @A @B List<@C Object> l1() { return null; }
+    @L Map<? extends String, List<Object>> m13;
 }

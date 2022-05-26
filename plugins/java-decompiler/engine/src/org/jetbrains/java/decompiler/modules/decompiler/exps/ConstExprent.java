@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -127,11 +127,11 @@ public class ConstExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
-    if (constType.type != CodeConstants.TYPE_NULL && value == null) {
+    if (constType.getType() != CodeConstants.TYPE_NULL && value == null) {
       return new TextBuffer(ExprProcessor.getCastTypeName(constType, Collections.emptyList()));
     }
 
-    switch (constType.type) {
+    switch (constType.getType()) {
       case CodeConstants.TYPE_BOOLEAN:
         return new TextBuffer(Boolean.toString((Integer)value != 0));
 
@@ -285,7 +285,7 @@ public class ConstExprent extends Exprent {
   }
 
   public boolean isNull() {
-    return CodeConstants.TYPE_NULL == constType.type;
+    return CodeConstants.TYPE_NULL == constType.getType();
   }
 
   private static String convertStringToJava(String value, boolean ascii) {
@@ -349,7 +349,7 @@ public class ConstExprent extends Exprent {
   }
 
   public boolean hasBooleanValue() {
-    switch (constType.type) {
+    switch (constType.getType()) {
       case CodeConstants.TYPE_BOOLEAN:
       case CodeConstants.TYPE_CHAR:
       case CodeConstants.TYPE_BYTE:
@@ -365,7 +365,7 @@ public class ConstExprent extends Exprent {
   }
 
   public boolean hasValueOne() {
-    switch (constType.type) {
+    switch (constType.getType()) {
       case CodeConstants.TYPE_BOOLEAN:
       case CodeConstants.TYPE_CHAR:
       case CodeConstants.TYPE_BYTE:
@@ -419,7 +419,7 @@ public class ConstExprent extends Exprent {
     }
     // BYTE, BYTECHAR, SHORTCHAR, SHORT, CHAR => INT in the INT context
     else if ((expectedType.equals(VarType.VARTYPE_INT) || expectedType.equals(VarType.VARTYPE_INTEGER)) &&
-            constType.typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+             constType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
       setConstType(VarType.VARTYPE_INT);
     }
   }

@@ -9,6 +9,7 @@ import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.findUsages.handlers.DelegatingFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler

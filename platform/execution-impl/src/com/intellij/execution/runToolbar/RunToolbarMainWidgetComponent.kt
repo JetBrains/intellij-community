@@ -161,6 +161,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       counter[project] = value
       if (value == 0) {
         RunToolbarSlotManager.getInstance(project).active = false
+        counter.remove(project)
       }
     }
 

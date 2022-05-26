@@ -82,7 +82,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static @NotNull SearchScope getUseScope(@NotNull PsiElement element, boolean restrictToCodeUsageScope) {
-    SearchScope scope = element.getUseScope();
+    SearchScope scope = PsiSearchScopeUtil.USE_SCOPE_KEY.get(element.getContainingFile());
+    if (scope != null) return scope;
+    scope = element.getUseScope();
     for (UseScopeEnlarger enlarger : UseScopeEnlarger.EP_NAME.getExtensions()) {
       ProgressManager.checkCanceled();
       SearchScope additionalScope = enlarger.getAdditionalUseScope(element);
@@ -1262,7 +1264,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return Collections.singletonList(idIndexQuery);
       }
 
-      if (!TrigramIndex.isEnabled()) {
+      if (IdIndexEntry.useStrongerHash()) {
         return Collections.singletonList(idIndexQuery);
       }
 

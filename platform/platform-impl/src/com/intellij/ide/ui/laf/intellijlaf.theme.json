@@ -142,7 +142,9 @@
 
     "SegmentedButton": {
       "selectedStartBorderColor": "componentBorder",
-      "selectedEndBorderColor": "componentBorder"
+      "selectedEndBorderColor": "componentBorder",
+      "selectedButtonColor": "white",
+      "focusedSelectedButtonColor": "#dae4ed"
     },
 
     "CellEditor.border.width": 2,

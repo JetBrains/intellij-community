@@ -204,11 +204,6 @@ public class XmlStubBasedTagBase<StubT extends XmlTagStub<?>>
   }
 
   @Override
-  public boolean isCaseSensitive() {
-    return true;
-  }
-
-  @Override
   @NotNull
   public String getNamespace() {
     return CachedValuesManager.getCachedValue(this, () ->

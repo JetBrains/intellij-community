@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -16,11 +15,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.InputValidator;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
-import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -152,7 +149,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
     if (variables == null) return false;
     if (variables.isEmpty()) return true;
 
-    PsiElement anchor = RefactoringUtil.getAnchorElementForMultipleExpressions(occurrences.toArray(PsiExpression.EMPTY_ARRAY), null);
+    PsiElement anchor = CommonJavaRefactoringUtil.getAnchorElementForMultipleExpressions(occurrences.toArray(PsiExpression.EMPTY_ARRAY), null);
     if (anchor == null) return false;
     PsiElement anchorParent = anchor.getParent();
     if (anchorParent == null) return false;
@@ -302,22 +299,10 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
         VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
         Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), true);
         if (editor != null) {
-          new MyIntroduceVariableHandler().invoke(project, editor, (PsiExpression)element);
+          JavaIntroduceVariableHandlerBase handler =
+            (JavaIntroduceVariableHandlerBase)JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
+          handler.invoke(project, editor, (PsiExpression)element);
         }
-      }
-    }
-
-    private static class MyIntroduceVariableHandler extends IntroduceVariableHandler {
-      @Override
-      public IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr,
-                                                   PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
-                                                   boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
-                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
-        if (replaceChoice == null && ApplicationManager.getApplication().isUnitTestMode()) {
-          replaceChoice = JavaReplaceChoice.ALL;
-        }
-        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager,
-                                 declareFinalIfAll, anyAssignmentLHS, validator, anchor, replaceChoice);
       }
     }
   }

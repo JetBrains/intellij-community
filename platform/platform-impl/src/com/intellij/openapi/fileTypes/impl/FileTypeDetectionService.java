@@ -13,7 +13,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -200,11 +199,13 @@ final class FileTypeDetectionService implements Disposable {
     myFileTypeManager.log(s);
   }
 
-  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
+  @NotNull
+  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
     return getOrDetectFromContent(file, content, myCanUseCachedDetectedFileType);
   }
 
-  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, boolean useCache) {
+  @NotNull
+  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, boolean useCache) {
     if (!isDetectable(file)) {
       if (myFileTypeManager.getFileTypeByFileName(file.getName()) == DetectedByContentFileType.INSTANCE) {
         // allow opening empty file in IDEA's editor
@@ -330,12 +331,11 @@ final class FileTypeDetectionService implements Disposable {
     LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
   }
 
-  private static boolean isDetectable(@NotNull final VirtualFile file) {
-    if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL)) {
-      // for empty file there is still hope its type will change
-      return false;
-    }
-    return file.getFileSystem() instanceof FileSystemInterface;
+  static boolean isDetectable(@NotNull final VirtualFile file) {
+    return !file.isDirectory()
+           && file.isValid()
+           && !file.is(VFileProperty.SPECIAL)
+           && file.getFileSystem() instanceof FileSystemInterface;
   }
 
   // read auto-detection flags from the persistent FS file attributes. If file attributes are absent, return 0 for flags
@@ -608,8 +608,11 @@ final class FileTypeDetectionService implements Disposable {
 
   @NotNull
   private ByteArraySequence getFirstBytes(@NotNull VirtualFile file, byte @Nullable [] content) throws IOException {
+    int bufferLength = getDetectFileBufferSize(file);
     if (content == null) {
-      int bufferLength = getDetectFileBufferSize(file);
+      if (bufferLength == 0) {
+        return ByteArraySequence.EMPTY;
+      }
       try {
         return ProgressManager.getInstance().isInNonCancelableSection() || ApplicationManager.getApplication().isWriteThread()
                ? readFirstBytesFromFile(file, bufferLength)
@@ -620,7 +623,7 @@ final class FileTypeDetectionService implements Disposable {
       }
     }
     else {
-      return content.length != 0 ? new ByteArraySequence(content) : ByteArraySequence.EMPTY;
+      return content.length != 0 ? new ByteArraySequence(content, 0, Math.min(content.length, bufferLength)) : ByteArraySequence.EMPTY;
     }
   }
 
@@ -685,7 +688,7 @@ final class FileTypeDetectionService implements Disposable {
         FileTypeRegistry.FileTypeDetector detector = detectors.get(i);
         bufferLength = Math.max(bufferLength, detector.getDesiredContentPrefixLength());
       }
-      if (bufferLength <= 0) {
+      if (bufferLength < 0) {
         bufferLength = FileUtilRt.getUserContentLoadLimit();
       }
       cachedDetectFileBufferSize = bufferLength;

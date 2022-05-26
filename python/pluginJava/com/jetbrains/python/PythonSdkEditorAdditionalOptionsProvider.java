@@ -72,9 +72,5 @@ public class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdditiona
     @Override
     public void apply() throws ConfigurationException {
     }
-
-    @Override
-    public void reset() {
-    }
   }
 }

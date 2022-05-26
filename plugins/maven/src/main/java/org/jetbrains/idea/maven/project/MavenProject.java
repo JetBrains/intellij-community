@@ -1032,6 +1032,18 @@ public class MavenProject {
     return getCompilerLevel("release");
   }
 
+  public @Nullable String getTestSourceLevel() {
+    return getCompilerLevel("testSource");
+  }
+
+  public @Nullable String getTestTargetLevel() {
+    return getCompilerLevel("testTarget");
+  }
+
+  public @Nullable String getTestReleaseLevel() {
+    return getCompilerLevel("testRelease");
+  }
+
   private @Nullable String getCompilerLevel(String level) {
     List<Element> configs = getCompilerConfigs();
     if (configs.size() == 1) return getCompilerLevel(level, configs.get(0));

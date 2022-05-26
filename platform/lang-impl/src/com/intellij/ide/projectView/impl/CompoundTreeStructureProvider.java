@@ -78,9 +78,7 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
           Object data = provider.getData(selection, dataId);
           if (data != null) return data;
         }
-        catch (IndexNotReadyException ignore) {
-        }
-        catch (ProcessCanceledException ignore) {
+        catch (IndexNotReadyException | ProcessCanceledException ignore) {
         }
         catch (Exception exception) {
           LOG.warn("unexpected error in " + provider, exception);
