@@ -5,7 +5,6 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.impl.fields.Field
 
 sealed class ValueType<V> {
-  @ObjModule.InitApi
   open fun link(linker: ObjModule) = Unit
 }
 
@@ -19,14 +18,12 @@ object TInt : PrimitiveType<Int>()
 object TString : AtomicType<String>()
 
 class TList<E>(val elementType: ValueType<E>) : ValueType<List<E>>() {
-  @ObjModule.InitApi
   override fun link(linker: ObjModule) {
     elementType.link(linker)
   }
 }
 
 class TMap<K, V>(val keyType: ValueType<K>, val valueType: ValueType<V>) : ValueType<Map<K, V>>() {
-  @ObjModule.InitApi
   override fun link(linker: ObjModule) {
     keyType.link(linker)
     valueType.link(linker)
@@ -38,7 +35,6 @@ class TPsiRef<T : Obj>(
   child: Boolean = false,
   relation: Boolean = false,
 ) : TRef<T>(targetModuleType, child, relation) {
-  @ObjModule.InitApi
   override fun link(linker: ObjModule) { }
 }
 
@@ -51,7 +47,6 @@ open class TRef<T : Obj>(
   lateinit var targetObjType: ObjType<T, *>
   var oppositeField: Field<*, *>? = null
 
-  @ObjModule.InitApi
   override fun link(linker: ObjModule) {
     targetObjType = linker.byId[linker.typeIndex(targetObjTypeId.id)] as? ObjType<T, *>
                ?: error("Type \"${targetObjTypeId.id}\" is not registered in $linker")
@@ -59,7 +54,6 @@ open class TRef<T : Obj>(
 }
 
 class TOptional<V>(val type: ValueType<V>) : ValueType<V?>() {
-  @ObjModule.InitApi
   override fun link(linker: ObjModule) {
     type.link(linker)
   }
@@ -97,7 +91,6 @@ class TStructure<T : Obj, B : ObjBuilder<T>>(
   val name: String?
     get() = box.name
 
-  @ObjModule.InitApi
   override fun link(linker: ObjModule) {
     _declaredFields.forEach { it.type.link(linker) }
     if (base != null) {

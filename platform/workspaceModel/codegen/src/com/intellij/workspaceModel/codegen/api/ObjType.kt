@@ -18,7 +18,6 @@ abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModul
   override val name: String
     get() = super.name
 
-  @ObjModule.InitApi
   fun link(linker: ObjModule) {
     structure.link(linker)
   }

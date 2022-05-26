@@ -9,16 +9,12 @@ import org.jetbrains.deft.impl.fields.ExtField
 private val LOG = logger<ObjModule>()
 
 abstract class ObjModule {
-  @RequiresOptIn
-  annotation class InitApi
-
   internal lateinit var byId: Array<ObjType<*, *>?>
 
   protected fun beginInit(maxId: Int) {
     byId = arrayOfNulls(maxId)
   }
 
-  @InitApi
   protected fun add(type: ObjType<*, *>) {
     byId[typeIndex(type.id)] = type
   }
@@ -28,7 +24,6 @@ abstract class ObjModule {
   @Volatile
   private var initialized = false
 
-  @OptIn(InitApi::class)
   fun require(): ObjModule {
     if (!initialized) {
       link()
@@ -38,7 +33,6 @@ abstract class ObjModule {
     return this
   }
 
-  @InitApi
   private fun link() {
     check(!initialized)
 

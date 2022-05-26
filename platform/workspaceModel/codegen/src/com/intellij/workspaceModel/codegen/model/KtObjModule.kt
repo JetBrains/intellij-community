@@ -39,7 +39,6 @@ class KtObjModule(
     return file
   }
 
-  @OptIn(InitApi::class)
   fun build(diagnostics: Diagnostics = Diagnostics()): Built {
     val simpleTypes = mutableListOf<DefType>()
     files.forEach {
