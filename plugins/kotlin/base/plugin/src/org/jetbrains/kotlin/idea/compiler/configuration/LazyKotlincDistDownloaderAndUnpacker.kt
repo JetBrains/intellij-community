@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.idea.artifacts.*
+import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import java.io.File
 import java.security.MessageDigest
 
@@ -29,49 +27,29 @@ import java.security.MessageDigest
  * the whole pipeline if the pom changes ([AbstractLazyFileOutputProducer] guarantees us that). It's convenient for the local testing
  * ("install to maven local -> test" development cycle)
  */
-class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, LazyPomAndJarsDownloader.Context> {
-    private val downloader = LazyPomAndJarsDownloader(version)
+class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, DownloadContext> {
+    private val downloader =
+        LazyKotlinMavenArtifactDownloader(KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version, artifactIsPom = true)
     private val distLayoutProducer = LazyDistDirLayoutProducer(version, KotlinArtifactsDownloader.getUnpackedKotlinDistPath(version))
 
     override fun isUpToDate(input: Unit): Boolean {
-        val downloaded = downloader.getOutputIfUpToDateOrEmpty(Unit)
+        val downloaded = downloader.getDownloadedIfUpToDateOrEmpty()
             .filter { it.extension == "jar" }
             .takeIf { it.isNotEmpty() }
             ?: return false
         return distLayoutProducer.isUpToDate(downloaded)
     }
 
-    override fun lazyProduceOutput(input: Unit, computationContext: LazyPomAndJarsDownloader.Context): List<File> {
-        val downloaded = downloader.lazyProduceOutput(Unit, computationContext)
+    override fun lazyProduceOutput(input: Unit, computationContext: DownloadContext): List<File> {
+        val downloaded = downloader.lazyDownload(computationContext)
             .filter { it.extension == "jar" }
             .takeIf { it.isNotEmpty() }
             ?: return emptyList()
         return listOf(distLayoutProducer.lazyProduceDist(downloaded))
     }
 
-    fun lazyProduceDist(context: LazyPomAndJarsDownloader.Context): File? = lazyProduceOutput(Unit, context).singleOrNull()
+    fun lazyProduceDist(context: DownloadContext): File? = lazyProduceOutput(Unit, context).singleOrNull()
     fun isUpToDate() = isUpToDate(Unit)
-}
-
-class LazyPomAndJarsDownloader(private val version: String) :
-    AbstractLazyFileOutputProducer<Unit, LazyPomAndJarsDownloader.Context>("${LazyPomAndJarsDownloader::class.java.name}-$version") {
-
-    override fun produceOutput(input: Unit, computationContext: Context): List<File> {
-        computationContext.indicator.text = computationContext.indicatorDownloadText
-        return KotlinArtifactsDownloader.downloadMavenArtifacts(
-            KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID,
-            version,
-            computationContext.project,
-            computationContext.indicator,
-            artifactIsPom = true
-        )
-    }
-
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: Unit, buffer: ByteArray) {
-        // The input is the Internet, we don't track it in this implementation
-    }
-
-    data class Context(val project: Project, val indicator: ProgressIndicator, @NlsContexts.ProgressText val indicatorDownloadText: String)
 }
 
 private class LazyDistDirLayoutProducer(version: String, private val unpackedDistDestination: File) :
