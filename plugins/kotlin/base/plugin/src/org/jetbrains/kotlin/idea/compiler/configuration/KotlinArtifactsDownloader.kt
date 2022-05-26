@@ -43,7 +43,7 @@ object KotlinArtifactsDownloader {
 
         return getLazyDistDownloaderAndUnpacker(version).isUpToDate() ||
                 getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
-                    getAllInOneOldFormatPackedDist(parsedVersion.rawVersion)?.let { jar ->
+                    findAllInOneOldFormatPackedDist(parsedVersion.rawVersion)?.let { jar ->
                         unpacker.isUpToDate(jar)
                     }
                 } ?: false
@@ -102,7 +102,7 @@ object KotlinArtifactsDownloader {
         }
 
         getAllIneOneOldFormatLazyDistUnpacker(parsedVersion)?.let { unpacker ->
-            getAllInOneOldFormatPackedDist(version)?.let { packedDist ->
+            findAllInOneOldFormatPackedDist(version)?.let { packedDist ->
                 unpacker.getUnpackedIfUpToDateOrNull(packedDist)?.let { return it }
             }
         }
@@ -183,7 +183,7 @@ object KotlinArtifactsDownloader {
      */
     private fun isAllInOneOldFormatDistFormatAvailable(version: IdeKotlinVersion) = version < IdeKotlinVersion.get("1.7.20")
 
-    private fun getAllInOneOldFormatPackedDist(version: String) =
+    private fun findAllInOneOldFormatPackedDist(version: String) =
         KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, OLD_KOTLIN_DIST_ARTIFACT_ID, version)?.toFile()
 
     private fun getMavenRepos(project: Project): List<RemoteRepositoryDescription> =
