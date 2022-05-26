@@ -2,26 +2,43 @@
 package org.jetbrains.plugins.gradle.importing
 
 import java.util.*
+import kotlin.collections.ArrayList
 
-class GradleSettingScriptBuilder(projectName: String) {
+class GradleSettingScriptBuilder {
 
-  private val builder = StringJoiner("\n")
-    .add("rootProject.name = '$projectName'")
-    .add("")
+  private val lines = ArrayList<String>()
 
-  fun generate() = builder.toString()
+  private var projectName: String? = null
+
+  fun setProjectName(projectName: String) {
+    this.projectName = projectName
+  }
 
   fun include(name: String) = apply {
-    builder.add("include '$name'")
+    lines.add("include '$name'")
   }
 
   fun includeBuild(name: String) = apply {
-    builder.add("includeBuild '$name'")
+    lines.add("includeBuild '$name'")
+  }
+
+  fun generate(): String {
+    val joiner = StringJoiner("\n")
+    if (projectName != null) {
+      joiner.add("rootProject.name = '$projectName'")
+    }
+    if (projectName != null && lines.isNotEmpty()) {
+      joiner.add("")
+    }
+    for (line in lines) {
+      joiner.add(line)
+    }
+    return joiner.toString()
   }
 
   companion object {
     @JvmStatic
-    fun settingsScript(projectName: String, configure: GradleSettingScriptBuilder.() -> Unit) =
-      GradleSettingScriptBuilder(projectName).apply(configure).generate()
+    fun settingsScript(configure: GradleSettingScriptBuilder.() -> Unit) =
+      GradleSettingScriptBuilder().apply(configure).generate()
   }
 }

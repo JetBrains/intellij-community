@@ -7,17 +7,20 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.testFramework.runInEdtAndWait
 
 fun Project.use(save: Boolean = false, action: (Project) -> Unit) {
-  val project = this@use
   try {
-    action(project)
+    action(this)
   }
   finally {
-    runInEdtAndWait {
-      val projectManager = ProjectManagerEx.getInstanceEx()
-      if (save) {
-        StoreUtil.saveSettings(project, forceSavingAllSettings = true)
-      }
-      projectManager.forceCloseProject(project)
+    forceCloseProject(save)
+  }
+}
+
+fun Project.forceCloseProject(save: Boolean = false) {
+  runInEdtAndWait {
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    if (save) {
+      StoreUtil.saveSettings(this, forceSavingAllSettings = true)
     }
+    projectManager.forceCloseProject(this)
   }
 }

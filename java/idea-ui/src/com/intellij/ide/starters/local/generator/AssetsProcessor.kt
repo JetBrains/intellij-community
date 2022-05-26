@@ -32,7 +32,7 @@ class AssetsProcessor {
     return generateSources(outputDir, assets, templateProperties)
   }
 
-  private fun generateSources(
+  fun generateSources(
     outputDirectory: VirtualFile,
     assets: List<GeneratorAsset>,
     templateProperties: Map<String, Any>

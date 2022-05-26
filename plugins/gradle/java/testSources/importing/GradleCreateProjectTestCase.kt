@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgress
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
@@ -28,7 +27,10 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.BareTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.SdkTestFixture
+import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.ui.UIBundle
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
@@ -40,8 +42,8 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectW
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.useKotlinDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.version
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.isSupported
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import java.io.File
@@ -50,18 +52,24 @@ import com.intellij.openapi.externalSystem.util.use as utilUse
 
 abstract class GradleCreateProjectTestCase : UsefulTestCase() {
 
-  private val bareFixture = IdeaTestFixtureFactory.getFixtureFactory().createBareFixture()
-  private val tempDirFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
-  private val sdkFixture = IdeaTestFixtureFactory.getFixtureFactory().createSdkFixture()
+  private lateinit var tempDirFixture: TempDirTestFixture
+  private lateinit var bareFixture: BareTestFixture
+  private lateinit var sdkFixture: SdkTestFixture
 
   override fun setUp() {
     super.setUp()
+
+    tempDirFixture = IdeaTestFixtureFactory.getFixtureFactory()
+      .createTempDirTestFixture()
     tempDirFixture.setUp()
+
+    bareFixture = IdeaTestFixtureFactory.getFixtureFactory()
+      .createBareFixture()
     bareFixture.setUp()
+
+    sdkFixture = GradleTestFixtureFactory.getFixtureFactory()
+      .createGradleJvmTestFixture(GradleVersion.current())
     sdkFixture.setUp()
-    sdkFixture.setUpSdk(JavaSdk.getInstance()) {
-      isSupported(GradleVersion.current(), it)
-    }
   }
 
   override fun tearDown() {

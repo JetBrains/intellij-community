@@ -10,8 +10,24 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.SdkTestFixture
 
-class SdkTestFixtureImpl : BaseFixture(), SdkTestFixture {
-  override fun setUpSdk(sdkType: SdkType, versionFilter: (String) -> Boolean): Sdk {
+class SdkTestFixtureImpl(
+  private val sdkType: SdkType,
+  private val versionFilter: (String) -> Boolean
+) : BaseFixture(), SdkTestFixture {
+
+  private lateinit var sdk: Sdk
+
+  override fun getSdk(): Sdk {
+    return sdk
+  }
+
+  override fun setUp() {
+    super.setUp()
+
+    sdk = setUpSdk(sdkType, versionFilter)
+  }
+
+  private fun setUpSdk(sdkType: SdkType, versionFilter: (String) -> Boolean): Sdk {
     val jdkTable = ProjectJdkTable.getInstance()
     for (sdkHome in sdkType.suggestHomePaths()) {
       if (sdkType.isValidSdkHome(sdkHome)) {

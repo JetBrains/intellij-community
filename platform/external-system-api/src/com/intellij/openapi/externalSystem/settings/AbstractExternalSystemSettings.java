@@ -243,7 +243,8 @@ public abstract class AbstractExternalSystemSettings<
     getPublisher().onProjectsLoaded(settings);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
     if (manager != null) {
-      ExternalSystemSettingsListenerEx.Companion.onProjectsLoaded(myProject, manager, settings);
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsLoaded(myProject, manager, settings));
     }
   }
 
@@ -251,7 +252,8 @@ public abstract class AbstractExternalSystemSettings<
     getPublisher().onProjectsLinked(settings);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
     if (manager != null) {
-      ExternalSystemSettingsListenerEx.Companion.onProjectsLinked(myProject, manager, settings);
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsLinked(myProject, manager, settings));
     }
   }
 
@@ -259,7 +261,8 @@ public abstract class AbstractExternalSystemSettings<
     getPublisher().onProjectsUnlinked(linkedProjectPaths);
     ExternalSystemManager<?, ?, ?, ?, ?> manager = myManager.getValue();
     if (manager != null) {
-      ExternalSystemSettingsListenerEx.Companion.onProjectsUnlinked(myProject, manager, linkedProjectPaths);
+      ExternalSystemSettingsListenerEx.EP_NAME
+        .forEachExtensionSafe(it -> it.onProjectsUnlinked(myProject, manager, linkedProjectPaths));
     }
   }
 

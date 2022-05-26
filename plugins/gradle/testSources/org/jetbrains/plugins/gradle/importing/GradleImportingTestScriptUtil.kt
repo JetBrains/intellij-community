@@ -13,14 +13,12 @@ fun GradleImportingTestCase.buildscript(configure: Consumer<TestGradleBuildScrip
 fun GradleImportingTestCase.buildscript(configure: TestGradleBuildScriptBuilder.() -> Unit) =
   createBuildScriptBuilder().apply(configure).generate()
 
-fun GradleImportingTestCase.createSettingsFile(configure: GradleSettingScriptBuilder.() -> Unit) {
-  createSettingsFile(settingsScript("project", configure))
-}
-
 fun GradleImportingTestCase.createSettingsFile(relativeModulePath: String = ".", configure: GradleSettingScriptBuilder.() -> Unit) {
   val file = createProjectSubFile("$relativeModulePath/settings.gradle")
-  val projectName = file.parent!!.name
-  val script = settingsScript(projectName, configure)
+  val script = settingsScript {
+    setProjectName(file.parent!!.name)
+    configure()
+  }
   ExternalSystemTestCase.setFileContent(file, script, false)
 }
 
