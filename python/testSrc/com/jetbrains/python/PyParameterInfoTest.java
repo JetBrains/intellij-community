@@ -1016,6 +1016,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
                                                           new String[]{"self: CallableTest, "});
   }
 
+  // PY-53611
+  public void testTypedDictWithRequiredAndNotRequiredKeys() {
+    final Map<String, PsiElement> test = loadTest(2);
+
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, x: int, y: int = ...",
+                                                         new String[]{"x: int, "},
+                                                         ArrayUtilRt.EMPTY_STRING_ARRAY);
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, x: int, y: int = ...",
+                                                         new String[]{"x: int, "},
+                                                         ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile());

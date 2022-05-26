@@ -39,4 +39,17 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                  "f = changes_return_type_to_str(returns_int)\n" +
                  "res2 = f(a=\"A\", b=True)");
   }
+
+  // PY-53611
+  public void testTypedDictWithRequiredAndNotRequiredKeys() {
+    doTestByText("from typing_extensions import TypedDict, Required, NotRequired\n" +
+                 "class A(TypedDict):\n" +
+                 "    x: int\n" +
+                 "    y: NotRequired[int]\n" +
+                 "class B(TypedDict, total=False):\n" +
+                 "    x: Required[int]\n" +
+                 "    y: int\n" +
+                 "a = A(<warning descr=\"Parameter 'x' unfilled\">)</warning>\n" +
+                 "b = B(<warning descr=\"Parameter 'x' unfilled\">)</warning>");
+  }
 }
