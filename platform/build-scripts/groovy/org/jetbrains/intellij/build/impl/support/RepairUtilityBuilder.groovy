@@ -39,6 +39,7 @@ final class RepairUtilityBuilder {
 
   private static final Collection<Binary> BINARIES = List.of(
     new Binary(OsFamily.LINUX, JvmArchitecture.x64, 'bin/repair-linux-amd64', 'bin/repair'),
+    new Binary(OsFamily.LINUX, JvmArchitecture.aarch64, 'bin/repair-linux-arm64', 'bin/repair'),
     new Binary(OsFamily.WINDOWS, JvmArchitecture.x64, 'bin/repair.exe', 'bin/repair.exe'),
     new Binary(OsFamily.MACOS, JvmArchitecture.x64, 'bin/repair-darwin-amd64', 'bin/repair'),
     new Binary(OsFamily.MACOS, JvmArchitecture.aarch64, 'bin/repair-darwin-arm64', 'bin/repair')
