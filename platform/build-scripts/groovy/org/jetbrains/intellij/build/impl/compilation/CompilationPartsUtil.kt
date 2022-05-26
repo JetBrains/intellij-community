@@ -15,11 +15,8 @@ import org.apache.http.client.methods.HttpHead
 import org.apache.http.impl.client.HttpClientBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.impl.BuildHelperKt
-
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,14 +43,6 @@ final class CompilationPartsUtil {
     BuildMessages messages = context.messages
 
     messages.progress("Packing classes and uploading them to the server")
-
-    //region Prepare executor
-    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    messages.info("Will use up to $executorThreadsCount threads for packing and uploading")
-
-    def executor = new NamedThreadPoolExecutor('Compile Parts', executorThreadsCount)
-    executor.prestartAllCoreThreads()
-    //endregion
 
     def incremental = context.options.incrementalCompilation
     Path zipsLocationDir = Path.of(zipsLocation)
