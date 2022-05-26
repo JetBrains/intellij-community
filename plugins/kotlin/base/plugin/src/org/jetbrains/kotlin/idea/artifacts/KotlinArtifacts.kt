@@ -12,11 +12,16 @@ class KotlinArtifacts private constructor(val kotlincDirectory: File) {
         @NlsSafe const val KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin"
         @Deprecated(
             "Deprecated because new \"meta pom\" format (KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID) should be used. " +
-                    "This constant should be used only for keeping backwards compatibility with the old format"
+                    "This constant should be used only for being possible to compile intellij repo"
         )
         @NlsSafe const val OLD_KOTLIN_DIST_ARTIFACT_ID = "kotlin-dist-for-ide"
         @NlsSafe const val KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID = "kotlin-dist-for-jps-meta"
-        @NlsSafe const val KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
+        @Deprecated(
+            "Deprecated because new KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID should be used. " +
+                            "This constant should be used only for being possible to compile intellij repo"
+        )
+        @NlsSafe const val OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath"
+        @NlsSafe const val KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID = "kotlin-jps-plugin"
         val KOTLIN_DIST_LOCATION_PREFIX = File(PathManager.getSystemPath(), "kotlin-dist-for-ide")
 
         @get:JvmStatic

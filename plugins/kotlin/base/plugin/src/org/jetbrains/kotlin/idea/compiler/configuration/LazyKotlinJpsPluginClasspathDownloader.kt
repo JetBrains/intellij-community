@@ -3,27 +3,55 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.LazyFileOutputProducer
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
-import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClasspathDownloader.Context
+import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import java.io.File
 
-class LazyKotlinJpsPluginClasspathDownloader(version: String) : LazyFileOutputProducer<Unit, Context> {
-    private val downloader = LazyKotlinMavenArtifactDownloader(KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version)
+private val VERSION_UNTIL_OLD_FAT_JAR_IS_AVAILABLE = IdeKotlinVersion.get("1.7.20")
 
-    override fun isUpToDate(input: Unit) = downloader.isUpToDate()
+class LazyKotlinJpsPluginClasspathDownloader(private val version: String) :
+    LazyFileOutputProducer<Unit, LazyKotlinJpsPluginClasspathDownloader.Context> {
+
+    private val newDownloader = LazyKotlinMavenArtifactDownloader(KotlinArtifacts.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID, version)
+    private val oldDownloader =
+        if (IdeKotlinVersion.get(version) < VERSION_UNTIL_OLD_FAT_JAR_IS_AVAILABLE) {
+            LazyKotlinMavenArtifactDownloader(OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version)
+        } else {
+            null
+        }
+
+    override fun isUpToDate(input: Unit) =
+        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) true
+        else newDownloader.isUpToDate() || oldDownloader?.isUpToDate() == true
 
     override fun lazyProduceOutput(input: Unit, computationContext: Context): List<File> {
-        val context = LazyKotlinMavenArtifactDownloader.DownloadContext(
+        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
+            return KotlinPluginLayout.instance.jpsPluginClasspath
+        }
+        oldDownloader?.getDownloadedIfUpToDateOrEmpty()?.takeIf { it.isNotEmpty() }?.let { return it }
+
+        val downloadContext = DownloadContext(
             computationContext.project,
             computationContext.indicator,
             KotlinBasePluginBundle.message("progress.text.downloading.kotlin.jps.plugin")
         )
-        return downloader.lazyDownload(context)
+        return newDownloader.lazyDownload(downloadContext).takeIf { it.isNotEmpty() }
+            ?: oldDownloader?.lazyDownload(downloadContext)
+            ?: emptyList()
     }
 
-    fun getDownloadedIfUpToDateOrEmpty() = downloader.getOutputIfUpToDateOrEmpty()
+    fun getDownloadedIfUpToDateOrEmpty() =
+        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
+            KotlinPluginLayout.instance.jpsPluginClasspath
+        } else {
+            newDownloader.getDownloadedIfUpToDateOrEmpty().takeIf { it.isNotEmpty() }
+                ?: oldDownloader?.getDownloadedIfUpToDateOrEmpty()
+                ?: emptyList()
+        }
+
     fun lazyDownload(computationContext: Context) = lazyProduceOutput(Unit, computationContext)
 
     data class Context(val project: Project, val indicator: ProgressIndicator)

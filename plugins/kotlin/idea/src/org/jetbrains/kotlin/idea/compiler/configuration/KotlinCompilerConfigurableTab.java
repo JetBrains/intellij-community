@@ -401,7 +401,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                     }
                     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
                                     KotlinArtifacts.KOTLIN_MAVEN_GROUP_ID,
-                                    KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
+                                    KotlinArtifacts.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID))
                             .onProcessed(jpsClassPathVersions -> {
                                 if (jpsClassPathVersions == null) {
                                     onFinish.accept(null);

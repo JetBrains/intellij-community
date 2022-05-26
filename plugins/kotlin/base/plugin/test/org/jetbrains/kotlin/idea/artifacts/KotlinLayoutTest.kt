@@ -36,7 +36,7 @@ class KotlinLayoutTest : UsefulTestCase() {
         val expectedClasspath = ProgressManager.getInstance().runProcess(
             Computable {
                 KotlinArtifactsDownloader.downloadMavenArtifacts(
-                    KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
+                    KotlinArtifacts.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
                     KotlinPluginLayout.instance.standaloneCompilerVersion.rawVersion,
                     myFixture.project,
                     ProgressManager.getInstance().progressIndicator,
