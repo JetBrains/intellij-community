@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.dsl
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.codeInspection.GradleDisablerTestUtils
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
@@ -17,7 +16,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROPERTY
 
 @CompileStatic
-class GradleManagedPropertyTest extends GradleHighlightingBaseTest implements TypingTest {
+class GradleManagedPropertyTest extends GradleHighlightingHeavyTestCase implements TypingTest {
 
   protected List<String> getParentCalls() {
     return []

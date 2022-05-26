@@ -3,9 +3,10 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
+import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixture
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
@@ -14,61 +15,56 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassName
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT
 
 @CompileStatic
-class GradleArtifactsTest extends GradleHighlightingBaseTest implements ResolveTest {
+class GradleArtifactsTest extends GradleHighlightingLightTestCase implements ResolveTest {
 
   @Override
-  protected List<String> getParentCalls() {
+  GradleTestFixture createGradleTestFixture(@NotNull GradleVersion gradleVersion) {
+    return createGradleTestFixture(gradleVersion, "java")
+  }
+
+  @Override
+  List<String> getParentCalls() {
     return []
   }
 
   @Test
-  void artifactsTest() {
-    importProject("apply plugin: 'java'")
-    new RunAll(
-      { 'closure delegate'() },
-      { 'member'() },
-      { 'unresolved reference'() },
-      { 'unresolved configuration reference'() },
-      { 'invalid artifact addition'() },
-      { 'artifact addition'() },
-      { 'configurable artifact addition'() },
-      { 'configuration delegate'() },
-      { 'configuration delegate method setter'() }
-    ).run()
-  }
-
-  void 'closure delegate'() {
+  void 'test closure delegate'() {
     doTest('artifacts { <caret> }') {
       closureDelegateTest(GRADLE_API_ARTIFACT_HANDLER, 1)
     }
   }
 
-  void 'member'() {
+  @Test
+  void 'test member'() {
     doTest('artifacts { <caret>add("conf", "notation") }') {
       methodTest(resolveTest(PsiMethod), "add", GRADLE_API_ARTIFACT_HANDLER)
     }
   }
 
-  void 'unresolved reference'() {
+  @Test
+  void 'test unresolved reference'() {
     doTest('artifacts { <caret>foo }', super.getParentCalls()) {
       resolveTest(null)
     }
   }
 
-  void 'unresolved configuration reference'() {
+  @Test
+  void 'test unresolved configuration reference'() {
     doTest('artifacts { <caret>archives }') {
       resolveTest(null)
     }
   }
 
-  void 'invalid artifact addition'() {
+  @Test
+  void 'test invalid artifact addition'() {
     // foo configuration doesn't exist
     doTest('artifacts { <caret>foo("artifactNotation") }') {
       assertEmpty(elementUnderCaret(GrMethodCall).multiResolve(false))
     }
   }
 
-  void 'artifact addition'() {
+  @Test
+  void 'test artifact addition'() {
     def test = {
       def call = elementUnderCaret(GrMethodCall)
       def result = assertOneElement(call.multiResolve(false))
@@ -82,7 +78,8 @@ class GradleArtifactsTest extends GradleHighlightingBaseTest implements ResolveT
     doTest('artifacts.<caret>archives("artifactNotation", "artifactNotation2", "artifactNotation3")', test)
   }
 
-  void 'configurable artifact addition'() {
+  @Test
+  void 'test configurable artifact addition'() {
     def test = {
       def call = elementUnderCaret(GrMethodCall)
       def result = assertOneElement(call.multiResolve(false))
@@ -94,13 +91,15 @@ class GradleArtifactsTest extends GradleHighlightingBaseTest implements ResolveT
     doTest('artifacts.<caret>archives("artifactNotation") {}', test)
   }
 
-  void 'configuration delegate'() {
+  @Test
+  void 'test configuration delegate'() {
     doTest('artifacts { archives("artifactNotation") { <caret> } }') {
       closureDelegateTest(GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT, 1)
     }
   }
 
-  void 'configuration delegate method setter'() {
+  @Test
+  void 'test configuration delegate method setter'() {
     doTest('artifacts { archives("artifactNotation") { <caret>name("hi") } }') {
       setterMethodTest('name', 'setName', GRADLE_API_CONFIGURABLE_PUBLISH_ARTIFACT)
     }

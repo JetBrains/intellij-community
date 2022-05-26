@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
@@ -13,23 +12,15 @@ import org.junit.runners.Parameterized
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_DATE
 
 @CompileStatic
-class GradleResolveTest extends GradleHighlightingBaseTest implements ResolveTest {
+class GradleResolveTest extends GradleHighlightingLightTestCase implements ResolveTest {
 
   @Parameterized.Parameters(name = "with Gradle-{0}")
   static Collection<Object[]> data() {
-    return [[BASE_GRADLE_VERSION] as Object[]]
+    return [[VersionMatcherRule.BASE_GRADLE_VERSION].toArray()]
   }
 
   @Test
-  void resolveTest() {
-    importProject('')
-    new RunAll(
-      { 'resolve date constructor'() },
-      { 'resolve date constructor 2'() }
-    ).run()
-  }
-
-  void 'resolve date constructor'() {
+  void 'test resolve date constructor'() {
     doTest('<caret>new Date()') {
       def expression = elementUnderCaret(GrNewExpression)
       def results = expression.multiResolve(false)
@@ -40,7 +31,8 @@ class GradleResolveTest extends GradleHighlightingBaseTest implements ResolveTes
     }
   }
 
-  void 'resolve date constructor 2'() {
+  @Test
+  void 'test resolve date constructor 2'() {
     doTest('<caret>new Date(1l)') {
       def expression = elementUnderCaret(GrNewExpression)
       def results = expression.multiResolve(false)

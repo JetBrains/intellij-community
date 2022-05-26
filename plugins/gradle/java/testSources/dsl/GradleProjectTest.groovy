@@ -2,36 +2,19 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 
 @CompileStatic
-class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTest {
+class GradleProjectTest extends GradleHighlightingLightTestCase {
 
   @Test
-  void resolveTest() {
-    importProject('')
-    new RunAll(
-      { 'resolve explicit getter'() },
-      { 'resolve property'() },
-      { 'resolve explicit setter'() },
-      { 'resolve explicit setter without argument'() },
-      { 'resolve property setter'() },
-      { 'resolve implicit setter'() },
-      { 'resolve implicit setter without argument'() },
-      { 'property vs task'() }
-    ).run()
-  }
-
-  void 'resolve explicit getter'() {
+  void 'test resolve explicit getter'() {
     doTest('<caret>getGroup()') {
       def results = elementUnderCaret(GrMethodCall).multiResolve(false)
       assert results.size() == 1
@@ -41,7 +24,8 @@ class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTes
     }
   }
 
-  void 'resolve property'() {
+  @Test
+  void 'test resolve property'() {
     doTest('<caret>group') {
       def results = elementUnderCaret(GrReferenceExpression).multiResolve(false)
       assert results.size() == 1
@@ -51,7 +35,8 @@ class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTes
     }
   }
 
-  void 'resolve explicit setter'() {
+  @Test
+  void 'test resolve explicit setter'() {
     doTest('<caret>setGroup(1)') {
       def results = elementUnderCaret(GrMethodCall).multiResolve(false)
       assert results.size() == 1
@@ -61,7 +46,8 @@ class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTes
     }
   }
 
-  void 'resolve explicit setter without argument'() {
+  @Test
+  void 'test resolve explicit setter without argument'() {
     doTest('<caret>setGroup()') {
       def results = elementUnderCaret(GrMethodCall).multiResolve(false)
       assert results.size() == 1
@@ -71,7 +57,8 @@ class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTes
     }
   }
 
-  void 'resolve property setter'() {
+  @Test
+  void 'test resolve property setter'() {
     doTest('<caret>group = 42') {
       def results = elementUnderCaret(GrReferenceExpression).multiResolve(false)
       assert results.size() == 1
@@ -81,20 +68,23 @@ class GradleProjectTest extends GradleHighlightingBaseTest implements ResolveTes
     }
   }
 
-  void 'resolve implicit setter'() {
+  @Test
+  void 'test resolve implicit setter'() {
     doTest('<caret>group(42)') {
       setterMethodTest('group', 'setGroup', GRADLE_API_PROJECT)
     }
   }
 
-  void 'resolve implicit setter without argument'() {
+  @Test
+  void 'test resolve implicit setter without argument'() {
     doTest('<caret>group()') {
       setterMethodTest('group', 'setGroup', GRADLE_API_PROJECT)
     }
   }
 
+  @Test
   @CompileDynamic
-  void 'property vs task'() {
+  void 'test property vs task'() {
     doTest('<caret>dependencies') {
       methodTest(resolveTest(PsiMethod), "getDependencies", GRADLE_API_PROJECT)
     }

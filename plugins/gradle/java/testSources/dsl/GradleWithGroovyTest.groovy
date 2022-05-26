@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
+import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixture
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.util.ResolveTest
@@ -15,28 +16,20 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassName
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 
 @CompileStatic
-class GradleWithGroovyTest extends GradleHighlightingBaseTest implements ResolveTest {
+class GradleWithGroovyTest extends GradleHighlightingLightTestCase implements ResolveTest {
 
   @Override
-  protected List<String> getParentCalls() {
+  GradleTestFixture createGradleTestFixture(@NotNull GradleVersion gradleVersion) {
+    return createGradleTestFixture(gradleVersion, "groovy")
+  }
+
+  @Override
+  List<String> getParentCalls() {
     return super.getParentCalls() + 'buildscript'
   }
 
   @Test
-  void artifactsTest() {
-    importProject(script {
-      it.withJavaPlugin()
-        .addImplementationDependency("org.codehaus.groovy:groovy:2.5.6")
-    })
-    new RunAll(
-      { 'Project#allprojects call'() },
-      { 'DomainObjectCollection#all call'() },
-      { 'DomainObjectCollection#withType call'() },
-      { 'DGM#collect'() }
-    ).run()
-  }
-
-  void 'Project#allprojects call'() {
+  void 'test Project#allprojects call'() {
     doTest('<caret>allprojects {}') {
       def method = assertInstanceOf(assertOneElement(elementUnderCaret(GrMethodCall).multiResolve(false)).element, PsiMethod)
       assert method.containingClass.qualifiedName == GRADLE_API_PROJECT
@@ -44,7 +37,8 @@ class GradleWithGroovyTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  void 'DomainObjectCollection#all call'() {
+  @Test
+  void 'test DomainObjectCollection#all call'() {
     doTest('<caret>configurations.all {}') {
       def method = assertInstanceOf(assertOneElement(elementUnderCaret(GrMethodCall).multiResolve(false)).element, PsiMethod)
       assert method.containingClass.qualifiedName == GRADLE_API_DOMAIN_OBJECT_COLLECTION
@@ -52,7 +46,8 @@ class GradleWithGroovyTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  void 'DomainObjectCollection#withType call'() {
+  @Test
+  void 'test DomainObjectCollection#withType call'() {
     doTest('<caret>plugins.withType(JavaPlugin) {}') {
       def method = assertInstanceOf(assertOneElement(elementUnderCaret(GrMethodCall).multiResolve(false)).element, PsiMethod)
       assert method.containingClass.qualifiedName == GRADLE_API_DOMAIN_OBJECT_COLLECTION
@@ -60,8 +55,9 @@ class GradleWithGroovyTest extends GradleHighlightingBaseTest implements Resolve
     }
   }
 
-  void 'DGM#collect'() {
+  @Test
+  void 'test DGM#collect'() {
     fixture.enableInspections(GroovyAssignabilityCheckInspection)
-    testHighlighting '''["a", "b"].collect { it.toUpperCase() }'''
+    doTestHighlighting '''["a", "b"].collect { it.toUpperCase() }'''
   }
 }

@@ -2,36 +2,26 @@
 package org.jetbrains.plugins.gradle.dsl
 
 
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.codeInspection.GradleDisablerTestUtils
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.junit.Test
 
 @CompileStatic
-class GradleTaskHighlightingTest extends GradleHighlightingBaseTest {
+class GradleTaskHighlightingTest extends GradleHighlightingLightTestCase {
 
   @Override
-  protected List<String> getParentCalls() {
+  List<String> getParentCalls() {
     return []
   }
 
   @Test
-  void test() {
-    importProject("")
+  void 'test task declaration'() {
     GradleDisablerTestUtils.enableAllDisableableInspections(testRootDisposable)
     fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection, GroovyAccessibilityInspection)
-    new RunAll(
-      { 'task declaration'() },
-      { 'task declaration invalid'() }
-    ).run()
-  }
-
-  void 'task declaration'() {
-    testHighlighting '''   
+    doTestHighlighting '''   
 task(id1)
 task(id2) {}
 task(id3, {})
@@ -59,7 +49,9 @@ task id14 << {}
   }
 
   void 'task declaration invalid'() {
-    testHighlighting """\
+    GradleDisablerTestUtils.enableAllDisableableInspections(testRootDisposable)
+    fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection, GroovyAccessibilityInspection)
+    doTestHighlighting """\
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(java.lang.String, java.lang.Integer)'">id1, 42</warning>
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(java.lang.Integer, ?)'">42, <warning descr="Cannot resolve symbol 'id2'">id2</warning></warning>
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(java.lang.String, java.lang.Integer, java.lang.Integer)'">id3, 42, 43</warning>

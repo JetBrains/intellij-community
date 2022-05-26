@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.importing.highlighting
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.dsl
 
 
 import com.intellij.openapi.application.ReadAction
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.Parameterized
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
@@ -27,7 +28,7 @@ import org.jetbrains.plugins.groovy.util.ResolveTest
 import java.nio.file.Paths
 
 @CompileStatic
-abstract class GradleHighlightingBaseTest extends GradleImportingTestCase implements ResolveTest {
+abstract class GradleHighlightingHeavyTestCase extends GradleImportingTestCase implements ResolveTest {
 
   @NotNull
   JavaCodeInsightTestFixture fixture

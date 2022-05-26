@@ -2,48 +2,51 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
+import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixture
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_JAVA_PLUGIN_CONVENTION
 
 @CompileStatic
-class GradleConventionsTest extends GradleHighlightingBaseTest implements ResolveTest {
+class GradleConventionsTest extends GradleHighlightingLightTestCase implements ResolveTest {
 
-  @Test
-  void test() {
-    importProject("apply plugin: 'java'")
-    new RunAll(
-      { 'property read'() },
-      { 'property read via project'() },
-      { 'property write'() },
-      { 'setter method'() }
-    ).run()
+  @Override
+  GradleTestFixture createGradleTestFixture(@NotNull GradleVersion gradleVersion) {
+    return createGradleTestFixture(gradleVersion, "java")
   }
 
-  void 'property read'() {
+  @Test
+  void 'test property read'() {
+    reloadProject() // Todo: remove when https://youtrack.jetbrains.com/issue/IDEA-295016 is fixed
     doTest('<caret>docsDir') {
       methodTest(resolveTest(PsiMethod), 'getDocsDir', GRADLE_API_JAVA_PLUGIN_CONVENTION)
     }
   }
 
-  void 'property read via project'() {
+  @Test
+  void 'test property read via project'() {
+    reloadProject() // Todo: remove when https://youtrack.jetbrains.com/issue/IDEA-295016 is fixed
     doTest('project.<caret>docsDir') {
       methodTest(resolveTest(PsiMethod), 'getDocsDir', GRADLE_API_JAVA_PLUGIN_CONVENTION)
     }
   }
 
-  void 'property write'() {
+  @Test
+  void 'test property write'() {
+    reloadProject() // Todo: remove when https://youtrack.jetbrains.com/issue/IDEA-295016 is fixed
     doTest('<caret>sourceCompatibility = 42') {
       methodTest(resolveTest(PsiMethod), 'setSourceCompatibility', GRADLE_API_JAVA_PLUGIN_CONVENTION)
     }
   }
 
   // this test is wrong and exists only to preserve current behaviour and to fail when behaviour changes
-  void 'setter method'() {
+  @Test
+  void 'test setter method'() {
+    reloadProject() // Todo: remove when https://youtrack.jetbrains.com/issue/IDEA-295016 is fixed
     doTest('<caret>targetCompatibility("1.8")') {
       setterMethodTest('targetCompatibility', 'setTargetCompatibility', GRADLE_API_JAVA_PLUGIN_CONVENTION)
 //      // the correct test is below:

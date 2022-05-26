@@ -1,45 +1,40 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
+import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixture
 import org.jetbrains.plugins.groovy.util.ResolveTest
 import org.junit.Test
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY
 
 @CompileStatic
-class GradlePublishingTest extends GradleHighlightingBaseTest implements ResolveTest {
+class GradlePublishingTest extends GradleHighlightingLightTestCase implements ResolveTest {
 
-  @Test
-  void repositoriesTest() {
-    importProject("apply plugin: 'maven-publish'")
-    new RunAll(
-      { 'publishing closure delegate'() },
-      { 'publishing repositories maven url'() }
-    ).run()
+  @Override
+  GradleTestFixture createGradleTestFixture(@NotNull GradleVersion gradleVersion) {
+    return createGradleTestFixture(gradleVersion, "maven-publish")
   }
 
   @Override
-  protected List<String> getParentCalls() {
+  List<String> getParentCalls() {
     return super.getParentCalls() + 'buildscript'
   }
 
-  void 'publishing closure delegate'() {
+  @Test
+  void 'test publishing closure delegate'() {
+    reloadProject() // Todo: remove when https://youtrack.jetbrains.com/issue/IDEA-295016 is fixed
     doTest('publishing { <caret> }') {
       closureDelegateTest(getPublishingExtensionFqn(), 1)
     }
   }
 
-  void 'publishing repositories maven url'() {
+  @Test
+  void 'test publishing repositories maven url'() {
     doTest('publishing { repositories { maven { url<caret> "" } } }') {
       setterMethodTest('url', 'setUrl', GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY)
     }
-  }
-
-  private String getPublishingExtensionFqn() {
-    isGradleOlderThan("4.8") || isGradleNewerOrSameAs("5.0") ? "org.gradle.api.publish.internal.DefaultPublishingExtension"
-                                                             : "org.gradle.api.publish.internal.DeferredConfigurablePublishingExtension"
   }
 }

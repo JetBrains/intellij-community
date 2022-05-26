@@ -3,36 +3,37 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.model.psi.impl.TargetsKt
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
+import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.service.resolve.GradleSubprojectSymbol
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureFactory
 import org.junit.Test
 
-import java.nio.file.Paths
+import static org.jetbrains.plugins.gradle.testFramework.GradleFileTestUtil.withSettingsFile
 
 @CompileStatic
-class GradleProjectReferenceTest extends GradleHighlightingBaseTest {
+class GradleProjectReferenceTest extends GradleHighlightingLightTestCase {
 
-  @Test
-  void projectReferencesTest() {
-    createSettingsFile('''\
-include 'child'
-include 'child:foo'
-include 'child:foo:bar'
-include 'child:foo:baz'
-include 'child:bar'
-include 'child:bar:foo'
-''');
-    importProject('')
-    new RunAll(
-      { renameChild() },
-      { renameGrandChild() },
-    ).run()
+  @Override
+  GradleTestFixture createGradleTestFixture(@NotNull GradleVersion gradleVersion) {
+    return GradleTestFixtureFactory.fixtureFactory
+      .createGradleTestFixture("GradleProjectReferenceTest", gradleVersion) {
+        withSettingsFile(it) {
+          it.setProjectName("GradleProjectReferenceTest")
+          it.include("child")
+          it.include("child:foo")
+          it.include("child:foo:bar")
+          it.include("child:foo:baz")
+          it.include("child:bar")
+          it.include("child:bar:foo")
+        }
+      }
   }
 
-  void renameChild() {
+  @Test
+  void 'test rename child'() {
     testRename '''\
 // :child:foo:bar
 project(':child')
@@ -64,7 +65,8 @@ println ":xchild:foox:bar"
 '''
   }
 
-  void renameGrandChild() {
+  @Test
+  void 'test rename grand child'() {
     testRename '''\
 // :child:foo:bar
 project(':child')
@@ -102,9 +104,6 @@ println ":xchild:foo:bar"
       def symbol = TargetsKt.targetSymbols(fixture.file, fixture.caretOffset)[0] as GradleSubprojectSymbol
       fixture.renameTarget(symbol, "xxx")
       fixture.checkResult after
-      ApplicationManager.application.runWriteAction {
-        VfsUtil.findFile(Paths.get(getProjectPath(), "build.gradle"), false).delete(this)
-      }
     }
   }
 }

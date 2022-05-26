@@ -1,38 +1,37 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
-import com.intellij.testFramework.RunAll
+
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
+import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixture
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Test
 import org.junit.runners.Parameterized
 
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASKS_JAVADOC_JAVADOC
 
 @CompileStatic
-class GradleActionTest extends GradleHighlightingBaseTest {
+class GradleActionTest extends GradleHighlightingLightTestCase {
 
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
   static Collection<Object[]> data() {
-    return [[BASE_GRADLE_VERSION].toArray()]
+    return [[VersionMatcherRule.BASE_GRADLE_VERSION].toArray()]
   }
 
   @Override
-  protected List<String> getParentCalls() {
+  GradleTestFixture createGradleTestFixture(@NotNull GradleVersion gradleVersion) {
+    return createGradleTestFixture(gradleVersion, "java")
+  }
+
+  @Override
+  List<String> getParentCalls() {
     return []
   }
 
   @Test
-  void test() {
-    importProject("apply plugin:'java'")
-    new RunAll(
-      { 'domain collection forEach'() },
-      { 'nested version block'() }
-    ).run()
-  }
-
-  void 'domain collection forEach'() {
+  void 'test domain collection forEach'() {
     doTest('tasks.withType(Javadoc).configureEach {\n' +
            '  <caret>\n' +
            '}') {
@@ -40,7 +39,8 @@ class GradleActionTest extends GradleHighlightingBaseTest {
     }
   }
 
-  void 'nested version block'() {
+  @Test
+  void 'test nested version block'() {
     doTest('dependencies {' +
            ' implementation("group:artifact") {\n' +
            '  version { <caret> }\n' +

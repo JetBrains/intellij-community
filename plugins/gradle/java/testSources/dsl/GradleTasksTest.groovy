@@ -2,10 +2,11 @@
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
+import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.service.resolve.GradleTaskProperty
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixture
 import org.jetbrains.plugins.groovy.util.ExpressionTest
 import org.junit.Test
 
@@ -13,80 +14,76 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 
 @CompileStatic
-class GradleTasksTest extends GradleHighlightingBaseTest implements ExpressionTest {
+class GradleTasksTest extends GradleHighlightingLightTestCase implements ExpressionTest {
 
   @Override
-  protected List<String> getParentCalls() {
+  GradleTestFixture createGradleTestFixture(@NotNull GradleVersion gradleVersion) {
+    return createGradleTestFixture(gradleVersion, "java")
+  }
+
+  @Override
+  List<String> getParentCalls() {
     return []
   }
 
   @Test
-  void test() {
-    importProject("apply plugin:'java'")
-    new RunAll(
-      { 'task ref'() },
-      { 'task call'() },
-      { 'task call delegate'() },
-      { 'task container vs task ref'() },
-      { 'task container vs task call'() },
-      { 'task via TaskContainer'() },
-      { 'task via Project'() },
-      { 'task in allProjects'() },
-      { 'task in allProjects via explicit delegate'() },
-      { 'task declaration configuration delegate'() },
-      { 'task declaration configuration delegate with explicit type'() }
-    ).run()
-  }
-
-  void 'task ref'() {
+  void 'test task ref'() {
     doTest('<caret>javadoc') {
       testTask('javadoc', GRADLE_API_TASKS_JAVADOC_JAVADOC)
     }
   }
 
-  void 'task call'() {
+  @Test
+  void 'test task call'() {
     doTest('<caret>javadoc {}') {
       methodCallTest(PsiMethod, GRADLE_API_TASKS_JAVADOC_JAVADOC)
     }
   }
 
-  void 'task call delegate'() {
+  @Test
+  void 'test task call delegate'() {
     doTest('javadoc { <caret> }') {
       closureDelegateTest(GRADLE_API_TASKS_JAVADOC_JAVADOC, 1)
     }
   }
 
-  void 'task container vs task ref'() {
+  @Test
+  void 'test task container vs task ref'() {
     doTest('<caret>tasks') {
       referenceExpressionTest(PsiMethod, GRADLE_API_TASK_CONTAINER)
     }
   }
 
-  void 'task container vs task call'() {
+  @Test
+  void 'test task container vs task call'() {
     doTest('<caret>tasks {}') {
       methodCallTest(PsiMethod, GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK)
     }
   }
 
-  void 'task via TaskContainer'() {
+  @Test
+  void 'test task via TaskContainer'() {
     doTest('tasks.<caret>tasks') {
       testTask('tasks', GRADLE_API_TASKS_DIAGNOSTICS_TASK_REPORT_TASK)
     }
   }
 
-  void 'task via Project'() {
+  @Test
+  void 'test task via Project'() {
     doTest('project.<caret>clean') {
       testTask('clean', GRADLE_API_TASKS_DELETE)
     }
   }
 
-  void 'task in allProjects'() {
+  @Test
+  void 'test task in allProjects'() {
     doTest('allProjects { <caret>clean }') {
       testTask('clean', GRADLE_API_TASKS_DELETE)
     }
   }
 
-  void 'task in allProjects via explicit delegate'() {
+  @Test
+  void 'test task in allProjects via explicit delegate'() {
     doTest('allProjects { delegate.<caret>clean }') {
       resolveTest(null)
     }
@@ -97,7 +94,8 @@ class GradleTasksTest extends GradleHighlightingBaseTest implements ExpressionTe
     assert property.name == name
   }
 
-  void 'task declaration configuration delegate'() {
+  @Test
+  void 'test task declaration configuration delegate'() {
     def data = [
       "task('s') { <caret> }",
       "task(id2) { <caret> }",
@@ -122,7 +120,8 @@ class GradleTasksTest extends GradleHighlightingBaseTest implements ExpressionTe
     }
   }
 
-  void 'task declaration configuration delegate with explicit type'() {
+  @Test
+  void 'test task declaration configuration delegate with explicit type'() {
     def data = [
       "task('s', type: String) { <caret> }",
       "task(id5, type: String) { <caret> }",

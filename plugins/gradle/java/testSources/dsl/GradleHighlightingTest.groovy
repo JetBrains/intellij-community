@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.importing.highlighting
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.psi.PsiMethod
@@ -7,13 +7,13 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspec
 import org.junit.Test
 import org.junit.runners.Parameterized
 
-class GradleHighlightingTest extends GradleHighlightingBaseTest {
+class GradleHighlightingTest extends GradleHighlightingHeavyTestCase {
 
-  /**
-   * It's sufficient to run the test against one gradle version
-   */
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
-  static Collection<Object[]> data() { [BASE_GRADLE_VERSION] }
+  static Collection<Object[]> data() {
+    return [[BASE_GRADLE_VERSION].toArray()]
+  }
 
   @Test
   void testConfiguration() throws Exception {
