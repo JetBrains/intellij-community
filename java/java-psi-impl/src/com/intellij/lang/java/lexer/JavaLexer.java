@@ -116,31 +116,37 @@ public final class JavaLexer extends LexerBase {
       case '\r':
       case '\f':
         myTokenType = TokenType.WHITE_SPACE;
-        myTokenEndOffset = getWhitespaces(myBufferIndex + 1);
+        myTokenEndOffset = getWhitespaces(myBufferIndex + mySymbolLength);
         break;
 
       case '/':
-        if (myBufferIndex + 1 >= myBufferEndOffset) {
+        if (myBufferIndex + mySymbolLength >= myBufferEndOffset) {
           myTokenType = JavaTokenType.DIV;
           myTokenEndOffset = myBufferEndOffset;
         }
         else {
-          char nextChar = charAt(myBufferIndex + 1);
+          int l1 = mySymbolLength;
+          char nextChar = charAt(myBufferIndex + l1);
           if (nextChar == '/') {
             myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
-            myTokenEndOffset = getLineTerminator(myBufferIndex + 2);
+            myTokenEndOffset = getLineTerminator(myBufferIndex + l1 + mySymbolLength);
           }
           else if (nextChar == '*') {
-            if (myBufferIndex + 2 >= myBufferEndOffset ||
-                (charAt(myBufferIndex + 2)) != '*' ||
-                (myBufferIndex + 3 < myBufferEndOffset &&
-                 (charAt(myBufferIndex + 3)) == '/')) {
-              myTokenType = JavaTokenType.C_STYLE_COMMENT;
-              myTokenEndOffset = getClosingComment(myBufferIndex + 2);
+            int l2 = mySymbolLength;
+            if (myBufferIndex + l1 + l2 < myBufferEndOffset && charAt(myBufferIndex + l1 + l2) == '*') {
+              int l3 = mySymbolLength;
+              if (myBufferIndex + l1 + l2 + l3 < myBufferEndOffset && charAt(myBufferIndex + l1 + l2 + l3) == '/') {
+                myTokenType = JavaTokenType.C_STYLE_COMMENT;
+                myTokenEndOffset = myBufferIndex + l1 + l2 + l3 + mySymbolLength;
+              }
+              else {
+                myTokenType = JavaDocElementType.DOC_COMMENT;
+                myTokenEndOffset = getClosingComment(myBufferIndex + l1 + l2 + l3);
+              }
             }
             else {
-              myTokenType = JavaDocElementType.DOC_COMMENT;
-              myTokenEndOffset = getClosingComment(myBufferIndex + 3);
+              myTokenType = JavaTokenType.C_STYLE_COMMENT;
+              myTokenEndOffset = getClosingComment(myBufferIndex + l1 + l2 + mySymbolLength);
             }
           }
           else {
@@ -150,7 +156,7 @@ public final class JavaLexer extends LexerBase {
         break;
 
       case '#' :
-        if (myBufferIndex == 0 && myBufferIndex + 1 < myBufferEndOffset && charAt(myBufferIndex + 1) == '!') {
+        if (mySymbolLength == 1 && myBufferIndex == 0 && myBufferIndex + 1 < myBufferEndOffset && charAt(myBufferIndex + 1) == '!' && mySymbolLength == 1) {
           myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
           myTokenEndOffset = getLineTerminator(myBufferIndex + 2);
         }
@@ -158,19 +164,28 @@ public final class JavaLexer extends LexerBase {
           flexLocateToken();
         }
         break;
+
       case '\'':
         myTokenType = JavaTokenType.CHARACTER_LITERAL;
-        myTokenEndOffset = getClosingQuote(myBufferIndex + 1, '\'');
+        myTokenEndOffset = getClosingQuote(myBufferIndex + mySymbolLength, '\'');
         break;
 
       case '"':
-        if (myBufferIndex + 2 < myBufferEndOffset && charAt(myBufferIndex + 2) == '"' && charAt(myBufferIndex + 1) == '"') {
-          myTokenType = JavaTokenType.TEXT_BLOCK_LITERAL;
-          myTokenEndOffset = getTextBlockEnd(myBufferIndex + 2);
+        int l1 = mySymbolLength;
+        if (myBufferIndex + l1 < myBufferEndOffset && charAt(myBufferIndex + l1) == '"') {
+          int l2 = mySymbolLength;
+          if (myBufferIndex + l1 + l2 < myBufferEndOffset &&  charAt(myBufferIndex + l1 + l2) == '"') {
+            myTokenType = JavaTokenType.TEXT_BLOCK_LITERAL;
+            myTokenEndOffset = getTextBlockEnd(myBufferIndex + l1 + l2);
+          }
+          else {
+            myTokenType = JavaTokenType.STRING_LITERAL;
+            myTokenEndOffset = myBufferIndex + l1 + l2;
+          }
         }
         else {
           myTokenType = JavaTokenType.STRING_LITERAL;
-          myTokenEndOffset = getClosingQuote(myBufferIndex + 1, '"');
+          myTokenEndOffset = getClosingQuote(myBufferIndex + l1, '"');
         }
         break;
 
@@ -189,7 +204,7 @@ public final class JavaLexer extends LexerBase {
     while (pos < myBufferEndOffset) {
       char c = charAt(pos);
       if (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != '\f') break;
-      pos++;
+      pos += mySymbolLength;
     }
 
     return pos;
@@ -211,18 +226,17 @@ public final class JavaLexer extends LexerBase {
       char c = charAt(pos);
 
       if (c == '\\') {
-        char d = symbolAt(pos);
         pos += mySymbolLength;
-        if (d != '\\') continue;
         // on (encoded) backslash we also need to skip the next symbol (e.g. \\u005c" is translated to \")
+        if (pos < myBufferEndOffset) charAt(pos);
       }
       else if (c == quoteChar) {
-        return pos + 1;
+        return pos + mySymbolLength;
       }
-      else if (c == '\n' || c == '\r') {
+      else if ((c == '\n' || c == '\r') && mySymbolLength == 1) {
         return pos;
       }
-      pos++;
+      pos += mySymbolLength;
     }
     return pos;
   }
@@ -230,12 +244,13 @@ public final class JavaLexer extends LexerBase {
   private int getClosingComment(int offset) {
     int pos = offset;
 
-    while (pos < myBufferEndOffset - 1) {
-      if (charAt(pos) == '*' && (charAt(pos + 1)) == '/') break;
-      pos++;
+    while (pos < myBufferEndOffset) {
+      char c = charAt(pos);
+      pos += mySymbolLength;
+      if (c == '*' && pos < myBufferEndOffset && charAt(pos) == '/') break;
     }
 
-    return pos + 2;
+    return pos + mySymbolLength;
   }
 
   private int getLineTerminator(int offset) {
@@ -244,7 +259,7 @@ public final class JavaLexer extends LexerBase {
     while (pos < myBufferEndOffset) {
       char c = charAt(pos);
       if (c == '\r' || c == '\n') break;
-      pos++;
+      pos += mySymbolLength;
     }
 
     return pos;
@@ -253,36 +268,40 @@ public final class JavaLexer extends LexerBase {
   private int getTextBlockEnd(int offset) {
     int pos = offset;
 
-    while ((pos = getClosingQuote(pos + 1, '"')) < myBufferEndOffset) {
+    while ((pos = getClosingQuote(pos + mySymbolLength, '"')) < myBufferEndOffset) {
       char c = charAt(pos);
       if (c == '\\') {
-        pos++;
+        pos += mySymbolLength;
+        charAt(pos); // skip escaped char
       }
-      else if (c == '"' && pos + 1 < myBufferEndOffset && charAt(pos + 1) == '"') {
-        return pos + 2;
+      else if (c == '"') {
+        int l1 = mySymbolLength;
+        if (pos + l1 < myBufferEndOffset && charAt(pos + l1) == '"') {
+          return pos + l1 + mySymbolLength;
+        }
       }
     }
 
     return pos;
   }
 
-  private char charAt(int position) {
-    return myBufferArray != null ? myBufferArray[position] : myBuffer.charAt(position);
+  private char _charAt(int offset) {
+    return myBufferArray != null ? myBufferArray[offset] : myBuffer.charAt(offset);
   }
 
-  private char symbolAt(int offset) {
+  private char charAt(int offset) {
     mySymbolLength = 1;
     int pos = offset;
-    char first = charAt(pos);
+    char first = _charAt(pos);
     if (first != '\\') return first;
-    if (++pos >= myBufferEndOffset || charAt(pos) != 'u') return first;
+    if (++pos >= myBufferEndOffset || _charAt(pos) != 'u') return first;
     //noinspection StatementWithEmptyBody
-    while (++pos < myBufferEndOffset && charAt(pos) == 'u');
+    while (++pos < myBufferEndOffset && _charAt(pos) == 'u');
     if (pos + 3 >= myBufferEndOffset) return first;
     int result = 0;
     for (int max = pos + 4; pos < max; pos++) {
       result <<= 4;
-      char c = charAt(pos);
+      char c = _charAt(pos);
       if ('0' <= c && c <= '9') result += c - '0';
       else if ('a' <= c && c <= 'f') result += (c - 'a') + 10;
       else if ('A' <= c && c <= 'F') result += (c - 'A') + 10;
