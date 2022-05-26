@@ -333,15 +333,22 @@ private inline fun Throwable.throwAsInvalidModuleException(crossinline action: (
     }
 }
 
-private class MergedDiagnostics(val diagnostics: Collection<Diagnostic>, override val modificationTracker: ModificationTracker) :
-    Diagnostics {
+private class MergedDiagnostics(
+    val diagnostics: Collection<Diagnostic>,
+    val noSuppressionDiagnostics: Collection<Diagnostic>,
+    override val modificationTracker: ModificationTracker
+) : Diagnostics {
     private val elementsCache = DiagnosticsElementsCache(this) { true }
 
     override fun all() = diagnostics
 
     override fun forElement(psiElement: PsiElement): MutableCollection<Diagnostic> = elementsCache.getDiagnostics(psiElement)
 
-    override fun noSuppression() = this
+    override fun noSuppression() = if (noSuppressionDiagnostics.isEmpty()) {
+        this
+    } else {
+        MergedDiagnostics(noSuppressionDiagnostics, emptyList(), modificationTracker)
+    }
 }
 
 /**
@@ -384,6 +391,12 @@ private class StackedCompositeBindingContextTrace(
         filtered
     }
 
+    val parentDiagnosticsNoSuppressionApartElement: Collection<Diagnostic> = run {
+        val all = parentContext.diagnostics.noSuppression()
+        val filtered = all.filter { it.psiElement == element && selfDiagnosticToHold(it) } + all.filter { it.psiElement.parentsWithSelf.none { e -> e == element } }
+        filtered
+    }
+
     inner class StackedCompositeBindingContext : BindingContext {
         var cachedDiagnostics: Diagnostics? = null
 
@@ -403,7 +416,14 @@ private class StackedCompositeBindingContextTrace(
                 this@StackedCompositeBindingContextTrace.mutableDiagnostics?.all()?.let {
                     mergedDiagnostics.addAll(it)
                 }
-                cachedDiagnostics = MergedDiagnostics(mergedDiagnostics, parentContext.diagnostics.modificationTracker)
+
+                val mergedNoSuppressionDiagnostics = mutableSetOf<Diagnostic>()
+                mergedNoSuppressionDiagnostics += parentDiagnosticsNoSuppressionApartElement
+                this@StackedCompositeBindingContextTrace.mutableDiagnostics?.noSuppression()?.let {
+                    mergedNoSuppressionDiagnostics.addAll(it)
+                }
+
+                cachedDiagnostics = MergedDiagnostics(mergedDiagnostics, mergedNoSuppressionDiagnostics, parentContext.diagnostics.modificationTracker)
             }
             return cachedDiagnostics!!
         }
