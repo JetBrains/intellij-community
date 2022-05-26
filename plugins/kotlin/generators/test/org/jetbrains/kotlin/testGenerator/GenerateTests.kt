@@ -1211,6 +1211,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFe10BindingLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/inspectionsLocal/addOperatorModifier", pattern = pattern)
+            model("testData/inspectionsLocal/booleanLiteralArgument", pattern = pattern)
         }
     }
 

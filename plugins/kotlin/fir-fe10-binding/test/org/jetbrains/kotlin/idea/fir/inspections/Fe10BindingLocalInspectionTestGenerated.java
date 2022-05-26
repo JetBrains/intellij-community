@@ -17,44 +17,125 @@ import org.junit.runner.RunWith;
 @TestRoot("fir-fe10-binding")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData/inspectionsLocal/addOperatorModifier")
-public class Fe10BindingLocalInspectionTestGenerated extends AbstractFe10BindingLocalInspectionTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe10BindingLocalInspectionTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/addOperatorModifier")
+    public static class AddOperatorModifier extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("containsBool.kt")
+        public void testContainsBool() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/containsBool.kt");
+        }
+
+        @TestMetadata("containsInt.kt")
+        public void testContainsInt() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/containsInt.kt");
+        }
+
+        @TestMetadata("extension.kt")
+        public void testExtension() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/extension.kt");
+        }
+
+        @TestMetadata("forOverride.kt")
+        public void testForOverride() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/forOverride.kt");
+        }
+
+        @TestMetadata("overridden.kt")
+        public void testOverridden() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/overridden.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/simple.kt");
+        }
+
+        @TestMetadata("toplevel.kt")
+        public void testToplevel() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/toplevel.kt");
+        }
     }
 
-    @TestMetadata("containsBool.kt")
-    public void testContainsBool() throws Exception {
-        runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/containsBool.kt");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument")
+    public static class BooleanLiteralArgument extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("containsInt.kt")
-    public void testContainsInt() throws Exception {
-        runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/containsInt.kt");
-    }
+        @TestMetadata("boolean.kt")
+        public void testBoolean() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/boolean.kt");
+        }
 
-    @TestMetadata("extension.kt")
-    public void testExtension() throws Exception {
-        runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/extension.kt");
-    }
+        @TestMetadata("booleanLiteral.kt")
+        public void testBooleanLiteral() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/booleanLiteral.kt");
+        }
 
-    @TestMetadata("forOverride.kt")
-    public void testForOverride() throws Exception {
-        runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/forOverride.kt");
-    }
+        @TestMetadata("booleanLiteralFixAll.kt")
+        public void testBooleanLiteralFixAll() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/booleanLiteralFixAll.kt");
+        }
 
-    @TestMetadata("overridden.kt")
-    public void testOverridden() throws Exception {
-        runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/overridden.kt");
-    }
+        @TestMetadata("booleanLiteralFixPart.kt")
+        public void testBooleanLiteralFixPart() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/booleanLiteralFixPart.kt");
+        }
 
-    @TestMetadata("simple.kt")
-    public void testSimple() throws Exception {
-        runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/simple.kt");
-    }
+        @TestMetadata("booleanLiteralMiddle.kt")
+        public void testBooleanLiteralMiddle() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/booleanLiteralMiddle.kt");
+        }
 
-    @TestMetadata("toplevel.kt")
-    public void testToplevel() throws Exception {
-        runTest("../idea/tests/testData/inspectionsLocal/addOperatorModifier/toplevel.kt");
+        @TestMetadata("booleanLiteralNoPrevious.kt")
+        public void testBooleanLiteralNoPrevious() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/booleanLiteralNoPrevious.kt");
+        }
+
+        @TestMetadata("hasError.kt")
+        public void testHasError() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/hasError.kt");
+        }
+
+        @TestMetadata("hasName.kt")
+        public void testHasName() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/hasName.kt");
+        }
+
+        @TestMetadata("hasVararg.kt")
+        public void testHasVararg() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/hasVararg.kt");
+        }
+
+        @TestMetadata("intLiteral.kt")
+        public void testIntLiteral() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/intLiteral.kt");
+        }
+
+        @TestMetadata("javaMethod.kt")
+        public void testJavaMethod() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/javaMethod.kt");
+        }
+
+        @TestMetadata("pair.kt")
+        public void testPair() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/pair.kt");
+        }
+
+        @TestMetadata("triple.kt")
+        public void testTriple() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/triple.kt");
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/vararg.kt");
+        }
     }
 }
