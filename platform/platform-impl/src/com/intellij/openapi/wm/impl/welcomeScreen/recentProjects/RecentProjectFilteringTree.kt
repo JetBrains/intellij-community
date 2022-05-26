@@ -98,7 +98,10 @@ class RecentProjectFilteringTree(
 
   override fun getNodeClass() = DefaultMutableTreeNode::class.java
 
-  override fun getText(item: RecentProjectTreeItem?): String = item?.displayName().orEmpty()
+  override fun getText(item: RecentProjectTreeItem?): String = when(item) {
+    is RecentProjectItem -> item.searchName()
+    else -> item?.displayName().orEmpty()
+  }
 
   override fun getChildren(item: RecentProjectTreeItem): Iterable<RecentProjectTreeItem> = item.children()
 

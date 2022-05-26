@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.util.BitUtil
+import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.InputEvent
 import java.nio.file.Files
@@ -79,6 +80,17 @@ data class RecentProjectItem(
       .withRunConfigurators()
 
     RecentProjectsManagerBase.instanceEx.openProject(file, options)
+  }
+
+  fun searchName(): String {
+    val home = SystemProperties.getUserHome()
+    var path = projectPath
+    if (FileUtil.startsWith(path, home)) {
+      path = path.substring(home.length)
+    }
+    val groupName = RecentProjectsManagerBase.instanceEx.findGroup(projectPath)?.name.orEmpty()
+
+    return "$groupName $path $displayName"
   }
 }
 

@@ -617,6 +617,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     fireChangeEvent()
   }
 
+  fun findGroup(projectPath: String): ProjectGroup? = groups.find { it.projects.contains(projectPath) }
+
   override fun getModificationCount(): Long {
     synchronized(stateLock) {
       return modCounter.get() + state.modificationCount
