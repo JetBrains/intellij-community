@@ -93,6 +93,7 @@ private class NewScriptDependenciesNotificationPanel(
         createComponentActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
             onClick()
 
+            @Suppress("DEPRECATION")
             val scriptDefinition = file.findScriptDefinition(project) ?: return@createComponentActionLabel
             KotlinScriptingSettings.getInstance(project).setAutoReloadConfigurations(scriptDefinition, true)
         }

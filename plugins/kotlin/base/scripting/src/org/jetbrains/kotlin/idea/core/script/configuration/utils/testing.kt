@@ -6,5 +6,5 @@ import com.intellij.openapi.application.Application
 
 var testScriptConfigurationNotification: Boolean = false
 
-val Application.isUnitTestModeWithoutScriptLoadingNotification: Boolean
+internal val Application.isUnitTestModeWithoutScriptLoadingNotification: Boolean
     get() = isUnitTestMode && !testScriptConfigurationNotification

@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 
 class ScriptDependenciesModificationTracker : SimpleModificationTracker() {
-
     companion object {
         @JvmStatic
         fun getInstance(project: Project): ScriptDependenciesModificationTracker = project.service()

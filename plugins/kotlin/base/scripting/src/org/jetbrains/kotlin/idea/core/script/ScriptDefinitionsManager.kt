@@ -121,8 +121,11 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         return virtualFile != null && ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType
     }
 
-    override fun findScriptDefinition(fileName: String): KotlinScriptDefinition? =
-        findDefinition(File(fileName).toScriptSource())?.legacyDefinition
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun findScriptDefinition(fileName: String): KotlinScriptDefinition? {
+        @Suppress("DEPRECATION")
+        return findDefinition(File(fileName).toScriptSource())?.legacyDefinition
+    }
 
     fun reloadDefinitionsBy(source: ScriptDefinitionsSource) {
         definitionsLock.writeWithCheckCanceled {

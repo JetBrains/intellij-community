@@ -8,14 +8,13 @@ import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
-class ScriptTemplatesProviderAdapter(private val templatesProvider: ScriptTemplatesProvider) : ScriptDefinitionSourceAsContributor {
-
+internal class ScriptTemplatesProviderAdapter(private val templatesProvider: ScriptTemplatesProvider) : ScriptDefinitionSourceAsContributor {
     override val id: String
         get() = templatesProvider.id
 
     override val definitions: Sequence<ScriptDefinition>
-        get() =
-            loadDefinitionsFromTemplates(
+        get() {
+            return loadDefinitionsFromTemplates(
                 templatesProvider.templateClassNames.toList(), templatesProvider.templateClasspath,
                 ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
                     getEnvironment {
@@ -24,4 +23,5 @@ class ScriptTemplatesProviderAdapter(private val templatesProvider: ScriptTempla
                 },
                 templatesProvider.additionalResolverClasspath
             ).asSequence()
+        }
 }

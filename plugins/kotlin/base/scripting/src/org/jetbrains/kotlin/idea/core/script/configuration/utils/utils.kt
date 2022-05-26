@@ -13,10 +13,7 @@ import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
-fun Project.getKtFile(
-    virtualFile: VirtualFile?,
-    ktFile: KtFile? = null
-): KtFile? {
+fun Project.getKtFile(virtualFile: VirtualFile?, ktFile: KtFile? = null): KtFile? {
     if (virtualFile == null) return null
     if (ktFile != null) {
         check(ktFile.originalFile.virtualFile == virtualFile)

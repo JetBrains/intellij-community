@@ -92,9 +92,10 @@ import kotlin.script.experimental.api.ScriptDiagnostic
  */
 class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : DefaultScriptingSupportBase(manager) {
     // TODO public for tests
-    val backgroundExecutor: BackgroundExecutor =
-        if (isUnitTestMode()) TestingBackgroundExecutor(manager)
-        else DefaultBackgroundExecutor(project, manager)
+    internal val backgroundExecutor: BackgroundExecutor = when {
+        isUnitTestMode() -> @Suppress("TestOnlyProblems") TestingBackgroundExecutor(manager)
+        else -> DefaultBackgroundExecutor(project, manager)
+    }
 
     private val outsiderLoader = ScriptOutsiderFileConfigurationLoader(project)
     private val fileAttributeCache = ScriptConfigurationFileAttributeCache(project)
@@ -109,7 +110,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
 
     private val saveLock = ReentrantLock()
 
-    override fun createCache() = object : ScriptConfigurationMemoryCache(project) {
+    override fun createCache(): ScriptConfigurationCache = object : ScriptConfigurationMemoryCache(project) {
         override fun setLoaded(file: VirtualFile, configurationSnapshot: ScriptConfigurationSnapshot) {
             super.setLoaded(file, configurationSnapshot)
             fileAttributeCache.save(file, configurationSnapshot)
@@ -412,7 +413,7 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
         skipNotification: Boolean = false
     ): Boolean
 
-    fun getCachedConfigurationState(file: VirtualFile?): ScriptConfigurationState? {
+    internal fun getCachedConfigurationState(file: VirtualFile?): ScriptConfigurationState? {
         if (file == null) return null
         return cache[file]
     }
@@ -572,6 +573,8 @@ object DefaultScriptConfigurationManagerExtensions {
         ProjectExtensionPointName("org.jetbrains.kotlin.scripting.idea.loader")
 }
 
-val ScriptConfigurationManager.testingBackgroundExecutor
-    get() = (this as CompositeScriptConfigurationManager).default
-        .backgroundExecutor as TestingBackgroundExecutor
+val ScriptConfigurationManager.testingBackgroundExecutor: TestingBackgroundExecutor
+    get() {
+        @Suppress("TestOnlyProblems")
+        return (this as CompositeScriptConfigurationManager).default.backgroundExecutor as TestingBackgroundExecutor
+    }

@@ -9,6 +9,6 @@ import org.jetbrains.kotlin.psi.KtFile
 
 open class FileContentsDependentConfigurationLoader(project: Project) : DefaultScriptConfigurationLoader(project) {
     override fun getInputsStamp(virtualFile: VirtualFile, file: KtFile): CachedConfigurationInputs {
-        return CachedConfigurationInputs.SourceContentsStamp.get(project, virtualFile, file)
+        return CachedConfigurationInputs.SourceContentsStamp.get(virtualFile)
     }
 }

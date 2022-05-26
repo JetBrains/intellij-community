@@ -13,8 +13,10 @@ import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfig
 class TestingBackgroundExecutor internal constructor(
     private val manager: CompositeScriptConfigurationManager
 ) : BackgroundExecutor {
-    val rootsManager get() = manager.updater
-    val backgroundQueue = HashSetQueue<BackgroundTask>()
+    private val backgroundQueue = HashSetQueue<BackgroundTask>()
+
+    private val rootsManager
+        get() = manager.updater
 
     class BackgroundTask(val file: VirtualFile, val actions: () -> Unit) {
         override fun equals(other: Any?): Boolean {

@@ -99,14 +99,14 @@ internal class ScriptConfigurationFileAttributeCache(
     }
 }
 
-class ScriptConfigurationSnapshotForFS(
+internal class ScriptConfigurationSnapshotForFS(
     val inputs: CachedConfigurationInputs,
     val reports: List<ScriptDiagnostic>,
     val configuration: ScriptCompilationConfiguration?
 ) : Serializable
 
 @Service
-class ScriptConfigurationSnapshotFile : AbstractFileAttributePropertyService<ScriptConfigurationSnapshotForFS>(
+internal class ScriptConfigurationSnapshotFile : AbstractFileAttributePropertyService<ScriptConfigurationSnapshotForFS>(
     name = "kotlin-script-dependencies",
     version = 5,
     read = DataInputStream::readObject,

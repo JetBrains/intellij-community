@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
+internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
     @RequiresBackgroundThread
     override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? {
         val ktFile = file.safeAs<KtFile>() ?: return null

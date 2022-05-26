@@ -35,17 +35,15 @@ interface ScriptConfigurationCache {
     fun getAnyLoadedScript(): ScriptCompilationConfigurationWrapper?
 }
 
-sealed class ScriptConfigurationCacheScope {
+internal sealed class ScriptConfigurationCacheScope {
     object All : ScriptConfigurationCacheScope()
     class File(val file: KtFile) : ScriptConfigurationCacheScope()
 }
 
-data class ScriptConfigurationState(
-    val applied: ScriptConfigurationSnapshot? = null,
-    val loaded: ScriptConfigurationSnapshot? = null
-) {
-    fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile? = null): Boolean =
-        (loaded ?: applied)?.inputs?.isUpToDate(project, file, ktFile) ?: false
+data class ScriptConfigurationState(val applied: ScriptConfigurationSnapshot? = null, val loaded: ScriptConfigurationSnapshot? = null) {
+    fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile? = null): Boolean {
+        return (loaded ?: applied)?.inputs?.isUpToDate(project, file, ktFile) ?: false
+    }
 }
 
 data class ScriptConfigurationSnapshot(
@@ -84,11 +82,12 @@ interface CachedConfigurationInputs: Serializable {
     }
 
     data class SourceContentsStamp(val source: String) : CachedConfigurationInputs {
-        override fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile?): Boolean =
-            get(project, file, ktFile) == this
+        override fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile?): Boolean {
+            return get(file) == this
+        }
 
         companion object {
-            fun get(project: Project, file: VirtualFile, ktFile: KtFile?): SourceContentsStamp {
+            fun get(file: VirtualFile): SourceContentsStamp {
                 val text = runReadAction {
                     FileDocumentManager.getInstance().getDocument(file)!!.text
                 }

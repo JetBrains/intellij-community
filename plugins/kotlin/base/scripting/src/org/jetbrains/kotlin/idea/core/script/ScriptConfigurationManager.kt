@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -33,7 +31,7 @@ import kotlin.script.experimental.api.makeFailureResult
 
 // NOTE: this service exists exclusively because ScriptDependencyManager
 // cannot be registered as implementing two services (state would be duplicated)
-class IdeScriptDependenciesProvider(project: Project) : ScriptDependenciesProvider(project) {
+internal class IdeScriptDependenciesProvider(project: Project) : ScriptDependenciesProvider(project) {
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val configuration = getScriptConfiguration(file)
         val reports = IdeScriptReportSink.getReports(file)
@@ -148,19 +146,5 @@ interface ScriptConfigurationManager {
         fun clearCaches(project: Project) {
             defaultScriptingSupport(project).updateScriptDefinitionsReferences()
         }
-
-        fun clearManualConfigurationLoadingIfNeeded(file: VirtualFile) {
-            if (file.LOAD_CONFIGURATION_MANUALLY == true) {
-                file.LOAD_CONFIGURATION_MANUALLY = null
-            }
-        }
-
-        fun markFileWithManualConfigurationLoading(file: VirtualFile) {
-            file.LOAD_CONFIGURATION_MANUALLY = true
-        }
-
-        fun isManualConfigurationLoading(file: VirtualFile): Boolean = file.LOAD_CONFIGURATION_MANUALLY ?: false
-
-        private var VirtualFile.LOAD_CONFIGURATION_MANUALLY: Boolean? by UserDataProperty(Key.create<Boolean>("MANUAL_CONFIGURATION_LOADING"))
     }
 }

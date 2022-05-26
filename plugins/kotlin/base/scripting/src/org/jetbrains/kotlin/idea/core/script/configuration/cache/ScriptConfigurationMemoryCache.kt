@@ -7,9 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.SLRUMap
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 
-open class ScriptConfigurationMemoryCache(
-    val project: Project
-) : ScriptConfigurationCache {
+internal open class ScriptConfigurationMemoryCache(val project: Project) : ScriptConfigurationCache {
     companion object {
         const val MAX_SCRIPTS_CACHED = 50
     }
@@ -54,5 +52,4 @@ open class ScriptConfigurationMemoryCache(
     override fun clear() {
         memoryCache.clear()
     }
-
 }

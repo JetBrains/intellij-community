@@ -19,9 +19,7 @@ import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChange
 import org.jetbrains.kotlin.idea.core.script.isScriptChangesNotifierDisabled
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
-internal class ScriptChangesNotifier(
-    private val project: Project
-) {
+internal class ScriptChangesNotifier(private val project: Project) {
     private val scriptsQueue: Alarm
     private val scriptChangesListenerDelayMillis = 1400
 

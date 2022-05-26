@@ -8,7 +8,7 @@ import java.io.File
 import kotlin.script.experimental.dependencies.DependenciesResolver
 
 @Deprecated("Use ScriptDefinitionContributor EP and loadDefinitionsFromTemplates top level function")
-interface ScriptTemplatesProvider {
+internal interface ScriptTemplatesProvider {
 
     // for resolving ambiguities
     val id: String

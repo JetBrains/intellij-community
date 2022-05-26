@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
 
-open class DefaultScriptChangeListener(project: Project) : ScriptChangeListener(project) {
+internal open class DefaultScriptChangeListener(project: Project) : ScriptChangeListener(project) {
     override fun editorActivated(vFile: VirtualFile) {
         val file = getAnalyzableKtFileForScript(vFile) ?: return
         default.ensureUpToDatedConfigurationSuggested(file)
