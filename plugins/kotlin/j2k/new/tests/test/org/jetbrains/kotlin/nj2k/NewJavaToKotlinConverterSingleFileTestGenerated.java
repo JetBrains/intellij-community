@@ -3295,6 +3295,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/newJ2k/javaStandardMethods")
+    public static class JavaStandardMethods extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("cloneable.java")
+        public void testCloneable() throws Exception {
+            runTest("testData/newJ2k/javaStandardMethods/cloneable.java");
+        }
+
+        @TestMetadata("cloneable2.java")
+        public void testCloneable2() throws Exception {
+            runTest("testData/newJ2k/javaStandardMethods/cloneable2.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/javaStreamsApi")
     public static class JavaStreamsApi extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
