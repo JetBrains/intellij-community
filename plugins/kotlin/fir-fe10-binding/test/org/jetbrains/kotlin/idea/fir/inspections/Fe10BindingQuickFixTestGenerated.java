@@ -17,24 +17,60 @@ import org.junit.runner.RunWith;
 @TestRoot("fir-fe10-binding")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData/quickfix/addVarianceModifier")
-public class Fe10BindingQuickFixTestGenerated extends AbstractFe10BindingQuickFixTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class Fe10BindingQuickFixTestGenerated extends AbstractFe10BindingQuickFixTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/addVarianceModifier")
+    public static class AddVarianceModifier extends AbstractFe10BindingQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractIn.kt")
+        public void testAbstractIn() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addVarianceModifier/abstractIn.kt");
+        }
+
+        @TestMetadata("abstractOut.kt")
+        public void testAbstractOut() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addVarianceModifier/abstractOut.kt");
+        }
+
+        @TestMetadata("emptyTest.kt")
+        public void testEmptyTest() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addVarianceModifier/emptyTest.kt");
+        }
     }
 
-    @TestMetadata("abstractIn.kt")
-    public void testAbstractIn() throws Exception {
-        runTest("../idea/tests/testData/quickfix/addVarianceModifier/abstractIn.kt");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty")
+    public static class CanBePrimaryConstructorProperty extends AbstractFe10BindingQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("abstractOut.kt")
-    public void testAbstractOut() throws Exception {
-        runTest("../idea/tests/testData/quickfix/addVarianceModifier/abstractOut.kt");
-    }
+        @TestMetadata("commentAfter.kt")
+        public void testCommentAfter() throws Exception {
+            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/commentAfter.kt");
+        }
 
-    @TestMetadata("emptyTest.kt")
-    public void testEmptyTest() throws Exception {
-        runTest("../idea/tests/testData/quickfix/addVarianceModifier/emptyTest.kt");
+        @TestMetadata("commentAhead.kt")
+        public void testCommentAhead() throws Exception {
+            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/commentAhead.kt");
+        }
+
+        @TestMetadata("protectedOpenVar.kt")
+        public void testProtectedOpenVar() throws Exception {
+            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/protectedOpenVar.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/simple.kt");
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../idea/tests/testData/quickfix/canBePrimaryConstructorProperty/vararg.kt");
+        }
     }
 }

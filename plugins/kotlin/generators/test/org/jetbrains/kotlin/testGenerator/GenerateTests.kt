@@ -1219,6 +1219,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFe10BindingQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("testData/quickfix/addVarianceModifier", pattern = pattern)
+            model("testData/quickfix/canBePrimaryConstructorProperty", pattern = pattern)
         }
     }
 
