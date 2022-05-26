@@ -31,7 +31,7 @@ object KotlinTypeAliasByExpansionShortNameIndex : StringStubIndexExtension<KtTyp
             DeprecationLevel.ERROR
         )
         @JvmStatic
-        fun getInstance() = KotlinTypeAliasByExpansionShortNameIndex
+        fun getINSTANCE() = KotlinTypeAliasByExpansionShortNameIndex
     }
 }
 
