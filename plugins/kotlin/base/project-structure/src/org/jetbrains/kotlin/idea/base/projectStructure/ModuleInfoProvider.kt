@@ -8,21 +8,21 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
-import org.jetbrains.kotlin.idea.LIBRARY_KEY
-import org.jetbrains.kotlin.idea.MODULE_ROOT_TYPE_KEY
-import org.jetbrains.kotlin.idea.SDK_KEY
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -257,10 +257,10 @@ class ModuleInfoProvider(private val project: Project) {
 
     private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByUserData(container: UserDataModuleContainer) {
         val module = container.module
-        val rootType = container.getUserData(MODULE_ROOT_TYPE_KEY)
+        val sourceRootType = container.customSourceRootType
 
-        if (module != null && rootType != null) {
-            val moduleInfo = when (rootType.sourceRootType) {
+        if (module != null && sourceRootType != null) {
+            val moduleInfo = when (sourceRootType.sourceRootType) {
                 SourceKotlinRootType -> module.productionSourceInfo
                 TestSourceKotlinRootType -> module.testSourceInfo
                 else -> null
@@ -271,14 +271,14 @@ class ModuleInfoProvider(private val project: Project) {
             }
         }
 
-        val library = container.getUserData(LIBRARY_KEY)
+        val library = container.customLibrary
         if (library != null) {
             for (libraryInfo in libraryInfoCache.get(library)) {
                 register(libraryInfo)
             }
         }
 
-        val sdk = container.getUserData(SDK_KEY)
+        val sdk = container.customSdk
         if (sdk != null) {
             register(SdkInfo(project, sdk))
         }
@@ -288,23 +288,35 @@ class ModuleInfoProvider(private val project: Project) {
 private sealed class UserDataModuleContainer {
     abstract val module: Module?
 
-    abstract fun <T> getUserData(key: Key<T>): T?
+    val customSourceRootType: JpsModuleSourceRootType<*>?
+        get() = holders.firstNotNullOfOrNull { it.customSourceRootType }
+
+    val customSdk: Sdk?
+        get() = holders.firstNotNullOfOrNull { it.customSdk }
+
+    val customLibrary: Library?
+        get() = holders.firstNotNullOfOrNull { it.customLibrary }
+
+    abstract val holders: List<UserDataHolder>
 
     data class ForVirtualFile(val virtualFile: VirtualFile, val project: Project) : UserDataModuleContainer() {
         override val module: Module?
             get() = ModuleUtilCore.findModuleForFile(virtualFile, project)
 
-        override fun <T> getUserData(key: Key<T>): T? = virtualFile.getUserData(key)
+        override val holders: List<UserDataHolder>
+            get() = listOf(virtualFile)
     }
 
     data class ForElement(val psiElement: PsiElement) : UserDataModuleContainer() {
         override val module: Module?
             get() = ModuleUtilCore.findModuleForPsiElement(psiElement)
 
-        override fun <T> getUserData(key: Key<T>): T? {
-            return psiElement.getUserData(key)
-                ?: psiElement.containingFile?.getUserData(key)
-                ?: psiElement.containingFile?.originalFile?.virtualFile?.getUserData(key)
+        override val holders: List<UserDataHolder> by lazy {
+            listOfNotNull(
+                psiElement,
+                psiElement.containingFile,
+                psiElement.containingFile?.originalFile?.virtualFile
+            )
         }
     }
 }

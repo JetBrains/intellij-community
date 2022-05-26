@@ -9,22 +9,20 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 // WARNING, this API is used by AS3.3+
 
-const val LIBRARY_KEY_NAME = "Kt_Library"
-const val SDK_KEY_NAME = "Kt_Sdk"
-const val MODULE_ROOT_TYPE_KEY_NAME = "Kt_SourceRootType"
+@JvmField
+@Deprecated("Use 'customSourceRootType' instead.")
+val MODULE_ROOT_TYPE_KEY = getOrCreateKey<JpsModuleSourceRootType<*>>("Kt_SourceRootType")
 
 @JvmField
-val MODULE_ROOT_TYPE_KEY = getOrCreateKey<JpsModuleSourceRootType<*>>(MODULE_ROOT_TYPE_KEY_NAME)
+@Deprecated("Use 'customSdk' instead.")
+val SDK_KEY = getOrCreateKey<Sdk>("Kt_Sdk")
 
 @JvmField
-val SDK_KEY = getOrCreateKey<Sdk>(SDK_KEY_NAME)
+@Deprecated("Use 'customLibrary' instead.")
+val LIBRARY_KEY = getOrCreateKey<Library>("Kt_Library")
 
-@JvmField
-val LIBRARY_KEY = getOrCreateKey<Library>(LIBRARY_KEY_NAME)
-
-
-inline fun <reified T> getOrCreateKey(name: String): Key<T> {
+private inline fun <reified T> getOrCreateKey(name: String): Key<T> {
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     val existingKey = Key.findKeyByName(name) as Key<T>?
-    return existingKey ?: Key.create<T>(name)
+    return existingKey ?: Key.create(name)
 }
