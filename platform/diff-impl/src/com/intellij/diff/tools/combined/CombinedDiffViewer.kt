@@ -342,6 +342,8 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       onSelected()
       scrollSupport.blockIterable.index = index
       scrollSupport.scroll(index, block, scrollPolicy)
+      //in case of CombinedLazyDiffViewer, the block selection should be repeated once again, until diff viewer loaded, and it's size will be known.
+      context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, if (viewer is CombinedLazyDiffViewer) block.id else null)
     }
 
     if (!focusBlock) {
@@ -369,7 +371,6 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   }
 
   internal fun contentChanged() {
-    context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, null)
     combinedEditorSettingsAction.installGutterPopup()
     combinedEditorSettingsAction.applyDefaults()
     editors.forEach { editor -> editor.settings.additionalLinesCount = 0 }
