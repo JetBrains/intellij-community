@@ -311,7 +311,7 @@ public final class ImageLoader {
   public static @Nullable Image loadPngFromClassResource(String path,
                                                          @Nullable Class<?> resourceClass,
                                                          @Nullable ClassLoader classLoader,
-                                                         double scale,
+                                                         float scale,
                                                          @Nullable Dimension2DDouble originalUserSize) throws IOException {
     byte[] data = getResourceData(path, resourceClass, classLoader);
     if (data == null) {
@@ -336,7 +336,7 @@ public final class ImageLoader {
     }
   }
 
-  private static @NotNull BufferedImage loadPng(@NotNull InputStream stream, double scale, @Nullable Dimension2DDouble originalUserSize) throws IOException {
+  private static @NotNull BufferedImage loadPng(@NotNull InputStream stream, float scale, @Nullable Dimension2DDouble originalUserSize) throws IOException {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
     BufferedImage image;
     ImageReader reader = ImageIO.getImageReadersByFormatName("png").next();
@@ -541,7 +541,7 @@ public final class ImageLoader {
     ScaleContext scaleContext = ScaleContext.create();
     try (inputStream) {
       ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
-      double scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
+      float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
       Image image = loadPng(inputStream, scale, originalUserSize);
       if (StartupUiUtil.isJreHiDPI(scaleContext)) {
         double userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE);
