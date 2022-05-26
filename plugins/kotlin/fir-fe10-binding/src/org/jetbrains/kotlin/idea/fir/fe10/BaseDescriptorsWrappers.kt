@@ -295,7 +295,7 @@ abstract class KtSymbolBasedFunctionLikeDescriptor(context: FE10BindingContext) 
         KtSymbolBasedValueParameterDescriptor(it, context,this, index)
     }
 
-    override fun hasStableParameterNames(): Boolean = implementationPostponed()
+    override fun hasStableParameterNames(): Boolean = ktSymbol.hasStableParameterNames
     override fun hasSynthesizedParameterNames(): Boolean = implementationPostponed()
     override fun getKind(): CallableMemberDescriptor.Kind = implementationPostponed()
 
