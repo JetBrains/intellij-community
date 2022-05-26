@@ -7,8 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 
 class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val withSources: Boolean) : KotlinLightProjectDescriptor() {
     override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()

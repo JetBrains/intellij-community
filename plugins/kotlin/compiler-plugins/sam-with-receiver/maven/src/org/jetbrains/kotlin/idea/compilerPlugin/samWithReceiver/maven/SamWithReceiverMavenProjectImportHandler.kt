@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.maven
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor
 

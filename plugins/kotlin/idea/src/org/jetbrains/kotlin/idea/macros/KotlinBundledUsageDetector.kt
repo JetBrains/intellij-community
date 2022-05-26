@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.jps.util.JpsPathUtil
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean

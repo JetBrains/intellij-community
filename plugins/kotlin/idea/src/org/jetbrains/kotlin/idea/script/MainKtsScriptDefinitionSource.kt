@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.script
 
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import java.io.File
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 

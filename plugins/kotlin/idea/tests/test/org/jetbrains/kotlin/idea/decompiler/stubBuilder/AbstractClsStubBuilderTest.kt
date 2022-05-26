@@ -11,7 +11,7 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.indexing.FileContentImpl
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase

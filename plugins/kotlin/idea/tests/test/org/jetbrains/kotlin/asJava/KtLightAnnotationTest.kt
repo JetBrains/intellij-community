@@ -14,7 +14,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightPsiArrayInitializerMemberValue
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf

@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.testGenerator.generator
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.junit.runner.RunWith

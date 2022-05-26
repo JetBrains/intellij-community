@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.base.util.ProjectStructureUtils;
 import org.jetbrains.kotlin.cli.common.arguments.*;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle;
 import org.jetbrains.kotlin.idea.base.compilerPreferences.facet.DescriptionListCellRenderer;
 import org.jetbrains.kotlin.idea.compiler.configuration.*;

@@ -40,7 +40,7 @@
 
     <psi.treeChangePreprocessor implementation="org.jetbrains.kotlin.idea.caches.KotlinPackageStatementPsiTreeChangePreprocessor"/>
 
-    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.artifacts.LazyFileOutputProducerCacheInvalidator"/>
+    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducerCacheInvalidator"/>
 
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache"/>
 

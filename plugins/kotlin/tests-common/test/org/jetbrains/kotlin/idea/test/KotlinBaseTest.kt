@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoot
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.config.JvmTarget.Companion.fromString
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import java.io.File
 import java.lang.reflect.Field

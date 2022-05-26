@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import java.io.File
 

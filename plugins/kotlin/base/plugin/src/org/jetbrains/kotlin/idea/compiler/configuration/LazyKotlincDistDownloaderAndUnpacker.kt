@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import org.jetbrains.kotlin.idea.artifacts.*
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.*
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.AbstractLazyFileOutputProducer
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducer
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import java.io.File
 import java.security.MessageDigest
@@ -27,7 +30,7 @@ import java.security.MessageDigest
  * the whole pipeline if the pom changes ([AbstractLazyFileOutputProducer] guarantees us that). It's convenient for the local testing
  * ("install to maven local -> test" development cycle)
  */
-class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, DownloadContext> {
+internal class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, DownloadContext> {
     private val downloader =
         LazyKotlinMavenArtifactDownloader(KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version, artifactIsPom = true)
     private val distLayoutProducer = LazyDistDirLayoutProducer(version, KotlinArtifactsDownloader.getUnpackedKotlinDistPath(version))

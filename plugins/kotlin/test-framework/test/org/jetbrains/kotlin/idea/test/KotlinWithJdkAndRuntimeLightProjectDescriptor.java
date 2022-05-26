@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
 
 import java.io.File;
 import java.util.Arrays;

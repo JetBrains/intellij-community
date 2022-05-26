@@ -22,7 +22,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingUtil
 import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction

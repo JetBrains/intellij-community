@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 
 abstract class AbstractSerializationPluginIdeDiagnosticTest : AbstractKotlinHighlightVisitorTest() {

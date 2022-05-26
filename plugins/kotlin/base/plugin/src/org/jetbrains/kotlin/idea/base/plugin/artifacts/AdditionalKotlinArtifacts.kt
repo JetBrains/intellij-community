@@ -1,15 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.artifacts
+package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.exists
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import java.io.File
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
 
+@ApiStatus.Internal
 object AdditionalKotlinArtifacts {
     private fun getLibraryFile(groupId: String, artifactId: String, libraryFileName: String): File {
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName)

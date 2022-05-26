@@ -13,7 +13,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.IdeaTestUtil;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind;
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType;
 

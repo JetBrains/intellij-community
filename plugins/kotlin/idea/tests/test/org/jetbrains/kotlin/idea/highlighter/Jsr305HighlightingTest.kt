@@ -6,8 +6,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.stubs.createFacet
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.pacelize.ide.test
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addRoot
 import java.io.File

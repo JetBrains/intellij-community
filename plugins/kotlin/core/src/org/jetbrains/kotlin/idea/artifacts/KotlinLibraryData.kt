@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import java.io.File
 
 enum class KotlinLibraryData(val libraryName: String, val kind: PersistentLibraryKind<*>?, val classesRoot: File, val sourcesRoot: File) {

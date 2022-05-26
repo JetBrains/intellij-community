@@ -28,7 +28,7 @@ import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.kotlin.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.base.util.writeWithCheckCanceled
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager

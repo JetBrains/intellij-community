@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codegen;
 
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 import org.jetbrains.kotlin.utils.StringsKt;

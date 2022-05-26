@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.allopen.gradleJava
 
 import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
 import org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModel
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 

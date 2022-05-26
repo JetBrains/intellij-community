@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.util.projectStructure.allModules

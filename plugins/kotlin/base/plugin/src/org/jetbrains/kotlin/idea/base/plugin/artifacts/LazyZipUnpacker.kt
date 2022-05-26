@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.artifacts
+package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.DigestUtil
 import java.io.File
 import java.security.MessageDigest
 
-class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputProducer<File, Unit>(
+internal class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputProducer<File, Unit>(
     // Use hash to get some unique string originated from destination.path which can be used in filename
     // (unfortunately, destination.path itself cannot be used as a filename because of slashes)
     "${LazyZipUnpacker::class.java.name}-${DigestUtil.md5Hex(destination.canonicalPath.toByteArray())}"

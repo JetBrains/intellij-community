@@ -6,7 +6,7 @@ package org.jetbrains.kotlin.test
 
 import com.intellij.testFramework.TestDataFile
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.jps.build.withSystemProperty

@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.projectModel
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.util.io.DigestUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.AbstractLazyFileOutputProducer
 import java.io.File
 import java.security.MessageDigest
 import kotlin.io.path.createTempDirectory

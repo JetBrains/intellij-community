@@ -9,8 +9,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 

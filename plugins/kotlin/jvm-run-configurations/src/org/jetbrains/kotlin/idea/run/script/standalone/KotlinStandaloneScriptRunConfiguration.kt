@@ -27,7 +27,7 @@ import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager

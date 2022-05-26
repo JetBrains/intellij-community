@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Ref
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll

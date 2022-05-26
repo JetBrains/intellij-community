@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
-import org.jetbrains.kotlin.idea.artifacts.LazyFileOutputProducer
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts.Companion.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyFileOutputProducer
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import java.io.File
 

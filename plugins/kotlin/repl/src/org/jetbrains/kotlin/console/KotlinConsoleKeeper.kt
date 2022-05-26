@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.plugin.KotlinCompilerClasspathProvider
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder

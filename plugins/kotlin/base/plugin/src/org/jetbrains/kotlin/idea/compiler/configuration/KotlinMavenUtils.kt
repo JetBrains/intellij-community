@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.JDOMUtil
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 import java.nio.file.Path

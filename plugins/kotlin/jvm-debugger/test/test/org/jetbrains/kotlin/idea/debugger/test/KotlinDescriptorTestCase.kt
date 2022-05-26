@@ -33,7 +33,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator

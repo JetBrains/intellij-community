@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.idea.test.Directives;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.test.ConfigurationKind;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TargetBackend;
