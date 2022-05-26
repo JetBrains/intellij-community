@@ -87,6 +87,7 @@ class RecentProjectFilteringTree(
       toggleClickCount = 0
 
       setExpandableItemsEnabled(false)
+      UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     }
   }
 
