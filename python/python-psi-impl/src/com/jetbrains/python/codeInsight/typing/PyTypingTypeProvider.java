@@ -103,6 +103,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String TYPE_ALIAS_EXT = "typing_extensions.TypeAlias";
   private static final String SPECIAL_FORM = "typing._SpecialForm";
   private static final String SPECIAL_FORM_EXT = "typing_extensions._SpecialForm";
+  public static final String REQUIRED = "typing.Required";
+  public static final String REQUIRED_EXT = "typing_extensions.Required";
+  public static final String NOT_REQUIRED = "typing.NotRequired";
+  public static final String NOT_REQUIRED_EXT = "typing_extensions.NotRequired";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -143,10 +147,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     // special forms
-    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL, ANNOTATED)
+    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL, ANNOTATED, REQUIRED, NOT_REQUIRED)
     // type aliases
     .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, ORDERED_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
-    .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT, ANNOTATED_EXT)
+    .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT, ANNOTATED_EXT, REQUIRED_EXT, NOT_REQUIRED_EXT)
     .build();
 
   /**
@@ -186,6 +190,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(TYPED_DICT, TYPED_DICT_EXT)
     .add(ANNOTATED, ANNOTATED_EXT)
     .add(TYPE_ALIAS, TYPE_ALIAS_EXT)
+    .add(REQUIRED, REQUIRED_EXT)
+    .add(NOT_REQUIRED, NOT_REQUIRED_EXT)
     .build();
 
   @Nullable
@@ -861,6 +867,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (annotatedType != null) {
         return annotatedType;
       }
+      final Ref<PyType> requiredOrNotRequiredType = getRequiredOrNotRequiredType(resolved, context);
+      if (requiredOrNotRequiredType != null) {
+        return requiredOrNotRequiredType;
+      }
       final Ref<PyType> literalType = getLiteralType(resolved, context);
       if (literalType != null) {
         return literalType;
@@ -1100,6 +1110,26 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
       Collection<String> resolvedNames = resolveToQualifiedNames(operand, context.getTypeContext());
       if (resolvedNames.stream().anyMatch(name -> ANNOTATED.equals(name) || ANNOTATED_EXT.equals(name))) {
+        final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
+        final PyExpression type = indexExpr instanceof PyTupleExpression ? ((PyTupleExpression)indexExpr).getElements()[0] : indexExpr;
+        if (type != null) {
+          return getType(type, context);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getRequiredOrNotRequiredType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
+      final PyExpression operand = subscriptionExpr.getOperand();
+
+      Collection<String> resolvedNames = resolveToQualifiedNames(operand, context.getTypeContext());
+      if (resolvedNames.stream().anyMatch(name -> REQUIRED.equals(name) || REQUIRED_EXT.equals(name) ||
+                                                  NOT_REQUIRED.equals(name) || NOT_REQUIRED_EXT.equals(name))) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         final PyExpression type = indexExpr instanceof PyTupleExpression ? ((PyTupleExpression)indexExpr).getElements()[0] : indexExpr;
         if (type != null) {
