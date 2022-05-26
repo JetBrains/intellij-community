@@ -4993,6 +4993,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/inapplicableTriple.kt");
         }
 
+        @TestMetadata("invertNegatedIsEmpty.kt")
+        public void testInvertNegatedIsEmpty() throws Exception {
+            runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/invertNegatedIsEmpty.kt");
+        }
+
+        @TestMetadata("invertNegatedIsNotEmpty.kt")
+        public void testInvertNegatedIsNotEmpty() throws Exception {
+            runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/invertNegatedIsNotEmpty.kt");
+        }
+
         @TestMetadata("longMixedExpression.kt")
         public void testLongMixedExpression() throws Exception {
             runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/longMixedExpression.kt");

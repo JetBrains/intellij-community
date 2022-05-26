@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -18,6 +19,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -36,7 +39,7 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection()
     }
 
     companion object {
-        fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {
+        fun KtQualifiedExpression.invertSelectorFunction(bindingContext: BindingContext? = null): KtQualifiedExpression? {
             val callExpression = this.callExpression ?: return null
             val calleeExpression = callExpression.calleeExpression ?: return null
             val calleeText = calleeExpression.text
@@ -44,12 +47,15 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection()
             val isNotEmptyCall = calleeText == "isNotEmpty"
             val isBlankCall = calleeText == "isBlank"
             val isNotBlankCall = calleeText == "isNotBlank"
+
+            val context = bindingContext ?: analyze(BodyResolveMode.PARTIAL)
             if (!isEmptyCall && !isNotEmptyCall && !isBlankCall && !isNotBlankCall) return null
-            if (isEmptyCall && isEmptyFunctions.none { callExpression.isCalling(FqName(it)) }
-                || isNotEmptyCall && isNotEmptyFunctions.none { callExpression.isCalling(FqName(it)) }
-                || isBlankCall && !callExpression.isCalling(FqName("kotlin.text.isBlank"))
-                || isNotBlankCall && !callExpression.isCalling(FqName("kotlin.text.isNotBlank"))) return null
+            if (isEmptyCall && isEmptyFunctions.none { callExpression.isCalling(FqName(it), context) }
+                || isNotEmptyCall && isNotEmptyFunctions.none { callExpression.isCalling(FqName(it), context) }
+                || isBlankCall && !callExpression.isCalling(FqName("kotlin.text.isBlank"), context)
+                || isNotBlankCall && !callExpression.isCalling(FqName("kotlin.text.isNotBlank"), context)) return null
             val to = if (isEmptyCall) "isNotEmpty" else if (isNotEmptyCall) "isEmpty" else if (isBlankCall) "isNotBlank" else "isBlank"
+
             return KtPsiFactory(this).createExpressionByPattern(
                 "$0.$to()",
                 this.receiverExpression,

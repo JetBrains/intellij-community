@@ -4,10 +4,13 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Companion.invertSelectorFunction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.psi2ir.deparenthesize
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
@@ -51,7 +54,11 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
             val operands = splitBooleanSequence(expr)?.asReversed() ?: return
 
             val newExpression = KtPsiFactory(expr).buildExpression {
-                appendExpressions(operands.map { it.negate() }, separator = operatorText)
+                val context by lazy { expr.analyze(BodyResolveMode.PARTIAL) }
+                val negatedOperands = operands.map {
+                    it.safeAs<KtQualifiedExpression>()?.invertSelectorFunction(context) ?: it.negate()
+                }
+                appendExpressions(negatedOperands, separator = operatorText)
             }
 
             val grandParentPrefix = expr.parent.parent as? KtPrefixExpression
