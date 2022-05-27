@@ -248,7 +248,7 @@ class KotlinImportOptimizer : ImportOptimizer {
                     )
                 }
 
-                else -> reference.toString().replace("DescriptorsImpl", "")
+                else -> reference.toString().replace("Fe10", "")
             }
         }
     }
