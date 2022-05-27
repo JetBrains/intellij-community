@@ -228,7 +228,11 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   void reset(DirectoryIndexAnalyticsReporter.ResetReason reason) {
+    boolean report = myRootIndex != null;
     myRootIndex = null;
-    DirectoryIndexAnalyticsReporter.reportReset(myProject, reason);
+
+    if (report) {
+      DirectoryIndexAnalyticsReporter.reportReset(myProject, reason);
+    }
   }
 }
