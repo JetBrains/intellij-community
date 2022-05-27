@@ -25,10 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static java.util.Map.entry;
@@ -298,19 +297,19 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
           PsiTreeUtil.getParentOfType(anchor, PsiTryStatement.class, true, PsiMember.class, PsiLambdaExpression.class);
         if (tryStatement == null) break;
         PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        if (PsiTreeUtil.isAncestor(tryBlock, anchor, true)) {
+        boolean inTry = PsiTreeUtil.isAncestor(tryBlock, anchor, true);
+        PsiResourceList resourceList = tryStatement.getResourceList();
+        boolean inResource = PsiTreeUtil.isAncestor(resourceList, anchor, true);
+        if (inTry || inResource) {
           for (PsiParameter parameter : tryStatement.getCatchBlockParameters()) {
             List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
             for (PsiTypeElement element : typeElements) {
               PsiType type = element.getType();
               if (type.equalsToText("java.io.UnsupportedEncodingException") ||
                   type.equalsToText("java.io.IOException")) {
-                Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
-                PsiResourceList resourceList = tryStatement.getResourceList();
-                if (resourceList != null) {
-                  Collection<PsiClassType> resourceExceptions = ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList);
-                  unhandledExceptions = StreamEx.of(unhandledExceptions, resourceExceptions).toFlatList(Function.identity());
-                }
+                Set<PsiClassType> unhandledExceptions = StreamEx.of(tryBlock, resourceList).nonNull()
+                  .flatCollection(block -> ExceptionUtil.collectUnhandledExceptions(block, block))
+                  .toSet();
                 if (!ContainerUtil.exists(unhandledExceptions, ue -> ue.isAssignableFrom(type) || type.isAssignableFrom(ue))) {
                   if (parameter.getType() instanceof PsiDisjunctionType) {
                     DeleteMultiCatchFix.deleteCaughtExceptionType(element);
