@@ -354,12 +354,9 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(typeId)
-        ser.saveString(propertiesXmlTag)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        typeId = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

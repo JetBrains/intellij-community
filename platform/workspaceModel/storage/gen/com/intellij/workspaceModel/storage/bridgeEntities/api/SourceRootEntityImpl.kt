@@ -410,8 +410,6 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveBlob(url, "VirtualFileUrl")
-        ser.saveString(rootType)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

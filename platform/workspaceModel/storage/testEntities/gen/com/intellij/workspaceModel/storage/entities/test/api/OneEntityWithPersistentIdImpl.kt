@@ -156,19 +156,19 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     }
 
     override fun persistentId(): PersistentEntityId<*> {
+        
       return OnePersistentId(myName)
-    } 
+    
+    }
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return OneEntityWithPersistentId::class.java
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(myName)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        myName = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

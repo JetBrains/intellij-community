@@ -374,15 +374,6 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveBlob(url, "VirtualFileUrl")
-        ser.saveInt(excludedUrls.size)
-        for (_excludedUrls in excludedUrls) {
-            ser.saveBlob(_excludedUrls, "VirtualFileUrl")
-        }
-        ser.saveInt(excludedPatterns.size)
-        for (_excludedPatterns in excludedPatterns) {
-            ser.saveString(_excludedPatterns)
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

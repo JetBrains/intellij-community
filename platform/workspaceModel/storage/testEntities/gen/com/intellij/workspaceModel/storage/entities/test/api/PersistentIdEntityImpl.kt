@@ -156,19 +156,19 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
     }
 
     override fun persistentId(): PersistentEntityId<*> {
+        
       return LinkedListEntityId(data)
-    } 
+    
+    }
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return PersistentIdEntity::class.java
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(data)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        data = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

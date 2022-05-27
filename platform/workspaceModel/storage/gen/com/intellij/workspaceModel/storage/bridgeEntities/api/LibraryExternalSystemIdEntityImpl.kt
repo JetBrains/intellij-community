@@ -223,11 +223,9 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(externalSystemId)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        externalSystemId = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

@@ -239,23 +239,9 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        val _renamedOutputFileName = renamedOutputFileName
-        if (_renamedOutputFileName != null) {
-            ser.saveString(_renamedOutputFileName)
-        } else {
-            ser.saveNull()
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        if (de.acceptNull()) {
-            renamedOutputFileName = null
-        }
-        else {
-            val _renamedOutputFileName: String
-            _renamedOutputFileName = de.readString()
-            renamedOutputFileName = _renamedOutputFileName
-        }
     }
 
     override fun equals(other: Any?): Boolean {

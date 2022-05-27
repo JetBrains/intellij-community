@@ -209,7 +209,6 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(x)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

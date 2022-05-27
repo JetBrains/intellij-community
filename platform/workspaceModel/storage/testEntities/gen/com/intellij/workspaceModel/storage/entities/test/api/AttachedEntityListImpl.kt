@@ -217,7 +217,6 @@ class AttachedEntityListData : WorkspaceEntityData<AttachedEntityList>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(data)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

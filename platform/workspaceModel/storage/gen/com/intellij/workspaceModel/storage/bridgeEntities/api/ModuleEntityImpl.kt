@@ -625,17 +625,9 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(name)
-        val _type = type
-        if (_type != null) {
-            ser.saveString(_type)
-        } else {
-            ser.saveNull()
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        name = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

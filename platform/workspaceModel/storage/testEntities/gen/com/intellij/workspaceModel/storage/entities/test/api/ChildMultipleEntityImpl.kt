@@ -224,11 +224,9 @@ class ChildMultipleEntityData : WorkspaceEntityData<ChildMultipleEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(childData)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        childData = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

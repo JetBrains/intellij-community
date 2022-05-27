@@ -183,18 +183,9 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(data)
-        ser.saveBoolean(boolData)
-        val _optionalData = optionalData
-        if (_optionalData != null) {
-            ser.saveString(_optionalData)
-        } else {
-            ser.saveNull()
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        data = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

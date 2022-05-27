@@ -278,11 +278,6 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        if (de.acceptNull()) {
-            module = null
-        }
-        else {
-        }
     }
 
     override fun equals(other: Any?): Boolean {

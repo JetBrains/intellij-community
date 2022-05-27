@@ -151,11 +151,9 @@ class BooleanEntityData : WorkspaceEntityData<BooleanEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveBoolean(data)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        data = de.readBoolean()
     }
 
     override fun equals(other: Any?): Boolean {

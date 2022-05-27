@@ -336,11 +336,9 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(fileName)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        fileName = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

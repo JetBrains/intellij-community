@@ -157,21 +157,9 @@ class ListEntityData : WorkspaceEntityData<ListEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveInt(data.size)
-        for (_data in data) {
-            ser.saveString(_data)
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        val counter0 = de.readInt()
-        val collector1 = ArrayList<String>()
-        var _data: String
-        repeat(counter0) {
-            _data = de.readString()
-            collector1.add(_data)
-        }
-        data = collector1
     }
 
     override fun equals(other: Any?): Boolean {

@@ -216,11 +216,9 @@ class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(parentData)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        parentData = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

@@ -219,11 +219,9 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(property)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        property = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

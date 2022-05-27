@@ -241,13 +241,6 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(libraryType)
-        val _propertiesXmlTag = propertiesXmlTag
-        if (_propertiesXmlTag != null) {
-            ser.saveString(_propertiesXmlTag)
-        } else {
-            ser.saveNull()
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

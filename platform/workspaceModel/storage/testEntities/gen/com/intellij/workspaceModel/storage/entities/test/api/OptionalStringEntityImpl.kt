@@ -152,23 +152,9 @@ class OptionalStringEntityData : WorkspaceEntityData<OptionalStringEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        val _data = data
-        if (_data != null) {
-            ser.saveString(_data)
-        } else {
-            ser.saveNull()
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        if (de.acceptNull()) {
-            data = null
-        }
-        else {
-            val _data: String
-            _data = de.readString()
-            data = _data
-        }
     }
 
     override fun equals(other: Any?): Boolean {

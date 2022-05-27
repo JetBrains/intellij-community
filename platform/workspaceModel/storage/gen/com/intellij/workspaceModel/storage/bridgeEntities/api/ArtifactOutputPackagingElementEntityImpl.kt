@@ -278,11 +278,6 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        if (de.acceptNull()) {
-            artifact = null
-        }
-        else {
-        }
     }
 
     override fun equals(other: Any?): Boolean {

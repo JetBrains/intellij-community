@@ -224,21 +224,9 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveInt(orderOfFacets.size)
-        for (_orderOfFacets in orderOfFacets) {
-            ser.saveString(_orderOfFacets)
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        val counter0 = de.readInt()
-        val collector1 = ArrayList<String>()
-        var _orderOfFacets: String
-        repeat(counter0) {
-            _orderOfFacets = de.readString()
-            collector1.add(_orderOfFacets)
-        }
-        orderOfFacets = collector1
     }
 
     override fun equals(other: Any?): Boolean {

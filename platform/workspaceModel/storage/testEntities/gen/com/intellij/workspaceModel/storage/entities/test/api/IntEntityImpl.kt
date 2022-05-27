@@ -151,11 +151,9 @@ class IntEntityData : WorkspaceEntityData<IntEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveInt(data)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        data = de.readInt()
     }
 
     override fun equals(other: Any?): Boolean {

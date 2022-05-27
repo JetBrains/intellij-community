@@ -230,7 +230,6 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveBlob(homeUrl, "VirtualFileUrl")
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

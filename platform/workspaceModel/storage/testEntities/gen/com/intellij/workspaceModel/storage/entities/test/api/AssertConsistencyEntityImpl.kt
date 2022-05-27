@@ -152,11 +152,9 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveBoolean(passCheck)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        passCheck = de.readBoolean()
     }
 
     override fun equals(other: Any?): Boolean {

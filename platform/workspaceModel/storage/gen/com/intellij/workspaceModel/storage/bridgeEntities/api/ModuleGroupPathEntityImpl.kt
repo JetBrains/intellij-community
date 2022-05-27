@@ -227,10 +227,6 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveInt(path.size)
-        for (_path in path) {
-            ser.saveString(_path)
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

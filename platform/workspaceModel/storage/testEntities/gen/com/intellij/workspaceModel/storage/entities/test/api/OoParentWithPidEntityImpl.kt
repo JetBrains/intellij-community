@@ -256,11 +256,9 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(parentProperty)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        parentProperty = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

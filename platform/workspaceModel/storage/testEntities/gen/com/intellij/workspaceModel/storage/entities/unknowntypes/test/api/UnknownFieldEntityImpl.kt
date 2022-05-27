@@ -158,7 +158,6 @@ class UnknownFieldEntityData : WorkspaceEntityData<UnknownFieldEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveBlob(data, "Date")
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

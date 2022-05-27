@@ -240,17 +240,9 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(myName)
-        val _additionalProperty = additionalProperty
-        if (_additionalProperty != null) {
-            ser.saveString(_additionalProperty)
-        } else {
-            ser.saveNull()
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        myName = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

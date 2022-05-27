@@ -383,19 +383,9 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(name)
-        ser.saveString(artifactType)
-        ser.saveBoolean(includeInProjectBuild)
-        val _outputUrl = outputUrl
-        if (_outputUrl != null) {
-            ser.saveBlob(_outputUrl, "VirtualFileUrl")
-        } else {
-            ser.saveNull()
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        name = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

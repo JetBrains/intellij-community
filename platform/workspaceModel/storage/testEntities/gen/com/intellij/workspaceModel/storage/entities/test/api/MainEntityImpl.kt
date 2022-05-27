@@ -160,11 +160,9 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(x)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        x = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

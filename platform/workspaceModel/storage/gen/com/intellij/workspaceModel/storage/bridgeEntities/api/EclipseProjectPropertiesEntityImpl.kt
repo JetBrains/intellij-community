@@ -326,30 +326,6 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveInt(variablePaths.size)
-        for ((key_variablePaths, value_variablePaths) in variablePaths) {
-            ser.saveString(key_variablePaths)
-            ser.saveString(value_variablePaths)
-        }
-        ser.saveInt(eclipseUrls.size)
-        for (_eclipseUrls in eclipseUrls) {
-            ser.saveBlob(_eclipseUrls, "VirtualFileUrl")
-        }
-        ser.saveInt(unknownCons.size)
-        for (_unknownCons in unknownCons) {
-            ser.saveString(_unknownCons)
-        }
-        ser.saveInt(knownCons.size)
-        for (_knownCons in knownCons) {
-            ser.saveString(_knownCons)
-        }
-        ser.saveBoolean(forceConfigureJdk)
-        ser.saveInt(expectedModuleSourcePlace)
-        ser.saveInt(srcPlace.size)
-        for ((key_srcPlace, value_srcPlace) in srcPlace) {
-            ser.saveString(key_srcPlace)
-            ser.saveInt(value_srcPlace)
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

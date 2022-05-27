@@ -237,8 +237,6 @@ class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveBoolean(generated)
-        ser.saveString(packagePrefix)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

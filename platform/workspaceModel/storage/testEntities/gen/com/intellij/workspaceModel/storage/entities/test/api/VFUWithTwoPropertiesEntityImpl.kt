@@ -201,13 +201,9 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(data)
-        ser.saveBlob(fileProperty, "VirtualFileUrl")
-        ser.saveBlob(secondFileProperty, "VirtualFileUrl")
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        data = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

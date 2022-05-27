@@ -336,11 +336,9 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(directoryName)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        directoryName = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

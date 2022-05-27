@@ -223,7 +223,6 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(propertiesXmlTag)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

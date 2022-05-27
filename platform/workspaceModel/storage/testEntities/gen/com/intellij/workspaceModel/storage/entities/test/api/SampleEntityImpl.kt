@@ -288,23 +288,9 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveBoolean(booleanProperty)
-        ser.saveString(stringProperty)
-        ser.saveInt(stringListProperty.size)
-        for (_stringListProperty in stringListProperty) {
-            ser.saveString(_stringListProperty)
-        }
-        ser.saveBlob(fileProperty, "VirtualFileUrl")
-        val _nullableData = nullableData
-        if (_nullableData != null) {
-            ser.saveString(_nullableData)
-        } else {
-            ser.saveNull()
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        booleanProperty = de.readBoolean()
     }
 
     override fun equals(other: Any?): Boolean {

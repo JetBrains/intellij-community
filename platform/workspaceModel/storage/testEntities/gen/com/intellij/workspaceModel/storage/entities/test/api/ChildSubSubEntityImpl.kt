@@ -222,7 +222,6 @@ class ChildSubSubEntityData : WorkspaceEntityData<ChildSubSubEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(childData)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

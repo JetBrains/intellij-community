@@ -226,10 +226,6 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveInt(orderOfSourceRoots.size)
-        for (_orderOfSourceRoots in orderOfSourceRoots) {
-            ser.saveBlob(_orderOfSourceRoots, "VirtualFileUrl")
-        }
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {

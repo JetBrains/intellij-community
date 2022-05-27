@@ -243,11 +243,9 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(pathInArchive)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        pathInArchive = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

@@ -113,11 +113,11 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
       }
 
       sectionNl("override fun serialize(ser: ${EntityInformation.Serializer::class.fqn})") {
-        InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, SerializatorVisitor(this@sectionNl))
+        //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, SerializatorVisitor(this@sectionNl))
       }
 
       sectionNl("override fun deserialize(de: ${EntityInformation.Deserializer::class.fqn})") {
-        InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
+        //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
       }
 
       // --- equals
