@@ -53,6 +53,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.Lazy;
 import org.intellij.lang.annotations.JdkConstants;
@@ -460,14 +461,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return myLafComboBoxModel.getValue();
   }
 
+  private List<UIManager.LookAndFeelInfo> lafListWithoutExcluded() {
+    List<String> excludedThemes = UiThemeProviderListManager.Companion.getExcludedThemes();
+    return ContainerUtil.filter(lafList.getValue(), info -> !excludedThemes.contains(info.getName()));
+  }
+
   private @NotNull List<LafReference> getAllReferences() {
     List<LafReference> result = new ArrayList<>();
     boolean addSeparator = false;
     Map<String, Integer> lafNameOrder = UiThemeProviderListManager.Companion.getLafNameOrder();
-    List<String> excludedThemes = UiThemeProviderListManager.Companion.getExcludedThemes();
     int maxNameOrder = Collections.max(lafNameOrder.values());
-    for (UIManager.LookAndFeelInfo info : lafList.getValue()) {
-      if (excludedThemes.contains(info.getName())) continue;
+    for (UIManager.LookAndFeelInfo info : lafListWithoutExcluded()) {
       if (addSeparator) {
         result.add(SEPARATOR);
         addSeparator = false;
@@ -1392,7 +1396,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       List<UIManager.LookAndFeelInfo> lightLafs = new ArrayList<>();
       List<UIManager.LookAndFeelInfo> darkLafs = new ArrayList<>();
 
-      for (UIManager.LookAndFeelInfo lafInfo : lafList.getValue()) {
+      for (UIManager.LookAndFeelInfo lafInfo : lafListWithoutExcluded()) {
         if (lafInfo instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)lafInfo).getTheme().isDark() ||
             lafInfo.getName().equals(DarculaLaf.NAME)) {
           darkLafs.add(lafInfo);
