@@ -72,10 +72,6 @@ object WorkspaceModelGenerator {
   private fun getSourceRoot(module: Module): List<SourceFolder> {
     val moduleRootManager = ModuleRootManager.getInstance(module)
     val contentEntries = moduleRootManager.contentEntries
-    if (contentEntries.size != 1) {
-      LOG.info("Unsupported cont of content roots for the module ${module.name}. Expected: 1, actual: ${contentEntries.size}")
-      return emptyList()
-    }
     //val contentEntryFile = contentEntry.file
     //val sourceFolders = contentEntry.sourceFolders
     //  if (contentEntryFile != null && VfsUtilCore.isAncestor(contentEntryFile, selectedFolder, false)) {
@@ -83,8 +79,8 @@ object WorkspaceModelGenerator {
     //    if (sourceFolder != null) return sourceFolder
     //  }
     //}
-    return contentEntries[0].sourceFolders.filter {
-      if (it.file == null)  return@filter false
+    return contentEntries.flatMap { it.sourceFolders.asIterable() }.filter {
+      if (it.file == null) return@filter false
       val javaSourceRootProperties = it.jpsElement.properties as? JavaSourceRootProperties
       if (javaSourceRootProperties == null) return@filter true
       return@filter !javaSourceRootProperties.isForGeneratedSources
