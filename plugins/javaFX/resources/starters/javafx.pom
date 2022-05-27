@@ -21,10 +21,10 @@
     <fx16.version>17.0.2</fx16.version>
     <fx17.version>17.0.2</fx17.version>
     <fx18.version>18.0.1</fx18.version>
-    <fx19.version>19-ea+3</fx19.version>
+    <fx19.version>19-ea+7</fx19.version>
 
     <fxgl11.version>11.17</fxgl11.version>
-    <fxgl17.version>17</fxgl17.version>
+    <fxgl17.version>17.1</fxgl17.version>
   </properties>
 
   <dependencyManagement>
@@ -58,17 +58,17 @@
       <dependency>
         <groupId>com.dlsc.formsfx</groupId>
         <artifactId>formsfx-core</artifactId>
-        <version>11.3.2</version>
+        <version>11.5.0</version>
       </dependency>
       <dependency>
         <groupId>net.synedra</groupId>
         <artifactId>validatorfx</artifactId>
-        <version>0.2.1</version>
+        <version>0.3.1</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.ikonli</groupId>
         <artifactId>ikonli-javafx</artifactId>
-        <version>12.3.0</version>
+        <version>12.3.1</version>
       </dependency>
       <dependency>
         <groupId>org.kordamp.bootstrapfx</groupId>
@@ -78,7 +78,7 @@
       <dependency>
         <groupId>eu.hansolo</groupId>
         <artifactId>tilesfx</artifactId>
-        <version>11.48</version>
+        <version>17.1.9</version>
       </dependency>
       <dependency>
         <groupId>com.github.almasb</groupId>
@@ -99,7 +99,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>7.5</version>
+        <version>7.6</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
@@ -114,7 +114,7 @@
       <dependency>
         <groupId>org.codehaus.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>3.0.9</version>
+        <version>3.0.10</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>
