@@ -63,6 +63,12 @@ final class ComponentsNavBarPanel extends Breadcrumbs {
                             : getBackground();
   }
 
+  @Override
+  public Font getFont() {
+    Font font = super.getFont();
+    return font != null ? font.deriveFont(13f) : null;
+  }
+
   private class ComponentItem implements Crumb {
     private final @NotNull Component myComponent;
 
