@@ -9,18 +9,33 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.exists
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.run.findActivateScript
+import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.io.File
-import java.nio.file.Path
 import javax.swing.JCheckBox
 import kotlin.io.path.Path
 import kotlin.io.path.name
-import kotlin.io.path.pathString
 
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
+  private fun generateCommandForPowerShell(sdk: Sdk, sdkHomePath: VirtualFile): Array<out String>? {
+    if ((sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavor is CondaEnvSdkFlavor) {
+      // Activate conda
+
+      // ' are in "Write-Host"
+      val errorMessage = PyTerminalBundle.message("powershell.conda.not.activated").replace('\'', '"')
+      // No need to escape path: conda can't have spaces
+      val condaActivateCommand = "try { conda activate ${sdkHomePath.parent.path} } catch { Write-Host('$errorMessage') }"
+      return arrayOf("powershell.exe", "-NoExit", "-Command", condaActivateCommand)
+    }
+
+    // Activate convenient virtualenv
+    val virtualEnvProfile = sdkHomePath.parent.findChild("activate.ps1") ?: return null
+    return if (virtualEnvProfile.exists()) arrayOf("powershell.exe", "-NoExit", "-File", virtualEnvProfile.path) else null
+  }
+
   override fun customizeCommandAndEnvironment(project: Project,
                                               command: Array<out String>,
                                               envs: MutableMap<String, String>): Array<out String> {
@@ -30,23 +45,22 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         (PythonSdkUtil.isVirtualEnv(sdk) || PythonSdkUtil.isConda(sdk)) &&
         PyVirtualEnvTerminalSettings.getInstance(project).virtualEnvActivate) {
       // in case of virtualenv sdk on unix we activate virtualenv
-      val path = sdk.homePath
+      val sdkHomePath = sdk.homeDirectory
 
-      if (path != null && command.isNotEmpty()) {
+      if (sdkHomePath != null && command.isNotEmpty()) {
         val shellPath = command[0]
 
         if (Path(shellPath).name == "powershell.exe") {
-          val powerShellActivator = Path.of(path).parent?.resolve("activate.ps1") ?: return command
-          return if (powerShellActivator.exists()) arrayOf("powershell.exe", "-NoExit", "-File", powerShellActivator.pathString) else command
+          return generateCommandForPowerShell(sdk, sdkHomePath) ?: command
         }
 
         if (isShellIntegrationAvailable(shellPath)) { //fish shell works only for virtualenv and not for conda
           //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
           //TODO: fix conda for fish
 
-          findActivateScript(path, shellPath)?.let { activate ->
-            envs.put("JEDITERM_SOURCE",  activate.first)
-            envs.put("JEDITERM_SOURCE_ARGS", activate.second?:"")
+          findActivateScript(sdkHomePath.path, shellPath)?.let { activate ->
+            envs.put("JEDITERM_SOURCE", activate.first)
+            envs.put("JEDITERM_SOURCE_ARGS", activate.second ?: "")
           }
         }
         else {
