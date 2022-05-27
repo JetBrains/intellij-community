@@ -808,7 +808,6 @@ public class SwitchBlockHighlightingModel {
     @Nullable
     private HighlightInfo checkSealedClassCompleteness(@NotNull PsiClass selectorClass,
                                                        @NotNull List<PsiCaseLabelElement> elements) {
-      Set<PsiClass> missingClasses;
       LinkedHashMap<PsiClass, PsiPattern> patternClasses = new LinkedHashMap<>();
       for (PsiCaseLabelElement element : elements) {
         PsiPattern patternLabelElement = ObjectUtils.tryCast(element, PsiPattern.class);
@@ -821,7 +820,7 @@ public class SwitchBlockHighlightingModel {
       Queue<PsiClass> nonVisited = new ArrayDeque<>();
       nonVisited.add(selectorClass);
       Set<PsiClass> visited = new SmartHashSet<>();
-      missingClasses = new LinkedHashSet<>();
+      Set<PsiClass> missingClasses = new LinkedHashSet<>();
       while (!nonVisited.isEmpty()) {
         PsiClass psiClass = nonVisited.peek();
         if (psiClass.hasModifierProperty(SEALED) && (psiClass.hasModifierProperty(ABSTRACT) ||
