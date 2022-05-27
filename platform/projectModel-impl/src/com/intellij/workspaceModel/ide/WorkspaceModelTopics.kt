@@ -15,7 +15,9 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import java.util.*
 
 interface WorkspaceModelChangeListener : EventListener {
+  @JvmDefault
   fun beforeChanged(event: VersionedStorageChange) {}
+  @JvmDefault
   fun changed(event: VersionedStorageChange) {}
 }
 
