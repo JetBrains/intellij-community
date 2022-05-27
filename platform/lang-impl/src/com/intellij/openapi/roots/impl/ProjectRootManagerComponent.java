@@ -246,7 +246,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     Set<String> excludedUrls = CollectionFactory.createSmallMemoryFootprintSet();
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
-    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensionList(myProject)) {
+    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
       Collections.addAll(excludedUrls, excludePolicy.getExcludeUrlsForProject());
     }
 
