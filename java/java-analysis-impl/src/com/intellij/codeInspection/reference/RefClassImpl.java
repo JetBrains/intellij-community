@@ -294,7 +294,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       final RefMethodImpl defaultConstructor = (RefMethodImpl)getDefaultConstructor();
       if (defaultConstructor != null) {
         for (RefClass superClass : getBaseClasses()) {
-          superClass.waitForInitialized();
+          superClass.initializeIfNeeded();
           WritableRefElement superDefaultConstructor = (WritableRefElement)superClass.getDefaultConstructor();
 
           if (superDefaultConstructor != null) {

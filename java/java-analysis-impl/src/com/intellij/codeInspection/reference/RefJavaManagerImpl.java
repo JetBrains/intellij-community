@@ -203,7 +203,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(sourcePsi != null, "UParameter " + param + " has null sourcePsi");
     RefElement result = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refElement);
-      ref.waitForInitialized();
+      ref.initializeIfNeeded();
       return (RefElement)ref;
     });
     return result instanceof RefParameter ? (RefParameter)result : null;

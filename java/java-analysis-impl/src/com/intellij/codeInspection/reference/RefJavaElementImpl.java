@@ -272,8 +272,8 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     if (!checkFlag(FORBID_PROTECTED_ACCESS_MASK) &&
         (expressionFrom instanceof UQualifiedReferenceExpression ||
          expressionFrom instanceof UCallExpression && ((UCallExpression)expressionFrom).getKind() == UastCallKind.CONSTRUCTOR_CALL)) {
-      waitForInitialized();
-      refFrom.waitForInitialized();
+      initializeIfNeeded();
+      refFrom.initializeIfNeeded();
       if (RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
         setFlag(true, FORBID_PROTECTED_ACCESS_MASK);
       }

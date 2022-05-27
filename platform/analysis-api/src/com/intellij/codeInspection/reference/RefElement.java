@@ -69,7 +69,7 @@ public interface RefElement extends RefEntity {
   /**
    * Tries to initialize this element, if it wasn't initialized yet.
    */
-  default void waitForInitialized() {}
+  default void initializeIfNeeded() {}
 
   /**
    * Returns the collection of references from this element to other elements.

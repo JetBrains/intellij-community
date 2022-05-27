@@ -57,7 +57,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
       RefMethod resolvedRefMethod = ObjectUtils.tryCast(getRefManager().getReference(resolvedMethod), RefMethod.class);
       if (resolvedRefMethod != null) {
         resolvedRefMethod.addDerivedReference(this);
-        resolvedRefMethod.waitForInitialized();
+        resolvedRefMethod.initializeIfNeeded();
         RefClass refClass = resolvedRefMethod.getOwnerClass();
         if (refClass != null) {
           refClass.addDerivedReference(this);

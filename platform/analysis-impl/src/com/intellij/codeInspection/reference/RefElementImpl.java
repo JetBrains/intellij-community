@@ -258,7 +258,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   }
 
   @Override
-  public final synchronized void waitForInitialized() {
+  public final synchronized void initializeIfNeeded() {
     if (isInitialized()) {
       return;
     }

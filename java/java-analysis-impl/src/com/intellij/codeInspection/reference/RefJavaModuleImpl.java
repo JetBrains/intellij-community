@@ -149,7 +149,7 @@ public final class RefJavaModuleImpl extends RefElementImpl implements RefJavaMo
                 if (targetElement == null) {
                   final RefElement refClass = getRefManager().getReference(implementationClass);
                   if (refClass instanceof RefClassImpl) {
-                    refClass.waitForInitialized();
+                    refClass.initializeIfNeeded();
                     if (myServiceImplementations == null) myServiceImplementations = new HashSet<>();
                     myServiceImplementations.add((RefClass)refClass);
 
