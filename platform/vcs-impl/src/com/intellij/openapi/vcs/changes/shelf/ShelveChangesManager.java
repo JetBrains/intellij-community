@@ -1287,11 +1287,13 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private static void removeChanges(@NotNull ShelvedChangeList list, @NotNull List<ShelvedChange> shelvedChanges) {
     for (Iterator<ShelvedChange> iterator = Objects.requireNonNull(list.getChanges()).iterator(); iterator.hasNext(); ) {
       final ShelvedChange change = iterator.next();
-      for (ShelvedChange newChange : shelvedChanges) {
-        if (Objects.equals(change.getBeforePath(), newChange.getBeforePath()) &&
-            Objects.equals(change.getAfterPath(), newChange.getAfterPath())) {
-          iterator.remove();
-        }
+
+      boolean toRemove = ContainerUtil.exists(shelvedChanges, newChange ->
+        Objects.equals(change.getBeforePath(), newChange.getBeforePath()) &&
+        Objects.equals(change.getAfterPath(), newChange.getAfterPath())
+      );
+      if (toRemove) {
+        iterator.remove();
       }
     }
   }
