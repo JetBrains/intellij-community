@@ -1212,6 +1212,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/inspectionsLocal/addOperatorModifier", pattern = pattern)
             model("testData/inspectionsLocal/booleanLiteralArgument", pattern = pattern)
+            model("testData/inspectionsLocal/convertSealedSubClassToObject", pattern = pattern)
         }
     }
 

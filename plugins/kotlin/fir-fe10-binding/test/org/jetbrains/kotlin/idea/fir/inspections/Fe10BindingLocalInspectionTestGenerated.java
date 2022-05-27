@@ -138,4 +138,127 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/booleanLiteralArgument/vararg.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject")
+    public static class ConvertSealedSubClassToObject extends AbstractFe10BindingLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/annotation.kt");
+        }
+
+        @TestMetadata("baseEquals.kt")
+        public void testBaseEquals() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/baseEquals.kt");
+        }
+
+        @TestMetadata("baseState.kt")
+        public void testBaseState() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/baseState.kt");
+        }
+
+        @TestMetadata("convertSubClassFromAnotherFile.kt")
+        public void testConvertSubClassFromAnotherFile() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassFromAnotherFile.kt");
+        }
+
+        @TestMetadata("convertSubClassWithModifiers.kt")
+        public void testConvertSubClassWithModifiers() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithModifiers.kt");
+        }
+
+        @TestMetadata("convertSubClassWithParentheses.kt")
+        public void testConvertSubClassWithParentheses() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithParentheses.kt");
+        }
+
+        @TestMetadata("convertSubClassWithSecondaryConstructor.kt")
+        public void testConvertSubClassWithSecondaryConstructor() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("convertSubClassWithoutParentheses.kt")
+        public void testConvertSubClassWithoutParentheses() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithoutParentheses.kt");
+        }
+
+        @TestMetadata("data.kt")
+        public void testData() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/data.kt");
+        }
+
+        @TestMetadata("enum.kt")
+        public void testEnum() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/enum.kt");
+        }
+
+        @TestMetadata("fakeState.kt")
+        public void testFakeState() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/fakeState.kt");
+        }
+
+        @TestMetadata("generic.kt")
+        public void testGeneric() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/generic.kt");
+        }
+
+        @TestMetadata("inner.kt")
+        public void testInner() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/inner.kt");
+        }
+
+        @TestMetadata("noEquals.kt")
+        public void testNoEquals() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/noEquals.kt");
+        }
+
+        @TestMetadata("nonEmptyConstructor.kt")
+        public void testNonEmptyConstructor() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/nonEmptyConstructor.kt");
+        }
+
+        @TestMetadata("openSubclass.kt")
+        public void testOpenSubclass() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/openSubclass.kt");
+        }
+
+        @TestMetadata("ownEquals.kt")
+        public void testOwnEquals() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/ownEquals.kt");
+        }
+
+        @TestMetadata("ownState.kt")
+        public void testOwnState() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/ownState.kt");
+        }
+
+        @TestMetadata("sealed.kt")
+        public void testSealed() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/sealed.kt");
+        }
+
+        @TestMetadata("sealedEquals.kt")
+        public void testSealedEquals() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/sealedEquals.kt");
+        }
+
+        @TestMetadata("sealedState.kt")
+        public void testSealedState() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/sealedState.kt");
+        }
+
+        @TestMetadata("withCompanion.kt")
+        public void testWithCompanion() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/withCompanion.kt");
+        }
+
+        @TestMetadata("withInner.kt")
+        public void testWithInner() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/convertSealedSubClassToObject/withInner.kt");
+        }
+    }
 }
