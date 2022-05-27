@@ -9,6 +9,7 @@ class KtInterface(
   val constructor: KtConstructor?,
   private val predefinedKind: KtInterfaceKind?,
   val annotations: KtAnnotations = KtAnnotations(),
+  val formExternalModule: Boolean = false
 ) {
   val open: Boolean = annotations.flags.open
   val abstract: Boolean = annotations.flags.abstract

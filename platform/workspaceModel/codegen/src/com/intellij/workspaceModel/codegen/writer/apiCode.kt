@@ -9,6 +9,7 @@ import org.jetbrains.deft.codegen.ijws.classes.noDefaultValue
 import org.jetbrains.deft.codegen.ijws.classes.noOptional
 import org.jetbrains.deft.codegen.ijws.classes.noRefs
 import org.jetbrains.deft.codegen.ijws.classes.noPersistentId
+import org.jetbrains.deft.codegen.ijws.fields.referencedField
 import org.jetbrains.deft.codegen.ijws.fields.wsCode
 import org.jetbrains.deft.codegen.model.DefType
 import org.jetbrains.deft.codegen.model.WsEntityInterface
@@ -79,7 +80,8 @@ fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean):
 }
 
 fun DefType.generatedExtensionCode(indent: String = "    "): String {
-  val extFields = ktModule.extFields.filter { it.owner is DefType && this === it.owner }
+  val extFields = ktModule.extFields.filter { it.owner is DefType &&
+                                              (this === it.owner || (it.owner.def.formExternalModule &&  it.referencedField.owner === this)) }
   if (extFields.isEmpty() && abstract) return ""
   return lines(indent) {
     line("//region generated code")

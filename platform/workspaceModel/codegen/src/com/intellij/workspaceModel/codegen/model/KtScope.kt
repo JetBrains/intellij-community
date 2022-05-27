@@ -102,6 +102,9 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
       if (psiElement is KtTypeReference && psiElement.text == typeName) {
         resolvedType = (psiElement.typeElement as KtUserType).referenceExpression?.mainReference?.resolve()
         return@processElements false
+      } else if (psiElement is KtUserType && psiElement.text == typeName) {
+        resolvedType = psiElement.referenceExpression?.mainReference?.resolve()
+        return@processElements false
       }
       return@processElements true
     }
@@ -137,7 +140,7 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
     }
     return KtScope(this, KtInterface(module, this,
                                      SrcRange(src, nameRange.startOffset until nameRange.endOffset),
-                                     ktTypes, null, predefinedKind, annotations))
+                                     ktTypes, null, predefinedKind, annotations, true))
   }
 
   //  val importList = psiFile.importList
