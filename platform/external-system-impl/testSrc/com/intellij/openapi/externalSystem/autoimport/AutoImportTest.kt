@@ -1043,7 +1043,7 @@ class AutoImportTest : AutoImportTestCase() {
   }
 
   @Test
-  fun `test skip insignificant changes`() {
+  fun `test partial ignoring settings files modification events`() {
     simpleTest {
       assertState(refresh = 1, settingsAccess = 1, notified = false, event = "register project without cache")
 
