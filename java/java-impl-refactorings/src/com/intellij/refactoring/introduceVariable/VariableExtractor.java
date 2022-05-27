@@ -155,8 +155,9 @@ final class VariableExtractor {
       }
       CodeBlockSurrounder.SurroundResult result = surrounder.surround();
       myAnchor = result.getAnchor();
-      if (addedCast && myAnchor instanceof PsiTypeCastExpression) {
-        myAnchor = Objects.requireNonNull(((PsiTypeCastExpression)myAnchor).getOperand());
+      PsiExpression expression = result.getExpression();
+      if (addedCast && expression instanceof PsiTypeCastExpression) {
+        expression.replace(Objects.requireNonNull(((PsiTypeCastExpression)expression).getOperand()));
       }
     }
   }

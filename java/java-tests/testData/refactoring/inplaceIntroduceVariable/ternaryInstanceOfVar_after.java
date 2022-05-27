@@ -4,7 +4,7 @@ class X {
       String y;
       if (x instanceof String) {
           String x1 = (String) x;
-          y = (String) x1;
+          y = x1;
       } else {
           y = null;
       }
