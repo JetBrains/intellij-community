@@ -205,13 +205,16 @@ public final class ShelvedChange {
         // content based on local shouldn't be cached because local file may be changed (during show diff also)
         return loadContent();
       }
+      catch (VcsException e) {
+        throw e;
+      }
       catch (Exception e) {
         throw new VcsException(e);
       }
     }
 
     @Nullable
-    private String loadContent() throws IOException, PatchSyntaxException, ApplyPatchException {
+    private String loadContent() throws IOException, PatchSyntaxException, VcsException {
       TextFilePatch patch = loadFilePatch(myProject, myPatchPath, myBeforePath, null);
       if (patch != null) {
         return loadContent(patch);
@@ -219,7 +222,7 @@ public final class ShelvedChange {
       return null;
     }
 
-    private String loadContent(final TextFilePatch patch) throws ApplyPatchException {
+    private String loadContent(final TextFilePatch patch) throws VcsException {
       if (patch.isNewFile()) {
         return patch.getSingleHunkPatchText();
       }
@@ -230,13 +233,16 @@ public final class ShelvedChange {
       if (appliedPatch != null) {
         return appliedPatch.patchedText;
       }
-      throw new ApplyPatchException("Apply patch conflict");
+      throw new VcsException(VcsBundle.message("patch.apply.error.conflict"));
     }
 
-    private String getBaseContent() {
+    @NotNull
+    private String getBaseContent() throws VcsException {
       return ReadAction.compute(() -> {
         VirtualFile file = myBeforeFilePath.getVirtualFile();
+        if (file == null) throw new VcsException(VcsBundle.message("patch.apply.error.file.not.found", myBeforeFilePath));
         final Document doc = FileDocumentManager.getInstance().getDocument(file);
+        if (doc == null) throw new VcsException(VcsBundle.message("patch.apply.error.document.not.found", file));
         return doc.getText();
       });
     }
