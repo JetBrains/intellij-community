@@ -78,7 +78,7 @@ class CloneableProjectsService {
       cloneableProject.progressIndicator.cancel()
     }
 
-    cloneableProjects.remove(cloneableProject)
+    cloneableProjects.removeIf { it.projectPath == cloneableProject.projectPath }
     fireCloneRemovedEvent()
   }
 
