@@ -124,26 +124,6 @@ public final class ApplyPatchAction extends DumbAwareAction {
     return dialog.showAndGet();
   }
 
-  public static void applySkipDirs(final List<? extends FilePatch> patches, final int skipDirs) {
-    if (skipDirs < 1) {
-      return;
-    }
-    for (FilePatch patch : patches) {
-      patch.setBeforeName(skipN(patch.getBeforeName(), skipDirs));
-      patch.setAfterName(skipN(patch.getAfterName(), skipDirs));
-    }
-  }
-
-  private static String skipN(final String path, final int num) {
-    final String[] pieces = path.split("/");
-    final StringBuilder sb = new StringBuilder();
-    for (int i = num; i < pieces.length; i++) {
-      final String piece = pieces[i];
-      sb.append('/').append(piece);
-    }
-    return sb.toString();
-  }
-
   public static @NotNull ApplyPatchStatus applyContent(@NotNull Project project,
                                                        @NotNull ApplyFilePatchBase<?> patch,
                                                        @Nullable ApplyPatchContext context,

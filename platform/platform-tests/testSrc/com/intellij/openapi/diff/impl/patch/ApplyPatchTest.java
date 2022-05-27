@@ -6,7 +6,6 @@ import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -237,7 +236,7 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
     Path patchPath = testDir.findChild("apply.patch").toNioPath();
     List<FilePatch> patches = new ArrayList<>(new PatchReader(patchPath).readTextPatches());
 
-    ApplyPatchAction.applySkipDirs(patches, skipTopDirs);
+    applySkipDirs(patches, skipTopDirs);
     VirtualFile beforeDir = testDir.findChild("before");
     PatchApplier patchApplier = new PatchApplier(myProject, beforeDir, patches, null, null);
     ApplyPatchStatus applyStatus = patchApplier.execute(false, false);
@@ -251,5 +250,25 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
   @NotNull
   private static String getTestDir(@TestDataFile String dirName) {
     return PlatformTestUtil.getPlatformTestDataPath() + "diff/applyPatch/" + dirName;
+  }
+
+  private static void applySkipDirs(final List<? extends FilePatch> patches, final int skipDirs) {
+    if (skipDirs < 1) {
+      return;
+    }
+    for (FilePatch patch : patches) {
+      patch.setBeforeName(skipN(patch.getBeforeName(), skipDirs));
+      patch.setAfterName(skipN(patch.getAfterName(), skipDirs));
+    }
+  }
+
+  protected static String skipN(final String path, final int num) {
+    final String[] pieces = path.split("/");
+    final StringBuilder sb = new StringBuilder();
+    for (int i = num; i < pieces.length; i++) {
+      final String piece = pieces[i];
+      sb.append('/').append(piece);
+    }
+    return sb.toString();
   }
 }
