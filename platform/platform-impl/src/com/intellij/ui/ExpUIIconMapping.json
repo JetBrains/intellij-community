@@ -462,6 +462,9 @@
       ],
       "phpWeb.svg": "icons/run_web_app.svg"
     },
+    "plugins/space": {
+      "spaceToolWindow.svg": "icons/spaceToolWindow.svg"
+    },
     "run": {
       "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
