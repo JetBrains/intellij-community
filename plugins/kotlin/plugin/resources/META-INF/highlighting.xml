@@ -9,12 +9,12 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
-            serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10KotlinReferenceProviderContributor"/>
+            serviceImplementation="org.jetbrains.kotlin.references.fe10.base.KtFe10KotlinReferenceProviderContributor"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtReferenceMutateServiceImpl"/>
     <applicationService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10ReferenceResolutionHelper"
+            serviceInterface="org.jetbrains.kotlin.references.fe10.base.KtFe10ReferenceResolutionHelper"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtFe10ReferenceResolutionHelperImpl"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy"

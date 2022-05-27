@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
-import org.jetbrains.kotlin.analysis.api.descriptors.references.Fe10SyntheticPropertyAccessorReference
+import org.jetbrains.kotlin.references.fe10.Fe10SyntheticPropertyAccessorReference
 import org.jetbrains.kotlin.asJava.canHaveSyntheticGetter
 import org.jetbrains.kotlin.asJava.canHaveSyntheticSetter
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod

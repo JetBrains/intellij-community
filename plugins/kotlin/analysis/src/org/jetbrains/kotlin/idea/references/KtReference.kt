@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.PsiMember
-import org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10Reference
+import org.jetbrains.kotlin.references.fe10.base.KtFe10Reference
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.psi.KtDeclaration
