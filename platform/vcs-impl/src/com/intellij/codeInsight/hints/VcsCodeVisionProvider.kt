@@ -73,28 +73,22 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
-      try {
-        val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
-                                    ?: return@runReadAction READY_EMPTY
-        val traverser = SyntaxTraverser.psiTraverser(file)
-        for (element in traverser.preOrderDfsTraversal()) {
-          if (visionLanguageContext.isAccepted(element)) {
-            val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-            val length = editor.document.textLength
-            val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
-            val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
-            val text = codeAuthorInfo.getText()
-            val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
-            val clickHandler = CodeAuthorClickHandler(element, language)
-            val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
-            entry.showInMorePopup = false
-            lenses.add(adjustedRange to entry)
-          }
+      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
+                                  ?: return@runReadAction READY_EMPTY
+      val traverser = SyntaxTraverser.psiTraverser(file)
+      for (element in traverser.preOrderDfsTraversal()) {
+        if (visionLanguageContext.isAccepted(element)) {
+          val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
+          val length = editor.document.textLength
+          val adjustedRange = TextRange(min(textRange.startOffset, length), min(textRange.endOffset, length))
+          val codeAuthorInfo = PREVIEW_INFO_KEY.get(editor) ?: getCodeAuthorInfo(element.project, adjustedRange, editor, aspect)
+          val text = codeAuthorInfo.getText()
+          val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
+          val clickHandler = CodeAuthorClickHandler(element, language)
+          val entry = ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList())
+          entry.showInMorePopup = false
+          lenses.add(adjustedRange to entry)
         }
-      }
-      catch (e: Exception) {
-        e.printStackTrace()
-        throw e
       }
       return@runReadAction CodeVisionState.Ready(lenses)
     }
@@ -107,7 +101,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
     val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
     val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(psiFile.virtualFile) ?: return null
     if ("Git" != vcs.name) {
-        return null
+      return null
     }
     if (vcs.annotationProvider !is CacheableAnnotationProvider) return null
     return object : BypassBasedPlaceholderCollector {
