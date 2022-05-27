@@ -1305,9 +1305,10 @@
         <constraint name="Variable" nameOfExprType="JamAnnotationMeta" maxCount="2147483647" target="true" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;&quot;)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
+      <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;$l$&quot;)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="s" within="" contains="" />
+        <constraint name="l" regexp="^$" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" order="1" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;&quot;)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
         <constraint name="__context__" within="" contains="" />
