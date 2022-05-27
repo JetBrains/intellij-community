@@ -8,12 +8,14 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
 import com.intellij.openapi.vcs.changes.DiffRequestProcessorWithProducers
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Companion.prepareCombinedDiffModelRequests
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,7 +34,7 @@ internal val COMBINED_DIFF_PREVIEW_TAB_NAME = Key.create<() -> @NlsContexts.TabT
 
 class CombinedDiffPreviewVirtualFile(sourceId: String) : CombinedDiffVirtualFile(sourceId, "")
 
-abstract class CombinedDiffPreview(private val tree: ChangesTree,
+abstract class CombinedDiffPreview(protected val tree: ChangesTree,
                                    targetComponent: JComponent,
                                    isOpenEditorDiffPreviewWithSingleClick: Boolean,
                                    parentDisposable: Disposable) :
@@ -77,7 +79,7 @@ abstract class CombinedDiffPreview(private val tree: ChangesTree,
       val changes = model.getSelectedOrAllChangesStream().toList()
       if (changes.isNotEmpty()) {
         model.refresh(true)
-        model.reset(model.prepareCombinedDiffModelRequests(changes))
+        model.reset(prepareCombinedDiffModelRequests(project, changes))
       }
     }
   }
@@ -109,8 +111,9 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
       scrollToChange(change)
     }
   }
-
-  open fun prepareCombinedDiffModelRequests(changes: List<Wrapper>): Map<CombinedBlockId, DiffRequestProducer> {
+companion object {
+  @JvmStatic
+  fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): Map<CombinedBlockId, DiffRequestProducer> {
     return changes
       .asSequence()
       .mapNotNull { wrapper ->
@@ -118,6 +121,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
           ?.let { CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag) to it }
       }.toMap()
   }
+}
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<DiffRequestProducer> {
     return ListSelection.create(requests.values.toList(), selected?.createProducer(project))

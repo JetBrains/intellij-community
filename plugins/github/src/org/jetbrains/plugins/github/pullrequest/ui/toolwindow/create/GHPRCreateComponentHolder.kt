@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -26,8 +27,6 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
-import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.Processor
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -40,6 +39,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -240,20 +240,16 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   private fun createChangesTree(parentPanel: JPanel,
                                 model: SingleValueModel<Collection<Change>>,
                                 emptyTextText: String): JComponent {
-    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText).also {
-      it.doubleClickHandler = Processor { e ->
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(it, e)) return@Processor false
-        viewController.openNewPullRequestDiff(true)
-        true
-      }
-      it.enterKeyHandler = Processor {
-        viewController.openNewPullRequestDiff(true)
-        true
-      }
-    }
+    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
 
-    DataManager.registerDataProvider(parentPanel) {
-      if (tree.isShowing) tree.getData(it) else null
+    val diffPreview = GHPRCombinedDiffPreviewBase.createAndSetupDiffPreview(tree, null, dataContext.filesManager)
+
+    DataManager.registerDataProvider(parentPanel) { dataId ->
+      when {
+        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreview
+        tree.isShowing -> tree.getData(dataId)
+        else -> null
+      }
     }
     return ScrollPaneFactory.createScrollPane(tree, true)
   }

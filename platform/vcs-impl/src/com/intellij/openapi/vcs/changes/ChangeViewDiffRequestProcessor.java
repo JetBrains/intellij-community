@@ -398,7 +398,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     }
   }
 
-  protected static class ChangeWrapper extends Wrapper {
+  public static class ChangeWrapper extends Wrapper {
     @NotNull protected final Change change;
     @Nullable protected final ChangesBrowserNode.Tag nodeTag;
 
