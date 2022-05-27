@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-stdlib" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20-dev-1320">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20-dev-1577">
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
       </exclude>
@@ -9,17 +9,17 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/kotlin" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.7.20-dev-1320/kotlin-stdlib-jdk8-1.7.20-dev-1320.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.7.20-dev-1320/kotlin-stdlib-1.7.20-dev-1320.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.20-dev-1320/kotlin-stdlib-common-1.7.20-dev-1320.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.7.20-dev-1320/kotlin-stdlib-jdk7-1.7.20-dev-1320.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.7.20-dev-1577/kotlin-stdlib-jdk8-1.7.20-dev-1577.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.7.20-dev-1577/kotlin-stdlib-1.7.20-dev-1577.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.20-dev-1577/kotlin-stdlib-common-1.7.20-dev-1577.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.7.20-dev-1577/kotlin-stdlib-jdk7-1.7.20-dev-1577.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.7.20-dev-1320/kotlin-stdlib-jdk8-1.7.20-dev-1320-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.7.20-dev-1320/kotlin-stdlib-1.7.20-dev-1320-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.20-dev-1320/kotlin-stdlib-common-1.7.20-dev-1320-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.7.20-dev-1320/kotlin-stdlib-jdk7-1.7.20-dev-1320-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.7.20-dev-1577/kotlin-stdlib-jdk8-1.7.20-dev-1577-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.7.20-dev-1577/kotlin-stdlib-1.7.20-dev-1577-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.7.20-dev-1577/kotlin-stdlib-common-1.7.20-dev-1577-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.7.20-dev-1577/kotlin-stdlib-jdk7-1.7.20-dev-1577-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
