@@ -29,6 +29,10 @@ sealed class KotlinPluginLayout {
      */
     abstract val jpsPluginClasspath: List<File>
 
+    val jsEngines by lazy {
+        kotlinc.resolve("lib").resolve("js.engines.jar").also { check(it.exists()) { "$it doesn't exist" } }
+    }
+
     /**
      * Version of the stand-alone compiler (artifacts in the 'kotlinc/' directory of the Kotlin plugin).
      * Stand-alone compiler is always stable in 'master' and release branches. It is used for compilation with JPS.
