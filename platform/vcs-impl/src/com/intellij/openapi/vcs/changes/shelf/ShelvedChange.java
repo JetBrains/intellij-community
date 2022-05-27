@@ -61,6 +61,12 @@ public final class ShelvedChange {
     return new ShelvedChange(patchPath, beforePath, afterPath, fileStatus, change);
   }
 
+  public static ShelvedChange copyToNewPatch(@NotNull Project project,
+                                             @NotNull Path newPatchPath,
+                                             @NotNull ShelvedChange shelvedChange) {
+    return create(project, newPatchPath, shelvedChange.getBeforePath(), shelvedChange.getAfterPath(), shelvedChange.getFileStatus());
+  }
+
   public boolean isConflictingChange() {
     ContentRevision afterRevision = getChange().getAfterRevision();
     if (afterRevision == null) return false;

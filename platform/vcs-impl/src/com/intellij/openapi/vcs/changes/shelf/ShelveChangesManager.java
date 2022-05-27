@@ -339,6 +339,17 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
+  private static List<ShelvedChange> copyTextFiles(@NotNull Project project,
+                                                   @NotNull ShelvedChangeList changeList,
+                                                   @NotNull Path newPatchPath) {
+    List<ShelvedChange> copied = new ArrayList<>();
+    for (ShelvedChange change : changeList.getChanges()) {
+      copied.add(ShelvedChange.copyToNewPatch(project, newPatchPath, change));
+    }
+    return copied;
+  }
+
+  @NotNull
   private static List<ShelvedBinaryFile> copyBinaryFiles(@NotNull ShelvedChangeList list, @NotNull Path targetDirectory)
     throws IOException {
     Files.createDirectories(targetDirectory);
@@ -1212,8 +1223,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     Files.copy(changeList.path, newPath);
     changeList.loadChangesIfNeeded(myProject);
 
-    ShelvedChangeList listCopy = new ShelvedChangeList(newPath, changeList.DESCRIPTION, copyBinaryFiles(changeList, targetDir),
-                                                       new ArrayList<>(Objects.requireNonNull(changeList.getChanges())),
+    ShelvedChangeList listCopy = new ShelvedChangeList(newPath, changeList.DESCRIPTION,
+                                                       copyBinaryFiles(changeList, targetDir),
+                                                       copyTextFiles(myProject, changeList, newPath),
                                                        changeList.DATE.getTime());
     listCopy.markToDelete(changeList.isMarkedToDelete());
     listCopy.setRecycled(changeList.isRecycled());
