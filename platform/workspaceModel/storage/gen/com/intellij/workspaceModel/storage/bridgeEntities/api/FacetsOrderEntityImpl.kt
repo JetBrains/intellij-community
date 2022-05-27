@@ -155,41 +155,41 @@ open class FacetsOrderEntityImpl: FacetsOrderEntity, WorkspaceEntityBase() {
                 
             }
             
-            var _moduleEntity: ModuleEntity? = null
-            override var moduleEntity: ModuleEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this) ?: _moduleEntity!!
-                    } else {
-                        _moduleEntity!!
-                    }
+        var _moduleEntity: ModuleEntity? = null
+        override var moduleEntity: ModuleEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this) ?: _moduleEntity!!
+                } else {
+                    _moduleEntity!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("FacetsOrderEntity", "moduleEntity", true, MODULEENTITY_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("FacetsOrderEntity", "moduleEntity", true, MODULEENTITY_CONNECTION_ID)] = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(MODULEENTITY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("FacetsOrderEntity", "moduleEntity", true, MODULEENTITY_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._moduleEntity = value
-                    }
-                    changedProperty.add("moduleEntity")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(MODULEENTITY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("FacetsOrderEntity", "moduleEntity", true, MODULEENTITY_CONNECTION_ID)] = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._moduleEntity = value
+                }
+                changedProperty.add("moduleEntity")
+            }
         
         override fun getEntityData(): FacetsOrderEntityData = result ?: super.getEntityData() as FacetsOrderEntityData
         override fun getEntityClass(): Class<FacetsOrderEntity> = FacetsOrderEntity::class.java

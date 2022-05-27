@@ -337,41 +337,41 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                 
             }
             
-            var _children: List<SoftLinkReferencedChild>? = null
-            override var children: List<SoftLinkReferencedChild>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
-                    } else {
-                        _children!!
-                    }
+        var _children: List<SoftLinkReferencedChild>? = null
+        override var children: List<SoftLinkReferencedChild>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
+                } else {
+                    _children!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for a reference of non-ext field
-                            if (item_value is SoftLinkReferencedChildImpl.Builder) {
-                                item_value._parentEntity = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _children = value
-                        // Test
-                    }
-                    changedProperty.add("children")
+                    _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for a reference of non-ext field
+                        if (item_value is SoftLinkReferencedChildImpl.Builder) {
+                            item_value._parentEntity = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _children = value
+                    // Test
+                }
+                changedProperty.add("children")
+            }
         
         override fun getEntityData(): EntityWithSoftLinksData = result ?: super.getEntityData() as EntityWithSoftLinksData
         override fun getEntityClass(): Class<EntityWithSoftLinks> = EntityWithSoftLinks::class.java

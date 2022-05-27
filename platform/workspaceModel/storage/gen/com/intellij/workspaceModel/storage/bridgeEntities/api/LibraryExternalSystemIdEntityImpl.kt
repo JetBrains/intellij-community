@@ -154,41 +154,41 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
                 
             }
             
-            var _library: LibraryEntity? = null
-            override var library: LibraryEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: _library!!
-                    } else {
-                        _library!!
-                    }
+        var _library: LibraryEntity? = null
+        override var library: LibraryEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: _library!!
+                } else {
+                    _library!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID)] = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._library = value
-                    }
-                    changedProperty.add("library")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID)] = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._library = value
+                }
+                changedProperty.add("library")
+            }
         
         override fun getEntityData(): LibraryExternalSystemIdEntityData = result ?: super.getEntityData() as LibraryExternalSystemIdEntityData
         override fun getEntityClass(): Class<LibraryExternalSystemIdEntity> = LibraryExternalSystemIdEntity::class.java

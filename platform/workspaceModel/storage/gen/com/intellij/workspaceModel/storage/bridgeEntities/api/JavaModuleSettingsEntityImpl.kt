@@ -149,41 +149,41 @@ open class JavaModuleSettingsEntityImpl: JavaModuleSettingsEntity, WorkspaceEnti
         }
     
         
-            var _module: ModuleEntity? = null
-            override var module: ModuleEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: _module!!
-                    } else {
-                        _module!!
-                    }
+        var _module: ModuleEntity? = null
+        override var module: ModuleEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: _module!!
+                } else {
+                    _module!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of non-ext field
-                        if (value is ModuleEntityImpl.Builder) {
-                            value._javaSettings = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of non-ext field
+                    if (value is ModuleEntityImpl.Builder) {
+                        value._javaSettings = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of non-ext field
-                        if (value is ModuleEntityImpl.Builder) {
-                            value._javaSettings = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._module = value
-                    }
-                    changedProperty.add("module")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of non-ext field
+                    if (value is ModuleEntityImpl.Builder) {
+                        value._javaSettings = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._module = value
+                }
+                changedProperty.add("module")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

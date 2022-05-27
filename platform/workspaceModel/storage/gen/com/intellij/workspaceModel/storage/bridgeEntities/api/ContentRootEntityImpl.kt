@@ -192,41 +192,41 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
         }
     
         
-            var _module: ModuleEntity? = null
-            override var module: ModuleEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: _module!!
-                    } else {
-                        _module!!
-                    }
+        var _module: ModuleEntity? = null
+        override var module: ModuleEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: _module!!
+                } else {
+                    _module!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for the list of non-ext field
-                        if (value is ModuleEntityImpl.Builder) {
-                            value._contentRoots = (value._contentRoots ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for the list of non-ext field
+                    if (value is ModuleEntityImpl.Builder) {
+                        value._contentRoots = (value._contentRoots ?: emptyList()) + this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for the list of non-ext field
-                        if (value is ModuleEntityImpl.Builder) {
-                            value._contentRoots = (value._contentRoots ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._module = value
-                    }
-                    changedProperty.add("module")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for the list of non-ext field
+                    if (value is ModuleEntityImpl.Builder) {
+                        value._contentRoots = (value._contentRoots ?: emptyList()) + this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._module = value
+                }
+                changedProperty.add("module")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
@@ -266,77 +266,77 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 changedProperty.add("excludedPatterns")
             }
             
-            var _sourceRoots: List<SourceRootEntity>? = null
-            override var sourceRoots: List<SourceRootEntity>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList() + (_sourceRoots ?: emptyList())
-                    } else {
-                        _sourceRoots!!
-                    }
+        var _sourceRoots: List<SourceRootEntity>? = null
+        override var sourceRoots: List<SourceRootEntity>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<SourceRootEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList() + (_sourceRoots ?: emptyList())
+                } else {
+                    _sourceRoots!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(SOURCEROOTS_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for a reference of non-ext field
-                            if (item_value is SourceRootEntityImpl.Builder) {
-                                item_value._contentRoot = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _sourceRoots = value
-                        // Test
-                    }
-                    changedProperty.add("sourceRoots")
+                    _diff.updateOneToManyChildrenOfParent(SOURCEROOTS_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for a reference of non-ext field
+                        if (item_value is SourceRootEntityImpl.Builder) {
+                            item_value._contentRoot = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _sourceRoots = value
+                    // Test
+                }
+                changedProperty.add("sourceRoots")
+            }
         
-            var _sourceRootOrder: SourceRootOrderEntity? = null
-            override var sourceRootOrder: SourceRootOrderEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this) ?: _sourceRootOrder
-                    } else {
-                        _sourceRootOrder
-                    }
+        var _sourceRootOrder: SourceRootOrderEntity? = null
+        override var sourceRootOrder: SourceRootOrderEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this) ?: _sourceRootOrder
+                } else {
+                    _sourceRootOrder
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is SourceRootOrderEntityImpl.Builder) {
-                            value._contentRootEntity = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is SourceRootOrderEntityImpl.Builder) {
+                        value._contentRootEntity = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(SOURCEROOTORDER_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is SourceRootOrderEntityImpl.Builder) {
-                            value._contentRootEntity = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._sourceRootOrder = value
-                    }
-                    changedProperty.add("sourceRootOrder")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(SOURCEROOTORDER_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is SourceRootOrderEntityImpl.Builder) {
+                        value._contentRootEntity = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._sourceRootOrder = value
+                }
+                changedProperty.add("sourceRootOrder")
+            }
         
         override fun getEntityData(): ContentRootEntityData = result ?: super.getEntityData() as ContentRootEntityData
         override fun getEntityClass(): Class<ContentRootEntity> = ContentRootEntity::class.java

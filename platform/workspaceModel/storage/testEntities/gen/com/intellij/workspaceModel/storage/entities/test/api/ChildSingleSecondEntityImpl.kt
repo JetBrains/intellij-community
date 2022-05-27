@@ -152,41 +152,41 @@ open class ChildSingleSecondEntityImpl: ChildSingleSecondEntity, WorkspaceEntity
                 changedProperty.add("commonData")
             }
             
-            var _parentEntity: ParentSingleAbEntity? = null
-            override var parentEntity: ParentSingleAbEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity!!
-                    } else {
-                        _parentEntity!!
-                    }
+        var _parentEntity: ParentSingleAbEntity? = null
+        override var parentEntity: ParentSingleAbEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity!!
+                } else {
+                    _parentEntity!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is ParentSingleAbEntityImpl.Builder) {
-                            value._child = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is ParentSingleAbEntityImpl.Builder) {
+                        value._child = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToAbstractOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is ParentSingleAbEntityImpl.Builder) {
-                            value._child = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._parentEntity = value
-                    }
-                    changedProperty.add("parentEntity")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToAbstractOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is ParentSingleAbEntityImpl.Builder) {
+                        value._child = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._parentEntity = value
+                }
+                changedProperty.add("parentEntity")
+            }
         
         override var secondData: String
             get() = getEntityData().secondData

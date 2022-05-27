@@ -154,41 +154,41 @@ open class ArtifactExternalSystemIdEntityImpl: ArtifactExternalSystemIdEntity, W
                 
             }
             
-            var _artifactEntity: ArtifactEntity? = null
-            override var artifactEntity: ArtifactEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(ARTIFACTENTITY_CONNECTION_ID, this) ?: _artifactEntity!!
-                    } else {
-                        _artifactEntity!!
-                    }
+        var _artifactEntity: ArtifactEntity? = null
+        override var artifactEntity: ArtifactEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(ARTIFACTENTITY_CONNECTION_ID, this) ?: _artifactEntity!!
+                } else {
+                    _artifactEntity!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("ArtifactExternalSystemIdEntity", "artifactEntity", true, ARTIFACTENTITY_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("ArtifactExternalSystemIdEntity", "artifactEntity", true, ARTIFACTENTITY_CONNECTION_ID)] = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(ARTIFACTENTITY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("ArtifactExternalSystemIdEntity", "artifactEntity", true, ARTIFACTENTITY_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._artifactEntity = value
-                    }
-                    changedProperty.add("artifactEntity")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(ARTIFACTENTITY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("ArtifactExternalSystemIdEntity", "artifactEntity", true, ARTIFACTENTITY_CONNECTION_ID)] = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._artifactEntity = value
+                }
+                changedProperty.add("artifactEntity")
+            }
         
         override fun getEntityData(): ArtifactExternalSystemIdEntityData = result ?: super.getEntityData() as ArtifactExternalSystemIdEntityData
         override fun getEntityClass(): Class<ArtifactExternalSystemIdEntity> = ArtifactExternalSystemIdEntity::class.java

@@ -144,39 +144,39 @@ open class ExtractedDirectoryPackagingElementEntityImpl: ExtractedDirectoryPacka
         }
     
         
-            var _parentEntity: CompositePackagingElementEntity? = null
-            override var parentEntity: CompositePackagingElementEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity
-                    } else {
-                        _parentEntity
-                    }
+        var _parentEntity: CompositePackagingElementEntity? = null
+        override var parentEntity: CompositePackagingElementEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity
+                } else {
+                    _parentEntity
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value != null) {
-                            val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
-                            access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
-                        }
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    if (value != null) {
+                        val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
+                        access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        if (value != null) {
-                            val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
-                            access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
-                        }
-                        
-                        this._parentEntity = value
-                    }
-                    changedProperty.add("parentEntity")
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+                }
+                else {
+                    if (value != null) {
+                        val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
+                        access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
+                    }
+                    
+                    this._parentEntity = value
+                }
+                changedProperty.add("parentEntity")
+            }
         
         override var filePath: VirtualFileUrl
             get() = getEntityData().filePath

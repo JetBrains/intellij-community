@@ -154,10 +154,8 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculablePersistentId<Fi
     }
 
     override fun persistentId(): PersistentEntityId<*> {
-        
       return FirstPId(data)
-    
-    }
+    } 
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return FirstEntityWithPId::class.java

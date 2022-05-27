@@ -126,41 +126,41 @@ open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
         }
     
         
-            var _root: CompositeAbstractEntity? = null
-            override var root: CompositeAbstractEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this) ?: _root!!
-                    } else {
-                        _root!!
-                    }
+        var _root: CompositeAbstractEntity? = null
+        override var root: CompositeAbstractEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this) ?: _root!!
+                } else {
+                    _root!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value != null) {
-                            val access = value::class.memberProperties.single { it.name == "_parentEntity" } as KMutableProperty1<*, *>
-                            // x
-                            access.setter.call(value, this)
-                        }
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    if (value != null) {
+                        val access = value::class.memberProperties.single { it.name == "_parentEntity" } as KMutableProperty1<*, *>
+                        // x
+                        access.setter.call(value, this)
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToAbstractOneChildOfParent(ROOT_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        if (value != null) {
-                            val access = value::class.memberProperties.single { it.name == "_parentEntity" } as KMutableProperty1<*, *>
-                            // x
-                            access.setter.call(value, this)
-                        }
-                        
-                        this._root = value
-                    }
-                    changedProperty.add("root")
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToAbstractOneChildOfParent(ROOT_CONNECTION_ID, this, value)
+                }
+                else {
+                    if (value != null) {
+                        val access = value::class.memberProperties.single { it.name == "_parentEntity" } as KMutableProperty1<*, *>
+                        // x
+                        access.setter.call(value, this)
+                    }
+                    
+                    this._root = value
+                }
+                changedProperty.add("root")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

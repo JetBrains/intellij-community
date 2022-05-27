@@ -145,41 +145,41 @@ open class LibraryPropertiesEntityImpl: LibraryPropertiesEntity, WorkspaceEntity
         }
     
         
-            var _library: LibraryEntity? = null
-            override var library: LibraryEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: _library!!
-                    } else {
-                        _library!!
-                    }
+        var _library: LibraryEntity? = null
+        override var library: LibraryEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: _library!!
+                } else {
+                    _library!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of non-ext field
-                        if (value is LibraryEntityImpl.Builder) {
-                            value._libraryProperties = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of non-ext field
+                    if (value is LibraryEntityImpl.Builder) {
+                        value._libraryProperties = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of non-ext field
-                        if (value is LibraryEntityImpl.Builder) {
-                            value._libraryProperties = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._library = value
-                    }
-                    changedProperty.add("library")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of non-ext field
+                    if (value is LibraryEntityImpl.Builder) {
+                        value._libraryProperties = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._library = value
+                }
+                changedProperty.add("library")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

@@ -136,41 +136,41 @@ open class ChildSubSubEntityImpl: ChildSubSubEntity, WorkspaceEntityBase() {
         }
     
         
-            var _parentEntity: ChildSubEntity? = null
-            override var parentEntity: ChildSubEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity!!
-                    } else {
-                        _parentEntity!!
-                    }
+        var _parentEntity: ChildSubEntity? = null
+        override var parentEntity: ChildSubEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity!!
+                } else {
+                    _parentEntity!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is ChildSubEntityImpl.Builder) {
-                            value._child = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is ChildSubEntityImpl.Builder) {
+                        value._child = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is ChildSubEntityImpl.Builder) {
-                            value._child = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._parentEntity = value
-                    }
-                    changedProperty.add("parentEntity")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is ChildSubEntityImpl.Builder) {
+                        value._child = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._parentEntity = value
+                }
+                changedProperty.add("parentEntity")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

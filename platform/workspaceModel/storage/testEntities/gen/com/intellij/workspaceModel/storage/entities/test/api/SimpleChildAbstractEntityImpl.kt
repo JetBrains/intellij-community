@@ -135,39 +135,39 @@ open class SimpleChildAbstractEntityImpl: SimpleChildAbstractEntity, WorkspaceEn
         }
     
         
-            var _parentInList: CompositeAbstractEntity? = null
-            override var parentInList: CompositeAbstractEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: _parentInList!!
-                    } else {
-                        _parentInList!!
-                    }
+        var _parentInList: CompositeAbstractEntity? = null
+        override var parentInList: CompositeAbstractEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: _parentInList!!
+                } else {
+                    _parentInList!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value != null) {
-                            val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
-                            access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
-                        }
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    if (value != null) {
+                        val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
+                        access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToAbstractManyParentOfChild(PARENTINLIST_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        if (value != null) {
-                            val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
-                            access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
-                        }
-                        
-                        this._parentInList = value
-                    }
-                    changedProperty.add("parentInList")
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToAbstractManyParentOfChild(PARENTINLIST_CONNECTION_ID, this, value)
+                }
+                else {
+                    if (value != null) {
+                        val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
+                        access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
+                    }
+                    
+                    this._parentInList = value
+                }
+                changedProperty.add("parentInList")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

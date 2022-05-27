@@ -150,41 +150,41 @@ open class ParentMultipleEntityImpl: ParentMultipleEntity, WorkspaceEntityBase()
                 
             }
             
-            var _children: List<ChildMultipleEntity>? = null
-            override var children: List<ChildMultipleEntity>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<ChildMultipleEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
-                    } else {
-                        _children!!
-                    }
+        var _children: List<ChildMultipleEntity>? = null
+        override var children: List<ChildMultipleEntity>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<ChildMultipleEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
+                } else {
+                    _children!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for a reference of non-ext field
-                            if (item_value is ChildMultipleEntityImpl.Builder) {
-                                item_value._parentEntity = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _children = value
-                        // Test
-                    }
-                    changedProperty.add("children")
+                    _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for a reference of non-ext field
+                        if (item_value is ChildMultipleEntityImpl.Builder) {
+                            item_value._parentEntity = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _children = value
+                    // Test
+                }
+                changedProperty.add("children")
+            }
         
         override fun getEntityData(): ParentMultipleEntityData = result ?: super.getEntityData() as ParentMultipleEntityData
         override fun getEntityClass(): Class<ParentMultipleEntity> = ParentMultipleEntity::class.java

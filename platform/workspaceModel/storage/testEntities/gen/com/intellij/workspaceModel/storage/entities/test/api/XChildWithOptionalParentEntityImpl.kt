@@ -146,41 +146,41 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
                 
             }
             
-            var _optionalParent: XParentEntity? = null
-            override var optionalParent: XParentEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this) ?: _optionalParent
-                    } else {
-                        _optionalParent
-                    }
+        var _optionalParent: XParentEntity? = null
+        override var optionalParent: XParentEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this) ?: _optionalParent
+                } else {
+                    _optionalParent
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for the list of non-ext field
-                        if (value is XParentEntityImpl.Builder) {
-                            value._optionalChildren = (value._optionalChildren ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for the list of non-ext field
+                    if (value is XParentEntityImpl.Builder) {
+                        value._optionalChildren = (value._optionalChildren ?: emptyList()) + this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToManyParentOfChild(OPTIONALPARENT_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for the list of non-ext field
-                        if (value is XParentEntityImpl.Builder) {
-                            value._optionalChildren = (value._optionalChildren ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._optionalParent = value
-                    }
-                    changedProperty.add("optionalParent")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToManyParentOfChild(OPTIONALPARENT_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for the list of non-ext field
+                    if (value is XParentEntityImpl.Builder) {
+                        value._optionalChildren = (value._optionalChildren ?: emptyList()) + this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._optionalParent = value
+                }
+                changedProperty.add("optionalParent")
+            }
         
         override fun getEntityData(): XChildWithOptionalParentEntityData = result ?: super.getEntityData() as XChildWithOptionalParentEntityData
         override fun getEntityClass(): Class<XChildWithOptionalParentEntity> = XChildWithOptionalParentEntity::class.java

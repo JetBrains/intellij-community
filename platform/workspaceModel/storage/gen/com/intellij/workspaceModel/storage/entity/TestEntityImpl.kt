@@ -1,4 +1,3 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.entity
 
 import com.intellij.workspaceModel.storage.EntityInformation
@@ -188,12 +187,9 @@ class TestEntityData : WorkspaceEntityData<TestEntity>() {
     }
 
     override fun serialize(ser: EntityInformation.Serializer) {
-        ser.saveString(name)
-        ser.saveInt(count)
     }
 
     override fun deserialize(de: EntityInformation.Deserializer) {
-        name = de.readString()
     }
 
     override fun equals(other: Any?): Boolean {

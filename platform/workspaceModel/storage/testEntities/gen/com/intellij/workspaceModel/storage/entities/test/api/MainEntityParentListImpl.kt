@@ -153,41 +153,41 @@ open class MainEntityParentListImpl: MainEntityParentList, WorkspaceEntityBase()
                 
             }
             
-            var _children: List<AttachedEntityParentList>? = null
-            override var children: List<AttachedEntityParentList>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<AttachedEntityParentList>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
-                    } else {
-                        _children!!
-                    }
+        var _children: List<AttachedEntityParentList>? = null
+        override var children: List<AttachedEntityParentList>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<AttachedEntityParentList>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
+                } else {
+                    _children!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for an optional of ext field
-                            if (item_value is ModifiableWorkspaceEntityBase<*>) {
-                                item_value.extReferences[ExtRefKey("MainEntityParentList", "children", false, CHILDREN_CONNECTION_ID)] = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _children = value
-                        // Test
-                    }
-                    changedProperty.add("children")
+                    _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for an optional of ext field
+                        if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                            item_value.extReferences[ExtRefKey("MainEntityParentList", "children", false, CHILDREN_CONNECTION_ID)] = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _children = value
+                    // Test
+                }
+                changedProperty.add("children")
+            }
         
         override fun getEntityData(): MainEntityParentListData = result ?: super.getEntityData() as MainEntityParentListData
         override fun getEntityClass(): Class<MainEntityParentList> = MainEntityParentList::class.java

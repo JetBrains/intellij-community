@@ -227,113 +227,113 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                 changedProperty.add("excludedRoots")
             }
             
-            var _sdk: SdkEntity? = null
-            override var sdk: SdkEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(SDK_CONNECTION_ID, this) ?: _sdk
-                    } else {
-                        _sdk
-                    }
+        var _sdk: SdkEntity? = null
+        override var sdk: SdkEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(SDK_CONNECTION_ID, this) ?: _sdk
+                } else {
+                    _sdk
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is SdkEntityImpl.Builder) {
-                            value._library = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is SdkEntityImpl.Builder) {
+                        value._library = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(SDK_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is SdkEntityImpl.Builder) {
-                            value._library = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._sdk = value
-                    }
-                    changedProperty.add("sdk")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(SDK_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is SdkEntityImpl.Builder) {
+                        value._library = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._sdk = value
+                }
+                changedProperty.add("sdk")
+            }
         
-            var _libraryProperties: LibraryPropertiesEntity? = null
-            override var libraryProperties: LibraryPropertiesEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this) ?: _libraryProperties
-                    } else {
-                        _libraryProperties
-                    }
+        var _libraryProperties: LibraryPropertiesEntity? = null
+        override var libraryProperties: LibraryPropertiesEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this) ?: _libraryProperties
+                } else {
+                    _libraryProperties
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is LibraryPropertiesEntityImpl.Builder) {
-                            value._library = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is LibraryPropertiesEntityImpl.Builder) {
+                        value._library = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(LIBRARYPROPERTIES_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is LibraryPropertiesEntityImpl.Builder) {
-                            value._library = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._libraryProperties = value
-                    }
-                    changedProperty.add("libraryProperties")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(LIBRARYPROPERTIES_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is LibraryPropertiesEntityImpl.Builder) {
+                        value._library = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._libraryProperties = value
+                }
+                changedProperty.add("libraryProperties")
+            }
         
-            var _libraryFilesPackagingElement: LibraryFilesPackagingElementEntity? = null
-            override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this) ?: _libraryFilesPackagingElement
-                    } else {
-                        _libraryFilesPackagingElement
-                    }
+        var _libraryFilesPackagingElement: LibraryFilesPackagingElementEntity? = null
+        override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this) ?: _libraryFilesPackagingElement
+                } else {
+                    _libraryFilesPackagingElement
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("LibraryEntity", "libraryFilesPackagingElement", false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("LibraryEntity", "libraryFilesPackagingElement", false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("LibraryEntity", "libraryFilesPackagingElement", false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._libraryFilesPackagingElement = value
-                    }
-                    changedProperty.add("libraryFilesPackagingElement")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("LibraryEntity", "libraryFilesPackagingElement", false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._libraryFilesPackagingElement = value
+                }
+                changedProperty.add("libraryFilesPackagingElement")
+            }
         
         override fun getEntityData(): LibraryEntityData = result ?: super.getEntityData() as LibraryEntityData
         override fun getEntityClass(): Class<LibraryEntity> = LibraryEntity::class.java

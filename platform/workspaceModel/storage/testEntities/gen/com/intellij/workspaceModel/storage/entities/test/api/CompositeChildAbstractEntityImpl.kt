@@ -179,39 +179,39 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
         }
     
         
-            var _parentInList: CompositeAbstractEntity? = null
-            override var parentInList: CompositeAbstractEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: _parentInList!!
-                    } else {
-                        _parentInList!!
-                    }
+        var _parentInList: CompositeAbstractEntity? = null
+        override var parentInList: CompositeAbstractEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: _parentInList!!
+                } else {
+                    _parentInList!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value != null) {
-                            val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
-                            access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
-                        }
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    if (value != null) {
+                        val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
+                        access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToAbstractManyParentOfChild(PARENTINLIST_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        if (value != null) {
-                            val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
-                            access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
-                        }
-                        
-                        this._parentInList = value
-                    }
-                    changedProperty.add("parentInList")
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToAbstractManyParentOfChild(PARENTINLIST_CONNECTION_ID, this, value)
+                }
+                else {
+                    if (value != null) {
+                        val access = value::class.memberProperties.single { it.name == "_children" } as KMutableProperty1<*, *>
+                        access.setter.call(value, ((access.getter.call(value) as? List<*>) ?: emptyList<Any>()) + this)
+                    }
+                    
+                    this._parentInList = value
+                }
+                changedProperty.add("parentInList")
+            }
         
             var _children: List<SimpleAbstractEntity>? = null
             override var children: List<SimpleAbstractEntity>
@@ -256,41 +256,41 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                 
             }
             
-            var _parentEntity: ParentChainEntity? = null
-            override var parentEntity: ParentChainEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity
-                    } else {
-                        _parentEntity
-                    }
+        var _parentEntity: ParentChainEntity? = null
+        override var parentEntity: ParentChainEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity
+                } else {
+                    _parentEntity
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is ParentChainEntityImpl.Builder) {
-                            value._root = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is ParentChainEntityImpl.Builder) {
+                        value._root = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToAbstractOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is ParentChainEntityImpl.Builder) {
-                            value._root = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._parentEntity = value
-                    }
-                    changedProperty.add("parentEntity")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToAbstractOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is ParentChainEntityImpl.Builder) {
+                        value._root = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._parentEntity = value
+                }
+                changedProperty.add("parentEntity")
+            }
         
         override fun getEntityData(): CompositeChildAbstractEntityData = result ?: super.getEntityData() as CompositeChildAbstractEntityData
         override fun getEntityClass(): Class<CompositeChildAbstractEntity> = CompositeChildAbstractEntity::class.java

@@ -138,41 +138,41 @@ open class OoParentWithoutPidEntityImpl: OoParentWithoutPidEntity, WorkspaceEnti
                 
             }
             
-            var _childOne: OoChildWithPidEntity? = null
-            override var childOne: OoChildWithPidEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(CHILDONE_CONNECTION_ID, this) ?: _childOne
-                    } else {
-                        _childOne
-                    }
+        var _childOne: OoChildWithPidEntity? = null
+        override var childOne: OoChildWithPidEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(CHILDONE_CONNECTION_ID, this) ?: _childOne
+                } else {
+                    _childOne
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is OoChildWithPidEntityImpl.Builder) {
-                            value._parentEntity = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is OoChildWithPidEntityImpl.Builder) {
+                        value._parentEntity = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(CHILDONE_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is OoChildWithPidEntityImpl.Builder) {
-                            value._parentEntity = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._childOne = value
-                    }
-                    changedProperty.add("childOne")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(CHILDONE_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is OoChildWithPidEntityImpl.Builder) {
+                        value._parentEntity = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._childOne = value
+                }
+                changedProperty.add("childOne")
+            }
         
         override fun getEntityData(): OoParentWithoutPidEntityData = result ?: super.getEntityData() as OoParentWithoutPidEntityData
         override fun getEntityClass(): Class<OoParentWithoutPidEntity> = OoParentWithoutPidEntity::class.java

@@ -156,41 +156,41 @@ open class NamedChildEntityImpl: NamedChildEntity, WorkspaceEntityBase() {
                 
             }
             
-            var _parentEntity: NamedEntity? = null
-            override var parentEntity: NamedEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity!!
-                    } else {
-                        _parentEntity!!
-                    }
+        var _parentEntity: NamedEntity? = null
+        override var parentEntity: NamedEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: _parentEntity!!
+                } else {
+                    _parentEntity!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for the list of non-ext field
-                        if (value is NamedEntityImpl.Builder) {
-                            value._children = (value._children ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for the list of non-ext field
+                    if (value is NamedEntityImpl.Builder) {
+                        value._children = (value._children ?: emptyList()) + this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for the list of non-ext field
-                        if (value is NamedEntityImpl.Builder) {
-                            value._children = (value._children ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._parentEntity = value
-                    }
-                    changedProperty.add("parentEntity")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for the list of non-ext field
+                    if (value is NamedEntityImpl.Builder) {
+                        value._children = (value._children ?: emptyList()) + this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._parentEntity = value
+                }
+                changedProperty.add("parentEntity")
+            }
         
         override fun getEntityData(): NamedChildEntityData = result ?: super.getEntityData() as NamedChildEntityData
         override fun getEntityClass(): Class<NamedChildEntity> = NamedChildEntity::class.java

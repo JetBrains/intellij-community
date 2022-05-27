@@ -140,41 +140,41 @@ open class JavaSourceRootEntityImpl: JavaSourceRootEntity, WorkspaceEntityBase()
         }
     
         
-            var _sourceRoot: SourceRootEntity? = null
-            override var sourceRoot: SourceRootEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this) ?: _sourceRoot!!
-                    } else {
-                        _sourceRoot!!
-                    }
+        var _sourceRoot: SourceRootEntity? = null
+        override var sourceRoot: SourceRootEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this) ?: _sourceRoot!!
+                } else {
+                    _sourceRoot!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for the list of non-ext field
-                        if (value is SourceRootEntityImpl.Builder) {
-                            value._javaSourceRoots = (value._javaSourceRoots ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for the list of non-ext field
+                    if (value is SourceRootEntityImpl.Builder) {
+                        value._javaSourceRoots = (value._javaSourceRoots ?: emptyList()) + this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToManyParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for the list of non-ext field
-                        if (value is SourceRootEntityImpl.Builder) {
-                            value._javaSourceRoots = (value._javaSourceRoots ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._sourceRoot = value
-                    }
-                    changedProperty.add("sourceRoot")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToManyParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for the list of non-ext field
+                    if (value is SourceRootEntityImpl.Builder) {
+                        value._javaSourceRoots = (value._javaSourceRoots ?: emptyList()) + this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._sourceRoot = value
+                }
+                changedProperty.add("sourceRoot")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

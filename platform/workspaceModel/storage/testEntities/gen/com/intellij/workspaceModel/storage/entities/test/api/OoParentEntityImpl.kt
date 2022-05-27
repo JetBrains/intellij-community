@@ -148,77 +148,77 @@ open class OoParentEntityImpl: OoParentEntity, WorkspaceEntityBase() {
                 
             }
             
-            var _child: OoChildEntity? = null
-            override var child: OoChildEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: _child
-                    } else {
-                        _child
-                    }
+        var _child: OoChildEntity? = null
+        override var child: OoChildEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: _child
+                } else {
+                    _child
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is OoChildEntityImpl.Builder) {
-                            value._parentEntity = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is OoChildEntityImpl.Builder) {
+                        value._parentEntity = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(CHILD_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is OoChildEntityImpl.Builder) {
-                            value._parentEntity = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._child = value
-                    }
-                    changedProperty.add("child")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(CHILD_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is OoChildEntityImpl.Builder) {
+                        value._parentEntity = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._child = value
+                }
+                changedProperty.add("child")
+            }
         
-            var _anotherChild: OoChildWithNullableParentEntity? = null
-            override var anotherChild: OoChildWithNullableParentEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(ANOTHERCHILD_CONNECTION_ID, this) ?: _anotherChild
-                    } else {
-                        _anotherChild
-                    }
+        var _anotherChild: OoChildWithNullableParentEntity? = null
+        override var anotherChild: OoChildWithNullableParentEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(ANOTHERCHILD_CONNECTION_ID, this) ?: _anotherChild
+                } else {
+                    _anotherChild
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of non-ext field
-                        if (value is OoChildWithNullableParentEntityImpl.Builder) {
-                            value._parentEntity = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of non-ext field
+                    if (value is OoChildWithNullableParentEntityImpl.Builder) {
+                        value._parentEntity = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(ANOTHERCHILD_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of non-ext field
-                        if (value is OoChildWithNullableParentEntityImpl.Builder) {
-                            value._parentEntity = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._anotherChild = value
-                    }
-                    changedProperty.add("anotherChild")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(ANOTHERCHILD_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of non-ext field
+                    if (value is OoChildWithNullableParentEntityImpl.Builder) {
+                        value._parentEntity = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._anotherChild = value
+                }
+                changedProperty.add("anotherChild")
+            }
         
         override fun getEntityData(): OoParentEntityData = result ?: super.getEntityData() as OoParentEntityData
         override fun getEntityClass(): Class<OoParentEntity> = OoParentEntity::class.java

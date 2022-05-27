@@ -197,113 +197,113 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 
             }
             
-            var _children: List<XChildEntity>? = null
-            override var children: List<XChildEntity>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<XChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
-                    } else {
-                        _children!!
-                    }
+        var _children: List<XChildEntity>? = null
+        override var children: List<XChildEntity>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<XChildEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
+                } else {
+                    _children!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for a reference of non-ext field
-                            if (item_value is XChildEntityImpl.Builder) {
-                                item_value._parentEntity = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _children = value
-                        // Test
-                    }
-                    changedProperty.add("children")
+                    _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for a reference of non-ext field
+                        if (item_value is XChildEntityImpl.Builder) {
+                            item_value._parentEntity = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _children = value
+                    // Test
+                }
+                changedProperty.add("children")
+            }
         
-            var _optionalChildren: List<XChildWithOptionalParentEntity>? = null
-            override var optionalChildren: List<XChildWithOptionalParentEntity>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<XChildWithOptionalParentEntity>(OPTIONALCHILDREN_CONNECTION_ID, this)!!.toList() + (_optionalChildren ?: emptyList())
-                    } else {
-                        _optionalChildren!!
-                    }
+        var _optionalChildren: List<XChildWithOptionalParentEntity>? = null
+        override var optionalChildren: List<XChildWithOptionalParentEntity>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<XChildWithOptionalParentEntity>(OPTIONALCHILDREN_CONNECTION_ID, this)!!.toList() + (_optionalChildren ?: emptyList())
+                } else {
+                    _optionalChildren!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(OPTIONALCHILDREN_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for an optional of non-ext field
-                            if (item_value is XChildWithOptionalParentEntityImpl.Builder) {
-                                item_value._optionalParent = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _optionalChildren = value
-                        // Test
-                    }
-                    changedProperty.add("optionalChildren")
+                    _diff.updateOneToManyChildrenOfParent(OPTIONALCHILDREN_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for an optional of non-ext field
+                        if (item_value is XChildWithOptionalParentEntityImpl.Builder) {
+                            item_value._optionalParent = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _optionalChildren = value
+                    // Test
+                }
+                changedProperty.add("optionalChildren")
+            }
         
-            var _childChild: List<XChildChildEntity>? = null
-            override var childChild: List<XChildChildEntity>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<XChildChildEntity>(CHILDCHILD_CONNECTION_ID, this)!!.toList() + (_childChild ?: emptyList())
-                    } else {
-                        _childChild!!
-                    }
+        var _childChild: List<XChildChildEntity>? = null
+        override var childChild: List<XChildChildEntity>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<XChildChildEntity>(CHILDCHILD_CONNECTION_ID, this)!!.toList() + (_childChild ?: emptyList())
+                } else {
+                    _childChild!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(CHILDCHILD_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for a reference of non-ext field
-                            if (item_value is XChildChildEntityImpl.Builder) {
-                                item_value._parent1 = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _childChild = value
-                        // Test
-                    }
-                    changedProperty.add("childChild")
+                    _diff.updateOneToManyChildrenOfParent(CHILDCHILD_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for a reference of non-ext field
+                        if (item_value is XChildChildEntityImpl.Builder) {
+                            item_value._parent1 = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _childChild = value
+                    // Test
+                }
+                changedProperty.add("childChild")
+            }
         
         override fun getEntityData(): XParentEntityData = result ?: super.getEntityData() as XParentEntityData
         override fun getEntityClass(): Class<XParentEntity> = XParentEntity::class.java

@@ -148,41 +148,41 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
         }
     
         
-            var _artifact: ArtifactEntity? = null
-            override var artifact: ArtifactEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this) ?: _artifact!!
-                    } else {
-                        _artifact!!
-                    }
+        var _artifact: ArtifactEntity? = null
+        override var artifact: ArtifactEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyParent(ARTIFACT_CONNECTION_ID, this) ?: _artifact!!
+                } else {
+                    _artifact!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for the list of non-ext field
-                        if (value is ArtifactEntityImpl.Builder) {
-                            value._customProperties = (value._customProperties ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for the list of non-ext field
+                    if (value is ArtifactEntityImpl.Builder) {
+                        value._customProperties = (value._customProperties ?: emptyList()) + this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToManyParentOfChild(ARTIFACT_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for the list of non-ext field
-                        if (value is ArtifactEntityImpl.Builder) {
-                            value._customProperties = (value._customProperties ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._artifact = value
-                    }
-                    changedProperty.add("artifact")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToManyParentOfChild(ARTIFACT_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for the list of non-ext field
+                    if (value is ArtifactEntityImpl.Builder) {
+                        value._customProperties = (value._customProperties ?: emptyList()) + this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._artifact = value
+                }
+                changedProperty.add("artifact")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

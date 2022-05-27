@@ -138,41 +138,41 @@ open class SourceRootOrderEntityImpl: SourceRootOrderEntity, WorkspaceEntityBase
         }
     
         
-            var _contentRootEntity: ContentRootEntity? = null
-            override var contentRootEntity: ContentRootEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(CONTENTROOTENTITY_CONNECTION_ID, this) ?: _contentRootEntity!!
-                    } else {
-                        _contentRootEntity!!
-                    }
+        var _contentRootEntity: ContentRootEntity? = null
+        override var contentRootEntity: ContentRootEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(CONTENTROOTENTITY_CONNECTION_ID, this) ?: _contentRootEntity!!
+                } else {
+                    _contentRootEntity!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of non-ext field
-                        if (value is ContentRootEntityImpl.Builder) {
-                            value._sourceRootOrder = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of non-ext field
+                    if (value is ContentRootEntityImpl.Builder) {
+                        value._sourceRootOrder = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(CONTENTROOTENTITY_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of non-ext field
-                        if (value is ContentRootEntityImpl.Builder) {
-                            value._sourceRootOrder = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._contentRootEntity = value
-                    }
-                    changedProperty.add("contentRootEntity")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(CONTENTROOTENTITY_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of non-ext field
+                    if (value is ContentRootEntityImpl.Builder) {
+                        value._sourceRootOrder = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._contentRootEntity = value
+                }
+                changedProperty.add("contentRootEntity")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

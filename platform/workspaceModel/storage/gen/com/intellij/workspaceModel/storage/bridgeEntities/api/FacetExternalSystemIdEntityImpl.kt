@@ -154,41 +154,41 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
                 
             }
             
-            var _facet: FacetEntity? = null
-            override var facet: FacetEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(FACET_CONNECTION_ID, this) ?: _facet!!
-                    } else {
-                        _facet!!
-                    }
+        var _facet: FacetEntity? = null
+        override var facet: FacetEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(FACET_CONNECTION_ID, this) ?: _facet!!
+                } else {
+                    _facet!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("FacetExternalSystemIdEntity", "facet", true, FACET_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("FacetExternalSystemIdEntity", "facet", true, FACET_CONNECTION_ID)] = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(FACET_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("FacetExternalSystemIdEntity", "facet", true, FACET_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._facet = value
-                    }
-                    changedProperty.add("facet")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(FACET_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("FacetExternalSystemIdEntity", "facet", true, FACET_CONNECTION_ID)] = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._facet = value
+                }
+                changedProperty.add("facet")
+            }
         
         override fun getEntityData(): FacetExternalSystemIdEntityData = result ?: super.getEntityData() as FacetExternalSystemIdEntityData
         override fun getEntityClass(): Class<FacetExternalSystemIdEntity> = FacetExternalSystemIdEntity::class.java

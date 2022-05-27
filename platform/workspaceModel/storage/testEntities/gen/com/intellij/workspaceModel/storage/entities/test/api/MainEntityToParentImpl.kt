@@ -123,41 +123,41 @@ open class MainEntityToParentImpl: MainEntityToParent, WorkspaceEntityBase() {
         }
     
         
-            var _child: AttachedEntityToParent? = null
-            override var child: AttachedEntityToParent?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: _child
-                    } else {
-                        _child
-                    }
+        var _child: AttachedEntityToParent? = null
+        override var child: AttachedEntityToParent?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: _child
+                } else {
+                    _child
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("MainEntityToParent", "child", false, CHILD_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("MainEntityToParent", "child", false, CHILD_CONNECTION_ID)] = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(CHILD_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("MainEntityToParent", "child", false, CHILD_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._child = value
-                    }
-                    changedProperty.add("child")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(CHILD_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("MainEntityToParent", "child", false, CHILD_CONNECTION_ID)] = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._child = value
+                }
+                changedProperty.add("child")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource

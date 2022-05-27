@@ -249,221 +249,221 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                 changedProperty.add("dependencies")
             }
             
-            var _contentRoots: List<ContentRootEntity>? = null
-            override var contentRoots: List<ContentRootEntity>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList() + (_contentRoots ?: emptyList())
-                    } else {
-                        _contentRoots!!
-                    }
+        var _contentRoots: List<ContentRootEntity>? = null
+        override var contentRoots: List<ContentRootEntity>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList() + (_contentRoots ?: emptyList())
+                } else {
+                    _contentRoots!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(CONTENTROOTS_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for a reference of non-ext field
-                            if (item_value is ContentRootEntityImpl.Builder) {
-                                item_value._module = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _contentRoots = value
-                        // Test
-                    }
-                    changedProperty.add("contentRoots")
+                    _diff.updateOneToManyChildrenOfParent(CONTENTROOTS_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for a reference of non-ext field
+                        if (item_value is ContentRootEntityImpl.Builder) {
+                            item_value._module = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _contentRoots = value
+                    // Test
+                }
+                changedProperty.add("contentRoots")
+            }
         
-            var _customImlData: ModuleCustomImlDataEntity? = null
-            override var customImlData: ModuleCustomImlDataEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(CUSTOMIMLDATA_CONNECTION_ID, this) ?: _customImlData
-                    } else {
-                        _customImlData
-                    }
+        var _customImlData: ModuleCustomImlDataEntity? = null
+        override var customImlData: ModuleCustomImlDataEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(CUSTOMIMLDATA_CONNECTION_ID, this) ?: _customImlData
+                } else {
+                    _customImlData
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is ModuleCustomImlDataEntityImpl.Builder) {
-                            value._module = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is ModuleCustomImlDataEntityImpl.Builder) {
+                        value._module = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(CUSTOMIMLDATA_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is ModuleCustomImlDataEntityImpl.Builder) {
-                            value._module = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._customImlData = value
-                    }
-                    changedProperty.add("customImlData")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(CUSTOMIMLDATA_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is ModuleCustomImlDataEntityImpl.Builder) {
+                        value._module = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._customImlData = value
+                }
+                changedProperty.add("customImlData")
+            }
         
-            var _groupPath: ModuleGroupPathEntity? = null
-            override var groupPath: ModuleGroupPathEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(GROUPPATH_CONNECTION_ID, this) ?: _groupPath
-                    } else {
-                        _groupPath
-                    }
+        var _groupPath: ModuleGroupPathEntity? = null
+        override var groupPath: ModuleGroupPathEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(GROUPPATH_CONNECTION_ID, this) ?: _groupPath
+                } else {
+                    _groupPath
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is ModuleGroupPathEntityImpl.Builder) {
-                            value._module = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is ModuleGroupPathEntityImpl.Builder) {
+                        value._module = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(GROUPPATH_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is ModuleGroupPathEntityImpl.Builder) {
-                            value._module = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._groupPath = value
-                    }
-                    changedProperty.add("groupPath")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(GROUPPATH_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is ModuleGroupPathEntityImpl.Builder) {
+                        value._module = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._groupPath = value
+                }
+                changedProperty.add("groupPath")
+            }
         
-            var _javaSettings: JavaModuleSettingsEntity? = null
-            override var javaSettings: JavaModuleSettingsEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(JAVASETTINGS_CONNECTION_ID, this) ?: _javaSettings
-                    } else {
-                        _javaSettings
-                    }
+        var _javaSettings: JavaModuleSettingsEntity? = null
+        override var javaSettings: JavaModuleSettingsEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(JAVASETTINGS_CONNECTION_ID, this) ?: _javaSettings
+                } else {
+                    _javaSettings
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is JavaModuleSettingsEntityImpl.Builder) {
-                            value._module = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is JavaModuleSettingsEntityImpl.Builder) {
+                        value._module = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(JAVASETTINGS_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is JavaModuleSettingsEntityImpl.Builder) {
-                            value._module = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._javaSettings = value
-                    }
-                    changedProperty.add("javaSettings")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(JAVASETTINGS_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is JavaModuleSettingsEntityImpl.Builder) {
+                        value._module = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._javaSettings = value
+                }
+                changedProperty.add("javaSettings")
+            }
         
-            var _exModuleOptions: ExternalSystemModuleOptionsEntity? = null
-            override var exModuleOptions: ExternalSystemModuleOptionsEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneChild(EXMODULEOPTIONS_CONNECTION_ID, this) ?: _exModuleOptions
-                    } else {
-                        _exModuleOptions
-                    }
+        var _exModuleOptions: ExternalSystemModuleOptionsEntity? = null
+        override var exModuleOptions: ExternalSystemModuleOptionsEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneChild(EXMODULEOPTIONS_CONNECTION_ID, this) ?: _exModuleOptions
+                } else {
+                    _exModuleOptions
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for a reference of non-ext field
-                        if (value is ExternalSystemModuleOptionsEntityImpl.Builder) {
-                            value._module = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for a reference of non-ext field
+                    if (value is ExternalSystemModuleOptionsEntityImpl.Builder) {
+                        value._module = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneChildOfParent(EXMODULEOPTIONS_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for a reference of non-ext field
-                        if (value is ExternalSystemModuleOptionsEntityImpl.Builder) {
-                            value._module = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._exModuleOptions = value
-                    }
-                    changedProperty.add("exModuleOptions")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneChildOfParent(EXMODULEOPTIONS_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for a reference of non-ext field
+                    if (value is ExternalSystemModuleOptionsEntityImpl.Builder) {
+                        value._module = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._exModuleOptions = value
+                }
+                changedProperty.add("exModuleOptions")
+            }
         
-            var _facets: List<FacetEntity>? = null
-            override var facets: List<FacetEntity>
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (_facets ?: emptyList())
-                    } else {
-                        _facets!!
-                    }
+        var _facets: List<FacetEntity>? = null
+        override var facets: List<FacetEntity>
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (_facets ?: emptyList())
+                } else {
+                    _facets!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null) {
-                        for (item_value in value) {
-                            if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
-                                _diff.addEntity(item_value)
-                            }
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null) {
+                    for (item_value in value) {
+                        if (item_value is ModifiableWorkspaceEntityBase<*> && (item_value as? ModifiableWorkspaceEntityBase<*>)?.diff == null) {
+                            _diff.addEntity(item_value)
                         }
-                        _diff.updateOneToManyChildrenOfParent(FACETS_CONNECTION_ID, this, value)
                     }
-                    else {
-                        for (item_value in value) {
-                            // Back reference for a reference of non-ext field
-                            if (item_value is FacetEntityImpl.Builder) {
-                                item_value._module = this
-                            }
-                            // else you're attaching a new entity to an existing entity that is not modifiable
-                        }
-                        
-                        _facets = value
-                        // Test
-                    }
-                    changedProperty.add("facets")
+                    _diff.updateOneToManyChildrenOfParent(FACETS_CONNECTION_ID, this, value)
                 }
+                else {
+                    for (item_value in value) {
+                        // Back reference for a reference of non-ext field
+                        if (item_value is FacetEntityImpl.Builder) {
+                            item_value._module = this
+                        }
+                        // else you're attaching a new entity to an existing entity that is not modifiable
+                    }
+                    
+                    _facets = value
+                    // Test
+                }
+                changedProperty.add("facets")
+            }
         
         override fun getEntityData(): ModuleEntityData = result ?: super.getEntityData() as ModuleEntityData
         override fun getEntityClass(): Class<ModuleEntity> = ModuleEntity::class.java

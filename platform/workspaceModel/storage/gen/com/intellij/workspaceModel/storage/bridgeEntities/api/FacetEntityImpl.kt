@@ -198,41 +198,41 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 
             }
             
-            var _module: ModuleEntity? = null
-            override var module: ModuleEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: _module!!
-                    } else {
-                        _module!!
-                    }
+        var _module: ModuleEntity? = null
+        override var module: ModuleEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: _module!!
+                } else {
+                    _module!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for the list of non-ext field
-                        if (value is ModuleEntityImpl.Builder) {
-                            value._facets = (value._facets ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for the list of non-ext field
+                    if (value is ModuleEntityImpl.Builder) {
+                        value._facets = (value._facets ?: emptyList()) + this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for the list of non-ext field
-                        if (value is ModuleEntityImpl.Builder) {
-                            value._facets = (value._facets ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._module = value
-                    }
-                    changedProperty.add("module")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for the list of non-ext field
+                    if (value is ModuleEntityImpl.Builder) {
+                        value._facets = (value._facets ?: emptyList()) + this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._module = value
+                }
+                changedProperty.add("module")
+            }
         
         override var facetType: String
             get() = getEntityData().facetType
@@ -259,41 +259,41 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 
             }
             
-            var _underlyingFacet: FacetEntity? = null
-            override var underlyingFacet: FacetEntity?
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this) ?: _underlyingFacet
-                    } else {
-                        _underlyingFacet
-                    }
+        var _underlyingFacet: FacetEntity? = null
+        override var underlyingFacet: FacetEntity?
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToManyParent(UNDERLYINGFACET_CONNECTION_ID, this) ?: _underlyingFacet
+                } else {
+                    _underlyingFacet
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for the list of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = (value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for the list of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = (value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToManyParentOfChild(UNDERLYINGFACET_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for the list of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = (value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._underlyingFacet = value
-                    }
-                    changedProperty.add("underlyingFacet")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToManyParentOfChild(UNDERLYINGFACET_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for the list of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = (value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._underlyingFacet = value
+                }
+                changedProperty.add("underlyingFacet")
+            }
         
         override fun getEntityData(): FacetEntityData = result ?: super.getEntityData() as FacetEntityData
         override fun getEntityClass(): Class<FacetEntity> = FacetEntity::class.java

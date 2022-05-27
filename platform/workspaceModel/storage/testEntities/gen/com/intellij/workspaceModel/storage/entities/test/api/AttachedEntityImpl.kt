@@ -139,41 +139,41 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
         }
     
         
-            var _ref: MainEntity? = null
-            override var ref: MainEntity
-                get() {
-                    val _diff = diff
-                    return if (_diff != null) {
-                        _diff.extractOneToOneParent(REF_CONNECTION_ID, this) ?: _ref!!
-                    } else {
-                        _ref!!
-                    }
+        var _ref: MainEntity? = null
+        override var ref: MainEntity
+            get() {
+                val _diff = diff
+                return if (_diff != null) {
+                    _diff.extractOneToOneParent(REF_CONNECTION_ID, this) ?: _ref!!
+                } else {
+                    _ref!!
                 }
-                set(value) {
-                    checkModificationAllowed()
-                    val _diff = diff
-                    if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("AttachedEntity", "ref", true, REF_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        _diff.addEntity(value)
+            }
+            set(value) {
+                checkModificationAllowed()
+                val _diff = diff
+                if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("AttachedEntity", "ref", true, REF_CONNECTION_ID)] = this
                     }
-                    if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
-                        _diff.updateOneToOneParentOfChild(REF_CONNECTION_ID, this, value)
-                    }
-                    else {
-                        // Back reference for an optional of ext field
-                        if (value is ModifiableWorkspaceEntityBase<*>) {
-                            value.extReferences[ExtRefKey("AttachedEntity", "ref", true, REF_CONNECTION_ID)] = this
-                        }
-                        // else you're attaching a new entity to an existing entity that is not modifiable
-                        
-                        this._ref = value
-                    }
-                    changedProperty.add("ref")
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    _diff.addEntity(value)
                 }
+                if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+                    _diff.updateOneToOneParentOfChild(REF_CONNECTION_ID, this, value)
+                }
+                else {
+                    // Back reference for an optional of ext field
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.extReferences[ExtRefKey("AttachedEntity", "ref", true, REF_CONNECTION_ID)] = this
+                    }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
+                    
+                    this._ref = value
+                }
+                changedProperty.add("ref")
+            }
         
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
