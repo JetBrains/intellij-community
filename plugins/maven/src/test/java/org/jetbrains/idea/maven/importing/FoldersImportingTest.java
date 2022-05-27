@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
@@ -1246,22 +1247,35 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   " </plugins>" +
                   "</build>");
 
-    final Runnable testAssertions = () -> {
-      assertSources("project",
-                    "anno",
-                    "src/main/java",
-                    "target/generated-sources/annotations",
-                    "target/generated-sources/foo",
-                    "target/generated-sources/test-annotations");
+    final Consumer<Boolean> testAssertions = (shouldKeepGeneratedFolders) -> {
+      if (shouldKeepGeneratedFolders) {
+        assertSources("project",
+                      "anno",
+                      "src/main/java",
+                      "target/generated-sources/annotations",
+                      "target/generated-sources/foo",
+                      "target/generated-sources/test-annotations");
+      }
+      else {
+        assertSources("project",
+                      "anno",
+                      "src/main/java");
+      }
 
       assertResources("project", "src/main/resources");
-      assertTestSources("project",
-                        "src/test/java",
-                        "target/generated-test-sources/foo");
+      if (shouldKeepGeneratedFolders) {
+        assertTestSources("project",
+                          "src/test/java",
+                          "target/generated-test-sources/foo");
+      }
+      else {
+        assertTestSources("project",
+                          "src/test/java");
+      }
       assertTestResources("project", "src/test/resources");
     };
 
-    testAssertions.run();
+    testAssertions.accept(true);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -1275,11 +1289,11 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       }
     });
 
-    testAssertions.run();
+    testAssertions.accept(true);
     importProject();
-    testAssertions.run();
+    testAssertions.accept(supportsKeepingFoldersFromPreviousImport());
     resolveFoldersAndImport();
-    testAssertions.run();
+    testAssertions.accept(supportsKeepingFoldersFromPreviousImport());
   }
 
   @Test
