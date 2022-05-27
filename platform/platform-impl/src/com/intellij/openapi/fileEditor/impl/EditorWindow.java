@@ -1466,6 +1466,13 @@ public final class EditorWindow {
   }
 
   private boolean fileCanBeClosed(@NotNull VirtualFile file, @Nullable VirtualFile fileToIgnore) {
+    if (file instanceof BackedVirtualFile) {
+      BackedVirtualFile backedVirtualFile = (BackedVirtualFile)file;
+      VirtualFile originalFile = backedVirtualFile.getOriginFile();
+      if (originalFile.equals(fileToIgnore)) {
+        return false;
+      }
+    }
     return isFileOpen(file) && !file.equals(fileToIgnore) && !isFilePinned(file);
   }
 
