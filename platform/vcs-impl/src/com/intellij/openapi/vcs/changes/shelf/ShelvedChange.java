@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,15 +33,15 @@ public final class ShelvedChange {
   private static final Logger LOG = Logger.getInstance(ShelvedChange.class);
 
   @NotNull private final Path myPatchPath;
-  private final String myBeforePath;
-  private final String myAfterPath;
+  @NotNull private final String myBeforePath;
+  @NotNull private final String myAfterPath;
   @NotNull private final FileStatus myFileStatus;
   @NotNull private final Change myChange;
 
   public ShelvedChange(@NotNull Project project,
                        @NotNull Path patchPath,
-                       String beforePath,
-                       String afterPath,
+                       @NotNull String beforePath,
+                       @NotNull String afterPath,
                        @NotNull FileStatus fileStatus) {
     myPatchPath = patchPath;
     myBeforePath = beforePath;
@@ -64,10 +65,12 @@ public final class ShelvedChange {
     return false;
   }
 
+  @NotNull
   public String getBeforePath() {
     return myBeforePath;
   }
 
+  @NotNull
   public String getAfterPath() {
     return myAfterPath;
   }
@@ -94,8 +97,9 @@ public final class ShelvedChange {
   private Change createChange(@NotNull Project project) {
     File baseDir = new File(Objects.requireNonNull(project.getBasePath()));
 
-    File file = getAbsolutePath(baseDir, myBeforePath);
-    FilePath beforePath = VcsUtil.getFilePath(file, false);
+    FilePath beforePath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myBeforePath), false);
+    FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
+
     ContentRevision beforeRevision = null;
     if (myFileStatus != FileStatus.ADDED) {
       beforeRevision = new CurrentContentRevision(beforePath) {
@@ -108,13 +112,12 @@ public final class ShelvedChange {
     }
     ContentRevision afterRevision = null;
     if (myFileStatus != FileStatus.DELETED) {
-      FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
       afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
     }
     return new Change(beforeRevision, afterRevision, myFileStatus);
   }
 
-  private static File getAbsolutePath(final File baseDir, final String relativePath) {
+  private static File getAbsolutePath(@NotNull File baseDir, @NotNull String relativePath) {
     File file;
     try {
       file = new File(baseDir, relativePath).getCanonicalFile();
@@ -153,11 +156,11 @@ public final class ShelvedChange {
   }
 
   private class PatchedContentRevision implements ContentRevision {
-    private final Project myProject;
-    private final FilePath myBeforeFilePath;
-    private final FilePath myAfterFilePath;
+    @NotNull private final Project myProject;
+    @NotNull private final FilePath myBeforeFilePath;
+    @NotNull private final FilePath myAfterFilePath;
 
-    PatchedContentRevision(Project project, final FilePath beforeFilePath, final FilePath afterFilePath) {
+    PatchedContentRevision(@NotNull Project project, @NotNull FilePath beforeFilePath, @NotNull FilePath afterFilePath) {
       myProject = project;
       myBeforeFilePath = beforeFilePath;
       myAfterFilePath = afterFilePath;
@@ -200,7 +203,8 @@ public final class ShelvedChange {
 
     private String getBaseContent() {
       return ReadAction.compute(() -> {
-        final Document doc = FileDocumentManager.getInstance().getDocument(myBeforeFilePath.getVirtualFile());
+        VirtualFile file = myBeforeFilePath.getVirtualFile();
+        final Document doc = FileDocumentManager.getInstance().getDocument(file);
         return doc.getText();
       });
     }
@@ -223,6 +227,6 @@ public final class ShelvedChange {
   }
 
   public String toString() {
-    return FileUtil.toSystemDependentName(myBeforePath == null ? myAfterPath : myBeforePath);
+    return FileUtil.toSystemDependentName(myBeforePath);
   }
 }
