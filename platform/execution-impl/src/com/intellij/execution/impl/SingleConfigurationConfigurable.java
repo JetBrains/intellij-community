@@ -123,6 +123,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     RunnerAndConfigurationSettings snapshot = super.getSnapshot();
     snapshot.setName(getNameText());
     snapshot.setFolderName(getFolderName());
+    snapshot.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallel);
     RunnerAndConfigurationSettings original = getSettings();
     snapshot.setTemporary(original.isTemporary());
 
