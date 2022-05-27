@@ -634,7 +634,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   private void logNotFiltered(String text, VirtualFile file, int line, int position) {
     // unused asks shouldReport not only for warnings.
     if (text.contains("unused")) return;
-    reportMessage(3, "Not filtered: ");
+    reportMessage(3, "Not filtered:");
     reportMessage(3, file.getPath() + ":" + (line + 1) + " Original: " + (position + 1));
     reportMessage(3, "\t\t" + text);
   }
