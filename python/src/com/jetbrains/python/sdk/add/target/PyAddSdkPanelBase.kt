@@ -84,10 +84,7 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
 
       return sdk
     }
-
-    private fun generateSdkHomePath(data: PyTargetAwareAdditionalData): String {
-      // TODO [targets] Add identifier PyTargetAwareAdditionalData
-      return "target://" + data.interpreterPath
-    }
+    // TODO [targets] Add identifier PyTargetAwareAdditionalData
+    private fun generateSdkHomePath(data: PyTargetAwareAdditionalData): String = data.interpreterPath
   }
 }

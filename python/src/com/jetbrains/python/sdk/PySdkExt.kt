@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
@@ -56,6 +57,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.div
 
 /**
  * @author vlan
@@ -389,4 +391,18 @@ private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
     .toList()
 }
 
-fun Sdk?.isTargetBased(): Boolean = this != null && sdkAdditionalData is PyTargetAwareAdditionalData
+fun Sdk?.isTargetBased(): Boolean = this != null && targetEnvConfiguration != null
+
+/**
+ * Returns target environment if configuration is target api based
+ */
+val Sdk.targetEnvConfiguration get():TargetEnvironmentConfiguration? = (sdkAdditionalData as? PyTargetAwareAdditionalData)?.targetEnvironmentConfiguration
+
+/**
+ * Where "remote_sources" folder for certain SDK is stored
+ */
+val Sdk.remoteSourcesLocalPath: Path
+  get() {
+    val sdkUniqueId = (homePath!! + targetEnvConfiguration?.uuid).hashCode().toString()
+    return Path.of(PathManager.getSystemPath()) / PythonSdkUtil.REMOTE_SOURCES_DIR_NAME / sdkUniqueId
+  }

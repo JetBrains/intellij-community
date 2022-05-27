@@ -29,7 +29,6 @@ import com.jetbrains.python.run.execute
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import java.nio.file.Files
-import java.nio.file.Paths
 import java.nio.file.attribute.FileTime
 import java.time.Instant
 import kotlin.io.path.deleteExisting
@@ -50,7 +49,7 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, project: Project) {
 
   @Throws(ExecutionException::class)
   fun run(indicator: ProgressIndicator) {
-    val localRemoteSourcesRoot = Files.createDirectories(Paths.get(PythonSdkUtil.getRemoteSourcesLocalPath(sdk.homePath)))
+    val localRemoteSourcesRoot = Files.createDirectories(sdk.remoteSourcesLocalPath)
 
     val localUploadDir = Files.createTempDirectory("remote_sync")
     val uploadVolume = TargetEnvironment.UploadRoot(localRootPath = localUploadDir, targetRootPath = TargetPath.Temporary())
