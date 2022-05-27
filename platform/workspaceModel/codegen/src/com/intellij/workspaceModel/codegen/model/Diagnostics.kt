@@ -1,7 +1,10 @@
 package org.jetbrains.deft.codegen.model
 
-class Diagnostics(val appendable: Appendable? = System.out) {
+import com.intellij.openapi.diagnostic.logger
+
+private val LOG = logger<Diagnostics>()
+class Diagnostics {
   fun add(range: SrcRange, message: String) {
-    appendable?.appendLine(range.show(message))
+    LOG.info(range.show(message))
   }
 }
