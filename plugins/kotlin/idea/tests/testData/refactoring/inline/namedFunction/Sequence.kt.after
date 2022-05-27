@@ -6,8 +6,8 @@ fun <T> mySeq(f: MySeq<T>.() -> Unit): MySeq<T> = null!!
 
 class Test {
     fun repro() = mySeq<Int> {
-        mySeq<Double> {
-            yield(1.0)
+        mySeq {
+            this.yield(1.0)
         }
     }
 

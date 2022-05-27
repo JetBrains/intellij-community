@@ -1,3 +1,4 @@
+// ERROR: 'when' expression must be exhaustive, add necessary 'C' branch or 'else' branch instead
 // ERROR: A 'return' expression required in a function with a block body ('{...}')
 // PROBLEM: none
 
