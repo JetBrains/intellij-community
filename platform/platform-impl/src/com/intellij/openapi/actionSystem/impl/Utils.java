@@ -119,7 +119,7 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    return expandActionGroupAsync(group, presentationFactory, context, place, false);
+    return expandActionGroupAsync(group, presentationFactory, context, place, false, false);
   }
 
   @ApiStatus.Internal
@@ -127,10 +127,11 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
-                                                                          boolean isToolbarAction) {
+                                                                          boolean isToolbarAction,
+                                                                          boolean skipFastTrack) {
     LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
-    List<AnAction> actions = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
+    List<AnAction> actions = skipFastTrack ? null : expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
     if (actions != null) {
       return Promises.resolvedCancellablePromise(actions);
     }

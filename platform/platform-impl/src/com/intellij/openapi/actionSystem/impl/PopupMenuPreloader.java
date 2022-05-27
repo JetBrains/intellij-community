@@ -110,11 +110,12 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
     }
     Component contextComponent = ActionPlaces.MAIN_MENU.equals(myPlace) ?
                                  IJSwingUtilities.getFocusedComponentInWindowOrSelf(component) : component;
-    DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(contextComponent));
+    DataContext dataContext = Utils.freezeDataContext(
+      Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(contextComponent)), null);
     long start = System.nanoTime();
     myRetries ++;
     CancellablePromise<List<AnAction>> promise = Utils.expandActionGroupAsync(
-      actionGroup, new PresentationFactory(), dataContext, myPlace);
+      actionGroup, new PresentationFactory(), dataContext, myPlace, false, true);
     promise.onSuccess(__ -> dispose(TimeoutUtil.getDurationMillis(start)));
     promise.onError(__ -> {
       int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
