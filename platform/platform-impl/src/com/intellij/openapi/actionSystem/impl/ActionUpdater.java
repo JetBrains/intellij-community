@@ -162,7 +162,7 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ")";
+    String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ", " + myPlace + ")";
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
     boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
     boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
