@@ -547,9 +547,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private void setupFirstAnalysisHandler(GlobalInspectionContextEx context) {
-    if (myVerboseLevel > 0) {
-      reportMessage(1, "Running first analysis stage...");
-    }
+    reportMessage(1, "Running first analysis stage...");
     context.setGlobalReportedProblemFilter(
       (entity, description) -> {
         if (!(entity instanceof RefElement)) return false;
@@ -577,9 +575,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   public void setupSecondAnalysisHandler(Project project, GlobalInspectionContextEx context) {
-    if (myVerboseLevel > 0) {
-      reportMessage(1, "Running second analysis stage...");
-    }
+    reportMessage(1, "Running second analysis stage...");
     printBeforeSecondStageProblems();
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     context.setGlobalReportedProblemFilter(
