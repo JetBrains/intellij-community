@@ -55,12 +55,6 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
         LOG.info(e);
       }
     }
-    else {
-      Map<String, String> map = commitContext.getUserData(ourStoredTexts);
-      if (map != null) {
-        return map.get(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString());
-      }
-    }
     return null;
   }
 
@@ -79,5 +73,20 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
       commitContext.putUserData(ourStoredTexts, map);
     }
     map.put(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString(), content.toString());
+  }
+
+  /**
+   * @param path path relative to the ProjectBasePath
+   */
+  public static @Nullable String getBaseContent(@NotNull Project project, @NotNull String path, @Nullable CommitContext commitContext) {
+    if (commitContext == null) {
+      return null;
+    }
+
+    Map<String, String> map = commitContext.getUserData(ourStoredTexts);
+    if (map != null) {
+      return map.get(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString());
+    }
+    return null;
   }
 }

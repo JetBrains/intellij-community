@@ -45,8 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_CANNOT_FIND_PATCH_FILE;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
 public final class ApplyPatchAction extends DumbAwareAction {
@@ -241,9 +241,8 @@ public final class ApplyPatchAction extends DumbAwareAction {
     return WriteAction.compute(() -> {
       try {
         return patch.apply(file, context, project, VcsUtil.getFilePath(file), () -> {
-          BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class);
           String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
-          return baseRevisionTextPatchEP.provideContent(project, path, commitContext);
+          return BaseRevisionTextPatchEP.getBaseContent(project, path, commitContext);
         }, commitContext);
       }
       catch (IOException e) {

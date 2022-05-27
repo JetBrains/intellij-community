@@ -19,7 +19,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
+import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -472,8 +475,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
         }
         else {
           String path = chooseNotNull(patch.getAfterName(), patch.getBeforeName());
-          CharSequence baseContents = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class)
-            .provideContent(myProject, path, commitContext);
+          CharSequence baseContents = BaseRevisionTextPatchEP.getBaseContent(myProject, path, commitContext);
 
           ApplyPatchForBaseRevisionTexts texts =
             ApplyPatchForBaseRevisionTexts.create(myProject, myFile, myPatchContext.getPathBeforeRename(myFile), patch, baseContents);

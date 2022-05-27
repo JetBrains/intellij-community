@@ -48,7 +48,10 @@ public final class CharsetEP implements PatchEP {
     map.put(FilePathsHelper.convertPath(file.toString()), content.toString());
   }
 
-  public static @Nullable String getCharset(String path, @NotNull CommitContext commitContext) {
+  /**
+   * @param path absolute path to a file
+   */
+  public static @Nullable String getCharset(@NotNull String path, @NotNull CommitContext commitContext) {
     Map<String, String> userData = commitContext.getUserData(ourName);
     return userData == null ? null : userData.get(FilePathsHelper.convertPath(path));
   }
