@@ -1,10 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing.tree.workspace
 
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
@@ -22,6 +20,7 @@ import org.jetbrains.idea.maven.importing.tree.dependency.BaseDependency
 import org.jetbrains.idea.maven.importing.tree.dependency.LibraryDependency
 import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency
 import org.jetbrains.idea.maven.importing.tree.dependency.SystemDependency
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporterBase
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -29,16 +28,13 @@ import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesF
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 
-class WorkspaceModuleImporter(
+class WorkspaceModuleTreeImporter(
   private val importData: MavenModuleImportData,
   private val virtualFileUrlManager: VirtualFileUrlManager,
-  private val builder: MutableEntityStorage,
+  builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
   private val mavenImportFoldersByMavenId: MutableMap<String, MavenImportFolderHolder>,
-  private val project: Project) {
-
-  private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(
-    ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID)
+  private val project: Project) : WorkspaceModuleImporterBase(builder) {
 
   fun importModule(): ModuleEntity {
     val importFolderHolder = mavenImportFoldersByMavenId.getOrPut(importData.mavenProject.mavenId.key) { collectMavenFolders() }
@@ -48,12 +44,7 @@ class WorkspaceModuleImporter(
     val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource)
     val dependencies = collectDependencies(importData, entitySource)
     val moduleName = importData.moduleData.moduleName
-    val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
-      module = moduleEntity
-      externalSystem = externalSource.id
-    }
-    builder.addEntity(externalSystemModuleOptionsEntity)
+    val moduleEntity = createModuleEntity(importData.mavenProject, moduleName, dependencies, entitySource)
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings)
 
     when (importData.moduleData.type) {
@@ -308,9 +299,6 @@ class WorkspaceModuleImporter(
 
   private fun toAbsolutePath(path: String) = MavenUtil.toPath(importData.mavenProject, path).path
 
-  companion object {
-    internal val JAVADOC_TYPE: LibraryRootTypeId = LibraryRootTypeId("JAVADOC")
-  }
 }
 
 class MavenImportFolderHolder(

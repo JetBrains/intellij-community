@@ -2,9 +2,7 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
@@ -35,25 +33,18 @@ class WorkspaceModuleImporter(
   private val mavenProject: MavenProject,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val projectsTree: MavenProjectsTree,
-  private val builder: MutableEntityStorage,
+  builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
   private val mavenProjectToModuleName: HashMap<MavenProject, String>,
-  private val project: Project) {
-
-  private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
+  private val project: Project) : WorkspaceModuleImporterBase(builder) {
 
   fun importModule(): ModuleEntity {
     val baseModuleDirPath = importingSettings.dedicatedModuleDir.ifBlank { null } ?: mavenProject.directory
-    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileUrlManager.fromPath(baseModuleDirPath), externalSource)
+    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileUrlManager.fromPath(baseModuleDirPath),
+                                                                          externalSource)
     val dependencies = collectDependencies(entitySource)
     val moduleName = mavenProjectToModuleName.getValue(mavenProject)
-    val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
-      module = moduleEntity
-      externalSystem = EXTERNAL_SOURCE_ID
-      linkedProjectPath = linkedProjectPath(mavenProject)
-    }
-    builder.addEntity(externalSystemModuleOptionsEntity)
+    val moduleEntity = createModuleEntity(mavenProject, moduleName, dependencies, entitySource)
 
     val excludedFolders = LinkedHashSet<VirtualFileUrl>()
     importJavaSettings(moduleEntity, excludedFolders)
@@ -311,13 +302,4 @@ class WorkspaceModuleImporter(
 
   private fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
 
-  companion object {
-    internal val JAVADOC_TYPE: LibraryRootTypeId = LibraryRootTypeId("JAVADOC")
-
-    val EXTERNAL_SOURCE_ID get() = ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
-
-    fun linkedProjectPath(mavenProject: MavenProject): String {
-      return FileUtil.toSystemIndependentName(mavenProject.directory)
-    }
-  }
 }

@@ -20,39 +20,43 @@ import java.util.*
 
 class MavenProjectTreeImporterToWorkspaceModel(
   projectsTree: MavenProjectsTree,
-  projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+  private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
   importingSettings: MavenImportingSettings,
   modelsProvider: IdeModifiableModelsProvider,
   project: Project
-) : MavenProjectImporterWorkspaceBase(projectsTree, projectsToImportWithChanges, importingSettings, modelsProvider, project) {
+) : MavenProjectImporterWorkspaceBase(projectsTree, importingSettings, modelsProvider, project) {
 
   private val createdModulesList = ArrayList<Module>()
-  private val contextProvider = MavenProjectImportContextProvider(project, projectsTree,
-                                                                  projectsToImportWithChanges, myImportingSettings)
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
     val postTasks = ArrayList<MavenProjectsProcessorTask>()
+
+    val (hasChanges, projectsWithChanges) = collectProjectsAndChanges(projectsToImportWithChanges)
+
+    val contextProvider = MavenProjectImportContextProvider(myProject, myProjectsTree, projectsWithChanges, myImportingSettings)
+
     val context = contextProvider.context
-    if (context.hasChanges) {
+    if (hasChanges || context.hasChanges) {
       try {
-        importModules(context, postTasks)
+        importModules(context, projectsWithChanges, postTasks)
       }
       finally {
         MavenUtil.invokeAndWaitWriteAction(myProject) { myModelsProvider.dispose() }
       }
-      scheduleRefreshResolvedArtifacts(postTasks)
     }
     return postTasks
   }
 
-  private fun importModules(context: MavenModuleImportContext, postTasks: List<MavenProjectsProcessorTask>) {
+  private fun importModules(context: MavenModuleImportContext,
+                            projectChanges: Map<MavenProject, MavenProjectChanges>,
+                            postTasks: List<MavenProjectsProcessorTask>) {
     val builder = MutableEntityStorage.create()
 
     val createdModuleIds = ArrayList<Pair<MavenModuleImportData, ModuleId>>()
     val mavenFolderHolderByMavenId = TreeMap<String, MavenImportFolderHolder>()
 
     for (importData in context.allModules) {
-      val moduleEntity = WorkspaceModuleImporter(
+      val moduleEntity = WorkspaceModuleTreeImporter(
         importData, virtualFileUrlManager, builder, myImportingSettings, mavenFolderHolderByMavenId, myProject
       ).importModule()
       createdModuleIds.add(importData to moduleEntity.persistentId)
@@ -76,7 +80,7 @@ class MavenProjectTreeImporterToWorkspaceModel(
       }
     }
 
-    finalizeImport(moduleImportData, context.moduleNameByProject, postTasks)
+    finalizeImport(moduleImportData, context.moduleNameByProject, projectChanges, postTasks)
 
   }
 

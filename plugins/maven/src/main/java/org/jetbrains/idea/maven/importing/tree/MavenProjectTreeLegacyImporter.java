@@ -68,7 +68,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
 
       TreeModuleConfigurer configurer = new TreeModuleConfigurer(myProjectsTree, myImportingSettings, myModelsProvider);
       importers.addAll(configurer.configModules(myContext.allModules, myContext.moduleNameByProject));
-      scheduleRefreshResolvedArtifacts(postTasks);
+      scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
     }
 
     List<Module> obsoleteModules = myContext.legacyObsoleteModules;

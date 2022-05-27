@@ -27,7 +27,6 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
 
   protected final MavenProjectsTree myProjectsTree;
   protected final MavenImportingSettings myImportingSettings;
-  protected volatile Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
 
   protected final IdeModifiableModelsProvider myIdeModifiableModelsProvider;
   protected final ModifiableModelsProviderProxy myModelsProvider;
@@ -35,13 +34,11 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   public MavenProjectImporterBase(Project project,
                                   MavenProjectsTree projectsTree,
                                   MavenImportingSettings importingSettings,
-                                  Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
                                   @NotNull IdeModifiableModelsProvider modelsProvider) {
     myProject = project;
 
     myProjectsTree = projectsTree;
     myImportingSettings = importingSettings;
-    myProjectsToImportWithChanges = projectsToImportWithChanges;
 
     myIdeModifiableModelsProvider = modelsProvider;
 
@@ -96,7 +93,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     }
   }
 
-  protected void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks) {
+  protected void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks, Set<MavenProject> projectsToRefresh) {
     // We have to refresh all the resolved artifacts manually in order to
     // update all the VirtualFilePointers. It is not enough to call
     // VirtualFileManager.refresh() since the newly created files will be only
@@ -106,7 +103,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     // and FileWatcher differs from real-life execution.
 
     List<MavenArtifact> artifacts = new ArrayList<>();
-    for (MavenProject each : myProjectsToImportWithChanges.keySet()) {
+    for (MavenProject each : projectsToRefresh) {
       artifacts.addAll(each.getDependencies());
     }
 
@@ -130,13 +127,6 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     String options = javacOptions.ADDITIONAL_OPTIONS_STRING;
     options = options.replaceFirst("(-target (\\S+))", ""); // Old IDEAs saved
     javacOptions.ADDITIONAL_OPTIONS_STRING = options;
-  }
-
-  protected boolean projectsToImportHaveChanges() {
-    for (MavenProjectChanges each : myProjectsToImportWithChanges.values()) {
-      if (each.hasChanges()) return true;
-    }
-    return false;
   }
 
 

@@ -210,7 +210,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                           LibraryRootTypeId.COMPILED))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
-                  WorkspaceModuleImporter.JAVADOC_TYPE))
+                  WorkspaceModuleImporterBase.JAVADOC_TYPE))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
                   LibraryRootTypeId.SOURCES))

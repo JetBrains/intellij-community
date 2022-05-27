@@ -88,12 +88,12 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
 
     if (myProject.isDisposed()) return null;
 
-    final boolean projectsHaveChanges = projectsToImportHaveChanges();
+    final boolean projectsHaveChanges = projectsToImportHaveChanges(myProjectsToImportWithChanges.values());
     final List<MavenModuleImporter> importers = new ArrayList<>();
     if (projectsHaveChanges) {
       hasChanges = true;
       importers.addAll(importModules());
-      scheduleRefreshResolvedArtifacts(postTasks);
+      scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
     }
 
     if (projectsHaveChanges || myImportModuleGroupsRequired) {
@@ -142,6 +142,14 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
 
     return postTasks;
   }
+
+  protected boolean projectsToImportHaveChanges(Collection<MavenProjectChanges> changes) {
+    for (MavenProjectChanges each : changes) {
+      if (each.hasChanges()) return true;
+    }
+    return false;
+  }
+
 
   private Map<MavenProject, MavenProjectChanges> collectProjectsToImport(Map<MavenProject, MavenProjectChanges> projectsToImport) {
     Map<MavenProject, MavenProjectChanges> result = new HashMap<>(projectsToImport);
