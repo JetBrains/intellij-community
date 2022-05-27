@@ -73,16 +73,16 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     else if (context.isAllowRename() && afterName != null && !beforeName.equals(afterName)) {
       String[] beforeNameComponents = beforeName.split("/");
       String[] afterNameComponents = afterName.split("/");
-      if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
+      if (!beforeNameComponents[beforeNameComponents.length - 1].equals(afterNameComponents[afterNameComponents.length - 1])) {
         context.registerBeforeRename(file);
-        file.rename(FilePatch.class, afterNameComponents [afterNameComponents.length-1]);
+        file.rename(FilePatch.class, afterNameComponents[afterNameComponents.length - 1]);
       }
       boolean needMove = (beforeNameComponents.length != afterNameComponents.length);
       if (!needMove) {
         needMove = checkPackageRename(context, beforeNameComponents, afterNameComponents);
       }
       if (needMove) {
-        VirtualFile moveTarget = findFileToPatchByComponents(context, afterNameComponents, afterNameComponents.length-1);
+        VirtualFile moveTarget = findFileToPatchByComponents(context, afterNameComponents, afterNameComponents.length - 1);
         if (moveTarget == null) {
           return null;
         }
@@ -97,8 +97,8 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
                                             final String[] beforeNameComponents,
                                             final String[] afterNameComponents) {
     int changedIndex = -1;
-    for(int i=context.getSkipTopDirs(); i<afterNameComponents.length-1; i++) {
-      if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
+    for (int i = context.getSkipTopDirs(); i < afterNameComponents.length - 1; i++) {
+      if (!beforeNameComponents[i].equals(afterNameComponents[i])) {
         if (changedIndex != -1) {
           return true;
         }
@@ -106,8 +106,8 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
       }
     }
     if (changedIndex == -1) return false;
-    VirtualFile oldDir = findFileToPatchByComponents(context, beforeNameComponents, changedIndex+1);
-    VirtualFile newDir = findFileToPatchByComponents(context.getPrepareContext(), afterNameComponents, changedIndex+1);
+    VirtualFile oldDir = findFileToPatchByComponents(context, beforeNameComponents, changedIndex + 1);
+    VirtualFile newDir = findFileToPatchByComponents(context.getPrepareContext(), afterNameComponents, changedIndex + 1);
     if (oldDir != null && newDir == null) {
       return false;
     }
@@ -126,18 +126,18 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
                                                          final String[] pathNameComponents,
                                                          final int lastComponentToFind) {
     VirtualFile patchedDir = context.getBaseDir();
-    for(int i=context.getSkipTopDirs(); i<lastComponentToFind; i++) {
+    for (int i = context.getSkipTopDirs(); i < lastComponentToFind; i++) {
       VirtualFile nextChild;
-      if (pathNameComponents [i].equals("..")) {
+      if (pathNameComponents[i].equals("..")) {
         nextChild = patchedDir.getParent();
       }
       else {
-        nextChild = patchedDir.findChild(pathNameComponents [i]);
+        nextChild = patchedDir.findChild(pathNameComponents[i]);
       }
       if (nextChild == null) {
         if (context.isCreateDirectories()) {
           try {
-            nextChild = patchedDir.createChildDirectory(null, pathNameComponents [i]);
+            nextChild = patchedDir.createChildDirectory(null, pathNameComponents[i]);
           }
           catch (IOException e) {
             return null;
