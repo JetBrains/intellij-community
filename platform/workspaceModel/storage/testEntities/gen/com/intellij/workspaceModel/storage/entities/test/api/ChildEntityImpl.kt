@@ -167,6 +167,7 @@ open class ChildEntityImpl: ChildEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is ParentEntityImpl.Builder) {
                             value._child = this
                         }
@@ -177,6 +178,7 @@ open class ChildEntityImpl: ChildEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is ParentEntityImpl.Builder) {
                             value._child = this
                         }

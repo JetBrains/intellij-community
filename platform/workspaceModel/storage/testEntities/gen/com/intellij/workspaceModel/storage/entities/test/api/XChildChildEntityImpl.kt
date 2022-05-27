@@ -174,6 +174,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is XParentEntityImpl.Builder) {
                             value._childChild = (value._childChild ?: emptyList()) + this
                         }
@@ -184,6 +185,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(PARENT1_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is XParentEntityImpl.Builder) {
                             value._childChild = (value._childChild ?: emptyList()) + this
                         }
@@ -217,6 +219,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is XChildEntityImpl.Builder) {
                             value._childChild = (value._childChild ?: emptyList()) + this
                         }
@@ -227,6 +230,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(PARENT2_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is XChildEntityImpl.Builder) {
                             value._childChild = (value._childChild ?: emptyList()) + this
                         }

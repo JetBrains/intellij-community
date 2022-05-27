@@ -162,6 +162,7 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is ArtifactEntityImpl.Builder) {
                             value._customProperties = (value._customProperties ?: emptyList()) + this
                         }
@@ -172,6 +173,7 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                         _diff.updateOneToManyParentOfChild(ARTIFACT_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is ArtifactEntityImpl.Builder) {
                             value._customProperties = (value._customProperties ?: emptyList()) + this
                         }

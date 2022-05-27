@@ -221,6 +221,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is ContentRootEntityImpl.Builder) {
                             value._sourceRoots = (value._sourceRoots ?: emptyList()) + this
                         }
@@ -231,6 +232,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(CONTENTROOT_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is ContentRootEntityImpl.Builder) {
                             value._sourceRoots = (value._sourceRoots ?: emptyList()) + this
                         }
@@ -282,6 +284,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is CustomSourceRootPropertiesEntityImpl.Builder) {
                             value._sourceRoot = this
                         }
@@ -292,6 +295,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is CustomSourceRootPropertiesEntityImpl.Builder) {
                             value._sourceRoot = this
                         }
@@ -325,6 +329,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is JavaSourceRootEntityImpl.Builder) {
                                 item_value._sourceRoot = this
                             }
@@ -360,6 +365,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is JavaResourceRootEntityImpl.Builder) {
                                 item_value._sourceRoot = this
                             }

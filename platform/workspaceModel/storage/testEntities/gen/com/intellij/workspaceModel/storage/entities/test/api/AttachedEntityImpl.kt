@@ -153,7 +153,8 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is MainEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("AttachedEntity", "ref", true, REF_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -163,7 +164,8 @@ open class AttachedEntityImpl: AttachedEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneParentOfChild(REF_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is MainEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("AttachedEntity", "ref", true, REF_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

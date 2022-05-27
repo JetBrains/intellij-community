@@ -173,6 +173,7 @@ open class ParentMultipleEntityImpl: ParentMultipleEntity, WorkspaceEntityBase()
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is ChildMultipleEntityImpl.Builder) {
                                 item_value._parentEntity = this
                             }

@@ -170,6 +170,7 @@ open class NamedChildEntityImpl: NamedChildEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is NamedEntityImpl.Builder) {
                             value._children = (value._children ?: emptyList()) + this
                         }
@@ -180,6 +181,7 @@ open class NamedChildEntityImpl: NamedChildEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is NamedEntityImpl.Builder) {
                             value._children = (value._children ?: emptyList()) + this
                         }

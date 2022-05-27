@@ -154,6 +154,7 @@ open class JavaSourceRootEntityImpl: JavaSourceRootEntity, WorkspaceEntityBase()
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is SourceRootEntityImpl.Builder) {
                             value._javaSourceRoots = (value._javaSourceRoots ?: emptyList()) + this
                         }
@@ -164,6 +165,7 @@ open class JavaSourceRootEntityImpl: JavaSourceRootEntity, WorkspaceEntityBase()
                         _diff.updateOneToManyParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is SourceRootEntityImpl.Builder) {
                             value._javaSourceRoots = (value._javaSourceRoots ?: emptyList()) + this
                         }

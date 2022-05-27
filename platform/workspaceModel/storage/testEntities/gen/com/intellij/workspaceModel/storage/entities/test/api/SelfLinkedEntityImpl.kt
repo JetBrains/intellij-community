@@ -138,7 +138,8 @@ open class SelfLinkedEntityImpl: SelfLinkedEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is SelfLinkedEntityImpl.Builder) {
+                        // Back reference for the list of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("SelfLinkedEntity", "parentEntity", true, PARENTENTITY_CONNECTION_ID)] = (value.extReferences[ExtRefKey("SelfLinkedEntity", "parentEntity", true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -148,7 +149,8 @@ open class SelfLinkedEntityImpl: SelfLinkedEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is SelfLinkedEntityImpl.Builder) {
+                        // Back reference for the list of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("SelfLinkedEntity", "parentEntity", true, PARENTENTITY_CONNECTION_ID)] = (value.extReferences[ExtRefKey("SelfLinkedEntity", "parentEntity", true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

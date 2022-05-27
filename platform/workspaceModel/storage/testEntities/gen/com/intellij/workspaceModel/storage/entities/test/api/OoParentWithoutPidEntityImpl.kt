@@ -152,6 +152,7 @@ open class OoParentWithoutPidEntityImpl: OoParentWithoutPidEntity, WorkspaceEnti
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is OoChildWithPidEntityImpl.Builder) {
                             value._parentEntity = this
                         }
@@ -162,6 +163,7 @@ open class OoParentWithoutPidEntityImpl: OoParentWithoutPidEntity, WorkspaceEnti
                         _diff.updateOneToOneChildOfParent(CHILDONE_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is OoChildWithPidEntityImpl.Builder) {
                             value._parentEntity = this
                         }

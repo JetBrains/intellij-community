@@ -206,6 +206,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is ModuleEntityImpl.Builder) {
                             value._contentRoots = (value._contentRoots ?: emptyList()) + this
                         }
@@ -216,6 +217,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is ModuleEntityImpl.Builder) {
                             value._contentRoots = (value._contentRoots ?: emptyList()) + this
                         }
@@ -287,6 +289,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is SourceRootEntityImpl.Builder) {
                                 item_value._contentRoot = this
                             }
@@ -313,6 +316,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is SourceRootOrderEntityImpl.Builder) {
                             value._contentRootEntity = this
                         }
@@ -323,6 +327,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(SOURCEROOTORDER_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is SourceRootOrderEntityImpl.Builder) {
                             value._contentRootEntity = this
                         }

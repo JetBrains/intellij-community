@@ -167,6 +167,7 @@ open class ChildNullableEntityImpl: ChildNullableEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for an optional of non-ext field
                         if (value is ParentNullableEntityImpl.Builder) {
                             value._child = this
                         }
@@ -177,6 +178,7 @@ open class ChildNullableEntityImpl: ChildNullableEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for an optional of non-ext field
                         if (value is ParentNullableEntityImpl.Builder) {
                             value._child = this
                         }

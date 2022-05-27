@@ -168,7 +168,8 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is LibraryEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -178,7 +179,8 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
                         _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is LibraryEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

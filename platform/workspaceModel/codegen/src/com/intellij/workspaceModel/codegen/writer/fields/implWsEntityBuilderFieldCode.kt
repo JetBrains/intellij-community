@@ -7,6 +7,7 @@ import deft.storage.codegen.*
 import deft.storage.codegen.field.javaMutableType
 import deft.storage.codegen.field.javaType
 import deft.storage.codegen.field.unsupportedTypeError
+import org.jetbrains.deft.codegen.ijws.classes.*
 import org.jetbrains.deft.codegen.ijws.classes.`else`
 import org.jetbrains.deft.codegen.ijws.classes.`for`
 import org.jetbrains.deft.codegen.ijws.classes.`if`
@@ -225,14 +226,18 @@ private fun LinesBuilder.backrefSetup(
         }
       }
       else {
-        `if`("$varName is $javaBuilderType") {
           if (referencedField !is ExtField<*, *>) {
-            line("$varName.${referencedField.implFieldName} = ($varName.${referencedField.implFieldName} ?: emptyList()) + this")
+            lineComment("Back reference for the list of non-ext field")
+            `if`("$varName is $javaBuilderType") {
+              line("$varName.${referencedField.implFieldName} = ($varName.${referencedField.implFieldName} ?: emptyList()) + this")
+            }
           }
           else {
-            line("$varName.extReferences[$extKey] = ($varName.extReferences[$extKey] as? List<Any> ?: emptyList()) + this")
+            lineComment("Back reference for the list of ext field")
+            `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
+              line("$varName.extReferences[$extKey] = ($varName.extReferences[$extKey] as? List<Any> ?: emptyList()) + this")
+            }
           }
-        }
         line("// else you're attaching a new entity to an existing entity that is not modifiable")
       }
     }
@@ -247,14 +252,18 @@ private fun LinesBuilder.backrefSetup(
         }
       }
       else {
-        `if`("$varName is $javaBuilderType") {
           if (referencedField !is ExtField<*, *>) {
-            line("$varName.${referencedField.implFieldName} = this")
+            lineComment("Back reference for an optional of non-ext field")
+            `if`("$varName is $javaBuilderType") {
+              line("$varName.${referencedField.implFieldName} = this")
+            }
           }
           else {
-            line("$varName.extReferences[$extKey] = this")
+            lineComment("Back reference for an optional of ext field")
+            `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
+              line("$varName.extReferences[$extKey] = this")
+            }
           }
-        }
         line("// else you're attaching a new entity to an existing entity that is not modifiable")
       }
     }
@@ -268,11 +277,15 @@ private fun LinesBuilder.backrefSetup(
         }
       }
       else {
-        `if`("$varName is $javaBuilderType") {
-          if (referencedField !is ExtField<*, *>) {
+        if (referencedField !is ExtField<*, *>) {
+          lineComment("Back reference for a reference of non-ext field")
+          `if`("$varName is $javaBuilderType") {
             line("$varName.${referencedField.implFieldName} = this")
           }
-          else {
+        }
+        else {
+          lineComment("Back reference for a reference of ext field")
+          `if`("$varName is ${ModifiableWorkspaceEntityBase::class.fqn}<*>") {
             line("$varName.extReferences[$extKey] = this")
           }
         }

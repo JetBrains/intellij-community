@@ -168,7 +168,8 @@ open class ArtifactExternalSystemIdEntityImpl: ArtifactExternalSystemIdEntity, W
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is ArtifactEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("ArtifactExternalSystemIdEntity", "artifactEntity", true, ARTIFACTENTITY_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -178,7 +179,8 @@ open class ArtifactExternalSystemIdEntityImpl: ArtifactExternalSystemIdEntity, W
                         _diff.updateOneToOneParentOfChild(ARTIFACTENTITY_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is ArtifactEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("ArtifactExternalSystemIdEntity", "artifactEntity", true, ARTIFACTENTITY_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

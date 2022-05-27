@@ -151,6 +151,7 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for an optional of non-ext field
                         if (value is SourceRootEntityImpl.Builder) {
                             value._customSourceRootProperties = this
                         }
@@ -161,6 +162,7 @@ open class CustomSourceRootPropertiesEntityImpl: CustomSourceRootPropertiesEntit
                         _diff.updateOneToOneParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for an optional of non-ext field
                         if (value is SourceRootEntityImpl.Builder) {
                             value._customSourceRootProperties = this
                         }

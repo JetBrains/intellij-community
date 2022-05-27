@@ -222,6 +222,7 @@ open class SampleEntityImpl: SampleEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for an optional of non-ext field
                             if (item_value is ChildSampleEntityImpl.Builder) {
                                 item_value._parentEntity = this
                             }

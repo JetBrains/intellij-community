@@ -163,6 +163,7 @@ open class OoParentWithPidEntityImpl: OoParentWithPidEntity, WorkspaceEntityBase
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is OoChildForParentWithPidEntityImpl.Builder) {
                             value._parentEntity = this
                         }
@@ -173,6 +174,7 @@ open class OoParentWithPidEntityImpl: OoParentWithPidEntity, WorkspaceEntityBase
                         _diff.updateOneToOneChildOfParent(CHILDONE_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is OoChildForParentWithPidEntityImpl.Builder) {
                             value._parentEntity = this
                         }
@@ -197,6 +199,7 @@ open class OoParentWithPidEntityImpl: OoParentWithPidEntity, WorkspaceEntityBase
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is OoChildAlsoWithPidEntityImpl.Builder) {
                             value._parentEntity = this
                         }
@@ -207,6 +210,7 @@ open class OoParentWithPidEntityImpl: OoParentWithPidEntity, WorkspaceEntityBase
                         _diff.updateOneToOneChildOfParent(CHILDTHREE_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is OoChildAlsoWithPidEntityImpl.Builder) {
                             value._parentEntity = this
                         }

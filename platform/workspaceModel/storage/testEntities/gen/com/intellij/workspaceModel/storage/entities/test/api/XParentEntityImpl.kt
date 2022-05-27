@@ -220,6 +220,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is XChildEntityImpl.Builder) {
                                 item_value._parentEntity = this
                             }
@@ -255,6 +256,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for an optional of non-ext field
                             if (item_value is XChildWithOptionalParentEntityImpl.Builder) {
                                 item_value._optionalParent = this
                             }
@@ -290,6 +292,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is XChildChildEntityImpl.Builder) {
                                 item_value._parent1 = this
                             }

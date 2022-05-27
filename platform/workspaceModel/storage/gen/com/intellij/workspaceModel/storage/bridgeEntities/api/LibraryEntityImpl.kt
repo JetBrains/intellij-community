@@ -241,6 +241,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is SdkEntityImpl.Builder) {
                             value._library = this
                         }
@@ -251,6 +252,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(SDK_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is SdkEntityImpl.Builder) {
                             value._library = this
                         }
@@ -275,6 +277,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is LibraryPropertiesEntityImpl.Builder) {
                             value._library = this
                         }
@@ -285,6 +288,7 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(LIBRARYPROPERTIES_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is LibraryPropertiesEntityImpl.Builder) {
                             value._library = this
                         }
@@ -309,7 +313,8 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is LibraryFilesPackagingElementEntityImpl.Builder) {
+                        // Back reference for a reference of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("LibraryEntity", "libraryFilesPackagingElement", false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -319,7 +324,8 @@ open class LibraryEntityImpl: LibraryEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is LibraryFilesPackagingElementEntityImpl.Builder) {
+                        // Back reference for a reference of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("LibraryEntity", "libraryFilesPackagingElement", false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

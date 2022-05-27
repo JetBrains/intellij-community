@@ -360,6 +360,7 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is SoftLinkReferencedChildImpl.Builder) {
                                 item_value._parentEntity = this
                             }

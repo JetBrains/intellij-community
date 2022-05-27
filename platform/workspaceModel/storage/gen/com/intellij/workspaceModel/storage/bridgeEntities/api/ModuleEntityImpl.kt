@@ -272,6 +272,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is ContentRootEntityImpl.Builder) {
                                 item_value._module = this
                             }
@@ -298,6 +299,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is ModuleCustomImlDataEntityImpl.Builder) {
                             value._module = this
                         }
@@ -308,6 +310,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(CUSTOMIMLDATA_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is ModuleCustomImlDataEntityImpl.Builder) {
                             value._module = this
                         }
@@ -332,6 +335,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is ModuleGroupPathEntityImpl.Builder) {
                             value._module = this
                         }
@@ -342,6 +346,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(GROUPPATH_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is ModuleGroupPathEntityImpl.Builder) {
                             value._module = this
                         }
@@ -366,6 +371,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is JavaModuleSettingsEntityImpl.Builder) {
                             value._module = this
                         }
@@ -376,6 +382,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(JAVASETTINGS_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is JavaModuleSettingsEntityImpl.Builder) {
                             value._module = this
                         }
@@ -400,6 +407,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is ExternalSystemModuleOptionsEntityImpl.Builder) {
                             value._module = this
                         }
@@ -410,6 +418,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(EXMODULEOPTIONS_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is ExternalSystemModuleOptionsEntityImpl.Builder) {
                             value._module = this
                         }
@@ -443,6 +452,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is FacetEntityImpl.Builder) {
                                 item_value._module = this
                             }

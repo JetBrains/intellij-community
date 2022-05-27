@@ -290,6 +290,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is ArtifactPropertiesEntityImpl.Builder) {
                                 item_value._artifact = this
                             }
@@ -316,7 +317,8 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is ArtifactOutputPackagingElementEntityImpl.Builder) {
+                        // Back reference for a reference of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("ArtifactEntity", "artifactOutputPackagingElement", false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -326,7 +328,8 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneChildOfParent(ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is ArtifactOutputPackagingElementEntityImpl.Builder) {
+                        // Back reference for a reference of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("ArtifactEntity", "artifactOutputPackagingElement", false, ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

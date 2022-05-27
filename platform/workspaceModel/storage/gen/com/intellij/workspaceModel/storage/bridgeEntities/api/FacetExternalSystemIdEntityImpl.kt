@@ -168,7 +168,8 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is FacetEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("FacetExternalSystemIdEntity", "facet", true, FACET_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -178,7 +179,8 @@ open class FacetExternalSystemIdEntityImpl: FacetExternalSystemIdEntity, Workspa
                         _diff.updateOneToOneParentOfChild(FACET_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is FacetEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("FacetExternalSystemIdEntity", "facet", true, FACET_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

@@ -145,7 +145,8 @@ open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is MainEntityListImpl.Builder) {
+                        // Back reference for the list of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] = (value.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -155,7 +156,8 @@ open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(REF_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is MainEntityListImpl.Builder) {
+                        // Back reference for the list of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] = (value.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

@@ -208,6 +208,7 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is XParentEntityImpl.Builder) {
                             value._children = (value._children ?: emptyList()) + this
                         }
@@ -218,6 +219,7 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is XParentEntityImpl.Builder) {
                             value._children = (value._children ?: emptyList()) + this
                         }
@@ -251,6 +253,7 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is XChildChildEntityImpl.Builder) {
                                 item_value._parent2 = this
                             }

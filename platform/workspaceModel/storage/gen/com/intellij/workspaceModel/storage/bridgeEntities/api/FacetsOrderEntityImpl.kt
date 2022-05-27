@@ -169,7 +169,8 @@ open class FacetsOrderEntityImpl: FacetsOrderEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is ModuleEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("FacetsOrderEntity", "moduleEntity", true, MODULEENTITY_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -179,7 +180,8 @@ open class FacetsOrderEntityImpl: FacetsOrderEntity, WorkspaceEntityBase() {
                         _diff.updateOneToOneParentOfChild(MODULEENTITY_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is ModuleEntityImpl.Builder) {
+                        // Back reference for an optional of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("FacetsOrderEntity", "moduleEntity", true, MODULEENTITY_CONNECTION_ID)] = this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

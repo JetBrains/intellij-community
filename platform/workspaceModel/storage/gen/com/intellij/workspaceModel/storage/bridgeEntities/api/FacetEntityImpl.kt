@@ -212,6 +212,7 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is ModuleEntityImpl.Builder) {
                             value._facets = (value._facets ?: emptyList()) + this
                         }
@@ -222,6 +223,7 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is ModuleEntityImpl.Builder) {
                             value._facets = (value._facets ?: emptyList()) + this
                         }
@@ -271,7 +273,8 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                        if (value is FacetEntityImpl.Builder) {
+                        // Back reference for the list of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = (value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
@@ -281,7 +284,8 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                         _diff.updateOneToManyParentOfChild(UNDERLYINGFACET_CONNECTION_ID, this, value)
                     }
                     else {
-                        if (value is FacetEntityImpl.Builder) {
+                        // Back reference for the list of ext field
+                        if (value is ModifiableWorkspaceEntityBase<*>) {
                             value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] = (value.extReferences[ExtRefKey("FacetEntity", "underlyingFacet", true, UNDERLYINGFACET_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable

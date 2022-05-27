@@ -175,6 +175,7 @@ open class SourceEntityImpl: SourceEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is ChildSourceEntityImpl.Builder) {
                                 item_value._parentEntity = this
                             }

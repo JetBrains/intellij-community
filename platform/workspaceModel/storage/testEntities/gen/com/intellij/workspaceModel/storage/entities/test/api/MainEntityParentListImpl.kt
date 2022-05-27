@@ -176,7 +176,8 @@ open class MainEntityParentListImpl: MainEntityParentList, WorkspaceEntityBase()
                     }
                     else {
                         for (item_value in value) {
-                            if (item_value is AttachedEntityParentListImpl.Builder) {
+                            // Back reference for an optional of ext field
+                            if (item_value is ModifiableWorkspaceEntityBase<*>) {
                                 item_value.extReferences[ExtRefKey("MainEntityParentList", "children", false, CHILDREN_CONNECTION_ID)] = this
                             }
                             // else you're attaching a new entity to an existing entity that is not modifiable

@@ -160,6 +160,7 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for the list of non-ext field
                         if (value is XParentEntityImpl.Builder) {
                             value._optionalChildren = (value._optionalChildren ?: emptyList()) + this
                         }
@@ -170,6 +171,7 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
                         _diff.updateOneToManyParentOfChild(OPTIONALPARENT_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for the list of non-ext field
                         if (value is XParentEntityImpl.Builder) {
                             value._optionalChildren = (value._optionalChildren ?: emptyList()) + this
                         }

@@ -187,6 +187,7 @@ open class NamedEntityImpl: NamedEntity, WorkspaceEntityBase() {
                     }
                     else {
                         for (item_value in value) {
+                            // Back reference for a reference of non-ext field
                             if (item_value is NamedChildEntityImpl.Builder) {
                                 item_value._parentEntity = this
                             }

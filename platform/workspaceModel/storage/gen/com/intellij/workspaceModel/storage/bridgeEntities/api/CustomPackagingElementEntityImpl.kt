@@ -236,6 +236,7 @@ open class CustomPackagingElementEntityImpl: CustomPackagingElementEntity, Works
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is ArtifactEntityImpl.Builder) {
                             value._rootElement = this
                         }
@@ -246,6 +247,7 @@ open class CustomPackagingElementEntityImpl: CustomPackagingElementEntity, Works
                         _diff.updateOneToAbstractOneParentOfChild(ARTIFACT_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is ArtifactEntityImpl.Builder) {
                             value._rootElement = this
                         }

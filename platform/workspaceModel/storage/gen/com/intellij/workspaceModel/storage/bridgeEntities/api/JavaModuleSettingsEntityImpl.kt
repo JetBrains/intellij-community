@@ -163,6 +163,7 @@ open class JavaModuleSettingsEntityImpl: JavaModuleSettingsEntity, WorkspaceEnti
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for an optional of non-ext field
                         if (value is ModuleEntityImpl.Builder) {
                             value._javaSettings = this
                         }
@@ -173,6 +174,7 @@ open class JavaModuleSettingsEntityImpl: JavaModuleSettingsEntity, WorkspaceEnti
                         _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for an optional of non-ext field
                         if (value is ModuleEntityImpl.Builder) {
                             value._javaSettings = this
                         }

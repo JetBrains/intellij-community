@@ -270,6 +270,7 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                     checkModificationAllowed()
                     val _diff = diff
                     if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+                        // Back reference for a reference of non-ext field
                         if (value is ParentChainEntityImpl.Builder) {
                             value._root = this
                         }
@@ -280,6 +281,7 @@ open class CompositeChildAbstractEntityImpl: CompositeChildAbstractEntity, Works
                         _diff.updateOneToAbstractOneParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
                     }
                     else {
+                        // Back reference for a reference of non-ext field
                         if (value is ParentChainEntityImpl.Builder) {
                             value._root = this
                         }
