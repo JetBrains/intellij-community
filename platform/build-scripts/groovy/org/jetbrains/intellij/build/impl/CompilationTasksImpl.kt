@@ -124,7 +124,13 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
       ))
     }
     else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
-      fetchAndUnpackCompiledClasses(messages = context.messages, classesOutput = context.projectOutputDirectory, options = context.options)
+      val forInstallers = System.getProperty("intellij.fetch.compiled.classes.for.installers", "false").toBoolean()
+      fetchAndUnpackCompiledClasses(
+        reportStatisticValue = context.messages::reportStatisticValue,
+        classOutput = context.projectOutputDirectory,
+        metadataFile = Path.of(context.options.pathToCompiledClassesArchivesMetadata!!),
+        saveHash = !forInstallers,
+      )
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(context.projectOutputDirectory, context)

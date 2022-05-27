@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync
 
 import okhttp3.MediaType
@@ -25,10 +25,8 @@ internal fun post(path: String, body: String, mediaType: MediaType?, conf: Reque
 
 private fun rest(request: Request): String {
   client.newCall(request).execute().use { response ->
-    val entity = response.body!!.string()
-    if (response.code != 200) {
-      throw IllegalStateException("${response.code} ${response.message} $entity")
-    }
+    val entity = response.body.string()
+    check(response.code == 200) { "${response.code} ${response.message} $entity" }
     return entity
   }
 }

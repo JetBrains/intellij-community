@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies;
 
+import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
 import com.google.common.util.concurrent.Striped;
-import net.jpountz.lz4.LZ4FrameInputStream;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +73,12 @@ final public class BuildDependenciesDownloader {
     return getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, null, packaging);
   }
 
-  public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String classifier, String packaging) {
+  public static URI getUriForMavenArtifact(String mavenRepository,
+                                           String groupId,
+                                           String artifactId,
+                                           String version,
+                                           String classifier,
+                                           String packaging) {
     String result = mavenRepository;
     if (!result.endsWith("/")) {
       result += "/";
@@ -133,7 +138,9 @@ final public class BuildDependenciesDownloader {
     }
   }
 
-  public static synchronized Path extractFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, Path archiveFile, BuildDependenciesExtractOptions... options) {
+  public static synchronized Path extractFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot,
+                                                             Path archiveFile,
+                                                             BuildDependenciesExtractOptions... options) {
     cleanUpIfRequired(communityRoot);
 
     try {
@@ -182,7 +189,10 @@ final public class BuildDependenciesDownloader {
   }
 
   // assumes file at `archiveFile` is immutable
-  private static void extractFileWithFlagFileLocation(Path archiveFile, Path targetDirectory, Path flagFile, BuildDependenciesExtractOptions[] options)
+  private static void extractFileWithFlagFileLocation(Path archiveFile,
+                                                      Path targetDirectory,
+                                                      Path flagFile,
+                                                      BuildDependenciesExtractOptions[] options)
     throws Exception {
     if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
       debug("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
@@ -227,11 +237,11 @@ final public class BuildDependenciesDownloader {
 
     boolean stripRoot = Arrays.stream(options).anyMatch(opt -> opt == BuildDependenciesExtractOptions.STRIP_ROOT);
 
-    if (start.order(ByteOrder.LITTLE_ENDIAN).getInt(0) == 0x184D2204) {
+    if (start.order(ByteOrder.LITTLE_ENDIAN).getInt(0) == 0xFD2FB528) {
       Path unwrappedArchiveFile = archiveFile.getParent().resolve(archiveFile.getFileName() + ".unwrapped");
       try {
         try (OutputStream out = Files.newOutputStream(unwrappedArchiveFile)) {
-          try (LZ4FrameInputStream input = new LZ4FrameInputStream(Files.newInputStream(archiveFile))) {
+          try (ZstdInputStreamNoFinalizer input = new ZstdInputStreamNoFinalizer(Files.newInputStream(archiveFile))) {
             input.transferTo(out);
           }
         }
@@ -256,11 +266,19 @@ final public class BuildDependenciesDownloader {
 
     Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options));
     if (!checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      throw new IllegalStateException("checkFlagFile must be true right after extracting the archive. flagFile:" + flagFile + " archiveFile:" + archiveFile + " target:" + targetDirectory);
+      throw new IllegalStateException("checkFlagFile must be true right after extracting the archive. flagFile:" +
+                                      flagFile +
+                                      " archiveFile:" +
+                                      archiveFile +
+                                      " target:" +
+                                      targetDirectory);
     }
   }
 
-  public static void extractFile(Path archiveFile, Path target, BuildDependenciesCommunityRoot communityRoot, BuildDependenciesExtractOptions... options) {
+  public static void extractFile(Path archiveFile,
+                                 Path target,
+                                 BuildDependenciesCommunityRoot communityRoot,
+                                 BuildDependenciesExtractOptions... options) {
     cleanUpIfRequired(communityRoot);
 
     final Lock lock = fileLocks.get(target);
@@ -271,9 +289,11 @@ final public class BuildDependenciesDownloader {
       Path flagFile = getProjectLocalDownloadCache(communityRoot)
         .resolve(DigestUtils.sha256Hex(target.toString()).substring(0, 6) + "-" + target.getFileName().toString() + ".flag.txt");
       extractFileWithFlagFileLocation(archiveFile, target, flagFile, options);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       throw new RuntimeException(e);
-    } finally {
+    }
+    finally {
       lock.unlock();
     }
   }
@@ -369,7 +389,8 @@ final public class BuildDependenciesDownloader {
       finally {
         span.close();
       }
-    } finally {
+    }
+    finally {
       lock.unlock();
     }
   }
