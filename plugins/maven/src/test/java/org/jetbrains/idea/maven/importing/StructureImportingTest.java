@@ -64,6 +64,51 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
+  public void testMarkModulesAsMavenized() {
+    createModule("userModule");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "userModule");
+    assertMavenizedModule("project");
+    assertMavenizedModule("m1");
+    assertNotMavenizedModule("userModule");
+
+    configConfirmationForYesAnswer();
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m2", "userModule");
+    assertMavenizedModule("project");
+    assertMavenizedModule("m2");
+    assertNotMavenizedModule("userModule");
+  }
+
+
+  @Test
   public void testModulesWithSlashesRegularAndBack() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

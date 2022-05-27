@@ -429,6 +429,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return m;
   }
 
+  protected void assertMavenizedModule(final String name) {
+    assertTrue(MavenProjectsManager.getInstance(myProject).isMavenizedModule(getModule(name)));
+  }
+
+  protected void assertNotMavenizedModule(final String name) {
+    assertFalse(MavenProjectsManager.getInstance(myProject).isMavenizedModule(getModule(name)));
+  }
+
   private ContentEntry getContentRoot(String moduleName) {
     ContentEntry[] ee = getContentRoots(moduleName);
     List<String> roots = new ArrayList<>();
