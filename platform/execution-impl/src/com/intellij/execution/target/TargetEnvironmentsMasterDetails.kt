@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -101,14 +101,9 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
       SwingUtilities.convertPointToScreen(containerScreenPoint, myTree)
       val targetPoint = Point(containerScreenPoint.x + (myTree.width - size.width) / 2, containerScreenPoint.y + textY + size.height)
 
-      JBPopupFactory.getInstance().createActionGroupPopup(null, CreateNewTargetGroup(), object : DataContext {
-        override fun getData(dataId: String): Any? {
-          if (CONTEXT_COMPONENT.`is`(dataId)) {
-            return myTree
-          }
-          return null
-        }
-      }, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).showInScreenCoordinates(myTree, targetPoint)
+      JBPopupFactory.getInstance().createActionGroupPopup(null, CreateNewTargetGroup(), DataManager.getInstance().getDataContext(myTree),
+                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+        .showInScreenCoordinates(myTree, targetPoint)
     }
     val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD))
     myTree.emptyText.appendSecondaryText(" $shortcutText", StatusText.DEFAULT_ATTRIBUTES, null)
