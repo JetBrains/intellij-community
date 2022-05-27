@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.referrersx
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+
 
 
 
@@ -72,7 +74,7 @@ var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntit
         return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
     }
     set(value) {
-        val diff = (this as ModuleEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             if (value != null) {
                 if ((value as EclipseProjectPropertiesEntityImpl.Builder).diff == null) {
@@ -97,7 +99,7 @@ var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
         return referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()
     }
     set(value) {
-        val diff = (this as ModuleEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             if (value != null) {
                 if ((value as FacetsOrderEntityImpl.Builder).diff == null) {

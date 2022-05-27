@@ -13,6 +13,8 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+
 
 
 
@@ -66,7 +68,7 @@ var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>
         return referrersx(FacetEntity::underlyingFacet)
     }
     set(value) {
-        val diff = (this as FacetEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             for (item in value) {
                 if ((item as FacetEntityImpl.Builder).diff == null) {
@@ -91,7 +93,7 @@ var FacetEntity.Builder.facetExternalSystemIdEntity: @Child FacetExternalSystemI
         return referrersx(FacetExternalSystemIdEntity::facet).singleOrNull()
     }
     set(value) {
-        val diff = (this as FacetEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             if (value != null) {
                 if ((value as FacetExternalSystemIdEntityImpl.Builder).diff == null) {

@@ -11,6 +11,8 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.referrersx
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+
 
 
 
@@ -78,7 +80,7 @@ var AttachedEntityToParent.Builder.ref: MainEntityToParent
         return referrersx(MainEntityToParent::child).single()
     }
     set(value) {
-        val diff = (this as AttachedEntityToParentImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             if ((value as MainEntityToParentImpl.Builder).diff == null) {
                 value._child = this

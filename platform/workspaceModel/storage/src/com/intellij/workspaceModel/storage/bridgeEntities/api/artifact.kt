@@ -15,6 +15,8 @@ import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.referrersx
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+
 
 
 
@@ -70,7 +72,7 @@ var ArtifactEntity.Builder.artifactExternalSystemIdEntity: @Child ArtifactExtern
         return referrersx(ArtifactExternalSystemIdEntity::artifactEntity).singleOrNull()
     }
     set(value) {
-        val diff = (this as ArtifactEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             if (value != null) {
                 if ((value as ArtifactExternalSystemIdEntityImpl.Builder).diff == null) {
@@ -304,7 +306,7 @@ var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
         return referrersx(ArtifactEntity::artifactOutputPackagingElement).single()
     }
     set(value) {
-        val diff = (this as ArtifactOutputPackagingElementEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             if ((value as ArtifactEntityImpl.Builder).diff == null) {
                 value._artifactOutputPackagingElement = this
@@ -385,7 +387,7 @@ var LibraryFilesPackagingElementEntity.Builder.libraryEntity: LibraryEntity
         return referrersx(LibraryEntity::libraryFilesPackagingElement).single()
     }
     set(value) {
-        val diff = (this as LibraryFilesPackagingElementEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             if ((value as LibraryEntityImpl.Builder).diff == null) {
                 value._libraryFilesPackagingElement = this

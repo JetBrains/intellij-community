@@ -12,6 +12,8 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.referrersx
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+
 
 
 
@@ -46,7 +48,7 @@ var SelfLinkedEntity.Builder.children: @Child List<SelfLinkedEntity>
         return referrersx(SelfLinkedEntity::parentEntity)
     }
     set(value) {
-        val diff = (this as SelfLinkedEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             for (item in value) {
                 if ((item as SelfLinkedEntityImpl.Builder).diff == null) {

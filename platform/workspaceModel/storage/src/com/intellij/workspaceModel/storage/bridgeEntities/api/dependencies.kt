@@ -14,6 +14,8 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.ExtRefKey
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.referrersx
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+
 
 
 
@@ -70,7 +72,7 @@ var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity
         return referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
     }
     set(value) {
-        val diff = (this as LibraryEntityImpl.Builder).diff
+        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
         if (diff != null) {
             if (value != null) {
                 if ((value as LibraryExternalSystemIdEntityImpl.Builder).diff == null) {

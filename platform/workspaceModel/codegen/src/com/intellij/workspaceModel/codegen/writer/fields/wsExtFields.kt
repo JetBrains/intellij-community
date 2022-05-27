@@ -36,7 +36,7 @@ val ExtField<*, *>.wsCode: String
         line("return ${wsFqn(referrFunction)}(${oppositeField.owner.javaSimpleName}::${oppositeField.javaName})$singleFunction")
       }
       section("set(value)") {
-        line("val diff = (this as ${owner.javaImplFqn}.Builder).diff")
+        line("val diff = (this as ${ModifiableWorkspaceEntityBase::class.fqn}<*>).diff")
         `if`("diff != null") {
           when (type) {
             is TOptional<*> -> {
