@@ -32,17 +32,17 @@ open class PluginConfigurator(val testContext: IDETestContext) {
   }
 
   fun setupPluginFromPluginManager(
-    pluginName: String,
+    pluginId: String,
     ideBuild: String,
     channel: String? = null,
   ) = apply {
-    val fileName = pluginName.replace(".", "-") + ".zip"
+    val fileName = pluginId.replace(".", "-") + ".zip"
     val downloadedPlugin = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("plugins") / testContext.ide.build / fileName
     if (!downloadedPlugin.toFile().exists()) {
       val url = buildString {
         append("https://plugins.jetbrains.com/pluginManager/")
         append("?action=download")
-        append("&id=${pluginName.replace(" ", "%20")}")
+        append("&id=${pluginId.replace(" ", "%20")}")
         append("&noStatistic=false")
         append("&build=$ideBuild")
         channel?.let {
