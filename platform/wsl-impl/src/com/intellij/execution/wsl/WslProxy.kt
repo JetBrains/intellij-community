@@ -14,6 +14,7 @@ import io.ktor.utils.io.close
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import java.io.IOException
 import java.net.InetAddress
 import java.nio.ByteBuffer
@@ -84,7 +85,12 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
 
   private suspend fun readToBuffer(channel: ByteReadChannel, bufferSize: Int): ByteBuffer {
     val buffer = ByteBuffer.allocate(bufferSize).order(ByteOrder.LITTLE_ENDIAN)
-    channel.readFully(buffer)
+    try {
+      channel.readFully(buffer)
+    }
+    catch (e: ClosedReceiveChannelException) {
+      throw Exception("wslproxy closed stream unexpectedly. See idea.log for errors", e)
+    }
     buffer.rewind()
     return buffer
   }
