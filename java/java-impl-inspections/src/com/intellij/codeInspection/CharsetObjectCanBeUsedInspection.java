@@ -75,6 +75,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       entry("ASCII", "US_ASCII"),
       entry("ISO646-US", "US_ASCII"),
       entry("ISO-8859-1", "ISO_8859_1"),
+      entry("8859_1", "ISO_8859_1"),
       entry("UTF-8", "UTF_8"),
       entry("UTF8", "UTF_8"),
       entry("UTF-16BE", "UTF_16BE"),
