@@ -31,17 +31,17 @@ import java.util.Objects;
 public final class ShelvedChange {
   private static final Logger LOG = Logger.getInstance(ShelvedChange.class);
 
-  private final Path myPatchPath;
+  @NotNull private final Path myPatchPath;
   private final String myBeforePath;
   private final String myAfterPath;
-  private final FileStatus myFileStatus;
+  @NotNull private final FileStatus myFileStatus;
   @NotNull private final Change myChange;
 
   public ShelvedChange(@NotNull Project project,
                        @NotNull Path patchPath,
                        String beforePath,
                        String afterPath,
-                       FileStatus fileStatus) {
+                       @NotNull FileStatus fileStatus) {
     myPatchPath = patchPath;
     myBeforePath = beforePath;
     // optimisation: memory
@@ -72,6 +72,7 @@ public final class ShelvedChange {
     return myAfterPath;
   }
 
+  @NotNull
   public FileStatus getFileStatus() {
     return myFileStatus;
   }

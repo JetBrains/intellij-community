@@ -6,8 +6,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class FilePatch {
-  private String myBeforeName;
-  private String myAfterName;
+  private @Nullable String myBeforeName;
+  private @Nullable String myAfterName;
   @Nullable private @Nls String myBeforeVersionId;
   @Nullable private @Nls String myAfterVersionId;
   private String myBaseRevisionText;
@@ -22,21 +22,25 @@ public abstract class FilePatch {
     return myAfterName;
   }
 
+  @Nullable
   public String getBeforeFileName() {
+    if (myBeforeName == null) return null;
     String[] pathNameComponents = myBeforeName.split("/");
-    return pathNameComponents [pathNameComponents.length-1];
+    return pathNameComponents[pathNameComponents.length - 1];
   }
 
+  @Nullable
   public String getAfterFileName() {
+    if (myAfterName == null) return null;
     String[] pathNameComponents = myAfterName.split("/");
-    return pathNameComponents [pathNameComponents.length-1];
+    return pathNameComponents[pathNameComponents.length - 1];
   }
 
-  public void setBeforeName(final String fileName) {
+  public void setBeforeName(@Nullable String fileName) {
     myBeforeName = fileName;
   }
 
-  public void setAfterName(final String fileName) {
+  public void setAfterName(@Nullable String fileName) {
     myAfterName = fileName;
   }
 
