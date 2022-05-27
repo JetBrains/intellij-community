@@ -4,7 +4,7 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.application.Topics;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,7 +81,7 @@ public final class PsiVFSListener implements BulkFileListener {
           }
 
           PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-          ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
+          ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(true);
         }, project);
       }
 
@@ -91,7 +91,7 @@ public final class PsiVFSListener implements BulkFileListener {
         @Override
         public void fileTypesChanged(@NotNull FileTypeEvent e) {
           PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-          ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(e.getRemovedFileType() != null);
+          ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(e.getRemovedFileType() != null);
         }
       });
       connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerListener(project));
@@ -100,13 +100,13 @@ public final class PsiVFSListener implements BulkFileListener {
         @Override
         public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
           PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-          ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
+          ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(true);
         }
 
         @Override
         public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
           PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-          ((FileManagerImpl)(psiManager.getFileManager())).processFileTypesChanged(true);
+          ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(true);
         }
       });
 
@@ -125,7 +125,7 @@ public final class PsiVFSListener implements BulkFileListener {
     Topics.subscribe(VirtualFileManager.VFS_CHANGES, null, new BulkFileListener() {
       @Override
       public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-        for (Project project : ProjectUtil.getOpenProjects()) {
+        for (Project project : ProjectUtilCore.getOpenProjects()) {
           if (!project.isDisposed()) {
             project.getService(PsiVFSListener.class).before(events);
           }
@@ -134,7 +134,7 @@ public final class PsiVFSListener implements BulkFileListener {
 
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        Project[] projects = ProjectUtil.getOpenProjects();
+        Project[] projects = ProjectUtilCore.getOpenProjects();
         // let PushedFilePropertiesUpdater process all pending vfs events and update file properties before we issue PSI events
         for (Project project : projects) {
           PushedFilePropertiesUpdater updater = PushedFilePropertiesUpdater.getInstance(project);
@@ -597,12 +597,12 @@ public final class PsiVFSListener implements BulkFileListener {
 
   private static final class MyModuleRootListener implements ModuleRootListener {
     private int depthCounter; // accessed from within write action only
-    private final PsiManagerImpl manager;
+    private final PsiManagerImpl psiManager;
     private final FileManagerImpl fileManager;
 
     private MyModuleRootListener(@NotNull Project project) {
-      this.manager = (PsiManagerImpl)PsiManager.getInstance(project);
-      this.fileManager = (FileManagerImpl)manager.getFileManager();
+      psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+      fileManager = (FileManagerImpl)psiManager.getFileManager();
     }
 
     @Override
@@ -613,9 +613,9 @@ public final class PsiVFSListener implements BulkFileListener {
           depthCounter++;
           if (depthCounter > 1) return;
 
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(manager);
+          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-          manager.beforePropertyChange(treeEvent);
+          psiManager.beforePropertyChange(treeEvent);
         }
       );
     }
@@ -633,21 +633,21 @@ public final class PsiVFSListener implements BulkFileListener {
 
           DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
 
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(manager);
+          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-          manager.propertyChanged(treeEvent);
+          psiManager.propertyChanged(treeEvent);
         }
       );
     }
   }
 
   private static class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
-    private final PsiManagerImpl manager;
+    private final PsiManagerImpl psiManager;
     private final FileManagerImpl fileManager;
 
     MyAdditionalLibraryRootListener(@NotNull Project project) {
-      this.manager = (PsiManagerImpl)PsiManager.getInstance(project);
-      this.fileManager = (FileManagerImpl)manager.getFileManager();
+      psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+      fileManager = (FileManagerImpl)psiManager.getFileManager();
     }
 
     @Override
@@ -657,14 +657,14 @@ public final class PsiVFSListener implements BulkFileListener {
                                     @NotNull String libraryNameForDebug) {
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
-          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(manager);
+          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-          manager.beforePropertyChange(treeEvent);
+          psiManager.beforePropertyChange(treeEvent);
           DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
 
-          treeEvent = new PsiTreeChangeEventImpl(manager);
+          treeEvent = new PsiTreeChangeEventImpl(psiManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
-          manager.propertyChanged(treeEvent);
+          psiManager.propertyChanged(treeEvent);
         }
       );
     }
@@ -676,7 +676,7 @@ public final class PsiVFSListener implements BulkFileListener {
 
     private MyFileDocumentManagerListener(@NotNull Project project) {
       this.project = project;
-      this.fileManager = (FileManagerImpl)((PsiManagerImpl)PsiManager.getInstance(project)).getFileManager();
+      fileManager = (FileManagerImpl)((PsiManagerImpl)PsiManager.getInstance(project)).getFileManager();
     }
 
     @Override
@@ -743,7 +743,7 @@ public final class PsiVFSListener implements BulkFileListener {
     myReportedUnloadedPsiChange = false;
   }
 
-  // group same type events together and call fireForGrouped() for the each batch
+  // group same type events together and call fireForGrouped() for each batch
   private void groupAndFire(@NotNull List<? extends VFileEvent> events) {
     StreamEx.of(events)
       // group several VFileDeleteEvents together, several VFileMoveEvents together, place all other events into one-element lists
