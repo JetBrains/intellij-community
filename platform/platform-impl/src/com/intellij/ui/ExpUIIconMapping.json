@@ -165,7 +165,9 @@
         "actions/findAndShowNextMatchesSmall.svg",
         "general/arrowDown.svg",
         "general/chevron-down.svg",
-        "general/linkDropTriangle.svg"
+        "general/linkDropTriangle.svg",
+        "ide/notification/expand.svg",
+        "ide/notification/expandHover.svg"
       ],
       "chevronDownLarge.svg": "toolbar/expand.svg",
       "chevronLeft.svg": [
@@ -183,12 +185,16 @@
         "actions/findAndShowPrevMatches.svg",
         "actions/findAndShowPrevMatchesSmall.svg",
         "general/arrowUp.svg",
-        "general/chevron-up.svg"
+        "general/chevron-up.svg",
+        "ide/notification/collapse.svg",
+        "ide/notification/collapseHover.svg"
       ],
       "chevronUpLarge.svg": "toolbar/collapse.svg",
       "close.svg": [
         "actions/cancel.svg",
-        "codeWithMe/cwmTerminate.svg"
+        "codeWithMe/cwmTerminate.svg",
+        "ide/notification/close.svg",
+        "ide/notification/closeHover.svg"
       ],
       "closeSmall.svg": "actions/close.svg",
       "closeSmallHovered.svg": "actions/closeHovered.svg",
@@ -221,7 +227,12 @@
       "locate.svg": "general/locate.svg",
       "locked.svg": "ide/readonly.svg",
       "moreHorizontal.svg": "actions/moreHorizontal.svg",
-      "moreVertical.svg": "actions/more.svg",
+      "moreVertical.svg":
+      [
+        "actions/more.svg",
+        "ide/notification/gear.svg",
+        "ide/notification/gearHover.svg"
+      ],
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
@@ -488,7 +499,11 @@
       "webApp.svg": "runConfigurations/web_app.svg"
     },
     "status": {
-      "error.svg": "general/balloonError.svg",
+      "error.svg": [
+        "general/balloonError.svg",
+        "ide/fatalError.svg"
+      ],
+      "errorOutline.svg": "ide/fatalError-read.svg",
       "info.svg": "general/balloonInformation.svg",
       "warning.svg": "general/balloonWarning.svg",
       "warningOutline.svg": "general/showWarning.svg"
