@@ -36,6 +36,8 @@ import java.awt.*;
 import java.util.function.Consumer;
 
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
+  private HighlightPopup myPopup = null;
+
 
   abstract void onKeyChosen(@NotNull TextAttributesKey key);
 
@@ -73,8 +75,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
     group.add(new DumbAwareAction(InspectionsBundle.message("inspection.edit.highlighting.action")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        // TODO: Open ColorAndFontOptions in a new popup
-        DataContext dataContext = DataManager.getInstance().getDataContext(button);
+        final var dataContext = myPopup == null ? e.getDataContext() : DataManager.getInstance().getDataContext(myPopup.getComponent());
         ColorAndFontOptions.selectOrEditColor(dataContext,
                                               OptionsBundle.message("options.java.attribute.descriptor.error").split("//")[0],
                                               OptionsBundle.message("options.general.display.name"));
@@ -89,7 +90,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
                                                  @NotNull JComponent component,
                                                  @Nullable Runnable disposeCallback) {
     final var group = createPopupActionGroup(component);
-    final var popup = new HighlightPopup(
+    myPopup = new HighlightPopup(
       myPopupTitle,
       group,
       context,
@@ -98,8 +99,8 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
       getMaxRows(),
       getPreselectCondition()
     );
-    popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
-    return popup;
+    myPopup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
+    return myPopup;
   }
 
   @Override

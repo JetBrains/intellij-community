@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -15,7 +14,7 @@ import java.awt.event.MouseEvent;
 import java.util.EventObject;
 import java.util.List;
 
-public class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKey> {
+public abstract class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKey> {
 
   private final List<Pair<TextAttributesKey, @Nls String>> myEditorAttributesKey;
 
@@ -54,9 +53,9 @@ public class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKe
   public void onClosed(@NotNull LightweightWindowEvent event) {
     super.onClosed(event);
     if (getCellEditorValue() == EDIT_HIGHLIGHTING) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-          // TODO: Open a popup with ColorAndFontOptions
-      });
+      openColorSettings();
     }
   }
+
+  abstract void openColorSettings();
 }

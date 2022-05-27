@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
+import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorSettingsUtil;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -14,8 +15,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -111,7 +114,17 @@ public class ScopesAndSeveritiesTable extends JBTable {
     severityColumn.setCellEditor(renderer);
 
     final TableColumn highlightingColumn = columnModel.getColumn(HIGHLIGHTING_COLUMN);
-    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames());
+    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames()) {
+      @Override
+      void openColorSettings() {
+        final var dataContext = DataManager.getInstance().getDataContext(this);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          ColorAndFontOptions.selectOrEditColor(dataContext,
+                                                OptionsBundle.message("options.java.attribute.descriptor.error").split("//")[0],
+                                                OptionsBundle.message("options.general.display.name"));
+        });
+      }
+    };
     highlightingColumn.setCellRenderer(highlightingRenderer);
     highlightingColumn.setCellEditor(highlightingRenderer);
 
