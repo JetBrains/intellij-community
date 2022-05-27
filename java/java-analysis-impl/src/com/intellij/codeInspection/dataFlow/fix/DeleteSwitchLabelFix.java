@@ -27,7 +27,7 @@ import java.util.Objects;
 
 public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myName;
-  private boolean myAddDefaultIfNecessary;
+  private final boolean myAddDefaultIfNecessary;
   private final boolean myBranch;
 
   public DeleteSwitchLabelFix(@NotNull PsiCaseLabelElement label, boolean addDefaultIfNecessary) {
