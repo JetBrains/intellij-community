@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.PlatformUtils
 
 class DebuggerUIExperimentCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
@@ -43,6 +44,7 @@ class DebuggerUIExperimentCollector : CounterUsagesCollector() {
     }
 
     private fun isEnabled(): Boolean = ApplicationManager.getApplication().isEAP &&
+                                       PlatformUtils.isIntelliJ() &&
                                        Registry.`is`("debugger.ui.experiment.enabled") &&
                                        StatisticsUploadAssistant.isSendAllowed() &&
                                        !ApplicationManager.getApplication().isInternal
