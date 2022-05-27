@@ -60,7 +60,8 @@ object CodeWriter {
       }
       module.files.forEach {
         val virtualFile = fileMapping[it.name] ?: return@forEach
-        documentManager.getDocument(virtualFile)?.setText(it.rewrite())
+        val fileContent = it.rewrite() ?: return@forEach
+        documentManager.getDocument(virtualFile)?.setText(fileContent)
       }
 
       entitiesForGeneration.forEach {
@@ -86,7 +87,8 @@ object CodeWriter {
     }
     val result = module.build()
     module.files.forEach {
-      dir.resolve(it.name).writeText(it.rewrite())
+      val fileContent = it.rewrite() ?: return@forEach
+      dir.resolve(it.name).writeText(fileContent)
     }
     result.typeDefs.filterNot { it.name == "WorkspaceEntity" || it.name == "WorkspaceEntityWithPersistentId" || it.abstract }.forEach {
       generatedDestDir

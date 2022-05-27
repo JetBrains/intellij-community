@@ -8,7 +8,7 @@ import org.jetbrains.deft.codegen.utils.Imports
 import storage.codegen.patcher.KotlinWriter
 
 
-fun KtFile.rewrite(): String {
+fun KtFile.rewrite(): String? {
   val toImport = Imports(pkg.fqn)
   toImport.set.add("org.jetbrains.deft.ObjBuilder")
   toImport.set.add("com.intellij.workspaceModel.storage.EntitySource")
@@ -22,6 +22,7 @@ fun KtFile.rewrite(): String {
       code[block] = toImport.findAndRemoveFqns(objType.generatedApiCode(indent, body.generatedCode == null)) to toImport.findAndRemoveFqns(objType.generatedExtensionCode(parentIndent))
     }
   }
+  if (code.isEmpty()) return null
 
   val w = KotlinWriter(content())
 
@@ -29,6 +30,7 @@ fun KtFile.rewrite(): String {
     w.addImports(imports, toImport.set.sorted())
   }
 
+  var hasSomethingToWrite = false
   block.visitRecursively { block, objType ->
     val newCode = code[block]
     if (newCode == null) {
@@ -36,13 +38,16 @@ fun KtFile.rewrite(): String {
       var oldCode = block._generatedCode
       if (oldCode != null) {
         w.removeBlock(oldCode)
+        hasSomethingToWrite = true
       }
       oldCode = block._extensionCode
       if (oldCode != null) {
         w.removeBlock(oldCode)
+        hasSomethingToWrite = true
       }
     }
     else {
+      hasSomethingToWrite = true
       w.addGeneratedCodeBlock(objType!!, newCode.first)
       w.addExtensionBlock(objType, newCode.second)
     }
@@ -50,7 +55,7 @@ fun KtFile.rewrite(): String {
 
   w.end()
 
-  return w.result.toString()
+  return if (hasSomethingToWrite) w.result.toString() else null
 }
 
 private fun KotlinWriter.addExtensionBlock(defType: DefType, code: String) {
