@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl.patch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -85,7 +86,8 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
 
     Map<String, String> map = commitContext.getUserData(ourStoredTexts);
     if (map != null) {
-      return map.get(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString());
+      String content = map.get(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString());
+      return StringUtil.convertLineSeparators(content);
     }
     return null;
   }
