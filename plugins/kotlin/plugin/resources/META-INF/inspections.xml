@@ -2908,6 +2908,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
+                     cleanupTool="true"
                      level="WARNING"
                      language="kotlin"
                      key="inspection.redundant.nullable.return.type.display.name" bundle="messages.KotlinBundle"/>
