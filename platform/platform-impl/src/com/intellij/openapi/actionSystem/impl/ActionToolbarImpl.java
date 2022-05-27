@@ -1227,7 +1227,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (!(myVisibleActions.isEmpty() && getComponentCount() == 1 && getClientProperty(failedKey) == null)) {
       return;
     }
-    List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null, false);
+    List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null);
     if (actions != null) {
       actionsUpdated(true, actions);
     }
