@@ -53,7 +53,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
     // Opposite field may be either one-to-one or one-to-many
 
     val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
-    lines(indent = "    ") {
+    lines {
       line("var ${field.implFieldName}: $javaType? = null")
       sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
         section("get()") {
@@ -125,7 +125,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
         }
       }
       else {
-        lines(indent = "    ") {
+        lines {
           line("var _${field.javaName}: $javaType? = null")
           sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
             section("get()") {
