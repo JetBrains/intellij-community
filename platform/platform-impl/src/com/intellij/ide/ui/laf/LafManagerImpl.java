@@ -1274,6 +1274,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
       UITheme newTheme = newLaF.getTheme();
+      ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+      if (pluginClassLoader != null) {
+        newTheme.setProviderClassLoader(pluginClassLoader);
+      }
+
       if (!autodetect && (!isUpdatingPlugin || newTheme.getId().equals(themeIdBeforePluginUpdate))) {
         setLookAndFeelImpl(newLaF, true, false);
         JBColor.setDark(newTheme.isDark());
@@ -1288,7 +1293,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         return;
       }
 
-      boolean isDark = oldLaF.getTheme().isDark();
+      UITheme oldTheme = oldLaF.getTheme();
+      oldTheme.setProviderClassLoader(null);
+
+      boolean isDark = oldTheme.isDark();
       UIManager.LookAndFeelInfo defaultLaF;
       if (oldLaF == getCurrentLookAndFeel()) {
         defaultLaF = isDark ? defaultDarkLaf.getValue() : getDefaultLightLaf();
