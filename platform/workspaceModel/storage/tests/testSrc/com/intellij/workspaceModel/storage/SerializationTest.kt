@@ -2,12 +2,14 @@
 package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.entities.test.api.*
-import org.junit.jupiter.api.Test
+import org.junit.Ignore
+import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class SerializationTest {
   @Test
+  @Ignore
   fun `test bool data`() {
     val builder = createEmptyBuilder()
     builder.addEntity(BooleanEntity(true, MySource) {
@@ -28,6 +30,7 @@ class SerializationTest {
   }
 
   @Test
+  @Ignore
   fun `test string data`() {
     val builder = createEmptyBuilder()
     builder.addEntity(StringEntity("One", MySource) {
@@ -48,6 +51,7 @@ class SerializationTest {
   }
 
   @Test
+  @Ignore
   fun `test Int data`() {
     val builder = createEmptyBuilder()
     builder.addEntity(IntEntity(1, MySource) {
@@ -68,6 +72,7 @@ class SerializationTest {
   }
 
   @Test
+  @Ignore
   fun `test list data`() {
     val builder = createEmptyBuilder()
     builder.addEntity(ListEntity(listOf("data"), MySource) {
@@ -88,6 +93,7 @@ class SerializationTest {
   }
 
   @Test
+  @Ignore
   fun `test optional int data with null data`() {
     val builder = createEmptyBuilder()
     builder.addEntity(OptionalIntEntity(MySource) {
@@ -110,6 +116,7 @@ class SerializationTest {
   }
 
   @Test
+  @Ignore
   fun `test optional int data with not null data`() {
     val builder = createEmptyBuilder()
     builder.addEntity(OptionalIntEntity(MySource) {
@@ -132,6 +139,7 @@ class SerializationTest {
   }
 
   @Test
+  @Ignore
   fun `test optional string data with null data`() {
     val builder = createEmptyBuilder()
     builder.addEntity(OptionalStringEntity(MySource) {
@@ -154,6 +162,7 @@ class SerializationTest {
   }
 
   @Test
+  @Ignore
   fun `test optional string data with not null data`() {
     val builder = createEmptyBuilder()
     builder.addEntity(OptionalStringEntity(MySource) {
