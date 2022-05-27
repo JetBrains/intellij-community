@@ -81,6 +81,9 @@ public final class ShelvedChange {
     return myChange;
   }
 
+  /**
+   * @deprecated Parameter unused, use {@link #getChange()}
+   */
   @NotNull
   @Deprecated(forRemoval = true)
   public Change getChange(@NotNull Project project) {
