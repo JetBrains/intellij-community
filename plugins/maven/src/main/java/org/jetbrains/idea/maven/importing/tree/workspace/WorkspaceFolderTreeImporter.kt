@@ -17,7 +17,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.io.File
 import java.nio.file.Path
 
-class WorkspaceFolderImporter(
+class WorkspaceFolderTreeImporter(
   private val builder: MutableEntityStorage,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val importingSettings: MavenImportingSettings) {

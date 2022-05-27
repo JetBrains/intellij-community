@@ -45,7 +45,7 @@ class WorkspaceModuleTreeImporter(
     val dependencies = collectDependencies(importData, entitySource)
     val moduleName = importData.moduleData.moduleName
     val moduleEntity = createModuleEntity(importData.mavenProject, moduleName, dependencies, entitySource)
-    val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings)
+    val folderImporter = WorkspaceFolderTreeImporter(builder, virtualFileUrlManager, importingSettings)
 
     when (importData.moduleData.type) {
       MavenModuleType.MAIN -> configMain(moduleEntity, importFolderHolder, folderImporter)
@@ -58,7 +58,7 @@ class WorkspaceModuleTreeImporter(
     return moduleEntity
   }
 
-  private fun config(moduleEntity: ModuleEntity, importFolderHolder: MavenImportFolderHolder, folderImporter: WorkspaceFolderImporter) {
+  private fun config(moduleEntity: ModuleEntity, importFolderHolder: MavenImportFolderHolder, folderImporter: WorkspaceFolderTreeImporter) {
     importJavaSettings(moduleEntity, importFolderHolder)
 
     folderImporter
@@ -67,7 +67,7 @@ class WorkspaceModuleTreeImporter(
 
   private fun configAggregator(moduleEntity: ModuleEntity,
                                importFolderHolder: MavenImportFolderHolder,
-                               folderImporter: WorkspaceFolderImporter) {
+                               folderImporter: WorkspaceFolderTreeImporter) {
     importJavaSettingsAggregator(moduleEntity)
 
     folderImporter
@@ -76,7 +76,7 @@ class WorkspaceModuleTreeImporter(
 
   private fun configMainAndTestAggregator(moduleEntity: ModuleEntity,
                                           importFolderHolder: MavenImportFolderHolder,
-                                          folderImporter: WorkspaceFolderImporter) {
+                                          folderImporter: WorkspaceFolderTreeImporter) {
     importJavaSettingsMainAndTestAggregator(moduleEntity)
 
     folderImporter
@@ -85,7 +85,7 @@ class WorkspaceModuleTreeImporter(
 
   private fun configMain(moduleEntity: ModuleEntity,
                          importFolderHolder: MavenImportFolderHolder,
-                         folderImporter: WorkspaceFolderImporter) {
+                         folderImporter: WorkspaceFolderTreeImporter) {
     importJavaSettingsMain(moduleEntity, importFolderHolder)
 
     folderImporter
@@ -94,7 +94,7 @@ class WorkspaceModuleTreeImporter(
 
   private fun configTest(moduleEntity: ModuleEntity,
                          importFolderHolder: MavenImportFolderHolder,
-                         folderImporter: WorkspaceFolderImporter) {
+                         folderImporter: WorkspaceFolderTreeImporter) {
     importJavaSettingsTest(moduleEntity, importFolderHolder)
 
     folderImporter
