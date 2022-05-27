@@ -38,17 +38,27 @@ public final class ShelvedChange {
   @NotNull private final FileStatus myFileStatus;
   @NotNull private final Change myChange;
 
-  public ShelvedChange(@NotNull Project project,
-                       @NotNull Path patchPath,
-                       @NotNull String beforePath,
-                       @NotNull String afterPath,
-                       @NotNull FileStatus fileStatus) {
+  private ShelvedChange(@NotNull Path patchPath,
+                        @NotNull String beforePath,
+                        @NotNull String afterPath,
+                        @NotNull FileStatus fileStatus,
+                        @NotNull Change change) {
     myPatchPath = patchPath;
     myBeforePath = beforePath;
-    // optimisation: memory
-    myAfterPath = Objects.equals(beforePath, afterPath) ? beforePath : afterPath;
+    myAfterPath = afterPath;
     myFileStatus = fileStatus;
-    myChange = createChange(project);
+    myChange = change;
+  }
+
+  public static ShelvedChange create(@NotNull Project project,
+                                     @NotNull Path patchPath,
+                                     @NotNull String beforePath,
+                                     @NotNull String afterPath,
+                                     @NotNull FileStatus fileStatus) {
+    // optimisation: memory
+    afterPath = Objects.equals(beforePath, afterPath) ? beforePath : afterPath;
+    Change change = createChange(project, patchPath, beforePath, afterPath, fileStatus);
+    return new ShelvedChange(patchPath, beforePath, afterPath, fileStatus, change);
   }
 
   public boolean isConflictingChange() {
@@ -94,15 +104,19 @@ public final class ShelvedChange {
     return myChange;
   }
 
-  private Change createChange(@NotNull Project project) {
+  private static Change createChange(@NotNull Project project,
+                                     @NotNull Path patchPath,
+                                     @NotNull String beforePath,
+                                     @NotNull String afterPath,
+                                     @NotNull FileStatus fileStatus) {
     File baseDir = new File(Objects.requireNonNull(project.getBasePath()));
 
-    FilePath beforePath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myBeforePath), false);
-    FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
+    FilePath beforeFilePath = VcsUtil.getFilePath(getAbsolutePath(baseDir, beforePath), false);
+    FilePath afterFilePath = VcsUtil.getFilePath(getAbsolutePath(baseDir, afterPath), false);
 
     ContentRevision beforeRevision = null;
-    if (myFileStatus != FileStatus.ADDED) {
-      beforeRevision = new CurrentContentRevision(beforePath) {
+    if (fileStatus != FileStatus.ADDED) {
+      beforeRevision = new CurrentContentRevision(beforeFilePath) {
         @Override
         @NotNull
         public VcsRevisionNumber getRevisionNumber() {
@@ -111,10 +125,10 @@ public final class ShelvedChange {
       };
     }
     ContentRevision afterRevision = null;
-    if (myFileStatus != FileStatus.DELETED) {
-      afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
+    if (fileStatus != FileStatus.DELETED) {
+      afterRevision = new PatchedContentRevision(project, patchPath, beforePath, beforeFilePath, afterFilePath);
     }
-    return new Change(beforeRevision, afterRevision, myFileStatus);
+    return new Change(beforeRevision, afterRevision, fileStatus);
   }
 
   private static File getAbsolutePath(@NotNull File baseDir, @NotNull String relativePath) {
@@ -130,9 +144,13 @@ public final class ShelvedChange {
   }
 
   @Nullable
-  public TextFilePatch loadFilePatch(final Project project, CommitContext commitContext) throws IOException, PatchSyntaxException {
-    List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(project, myPatchPath, commitContext);
-    return ContainerUtil.find(filePatches, patch -> myBeforePath.equals(patch.getBeforeName()));
+  private static TextFilePatch loadFilePatch(@NotNull Project project,
+                                             @NotNull Path patchPath,
+                                             @NotNull String beforePath,
+                                             @Nullable CommitContext commitContext)
+    throws IOException, PatchSyntaxException {
+    List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(project, patchPath, commitContext);
+    return ContainerUtil.find(filePatches, patch -> beforePath.equals(patch.getBeforeName()));
   }
 
   @Override
@@ -155,13 +173,21 @@ public final class ShelvedChange {
     return Objects.hash(myPatchPath, myBeforePath, myAfterPath, myFileStatus);
   }
 
-  private class PatchedContentRevision implements ContentRevision {
+  private static class PatchedContentRevision implements ContentRevision {
     @NotNull private final Project myProject;
+    @NotNull private final Path myPatchPath;
+    @NotNull private final String myBeforePath;
     @NotNull private final FilePath myBeforeFilePath;
     @NotNull private final FilePath myAfterFilePath;
 
-    PatchedContentRevision(@NotNull Project project, @NotNull FilePath beforeFilePath, @NotNull FilePath afterFilePath) {
+    PatchedContentRevision(@NotNull Project project,
+                           @NotNull Path patchPath,
+                           @NotNull String beforePath,
+                           @NotNull FilePath beforeFilePath,
+                           @NotNull FilePath afterFilePath) {
       myProject = project;
+      myPatchPath = patchPath;
+      myBeforePath = beforePath;
       myBeforeFilePath = beforeFilePath;
       myAfterFilePath = afterFilePath;
     }
@@ -180,7 +206,7 @@ public final class ShelvedChange {
 
     @Nullable
     private String loadContent() throws IOException, PatchSyntaxException, ApplyPatchException {
-      TextFilePatch patch = loadFilePatch(myProject, null);
+      TextFilePatch patch = loadFilePatch(myProject, myPatchPath, myBeforePath, null);
       if (patch != null) {
         return loadContent(patch);
       }
