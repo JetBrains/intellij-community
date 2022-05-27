@@ -51,9 +51,14 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return SUCCESS;
   }
 
-  protected abstract void applyCreate(Project project, VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException;
+  protected abstract void applyCreate(@NotNull Project project,
+                                      @NotNull VirtualFile newFile,
+                                      @Nullable CommitContext commitContext) throws IOException;
 
-  protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Supplier<? extends CharSequence> baseContents) throws IOException;
+  protected abstract Result applyChange(@NotNull Project project,
+                                        @NotNull VirtualFile fileToPatch,
+                                        @NotNull FilePath pathBeforeRename,
+                                        @Nullable Supplier<? extends CharSequence> baseContents) throws IOException;
 
   @Nullable
   public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName)

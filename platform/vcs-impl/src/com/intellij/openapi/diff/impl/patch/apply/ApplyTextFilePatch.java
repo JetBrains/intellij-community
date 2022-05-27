@@ -25,7 +25,10 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
   }
 
   @Override
-  protected @NotNull Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Supplier<? extends CharSequence> baseContents) throws IOException {
+  protected @NotNull Result applyChange(@NotNull Project project,
+                                        @NotNull VirtualFile fileToPatch,
+                                        @NotNull FilePath pathBeforeRename,
+                                        @Nullable Supplier<? extends CharSequence> baseContents) throws IOException {
     final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
     if (document == null) {
       throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
@@ -47,7 +50,9 @@ public final class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> 
   }
 
   @Override
-  protected void applyCreate(Project project, @NotNull VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException {
+  protected void applyCreate(@NotNull Project project,
+                             @NotNull VirtualFile newFile,
+                             @Nullable CommitContext commitContext) throws IOException {
     Document document = FileDocumentManager.getInstance().getDocument(newFile);
     if (document == null) {
       throw new IOException("Failed to set contents for new file " + newFile.getPath());
