@@ -22,19 +22,19 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testNegatedDigitRange() {
-    doTest("[^0-9]", "\\D");
+    highlightTest("[^0-9]"); // no warn; replacing with \D is not equivalent in Unicode context
   }
 
   public void testNegatedWordClassCharExpression() {
-    doTest("[^0-9a-zA-Z_]", "\\W");
+    highlightTest("[^0-9a-zA-Z_]"); // no warn; replacing with \W is not equivalent in Unicode context
   }
 
   public void testDigitRange() {
-    doTest("[^0-9abc]", 2, 3, "\\d", "[^\\dabc]");
+    highlightTest("[^0-9abc]"); // no warn; replacing with [^\dabc] is not equivalent in Unicode context
   }
 
   public void testDigitRange2() {
-    doTest("[0-9abc]", 1, 3, "\\d", "[\\dabc]");
+    highlightTest("[0-9abc]"); // no warn; replacing with \d is not equivalent in Unicode context
   }
 
   public void testSingleElementClass() {
@@ -46,11 +46,15 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testSimpleDigitRange() {
-    doTest("[0-9]", "\\d");
+    highlightTest("[0-9]"); // no warn; replacing with \d is not equivalent in Unicode context
   }
 
   public void testWordCharClassExpression() {
-    doTest("[0-9a-zA-Z_]", "\\w");
+    highlightTest("[0-9a-zA-Z_]"); // no warn; replacing with \w is not equivalent in Unicode context
+  }
+
+  public void testProperty() {
+    doTest("\\p{IsDigit}", "\\d");
   }
 
   public void testStarToPlusNoWarm() {
