@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
@@ -21,9 +21,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.isDotSelector
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_FQ_NAME
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
@@ -32,7 +33,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.createFunctionType
-import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_FQ_NAME
 
 class CodeFragmentParameterInfo(
     val parameters: List<Smart>,
@@ -131,10 +131,8 @@ class CodeFragmentParameterAnalyzer(
                 if (!processed && resolvedCall.resultingDescriptor is SyntheticFieldDescriptor) {
                     val descriptor = resolvedCall.resultingDescriptor as SyntheticFieldDescriptor
                     val parameter = processSyntheticFieldVariable(descriptor)
-                    if (parameter != null) {
-                        checkBounds(descriptor, expression, parameter)
-                        processed = true
-                    }
+                    checkBounds(descriptor, expression, parameter)
+                    processed = true
                 }
 
                 // If a reference has receivers, we can calculate its value using them, no need to capture
@@ -273,7 +271,7 @@ class CodeFragmentParameterAnalyzer(
         }
     }
 
-    private fun processSyntheticFieldVariable(descriptor: SyntheticFieldDescriptor): Smart? {
+    private fun processSyntheticFieldVariable(descriptor: SyntheticFieldDescriptor): Smart {
         val propertyDescriptor = descriptor.propertyDescriptor
         val fieldName = propertyDescriptor.name.asString()
         val type = propertyDescriptor.type

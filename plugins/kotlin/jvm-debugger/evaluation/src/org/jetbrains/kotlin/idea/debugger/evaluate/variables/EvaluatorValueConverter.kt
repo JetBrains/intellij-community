@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
@@ -72,11 +72,11 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
     }
 
     fun coerce(value: Value?, type: AsmType): Result? {
-        val unrefResult = coerceRef(value, type) ?: return null
+        val unrefResult = coerceRef(value, type)
         return coerceBoxing(unrefResult.value, type)
     }
 
-    private fun coerceRef(value: Value?, type: AsmType): Result? {
+    private fun coerceRef(value: Value?, type: AsmType): Result {
         when {
             type.isRefType -> {
                 if (value != null && value.asmType().isRefType) {
@@ -170,12 +170,12 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
         return context.invokeMethod(value, valueMethod, emptyList())
     }
 
-    private fun ref(value: Value?): Value? {
+    private fun ref(value: Value?): Value {
         if (value is VoidValue) {
             return value
         }
 
-        fun wrapRef(value: Value?, refTypeClass: ClassType): Value? {
+        fun wrapRef(value: Value?, refTypeClass: ClassType): Value {
             val constructor = refTypeClass.methods().single { it.isConstructor }
             val ref = context.newInstance(refTypeClass, constructor, emptyList())
             context.keepReference(ref)

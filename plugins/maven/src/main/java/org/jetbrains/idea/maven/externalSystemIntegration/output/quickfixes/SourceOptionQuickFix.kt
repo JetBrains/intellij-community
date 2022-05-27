@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.google.common.primitives.Bytes
@@ -91,7 +91,7 @@ class SourceLevelBuildIssue(private val message: String,
   }.joinToString("\n<br/>")
 
 
-  override fun getNavigatable(project: Project): Navigatable? {
+  override fun getNavigatable(project: Project): Navigatable {
     return mavenProject.file.let { OpenFileDescriptor(project, it) }
   }
 }
@@ -234,7 +234,7 @@ object CacheForCompilerErrorMessages {
     }
   }
 
-  private fun toMessagePredicate(message: String): MessagePredicate? {
+  private fun toMessagePredicate(message: String): MessagePredicate {
     val first = message.substringBefore("{0}")
     val second = message.substringAfter("{0}")
     return { it.contains(first) && it.contains(second) }

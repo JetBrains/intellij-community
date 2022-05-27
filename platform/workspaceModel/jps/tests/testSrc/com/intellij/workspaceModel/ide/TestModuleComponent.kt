@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ComponentNotRegistered")
 
 package com.intellij.workspaceModel.ide
@@ -11,7 +12,7 @@ import com.intellij.openapi.module.ModuleComponent
 class TestModuleComponent: ModuleComponent, PersistentStateComponent<TestModuleComponent> {
   var testString: String = ""
 
-  override fun getState(): TestModuleComponent? = this
+  override fun getState(): TestModuleComponent = this
   override fun loadState(state: TestModuleComponent) {
     testString = state.testString
   }

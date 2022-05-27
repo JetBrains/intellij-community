@@ -1,18 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.fir.fe10.*
-import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.InvalidWayOfUsingAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.utils.EntityWasGarbageCollectedException
 import org.jetbrains.kotlin.analysis.api.fir.utils.KtAnalysisSessionFe10BindingHolder
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -23,6 +15,12 @@ import org.jetbrains.kotlin.analysis.api.tokens.assertIsValidAndAccessible
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.idea.fir.analysis.project.structure.FE10ApiUsage
 import org.jetbrains.kotlin.idea.fir.analysis.project.structure.moduleInfo
 import org.jetbrains.kotlin.name.FqName
@@ -156,9 +154,9 @@ private class KtSymbolBasedModuleDescriptorImpl(
     override val builtIns: KotlinBuiltIns
         get() = context.builtIns
 
-    override val stableName: Name?
+    override val stableName: Name
         get() = context.noImplementation()
-    override val platform: TargetPlatform?
+    override val platform: TargetPlatform
         get() = module.platform
 
     override fun shouldSeeInternalsOf(targetModule: ModuleDescriptor): Boolean = context.noImplementation()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.dvcs.commit.AmendCommitService
@@ -17,7 +17,7 @@ internal class GitAmendCommitService(project: Project) : AmendCommitService(proj
   override fun isAmendCommitSupported(): Boolean = true
 
   @Throws(VcsException::class)
-  override fun getLastCommitMessage(root: VirtualFile): String? {
+  override fun getLastCommitMessage(root: VirtualFile): String {
     val h = GitLineHandler(project, root, GitCommand.LOG)
     h.addParameters("--max-count=1")
     h.addParameters("--encoding=UTF-8")

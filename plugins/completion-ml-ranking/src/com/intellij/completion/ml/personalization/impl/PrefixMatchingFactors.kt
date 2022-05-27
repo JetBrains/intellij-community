@@ -20,7 +20,7 @@ class PrefixMatchingTypeUpdater(private val factor: MutableDoubleFactor) : Facto
 class PrefixMatchingTypeRatio(private val type: PrefixMatchingType) : UserFactor {
 
   override val id: String = "PrefixMatchingTypeRatioOf$type"
-  override fun compute(storage: UserFactorStorage): String? {
+  override fun compute(storage: UserFactorStorage): String {
     val reader = storage.getFactorReader(UserFactorDescriptions.PREFIX_MATCHING_TYPE)
     val total = reader.getTotalCompletionCount()
     return if (total == 0.0) "0.0" else (reader.getCompletionCountByType(type) / total).toString()

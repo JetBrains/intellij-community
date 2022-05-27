@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.execution.junit.JUnitUtil
 import com.siyeh.ig.junit.JUnitCommonClassNames
-import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework.Companion.KOTLIN_TEST_TEST
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.cached
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.getTopmostClass
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.isAnnotated
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class JUnit4KotlinTestFramework : AbstractKotlinTestFramework() {
 
@@ -32,7 +30,7 @@ class JUnit4KotlinTestFramework : AbstractKotlinTestFramework() {
         return method.isAnnotated(JUnitCommonClassNames.ORG_JUNIT_TEST) || method.isAnnotated(KOTLIN_TEST_TEST)
     }
 
-    private fun isJUnit4TestClass(ktClassOrObject: KtClassOrObject): Boolean? {
+    private fun isJUnit4TestClass(ktClassOrObject: KtClassOrObject): Boolean {
         val topmostClass = getTopmostClass(ktClassOrObject)
         if (topmostClass == ktClassOrObject && ktClassOrObject.isAnnotated(JUnitUtil.RUN_WITH)) return true
 

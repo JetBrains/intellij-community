@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased
 
 import com.intellij.lang.Language
@@ -192,10 +192,10 @@ object PsiIndexConsistencyTester {
     }
 
     object PsiFileRef : RefKind() {
-      override fun loadRef(model: Model): Any? = model.findPsiFile()
+      override fun loadRef(model: Model): Any = model.findPsiFile()
     }
     object DocumentRef : RefKind() {
-      override fun loadRef(model: Model): Any? = model.getDocument()
+      override fun loadRef(model: Model): Any = model.getDocument()
     }
     object DirRef : RefKind() {
       override fun loadRef(model: Model): Any? = model.findPsiFile().containingDirectory

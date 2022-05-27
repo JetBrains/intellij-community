@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -77,7 +77,7 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         return emptyList()
     }
 
-    override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? {
+    override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
         // TODO: implement this
         return (declaration as? KtNamedDeclaration)?.name ?: "SUPPORT FOR FIR"
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
@@ -20,9 +20,9 @@ class GradleTaskProperty(
 ) : LazyTypeProperty(task.name, task.typeFqn, context),
     OriginInfoAwareElement {
 
-  override fun getIcon(flags: Int): Icon? = ExternalSystemIcons.Task
+  override fun getIcon(flags: Int): Icon = ExternalSystemIcons.Task
 
-  override fun getOriginInfo(): String? = "task"
+  override fun getOriginInfo(): String = "task"
 
   private val doc by lazyPub {
     val result = StringBuilder()

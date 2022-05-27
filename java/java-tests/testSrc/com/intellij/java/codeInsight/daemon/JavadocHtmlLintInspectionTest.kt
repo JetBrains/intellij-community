@@ -14,7 +14,7 @@ import com.intellij.util.lang.JavaVersion
 import java.io.File
 
 private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
-  override fun getSdk(): Sdk? {
+  override fun getSdk(): Sdk {
     val jreHome = File(System.getProperty("java.home"))
     val jdkHome = if (jreHome.name == "jre") jreHome.parentFile else jreHome
     return IdeaTestUtil.createMockJdk("java version \"{${JavaVersion.current()}}\"", jdkHome.path)

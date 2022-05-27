@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiElement
@@ -39,7 +39,7 @@ open class BaseMethodResolveResult(
     MethodCandidateImpl(state[RECEIVER], method, contextSubstitutor, arguments, place)
   }
 
-  final override fun getCandidate(): GroovyMethodCandidate? = myRealCandidate
+  final override fun getCandidate(): GroovyMethodCandidate = myRealCandidate
 
   private val myRealCandidate by recursionAwareLazy {
     createMethodCandidate(method, place, state)

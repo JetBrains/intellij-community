@@ -34,7 +34,7 @@ class IntelliJProjectResourceBundleManager(project: Project) : ResourceBundleMan
     return (preferredFiles + otherFiles).toMutableList()
   }
 
-  override fun getI18nizedTextGenerator(): I18nizedTextGenerator? {
+  override fun getI18nizedTextGenerator(): I18nizedTextGenerator {
     return object : I18nizedTextGenerator() {
       override fun getI18nizedText(propertyKey: String, propertiesFile: PropertiesFile?, context: PsiElement?): String {
         return getI18nizedConcatenationText(propertyKey, "", propertiesFile, context)

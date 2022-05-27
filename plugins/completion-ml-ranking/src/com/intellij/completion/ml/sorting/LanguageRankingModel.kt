@@ -13,7 +13,7 @@ class LanguageRankingModel(private val model: DecisionFunction, private val deco
 
   override fun version(): String? = model.version()
 
-  override fun score(features: RankingFeatures): Double? {
+  override fun score(features: RankingFeatures): Double {
     return model.predict(featuresArrayBuilder.buildArray(features))
   }
 

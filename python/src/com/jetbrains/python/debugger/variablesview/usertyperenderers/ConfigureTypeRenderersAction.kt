@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.variablesview.usertyperenderers
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -50,7 +50,7 @@ private fun loadCustomChildren(frameAccessor: PyFrameAccessor,
 
 fun loadTypeRendererChildren(frameAccessor: PyFrameAccessor,
                              debugValue: PyDebugValue,
-                             typeRenderer: PyUserNodeRenderer): XValueChildrenList? {
+                             typeRenderer: PyUserNodeRenderer): XValueChildrenList {
   val childrenList = XValueChildrenList()
   if (!typeRenderer.childrenRenderer.isDefault) {
     val customChildren = loadCustomChildren(frameAccessor, typeRenderer, debugValue)

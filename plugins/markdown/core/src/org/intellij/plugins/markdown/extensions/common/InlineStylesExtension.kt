@@ -28,7 +28,7 @@ internal class InlineStylesExtension(private val project: Project?) : MarkdownBr
   override fun dispose() = Unit
 
   class Provider: MarkdownBrowserPreviewExtension.Provider {
-    override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
+    override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension {
       return InlineStylesExtension(panel.project)
     }
   }

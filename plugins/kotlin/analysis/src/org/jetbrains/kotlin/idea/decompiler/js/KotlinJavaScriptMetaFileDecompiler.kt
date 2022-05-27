@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.js
 
@@ -17,7 +17,7 @@ class KotlinJavaScriptMetaFileDecompiler : KotlinMetadataDecompiler<JsMetadataVe
     KotlinJavaScriptMetaFileType, { JsSerializerProtocol }, DynamicTypeDeserializer,
     { JsMetadataVersion.INSTANCE }, { JsMetadataVersion.INVALID_VERSION }, KotlinStubVersions.JS_STUB_VERSION
 ) {
-    override fun readFile(bytes: ByteArray, file: VirtualFile): KotlinMetadataStubBuilder.FileWithMetadata? {
+    override fun readFile(bytes: ByteArray, file: VirtualFile): KotlinMetadataStubBuilder.FileWithMetadata {
         val stream = ByteArrayInputStream(bytes)
 
         val version = JsMetadataVersion.readFrom(stream)

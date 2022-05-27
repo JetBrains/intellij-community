@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -71,7 +71,7 @@ class ChangeFunctionLiteralSignatureFix private constructor(
             return Data(descriptor, parameterTypes)
         }
 
-        override fun createFix(originalElement: KtFunctionLiteral, data: Data): IntentionAction? =
+        override fun createFix(originalElement: KtFunctionLiteral, data: Data): IntentionAction =
             ChangeFunctionLiteralSignatureFix(originalElement, data.descriptor, data.parameterTypes)
     }
 }

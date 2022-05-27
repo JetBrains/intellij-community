@@ -28,7 +28,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
         element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
 
     @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
+    override fun getTypeMapper(element: KtElement): KotlinTypeMapper {
         return KotlinTypeMapper(
             getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
             JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,

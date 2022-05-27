@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
 class GradleTaskContainerContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName(): String? = GRADLE_API_TASK_CONTAINER
+  override fun getParentClassName(): String = GRADLE_API_TASK_CONTAINER
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,

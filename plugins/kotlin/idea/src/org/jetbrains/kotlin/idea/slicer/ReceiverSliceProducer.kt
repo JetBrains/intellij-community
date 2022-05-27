@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.slicer
 
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 
 object ReceiverSliceProducer : SliceProducer {
-    override fun produce(usage: UsageInfo, mode: KotlinSliceAnalysisMode, parent: SliceUsage): Collection<SliceUsage>? {
+    override fun produce(usage: UsageInfo, mode: KotlinSliceAnalysisMode, parent: SliceUsage): Collection<SliceUsage> {
         val refElement = usage.element ?: return emptyList()
         when (refElement) {
             is KtExpression -> {
@@ -52,7 +52,7 @@ object ReceiverSliceProducer : SliceProducer {
         }
     }
 
-    override val testPresentation: String?
+    override val testPresentation: String
         get() = "RECEIVER"
 
     override fun equals(other: Any?) = other === this

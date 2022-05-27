@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -42,7 +42,7 @@ class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
         return symbol.getTypeDeclarationFromCallable { descriptor -> descriptor.returnType }
     }
 
-    private fun KtDeclaration.getTypeDeclarationFromCallable(typeFromDescriptor: (CallableDescriptor) -> KotlinType?): Array<PsiElement>? {
+    private fun KtDeclaration.getTypeDeclarationFromCallable(typeFromDescriptor: (CallableDescriptor) -> KotlinType?): Array<PsiElement> {
         val callableDescriptor = resolveToDescriptorIfAny() as? CallableDescriptor ?: return emptyArray()
         val type = typeFromDescriptor(callableDescriptor) ?: return emptyArray()
         val classifierDescriptor = type.constructor.declarationDescriptor ?: return emptyArray()

@@ -1,18 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.AbstractReceiverParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ReceiverParameterDescriptorImpl
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -615,7 +618,7 @@ class KtSymbolBasedPropertyDescriptor(
     override fun isActual(): Boolean = implementationPostponed()
     override fun isExternal(): Boolean = implementationPlanned()
 
-    override fun getInType(): KotlinType? = implementationPostponed()
+    override fun getInType(): KotlinType = implementationPostponed()
 
     override fun setOverriddenDescriptors(overriddenDescriptors: MutableCollection<out CallableMemberDescriptor>) =
         noImplementation()
@@ -636,8 +639,8 @@ class KtSymbolBasedPropertyDescriptor(
 
     override fun getAccessors(): List<PropertyAccessorDescriptor> = listOfNotNull(getter, setter)
 
-    override fun getBackingField(): FieldDescriptor? = implementationPostponed()
-    override fun getDelegateField(): FieldDescriptor? = implementationPostponed()
+    override fun getBackingField(): FieldDescriptor = implementationPostponed()
+    override fun getDelegateField(): FieldDescriptor = implementationPostponed()
     override val isDelegated: Boolean
         get() = implementationPostponed()
 

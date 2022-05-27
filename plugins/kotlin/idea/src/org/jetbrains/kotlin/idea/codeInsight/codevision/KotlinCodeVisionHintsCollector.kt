@@ -202,7 +202,7 @@ class KotlinCodeVisionHintsCollector(
         private val inheritorsLimit: Int
     ) : CachedValueProvider<CachedHints> {
 
-        override fun compute(): CachedValueProvider.Result<CachedHints>? {
+        override fun compute(): CachedValueProvider.Result<CachedHints> {
             val hints: MutableList<KotlinCodeVisionLimitedHint> = SmartList()
 
             if (showUsages)

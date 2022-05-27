@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.github
 
@@ -361,7 +361,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       init()
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
       val mainText = JBLabel(if (remotes.size == 1) GithubBundle.message("share.action.remote.is.on.github")
                              else GithubBundle.message("share.action.remotes.are.on.github"))
 
@@ -407,7 +407,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       return null
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
       val tree = super.createCenterPanel()
 
       val commitMessage = CommitMessage(myProject)
@@ -431,7 +431,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       else null
     }
 
-    override fun getDimensionServiceKey(): String? {
+    override fun getDimensionServiceKey(): String {
       return "Github.UntrackedFilesDialog"
     }
   }

@@ -34,13 +34,13 @@ class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Projec
 
   }
 
-  private fun getAnnotationsCoordinates(): Pair<String, String>? {
+  private fun getAnnotationsCoordinates(): Pair<String, String> {
     //Currently, for any IDE download ideaIU's annotations.
     return "com.jetbrains.intellij.idea" to "ideaIU"
   }
 
   override fun downloadExternalAnnotations(ideBuildNumber: BuildNumber): IntelliJSdkExternalAnnotations? {
-    val (groupId, artifactId) = getAnnotationsCoordinates() ?: return null
+    val (groupId, artifactId) = getAnnotationsCoordinates()
 
     val lastReleaseVersion = "${ideBuildNumber.baselineVersion}.999999"
     val lastReleaseAnnotations = tryDownload(groupId, artifactId, lastReleaseVersion, listOf(RELEASES_REPO_DESCRIPTION))

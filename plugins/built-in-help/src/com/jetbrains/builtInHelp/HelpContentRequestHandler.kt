@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.builtInHelp
 
 import com.intellij.openapi.util.text.StringUtil
@@ -31,16 +31,14 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
       for (name: String in urlDecoder.parameters().keys) {
         val param = urlDecoder.parameters()[name]
         if (param != null && (param.isEmpty() || StringUtil.isEmpty(param[0]))) {
-          val map: HelpMap? = JAXBContext.newInstance(
+          val map: HelpMap = JAXBContext.newInstance(
             HelpMap::class.java, HelpMapId::class.java).createUnmarshaller().unmarshal(
             HelpRequestHandlerBase::class.java.getResource("/topics/Map.jhm")) as HelpMap
-          if (map != null) {
-            val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND)
-            response.addCommonHeaders()
-            response.headers().add("Location", prefix + map.getUrlForId(name))
-            context.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
-            return true
-          }
+          val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.FOUND)
+          response.addCommonHeaders()
+          response.headers().add("Location", prefix + map.getUrlForId(name))
+          context.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE)
+          return true
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -31,9 +31,9 @@ import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import java.util.*
 
@@ -74,7 +74,7 @@ abstract class ChangeCallableReturnTypeFix(
     }
 
     class ForEnclosing(element: KtFunction, type: KotlinType) : ChangeCallableReturnTypeFix(element, type), HighPriorityAction {
-        override fun functionPresentation(): String? {
+        override fun functionPresentation(): String {
             val presentation = super.functionPresentation()
                 ?: return KotlinBundle.message("fix.change.return.type.presentation.enclosing.function")
             return KotlinBundle.message("fix.change.return.type.presentation.enclosing", presentation)
@@ -82,7 +82,7 @@ abstract class ChangeCallableReturnTypeFix(
     }
 
     class ForCalled(element: KtCallableDeclaration, type: KotlinType) : ChangeCallableReturnTypeFix(element, type) {
-        override fun functionPresentation(): String? {
+        override fun functionPresentation(): String {
             val presentation = super.functionPresentation()
                 ?: return KotlinBundle.message("fix.change.return.type.presentation.called.function")
             return when (element) {

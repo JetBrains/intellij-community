@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder
@@ -27,7 +27,7 @@ internal class FieldExpression(
   private val myClassPointer = target.createSmartPointer(project)
   private val myFactory = JavaPsiFacade.getElementFactory(project)
 
-  override fun calculateResult(context: ExpressionContext): Result? = TextResult(fieldName)
+  override fun calculateResult(context: ExpressionContext): Result = TextResult(fieldName)
 
   override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement> {
     val psiClass = myClassPointer.element ?: return LookupElement.EMPTY_ARRAY

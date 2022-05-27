@@ -28,7 +28,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         }
     }
 
-    override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+    override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass {
         return MyPass(file.project, file, editor)
     }
 

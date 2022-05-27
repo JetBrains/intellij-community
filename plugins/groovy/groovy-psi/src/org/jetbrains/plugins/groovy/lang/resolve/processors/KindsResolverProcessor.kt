@@ -29,7 +29,7 @@ open class KindsResolverProcessor(
     @Suppress("LeakingThis") hint(GroovyResolveKind.HINT_KEY, this)
   }
 
-  final override fun getName(state: ResolveState): String? = name
+  final override fun getName(state: ResolveState): String = name
 
   override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind in kinds && kind !in candidates
 

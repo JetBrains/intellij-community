@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven
 
@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.SmartList
-import java.util.*
 
 fun kotlinPluginId(version: String?) = MavenId(KotlinMavenConfigurator.GROUP_ID, KotlinMavenConfigurator.MAVEN_PLUGIN_ID, version)
 
@@ -646,7 +645,7 @@ private fun PomFile.changeConfigurationOrProperty(
     kotlinPlugin: MavenDomPlugin,
     configurationTagName: String,
     propertyName: String, value: String
-): XmlTag? {
+): XmlTag {
     val configuration = kotlinPlugin.configuration
     if (configuration.exists()) {
         val subTag = configuration.xmlTag?.findFirstSubTag(configurationTagName)

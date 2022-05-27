@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.java
 
@@ -215,7 +215,7 @@ class JavaUEnumConstant(
     get() = null
   override val methodIdentifier: UIdentifier?
     get() = null
-  override val classReference: UReferenceExpression?
+  override val classReference: UReferenceExpression
     get() = JavaEnumConstantClassReference(sourcePsi, this)
   override val typeArgumentCount: Int
     get() = 0
@@ -232,7 +232,7 @@ class JavaUEnumConstant(
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
-  override val returnType: PsiType?
+  override val returnType: PsiType
     get() = sourcePsi.type
 
   override fun resolve(): PsiMethod? = sourcePsi.resolveMethod()

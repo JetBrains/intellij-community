@@ -67,7 +67,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
   class TableCopyProvider(private val table: JBTable) : CopyProvider {
 
     override fun performCopy(dataContext: DataContext) {
-      val copySelectedToString: String? = ClipboardUtils.copySelectedToString(table)
+      val copySelectedToString: CharSequence = ClipboardUtils.copySelectedToString(table)
       CopyPasteManager.getInstance().setContents(TextTransferable(copySelectedToString))
     }
 

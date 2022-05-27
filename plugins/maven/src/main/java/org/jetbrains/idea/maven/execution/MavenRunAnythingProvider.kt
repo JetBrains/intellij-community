@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext
@@ -8,7 +8,6 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvi
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
 import com.intellij.ide.actions.runAnything.getPath
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.util.NlsSafe
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -19,14 +18,14 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   override fun getHelpCommand() = HELP_COMMAND
 
-  override fun getHelpIcon(): Icon? = OpenapiIcons.RepositoryLibraryLogo
+  override fun getHelpIcon(): Icon = OpenapiIcons.RepositoryLibraryLogo
 
 
   override fun getHelpGroupTitle():  String {
     return "Maven" //NON-NLS
   }
 
-  override fun getIcon(value: String): Icon? = OpenapiIcons.RepositoryLibraryLogo
+  override fun getIcon(value: String): Icon = OpenapiIcons.RepositoryLibraryLogo
 
   override fun getCompletionGroupTitle() = RunnerBundle.message("popup.title.maven.goals")
 

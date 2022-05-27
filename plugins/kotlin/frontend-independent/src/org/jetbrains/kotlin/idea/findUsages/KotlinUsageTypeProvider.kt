@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -8,7 +8,7 @@ import com.intellij.usages.impl.rules.UsageType
 import com.intellij.usages.impl.rules.UsageTypeProviderEx
 import org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypes.toUsageType
 import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
-import org.jetbrains.kotlin.idea.references.*
+import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
@@ -106,7 +106,7 @@ abstract class KotlinUsageTypeProvider : UsageTypeProviderEx {
         }
     }
 
-    protected fun getVariableUsageType(refExpr: KtReferenceExpression): UsageTypeEnum? {
+    protected fun getVariableUsageType(refExpr: KtReferenceExpression): UsageTypeEnum {
         if (refExpr.getParentOfTypeAndBranch<KtDelegatedSuperTypeEntry> { delegateExpression } != null) return DELEGATE
 
         if (refExpr.parent is KtValueArgumentName) return NAMED_ARGUMENT

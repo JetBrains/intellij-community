@@ -111,11 +111,8 @@ class ActionsGenerationStep(
                 inc(javaProperties.tokenType.toString().toLowerCase())
                 group(action.kind().toString().toLowerCase()) {
                   inc("total")
-                  when (javaProperties.isStatic) {
-                    true -> inc("static")
-                    false -> inc("nonstatic")
-                    else -> inc("unknown")
-                  }
+                  if (javaProperties.isStatic) inc("static")
+                  else inc("nonstatic")
 
                   countingGroup("popular symbols", 3000) {
                     inc("${javaProperties.containingClass}#${action.expectedText}")

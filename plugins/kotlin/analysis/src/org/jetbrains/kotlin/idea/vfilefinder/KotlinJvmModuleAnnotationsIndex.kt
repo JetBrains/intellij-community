@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.vfilefinder
 
@@ -19,7 +19,7 @@ object KotlinJvmModuleAnnotationsIndex : FileBasedIndexExtension<String, List<Cl
     private val KEY_DESCRIPTOR = KotlinModuleMappingIndex.STRING_KEY_DESCRIPTOR
 
     private val VALUE_EXTERNALIZER = object : DataExternalizer<List<ClassId>> {
-        override fun read(input: DataInput): List<ClassId>? =
+        override fun read(input: DataInput): List<ClassId> =
             IOUtil.readStringList(input).map(ClassId::fromString)
 
         override fun save(out: DataOutput, value: List<ClassId>) =

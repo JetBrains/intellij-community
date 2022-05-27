@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core
 
 import org.jetbrains.kotlin.backend.common.output.OutputFile
@@ -21,7 +21,10 @@ import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtScript
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -40,7 +43,7 @@ class KotlinCompilerIde(
             }
         }
 
-        private fun getDefaultResolutionFacade(file: KtFile): ResolutionFacade? {
+        private fun getDefaultResolutionFacade(file: KtFile): ResolutionFacade {
             return file.getResolutionFacade()
         }
     }

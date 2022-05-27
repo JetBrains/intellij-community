@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
 class GradleExtensionsContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName(): String? = GRADLE_API_PROJECT
+  override fun getParentClassName(): String = GRADLE_API_PROJECT
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,

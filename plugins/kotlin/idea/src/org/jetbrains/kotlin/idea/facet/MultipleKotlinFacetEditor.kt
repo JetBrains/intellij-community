@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.facet
 
@@ -22,7 +22,7 @@ class MultipleKotlinFacetEditor(
     private val FacetEditor.compilerConfigurable: KotlinCompilerConfigurableTab
         get() = tabEditor.compilerConfigurable
 
-    override fun createComponent(): JComponent? {
+    override fun createComponent(): JComponent {
         return KotlinFacetEditorGeneralTab.EditorComponent(project, null).apply {
             initialize()
             editors.flatMap { it.editorTabs.filterIsInstance<KotlinFacetEditorGeneralTab>() }.forEach { it.initializeIfNeeded() }

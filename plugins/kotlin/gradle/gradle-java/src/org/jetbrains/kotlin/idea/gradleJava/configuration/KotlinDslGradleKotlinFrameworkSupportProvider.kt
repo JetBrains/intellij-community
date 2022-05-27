@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
@@ -14,17 +14,22 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.configuration.DEFAULT_GRADLE_PLUGIN_REPOSITORY
+import org.jetbrains.kotlin.idea.configuration.LAST_SNAPSHOT_VERSION
+import org.jetbrains.kotlin.idea.configuration.getRepositoryForVersion
+import org.jetbrains.kotlin.idea.configuration.toKotlinRepositorySnippet
+import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
+import org.jetbrains.kotlin.idea.gradle.configuration.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.GSK_KOTLIN_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinGradlePluginClassPathSnippet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinModuleDependencySnippet
-import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
-import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
-import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
-import org.jetbrains.kotlin.idea.gradle.configuration.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.versions.*
+import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
+import org.jetbrains.kotlin.idea.versions.getDefaultJvmTarget
+import org.jetbrains.kotlin.idea.versions.getStdlibArtifactId
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider
 import javax.swing.Icon
@@ -235,7 +240,7 @@ class KotlinDslGradleKotlinJSBrowserFrameworkSupportProvider :
         addBrowserSupport(module)
     }
 
-    override fun additionalSubTargetSettings(): String? =
+    override fun additionalSubTargetSettings(): String =
         browserConfiguration()
 }
 

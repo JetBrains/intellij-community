@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
@@ -32,7 +32,7 @@ class JavaToKotlinPreconversionPullUpHelper(
     private val membersToDummyDeclarations = HashMap<PsiMember, KtElement>()
 
     private val encapsulateFieldsDescriptor = object : EncapsulateFieldsDescriptor {
-        override fun getSelectedFields(): Array<out FieldDescriptor>? = arrayOf()
+        override fun getSelectedFields(): Array<out FieldDescriptor> = arrayOf()
         override fun isToEncapsulateGet() = true
         override fun isToEncapsulateSet() = true
         override fun isToUseAccessorsWhenAccessible() = true

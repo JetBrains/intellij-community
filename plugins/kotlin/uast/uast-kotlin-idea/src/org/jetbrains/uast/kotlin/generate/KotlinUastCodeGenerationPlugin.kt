@@ -250,7 +250,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     @Deprecated("use version with context parameter")
-    fun createSimpleReference(name: String): USimpleNameReferenceExpression? {
+    fun createSimpleReference(name: String): USimpleNameReferenceExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
         return createSimpleReference(name, null)
     }
@@ -270,7 +270,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     @Deprecated("use version with context parameter")
-    fun createReturnExpresion(expression: UExpression?, inLambda: Boolean): UReturnExpression? {
+    fun createReturnExpresion(expression: UExpression?, inLambda: Boolean): UReturnExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
         return createReturnExpresion(expression, inLambda, null)
     }
@@ -362,7 +362,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     @Deprecated("use version with context parameter")
-    fun createBlockExpression(expressions: List<UExpression>): UBlockExpression? {
+    fun createBlockExpression(expressions: List<UExpression>): UBlockExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
         return createBlockExpression(expressions, null)
     }
@@ -379,7 +379,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     @Deprecated("use version with context parameter")
-    fun createDeclarationExpression(declarations: List<UDeclaration>): UDeclarationsExpression? {
+    fun createDeclarationExpression(declarations: List<UDeclaration>): UDeclarationsExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
         return createDeclarationExpression(declarations, null)
     }
@@ -469,7 +469,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         type: PsiType?,
         initializer: UExpression,
         immutable: Boolean
-    ): ULocalVariable? {
+    ): ULocalVariable {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
         return createLocalVariable(suggestedName, type, initializer, immutable, null)
     }

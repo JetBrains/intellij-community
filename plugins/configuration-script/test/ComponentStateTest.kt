@@ -23,16 +23,16 @@ class ComponentStateTest {
       git:
         updateMethod: rebase
     """)
-    assertThat(result!!.updateMethod).isEqualTo(UpdateMethod.REBASE)
+    assertThat(result.updateMethod).isEqualTo(UpdateMethod.REBASE)
   }
 }
 
 @Suppress("SameParameterValue")
-private fun doReadComponentConfiguration(namePath: String, @Language("YAML") data: String): TestState? {
+private fun doReadComponentConfiguration(namePath: String, @Language("YAML") data: String): TestState {
   return readComponentConfiguration(findValueNodeByPath(namePath, doRead(data.trimIndent().reader())!!.value)!!, TestState::class.java)
 }
 
-private fun <T : BaseState> readComponentConfiguration(nodes: List<NodeTuple>, stateClass: Class<out T>): T? {
+private fun <T : BaseState> readComponentConfiguration(nodes: List<NodeTuple>, stateClass: Class<out T>): T {
   return readIntoObject(ReflectionUtil.newInstance(stateClass), nodes)
 }
 

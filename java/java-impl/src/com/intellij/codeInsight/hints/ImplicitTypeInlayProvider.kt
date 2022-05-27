@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
@@ -9,7 +9,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class ImplicitTypeInlayProvider : InlayHintsProvider<NoSettings> {
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector {
     val project = file.project
     return object: FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {

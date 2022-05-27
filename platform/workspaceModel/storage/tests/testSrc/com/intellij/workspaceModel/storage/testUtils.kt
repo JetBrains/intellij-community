@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
 import com.google.common.collect.HashBiMap
@@ -15,7 +15,7 @@ import kotlin.reflect.full.memberProperties
 class TestEntityTypesResolver : EntityTypesResolver {
   private val pluginPrefix = "PLUGIN___"
 
-  override fun getPluginId(clazz: Class<*>): String? = pluginPrefix + clazz.name
+  override fun getPluginId(clazz: Class<*>): String = pluginPrefix + clazz.name
   override fun resolveClass(name: String, pluginId: String?): Class<*> {
     Assert.assertEquals(pluginPrefix + name, pluginId)
     if (name.startsWith("[")) return Class.forName(name)

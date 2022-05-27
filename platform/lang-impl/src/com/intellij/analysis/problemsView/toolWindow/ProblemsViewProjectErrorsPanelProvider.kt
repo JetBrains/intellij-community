@@ -14,7 +14,7 @@ class ProblemsViewProjectErrorsPanelProvider(private val project: Project) : Pro
   }
   private val ACTION_IDS = listOf("CompileDirty", "InspectCode")
 
-  override fun create(): ProblemsViewTab? {
+  override fun create(): ProblemsViewTab {
     val state = ProblemsViewState.getInstance(project)
     val panel = ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.project"))
     panel.treeModel.root = CollectorBasedRoot(panel)

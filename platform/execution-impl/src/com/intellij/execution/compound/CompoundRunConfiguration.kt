@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.compound
 
 import com.intellij.execution.*
@@ -106,7 +106,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     }
   }
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState {
     try {
       checkConfiguration()
     }
@@ -143,7 +143,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     }
   }
 
-  override fun getState(): CompoundRunConfigurationOptions? {
+  override fun getState(): CompoundRunConfigurationOptions {
     if (isDirty.compareAndSet(true, false)) {
       options.configurations.clear()
       for (entry in sortedConfigurationsWithTargets) {

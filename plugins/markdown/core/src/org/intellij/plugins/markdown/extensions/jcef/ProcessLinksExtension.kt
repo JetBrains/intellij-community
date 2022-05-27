@@ -40,7 +40,7 @@ internal class ProcessLinksExtension(private val panel: MarkdownHtmlPanel): Mark
   override fun dispose() = Unit
 
   class Provider: MarkdownBrowserPreviewExtension.Provider {
-    override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
+    override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension {
       return ProcessLinksExtension(panel)
     }
   }

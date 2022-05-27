@@ -96,7 +96,7 @@ internal class CountingTestExtension : FileBasedIndexInfrastructureExtension {
   val trigramCounter = AtomicInteger()
   val commonBundledFileCounter = AtomicInteger()
 
-  override fun createFileIndexingStatusProcessor(project: Project): FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor? {
+  override fun createFileIndexingStatusProcessor(project: Project): FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor {
     return object : FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor {
       override fun shouldProcessUpToDateFiles(): Boolean = true
 
