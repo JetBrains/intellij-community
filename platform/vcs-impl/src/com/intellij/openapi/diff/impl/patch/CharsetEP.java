@@ -25,7 +25,8 @@ public final class CharsetEP implements PatchEP {
 
   @Override
   public CharSequence provideContent(@NotNull Project project, @NotNull String path, @Nullable CommitContext commitContext) {
-    VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path));
+    Path file = ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
+    VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
     return vf == null ? null : vf.getCharset().name();
   }
 

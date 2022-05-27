@@ -19,11 +19,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class BaseRevisionTextPatchEP implements PatchEP {
-  public final static Key<Boolean> ourPutBaseRevisionTextKey = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey");
-  public static final Key<Map<FilePath, ContentRevision>>
-    ourBaseRevisions = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourBaseRevisionPaths");
-  public static final Key<Map<String, String>> ourStoredTexts = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
-  private final static Logger LOG = Logger.getInstance(BaseRevisionTextPatchEP.class);
+  public static final Key<Boolean> ourPutBaseRevisionTextKey =
+    Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey");
+  public static final Key<Map<FilePath, ContentRevision>> ourBaseRevisions =
+    Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourBaseRevisionPaths");
+  private static final Key<Map<String, String>> ourStoredTexts =
+    Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
+  private static final Logger LOG = Logger.getInstance(BaseRevisionTextPatchEP.class);
 
   @NotNull
   @Override
