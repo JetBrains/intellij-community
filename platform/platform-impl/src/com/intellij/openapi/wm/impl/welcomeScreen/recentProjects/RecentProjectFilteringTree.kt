@@ -201,14 +201,16 @@ class RecentProjectFilteringTree(
         return
       }
 
-      if (intersectWithActionIcon(point)) {
-        when (item) {
-          is CloneableProjectItem -> cancelCloneProject(item.cloneableProject)
-          else -> invokePopup(mouseEvent.component, point.x, point.y)
+      if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
+        if (intersectWithActionIcon(point)) {
+          when (item) {
+            is CloneableProjectItem -> cancelCloneProject(item.cloneableProject)
+            else -> invokePopup(mouseEvent.component, point.x, point.y)
+          }
         }
-      }
-      else if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
-        activateItem(tree, item)
+        else {
+          activateItem(tree, item)
+        }
       }
 
       mouseEvent.consume()
