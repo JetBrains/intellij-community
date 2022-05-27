@@ -40,7 +40,7 @@ class WorkspaceModuleImporter(
   private val mavenProjectToModuleName: HashMap<MavenProject, String>,
   private val project: Project) {
 
-  private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID)
+  private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
   fun importModule(): ModuleEntity {
     val baseModuleDirPath = importingSettings.dedicatedModuleDir.ifBlank { null } ?: mavenProject.directory
@@ -50,7 +50,8 @@ class WorkspaceModuleImporter(
     val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
     val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
       module = moduleEntity
-      externalSystem = externalSource.id
+      externalSystem = EXTERNAL_SOURCE_ID
+      linkedProjectPath = linkedProjectPath(mavenProject)
     }
     builder.addEntity(externalSystemModuleOptionsEntity)
 
@@ -312,5 +313,11 @@ class WorkspaceModuleImporter(
 
   companion object {
     internal val JAVADOC_TYPE: LibraryRootTypeId = LibraryRootTypeId("JAVADOC")
+
+    val EXTERNAL_SOURCE_ID get() = ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+
+    fun linkedProjectPath(mavenProject: MavenProject): String {
+      return FileUtil.toSystemIndependentName(mavenProject.directory)
+    }
   }
 }
