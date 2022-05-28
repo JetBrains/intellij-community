@@ -9,7 +9,7 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     Disposer.register(parent, this);
   }
 
-  public void renderSimilarUsages(@NotNull Collection<SimilarityUsage> similarUsagesGroupUsages) {
+  public void renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
     if (alreadyShown < similarUsagesGroupUsages.size() - 1) {
       similarUsagesGroupUsages.stream().skip(alreadyShown).limit(SNIPPET_LIMIT).forEach(usage -> {
         final UsageInfo info = ((UsageInfo2UsageAdapter)usage).getUsageInfo();

@@ -12,11 +12,11 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.JavaTokenType.FINAL_KEYWORD;
 
-public class JavaSimilarityPropertiesExtractor extends JavaRecursiveElementVisitor {
+public class JavaSimilarityFeaturesExtractor extends JavaRecursiveElementVisitor {
   private final @NotNull UsageSimilarityFeaturesRecorder myUsageSimilarityFeaturesRecorder;
   private final @NotNull PsiElement myContext;
 
-  public JavaSimilarityPropertiesExtractor(@NotNull PsiElement context) {
+  public JavaSimilarityFeaturesExtractor(@NotNull PsiElement context) {
     myUsageSimilarityFeaturesRecorder = new UsageSimilarityFeaturesRecorder(context);
     myContext = context;
   }

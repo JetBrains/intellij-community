@@ -15,7 +15,7 @@ import java.util.List;
  * This interface marks {@link com.intellij.usages.UsageInfo2UsageAdapter} implementation as a subject of clustering
  */
 @ApiStatus.Experimental
-public interface SimilarityUsage {
+public interface SimilarUsage {
 
   /**
    * Each usage provides a {@link Bag} of features (string tokens) collected by {@link com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider} implementation

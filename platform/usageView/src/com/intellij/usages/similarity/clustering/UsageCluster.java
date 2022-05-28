@@ -2,7 +2,7 @@
 package com.intellij.usages.similarity.clustering;
 
 import com.intellij.usages.UsageGroup;
-import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class UsageCluster {
 
   private final int myIndex;
-  private final Set<SimilarityUsage> myUsages = new CopyOnWriteArraySet<>();
+  private final Set<SimilarUsage> myUsages = new CopyOnWriteArraySet<>();
 
   public UsageCluster(int index) {
     this.myIndex = index;
@@ -24,11 +24,11 @@ public class UsageCluster {
     return myIndex;
   }
 
-  public synchronized void addUsage(@NotNull SimilarityUsage usage) {
+  public synchronized void addUsage(@NotNull SimilarUsage usage) {
     myUsages.add(usage);
   }
 
-  public @NotNull Set<SimilarityUsage> getUsages() {
+  public @NotNull Set<SimilarUsage> getUsages() {
     return myUsages;
   }
 
@@ -40,11 +40,11 @@ public class UsageCluster {
   }
 
   @NotNull
-  public Set<SimilarityUsage> getUsageFilteredByGroup(@NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
+  public Set<SimilarUsage> getUsageFilteredByGroup(@NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
     return getUsages().stream().filter(e -> belongsToGroup(e, groups)).collect(Collectors.toSet());
   }
 
-  public static boolean belongsToGroup(@NotNull SimilarityUsage info,
+  public static boolean belongsToGroup(@NotNull SimilarUsage info,
                                        @NotNull Collection<@NotNull Collection<? extends UsageGroup>> selectedGroupPaths) {
     for (Collection<? extends UsageGroup> selectedGroupPath : selectedGroupPaths) {
       if (ContainerUtil.intersection(selectedGroupPath, info.getUsageGroupData()).size() == selectedGroupPath.size()) {

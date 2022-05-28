@@ -31,7 +31,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
-import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener;
@@ -126,7 +126,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     return actionToolbar;
   }
 
-  private @NotNull ActionLink createOpenSimilarUsagesActionLink(UsageInfo info, @NotNull Set<SimilarityUsage> usagesToRender) {
+  private @NotNull ActionLink createOpenSimilarUsagesActionLink(UsageInfo info, @NotNull Set<SimilarUsage> usagesToRender) {
     final ActionLink actionLink = new ActionLink(UsageViewBundle.message("similar.usages.show.0.similar.usages.title", usagesToRender.size() - 1), e -> {
       myIsShowingSimilarUsages = true;
       ActivityTracker.getInstance().inc();
@@ -174,11 +174,11 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   private void renderCluster(@NotNull JPanel summaryPanel,
                              @NotNull UsageCluster cluster) {
-    final Set<SimilarityUsage> usageFilteredByGroup = new HashSet<>();
+    final Set<SimilarUsage> usageFilteredByGroup = new HashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       usageFilteredByGroup.addAll(cluster.getUsageFilteredByGroup(myGroups));
     });
-    SimilarityUsage usage = ContainerUtil.getFirstItem(usageFilteredByGroup);
+    SimilarUsage usage = ContainerUtil.getFirstItem(usageFilteredByGroup);
     if (usage instanceof UsageInfo2UsageAdapter) {
       final UsageInfo2UsageAdapter usageInfoAdapter = (UsageInfo2UsageAdapter)usage;
       UsageCodeSnippetComponent summaryRendererComponent =
@@ -232,8 +232,8 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     Optional<Usage> usage = usageView.getUsages().stream().findFirst();
     if (usage.isPresent()) {
       Usage firstUsage = usage.get();
-      if (firstUsage instanceof SimilarityUsage) {
-        return ((SimilarityUsage)firstUsage).getClusteringSession();
+      if (firstUsage instanceof SimilarUsage) {
+        return ((SimilarUsage)firstUsage).getClusteringSession();
       }
     }
     return null;

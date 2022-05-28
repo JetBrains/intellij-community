@@ -7,9 +7,8 @@ import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
 import org.jetbrains.kotlin.psi.*
 
-class KotlinSimilarityPropertiesExtractor(context: PsiElement) : KtTreeVisitorVoid() {
-    private val myUsageSimilarityFeaturesRecorder =
-        UsageSimilarityFeaturesRecorder(context)
+class KotlinSimilarityFeaturesExtractor(context: PsiElement) : KtTreeVisitorVoid() {
+    private val myUsageSimilarityFeaturesRecorder = UsageSimilarityFeaturesRecorder(context)
     private val myContext = context
 
     fun getFeatures(): Bag {
