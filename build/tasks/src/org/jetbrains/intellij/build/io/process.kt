@@ -196,7 +196,9 @@ fun runProcess(args: List<String>,
         .start()
       val errorReader = logger?.let { readErrorOutput(process, timeout, it) }
       try {
-        if (logger != null) readOutputAndBlock(process, timeout, logger)
+        if (logger != null) {
+          readOutputAndBlock(process, timeout, logger)
+        }
 
         if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
           process.destroyForcibly().waitFor()
