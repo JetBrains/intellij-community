@@ -68,6 +68,14 @@
                      language="kotlin"
                      key="inspection.cascade.if.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.ConvertCallChainIntoSequenceInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="INFO"
+                     language="kotlin"
+                     key="inspection.convert.call.chain.into.sequence.display.name" bundle="messages.KotlinBundle"/>
+
 
   </extensions>
 </idea-plugin>
