@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>content</key>
+	<string>, ${1:field}${2: = ${3:value}}</string>
+	<key>keyEquivalent</key>
+	<string>^,</string>
+	<key>name</key>
+	<string>Field &amp; Value</string>
+	<key>scope</key>
+	<string>source.erlang meta.structure.record</string>
+	<key>uuid</key>
+	<string>2842C13E-C4F3-4DD4-86CE-C008A0AA461D</string>
+</dict>
+</plist>

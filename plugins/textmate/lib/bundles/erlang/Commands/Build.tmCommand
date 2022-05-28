@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>beforeRunningCommand</key>
+	<string>saveActiveFile</string>
+	<key>bundleUUID</key>
+	<string>065A8821-DD83-4753-90E3-AA70EC12E150</string>
+	<key>command</key>
+	<string>#!/usr/bin/env escript
+
+main([]) -&gt;
+    File = os:getenv("TM_FILEPATH"),
+    Dir = os:getenv("TM_DIRECTORY"),
+    Tokens = filename:split(Dir),
+    Opts=[return_errors, return_warnings],
+    crawl(hd(lists:reverse(Tokens)), Tokens, File, Opts).
+
+crawl("src", _Tokens, _File, _Opts) -&gt;
+    io:format("not implemented yet ...");
+crawl(_, _Tokens, File, Opts) -&gt;
+    main(File, File, Opts).
+
+main(DisplayPath, File, Opts) -&gt;
+    case compile:file(File, Opts) of
+        {ok, _Mod, []} -&gt;
+            io:format("&lt;script&gt;window.close()&lt;/script&gt;");
+        {ok, Mod, Warnings} -&gt;
+            io:format("Compilation success: ~p&lt;script&gt;window.close()&lt;/script&gt;&lt;br&gt;",[Mod]),
+            report_warnings(Warnings);
+        {error, Errors, Warnings} -&gt;
+            io:format("&lt;b&gt;Errors:&lt;/b&gt;&lt;br&gt;&lt;br&gt;"),
+            [list_errors(DisplayPath,F,E) || {F, E} &lt;- Errors],
+            report_warnings(Warnings)
+    end.
+
+
+list_errors(R, F, [{Line,Mod,E}|Tail]) -&gt;
+    io:format("&lt;a style=\"color:red\" href=\"txmt://open/?url=file://~s&amp;line=~p\"&gt;~s:~p: ~s&lt;/a&gt;&lt;br&gt;", [R, Line, F, Line, Mod:format_error(E)]),
+    list_errors(F, F, Tail);
+list_errors(_, _, []) -&gt; ok.
+
+
+report_warnings([]) -&gt; ok;
+report_warnings(Warnings) -&gt;
+	io:format("&lt;br&gt;&lt;br&gt;&lt;b&gt;Warning:&lt;/b&gt;&lt;br&gt;&lt;br&gt;"),
+	[{FilePath, WarningsList}] = Warnings,
+	list_warnings(FilePath, WarningsList).
+
+
+list_warnings(_, []) -&gt; ok;
+list_warnings(F, [{Line,Mod,E}|Tail]) -&gt;
+    io:format("&lt;a style=\"color:orange\" href=\"txmt://open/?url=file://~s&amp;line=~p\"&gt;~s:~p: ~s&lt;/a&gt;&lt;br&gt;", [F, Line, F, Line, Mod:format_error(E)]),
+    list_warnings(F, Tail).
+</string>
+	<key>input</key>
+	<string>document</string>
+	<key>inputFormat</key>
+	<string>text</string>
+	<key>keyEquivalent</key>
+	<string>@b</string>
+	<key>name</key>
+	<string>Compile</string>
+	<key>outputCaret</key>
+	<string>afterOutput</string>
+	<key>outputFormat</key>
+	<string>html</string>
+	<key>outputLocation</key>
+	<string>newWindow</string>
+	<key>requiredCommands</key>
+	<array>
+		<dict>
+			<key>command</key>
+			<string>escript</string>
+			<key>locations</key>
+			<array>
+				<string>/usr/local/bin/escript</string>
+				<string>/opt/local/bin/escript</string>
+			</array>
+		</dict>
+	</array>
+	<key>scope</key>
+	<string>source.erlang</string>
+	<key>semanticClass</key>
+	<string>process.build.erlang</string>
+	<key>uuid</key>
+	<string>C340B2B5-3B6A-4756-860A-9687F4B54259</string>
+	<key>version</key>
+	<integer>2</integer>
+</dict>
+</plist>
