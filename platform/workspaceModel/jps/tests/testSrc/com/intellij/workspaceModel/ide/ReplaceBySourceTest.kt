@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.ide
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
@@ -28,7 +28,7 @@ class ReplaceBySourceTest {
     val expectedResult = mutableListOf<String>()
     for (i in 1..100) {
       val builder = createBuilder()
-      val storage = WorkspaceEntityStorageBuilder.create()
+      val storage = MutableEntityStorage.create()
       storage.replaceBySource({ entitySource -> entitySource is JpsFileEntitySource }, builder)
       val contentRootEntity = storage.entities(ContentRootEntity::class.java).first()
       if (i == 1) {
@@ -39,14 +39,14 @@ class ReplaceBySourceTest {
     }
   }
 
-  private fun createBuilder(): WorkspaceEntityStorageBuilder {
+  private fun createBuilder(): MutableEntityStorage {
     val fileUrl = "/user/opt/app/a.txt"
     val fileUrl2 = "/user/opt/app/b.txt"
     val fileUrl3 = "/user/opt/app/c.txt"
     val fileUrl4 = "/user/opt/app/d.txt"
     val fileUrl5 = "/user/opt/app/e.txt"
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
     val baseDir = projectModel.baseProjectDir.rootPath.resolve("test")
     val iprFile = baseDir.resolve("testProject.ipr")
     val configLocation = toConfigLocation(iprFile, virtualFileManager)

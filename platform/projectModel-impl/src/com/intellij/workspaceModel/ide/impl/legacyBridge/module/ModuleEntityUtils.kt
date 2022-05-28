@@ -9,15 +9,15 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
 /**
  * @return corresponding [ModuleBridge] or null if module is unloaded
  */
-fun ModuleEntity.findModuleBridge(snapshot: WorkspaceEntityStorage): ModuleBridge? {
+fun ModuleEntity.findModuleBridge(snapshot: EntityStorage): ModuleBridge? {
   return snapshot.moduleMap.getDataByEntity(this)
 }
 
@@ -25,7 +25,7 @@ fun ModuleEntity.findModuleBridge(snapshot: WorkspaceEntityStorage): ModuleBridg
  * Check if the module is unloaded. **Note** even if the module is unloaded all related entities will continue store at project model
  * thus the changes with these entities will be available for listening via [com.intellij.workspaceModel.ide.WorkspaceModelChangeListener]
  */
-fun ModuleEntity.isModuleUnloaded(snapshot: WorkspaceEntityStorage): Boolean {
+fun ModuleEntity.isModuleUnloaded(snapshot: EntityStorage): Boolean {
   return this.findModuleBridge(snapshot) == null
 }
 

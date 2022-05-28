@@ -38,9 +38,9 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -130,8 +130,8 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
 
       private @Nullable Module extractModuleFromContentRoots(@NotNull EntityChange<ContentRootEntity> change,
-                                                             @NotNull WorkspaceEntityStorage storageBefore,
-                                                             @NotNull WorkspaceEntityStorage storageAfter,
+                                                             @NotNull EntityStorage storageBefore,
+                                                             @NotNull EntityStorage storageAfter,
                                                              boolean before) {
         if (change instanceof EntityChange.Replaced<?>) {
           return before
@@ -150,8 +150,8 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
 
       private @Nullable Module extractModuleEntityChange(@NotNull EntityChange<ModuleEntity> change,
-                                                         @NotNull WorkspaceEntityStorage storageBefore,
-                                                         @NotNull WorkspaceEntityStorage storageAfter,
+                                                         @NotNull EntityStorage storageBefore,
+                                                         @NotNull EntityStorage storageAfter,
                                                          boolean before) {
         if (change instanceof EntityChange.Replaced<?>) {
           return before
@@ -169,11 +169,11 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
         throw new AssertionError();
       }
 
-      private @Nullable Module extractModule(@NotNull ModuleEntity entity, @NotNull WorkspaceEntityStorage storage) {
+      private @Nullable Module extractModule(@NotNull ModuleEntity entity, @NotNull EntityStorage storage) {
         return ModuleEntityUtils.findModuleBridge(entity, storage);
       }
 
-      private @Nullable Module extractModule(@NotNull ContentRootEntity entity, @NotNull WorkspaceEntityStorage storage) {
+      private @Nullable Module extractModule(@NotNull ContentRootEntity entity, @NotNull EntityStorage storage) {
         return extractModule(entity.getModule(), storage);
       }
     });

@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
+import org.jetbrains.idea.maven.importing.tree.workspace.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 
@@ -42,7 +43,7 @@ class MavenProjectImporterToWorkspaceModel(
   }
 
   private fun importModules(postTasks: ArrayList<MavenProjectsProcessorTask>) {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val allProjects = myProjectsTree.projects.toMutableSet()
     allProjects.addAll(myProjectsToImportWithChanges.keys)

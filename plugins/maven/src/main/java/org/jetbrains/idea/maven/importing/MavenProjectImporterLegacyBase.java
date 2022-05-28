@@ -9,8 +9,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
+import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -41,8 +41,8 @@ public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporte
 
   protected void setMavenizedModules(final Collection<Module> modules, final boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    WorkspaceEntityStorage initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
-    WorkspaceEntityStorageBuilder storageBuilder = WorkspaceEntityStorageBuilder.from(initialStorage);
+    EntityStorage initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+    MutableEntityStorage storageBuilder = MutableEntityStorage.from(initialStorage);
     for (Module module : modules) {
       if (module.isDisposed()) continue;
       ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);

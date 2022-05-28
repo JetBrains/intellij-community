@@ -10,10 +10,11 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
 import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 /**
@@ -135,7 +136,7 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
     }
   }
 
-  private fun <T: WorkspaceEntity> getEntityAndStorage(event: VersionedStorageChange, change: EntityChange<T>): Pair<T, WorkspaceEntityStorage> {
+  private fun <T: WorkspaceEntity> getEntityAndStorage(event: VersionedStorageChange, change: EntityChange<T>): Pair<T, EntityStorage> {
     return when (change) {
       is EntityChange.Added -> change.entity to event.storageAfter
       is EntityChange.Removed -> change.entity to event.storageBefore

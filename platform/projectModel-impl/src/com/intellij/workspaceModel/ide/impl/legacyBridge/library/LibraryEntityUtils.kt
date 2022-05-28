@@ -6,22 +6,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 
 /**
  * @return [Library] or null if corresponding module is unloaded
  */
-fun LibraryEntity.findLibraryBridge(snapshot: WorkspaceEntityStorage): Library? {
+fun LibraryEntity.findLibraryBridge(snapshot: EntityStorage): Library? {
   return snapshot.libraryMap.getDataByEntity(this)
 }
 
 /**
  * @return [Library] calculated base on the [LibraryId] it can be application or project level lib
  */
-fun LibraryId.findLibraryBridge(snapshot: WorkspaceEntityStorage, project: Project): Library? {
+fun LibraryId.findLibraryBridge(snapshot: EntityStorage, project: Project): Library? {
   return if (tableId is LibraryTableId.GlobalLibraryTableId) {
     LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(tableId.level, project)?.getLibraryByName(name)
   }
