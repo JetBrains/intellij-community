@@ -8,9 +8,9 @@ import com.intellij.feedback.kotlinRejecters.dialog.KotlinRejectersFeedbackDialo
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.util.PlatformUtils
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -21,7 +21,6 @@ class OpenApplicationFeedbackShower : AppLifecycleListener {
   companion object {
     val LAST_DATE_COLLECT_FEEDBACK = LocalDate(2022, 7, 19)
     const val MAX_NUMBER_NOTIFICATION_SHOWED = 3
-    private val suitableIDEs = listOf("IntelliJ IDEA Community Edition", "IntelliJ IDEA Ultimate Edition")
 
     fun showNotification(project: Project?, forTest: Boolean) {
       val notification = RequestFeedbackNotification(
@@ -46,8 +45,9 @@ class OpenApplicationFeedbackShower : AppLifecycleListener {
   }
 
   override fun appStarted() {
-    val ideName = ApplicationNamesInfo.getInstance().fullProductNameWithEdition
-    if (ideName !in suitableIDEs) return
+    if (!PlatformUtils.isIdeaUltimate() && !PlatformUtils.isIdeaCommunity()) {
+      return
+    }
     //Try to show only one possible feedback form - Kotlin Rejecters form
     val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
     if (!kotlinRejectersInfoState.feedbackSent && kotlinRejectersInfoState.showNotificationAfterRestart &&
