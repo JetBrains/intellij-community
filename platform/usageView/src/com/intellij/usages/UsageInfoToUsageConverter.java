@@ -11,9 +11,9 @@ import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
-import com.intellij.usages.similarity.usageAdapter.SimilarityReadWriteUsageInfo2UsageAdapter;
-import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
-import com.intellij.usages.similarity.usageAdapter.SimilarityUsageInfo2UsageAdapter;
+import com.intellij.usages.similarity.usageAdapter.SimilarReadWriteUsageInfo2UsageAdapter;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -129,15 +129,15 @@ public final class UsageInfoToUsageConverter {
       final UsageCluster cluster = session.findOrCreateCluster(features);
       if (cluster != null) {
         final ReadWriteAccessDetector.Access readWriteAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
-        final Usage similarityUsageAdapter;
+        final Usage similarUsageAdapter;
         if (readWriteAccess != null) {
-          similarityUsageAdapter = new SimilarityReadWriteUsageInfo2UsageAdapter(usageInfo, readWriteAccess, features, session, cluster);
+          similarUsageAdapter = new SimilarReadWriteUsageInfo2UsageAdapter(usageInfo, readWriteAccess, features, session, cluster);
         }
         else {
-          similarityUsageAdapter = new SimilarityUsageInfo2UsageAdapter(usageInfo, features, session, cluster);
+          similarUsageAdapter = new SimilarUsageInfo2UsageAdapter(usageInfo, features, session, cluster);
         }
-        cluster.addUsage((SimilarityUsage)similarityUsageAdapter);
-        return similarityUsageAdapter;
+        cluster.addUsage((SimilarUsage)similarUsageAdapter);
+        return similarUsageAdapter;
       }
     }
     return convert(primaryElements, usageInfo);

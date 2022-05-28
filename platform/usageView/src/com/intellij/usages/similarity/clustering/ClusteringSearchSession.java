@@ -9,7 +9,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.bag.BagsDistanceCalculator;
-import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +55,7 @@ public class ClusteringSearchSession {
    */
   public @Nullable UsageCluster findCluster(@Nullable UsageInfo usageInfo) {
     for (UsageCluster cluster : myClusters) {
-      for (SimilarityUsage usage : cluster.getUsages()) {
+      for (SimilarUsage usage : cluster.getUsages()) {
         if (usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(usageInfo)) {
           return cluster;
         }
@@ -104,7 +104,7 @@ public class ClusteringSearchSession {
   private static double findMinimalSimilarity(@NotNull UsageCluster usageCluster, Bag newUsageFeatures, double threshold) {
     final BagsDistanceCalculator bagsDistanceCalculator = new BagsDistanceCalculator(newUsageFeatures, threshold);
     double min = Double.MAX_VALUE;
-    for (SimilarityUsage usage : usageCluster.getUsages()) {
+    for (SimilarUsage usage : usageCluster.getUsages()) {
       final double similarity = bagsDistanceCalculator.similarity(usage.getFeatures());
       if (similarity < min) {
         min = similarity;
