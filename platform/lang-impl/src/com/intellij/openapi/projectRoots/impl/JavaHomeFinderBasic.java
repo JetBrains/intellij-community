@@ -367,7 +367,7 @@ public class JavaHomeFinderBasic {
 
     // finally, try the usual location in Unix or MacOS
     if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
-      Path installsDir = getPathInUserHome("asdf/installs");
+      Path installsDir = getPathInUserHome(".asdf/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }
 
