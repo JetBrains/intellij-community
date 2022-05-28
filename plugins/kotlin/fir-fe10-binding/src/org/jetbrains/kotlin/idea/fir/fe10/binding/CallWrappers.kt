@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.lang.ASTNode
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
@@ -82,9 +84,20 @@ internal fun FirExpression?.toExpressionReceiverValue(context: FE10BindingContex
     if (this == null) return null
 
     if (this is FirThisReceiverExpression) {
-        val ktClassSymbol =
-            context.ktAnalysisSessionFacade.buildClassLikeSymbol(calleeReference.boundSymbol?.fir as FirClassLikeDeclaration)
-        return ImplicitClassReceiver(ktClassSymbol.toDeclarationDescriptor(context) as ClassDescriptor)
+        val firDeclaration = calleeReference.boundSymbol?.fir
+        when (firDeclaration) {
+            is FirClassLikeDeclaration -> {
+                val ktClassSymbol = context.ktAnalysisSessionFacade.buildClassLikeSymbol(firDeclaration)
+                return ImplicitClassReceiver(ktClassSymbol.toDeclarationDescriptor(context) as ClassDescriptor)
+            }
+            is FirFunction -> {
+                val functionSymbol = context.ktAnalysisSessionFacade.buildSymbol(firDeclaration) ?: error("No symbol created for firDeclaration")
+                val functionDescriptor = functionSymbol.toDeclarationDescriptor(context) as CallableDescriptor
+                return functionDescriptor.extensionReceiverParameter?.value
+            }
+        }
+
+
     }
     val expression = realPsi.safeAs<KtExpression>() ?: context.implementationPostponed()
     return ExpressionReceiver.create(
