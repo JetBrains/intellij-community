@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmpty
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.typeUtil.isBoolean
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
@@ -51,10 +53,10 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
                 else -> throw IllegalArgumentException()
             }
 
-            val operands = splitBooleanSequence(expr)?.asReversed() ?: return
+            val context by lazy { expr.analyze(BodyResolveMode.PARTIAL) }
+            val operands = splitBooleanSequence(expr, context)?.asReversed() ?: return
 
             val newExpression = KtPsiFactory(expr).buildExpression {
-                val context by lazy { expr.analyze(BodyResolveMode.PARTIAL) }
                 val negatedOperands = operands.map {
                     it.safeAs<KtQualifiedExpression>()?.invertSelectorFunction(context) ?: it.negate()
                 }
@@ -71,17 +73,18 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
             }
         }
 
-        private fun splitBooleanSequence(expression: KtBinaryExpression): List<KtExpression>? {
+        private fun splitBooleanSequence(
+            expression: KtBinaryExpression,
+            context: BindingContext = expression.analyze(BodyResolveMode.PARTIAL)
+        ): List<KtExpression>? {
+            if (!expression.left.isBoolean(context) || !expression.right.isBoolean(context)) return null
+
             val result = ArrayList<KtExpression>()
             val firstOperator = expression.operationToken
 
             var remainingExpression: KtExpression = expression
             while (true) {
                 if (remainingExpression !is KtBinaryExpression) break
-
-                if (KtPsiUtil.deparenthesize(remainingExpression.left) is KtStatementExpression ||
-                    KtPsiUtil.deparenthesize(remainingExpression.right) is KtStatementExpression
-                ) return null
 
                 val operation = remainingExpression.operationToken
                 if (operation != KtTokens.ANDAND && operation != KtTokens.OROR) break
@@ -95,5 +98,7 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
             result.add(remainingExpression)
             return result
         }
+
+        private fun KtExpression?.isBoolean(context: BindingContext) = this != null && context.getType(this)?.isBoolean() == true
     }
 }
