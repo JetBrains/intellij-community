@@ -12,6 +12,9 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
+/**
+ * @author Konstantin Bulenkov
+ */
 class ExperimentalUIConfigurableUi: ConfigurableUi<ExperimentalUI> {
   private val ui: DialogPanel = panel {
     row {
@@ -39,10 +42,7 @@ class ExperimentalUIConfigurableUi: ConfigurableUi<ExperimentalUI> {
   }
 
   override fun reset(settings: ExperimentalUI) = ui.reset()
-
   override fun isModified(settings: ExperimentalUI) = ui.isModified()
-
   override fun apply(settings: ExperimentalUI) = ui.apply()
-
   override fun getComponent(): JComponent = ui
 }
