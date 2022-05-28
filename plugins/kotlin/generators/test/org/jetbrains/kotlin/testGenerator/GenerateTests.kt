@@ -1213,6 +1213,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("testData/inspectionsLocal/addOperatorModifier", pattern = pattern)
             model("testData/inspectionsLocal/booleanLiteralArgument", pattern = pattern)
             model("testData/inspectionsLocal/convertSealedSubClassToObject", pattern = pattern)
+            model("testData/inspectionsLocal/cascadeIf", pattern = pattern)
         }
     }
 
