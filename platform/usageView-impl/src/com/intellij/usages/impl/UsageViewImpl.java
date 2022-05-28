@@ -980,11 +980,7 @@ public class UsageViewImpl implements UsageViewEx {
     group.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
     group.getTemplatePresentation().setText(UsageViewBundle.messagePointer("action.group.by.title"));
     group.getTemplatePresentation().setDescription(UsageViewBundle.messagePointer("action.group.by.title"));
-    group.getTemplatePresentation().setMultipleChoice(true);
     AnAction[] groupingActions = createGroupingActions();
-    for (AnAction a : groupingActions) {
-      a.getTemplatePresentation().setMultipleChoice(true);
-    }
     if (groupingActions.length > 0) {
       group.add(new Separator(UsageViewBundle.message("action.group.by.title")));
       group.addAll(groupingActions);
