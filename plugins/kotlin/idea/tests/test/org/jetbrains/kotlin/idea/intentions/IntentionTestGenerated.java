@@ -4968,6 +4968,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasContinue.kt");
         }
 
+        @TestMetadata("hasNothing.kt")
+        public void testHasNothing() throws Exception {
+            runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasNothing.kt");
+        }
+
         @TestMetadata("hasReturn.kt")
         public void testHasReturn() throws Exception {
             runTest("testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasReturn.kt");
