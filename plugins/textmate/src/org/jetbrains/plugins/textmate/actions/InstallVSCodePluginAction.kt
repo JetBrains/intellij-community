@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.actions
 
-import com.google.gson.Gson
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,6 +26,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.textmate.TextMateService
 import org.jetbrains.plugins.textmate.configuration.BundleConfigBean
 import org.jetbrains.plugins.textmate.configuration.TextMateSettings
+import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.KeyAdapter
@@ -109,7 +109,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
 
   private fun loadPlugins(reader: BufferedReader): List<Plugin> {
     val plugins = mutableListOf<Plugin>()
-    val response = Gson().fromJson(reader, Object::class.java)
+    val response = JsonPlistReader.createJsonReader().readValue(reader, Object::class.java)
     val results = (response as? Map<*, *>)?.get("results")
     for (result in (results as? List<*> ?: emptyList<Any>())) {
       val extensions = (result as? Map<*, *>)?.get("extensions")
