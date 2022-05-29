@@ -78,10 +78,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     myIsEditor = isEditor;
   }
 
-  public void setUsageView(@Nullable UsageViewImpl usageView) {
-    myUsageView = usageView;
-  }
-
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
@@ -103,9 +99,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     @NotNull
     @Override
     public UsageContextPanel create(@NotNull UsageView usageView) {
-      UsagePreviewPanel previewPanel = new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true);
-      previewPanel.setUsageView((UsageViewImpl)usageView);
-      return previewPanel;
+      return new UsagePreviewPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation(), true);
     }
 
     @Override
@@ -392,20 +386,27 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Override
-  public void updateLayoutLater(List<? extends UsageInfo> infos, @NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
+  public void updateLayoutLater(@Nullable List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && selectedGroupNodes(infos, groups) && myUsageView != null) {
-      releaseEditor();
-      disposeMostCommonUsageComponent();
-      removeAll();
-      myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(myUsageView, groups);
-      add(myCommonUsagePatternsComponent);
-    } else {
+    if (usageView instanceof UsageViewImpl) {
+      myUsageView = (UsageViewImpl)usageView;
+    }
+    if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && myUsageView != null) {
+      @NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups = myUsageView.getSelectedGroups();
+      if (isOnlyGroupNodesSelected(infos, groups)) {
+        releaseEditor();
+        disposeMostCommonUsageComponent();
+        removeAll();
+        myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(myUsageView, groups);
+        add(myCommonUsagePatternsComponent);
+      }
+    }
+    else {
       previewUsages(infos);
     }
   }
 
-  private static boolean selectedGroupNodes(List<? extends UsageInfo> infos, Collection<Collection<? extends UsageGroup>> groups) {
+  private static boolean isOnlyGroupNodesSelected(@Nullable List<? extends UsageInfo> infos, Collection<Collection<? extends UsageGroup>> groups) {
     return (infos == null || infos.isEmpty()) && !groups.isEmpty();
   }
 
