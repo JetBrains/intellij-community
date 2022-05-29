@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.sdk.PythonEnvUtil
-import com.jetbrains.python.sdk.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
@@ -23,39 +22,18 @@ import org.jetbrains.annotations.Contract
  *               directory
  * @return lines to be executed in Python REPL
  */
-fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String = buildString {
-  val configEnvs = config.envs
-  configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED)
-  if (configEnvs.isNotEmpty()) {
-    append("import os\n")
-    for ((key, value) in configEnvs) {
-      append("os.environ[${key.toStringLiteral()}] = ${value.toStringLiteral()}\n")
-    }
-  }
+fun buildScriptWithConsoleRun(config: PythonRunConfiguration): String {
   val project = config.project
   val sdk = config.sdk
   val pathMapper = getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
-  var scriptPath = config.scriptName
-  var workingDir = config.workingDirectory
-  if (PythonSdkUtil.isRemote(sdk) && pathMapper != null) {
-    scriptPath = pathMapper.convertToRemote(scriptPath)
-    workingDir = pathMapper.convertToRemote(workingDir)
-  }
-  append("runfile(").append(scriptPath.toStringLiteral())
-  val scriptParameters = ProgramParametersConfigurator.expandMacrosAndParseParameters(config.scriptParameters)
-  if (scriptParameters.isNotEmpty()) {
-    append(", args=[").append(scriptParameters.joinToString(separator = ", ", transform = String::toStringLiteral)).append("]")
-  }
-  if (!workingDir.isEmpty()) {
-    append(", wdir=").append(workingDir.toStringLiteral())
-  }
-  if (config.isModuleMode) {
-    append(", is_module=True")
-  }
-  append(")")
+  return buildScriptFunctionWithConsoleRun(
+    config,
+    ::StringScriptBuilder,
+    t = { it },
+    toTargetPath = { pathMapper?.convertToRemote(it) ?: it },
+    toStringLiteral = String::toStringLiteral
+  )
 }
-
-private val EMPTY_STRING: TargetEnvironmentFunction<String> = constant("")
 
 /**
  * Composes the function that produces lines for execution in Python REPL for running Python script specified in the given [config].
@@ -68,33 +46,83 @@ private val EMPTY_STRING: TargetEnvironmentFunction<String> = constant("")
  * @see buildScriptWithConsoleRun
  */
 @ApiStatus.Experimental
-fun buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration): TargetEnvironmentFunction<String> {
+fun buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration): TargetEnvironmentFunction<String> =
+  buildScriptFunctionWithConsoleRun(
+    config,
+    ::TargetEnvironmentFunctionScriptBuilder,
+    t = ::constant,
+    toTargetPath = ::getTargetEnvironmentValueForLocalPath,
+    toStringLiteral = TargetEnvironmentFunction<String>::toStringLiteral
+  )
+
+/**
+ * @param config Python run configuration
+ * @param stringBuilderConstructor allows to instantiate [ScriptBuilder] required for building the result
+ * @param t transforms the provided [String] to a [T] object that denotes the string constant
+ * @param toTargetPath transforms the provided [String] local path to a [T] object defining corresponding path on the target
+ * @param toStringLiteral transforms the provided [T] object to an escaped Python literal [T] object
+ */
+private fun <T> buildScriptFunctionWithConsoleRun(config: PythonRunConfiguration,
+                                                  stringBuilderConstructor: () -> ScriptBuilder<T>,
+                                                  t: (String) -> T,
+                                                  toTargetPath: (String) -> T,
+                                                  toStringLiteral: (T) -> T): T {
+  val scriptBuilder = stringBuilderConstructor()
   val configEnvs = config.envs
   configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED)
-  var result = EMPTY_STRING
   if (configEnvs.isNotEmpty()) {
-    result += "import os\n"
+    scriptBuilder.append(t("import os\n"))
     for ((key, value) in configEnvs) {
-      result += "os.environ[${key.toStringLiteral()}] = ${value.toStringLiteral()}'\n"
+      scriptBuilder.append(t("os.environ[${key.toStringLiteral()}] = ${value.toStringLiteral()}\n"))
     }
   }
   val scriptPath = config.scriptName
   val workingDir = config.workingDirectory
-  result += "runfile("
-  result += getTargetEnvironmentValueForLocalPath(scriptPath).toStringLiteral()
+  scriptBuilder.append(t("runfile("))
+  scriptBuilder.append(toStringLiteral(toTargetPath(scriptPath)))
   val scriptParameters = ProgramParametersConfigurator.expandMacrosAndParseParameters(config.scriptParameters)
   if (scriptParameters.size != 0) {
-    result += ", args=[" + scriptParameters.joinToString<String>(separator = ", ", transform = String::toStringLiteral) + "]"
+    scriptBuilder.append(t(", args=[" + scriptParameters.joinToString<String>(separator = ", ", transform = String::toStringLiteral) + "]"))
   }
   if (!workingDir.isEmpty()) {
-    result += ", wdir="
-    result += getTargetEnvironmentValueForLocalPath(workingDir).toStringLiteral()
+    scriptBuilder.append(t(", wdir="))
+    scriptBuilder.append(toStringLiteral(toTargetPath(workingDir)))
   }
   if (config.isModuleMode) {
-    result += ", is_module=True"
+    scriptBuilder.append(t(", is_module=True"))
   }
-  result += ")"
-  return result
+  scriptBuilder.append(t(")"))
+  return scriptBuilder.build()
+}
+
+/**
+ * This is a temporary interface for smoother transition to Targets API. Its lifetime is expected to be limited by the lifetime of the
+ * legacy implementation based on `GeneralCommandLine`.
+ */
+private interface ScriptBuilder<T> {
+  fun append(fragment: T)
+
+  fun build(): T
+}
+
+private class StringScriptBuilder : ScriptBuilder<String> {
+  private val stringBuilder = StringBuilder()
+
+  override fun append(fragment: String) {
+    stringBuilder.append(fragment)
+  }
+
+  override fun build(): String = stringBuilder.toString()
+}
+
+private class TargetEnvironmentFunctionScriptBuilder : ScriptBuilder<TargetEnvironmentFunction<String>> {
+  private var functionBuilder: TargetEnvironmentFunction<String> = constant("")
+
+  override fun append(fragment: TargetEnvironmentFunction<String>) {
+    functionBuilder += fragment
+  }
+
+  override fun build(): TargetEnvironmentFunction<String> = functionBuilder
 }
 
 @Contract(pure = true)
