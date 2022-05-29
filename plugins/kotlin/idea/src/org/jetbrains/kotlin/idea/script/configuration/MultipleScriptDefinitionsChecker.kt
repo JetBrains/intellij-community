@@ -57,9 +57,8 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
     private fun areDefinitionsForGradleKts(allApplicableDefinitions: List<ScriptDefinition>): Boolean {
         return allApplicableDefinitions.all {
-            val pattern = it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern
-            pattern?.endsWith("\\.gradle\\.kts") == true ||
-                    pattern?.endsWith("\\.gradle\\.kts$") == true
+            val pattern = it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern ?: return true
+            pattern.endsWith("\\.gradle\\.kts") || pattern.endsWith("\\.gradle\\.kts$")
         }
     }
 
