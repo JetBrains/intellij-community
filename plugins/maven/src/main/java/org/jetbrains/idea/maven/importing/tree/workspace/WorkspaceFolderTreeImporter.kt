@@ -58,6 +58,8 @@ class WorkspaceFolderTreeImporter(
 
   private fun addSourceRootFolder(contentRootEntity: ContentRootEntity,
                                   sourceFolder: SourceFolder) {
+    if (!shouldAddSourceRootFor(sourceFolder.path, onlyIfNotEmpty = false)) return
+
     val sourceRootEntity = builder
       .addSourceRootEntity(contentRootEntity,
                            virtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(sourceFolder.path)),
@@ -100,8 +102,10 @@ class WorkspaceFolderTreeImporter(
     }
   }
 
-  private fun addGeneratedJavaSourceFolder(path: String, rootType: String, contentRootEntity: ContentRootEntity) {
-    if (File(path).list().isNullOrEmpty()) return
+  private fun addGeneratedJavaSourceFolderIfNoRegisteredSourceOnThisPath(path: String,
+                                                                         rootType: String,
+                                                                         contentRootEntity: ContentRootEntity) {
+    if (!shouldAddSourceRootFor(path, onlyIfNotEmpty = true)) return
 
     val url = virtualFileUrlManager.fromPath(path)
     if (contentRootEntity.sourceRoots.any {
@@ -112,6 +116,15 @@ class WorkspaceFolderTreeImporter(
                                                        rootType,
                                                        contentRootEntity.entitySource)
     builder.addJavaSourceRootEntity(sourceRootEntity, true, "")
+  }
+
+  private fun shouldAddSourceRootFor(path: String, onlyIfNotEmpty: Boolean): Boolean {
+    if (onlyIfNotEmpty) {
+      return !File(path).list().isNullOrEmpty()
+    }
+    else {
+      return File(path).exists()
+    }
   }
 
   private fun configGeneratedSourceFolder(targetDir: File, rootType: String, contentRootEntity: ContentRootEntity) {
