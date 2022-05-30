@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +66,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-  protected final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.linear.import"));
+  protected boolean isNewImportingProcess;
   protected MavenReadContext myReadContext;
   protected MavenResolvedContext myResolvedContext;
   protected MavenImportedContext myImportedContext;
@@ -85,6 +86,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (settingsFile != null) {
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), settingsFile.getAbsolutePath());
     }
+    isNewImportingProcess = Registry.is("maven.linear.import");
   }
 
   @Override
