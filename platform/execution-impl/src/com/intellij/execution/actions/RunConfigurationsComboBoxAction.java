@@ -2,6 +2,8 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.icons.AllIcons;
@@ -326,11 +328,32 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
 
-  private static class RunCurrentFileAction extends AnAction {
+  private static class RunCurrentFileAction extends DefaultActionGroup implements DumbAware {
     private RunCurrentFileAction() {
       super(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.item.in.dropdown"),
             ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.description"),
             null);
+
+      setPopup(true);
+      getTemplatePresentation().setPerformGroup(true);
+
+      addExecutorActions();
+      addSeparator();
+      addAction(new ExecutorRegistryImpl.EditRunConfigAndRunCurrentFileExecutorAction(DefaultRunExecutor.getRunExecutorInstance()));
+    }
+
+    private void addExecutorActions() {
+      // Similar to com.intellij.execution.actions.ChooseRunConfigurationPopup.ConfigurationActionsStep#buildActions
+      for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
+        if (executor instanceof ExecutorGroup) {
+          for (Executor childExecutor : ((ExecutorGroup<?>)executor).childExecutors()) {
+            addAction(new ExecutorRegistryImpl.RunCurrentFileExecutorAction(childExecutor));
+          }
+        }
+        else {
+          addAction(new ExecutorRegistryImpl.RunCurrentFileExecutorAction(executor));
+        }
+      }
     }
 
     @Override
