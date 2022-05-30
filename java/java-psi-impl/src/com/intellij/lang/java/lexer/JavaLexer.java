@@ -108,7 +108,7 @@ public final class JavaLexer extends LexerBase {
 
     myBufferIndex = myTokenEndOffset;
 
-    char c = charAt(myBufferIndex);
+    char c = locateCharAt(myBufferIndex);
     switch (c) {
       case ' ':
       case '\t':
@@ -126,16 +126,16 @@ public final class JavaLexer extends LexerBase {
         }
         else {
           int l1 = mySymbolLength;
-          char nextChar = charAt(myBufferIndex + l1);
+          char nextChar = locateCharAt(myBufferIndex + l1);
           if (nextChar == '/') {
             myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
             myTokenEndOffset = getLineTerminator(myBufferIndex + l1 + mySymbolLength);
           }
           else if (nextChar == '*') {
             int l2 = mySymbolLength;
-            if (myBufferIndex + l1 + l2 < myBufferEndOffset && charAt(myBufferIndex + l1 + l2) == '*') {
+            if (myBufferIndex + l1 + l2 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2) == '*') {
               int l3 = mySymbolLength;
-              if (myBufferIndex + l1 + l2 + l3 < myBufferEndOffset && charAt(myBufferIndex + l1 + l2 + l3) == '/') {
+              if (myBufferIndex + l1 + l2 + l3 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2 + l3) == '/') {
                 myTokenType = JavaTokenType.C_STYLE_COMMENT;
                 myTokenEndOffset = myBufferIndex + l1 + l2 + l3 + mySymbolLength;
               }
@@ -155,10 +155,10 @@ public final class JavaLexer extends LexerBase {
         }
         break;
 
-      case '#' :
-        if (mySymbolLength == 1 && myBufferIndex == 0 && myBufferIndex + 1 < myBufferEndOffset && charAt(myBufferIndex + 1) == '!' && mySymbolLength == 1) {
+      case '#': // this assumes the Unix shell used does not understand Unicode escapes sequences
+        if (myBufferIndex == 0 && mySymbolLength == 1 && myBufferEndOffset > 1 && charAt(1) == '!' && mySymbolLength == 1) {
           myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
-          myTokenEndOffset = getLineTerminator(myBufferIndex + 2);
+          myTokenEndOffset = getLineTerminator(2);
         }
         else {
           flexLocateToken();
@@ -172,9 +172,9 @@ public final class JavaLexer extends LexerBase {
 
       case '"':
         int l1 = mySymbolLength;
-        if (myBufferIndex + l1 < myBufferEndOffset && charAt(myBufferIndex + l1) == '"') {
+        if (myBufferIndex + l1 < myBufferEndOffset && locateCharAt(myBufferIndex + l1) == '"') {
           int l2 = mySymbolLength;
-          if (myBufferIndex + l1 + l2 < myBufferEndOffset &&  charAt(myBufferIndex + l1 + l2) == '"') {
+          if (myBufferIndex + l1 + l2 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2) == '"') {
             myTokenType = JavaTokenType.TEXT_BLOCK_LITERAL;
             myTokenEndOffset = getTextBlockEnd(myBufferIndex + l1 + l2);
           }
@@ -202,7 +202,7 @@ public final class JavaLexer extends LexerBase {
     int pos = offset;
 
     while (pos < myBufferEndOffset) {
-      char c = charAt(pos);
+      char c = locateCharAt(pos);
       if (c != ' ' && c != '\t' && c != '\n' && c != '\r' && c != '\f') break;
       pos += mySymbolLength;
     }
@@ -223,12 +223,12 @@ public final class JavaLexer extends LexerBase {
     int pos = offset;
 
     while (pos < myBufferEndOffset) {
-      char c = charAt(pos);
+      char c = locateCharAt(pos);
 
       if (c == '\\') {
         pos += mySymbolLength;
         // on (encoded) backslash we also need to skip the next symbol (e.g. \\u005c" is translated to \")
-        if (pos < myBufferEndOffset) charAt(pos);
+        if (pos < myBufferEndOffset) locateCharAt(pos);
       }
       else if (c == quoteChar) {
         return pos + mySymbolLength;
@@ -245,9 +245,9 @@ public final class JavaLexer extends LexerBase {
     int pos = offset;
 
     while (pos < myBufferEndOffset) {
-      char c = charAt(pos);
+      char c = locateCharAt(pos);
       pos += mySymbolLength;
-      if (c == '*' && pos < myBufferEndOffset && charAt(pos) == '/') break;
+      if (c == '*' && pos < myBufferEndOffset && locateCharAt(pos) == '/') break;
     }
 
     return pos + mySymbolLength;
@@ -257,7 +257,7 @@ public final class JavaLexer extends LexerBase {
     int pos = offset;
 
     while (pos < myBufferEndOffset) {
-      char c = charAt(pos);
+      char c = locateCharAt(pos);
       if (c == '\r' || c == '\n') break;
       pos += mySymbolLength;
     }
@@ -269,14 +269,14 @@ public final class JavaLexer extends LexerBase {
     int pos = offset;
 
     while ((pos = getClosingQuote(pos + mySymbolLength, '"')) < myBufferEndOffset) {
-      char c = charAt(pos);
+      char c = locateCharAt(pos);
       if (c == '\\') {
         pos += mySymbolLength;
-        charAt(pos); // skip escaped char
+        locateCharAt(pos); // skip escaped char
       }
       else if (c == '"') {
         int l1 = mySymbolLength;
-        if (pos + l1 < myBufferEndOffset && charAt(pos + l1) == '"') {
+        if (pos + l1 < myBufferEndOffset && locateCharAt(pos + l1) == '"') {
           return pos + l1 + mySymbolLength;
         }
       }
@@ -285,23 +285,23 @@ public final class JavaLexer extends LexerBase {
     return pos;
   }
 
-  private char _charAt(int offset) {
+  private char charAt(int offset) {
     return myBufferArray != null ? myBufferArray[offset] : myBuffer.charAt(offset);
   }
 
-  private char charAt(int offset) {
+  private char locateCharAt(int offset) {
     mySymbolLength = 1;
     int pos = offset;
-    char first = _charAt(pos);
+    char first = charAt(pos);
     if (first != '\\') return first;
-    if (++pos >= myBufferEndOffset || _charAt(pos) != 'u') return first;
+    if (++pos >= myBufferEndOffset || charAt(pos) != 'u') return first;
     //noinspection StatementWithEmptyBody
-    while (++pos < myBufferEndOffset && _charAt(pos) == 'u');
+    while (++pos < myBufferEndOffset && charAt(pos) == 'u');
     if (pos + 3 >= myBufferEndOffset) return first;
     int result = 0;
     for (int max = pos + 4; pos < max; pos++) {
       result <<= 4;
-      char c = _charAt(pos);
+      char c = charAt(pos);
       if ('0' <= c && c <= '9') result += c - '0';
       else if ('a' <= c && c <= 'f') result += (c - 'a') + 10;
       else if ('A' <= c && c <= 'F') result += (c - 'A') + 10;
