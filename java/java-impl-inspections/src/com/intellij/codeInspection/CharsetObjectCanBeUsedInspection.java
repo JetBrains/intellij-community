@@ -113,7 +113,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       private void addCharsetReplacement(@NotNull PsiElement place, @NotNull PsiExpression charset) {
         String charsetString = getCharsetString(charset);
         if (charsetString == null) return;
-        holder.registerProblem(place, JavaBundle.message("inspection.charset.object.can.be.used.message", charsetString),
+        holder.registerProblem(place, JavaBundle.message("inspection.charset.object.can.be.used.message", sanitizeExpression(charsetString)),
                                new CharsetObjectCanBeUsedFix(charsetString));
       }
 
@@ -148,6 +148,14 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
         return null;
       }
     };
+  }
+
+  @NotNull
+  private static String sanitizeExpression(String expression) {
+    if (expression.startsWith("java.nio.charset.StandardCharsets.")) {
+      return expression.substring("java.nio.charset.".length());
+    }
+    return expression;
   }
 
   abstract static class CharsetCallMatcher {
@@ -270,11 +278,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getName() {
-      String charsetExpression = myCharsetExpression;
-      if (charsetExpression.startsWith("java.nio.charset.StandardCharsets.")) {
-        charsetExpression = charsetExpression.substring("java.nio.charset.".length());
-      }
-      return CommonQuickFixBundle.message("fix.replace.with.x", charsetExpression);
+      return CommonQuickFixBundle.message("fix.replace.with.x", sanitizeExpression(myCharsetExpression));
     }
 
     @Nls
