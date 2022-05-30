@@ -5,12 +5,10 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RemoteDesktopService;
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -563,12 +561,9 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
 
     @Override
     public Object getData(@NotNull @NonNls final String dataId) {
-      final DialogWrapper wrapper = myDialogWrapper.get();
+      DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper instanceof DataProvider) {
-        return ((DataProvider) wrapper).getData(dataId);
-      } else if (wrapper instanceof TypeSafeDataProvider) {
-        TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter((TypeSafeDataProvider) wrapper);
-        return adapter.getData(dataId);
+        return ((DataProvider)wrapper).getData(dataId);
       }
       return null;
     }

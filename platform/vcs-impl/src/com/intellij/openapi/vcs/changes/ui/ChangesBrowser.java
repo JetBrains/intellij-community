@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
@@ -47,7 +46,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getVirtualFile
  * @deprecated Use {@link SimpleChangesBrowser}
  */
 @Deprecated(forRemoval = true)
-public class ChangesBrowser extends JPanel implements DataProvider, TypeSafeDataProvider, Disposable {
+public class ChangesBrowser extends JPanel implements DataProvider, Disposable {
 
   protected final ChangesTreeList<Change> myViewer;
   protected final JScrollPane myViewerScrollPane;
@@ -166,9 +165,6 @@ public class ChangesBrowser extends JPanel implements DataProvider, TypeSafeData
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    Object data = new TypeSafeDataProviderAdapter(this).getData(dataId);
-    if (data != null) return data;
-
     if (VcsDataKeys.CHANGES.is(dataId)) {
       List<Change> list = getSelectedChanges();
       if (list.isEmpty()) list = myViewer.getChanges();
@@ -203,10 +199,6 @@ public class ChangesBrowser extends JPanel implements DataProvider, TypeSafeData
     else {
       return myViewer.getData(dataId);
     }
-  }
-
-  @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
   }
 
   public void select(List<Change> changes) {
