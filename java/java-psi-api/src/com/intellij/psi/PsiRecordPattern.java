@@ -2,14 +2,18 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * <a href="https://openjdk.java.net/jeps/405">JEP</a>
  */
-public interface PsiRecordPattern extends PsiPrimaryPattern, PsiNamedElement {
+public interface PsiRecordPattern extends PsiPrimaryPattern {
   @NotNull
   PsiRecordStructurePattern getStructurePattern();
 
   @NotNull
   PsiTypeElement getTypeElement();
+
+  @Nullable
+  PsiRecordPatternVariable getPatternVariable();
 }

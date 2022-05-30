@@ -11,6 +11,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.psi.JavaTokenType.*;
 
 public final class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
@@ -186,6 +189,53 @@ public final class JavaSharedImplUtil {
       newType.acceptTree(new GeneratedMarkerVisitor());
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
       CodeEditUtil.replaceChild(variableElement, type, newType);
+    }
+  }
+
+  @NotNull
+  public static PsiElement getPatternVariableDeclarationScope(@NotNull PsiPatternVariable variable) {
+    PsiElement parent = variable.getPattern().getParent();
+    if (!(parent instanceof PsiInstanceOfExpression) && !(parent instanceof PsiCaseLabelElementList) && !(parent instanceof PsiPattern)) {
+      return parent;
+    }
+    boolean negated = false;
+    for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
+      if (nextParent instanceof PsiParenthesizedExpression) continue;
+      if (nextParent instanceof PsiConditionalExpression && parent == ((PsiConditionalExpression)nextParent).getCondition()) {
+        return nextParent;
+      }
+      if (nextParent instanceof PsiPrefixExpression && ((PsiPrefixExpression)nextParent).getOperationTokenType().equals(EXCL)) {
+        negated = !negated;
+        continue;
+      }
+      if (nextParent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)nextParent).getOperationTokenType();
+        if (tokenType.equals(ANDAND) && !negated || tokenType.equals(OROR) && negated) continue;
+      }
+      if (nextParent instanceof PsiIfStatement) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiConditionalLoopStatement) {
+        if (!negated) return nextParent;
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiSwitchLabelStatementBase) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression)) {
+        continue;
+      }
+      return parent;
     }
   }
 

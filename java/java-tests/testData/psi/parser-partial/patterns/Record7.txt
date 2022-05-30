@@ -1,26 +1,26 @@
 PsiJavaFile:Record7.java
-  PsiTypeTestPattern
-    PsiPatternVariable:a
-      PsiModifierList:
-        <empty list>
-      PsiTypeElement:Rec
-        PsiJavaCodeReferenceElement:Rec
-          PsiIdentifier:Rec('Rec')
-          PsiReferenceParameterList
-            <empty list>
-      PsiRecordStructurePattern
-        PsiJavaToken:LPARENTH('(')
-        PsiTypeTestPattern
-          PsiPatternVariable:a
-            PsiModifierList:
-              <empty list>
-            PsiTypeElement:int
-              PsiKeyword:int('int')
-            PsiWhiteSpace(' ')
-            PsiIdentifier:a('a')
-        PsiJavaToken:COMMA(',')
-        PsiErrorElement:Pattern expected
+  PsiRecordPattern
+    PsiModifierList:
+      <empty list>
+    PsiTypeElement:Rec
+      PsiJavaCodeReferenceElement:Rec
+        PsiIdentifier:Rec('Rec')
+        PsiReferenceParameterList
           <empty list>
-        PsiJavaToken:RPARENTH(')')
-      PsiWhiteSpace(' ')
+    PsiRecordStructurePattern
+      PsiJavaToken:LPARENTH('(')
+      PsiTypeTestPattern
+        PsiPatternVariable:a
+          PsiModifierList:
+            <empty list>
+          PsiTypeElement:int
+            PsiKeyword:int('int')
+          PsiWhiteSpace(' ')
+          PsiIdentifier:a('a')
+      PsiJavaToken:COMMA(',')
+      PsiErrorElement:Pattern expected
+        <empty list>
+      PsiJavaToken:RPARENTH(')')
+    PsiWhiteSpace(' ')
+    PsiRecordPatternVariable
       PsiIdentifier:a('a')

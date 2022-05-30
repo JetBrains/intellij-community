@@ -472,6 +472,9 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitRecordPattern(PsiRecordPattern recordPattern) {visitElement(recordPattern);}
-  public void visitRecordStructurePattern(PsiRecordStructurePattern recordStructurePattern) {visitElement(recordStructurePattern);}
+  public void visitRecordPattern(PsiRecordPattern recordPattern) { visitElement(recordPattern); }
+
+  public void visitRecordStructurePattern(PsiRecordStructurePattern recordStructurePattern) { visitElement(recordStructurePattern); }
+
+  public void visitRecordPatternVariable(PsiRecordPatternVariable variable) { visitPatternVariable(variable); }
 }
