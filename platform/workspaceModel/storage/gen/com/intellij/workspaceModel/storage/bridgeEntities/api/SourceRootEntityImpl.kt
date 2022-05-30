@@ -89,7 +89,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_javaSourceRoots, woBuilder_javaSourceRoots) = __javaSourceRoots.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(JAVASOURCEROOTS_CONNECTION_ID, withBuilder_javaSourceRoots)
-            this._javaSourceRoots = if (woBuilder_javaSourceRoots.isNotEmpty()) woBuilder_javaSourceRoots else null
+            this._javaSourceRoots = if (woBuilder_javaSourceRoots.isNotEmpty()) woBuilder_javaSourceRoots else emptyList()
             val __javaResourceRoots = _javaResourceRoots!!
             for (item in __javaResourceRoots) {
                 if (item is ModifiableWorkspaceEntityBase<*>) {
@@ -98,7 +98,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_javaResourceRoots, woBuilder_javaResourceRoots) = __javaResourceRoots.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(JAVARESOURCEROOTS_CONNECTION_ID, withBuilder_javaResourceRoots)
-            this._javaResourceRoots = if (woBuilder_javaResourceRoots.isNotEmpty()) woBuilder_javaResourceRoots else null
+            this._javaResourceRoots = if (woBuilder_javaResourceRoots.isNotEmpty()) woBuilder_javaResourceRoots else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -136,7 +136,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                 // Set field to null (in referenced entity)
                 val __mutSourceRoots = (__contentRoot as ContentRootEntityImpl.Builder)._sourceRoots?.toMutableList()
                 __mutSourceRoots?.remove(this)
-                __contentRoot._sourceRoots = if (__mutSourceRoots.isNullOrEmpty()) null else __mutSourceRoots
+                __contentRoot._sourceRoots = if (__mutSourceRoots.isNullOrEmpty()) emptyList() else __mutSourceRoots
             }
             if (__contentRoot != null) {
                 applyParentRef(CONTENTROOT_CONNECTION_ID, __contentRoot)
@@ -306,7 +306,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                 changedProperty.add("customSourceRootProperties")
             }
         
-        var _javaSourceRoots: List<JavaSourceRootEntity>? = null
+        var _javaSourceRoots: List<JavaSourceRootEntity> = emptyList()
         override var javaSourceRoots: List<JavaSourceRootEntity>
             get() {
                 val _diff = diff
@@ -342,7 +342,7 @@ open class SourceRootEntityImpl: SourceRootEntity, WorkspaceEntityBase() {
                 changedProperty.add("javaSourceRoots")
             }
         
-        var _javaResourceRoots: List<JavaResourceRootEntity>? = null
+        var _javaResourceRoots: List<JavaResourceRootEntity> = emptyList()
         override var javaResourceRoots: List<JavaResourceRootEntity>
             get() {
                 val _diff = diff

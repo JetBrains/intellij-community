@@ -61,7 +61,7 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_children, woBuilder_children) = __children.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CHILDREN_CONNECTION_ID, withBuilder_children)
-            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else null
+            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -130,7 +130,7 @@ open class ParentAbEntityImpl: ParentAbEntity, WorkspaceEntityBase() {
         }
     
         
-            var _children: List<ChildAbstractBaseEntity>? = null
+            var _children: List<ChildAbstractBaseEntity> = emptyList()
             override var children: List<ChildAbstractBaseEntity>
                 get() {
                     val _diff = diff

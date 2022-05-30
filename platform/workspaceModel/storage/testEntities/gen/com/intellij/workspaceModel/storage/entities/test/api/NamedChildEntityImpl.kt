@@ -91,7 +91,7 @@ open class NamedChildEntityImpl: NamedChildEntity, WorkspaceEntityBase() {
                 // Set field to null (in referenced entity)
                 val __mutChildren = (__parentEntity as NamedEntityImpl.Builder)._children?.toMutableList()
                 __mutChildren?.remove(this)
-                __parentEntity._children = if (__mutChildren.isNullOrEmpty()) null else __mutChildren
+                __parentEntity._children = if (__mutChildren.isNullOrEmpty()) emptyList() else __mutChildren
             }
             if (__parentEntity != null) {
                 applyParentRef(PARENTENTITY_CONNECTION_ID, __parentEntity)

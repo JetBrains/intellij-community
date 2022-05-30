@@ -92,7 +92,7 @@ open class JavaSourceRootEntityImpl: JavaSourceRootEntity, WorkspaceEntityBase()
                 // Set field to null (in referenced entity)
                 val __mutJavaSourceRoots = (__sourceRoot as SourceRootEntityImpl.Builder)._javaSourceRoots?.toMutableList()
                 __mutJavaSourceRoots?.remove(this)
-                __sourceRoot._javaSourceRoots = if (__mutJavaSourceRoots.isNullOrEmpty()) null else __mutJavaSourceRoots
+                __sourceRoot._javaSourceRoots = if (__mutJavaSourceRoots.isNullOrEmpty()) emptyList() else __mutJavaSourceRoots
             }
             if (__sourceRoot != null) {
                 applyParentRef(SOURCEROOT_CONNECTION_ID, __sourceRoot)

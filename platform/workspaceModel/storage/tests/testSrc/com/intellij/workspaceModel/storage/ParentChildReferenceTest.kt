@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import org.junit.jupiter.api.Test
 import kotlin.test.*
@@ -122,7 +123,7 @@ class ParentChildReferenceTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(parentEntity)
 
-    assertNull(parentEntity._children)
+    assertEmpty(parentEntity._children)
     children.forEach { child ->
       child as ChildMultipleEntityImpl.Builder
       assertNull(child._parentEntity)
@@ -161,7 +162,7 @@ class ParentChildReferenceTest {
     val builder = MutableEntityStorage.create()
     builder.addEntity(childEntity)
 
-    assertNull(parentEntity._children)
+    assertEmpty(parentEntity._children)
     assertNull(childEntity._parentEntity)
 
     val childEntityFromStore = builder.entities(ChildMultipleEntity::class.java).single()
@@ -219,7 +220,7 @@ class ParentChildReferenceTest {
 
     builder.addEntity(parentEntity)
 
-    assertNull(parentEntity._children)
+    assertEmpty(parentEntity._children)
     assertNull(firstChild._parentEntity)
 
     val childEntityFromStore = builder.entities(ChildMultipleEntity::class.java).single()

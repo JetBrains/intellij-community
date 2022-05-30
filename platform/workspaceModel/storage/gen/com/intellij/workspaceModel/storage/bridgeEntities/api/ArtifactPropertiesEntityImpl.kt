@@ -100,7 +100,7 @@ open class ArtifactPropertiesEntityImpl: ArtifactPropertiesEntity, WorkspaceEnti
                 // Set field to null (in referenced entity)
                 val __mutCustomProperties = (__artifact as ArtifactEntityImpl.Builder)._customProperties?.toMutableList()
                 __mutCustomProperties?.remove(this)
-                __artifact._customProperties = if (__mutCustomProperties.isNullOrEmpty()) null else __mutCustomProperties
+                __artifact._customProperties = if (__mutCustomProperties.isNullOrEmpty()) emptyList() else __mutCustomProperties
             }
             if (__artifact != null) {
                 applyParentRef(ARTIFACT_CONNECTION_ID, __artifact)

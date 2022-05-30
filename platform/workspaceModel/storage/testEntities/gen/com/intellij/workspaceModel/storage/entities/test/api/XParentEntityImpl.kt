@@ -70,7 +70,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_children, woBuilder_children) = __children.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CHILDREN_CONNECTION_ID, withBuilder_children)
-            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else null
+            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else emptyList()
             val __optionalChildren = _optionalChildren!!
             for (item in __optionalChildren) {
                 if (item is ModifiableWorkspaceEntityBase<*>) {
@@ -79,7 +79,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_optionalChildren, woBuilder_optionalChildren) = __optionalChildren.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(OPTIONALCHILDREN_CONNECTION_ID, withBuilder_optionalChildren)
-            this._optionalChildren = if (woBuilder_optionalChildren.isNotEmpty()) woBuilder_optionalChildren else null
+            this._optionalChildren = if (woBuilder_optionalChildren.isNotEmpty()) woBuilder_optionalChildren else emptyList()
             val __childChild = _childChild!!
             for (item in __childChild) {
                 if (item is ModifiableWorkspaceEntityBase<*>) {
@@ -88,7 +88,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_childChild, woBuilder_childChild) = __childChild.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CHILDCHILD_CONNECTION_ID, withBuilder_childChild)
-            this._childChild = if (woBuilder_childChild.isNotEmpty()) woBuilder_childChild else null
+            this._childChild = if (woBuilder_childChild.isNotEmpty()) woBuilder_childChild else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -197,7 +197,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 
             }
             
-        var _children: List<XChildEntity>? = null
+        var _children: List<XChildEntity> = emptyList()
         override var children: List<XChildEntity>
             get() {
                 val _diff = diff
@@ -233,7 +233,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 changedProperty.add("children")
             }
         
-        var _optionalChildren: List<XChildWithOptionalParentEntity>? = null
+        var _optionalChildren: List<XChildWithOptionalParentEntity> = emptyList()
         override var optionalChildren: List<XChildWithOptionalParentEntity>
             get() {
                 val _diff = diff
@@ -269,7 +269,7 @@ open class XParentEntityImpl: XParentEntity, WorkspaceEntityBase() {
                 changedProperty.add("optionalChildren")
             }
         
-        var _childChild: List<XChildChildEntity>? = null
+        var _childChild: List<XChildChildEntity> = emptyList()
         override var childChild: List<XChildChildEntity>
             get() {
                 val _diff = diff

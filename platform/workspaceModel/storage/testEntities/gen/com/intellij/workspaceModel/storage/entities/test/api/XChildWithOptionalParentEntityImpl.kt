@@ -91,7 +91,7 @@ open class XChildWithOptionalParentEntityImpl: XChildWithOptionalParentEntity, W
                 // Set field to null (in referenced entity)
                 val __mutOptionalChildren = (__optionalParent as XParentEntityImpl.Builder)._optionalChildren?.toMutableList()
                 __mutOptionalChildren?.remove(this)
-                __optionalParent._optionalChildren = if (__mutOptionalChildren.isNullOrEmpty()) null else __mutOptionalChildren
+                __optionalParent._optionalChildren = if (__mutOptionalChildren.isNullOrEmpty()) emptyList() else __mutOptionalChildren
             }
             if (__optionalParent != null) {
                 applyParentRef(OPTIONALPARENT_CONNECTION_ID, __optionalParent)

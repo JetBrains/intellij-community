@@ -66,7 +66,7 @@ ${
           }
           line("val (withBuilder_${it.name}, woBuilder_${it.name}) = $tmpFieldName.partition { it is ${ModifiableWorkspaceEntityBase::class.fqn}<*> && it.diff != null }")
           line("applyRef(${it.refsConnectionId}, withBuilder_${it.name})")
-          line("this.${it.implFieldName} = if (woBuilder_${it.name}.isNotEmpty()) woBuilder_${it.name} else null")
+          line("this.${it.implFieldName} = if (woBuilder_${it.name}.isNotEmpty()) woBuilder_${it.name} else emptyList()")
         }
         lineComment("Process entities from extension fields")
         line("val keysToRemove = ArrayList<${ExtRefKey::class.fqn}>()")
@@ -127,7 +127,7 @@ ${
                   line(
                     "val $tempPropertyName = ($tmpFieldName as ${parentField.owner.name}Impl.Builder)._${parentField.name}?.toMutableList()")
                   line("$tempPropertyName?.remove(this)")
-                  line("$tmpFieldName._${parentField.name} = if ($tempPropertyName.isNullOrEmpty()) null else $tempPropertyName")
+                  line("$tmpFieldName._${parentField.name} = if ($tempPropertyName.isNullOrEmpty()) emptyList() else $tempPropertyName")
                 }
               }
               else {

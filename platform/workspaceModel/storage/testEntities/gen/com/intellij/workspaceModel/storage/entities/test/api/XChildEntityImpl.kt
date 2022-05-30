@@ -72,7 +72,7 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_childChild, woBuilder_childChild) = __childChild.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CHILDCHILD_CONNECTION_ID, withBuilder_childChild)
-            this._childChild = if (woBuilder_childChild.isNotEmpty()) woBuilder_childChild else null
+            this._childChild = if (woBuilder_childChild.isNotEmpty()) woBuilder_childChild else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -110,7 +110,7 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
                 // Set field to null (in referenced entity)
                 val __mutChildren = (__parentEntity as XParentEntityImpl.Builder)._children?.toMutableList()
                 __mutChildren?.remove(this)
-                __parentEntity._children = if (__mutChildren.isNullOrEmpty()) null else __mutChildren
+                __parentEntity._children = if (__mutChildren.isNullOrEmpty()) emptyList() else __mutChildren
             }
             if (__parentEntity != null) {
                 applyParentRef(PARENTENTITY_CONNECTION_ID, __parentEntity)
@@ -230,7 +230,7 @@ open class XChildEntityImpl: XChildEntity, WorkspaceEntityBase() {
                 changedProperty.add("parentEntity")
             }
         
-        var _childChild: List<XChildChildEntity>? = null
+        var _childChild: List<XChildChildEntity> = emptyList()
         override var childChild: List<XChildChildEntity>
             get() {
                 val _diff = diff

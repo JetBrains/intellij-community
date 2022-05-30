@@ -121,7 +121,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_contentRoots, woBuilder_contentRoots) = __contentRoots.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CONTENTROOTS_CONNECTION_ID, withBuilder_contentRoots)
-            this._contentRoots = if (woBuilder_contentRoots.isNotEmpty()) woBuilder_contentRoots else null
+            this._contentRoots = if (woBuilder_contentRoots.isNotEmpty()) woBuilder_contentRoots else emptyList()
             val __facets = _facets!!
             for (item in __facets) {
                 if (item is ModifiableWorkspaceEntityBase<*>) {
@@ -130,7 +130,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_facets, woBuilder_facets) = __facets.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(FACETS_CONNECTION_ID, withBuilder_facets)
-            this._facets = if (woBuilder_facets.isNotEmpty()) woBuilder_facets else null
+            this._facets = if (woBuilder_facets.isNotEmpty()) woBuilder_facets else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -249,7 +249,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                 changedProperty.add("dependencies")
             }
             
-        var _contentRoots: List<ContentRootEntity>? = null
+        var _contentRoots: List<ContentRootEntity> = emptyList()
         override var contentRoots: List<ContentRootEntity>
             get() {
                 val _diff = diff
@@ -429,7 +429,7 @@ open class ModuleEntityImpl: ModuleEntity, WorkspaceEntityBase() {
                 changedProperty.add("exModuleOptions")
             }
         
-        var _facets: List<FacetEntity>? = null
+        var _facets: List<FacetEntity> = emptyList()
         override var facets: List<FacetEntity>
             get() {
                 val _diff = diff

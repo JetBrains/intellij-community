@@ -113,7 +113,7 @@ open class FacetEntityImpl: FacetEntity, WorkspaceEntityBase() {
                 // Set field to null (in referenced entity)
                 val __mutFacets = (__module as ModuleEntityImpl.Builder)._facets?.toMutableList()
                 __mutFacets?.remove(this)
-                __module._facets = if (__mutFacets.isNullOrEmpty()) null else __mutFacets
+                __module._facets = if (__mutFacets.isNullOrEmpty()) emptyList() else __mutFacets
             }
             if (__module != null) {
                 applyParentRef(MODULE_CONNECTION_ID, __module)

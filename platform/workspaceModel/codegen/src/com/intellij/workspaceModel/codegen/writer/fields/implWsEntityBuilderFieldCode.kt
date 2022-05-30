@@ -88,10 +88,10 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
     val elementType = this.elementType
     if (this.isRefType()) {
       val connectionName = field.refsConnectionId
-      val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
+      val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else error("It's prohibited to have nullable reference list")
       if ((elementType as TRef<*>).targetObjType.abstract) {
         lines(indent = "    ") {
-          line("var _${field.javaName}: $javaType? = null")
+          line("var _${field.javaName}: $javaType = emptyList()")
           sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
             section("get()") {
               line("val _diff = diff")
@@ -126,7 +126,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: Field<*, *>, optionalS
       }
       else {
         lines {
-          line("var _${field.javaName}: $javaType? = null")
+          line("var _${field.javaName}: $javaType = emptyList()")
           sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
             section("get()") {
               line("val _diff = diff")

@@ -67,7 +67,7 @@ open class NamedEntityImpl: NamedEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_children, woBuilder_children) = __children.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CHILDREN_CONNECTION_ID, withBuilder_children)
-            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else null
+            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -164,7 +164,7 @@ open class NamedEntityImpl: NamedEntity, WorkspaceEntityBase() {
                 changedProperty.add("additionalProperty")
             }
             
-        var _children: List<NamedChildEntity>? = null
+        var _children: List<NamedChildEntity> = emptyList()
         override var children: List<NamedChildEntity>
             get() {
                 val _diff = diff

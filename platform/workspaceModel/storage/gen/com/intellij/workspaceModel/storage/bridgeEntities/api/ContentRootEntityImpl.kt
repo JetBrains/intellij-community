@@ -90,7 +90,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_sourceRoots, woBuilder_sourceRoots) = __sourceRoots.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(SOURCEROOTS_CONNECTION_ID, withBuilder_sourceRoots)
-            this._sourceRoots = if (woBuilder_sourceRoots.isNotEmpty()) woBuilder_sourceRoots else null
+            this._sourceRoots = if (woBuilder_sourceRoots.isNotEmpty()) woBuilder_sourceRoots else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -128,7 +128,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 // Set field to null (in referenced entity)
                 val __mutContentRoots = (__module as ModuleEntityImpl.Builder)._contentRoots?.toMutableList()
                 __mutContentRoots?.remove(this)
-                __module._contentRoots = if (__mutContentRoots.isNullOrEmpty()) null else __mutContentRoots
+                __module._contentRoots = if (__mutContentRoots.isNullOrEmpty()) emptyList() else __mutContentRoots
             }
             if (__module != null) {
                 applyParentRef(MODULE_CONNECTION_ID, __module)
@@ -266,7 +266,7 @@ open class ContentRootEntityImpl: ContentRootEntity, WorkspaceEntityBase() {
                 changedProperty.add("excludedPatterns")
             }
             
-        var _sourceRoots: List<SourceRootEntity>? = null
+        var _sourceRoots: List<SourceRootEntity> = emptyList()
         override var sourceRoots: List<SourceRootEntity>
             get() {
                 val _diff = diff

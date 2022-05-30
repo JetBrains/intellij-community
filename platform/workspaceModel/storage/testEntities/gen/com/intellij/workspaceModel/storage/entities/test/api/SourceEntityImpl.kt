@@ -63,7 +63,7 @@ open class SourceEntityImpl: SourceEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_children, woBuilder_children) = __children.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CHILDREN_CONNECTION_ID, withBuilder_children)
-            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else null
+            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -152,7 +152,7 @@ open class SourceEntityImpl: SourceEntity, WorkspaceEntityBase() {
                 
             }
             
-        var _children: List<ChildSourceEntity>? = null
+        var _children: List<ChildSourceEntity> = emptyList()
         override var children: List<ChildSourceEntity>
             get() {
                 val _diff = diff

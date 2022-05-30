@@ -103,7 +103,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
             }
             val (withBuilder_customProperties, woBuilder_customProperties) = __customProperties.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
             applyRef(CUSTOMPROPERTIES_CONNECTION_ID, withBuilder_customProperties)
-            this._customProperties = if (woBuilder_customProperties.isNotEmpty()) woBuilder_customProperties else null
+            this._customProperties = if (woBuilder_customProperties.isNotEmpty()) woBuilder_customProperties else emptyList()
             // Process entities from extension fields
             val keysToRemove = ArrayList<ExtRefKey>()
             for ((key, entity) in extReferences) {
@@ -267,7 +267,7 @@ open class ArtifactEntityImpl: ArtifactEntity, WorkspaceEntityBase() {
                 changedProperty.add("rootElement")
             }
         
-        var _customProperties: List<ArtifactPropertiesEntity>? = null
+        var _customProperties: List<ArtifactPropertiesEntity> = emptyList()
         override var customProperties: List<ArtifactPropertiesEntity>
             get() {
                 val _diff = diff

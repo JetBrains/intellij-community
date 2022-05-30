@@ -91,7 +91,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                 // Set field to null (in referenced entity)
                 val __mutChildChild = (__parent1 as XParentEntityImpl.Builder)._childChild?.toMutableList()
                 __mutChildChild?.remove(this)
-                __parent1._childChild = if (__mutChildChild.isNullOrEmpty()) null else __mutChildChild
+                __parent1._childChild = if (__mutChildChild.isNullOrEmpty()) emptyList() else __mutChildChild
             }
             if (__parent1 != null) {
                 applyParentRef(PARENT1_CONNECTION_ID, __parent1)
@@ -105,7 +105,7 @@ open class XChildChildEntityImpl: XChildChildEntity, WorkspaceEntityBase() {
                 // Set field to null (in referenced entity)
                 val __mutChildChild = (__parent2 as XChildEntityImpl.Builder)._childChild?.toMutableList()
                 __mutChildChild?.remove(this)
-                __parent2._childChild = if (__mutChildChild.isNullOrEmpty()) null else __mutChildChild
+                __parent2._childChild = if (__mutChildChild.isNullOrEmpty()) emptyList() else __mutChildChild
             }
             if (__parent2 != null) {
                 applyParentRef(PARENT2_CONNECTION_ID, __parent2)
