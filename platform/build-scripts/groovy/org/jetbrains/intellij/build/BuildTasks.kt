@@ -47,8 +47,6 @@ interface BuildTasks {
     compileModules(moduleNames, emptyList())
   }
 
-  fun buildUpdaterJar()
-
   /**
    * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
    */
