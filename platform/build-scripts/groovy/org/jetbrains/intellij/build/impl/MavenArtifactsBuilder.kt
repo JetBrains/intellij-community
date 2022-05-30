@@ -289,7 +289,7 @@ private fun createDependencyTag(dep: MavenArtifactDependency): Dependency {
     val exclusion = Exclusion()
     exclusion.groupId = "*"
     exclusion.artifactId = "*"
-    dependency.addExclusion(Exclusion())
+    dependency.addExclusion(exclusion)
   }
   return dependency
 }
