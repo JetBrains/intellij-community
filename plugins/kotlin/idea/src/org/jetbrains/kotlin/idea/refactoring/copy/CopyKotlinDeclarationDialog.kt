@@ -134,7 +134,7 @@ class CopyKotlinDeclarationDialog(
             return JavaRefactoringBundle.message("invalid.target.package.name.specified")
         }
 
-        if (newName.isNullOrEmpty()) {
+        if (newName.isEmpty()) {
             return JavaRefactoringBundle.message("no.class.name.specified")
         }
 

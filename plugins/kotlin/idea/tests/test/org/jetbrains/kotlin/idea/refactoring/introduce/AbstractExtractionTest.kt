@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce
 
@@ -50,15 +50,13 @@ import org.jetbrains.kotlin.idea.refactoring.markMembersInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.extractClassMembers
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.io.File
 import java.util.*
@@ -100,7 +98,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
             class LambdaHelperImpl : HelperImpl(), KotlinIntroduceLambdaParameterHelper {
                 override fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor = with(descriptor) {
-                    if (name.isNullOrEmpty()) copy(suggestedNames = listOf("__dummyTestFun__")) else this
+                    if (name.isEmpty()) copy(suggestedNames = listOf("__dummyTestFun__")) else this
                 }
             }
 
