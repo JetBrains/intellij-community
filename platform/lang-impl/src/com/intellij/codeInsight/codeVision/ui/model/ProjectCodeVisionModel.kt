@@ -30,7 +30,7 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   val moreEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, "More...")
 
 
-  private fun getCodeVisionHost() = CodeVisionHost.getInstance(project)
+  private fun getCodeVisionHost() = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
 
   fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
     if (entry.providerId == MORE_PROVIDER_ID) {
@@ -47,15 +47,15 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
 
   fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
     if (actionId == HIDE_PROVIDER_ID) {
-      val id = CodeVisionHost.getInstance(project).getProviderById(entry.providerId)?.groupId ?: entry.providerId
+      val id = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId)?.groupId ?: entry.providerId
       CodeVisionSettings.instance().setProviderEnabled(id, false)
-      CodeVisionHost.getInstance(project).invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
+      CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
       return
     }
 
     if (actionId == HIDE_ALL) {
       CodeVisionSettings.instance().codeVisionEnabled = false
-      CodeVisionHost.getInstance(project).invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
+      CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
       return
     }
 

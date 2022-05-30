@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.annotate
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.hints.VcsCodeVisionProvider
 import com.intellij.codeInsight.hints.isCodeAuthorInlayHintsEnabled
@@ -54,7 +55,7 @@ internal class AnnotationsPreloader(private val project: Project) {
 
           runInEdt {
             refreshCodeAuthorInlayHints(project, file)
-            CodeVisionHost.getInstance(project).invalidateProvider(CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
+            CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProvider(CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
           }
         }
         catch (e: VcsException) {

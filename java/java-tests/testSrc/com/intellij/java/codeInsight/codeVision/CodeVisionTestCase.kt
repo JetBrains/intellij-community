@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
@@ -22,7 +23,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   protected fun testProviders(expectedText: String, fileName: String, vararg enabledProviderIds: String) {
     // set enabled providers
     val settings = CodeVisionSettings.instance()
-    val codeVisionHost = CodeVisionHost.getInstance(project)
+    val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
     codeVisionHost.providers.forEach {
       settings.setProviderEnabled(it.id, enabledProviderIds.contains(it.id))
     }

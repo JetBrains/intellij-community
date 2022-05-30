@@ -396,7 +396,7 @@
                     serviceImplementation="com.intellij.codeInsight.highlighting.HighlightManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.settings.CodeVisionSettings" />
-    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionHost" preload="true" />
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionInitializer" preload="true"/>
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionProvidersWatcher" />
     <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionContextProvider" />
     <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionThemeInfoProvider" />

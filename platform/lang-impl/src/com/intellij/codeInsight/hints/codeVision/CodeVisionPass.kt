@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
@@ -69,7 +70,7 @@ class CodeVisionPass(
     internal fun updateProviders(project: Project,
                                  editor: Editor,
                                  providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>) {
-      val codeVisionHost = CodeVisionHost.getInstance(project)
+      val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
       codeVisionHost.invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(editor, providerIdToLenses.keys))
     }
 

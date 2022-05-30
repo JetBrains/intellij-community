@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.codeVision.settings
 
-import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
-import com.intellij.codeInsight.codeVision.CodeVisionBundle
-import com.intellij.codeInsight.codeVision.CodeVisionHost
-import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPass
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderAdapter
 import com.intellij.lang.Language
@@ -43,7 +40,7 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
       editor.putUserData(CODE_VISION_PREVIEW_ENABLED, isEnabled)
       val project = editor.project ?: return@Runnable
       codeVisionData.applyTo(editor, project)
-      CodeVisionHost.getInstance(project).invalidateProviderSignal
+      CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal
         .fire(CodeVisionHost.LensInvalidateSignal(editor))
     }
   }
