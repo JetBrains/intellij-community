@@ -108,6 +108,8 @@ def starts_with_python_shebang(path):
 
 
 def is_python(path):
+    if isinstance(path, os.PathLike):
+        path = path.__fspath__()
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path) - 1]
     filename = os.path.basename(path).lower()
