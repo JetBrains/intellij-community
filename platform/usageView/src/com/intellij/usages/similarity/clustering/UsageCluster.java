@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.similarity.clustering;
 
-import com.intellij.usages.UsageGroup;
+import com.intellij.usages.Usage;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
@@ -39,19 +37,8 @@ public class UsageCluster {
     return myIndex == ((UsageCluster)o).myIndex;
   }
 
-  @NotNull
-  public Set<SimilarUsage> getUsageFilteredByGroup(@NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
-    return getUsages().stream().filter(e -> belongsToGroup(e, groups)).collect(Collectors.toSet());
-  }
-
-  public static boolean belongsToGroup(@NotNull SimilarUsage info,
-                                       @NotNull Collection<@NotNull Collection<? extends UsageGroup>> selectedGroupPaths) {
-    for (Collection<? extends UsageGroup> selectedGroupPath : selectedGroupPaths) {
-      if (ContainerUtil.intersection(selectedGroupPath, info.getUsageGroupData()).size() == selectedGroupPath.size()) {
-        return true;
-      }
-    }
-    return false;
+  public @NotNull Set<SimilarUsage> getOnlySelectedUsages(Set<Usage> selectedUsage) {
+    return getUsages().stream().filter(e -> selectedUsage.contains(e)).collect(Collectors.toSet());
   }
 
   @Override

@@ -2231,26 +2231,9 @@ public class UsageViewImpl implements UsageViewEx {
     return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
   }
 
-  public @NotNull Collection<@NotNull Collection<? extends UsageGroup>> getSelectedGroups() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    Collection<Collection<? extends UsageGroup>> groupPaths = new ArrayList<>();
-    for (TreeNode node : selectedNodes()) {
-      if (node instanceof GroupNode) {
-        List<UsageGroup> groupPath = new ArrayList<>();
-        TreeNode parent = node;
-        while (parent != null) {
-          if (parent instanceof GroupNode) {
-            final UsageGroup group = ((GroupNode)parent).getGroup();
-            if (group != null) {
-              groupPath.add(group);
-            }
-          }
-          parent = parent.getParent();
-        }
-        groupPaths.add(groupPath);
-      }
-    }
-    return groupPaths;
+  public boolean isGroupNodeSelected() {
+    return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes()).traverse()
+             .filterMap(node -> node instanceof GroupNode ? ((GroupNode)node) : null).first() != null;
   }
 
   @NotNull

@@ -2,7 +2,6 @@
 package com.intellij.usages.similarity.usageAdapter;
 
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
@@ -10,14 +9,10 @@ import com.intellij.usages.similarity.clustering.UsageCluster;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SimilarUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter implements SimilarUsage {
 
   private final @NotNull Bag myFeatures;
   private final @NotNull ClusteringSearchSession mySession;
-  private final @NotNull List<UsageGroup> myGroups;
   private final @Nullable UsageCluster myCluster;
 
   public SimilarUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo, @NotNull Bag features, @NotNull ClusteringSearchSession session,
@@ -25,7 +20,6 @@ public class SimilarUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter implem
     super(usageInfo);
     myFeatures = features;
     mySession = session;
-    myGroups = new ArrayList<>();
     myCluster = cluster;
   }
 
@@ -37,16 +31,6 @@ public class SimilarUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter implem
   @Override
   public @Nullable UsageCluster getCluster() {
     return myCluster;
-  }
-
-  @Override
-  public @NotNull List<? extends UsageGroup> getUsageGroupData() {
-    return myGroups;
-  }
-
-  @Override
-  public void addUsageGroupData(@NotNull List<? extends UsageGroup> groups) {
-    myGroups.addAll(groups);
   }
 
   @Override

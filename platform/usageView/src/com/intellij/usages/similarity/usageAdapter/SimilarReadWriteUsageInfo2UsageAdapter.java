@@ -4,22 +4,17 @@ package com.intellij.usages.similarity.usageAdapter;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.ReadWriteAccessUsageInfo2UsageAdapter;
-import com.intellij.usages.UsageGroup;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SimilarReadWriteUsageInfo2UsageAdapter extends ReadWriteAccessUsageInfo2UsageAdapter implements SimilarUsage {
   private final @NotNull Bag myFeatures;
   private final @NotNull ClusteringSearchSession mySession;
 
   private final @Nullable UsageCluster myCluster;
-  private final @NotNull List<UsageGroup> myGroups;
 
   public SimilarReadWriteUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo,
                                                 @NotNull ReadWriteAccessDetector.Access rwAccess,
@@ -28,7 +23,6 @@ public class SimilarReadWriteUsageInfo2UsageAdapter extends ReadWriteAccessUsage
     super(usageInfo, rwAccess);
     myFeatures = features;
     mySession = session;
-    myGroups = new ArrayList<>();
     myCluster = cluster;
   }
 
@@ -45,15 +39,5 @@ public class SimilarReadWriteUsageInfo2UsageAdapter extends ReadWriteAccessUsage
   @Override
   public @Nullable UsageCluster getCluster() {
     return myCluster;
-  }
-
-  @Override
-  public @NotNull List<? extends UsageGroup> getUsageGroupData() {
-    return myGroups;
-  }
-
-  @Override
-  public void addUsageGroupData(@NotNull List<? extends UsageGroup> groups) {
-    myGroups.addAll(groups);
   }
 }
