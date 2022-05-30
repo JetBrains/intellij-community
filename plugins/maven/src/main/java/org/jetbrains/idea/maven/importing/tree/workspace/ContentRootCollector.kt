@@ -44,7 +44,7 @@ object ContentRootCollector {
 
     for (folder in excludedFolders) {
       for (contentRootPath in sortedPotentialContentRootSet) {
-        if (FileUtil.isAncestor(contentRootPath, folder, false)) {
+        if (FileUtil.isAncestor(contentRootPath, folder, true)) {
           if (createContentRootForTarget) {
             val contentRootDataHolder = contentRootDataHolderByPath.getOrPut(contentRootPath) { ContentRootDataHolder(contentRootPath) }
             contentRootDataHolder.excludedPaths.add(folder)
