@@ -16,8 +16,6 @@ fun MutableEntityStorage.addModuleEntity(name: String,
                                          type: String? = null): ModuleEntity {
   val entity = ModuleEntity(name, source, dependencies) {
     this.type = type
-    this.contentRoots = emptyList()
-    this.facets = emptyList()
   }
   this.addEntity(entity)
   return entity
@@ -68,8 +66,6 @@ fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
                                              source: EntitySource): SourceRootEntity {
   val entity = SourceRootEntity(source, url, rootType) {
     this.contentRoot = contentRoot
-    this.javaSourceRoots = emptyList()
-    this.javaResourceRoots = emptyList()
   }
   this.addEntity(entity)
   return entity
@@ -127,7 +123,6 @@ fun MutableEntityStorage.addContentRootEntityWithCustomEntitySource(url: Virtual
                                                                     source: EntitySource): ContentRootEntity {
   val entity = ContentRootEntity(source, url, excludedUrls, excludedPatterns) {
     this.module = module
-    this.sourceRoots = emptyList()
   }
   this.addEntity(entity)
   return entity
@@ -200,7 +195,6 @@ fun MutableEntityStorage.addArtifactEntity(name: String,
   val entity = ArtifactEntity(name, source, artifactType, includeInProjectBuild) {
     this.outputUrl = outputUrl
     this.rootElement = rootElement
-    this.customProperties = emptyList()
   }
   this.addEntity(entity)
   return entity
