@@ -4,8 +4,8 @@ package com.intellij.codeInspection.reference;
 import com.intellij.psi.PsiReference;
 
 /**
- * Interfaces for references that may {@link PsiReference#resolve()} to Java class members ({@link com.intellij.psi.PsiMember}) and should
- * be counted as the member usage in unused declaration inspection.
+ * Interface for references contributed to Java String literals that may {@link PsiReference#resolve()} to Java class members
+ * ({@link com.intellij.psi.PsiMember}) and should be taken into account as the member usage in the unused declaration inspection.
  */
 public interface PsiMemberUsageReference extends PsiReference {
 }
