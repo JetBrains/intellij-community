@@ -32,12 +32,11 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
-import java.util.function.Predicate
 import java.util.regex.Pattern
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
+internal class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
     val projectHome = context.paths.projectHomeDir
     val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
@@ -56,7 +55,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     }
   }
 
-  override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: Predicate<File>?) {
+  override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: ((Path) -> Boolean)?) {
     if (options.isTestDiscoveryEnabled && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
       return
@@ -160,14 +159,14 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
 
   private fun runTestsFromGroupsAndPatterns(additionalJvmOptions: List<String>,
                                             defaultMainModule: String?,
-                                            rootExcludeCondition: Predicate<File>?,
+                                            rootExcludeCondition: ((Path) -> Boolean)?,
                                             additionalSystemProperties: MutableMap<String, String>,
                                             context: CompilationContext) {
     if (rootExcludeCondition != null) {
       val excludedRoots = ArrayList<String>()
       for (module in context.project.modules) {
         val contentRoots = module.contentRootsList.urls
-        if (!contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))) {
+        if (!contentRoots.isEmpty() && rootExcludeCondition(Path.of(JpsPathUtil.urlToPath(contentRoots.first())))) {
           var dir = context.getModuleOutputDir(module)
           if (Files.exists(dir)) {
             excludedRoots.add(dir.toString())
@@ -237,7 +236,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
   private fun debugTests(remoteDebugJvmOptions: String,
                          additionalJvmOptions: List<String>,
                          defaultMainModule: String?,
-                         rootExcludeCondition: Predicate<File>?,
+                         rootExcludeCondition: ((Path) -> Boolean)?,
                          context: CompilationContext) {
     val testConfigurationType = System.getProperty("teamcity.remote-debug.type")
     if (testConfigurationType != "junit") {
@@ -532,7 +531,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
         val loader = UrlClassLoader.build().files(files).get()
         val aClass = loader.loadClass(qName)
         @Suppress("UNCHECKED_CAST")
-        val testAnnotation = loader.loadClass("org.junit.Test") as Class<out Annotation>
+        val testAnnotation = loader.loadClass("org.junit.Test") as Class<Annotation>
         for (m in aClass.declaredMethods) {
           if (Modifier.isPublic(m.modifiers) && m.isAnnotationPresent(testAnnotation)) {
             val exitCode = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.name)
@@ -562,7 +561,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
                               testClasspath: List<String>) {
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
-        .setAttribute(AttributeKey.stringKey("pattern"), options.batchTestIncludes)
+        .setAttribute(AttributeKey.stringKey("pattern"), options.batchTestIncludes ?: "")
         .useWithScope {
           runInBatchMode(mainModule, systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath)
         }

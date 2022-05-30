@@ -306,7 +306,7 @@ class CompilationContextImpl : CompilationContext {
       printEnvironmentDebugInfo()
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
-      val model = loadProject(projectHome, kotlinBinaries, messages)
+      val model = loadProject(projectHome, kotlinBinaries)
       val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
       val context = CompilationContextImpl(model = model,
                                            communityHome = communityHome,
@@ -331,7 +331,7 @@ class CompilationContextImpl : CompilationContext {
   }
 }
 
-private fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries, messages: BuildMessages): JpsModel {
+private fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinaries): JpsModel {
   val model = JpsElementFactory.getInstance().createModel()
   val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
   if (kotlinBinaries.isCompilerRequired) {

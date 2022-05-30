@@ -56,7 +56,10 @@ object TracerProviderManager {
       Runtime.getRuntime().addShutdownHook(Thread({
                                                     tracerProvider?.let {
                                                       tracerProvider = null
-                                                      it.close()
+
+                                                      it.forceFlush()?.join(10, TimeUnit.SECONDS)
+                                                      JaegerJsonSpanExporter.finish()
+                                                      it.shutdown().join(10, TimeUnit.SECONDS)
                                                     }
                                                   }, "close tracer"))
     }
