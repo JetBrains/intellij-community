@@ -41,7 +41,9 @@ public enum LanguageLevel {
   JDK_17_PREVIEW(JavaPsiBundle.messagePointer("jdk.17.preview.language.level.description"), 17),
   JDK_18(JavaPsiBundle.messagePointer("jdk.18.language.level.description"), 18),
   JDK_18_PREVIEW(JavaPsiBundle.messagePointer("jdk.18.preview.language.level.description"), 18),
-  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 19);
+  JDK_19(JavaPsiBundle.messagePointer("jdk.19.language.level.description"), 19),
+  JDK_19_PREVIEW(JavaPsiBundle.messagePointer("jdk.19.preview.language.level.description"), 19),
+  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 20);
 
   /**
    * Should point to the last released JDK.
