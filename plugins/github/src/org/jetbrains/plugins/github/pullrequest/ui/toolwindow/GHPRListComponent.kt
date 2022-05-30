@@ -2,26 +2,28 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.codereview.OpenReviewButton
-import com.intellij.collaboration.ui.codereview.OpenReviewButtonViewModel
+import com.intellij.collaboration.ui.codereview.list.*
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import org.jetbrains.plugins.github.api.data.GHActor
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -32,15 +34,16 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchCompletionProvider
 import org.jetbrains.plugins.github.pullrequest.search.GHPRSearchQueryHolder
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.FlowLayout
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.ListSelectionModel
 import javax.swing.event.ChangeEvent
+import javax.swing.ScrollPaneConstants
 
 internal object GHPRListComponent {
 
@@ -66,22 +69,9 @@ internal object GHPRListComponent {
       override fun onAllDataRemoved() = listModel.removeAll()
     })
 
-    val list = object : JBList<GHPullRequestShort>(listModel) {
-
-      override fun getToolTipText(event: MouseEvent): String? {
-        val childComponent = ListUtil.getDeepestRendererChildComponentAt(this, event.point)
-        if (childComponent !is JComponent) return null
-        return childComponent.toolTipText
-      }
-    }.apply {
-      setExpandableItemsEnabled(false)
-      emptyText.clear()
-      selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
+    val list = ReviewListComponentFactory(listModel).create {
+      presentPR(dataContext.avatarIconsProvider, it)
     }.also {
-      ScrollingUtil.installActions(it)
-      ListUtil.installAutoSelectOnMouseMove(it)
-      ListUiUtil.Selection.installSelectionOnFocus(it)
-      ListUiUtil.Selection.installSelectionOnRightClick(it)
       DataManager.registerDataProvider(it) { dataId ->
         if (GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId)) it.selectedValue else null
       }
@@ -89,17 +79,7 @@ internal object GHPRListComponent {
       PopupHandler.installSelectionListPopup(it, actionManager.getAction(groupId) as ActionGroup, groupId)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("Github.PullRequest.Show", shortcuts, it)
-      ListSpeedSearch(it) { item -> item.title }
     }
-
-    val openButtonViewModel = OpenReviewButtonViewModel()
-    OpenReviewButton.installOpenButtonListeners(list, openButtonViewModel) {
-      ActionManager.getInstance().getAction("Github.PullRequest.Show")
-    }
-
-    val renderer = GHPRListCellRenderer(dataContext.avatarIconsProvider, openButtonViewModel)
-    list.cellRenderer = renderer
-    ClientProperty.put(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
     val searchQueryHolder = dataContext.searchHolder
     val searchStringModel = SingleValueModel(searchQueryHolder.queryString)
@@ -165,11 +145,8 @@ internal object GHPRListComponent {
     val scrollPane = ScrollPaneFactory.createScrollPane(list, true).apply {
       isOpaque = false
       viewport.isOpaque = false
-
-      verticalScrollBar.apply {
-        isOpaque = true
-        ClientProperty.put(this, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, false)
-      }
+      horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+      verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
       val model = verticalScrollBar.model
       val listener = object : BoundedRangeModelThresholdListener(model, 0.7f) {
@@ -199,6 +176,32 @@ internal object GHPRListComponent {
     return progressStripe
   }
 
+  private fun presentPR(avatarIconsProvider: GHAvatarIconsProvider, pr: GHPullRequestShort) =
+    ReviewListItemPresentation.Simple(pr.title, "#" + pr.number, pr.createdAt,
+                                      createUserPresentation(avatarIconsProvider, pr.author),
+                                      tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels"),
+                                                                        pr.labels.map(::getLabelPresentation)),
+                                      state = getStateText(pr.state, pr.isDraft),
+                                      userGroup1 = NamedCollection.create(GithubBundle.message("pull.request.assignees"),
+                                                                          pr.assignees.map { user ->
+                                                                            createUserPresentation(avatarIconsProvider, user)
+                                                                          }))
+
+  private fun getLabelPresentation(label: GHLabel) =
+    TagPresentation.Simple(label.name, ColorHexUtil.fromHex(label.color))
+
+  private fun getStateText(state: GHPullRequestState, isDraft: Boolean): @NlsSafe String? {
+    if (state == GHPullRequestState.OPEN) return null
+    return GHUIUtil.getPullRequestStateText(state, isDraft)
+  }
+
+  private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHActor?): UserPresentation? {
+    if (user == null) return null
+    return UserPresentation.Simple(user.login, null, avatarIconsProvider.getIcon(user.avatarUrl))
+  }
+
+  private fun createUserPresentation(avatarIconsProvider: GHAvatarIconsProvider, user: GHUser): UserPresentation =
+    UserPresentation.Simple(user.login, user.name, avatarIconsProvider.getIcon(user.avatarUrl))
 
   private class ListEmptyTextController(private val listLoader: GHListLoader<*>,
                                         private val searchHolder: GHPRSearchQueryHolder,
