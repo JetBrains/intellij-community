@@ -105,7 +105,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     catch (e: Throwable) {
       System.err.println("Cannot finish tracing: $e")
     }
-    throw RuntimeException(message)
+    throw BuildScriptsLoggedError(message)
   }
 
   override fun error(message: String, cause: Throwable) {
@@ -115,7 +115,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
        $message
        $writer
        """.trimIndent()))
-    throw RuntimeException(message, cause)
+    throw BuildScriptsLoggedError(message, cause)
   }
 
   override fun compilationError(compilerName: String, message: String) {

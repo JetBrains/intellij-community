@@ -6,6 +6,7 @@ import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.tracer
 import java.io.File
 import java.io.InputStream
@@ -228,7 +229,12 @@ private fun readOutputAndBlock(process: Process,
           when (val level = jObject.get("level")?.asText() ?: error("Missing field: 'level'")) {
             "SEVERE" -> {
               firstError?.compareAndSet(null, message)
-              throw RuntimeException(message)
+              try {
+                logger.error(message)
+              } catch (_: BuildScriptsLoggedError) {
+                // skip exception thrown by logger.error
+                // we want to continue consuming stream
+              }
             }
             "WARNING" -> {
               logger.warn(message)
@@ -253,7 +259,13 @@ private fun readOutputAndBlock(process: Process,
             }
           }
         } catch (e: Throwable)  {
-          logger.error("Unable to parse line: ${it}, error: ${e.message}")
+          try {
+            logger.error("Unable to parse line: ${it}, error: ${e.message}\n${e.stackTraceToString()}")
+          }
+          catch (_: BuildScriptsLoggedError) {
+            // skip exception thrown by logger.error
+            // we want to continue consuming stream
+          }
         }
       } else {
         logger.info(it)
