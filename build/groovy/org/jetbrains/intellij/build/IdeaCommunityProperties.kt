@@ -1,118 +1,101 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
-import org.jetbrains.intellij.build.impl.PlatformLayout
 
 import java.nio.file.Path
-import java.util.function.BiConsumer
 
-@CompileStatic
-class IdeaCommunityProperties extends BaseIdeaProperties {
-  private final Path communityHome
-
-  IdeaCommunityProperties(Path communityHome) {
-    this.communityHome = communityHome
-
+open class IdeaCommunityProperties(home: Path) : BaseIdeaProperties() {
+  init {
     baseFileName = "idea"
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.resources"
-    additionalIDEPropertiesFilePaths = List.of(communityHome.resolve("build/conf/ideaCE.properties"))
+    additionalIDEPropertiesFilePaths = listOf(home.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productImplementationModules = ["intellij.platform.main"]
+    productLayout.productImplementationModules = listOf("intellij.platform.main")
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules.addAll(BUNDLED_PLUGIN_MODULES)
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
-    productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+    productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + listOf(
       JavaPluginLayout.javaPlugin(),
-      CommunityRepositoryModules.androidPlugin([:]),
-      CommunityRepositoryModules.groovyPlugin([])
-    ]
+      CommunityRepositoryModules.androidPlugin(emptyMap()),
+      CommunityRepositoryModules.groovyPlugin(emptyList())
+    )
 
-    productLayout.addPlatformCustomizer(new BiConsumer<PlatformLayout, BuildContext>() {
-      @Override
-      void accept(PlatformLayout layout, BuildContext context) {
-        layout.withModule("intellij.platform.duplicates.analysis")
-        layout.withModule("intellij.platform.structuralSearch")
-      }
-    })
+    productLayout.addPlatformCustomizer { layout, _ ->
+      layout.withModule("intellij.platform.duplicates.analysis")
+      layout.withModule("intellij.platform.structuralSearch")
+    }
 
     mavenArtifacts.forIdeModules = true
-    mavenArtifacts.additionalModules = [
+    mavenArtifacts.additionalModules = listOf(
       "intellij.tools.jps.buildScriptDependencies",
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
       "intellij.maven.testFramework"
-    ]
-    mavenArtifacts.squashedModules += [
+    )
+    mavenArtifacts.squashedModules += listOf(
       "intellij.platform.util.base",
       "intellij.platform.util.zip",
-    ]
+    )
 
     versionCheckerConfig = CE_CLASS_VERSIONS
   }
 
-  @Override
-  void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
-    super.copyAdditionalFiles(buildContext, targetDirectory)
-    new FileSet(buildContext.paths.communityHomeDir)
+  override fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    super.copyAdditionalFiles(context, targetDirectory)
+    FileSet(context.paths.communityHomeDir)
       .include("LICENSE.txt")
       .include("NOTICE.txt")
       .copyToDir(Path.of(targetDirectory))
-    new FileSet(buildContext.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
+     FileSet(context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin"))
-    bundleExternalPlugins(buildContext, targetDirectory)
+    bundleExternalPlugins(context, targetDirectory)
   }
 
-  protected void bundleExternalPlugins(BuildContext buildContext, String targetDirectory) {
+  protected open fun bundleExternalPlugins(context: BuildContext, targetDirectory: String) {
     //temporary unbundle VulnerabilitySearch
     //ExternalPluginBundler.bundle('VulnerabilitySearch',
     //                             "$buildContext.paths.communityHome/build/dependencies",
     //                             buildContext, targetDirectory)
   }
 
-  @Override
-  WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
-    return new WindowsDistributionCustomizer() {
-      {
-        icoPath = "$communityHome/platform/icons/src/idea_CE.ico"
-        icoPathForEAP = "$communityHome/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
-        installerImagesPath = "$communityHome/build/conf/ideaCE/win/images"
-        fileAssociations = ["java", "groovy", "kt", "kts"]
+  override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
+    return object : WindowsDistributionCustomizer() {
+      init {
+        icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
+        icoPathForEAP = "$projectHome/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
+        installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
+        fileAssociations = listOf("java", "groovy", "kt", "kts")
       }
 
-      @Override
-      String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
+      override fun getFullNameIncludingEdition(applicationInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
 
-      @Override
-      String getFullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { "IntelliJ IDEA Community Edition" }
+      override fun getFullNameIncludingEditionAndVendor(applicationInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
 
-      @Override
-      String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
-        "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
+      override fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String {
+        return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
       }
     }
   }
 
-  @Override
-  LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
-    return new LinuxDistributionCustomizer() {
-      {
-        iconPngPath = "$communityHome/build/conf/ideaCE/linux/images/icon_CE_128.png"
-        iconPngPathForEAP = "$communityHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
+  override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
+    return object : LinuxDistributionCustomizer() {
+      init {
+        iconPngPath = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_128.png"
+        iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
           "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
-        extraExecutables = List.of(
+        extraExecutables = listOf(
           "plugins/Kotlin/kotlinc/bin/kotlin",
           "plugins/Kotlin/kotlinc/bin/kotlinc",
           "plugins/Kotlin/kotlinc/bin/kotlinc-js",
@@ -121,38 +104,38 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         )
       }
 
-      @Override
-      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "idea-IC-$buildNumber" }
+      override fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String) = "idea-IC-$buildNumber"
     }
   }
 
-  @Override
-  MacDistributionCustomizer createMacCustomizer(String projectHome) {
-    return new MacDistributionCustomizer() {
-      {
-        icnsPath = "$communityHome/build/conf/ideaCE/mac/images/idea.icns"
-        urlSchemes = ["idea"]
+  override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
+    return object : MacDistributionCustomizer() {
+      init {
+        icnsPath = "$projectHome/build/conf/ideaCE/mac/images/idea.icns"
+        urlSchemes = listOf("idea")
         associateIpr = true
         fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
         bundleIdentifier = "com.jetbrains.intellij.ce"
-        dmgImagePath = "$communityHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
-        icnsPathForEAP = "$communityHome/build/conf/ideaCE/mac/images/communityEAP.icns"
+        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
+        icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"
       }
 
-      @Override
-      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-        applicationInfo.isEAP() ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} CE EAP.app"
-                              : "IntelliJ IDEA CE.app"
+      override fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
+        return if (applicationInfo.isEAP) {
+          "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} CE EAP.app"
+        }
+        else {
+          "IntelliJ IDEA CE.app"
+        }
       }
     }
   }
 
-  @Override
-  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) { "IdeaIC${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
+  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  }
 
-  @Override
-  String getBaseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) { "ideaIC-$buildNumber" }
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String) =  "ideaIC-$buildNumber"
 
-  @Override
-  String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) { "idea-ce" }
+  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = "idea-ce"
 }

@@ -21,7 +21,7 @@ class MavenArtifactsProperties {
   /**
    * Names of additional modules for which Maven artifacts should be generated.
    */
-  var additionalModules: MutableList<String> = mutableListOf()
+  var additionalModules: List<String> = emptyList()
 
   /**
    * Names of modules for which Maven artifacts should be generated, that will create all its module-dependencies in a single jar.

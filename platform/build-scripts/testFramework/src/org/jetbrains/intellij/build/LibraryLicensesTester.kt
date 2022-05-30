@@ -9,7 +9,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 
-internal class LibraryLicensesTester(private val project: JpsProject, private val licenses: List<LibraryLicense>) {
+class LibraryLicensesTester(private val project: JpsProject, private val licenses: List<LibraryLicense>) {
   fun reportMissingLicenses(collector: SoftAssertions) {
     val nonPublicModules = setOf("intellij.idea.ultimate.build",
                                  "intellij.idea.community.build",

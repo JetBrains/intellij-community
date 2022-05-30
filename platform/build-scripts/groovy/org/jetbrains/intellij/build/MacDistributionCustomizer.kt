@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 
@@ -60,12 +60,12 @@ abstract class MacDistributionCustomizer {
    *
    * @see FileAssociation
    */
-  var fileAssociations: MutableList<FileAssociation> = mutableListOf()
+  var fileAssociations: List<FileAssociation> = emptyList()
 
   /**
    * Specify &lt;scheme&gt; here if you want product to be able to open urls like <scheme>://open?file=/some/file/path&line=0
    */
-  var urlSchemes: MutableList<String> = mutableListOf()
+  var urlSchemes: List<String> = emptyList()
 
   /**
    * CPU architectures app can be launched on, currently arm64 and x86_64 are supported
@@ -94,7 +94,7 @@ abstract class MacDistributionCustomizer {
   open fun getBinariesToSign(context: BuildContext, arch: JvmArchitecture): List<String> = listOf()
 
   /**
-   * Path to a image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
+   * Path to an image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
    */
   var dmgImagePathForEAP: String? = null
 
@@ -136,7 +136,7 @@ abstract class MacDistributionCustomizer {
    * Additional files to be copied to the distribution with specific architecture, e.g. help bundle or debugger binaries
    *
    * Method is invoked after {@link #copyAdditionalFiles(org.jetbrains.intellij.build.BuildContext, java.lang.String)}.
-   * In this method invocation {@code targetDirectory} may be different then in aforementioned method and may contain nothing.
+   * In this method invocation {@code targetDirectory} may be different from in aforementioned method and may contain nothing.
    *
    * @param context build context that contains information about build directories, product properties and application info
    * @param targetDirectory application bundle directory

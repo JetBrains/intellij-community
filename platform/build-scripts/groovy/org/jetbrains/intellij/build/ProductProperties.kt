@@ -86,8 +86,8 @@ abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
-  open fun getSystemSelector(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
-    return "${applicationInfo.productName}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
+  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "${appInfo.productName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
   }
 
   /**
@@ -105,7 +105,7 @@ abstract class ProductProperties {
   /**
    * List of licenses information about all libraries which can be used in the product modules
    */
-  var allLibraryLicenses: MutableList<LibraryLicense> = CommunityLibraryLicenses.LICENSES_LIST.toMutableList()
+  var allLibraryLicenses: List<LibraryLicense> = CommunityLibraryLicenses.LICENSES_LIST
 
   /**
    * If {@code true} the main product JAR file will be scrambled using {@link ProprietaryBuildTools#scrambleTool}
@@ -163,7 +163,7 @@ abstract class ProductProperties {
   /**
    * Base file name (without extension) for product archives and installers (*.exe, *.tar.gz, *.dmg)
    */
-  abstract fun getBaseArtifactName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String
+  abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
 
   /**
    * @return instance of the class containing properties specific for Windows distribution or {@code null} if the product doesn't have Windows distribution
@@ -226,7 +226,7 @@ abstract class ProductProperties {
    * @return name of sub-directory under projectHome/out where build artifacts will be placed, must be unique among all products built from
    * the same sources
    */
-  open fun getOutputDirectoryName(applicationInfo: ApplicationInfoProperties) = applicationInfo.productName.lowercase(Locale.ROOT)
+  open fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = appInfo.productName.lowercase(Locale.ROOT)
 
   /**
    * Paths to externally built plugins to be included into the IDE. They will be copied into the build, as well as included into

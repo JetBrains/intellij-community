@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 /**
@@ -19,11 +19,11 @@ data class FileAssociation @JvmOverloads constructor(
 ) {
   companion object {
     @JvmStatic
-    fun from(vararg extensions: String): List<FileAssociation> =
-      extensions.map { FileAssociation(it) }
+    fun from(vararg extensions: String): List<FileAssociation> = extensions.map(::FileAssociation)
 
     @JvmStatic
-    fun from(extensionsToIcons: Map<String, String>): List<FileAssociation> =
-      extensionsToIcons.entries.map { FileAssociation(it.key, it.value) }
+    fun from(extensionsToIcons: Map<String, String>): List<FileAssociation> {
+      return extensionsToIcons.entries.map { FileAssociation(it.key, it.value) }
+    }
   }
 }

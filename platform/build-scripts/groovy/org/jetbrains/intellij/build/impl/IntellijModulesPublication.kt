@@ -26,7 +26,14 @@ class IntellijModulesPublication(
 
   constructor(context: CompilationContext) : this(context = context, options = Options(version = context.options.buildNumber!!))
 
-  class Options(val version: String) {
+  class Options(
+    val version: String,
+    var modulesToPublish: List<String> = listProperty("intellij.modules.publication.list"),
+    /**
+     * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
+     */
+    var outputDir: Path = property("intellij.modules.publication.prebuilt.artifacts.dir")!!.let { Path.of(it).normalize() },
+  ) {
     companion object {
       private fun property(property: String) = System.getProperty(property)
 
@@ -51,11 +58,7 @@ class IntellijModulesPublication(
      * Check {@link org.jetbrains.intellij.build.impl.IntellijModulesPublication#artifactExists} for the details.
      */
     var checkArtifactExistsUrl = property("intellij.modules.publication.repository.existsUrl").trimEnd('/')
-    /**
-     * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
-     */
-    var outputDir = property("intellij.modules.publication.prebuilt.artifacts.dir")!!.let { Path.of(it).normalize() }
-    var modulesToPublish = listProperty("intellij.modules.publication.list")
+
     var modulesToExclude = listProperty("intellij.modules.publication.excluded", listOf("fleet"))
   }
 

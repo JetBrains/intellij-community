@@ -20,10 +20,10 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
                                             "intellij.java.rt")
 
     buildCrossPlatformDistribution = true
-    mavenArtifacts.additionalModules = [
+    mavenArtifacts.additionalModules = List.of(
       "intellij.java.compiler.antTasks",
       "intellij.platform.testFramework"
-    ]
+    )
   }
 
   @Override

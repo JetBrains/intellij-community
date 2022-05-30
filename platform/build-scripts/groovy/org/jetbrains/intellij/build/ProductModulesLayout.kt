@@ -68,7 +68,7 @@ class ProductModulesLayout {
    * i.e. for plugins which include an output of a single module and its module libraries, it's enough to specify module names of such plugins
    * in {@link #bundledPluginModules} and {@link #setPluginModulesToPublish pluginModulesToPublish}.
    */
-  var allNonTrivialPlugins: MutableList<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.toMutableList()
+  var allNonTrivialPlugins: List<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
 
   /**
    * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
