@@ -17,6 +17,8 @@ class WorkspaceImplAbsentInspection: LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
     override fun visitClass(klass: KtClass) {
       if (!klass.isWorkspaceEntity()) return
+      if (klass.name in SKIPPED_TYPES) return
+      if (klass.isAbstractEntity()) return
       if (klass.name == "Builder") return
       val foundImplClasses = KotlinClassShortNameIndex.get("${klass.name}Impl", klass.project, GlobalSearchScope.allScope(klass.project))
       if (!foundImplClasses.isEmpty()) return

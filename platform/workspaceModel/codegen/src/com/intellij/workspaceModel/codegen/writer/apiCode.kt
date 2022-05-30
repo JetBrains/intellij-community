@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package deft.storage.codegen
 
-import com.intellij.workspaceModel.codegen.skippedGenTypes
+import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
 import com.intellij.workspaceModel.storage.*
 import deft.storage.codegen.field.javaType
 import org.jetbrains.deft.Type
@@ -49,7 +49,7 @@ fun DefType.generatedApiCode(indent: String = "    ", isEmptyGenBlock: Boolean):
   val builderGeneric = if (abstract) "<$javaFullName>" else ""
   val companionObjectHeader = buildString {
     append("companion object: ${Type::class.fqn}<$javaFullName, Builder$builderGeneric>(")
-    if (base != null && base.name !in skippedGenTypes)
+    if (base != null && base.name !in SKIPPED_TYPES)
       append(base.javaFullName)
     append(")")
   }

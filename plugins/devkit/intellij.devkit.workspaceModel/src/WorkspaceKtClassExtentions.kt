@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.codegen
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.parsing.parseNumericLiteral
@@ -25,6 +26,11 @@ internal fun KtClass.isWorkspaceEntity(): Boolean {
     resolvedKtClass.superTypeListEntries.forEach { superTypeList.push(it) }
   }
   return false
+}
+
+internal fun KtClass.isAbstractEntity(): Boolean {
+  val annotationName = Abstract::class.simpleName
+  return annotationEntries.any { it.shortName?.identifier == annotationName }
 }
 
 internal fun KtClass.getApiVersion(): Int? {

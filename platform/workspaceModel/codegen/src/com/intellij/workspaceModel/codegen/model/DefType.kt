@@ -1,6 +1,6 @@
 package org.jetbrains.deft.codegen.model
 
-import com.intellij.workspaceModel.codegen.skippedGenTypes
+import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
 import com.intellij.workspaceModel.storage.EntitySource
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
@@ -32,7 +32,7 @@ class DefType(
   }
 
   val singleton get() = Object::class in def.annotations
-  val utilityType get() = superTypes.any { it.name == EntitySource::class.simpleName } || name in skippedGenTypes
+  val utilityType get() = superTypes.any { it.name == EntitySource::class.simpleName } || name in SKIPPED_TYPES
 
   fun verify(diagnostics: Diagnostics) {
     val base = base
