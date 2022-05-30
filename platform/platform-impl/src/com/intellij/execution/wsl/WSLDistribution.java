@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -24,7 +23,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.remote.RemoteCredentials;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -164,28 +162,35 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   /**
-   * Copying changed files recursively from {@code wslPath} to {@code windowsPath} with rsync
-   * Consider using ``WslSync`` class
+   * Recursively copies {@code sourceWslPath} to {@code targetWinDirPath} using rsync.
+   * <p>
+   * Examples:
+   * <ul>
+   *   <li>Copying {@code /dir1} to {@code C:\dir2}, will result in {@code C:\dir2\dir1}</li>
+   *   <li>Copying {@code /file1} to {@code C:\dir2}, will result in {@code C:\dir2\file1}</li>
+   * </ul>
+   * </p>
    *
-   * @param wslPath           path to the source file or directory inside wsl, e.g. /usr/bin or /usr/bin/bundle
-   * @param windowsPath       target windows path, e.g. C:/tmp; Parent directories are going to be created
-   * @param additionalOptions may be used for --delete (not recommended), --include and so on
-   * @param handlerConsumer   consumes process handler just before execution. Can be used for fast cancellation
-   * @return process output
-   * @implNote we use the same trick as in {@link com.intellij.ssh.RSyncUtil#download(List, List, RemoteCredentials, ProgressIndicator)} to
-   * achieve consistent copying behaviour for both files and directories.
-   * @see com.intellij.ssh.RSyncUtil#download(List, List, RemoteCredentials, ProgressIndicator)
+   * @param sourceWslPath     path to the source file or directory inside WSL e.g. /usr/bin/ or /usr/bin/bundle.
+   * @param targetWinDirPath  target windows directory path, e.g. C:\tmp\.
+   *                          This directory will be created along with all parents, if necessary.
+   * @param additionalOptions may be used for --delete (not recommended), --include and so on.
+   * @param handlerConsumer   consumes process handler just before execution.
+   *                          Can be used for fast cancellation.
+   * @deprecated copying using rsync is very slow on WSL2, instead consider using
+   * {@link com.intellij.execution.wsl.sync.WslSync.Companion#syncWslFolders(String, Path, AbstractWslDistribution, boolean, String[])}.
    */
-  public void copyFromWsl(@NotNull String wslPath,
-                          @NotNull String windowsPath,
-                          @Nullable List<String> additionalOptions,
-                          @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
+  @Deprecated
+  public void copyFromWslToWinDir(@NotNull String sourceWslPath,
+                                  @NotNull String targetWinDirPath,
+                                  @Nullable List<String> additionalOptions,
+                                  @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
     var command = ContainerUtil.newArrayList(RSYNC, "--checksum", "--recursive");
     if (additionalOptions != null) {
       command.addAll(additionalOptions);
     }
-    command.add(getSourceWslPath(wslPath));
-    command.add(getTargetWslPath(windowsPath));
+    command.add(getSourceWslPath(sourceWslPath));
+    command.add(getTargetWslPath(targetWinDirPath));
 
     var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
     if (process.getExitCode() != 0) {
@@ -700,17 +705,19 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   /**
-   * @return path to the parent of {@code windowsPath}, always with a trailing slash. Also creates all parent directories.
+   * @return {@code windowsDirPath} converted to WSL path (e.g. /mnt/c/...) with a trailing slash at the end.
+   * Also, ensures that the necessary directory structure is created.
+   * @throws ExecutionException in case of errors.
    */
-  private @NotNull String getTargetWslPath(final @NotNull String windowsPath) throws ExecutionException {
-    var windowsPathParent = new File(windowsPath).getParentFile();
-    if (!FileUtil.createDirectory(windowsPathParent)) {
-      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.create.target.dir.message", windowsPathParent));
+  private @NotNull String getTargetWslPath(final @NotNull String windowsDirPath) throws ExecutionException {
+    if (!FileUtil.createDirectory(new File(windowsDirPath))) {
+      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.create.target.dir.message", windowsDirPath));
     }
-    var targetWslPath = getWslPath(windowsPathParent.getPath());
+
+    var targetWslPath = getWslPath(windowsDirPath);
     if (targetWslPath == null) {
-      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
+      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsDirPath));
     }
-    return targetWslPath + "/";
+    return targetWslPath.endsWith("/") ? targetWslPath : targetWslPath + "/";
   }
 }
