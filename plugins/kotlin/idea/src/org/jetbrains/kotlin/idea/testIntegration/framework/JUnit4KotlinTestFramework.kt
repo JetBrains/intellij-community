@@ -7,8 +7,10 @@ import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework.C
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.cached
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.getTopmostClass
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.isAnnotated
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JUnit4KotlinTestFramework : AbstractKotlinTestFramework() {
 
@@ -31,6 +33,8 @@ class JUnit4KotlinTestFramework : AbstractKotlinTestFramework() {
     }
 
     private fun isJUnit4TestClass(ktClassOrObject: KtClassOrObject): Boolean {
+        if (ktClassOrObject.safeAs<KtClass>()?.isInner() == true)
+            return false
         val topmostClass = getTopmostClass(ktClassOrObject)
         if (topmostClass == ktClassOrObject && ktClassOrObject.isAnnotated(JUnitUtil.RUN_WITH)) return true
 
