@@ -16,6 +16,7 @@ import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenPlugin
@@ -91,7 +92,12 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             contributeSourceDirectories(mavenProject, module, rootModel)
         }
 
-        if (!KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(module.project)) return
+        if (MavenRunner.getInstance(module.project).settings.isDelegateBuildToMaven ||
+            !KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(module.project)
+        ) {
+            return
+        }
+
         postTasks.add { project: Project, _: MavenEmbeddersManager, _: MavenConsole, mavenProgressIndicator: MavenProgressIndicator ->
             val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return@add
             val compilerVersion = mavenPlugin.compilerVersion

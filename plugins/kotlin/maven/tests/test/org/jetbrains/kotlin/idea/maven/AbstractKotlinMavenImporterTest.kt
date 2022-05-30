@@ -14,6 +14,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
@@ -2256,6 +2257,24 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             Assert.assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(myProject))
             Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
+
+        @Test
+        fun testDontShowNotificationWhenBuildIsDelegatedToMaven() {
+            val isBuildDelegatedToMaven = MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven
+            MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven = true
+
+            try {
+                val version = "1.1.0"
+                val notifications = catchNotifications(myProject) {
+                    doUnsupportedVersionTest(version)
+                }
+
+                assertNull(notifications.find { it.title == "Unsupported Kotlin JPS plugin version" })
+            } finally {
+                MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven = isBuildDelegatedToMaven
+            }
+        }
+
     }
 
     class MultiModuleImport : AbstractKotlinMavenImporterTest() {
