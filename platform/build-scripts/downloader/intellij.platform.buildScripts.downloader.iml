@@ -12,7 +12,6 @@
     <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="library" name="zstd-jni" level="project" />
   </component>
 </module>

@@ -2,8 +2,8 @@
 package org.jetbrains.intellij.build.dependencies;
 
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
+import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Striped;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTrac
 import org.jetbrains.intellij.build.dependencies.telemetry.BuildDependenciesTracer;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -33,7 +34,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@SuppressWarnings("SSBasedInspection")
+@SuppressWarnings({"SSBasedInspection", "UnstableApiUsage"})
 @ApiStatus.Internal
 final public class BuildDependenciesDownloader {
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
@@ -127,7 +128,7 @@ final public class BuildDependenciesDownloader {
     try {
       String uriString = uri.toString();
       String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1);
-      String fileName = DigestUtils.sha256Hex(uriString).substring(0, 10) + "-" + lastNameFromUri;
+      String fileName = hashString(uriString).substring(0, 10) + "-" + lastNameFromUri;
       Path targetFile = getDownloadCachePath(communityRoot).resolve(fileName);
 
       downloadFile(uri, targetFile);
@@ -147,7 +148,7 @@ final public class BuildDependenciesDownloader {
       Path cachePath = getDownloadCachePath(communityRoot);
 
       String toHash = archiveFile.toString() + getExtractOptionsShortString(options);
-      String directoryName = archiveFile.getFileName().toString() + "." + DigestUtils.sha256Hex(toHash).substring(0, 6) + ".d";
+      String directoryName = archiveFile.getFileName().toString() + "." + hashString(toHash).substring(0, 6) + ".d";
       Path targetDirectory = cachePath.resolve(directoryName);
       Path flagFile = cachePath.resolve(directoryName + ".flag");
       extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options);
@@ -160,6 +161,10 @@ final public class BuildDependenciesDownloader {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static @NotNull String hashString(@NotNull String s) {
+    return new BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36);
   }
 
   private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory, BuildDependenciesExtractOptions[] options)
@@ -222,8 +227,7 @@ final public class BuildDependenciesDownloader {
     List<Path> filesAfterCleaning = BuildDependenciesUtil.listDirectory(targetDirectory);
     if (!filesAfterCleaning.isEmpty()) {
       throw new IllegalStateException("Target directory " + targetDirectory + " is not empty after cleaning: " +
-                                      filesAfterCleaning.stream().map(path -> path.toString()).collect(
-                                        Collectors.joining(" ")));
+                                      filesAfterCleaning.stream().map(Path::toString).collect(Collectors.joining(" ")));
     }
 
     ByteBuffer start = ByteBuffer.allocate(4);
@@ -287,7 +291,7 @@ final public class BuildDependenciesDownloader {
       // Extracting different archive files into the same target should overwrite target each time
       // That's why flagFile should be dependent only on target location
       Path flagFile = getProjectLocalDownloadCache(communityRoot)
-        .resolve(DigestUtils.sha256Hex(target.toString()).substring(0, 6) + "-" + target.getFileName().toString() + ".flag.txt");
+        .resolve(hashString(target.toString()).substring(0, 6) + "-" + target.getFileName().toString() + ".flag.txt");
       extractFileWithFlagFileLocation(archiveFile, target, flagFile, options);
     }
     catch (Exception e) {

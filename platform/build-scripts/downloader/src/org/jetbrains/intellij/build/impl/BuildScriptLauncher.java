@@ -16,7 +16,7 @@ import java.util.Map;
  * please do not add any more logic here as it won't be run if you start your target
  * from IDE
  */
-public class BuildScriptLauncher {
+public final class BuildScriptLauncher {
   private static final String MAIN_CLASS_PROPERTY = "build.script.launcher.main.class";
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
