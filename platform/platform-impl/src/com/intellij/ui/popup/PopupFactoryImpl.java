@@ -660,12 +660,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myMaxIconHeight = maxIconHeight;
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
-
-      myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
-        if (evt.getPropertyName() == Presentation.PROP_TEXT) {
-          myText = myAction.getTemplatePresentation().getText();
-        }
-      });
     }
 
     ActionItem(@NotNull AnAction action,
