@@ -241,7 +241,10 @@ class PluginLayout(val mainModule: String): BaseLayout() {
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-      layout.resourcePaths.add(ModuleResourceData(moduleName, resourcePath, relativeOutputPath, false))
+      layout.resourcePaths.add(ModuleResourceData(moduleName = moduleName,
+                                                  resourcePath = resourcePath,
+                                                  relativeOutputPath = relativeOutputPath,
+                                                  packToZip = false))
     }
 
     /**

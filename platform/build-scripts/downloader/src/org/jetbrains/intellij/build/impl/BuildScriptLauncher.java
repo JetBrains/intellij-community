@@ -31,7 +31,8 @@ public final class BuildScriptLauncher {
         .invokeExact(args);
 
       System.exit(0);
-    } catch (Throwable t) {
+    }
+    catch (Throwable t) {
       StringWriter sw = new StringWriter();
       try (PrintWriter printWriter = new PrintWriter(sw)) {
         t.printStackTrace(printWriter);
@@ -45,7 +46,8 @@ public final class BuildScriptLauncher {
         // https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Build+Problems
         System.out.println(new ServiceMessage("buildProblem", Map.of("description", message)) {}.asString());
         System.exit(0);
-      } else {
+      }
+      else {
         System.err.println("\nFATAL: " + message);
         System.exit(1);
       }
