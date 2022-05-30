@@ -134,10 +134,10 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
     substituteTemplatePlaceholders(sourceFile, targetFile, "@@", listOf(
-      Pair("product_full", fullName),
-      Pair("product", context.productProperties.baseFileName),
-      Pair("product_vendor", context.applicationInfo.shortCompanyName),
-      Pair("system_selector", context.systemSelector)
+      "product_full" to fullName,
+      "product" to context.productProperties.baseFileName,
+      "product_vendor" to context.applicationInfo.shortCompanyName,
+      "system_selector" to context.systemSelector
     ), convertToUnixLineEndings = true)
   }
 
@@ -217,11 +217,11 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           outputFile = snapDir.resolve("$snapName.desktop"),
           placeholder = "$",
           values = listOf(
-            Pair("NAME", productName),
-            Pair("ICON", "\${SNAP}/bin/${context.productProperties.baseFileName}.png"),
-            Pair("SCRIPT", snapName),
-            Pair("COMMENT", appInfo.motto ?: ""),
-            Pair("WM_CLASS", getLinuxFrameClass(context))
+            "NAME" to productName,
+            "ICON" to "\${SNAP}/bin/${context.productProperties.baseFileName}.png",
+            "SCRIPT" to snapName,
+            "COMMENT" to (appInfo.motto ?: ""),
+            "WM_CLASS" to getLinuxFrameClass(context)
           )
         )
         copyFile(iconPngPath, snapDir.resolve("$snapName.png"))
@@ -233,12 +233,12 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           outputFile = snapcraftConfig,
           placeholder = "$",
           values = listOf(
-            Pair("NAME", snapName),
-            Pair("VERSION", snapVersion),
-            Pair("SUMMARY", productName),
-            Pair("DESCRIPTION", customizer.snapDescription ?: ""),
-            Pair("GRADE", if (appInfo.isEAP) "devel" else "stable"),
-            Pair("SCRIPT", "bin/${context.productProperties.baseFileName}.sh")
+            "NAME" to snapName,
+            "VERSION" to snapVersion,
+            "SUMMARY" to productName,
+            "DESCRIPTION" to (customizer.snapDescription ?: ""),
+            "GRADE" to if (appInfo.isEAP) "devel" else "stable",
+            "SCRIPT" to "bin/${context.productProperties.baseFileName}.sh"
           )
         )
         context.messages.info("""
@@ -266,7 +266,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             "--volume=$snapDir/$snapName.desktop:/build/snap/gui/$snapName.desktop:ro",
             "--volume=$snapDir/$snapName.png:/build/prime/meta/gui/icon.png:ro",
             "--volume=$snapDir/result:/build/result",
-            "--volume=${context.paths.getDistAll()}:/build/dist.all:ro",
+            "--volume=${context.paths.distAllDir}:/build/dist.all:ro",
             "--volume=$productJsonDir:/build/dist.product-json:ro",
             "--volume=$unixDistPath:/build/dist.unix:ro",
             "--volume=$runtimeDir:/build/jre:ro",
@@ -278,7 +278,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
-        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName), context.paths.artifactDir)
+        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName!!), context.paths.artifactDir)
         context.notifyArtifactBuilt(snapArtifactPath)
         checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch = arch)
       }
