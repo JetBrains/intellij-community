@@ -32,7 +32,7 @@ interface ExternalSystemProjectAware {
    * because we can restore only delete event by CRCs.
    *
    * Note: Now create event and register settings file (file appear in settings files list) event
-   * is same (also for delete and unregister), because we cannot find settings file if that doesn't
+   * is same (also for delete and unregister), because we cannot find settings file if it doesn't
    * exist in file system. Usually settings files list forms during file system scanning.
    *
    * Note: This function will be called on EDT. Please make only trivial checks like:
