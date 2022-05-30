@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.caches.project
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.vfs.AsyncVfsEventsListener
@@ -11,6 +14,8 @@ import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationList
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriority
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.isDispatchThread
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class VfsCodeBlockModificationListener: StartupActivity.Background {
     override fun runActivity(project: Project) {
@@ -24,7 +29,16 @@ class VfsCodeBlockModificationListener: StartupActivity.Background {
                 } ?: true
             }
             if (projectRelatedVfsFileChange) {
-                ocbModificationListener.incModificationCount()
+                if (isDispatchThread()) {
+                    ocbModificationListener.incModificationCount()
+                } else {
+                    // it is not fully correct - OCB has to be triggered ASAP as we detect VFS-change out of IJ that
+                    // can affect Kotlin resolve, we can't do that properly before Kotlin 1.6.0
+                    // see [org.jetbrains.kotlin.descriptors.InvalidModuleNotifier]
+                    invokeLater {
+                        ocbModificationListener.incModificationCount()
+                    }
+                }
             }
         }
 
