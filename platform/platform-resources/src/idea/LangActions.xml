@@ -345,6 +345,8 @@
               class="com.intellij.lang.documentation.ide.actions.DocumentationForwardAction"/>
       <action id="Documentation.EditSource" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSource"
               class="com.intellij.lang.documentation.ide.actions.DocumentationEditSourceAction"/>
+      
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <action id="Documentation.ViewExternal" icon="AllIcons.General.Web" use-shortcut-of="ExternalJavaDoc"
             class="com.intellij.lang.documentation.ide.actions.DocumentationViewExternalAction"/>
