@@ -132,7 +132,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return myIsPreviewUsages;
   }
 
-  private Set<UnloadedModuleDescription> computeUnloadedModulesFromUseScope(UsageViewDescriptor descriptor) {
+  protected Set<UnloadedModuleDescription> computeUnloadedModulesFromUseScope(UsageViewDescriptor descriptor) {
     if (ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
       //optimization
       return Collections.emptySet();
