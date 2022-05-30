@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.transformFile
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -241,9 +240,8 @@ internal class WindowsDistributionBuilder(
   private fun generateVMOptions(distBinDir: Path) {
     val productProperties = context.productProperties
     val fileName = "${productProperties.baseFileName}64.exe.vmoptions"
-    val isEAP = context.applicationInfo.isEAP
-    val vmOptions = VmOptionsGenerator.computeVmOptions(isEAP, productProperties)
-    Files.writeString(distBinDir.resolve(fileName), vmOptions.joinToString(separator = "\r\n") + "\r\n", StandardCharsets.US_ASCII)
+    val vmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, productProperties)
+    VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\r\n")
   }
 
   private fun buildWinLauncher(winDistPath: Path) {

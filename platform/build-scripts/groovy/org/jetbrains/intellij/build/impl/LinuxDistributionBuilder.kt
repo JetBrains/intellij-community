@@ -10,11 +10,9 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.BuildUtils.assertUnixLineEndings
 import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProductPrefix
-import org.jetbrains.intellij.build.impl.VmOptionsGenerator.computeVmOptions
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
-import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
 
@@ -112,8 +110,9 @@ class LinuxDistributionBuilder(private val context: BuildContext,
   private fun generateVMOptions(distBinDir: Path) {
     val fileName = "${context.productProperties.baseFileName}64.vmoptions"
     @Suppress("SpellCheckingInspection")
-    val vmOptions = computeVmOptions(context.applicationInfo.isEAP, context.productProperties) + listOf("-Dsun.tools.attach.tmp.only=true")
-    Files.writeString(distBinDir.resolve(fileName), vmOptions.joinToString(separator = "\n") + "\n", StandardCharsets.US_ASCII)
+    val vmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties) +
+                    listOf("-Dsun.tools.attach.tmp.only=true")
+    VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\n")
   }
 
   private fun generateReadme(unixDistPath: Path) {

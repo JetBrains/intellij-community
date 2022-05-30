@@ -389,16 +389,8 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     val snapshotsDir = createSnapshotsDirectory()
     val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=$hprofSnapshotFilePath", "-Dkotlinx.coroutines.debug=on"))
-    jvmArgs.addAll(0, VmOptionsGenerator.COMMON_VM_OPTIONS)
-    if (options.jvmMemoryOptions == null) {
-      jvmArgs.add("-Xmx750m")
-      jvmArgs.add("-Xms750m")
-      @Suppress("SpellCheckingInspection")
-      jvmArgs.add("-Dsun.io.useCanonCaches=false")
-    }
-    else {
-      jvmArgs.addAll(options.jvmMemoryOptions.split(whitespaceRegex))
-    }
+    jvmArgs.addAll(0, VmOptionsGenerator.computeVmOptions(true, null))
+    jvmArgs.addAll(options.jvmMemoryOptions?.split(whitespaceRegex) ?: listOf("-Xms750m", "-Xmx750m", "-Dsun.io.useCanonCaches=false"))
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     val defaultSystemProperties = mapOf(
       "idea.platform.prefix" to options.platformPrefix,
