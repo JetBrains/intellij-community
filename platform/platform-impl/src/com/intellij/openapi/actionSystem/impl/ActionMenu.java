@@ -21,6 +21,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
+import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -107,8 +108,10 @@ public final class ActionMenu extends JBMenu {
 
     init();
 
-    // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
-    getPopupMenu();
+    // Also triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
+    BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu(), popupMenu -> {
+      Utils.updateMenuItems(popupMenu, getDataContext(), myPlace, myPresentationFactory);
+    });
   }
 
   @Override
@@ -406,7 +409,7 @@ public final class ActionMenu extends JBMenu {
     validate();
   }
 
-  public void fillMenu() {
+  private @NotNull DataContext getDataContext() {
     DataContext context;
 
     if (myContext != null) {
@@ -422,8 +425,12 @@ public final class ActionMenu extends JBMenu {
       }
       context = Utils.wrapDataContext(context);
     }
+    return context;
+  }
 
-    final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
+  public void fillMenu() {
+    DataContext context = getDataContext();
+    boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
     Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, isDarkMenu,
                    RelativePoint.getNorthEastOf(this), () -> !isSelected());
   }

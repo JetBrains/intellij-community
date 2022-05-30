@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.actionSystem.*;
@@ -312,7 +313,8 @@ public final class Utils {
       () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
       expire, removeIcon);
     boolean checked = group instanceof CheckedActionGroup;
-    fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+    boolean multiChoice = isMultiChoiceGroup(group);
+    fillMenuInner(component, list, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
 
   private static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull String place) {
@@ -354,6 +356,7 @@ public final class Utils {
   private static void fillMenuInner(@NotNull JComponent component,
                                     @NotNull List<? extends AnAction> list,
                                     boolean checked,
+                                    boolean multiChoice,
                                     boolean enableMnemonics,
                                     @NotNull PresentationFactory presentationFactory,
                                     @NotNull DataContext context,
@@ -379,6 +382,9 @@ public final class Utils {
         }
         LOG.warn(message);
         continue;
+      }
+      if (multiChoice && action instanceof Toggleable) {
+        presentation.setMultipleChoice(true);
       }
 
       if (action instanceof Separator) {
@@ -437,6 +443,68 @@ public final class Utils {
           }
         }
       }
+    }
+  }
+
+  public static boolean isMultiChoiceGroup(@NotNull ActionGroup actionGroup) {
+    Presentation p = actionGroup.getTemplatePresentation();
+    if (p.isMultipleChoice()) return true;
+    if (p.getIcon() == AllIcons.Actions.GroupBy ||
+        p.getIcon() == AllIcons.Actions.Show ||
+        p.getIcon() == AllIcons.General.GearPlain ||
+        p.getIcon() == AllIcons.Debugger.RestoreLayout) {
+      return true;
+    }
+    if (actionGroup.getClass() == DefaultActionGroup.class) {
+      for (AnAction child : actionGroup.getChildren(null)) {
+        if (child instanceof Separator) continue;
+        if (!(child instanceof Toggleable)) return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  static <T> void updateMenuItems(@NotNull JPopupMenu popupMenu,
+                                  @NotNull DataContext dataContext,
+                                  @NotNull String place,
+                                  @NotNull PresentationFactory presentationFactory) {
+    List<ActionMenuItem> items = ContainerUtil.filterIsInstance(popupMenu.getComponents(), ActionMenuItem.class);
+    updateComponentActions(
+      popupMenu, ContainerUtil.map(items, ActionMenuItem::getAnAction), dataContext, place, presentationFactory,
+      () -> {
+        for (ActionMenuItem item : items) {
+          item.updateFromPresentation(presentationFactory.getPresentation(item.getAnAction()));
+        }
+      });
+  }
+
+  @ApiStatus.Internal
+  public static <T> void updateComponentActions(@NotNull JComponent component,
+                                                @NotNull Iterable<AnAction> actions,
+                                                @NotNull DataContext dataContext,
+                                                @NotNull String place,
+                                                @NotNull PresentationFactory presentationFactory,
+                                                @NotNull Runnable onUpdate) {
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    for (AnAction action : actions) {
+      actionGroup.add(action);
+    }
+    // note that no retries are attempted
+    if (isAsyncDataContext(dataContext)) {
+      expandActionGroupAsync(actionGroup, presentationFactory, dataContext, place)
+        .onSuccess(__ -> {
+          try {
+            onUpdate.run();
+          }
+          finally {
+            component.repaint();
+          }
+        });
+    }
+    else {
+      expandActionGroupImpl(actionGroup, presentationFactory, dataContext, place, ActionPlaces.isPopupPlace(place), null, null);
+      onUpdate.run();
     }
   }
 

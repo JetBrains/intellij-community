@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
 
   private String myDescription;
   private boolean myToggled;
+  private boolean myKeepMenuOpen;
 
   ActionMenuItem(@NotNull AnAction action,
                  @NotNull String place,
@@ -120,13 +122,15 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
   }
 
   void updateFromPresentation(@NotNull Presentation presentation) {
-    setVisible(presentation.isVisible());
+    // all items must be visible at this point
+    //setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled());
     setText(presentation.getText(myEnableMnemonics));
     setMnemonic(presentation.getMnemonic());
     setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
     updateIcon(presentation);
     myDescription = presentation.getDescription();
+    myKeepMenuOpen = myKeepMenuOpen || myAction.getAction() instanceof KeepingPopupOpenAction || presentation.isMultipleChoice();
 
     if (myScreenMenuItemPeer != null) {
       myScreenMenuItemPeer.setLabel(getText(), getAccelerator());
@@ -265,6 +269,10 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
   @Override
   public boolean isSelected() {
     return myToggled;
+  }
+
+  public boolean isKeepMenuOpen() {
+    return myKeepMenuOpen;
   }
 
   private void performAction(int modifiers) {

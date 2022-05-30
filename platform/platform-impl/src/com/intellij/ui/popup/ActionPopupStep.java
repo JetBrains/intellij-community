@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -249,34 +250,20 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     performAction(myContext, myActionPlace, action, modifiers, inputEvent);
   }
 
-  public void updateStepItems(@Nullable Runnable afterUpdate) {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (PopupFactoryImpl.ActionItem actionItem : getValues()) {
-      actionGroup.add(actionItem.getAction());
-    }
-
+  public void updateStepItems(@NotNull JComponent component) {
     DataContext dataContext = myContext.get();
     PresentationFactory presentationFactory = myPresentationFactory != null ? myPresentationFactory : new PresentationFactory();
-
-    Runnable updatePresentationRunnable = () -> {
-      for (PopupFactoryImpl.ActionItem actionItem : getValues()) {
-        Presentation presentation = presentationFactory.getPresentation(actionItem.getAction());
-        actionItem.updateFromPresentation(presentation, myActionPlace);
+    List<PopupFactoryImpl.ActionItem> values = getValues();
+    Utils.updateComponentActions(
+      component, ContainerUtil.map(values, PopupFactoryImpl.ActionItem::getAction),
+      dataContext, myActionPlace, presentationFactory,
+      () -> {
+        for (PopupFactoryImpl.ActionItem actionItem : values) {
+          Presentation presentation = presentationFactory.getPresentation(actionItem.getAction());
+          actionItem.updateFromPresentation(presentation, myActionPlace);
+        }
       }
-      if (afterUpdate != null) {
-        afterUpdate.run();
-      }
-    };
-
-    if (Utils.isAsyncDataContext(dataContext)) {
-      Utils.expandActionGroupAsync(actionGroup, presentationFactory, dataContext, myActionPlace).onSuccess(actions -> {
-        updatePresentationRunnable.run();
-      });
-    }
-    else {
-      Utils.expandActionGroup(actionGroup, presentationFactory, dataContext, myActionPlace);
-      updatePresentationRunnable.run();
-    }
+    );
   }
 
   @Override

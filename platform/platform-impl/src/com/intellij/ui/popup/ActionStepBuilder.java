@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -93,9 +92,7 @@ class ActionStepBuilder {
   }
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-    boolean multiChoicePopup = actionGroup.getTemplatePresentation().isMultipleChoice() ||
-                               actionGroup.getTemplatePresentation().getIcon() == AllIcons.Actions.GroupBy ||
-                               actionGroup.getTemplatePresentation().getIcon() == AllIcons.Actions.Show;
+    boolean multiChoicePopup = Utils.isMultiChoiceGroup(actionGroup);
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
       actionGroup, myPresentationFactory, myDataContext, myActionPlace);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(

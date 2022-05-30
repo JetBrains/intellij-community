@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -34,8 +35,6 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.function.Supplier;
 
 /**
@@ -100,15 +99,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
       addPopupMenuListener(new MyPopupMenuListener());
-      // This fake event might be sent from BegMenuItemUI
-      // to update items in case of multiple choice when there are dependencies between items like:
-      // 1. Selected A means unselected B and vise versa
-      // 2. Selected/unselected A means enabled/disabled B
-      addPropertyChangeListener("updateChildren", new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          updateChildren(null);
-        }
+      BegMenuItemUI.registerMultiChoiceSupport(this, popupMenu -> {
+        Utils.updateMenuItems(popupMenu, myContext, myPlace, myPresentationFactory);
       });
       UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
     }
