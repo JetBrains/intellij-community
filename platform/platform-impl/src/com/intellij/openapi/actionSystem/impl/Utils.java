@@ -361,15 +361,19 @@ public final class Utils {
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     component.removeAll();
-    final @Nullable Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
+    Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
     if (nativePeer != null) nativePeer.beginFill();
-    final ArrayList<Component> children = new ArrayList<>();
+    ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
-      final AnAction action = list.get(i);
+      AnAction action = list.get(i);
       Presentation presentation = presentationFactory.getPresentation(action);
-      if (!(action instanceof Separator) && presentation.isVisible() && StringUtil.isEmpty(presentation.getText())) {
-        String message = "Skipping empty menu item for action '" + action + "' (" + action.getClass()+")";
+      if (!presentation.isVisible()) {
+        LOG.error("Invisible menu item for '" + action + "' (" + action.getClass() + ") in '" + place + "'");
+        continue;
+      }
+      else if (!(action instanceof Separator) && StringUtil.isEmpty(presentation.getText())) {
+        String message = "Empty menu item for '" + action + "' (" + action.getClass() + ") in '" + place + "'";
         if (action.getTemplatePresentation().getText() == null) {
           message += ". Please specify some default action text in plugin.xml or action constructor";
         }
@@ -378,7 +382,7 @@ public final class Utils {
       }
 
       if (action instanceof Separator) {
-        final String text = ((Separator)action).getText();
+        String text = ((Separator)action).getText();
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
           JPopupMenu.Separator separator = createSeparator(text);
           component.add(separator);
@@ -393,7 +397,8 @@ public final class Utils {
         if (nativePeer != null) nativePeer.add(menu.getScreenMenuPeer());
       }
       else {
-        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
+        ActionMenuItem each = new ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons);
+        each.updateFromPresentation(presentation);
         component.add(each);
         children.add(each);
         if (nativePeer != null) nativePeer.add(each.getScreenMenuItemPeer());
@@ -401,8 +406,9 @@ public final class Utils {
     }
 
     if (list.isEmpty()) {
-      ActionMenuItem each = new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER),
-                                               place, context, enableMnemonics, true, checked, useDarkIcons);
+      Presentation presentation = presentationFactory.getPresentation(EMPTY_MENU_FILLER);
+      ActionMenuItem each = new ActionMenuItem(EMPTY_MENU_FILLER, place, context, enableMnemonics, checked, useDarkIcons);
+      each.updateFromPresentation(presentation);
       component.add(each);
       children.add(each);
     }
