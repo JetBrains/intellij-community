@@ -20,7 +20,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
@@ -33,7 +32,9 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.find
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
-import com.intellij.refactoring.extractMethod.newImpl.inplace.*
+import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
@@ -245,7 +246,6 @@ class MethodExtractor {
   fun prepareRefactoringElements(extractOptions: ExtractOptions): ExtractedElements {
     val dependencies = withFilteredAnnotations(extractOptions)
     val factory = PsiElementFactory.getInstance(dependencies.project)
-    val styleManager = CodeStyleManager.getInstance(dependencies.project)
     val codeBlock = BodyBuilder(factory)
       .build(
         dependencies.elements,
@@ -271,24 +271,12 @@ class MethodExtractor {
       )
     method.body?.replace(codeBlock)
 
-    val parameters = dependencies.inputParameters.map { it.references.first() }
-
-    val callBuilder = CallBuilder(dependencies.project, dependencies.elements.first())
-    val methodCall = callBuilder.createMethodCall(method, parameters).text
-    val expressionElement = (dependencies.elements.singleOrNull() as? PsiExpression)
-    val callElements = if (expressionElement != null) {
-      callBuilder.buildExpressionCall(methodCall, dependencies.dataOutput)
-    }
-    else {
-      callBuilder.buildCall(methodCall, dependencies.flowOutput, dependencies.dataOutput, dependencies.exposedLocalVariables)
-    }
-    val formattedCallElements = callElements.map { styleManager.reformat(it) }
-
     if (needsNullabilityAnnotations(dependencies.project) && ExtractMethodHelper.isNullabilityAvailable(dependencies)) {
       updateMethodAnnotations(method, dependencies.inputParameters)
     }
 
-    return ExtractedElements(formattedCallElements, method)
+    val callElements = CallBuilder(dependencies.elements.first()).createCall(method, dependencies)
+    return ExtractedElements(callElements, method)
   }
 
   private fun needsNullabilityAnnotations(project: Project): Boolean {
