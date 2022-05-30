@@ -515,14 +515,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
     }
 
-    @Nullable
-    protected RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
-      if(e.getProject() == null ) return null;
+    protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
+      if (e.getProject() == null) return null;
       return RunManager.getInstance(e.getProject()).getSelectedConfiguration();
     }
 
-    private void run(@NotNull Project project, @Nullable RunConfiguration configuration, @Nullable RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
-      RunnerHelper.run(project, configuration, settings, dataContext, myExecutor);
+    protected void run(@NotNull Project project, @NotNull RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
+      RunnerHelper.run(project, settings.getConfiguration(), settings, dataContext, myExecutor);
     }
 
     @Override
@@ -535,7 +534,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
       RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(e);
       if (selectedConfiguration != null) {
-        run(project, selectedConfiguration.getConfiguration(), selectedConfiguration, e.getDataContext());
+        run(project, selectedConfiguration, e.getDataContext());
       }
       else if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
         runCurrentFile(e);
@@ -591,6 +590,58 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                                     @NotNull RunnerAndConfigurationSettings runConfig,
                                     @NotNull DataContext dataContext) {
       ExecutionUtil.doRunConfiguration(runConfig, myExecutor, null, null, dataContext);
+    }
+  }
+
+  public static class RunSpecifiedConfigExecutorAction extends ExecutorAction {
+    private final RunnerAndConfigurationSettings myRunConfig;
+    private final boolean myEditConfigBeforeRun;
+
+    public RunSpecifiedConfigExecutorAction(@NotNull Executor executor,
+                                            @NotNull RunnerAndConfigurationSettings runConfig,
+                                            boolean editConfigBeforeRun) {
+      super(executor);
+      myRunConfig = runConfig;
+      myEditConfigBeforeRun = editConfigBeforeRun;
+    }
+
+    @Override
+    protected @NotNull RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
+      return myRunConfig;
+    }
+
+    @Override
+    protected boolean hideDisabledExecutorButtons() {
+      // no need in a list of disabled actions in the secondary menu of the Run Configuration item in the combo box drop-down menu.
+      return true;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+
+      if (myEditConfigBeforeRun) {
+        Presentation presentation = e.getPresentation();
+        presentation.setText(ExecutionBundle.message("choose.run.popup.edit"));
+        presentation.setDescription(ExecutionBundle.message("choose.run.popup.edit.description"));
+        presentation.setIcon(AllIcons.Actions.EditSource);
+      }
+    }
+
+    @Override
+    protected void run(@NotNull Project project, @NotNull RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
+      LOG.assertTrue(myRunConfig == settings);
+
+      if (myEditConfigBeforeRun) {
+        String dialogTitle = ExecutionBundle.message("dialog.title.edit.configuration.settings");
+        if (!RunDialog.editConfiguration(project, myRunConfig, dialogTitle, myExecutor)) {
+          return;
+        }
+      }
+
+      super.run(project, myRunConfig, dataContext);
+
+      RunManager.getInstance(project).setSelectedConfiguration(myRunConfig);
     }
   }
 
