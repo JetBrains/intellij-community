@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework;
 
@@ -13,6 +13,7 @@ import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.execution.testframework.autotest.AdjustAutotestDelayActionGroup;
 import com.intellij.execution.testframework.export.ExportTestResultsAction;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
@@ -21,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import com.intellij.util.config.DumbAwareToggleInvertedBooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
@@ -53,7 +53,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                                properties, TestConsoleProperties.HIDE_IGNORED_TEST));
     actionGroup.addSeparator();
 
-    boolean isNewLayout = Registry.is("debugger.new.tool.window.layout");
+    boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     var sortGroup = !isNewLayout ? actionGroup : DefaultActionGroup.createPopupGroup(() -> ExecutionBundle.message("junit.runing.info.sort.group.name"));
     DumbAwareToggleBooleanProperty suitesAlwaysOnTop =

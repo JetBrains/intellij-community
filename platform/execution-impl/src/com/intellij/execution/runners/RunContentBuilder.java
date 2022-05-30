@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.CommonBundle;
@@ -93,7 +93,7 @@ public final class RunContentBuilder extends RunTab {
       consoleContent.setActions(new DefaultActionGroup(), ActionPlaces.RUNNER_TOOLBAR, console.getComponent());
     }
     ActionGroup toolbar = createActionToolbar(contentDescriptor, consoleActionsToMerge);
-    if (Registry.is("debugger.new.tool.window.layout")) {
+    if (UIExperiment.isNewDebuggerUIEnabled()) {
       var isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical");
 
       mySupplier = new RunTabSupplier(toolbar) {
@@ -194,7 +194,7 @@ public final class RunContentBuilder extends RunTab {
 
   @NotNull
   private ActionGroup createActionToolbar(@NotNull RunContentDescriptor contentDescriptor, AnAction @NotNull [] consoleActions) {
-    boolean isNewLayout = Registry.is("debugger.new.tool.window.layout");
+    boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));

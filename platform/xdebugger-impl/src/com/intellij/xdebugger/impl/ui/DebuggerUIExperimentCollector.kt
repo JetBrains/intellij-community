@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
+import com.intellij.execution.ui.UIExperiment
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration.Companion.getInstance
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -21,12 +22,14 @@ class DebuggerUIExperimentCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun startExperiment(): Boolean {
-      if (!isEnabled()) {
-        return false
+      var res = false
+      if (isEnabled()) {
+        val experimentGroup = getExperimentGroup()
+        START.log(experimentGroup)
+        res = experimentGroup == NUMBER_OF_EXPERIMENT_GROUPS - 1
       }
-      val experimentGroup = getExperimentGroup()
-      START.log(experimentGroup)
-      return experimentGroup == NUMBER_OF_EXPERIMENT_GROUPS - 1
+      UIExperiment.setNewDebuggerUIEnabled(res)
+      return res
     }
 
     @JvmStatic
