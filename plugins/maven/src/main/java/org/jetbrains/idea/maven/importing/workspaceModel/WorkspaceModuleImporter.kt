@@ -29,26 +29,26 @@ class WorkspaceModuleImporter(
   builder: MutableEntityStorage,
   importingSettings: MavenImportingSettings,
   private val mavenProjectToModuleName: HashMap<MavenProject, String>,
-  private val project: Project) : WorkspaceModuleImporterBase(virtualFileUrlManager, builder, importingSettings) {
+  project: Project) : WorkspaceModuleImporterBase<MavenModuleImportData>(project, virtualFileUrlManager, builder, importingSettings) {
 
   fun importModule(): ModuleEntity {
-    val baseModuleDirPath = importingSettings.dedicatedModuleDir.ifBlank { null } ?: mavenProject.directory
-    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileUrlManager.fromPath(baseModuleDirPath),
-                                                                          externalSource)
-    val dependencies = collectDependencies(entitySource)
-    val moduleName = mavenProjectToModuleName.getValue(mavenProject)
-
-    val moduleData = ModuleData(moduleName, MavenModuleType.MAIN_TEST, MavenJavaVersionHolder(null, null))
+    val moduleData = ModuleData(mavenProjectToModuleName.getValue(mavenProject),
+                                MavenModuleType.MAIN_TEST,
+                                MavenJavaVersionHolder(null, null))
     val importData = MavenModuleImportData(mavenProject, moduleData)
-    return createModuleEntity(importData, dependencies, entitySource, mutableMapOf())
+
+    return importModule(importData, mutableMapOf())
   }
 
-  private fun collectDependencies(moduleEntitySource: EntitySource): List<ModuleDependencyItem> {
+  override fun collectDependencies(importData: MavenModuleImportData,
+                                   entitySource: EntitySource): List<ModuleDependencyItem> {
     val dependencyTypes = importingSettings.dependencyTypesAsSet
-    dependencyTypes.addAll(mavenProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT))
+    dependencyTypes.addAll(importData.mavenProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT))
     return listOf(ModuleDependencyItem.InheritedSdkDependency,
                   ModuleDependencyItem.ModuleSourceDependency) +
-           mavenProject.dependencies.filter { dependencyTypes.contains(it.type) }.mapNotNull { createDependency(it, moduleEntitySource) }
+           importData.mavenProject.dependencies.filter { dependencyTypes.contains(it.type) }.mapNotNull {
+             createDependency(it, entitySource)
+           }
 
   }
 

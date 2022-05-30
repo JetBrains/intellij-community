@@ -2,8 +2,10 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -18,17 +20,31 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 
-open class WorkspaceModuleImporterBase(
+abstract class WorkspaceModuleImporterBase<ImportDataType : MavenModuleImportData>(
+  protected val project: Project,
   protected val virtualFileUrlManager: VirtualFileUrlManager,
   protected val builder: WorkspaceEntityStorageBuilder,
   protected val importingSettings: MavenImportingSettings,
 ) {
   protected val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
-  protected fun createModuleEntity(importData: MavenModuleImportData,
-                                   dependencies: List<ModuleDependencyItem>,
-                                   entitySource: EntitySource,
-                                   importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>): ModuleEntity {
+  protected fun importModule(importData: ImportDataType,
+                             importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>): ModuleEntity {
+    val baseModuleDirPath = importingSettings.dedicatedModuleDir.ifBlank { null } ?: importData.mavenProject.directory
+    val baseModuleDir = virtualFileUrlManager.fromPath(baseModuleDirPath)
+    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource)
+
+    val dependencies = collectDependencies(importData, entitySource)
+
+    return createModuleEntity(importData, dependencies, entitySource, importFoldersByMavenIdCache)
+  }
+
+  protected abstract fun collectDependencies(importData: ImportDataType, entitySource: EntitySource): List<ModuleDependencyItem>
+
+  private fun createModuleEntity(importData: MavenModuleImportData,
+                                 dependencies: List<ModuleDependencyItem>,
+                                 entitySource: EntitySource,
+                                 importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>): ModuleEntity {
     val moduleEntity = builder.addModuleEntity(importData.moduleData.moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
     builder.addEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, entitySource) {
       module = moduleEntity
@@ -217,7 +233,7 @@ open class WorkspaceModuleImporterBase(
 
   private fun toAbsolutePath(mavenProject: MavenProject, path: String) = MavenUtil.toPath(mavenProject, path).path
 
-  public class MavenImportFolderHolder(
+  class MavenImportFolderHolder(
     val outputPath: String,
     val testOutputPath: String,
     val targetDirPath: String,

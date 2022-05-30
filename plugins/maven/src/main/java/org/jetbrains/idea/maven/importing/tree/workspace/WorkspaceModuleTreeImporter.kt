@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
+import org.jetbrains.idea.maven.project.MavenProject
 
 class WorkspaceModuleTreeImporter(
   private val importData: MavenTreeModuleImportData,
@@ -28,22 +29,17 @@ class WorkspaceModuleTreeImporter(
   builder: MutableEntityStorage,
   importingSettings: MavenImportingSettings,
   private val importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>,
-  private val project: Project) : WorkspaceModuleImporterBase(virtualFileUrlManager, builder, importingSettings) {
+  project: Project) : WorkspaceModuleImporterBase<MavenTreeModuleImportData>(project, virtualFileUrlManager, builder, importingSettings) {
 
   fun importModule(): ModuleEntity {
-    val baseModuleDirPath = importingSettings.dedicatedModuleDir.ifBlank { null } ?: importData.mavenProject.directory
-    val baseModuleDir = virtualFileUrlManager.fromPath(baseModuleDirPath)
-    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource)
-    val dependencies = collectDependencies(importData, entitySource)
-
-    return createModuleEntity(importData, dependencies, entitySource, importFoldersByMavenIdCache)
+    return importModule(importData, importFoldersByMavenIdCache)
   }
 
-  private fun collectDependencies(importData: MavenTreeModuleImportData, entitySource: EntitySource): List<ModuleDependencyItem> {
+  override fun collectDependencies(importData: MavenTreeModuleImportData, entitySource: EntitySource): List<ModuleDependencyItem> {
     val result = mutableListOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
     for (dependency in importData.dependencies) {
       if (dependency is SystemDependency) {
-        result.add(createSystemDependency(dependency.artifact, entitySource))
+        result.add(createSystemDependency(importData.mavenProject, dependency.artifact, entitySource))
       }
       else if (dependency is LibraryDependency) {
         result.add(createLibraryDependency(dependency.artifact))
@@ -68,7 +64,8 @@ class WorkspaceModuleTreeImporter(
     }
 
 
-  private fun createSystemDependency(artifact: MavenArtifact,
+  private fun createSystemDependency(mavenProject: MavenProject,
+                                     artifact: MavenArtifact,
                                      moduleEntitySource: EntitySource): ModuleDependencyItem.Exportable.LibraryDependency {
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope)
     val roots = ArrayList<LibraryRoot>()
@@ -79,7 +76,7 @@ class WorkspaceModuleTreeImporter(
     )
 
     val libraryTableId = LibraryTableId.ModuleLibraryTableId(
-      moduleId = ModuleId(importData.mavenProject.displayName)) //(ModuleId(moduleEntity.name))
+      moduleId = ModuleId(mavenProject.displayName)) //(ModuleId(moduleEntity.name))
 
     builder.addLibraryEntity(artifact.libraryName, libraryTableId,
                              roots,
