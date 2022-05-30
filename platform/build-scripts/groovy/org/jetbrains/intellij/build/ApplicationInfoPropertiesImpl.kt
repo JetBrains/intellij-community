@@ -12,12 +12,12 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-@SuppressWarnings("SpellCheckingInspection")
+@Suppress("SpellCheckingInspection")
 private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
 
 @VisibleForTesting
-@SuppressWarnings("SpellCheckingInspection")
-val MAJOR_RELEASE_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMdd")
+@Suppress("SpellCheckingInspection")
+internal val MAJOR_RELEASE_DATE_PATTERN: DateTimeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd")
 
 class ApplicationInfoPropertiesImpl(
   productProperties: ProductProperties,
@@ -121,7 +121,7 @@ class ApplicationInfoPropertiesImpl(
     val artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
     var builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "$productCode-plugins/plugins.xml")
+      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "$productCode-plugins/plugins.xml")!!
       check (!builtinPluginsRepoUrl.startsWith("http:")) {
         "Insecure artifact server: $builtinPluginsRepoUrl"
       }
