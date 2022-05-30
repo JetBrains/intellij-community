@@ -40,7 +40,7 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 @CompileStatic
 class AndroidStudioProperties extends BaseIdeaProperties {
 
-  private static final List<String> INHERITED_PLUGINS = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BUNDLED_PLUGIN_MODULES
+  private static final List<String> INHERITED_PLUGINS = ProductModulesLayout.DEFAULT_BUNDLED_PLUGINS + BaseIdeaPropertiesKt.BUNDLED_PLUGIN_MODULES
 
   private static final List<String> EXTRA_PLUGINS = List.of(
     // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
@@ -94,8 +94,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true }
     additionalIdeJvmArguments = ["-XX:FlightRecorderOptions=stackdepth=256"]
 
-    productLayout.productApiModules = JAVA_IDE_API_MODULES
-    productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
+    productLayout.productApiModules = BaseIdeaPropertiesKt.JAVA_IDE_API_MODULES
+    productLayout.productImplementationModules = BaseIdeaPropertiesKt.JAVA_IDE_IMPLEMENTATION_MODULES +
                                                   ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main"] -
                                                   ["intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization"]
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")

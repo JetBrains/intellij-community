@@ -14,12 +14,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-private val JAVA_IDE_API_MODULES = java.util.List.of(
+val JAVA_IDE_API_MODULES = java.util.List.of(
   "intellij.xml.dom",
   "intellij.jsp.base"
 )
 
-private val JAVA_IDE_IMPLEMENTATION_MODULES = java.util.List.of(
+val JAVA_IDE_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.xml.dom.impl",
   "intellij.tools.testsBootstrap"
 )
