@@ -8,7 +8,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.util.function.BiConsumer
 
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
@@ -43,19 +42,18 @@ class PlatformLayout: BaseLayout() {
     excludedProjectLibraries.add(libraryName)
   }
 
-  fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: BiConsumer<JpsLibrary, JpsModule>) {
+  inline fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
     val libsToUnpack = projectLibrariesToUnpack.values()
     for (moduleName in getIncludedModuleNames()) {
       val module = context.findRequiredModule(moduleName)
-      for (
-        library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
+      for (library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
         if (library.createReference().parentReference is JpsModuleReference ||
             libsToUnpack.contains(library.name) ||
             excludedProjectLibraries.contains(library.name)) {
           continue
         }
 
-        consumer.accept(library, module)
+        consumer(library, module)
       }
     }
   }

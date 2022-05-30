@@ -20,7 +20,6 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -38,73 +37,81 @@ import java.util.concurrent.atomic.AtomicLong
 private val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 private val MEDIA_TYPE_JSON = "application/json".toMediaType()
 
-private val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
+internal val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
 
 internal const val MAX_BUFFER_SIZE = 4_000_000
 
-internal fun uploadArchives(messages: BuildMessages,
+internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -> Unit,
                             serverUrl: String,
                             metadataJson: String,
                             httpClient: OkHttpClient,
-                            contexts: List<PackAndUploadItem>,
-                            hashes: TreeMap<String, String>,
+                            items: List<PackAndUploadItem>,
                             bufferPool: DirectFixedSizeByteBufferPool) {
   val uploadedCount = AtomicInteger()
   val uploadedBytes = AtomicLong()
   val reusedCount = AtomicInteger()
   val reusedBytes = AtomicLong()
 
-  runUnderStatisticsTimer(messages, "compile-parts:upload:time") {
-    val alreadyUploaded = HashSet<String>()
-    val fallbackToHeads = try {
-      val files = spanBuilder("fetch info about already uploaded files").use {
-        getFoundAndMissingFiles(metadataJson, serverUrl, httpClient)
-      }
-      alreadyUploaded.addAll(files.found)
-      false
+  val alreadyUploaded = HashSet<String>()
+  val fallbackToHeads = try {
+    val files = spanBuilder("fetch info about already uploaded files").use {
+      getFoundAndMissingFiles(metadataJson, serverUrl, httpClient)
     }
-    catch (e: Throwable) {
-      Span.current().recordException(e, Attributes.of(
-        AttributeKey.stringKey("message"), "failed to fetch info about already uploaded files, will fallback to HEAD requests"
-      ))
-      true
-    }
-
-    ForkJoinTask.invokeAll(contexts.mapNotNull { item ->
-      if (alreadyUploaded.contains(item.name)) {
-        reusedCount.getAndIncrement()
-        reusedBytes.getAndAdd(Files.size(item.archive))
-        return@mapNotNull null
-      }
-
-      forkJoinTask(spanBuilder("upload archive").setAttribute("name", item.name)) {
-        val hash = hashes.get(item.name)
-        // do not use `.lz4` extension - server uses hard-coded `.jar` extension
-        // see https://jetbrains.team/p/iji/repositories/intellij-compile-artifacts/files/d91706d68b22502de56c78cdd6218eab3b395b3f/main-server/batch-files-checker/main.go?tab=source&line=62
-        if (uploadFile(url = "$serverUrl/$uploadPrefix/${item.name}/${hash}.jar",
-                       file = item.archive,
-                       useHead = fallbackToHeads,
-                       span = Span.current(),
-                       httpClient = httpClient,
-                       bufferPool = bufferPool)) {
-          uploadedCount.getAndIncrement()
-          uploadedBytes.getAndAdd(Files.size(item.archive))
-        }
-        else {
-          reusedCount.getAndIncrement()
-          reusedBytes.getAndAdd(Files.size(item.archive))
-        }
-      }
-    })
+    alreadyUploaded.addAll(files.found)
+    false
+  }
+  catch (e: Throwable) {
+    Span.current().recordException(e, Attributes.of(
+      AttributeKey.stringKey("message"), "failed to fetch info about already uploaded files, will fallback to HEAD requests"
+    ))
+    true
   }
 
-  messages.info("Upload complete: reused ${reusedCount.get()} parts, uploaded ${uploadedCount.get()} parts")
-  messages.reportStatisticValue("compile-parts:reused:bytes", reusedBytes.get().toString())
-  messages.reportStatisticValue("compile-parts:reused:count", reusedCount.get().toString())
-  messages.reportStatisticValue("compile-parts:uploaded:bytes", uploadedBytes.get().toString())
-  messages.reportStatisticValue("compile-parts:uploaded:count", uploadedCount.get().toString())
-  messages.reportStatisticValue("compile-parts:total:bytes", (reusedBytes.get() + uploadedBytes.get()).toString())
-  messages.reportStatisticValue("compile-parts:total:count", (reusedCount.get() + uploadedCount.get()).toString())
+  ForkJoinTask.invokeAll(items.mapNotNull { item ->
+    if (alreadyUploaded.contains(item.name)) {
+      reusedCount.getAndIncrement()
+      reusedBytes.getAndAdd(Files.size(item.archive))
+      return@mapNotNull null
+    }
+
+    forkJoinTask(spanBuilder("upload archive").setAttribute("name", item.name).setAttribute("hash", item.hash!!)) {
+      // do not use `.zstd` extension - server uses hard-coded `.jar` extension
+      // see https://jetbrains.team/p/iji/repositories/intellij-compile-artifacts/files/d91706d68b22502de56c78cdd6218eab3b395b3f/main-server/batch-files-checker/main.go?tab=source&line=62
+      if (uploadFile(url = "$serverUrl/$uploadPrefix/${item.name}/${item.hash!!}.jar",
+                     file = item.archive,
+                     useHead = fallbackToHeads,
+                     span = Span.current(),
+                     httpClient = httpClient,
+                     bufferPool = bufferPool)) {
+        uploadedCount.getAndIncrement()
+        uploadedBytes.getAndAdd(Files.size(item.archive))
+      }
+      else {
+        reusedCount.getAndIncrement()
+        reusedBytes.getAndAdd(Files.size(item.archive))
+      }
+    }
+  })
+
+  Span.current().addEvent("upload complete", Attributes.of(
+    AttributeKey.longKey("reusedParts"), reusedCount.get().toLong(),
+    AttributeKey.longKey("uploadedParts"), uploadedCount.get().toLong(),
+
+    AttributeKey.longKey("reusedBytes"), reusedBytes.get(),
+    AttributeKey.longKey("uploadedBytes"), uploadedBytes.get(),
+
+    AttributeKey.longKey("totalBytes"), reusedBytes.get() + uploadedBytes.get(),
+    AttributeKey.longKey("totalCount"), (reusedCount.get() + uploadedCount.get()).toLong(),
+  ))
+
+  reportStatisticValue("compile-parts:reused:bytes", reusedBytes.get().toString())
+  reportStatisticValue("compile-parts:reused:count", reusedCount.get().toString())
+
+  reportStatisticValue("compile-parts:uploaded:bytes", uploadedBytes.get().toString())
+  reportStatisticValue("compile-parts:uploaded:count", uploadedCount.get().toString())
+
+  reportStatisticValue("compile-parts:total:bytes", (reusedBytes.get() + uploadedBytes.get()).toString())
+  reportStatisticValue("compile-parts:total:count", (reusedCount.get() + uploadedCount.get()).toString())
 }
 
 private fun getFoundAndMissingFiles(metadataJson: String, serverUrl: String, client: OkHttpClient): CheckFilesResponse {
@@ -256,7 +263,7 @@ private fun compressSmallFile(channel: FileChannel, fileSize: Long, sink: Buffer
 }
 
 
-internal class DirectFixedSizeByteBufferPool(private val size: Int, private val maxPoolSize: Int) {
+internal class DirectFixedSizeByteBufferPool(private val size: Int, private val maxPoolSize: Int) : AutoCloseable {
   private val pool = ConcurrentLinkedQueue<ByteBuffer>()
 
   private val count = AtomicInteger()
@@ -280,7 +287,7 @@ internal class DirectFixedSizeByteBufferPool(private val size: Int, private val 
   }
 
   // pool is not expected to be used during releaseAll call
-  fun releaseAll() {
+  override fun close() {
     while (true) {
       ByteBufferCleaner.unmapBuffer(pool.poll() ?: return)
     }

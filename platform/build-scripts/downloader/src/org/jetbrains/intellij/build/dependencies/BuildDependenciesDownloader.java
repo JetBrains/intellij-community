@@ -235,13 +235,14 @@ final public class BuildDependenciesDownloader {
       channel.read(start, 0);
     }
     start.flip();
-    if (start.remaining() < 4) {
+    if (start.remaining() != 4) {
       throw new IllegalStateException("File " + archiveFile + " is smaller than 4 bytes, could not be extracted");
     }
 
     boolean stripRoot = Arrays.stream(options).anyMatch(opt -> opt == BuildDependenciesExtractOptions.STRIP_ROOT);
 
-    if (start.order(ByteOrder.LITTLE_ENDIAN).getInt(0) == 0xFD2FB528) {
+    int magicNumber = start.order(ByteOrder.LITTLE_ENDIAN).getInt(0);
+    if (magicNumber == 0xFD2FB528) {
       Path unwrappedArchiveFile = archiveFile.getParent().resolve(archiveFile.getFileName() + ".unwrapped");
       try {
         try (OutputStream out = Files.newOutputStream(unwrappedArchiveFile)) {
@@ -265,7 +266,9 @@ final public class BuildDependenciesDownloader {
       BuildDependenciesUtil.extractTarBz2(archiveFile, targetDirectory, stripRoot);
     }
     else {
-      throw new IllegalStateException("Unknown archive format at " + archiveFile + ". Currently only .tar.gz or .zip are supported");
+      throw new IllegalStateException("Unknown archive format at " + archiveFile + "." +
+                                      " Magic number (little endian hex): " + Integer.toHexString(magicNumber) + "." +
+                                      " Currently only .tar.gz or .zip are supported");
     }
 
     Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options));

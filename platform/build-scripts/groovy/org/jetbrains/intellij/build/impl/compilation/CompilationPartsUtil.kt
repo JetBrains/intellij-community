@@ -1,14 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "UnstableApiUsage")
 
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.diagnostic.telemetry.forkJoinTask
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.openapi.util.io.NioFiles
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import io.opentelemetry.context.Context
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -21,93 +22,99 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.zip
-import java.io.OutputStream
 import java.math.BigInteger
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
-import java.security.Provider
 import java.util.*
 import java.util.concurrent.*
 import java.util.zip.GZIPOutputStream
-import kotlin.io.path.name
+import kotlin.math.min
 
-fun packAndUploadToServer(context: CompilationContext, zipsLocation: Path) {
-  val contexts = spanBuilder("pack classes").useWithScope {
-    packCompilationResult(context, zipsLocation)
+fun packAndUploadToServer(context: CompilationContext, zipDir: Path) {
+  val items = spanBuilder("pack classes").useWithScope {
+    packCompilationResult(context, zipDir)
   }
 
-  // 4MB block, x2 of FJP thread count - one buffer to source, another one for target
-  val bufferPool = createBufferPool()
-  try {
-    spanBuilder("upload packed classes to the server").useWithScope {
-      upload(zipsLocation, context.messages, contexts, bufferPool)
+  createBufferPool().use { bufferPool ->
+    spanBuilder("upload packed classes").useWithScope {
+      upload(zipDir, context.messages, items, bufferPool)
     }
-  }
-  finally {
-    bufferPool.releaseAll()
   }
 }
 
 private fun createBufferPool(): DirectFixedSizeByteBufferPool {
+  // 4MB block, x2 of FJP thread count - one buffer to source, another one for target
   return DirectFixedSizeByteBufferPool(size = MAX_BUFFER_SIZE, maxPoolSize = ForkJoinPool.getCommonPoolParallelism() * 2)
 }
 
-private fun packCompilationResult(context: CompilationContext, zipsLocation: Path): List<PackAndUploadItem> {
+private fun packCompilationResult(context: CompilationContext, zipDir: Path): List<PackAndUploadItem> {
   val incremental = context.options.incrementalCompilation
   if (!incremental) {
-    NioFiles.deleteRecursively(zipsLocation)
+    try {
+      deleteDir(zipDir)
+    }
+    catch (ignore: NoSuchFileException) {
+    }
   }
-  Files.createDirectories(zipsLocation)
+  Files.createDirectories(zipDir)
 
   val items = ArrayList<PackAndUploadItem>(2048)
-  val span = Span.current()
-  // production, test
-  for (subRoot in Files.newDirectoryStream(context.projectOutputDirectory).use(DirectoryStream<Path>::toList)) {
-    if (!Files.isDirectory(subRoot)) {
-      continue
-    }
+  spanBuilder("compute module list to pack").use { span ->
+    // production, test
+    for (subRoot in Files.newDirectoryStream(context.projectOutputDirectory).use(DirectoryStream<Path>::toList)) {
+      if (!Files.isDirectory(subRoot)) {
+        continue
+      }
 
-    val subRootName = subRoot.name
-    Files.createDirectories(zipsLocation.resolve(subRootName))
+      val subRootName = subRoot.fileName.toString()
+      Files.createDirectories(zipDir.resolve(subRootName))
 
-    Files.newDirectoryStream(subRoot).use { subRootStream ->
-      for (module in subRootStream) {
-        val name = "$subRootName/${module.name}"
-        try {
-          if (isModuleOutputDirEmpty(module)) {
-            span.addEvent("skip empty module", Attributes.of(
-              AttributeKey.stringKey("name"), name,
+      Files.newDirectoryStream(subRoot).use { subRootStream ->
+        for (module in subRootStream) {
+          val fileName = module.fileName.toString()
+          val name = "$subRootName/$fileName"
+          try {
+            if (isModuleOutputDirEmpty(module)) {
+              span.addEvent("skip empty module", Attributes.of(
+                AttributeKey.stringKey("name"), name,
+              ))
+              continue
+            }
+          }
+          catch (ignore: FileSystemException) {
+            continue
+          }
+
+          if (context.findModule(fileName) == null) {
+            span.addEvent("skip module output from missing in project module", Attributes.of(
+              AttributeKey.stringKey("module"), fileName,
             ))
             continue
           }
-        }
-        catch (ignore: FileSystemException) {
-          continue
-        }
 
-        if (context.findModule(module.name) == null) {
-          span.addEvent("skip module output from missing in project module", Attributes.of(
-            AttributeKey.stringKey("module"), module.name,
-          ))
-          continue
+          items.add(PackAndUploadItem(output = module, name = name, archive = zipDir.resolve("$name.jar")))
         }
-
-        items.add(PackAndUploadItem(output = module, name = name, archive = zipsLocation.resolve("$name.jar")))
       }
     }
   }
 
   spanBuilder("build zip archives").useWithScope {
-    runUnderStatisticsTimer(context.messages, "compile-parts:pack:time") {
-      ForkJoinTask.invokeAll(items.map { item ->
-        forkJoinTask(spanBuilder("pack").setAttribute("name", item.name)) {
-          // we compress the whole file using LZ4
+    val traceContext = Context.current()
+    ForkJoinTask.invokeAll(items.map { item ->
+      ForkJoinTask.adapt(Callable {
+        spanBuilder("pack").setParent(traceContext).setAttribute("name", item.name).use {
+          // we compress the whole file using ZSTD
           zip(targetFile = item.archive, dirs = mapOf(item.output to ""), compress = false, overwrite = true)
         }
+        spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).use {
+          item.hash = computeHash(item.archive)
+        }
       })
-    }
+    })
   }
   return items
 }
@@ -126,7 +133,7 @@ private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
 // TODO: Remove hardcoded constant
 internal const val uploadPrefix = "intellij-compile/v2"
 
-private fun upload(zipsLocation: Path, messages: BuildMessages, contexts: List<PackAndUploadItem>, bufferPool: DirectFixedSizeByteBufferPool) {
+private fun upload(zipsLocation: Path, messages: BuildMessages, items: List<PackAndUploadItem>, bufferPool: DirectFixedSizeByteBufferPool) {
   val serverUrlPropertyName = "intellij.build.compiled.classes.server.url"
   val serverUrl = System.getProperty(serverUrlPropertyName)?.trimEnd('/')
   check(!serverUrl.isNullOrBlank()) {
@@ -139,14 +146,6 @@ private fun upload(zipsLocation: Path, messages: BuildMessages, contexts: List<P
     "Unable to determine current git branch, assuming 'master'. \nPlease set '$artifactBranchPropertyName' system property"
   }
 
-  val hashes = spanBuilder("compute archives checksums").useWithScope {
-    runUnderStatisticsTimer(messages, "compile-parts:checksum:time") {
-      ForkJoinTask.invokeAll(contexts.map { item ->
-        ForkJoinTask.adapt(Callable { item.name to computeHash(item.archive)!! })
-      }).associateTo(TreeMap()) { it.rawResult }
-    }
-  }
-
   val httpClient = createHttpClient("Parts Uploader")
 
   // prepare metadata for writing into file
@@ -154,16 +153,17 @@ private fun upload(zipsLocation: Path, messages: BuildMessages, contexts: List<P
     serverUrl = serverUrl,
     branch = branch,
     prefix = uploadPrefix,
-    files = hashes,
+    files = items.associateTo(TreeMap()) { item ->
+      item.name to item.hash!!
+    },
   ))
 
-  spanBuilder("upload archives").useWithScope {
-    uploadArchives(messages = messages,
+  spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"), items.map(PackAndUploadItem::name)).useWithScope {
+    uploadArchives(reportStatisticValue = messages::reportStatisticValue,
                    serverUrl = serverUrl,
                    metadataJson = metadataJson,
                    httpClient = httpClient,
-                   contexts = contexts,
-                   hashes = hashes,
+                   items = items,
                    bufferPool = bufferPool)
   }
 
@@ -288,17 +288,17 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
       }
       else {
         val client = createHttpClient("Parts Downloader", followRedirects = false)
-        val bufferPool = createBufferPool()
         try {
-          downloadCompilationCache(serverUrl = serverUrl,
-                                   prefix = prefix,
-                                   toDownload = toDownload,
-                                   client = client,
-                                   bufferPool = bufferPool,
-                                   saveHash = saveHash)
+          createBufferPool().use { bufferPool ->
+            downloadCompilationCache(serverUrl = serverUrl,
+                                     prefix = prefix,
+                                     toDownload = toDownload,
+                                     client = client,
+                                     bufferPool = bufferPool,
+                                     saveHash = saveHash)
+          }
         }
         finally {
-          bufferPool.releaseAll()
           client.dispatcher.executorService.shutdown()
           client.connectionPool.evictAll()
         }
@@ -312,7 +312,8 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
       reportStatisticValue("compile-parts:downloaded:count", toDownload.size.toString())
 
       if (!failed.isEmpty()) {
-        throw RuntimeException("Failed to fetch ${failed.size} file${if (failed.size > 1) "s" else ""}, see details above or in a trace file")
+        throw RuntimeException(
+          "Failed to fetch ${failed.size} file${if (failed.size > 1) "s" else ""}, see details above or in a trace file")
       }
     }
 
@@ -350,7 +351,7 @@ private fun checkPreviouslyUnpackedDirectories(items: List<FetchAndUnpackItem>,
         span.addEvent("no .hash file in output directory", Attributes.of(
           AttributeKey.stringKey("name"), item.name,
         ))
-        NioFiles.deleteRecursively(out)
+        deleteDir(out)
         return@adapt
       }
 
@@ -365,7 +366,7 @@ private fun checkPreviouslyUnpackedDirectories(items: List<FetchAndUnpackItem>,
             AttributeKey.stringKey("expected"), item.hash,
             AttributeKey.stringKey("actual"), actual,
           ))
-          NioFiles.deleteRecursively(out)
+          deleteDir(out)
         }
       }
       catch (e: Throwable) {
@@ -375,7 +376,7 @@ private fun checkPreviouslyUnpackedDirectories(items: List<FetchAndUnpackItem>,
         span.recordException(e, Attributes.of(
           AttributeKey.stringKey("name"), item.name,
         ))
-        NioFiles.deleteRecursively(out)
+        deleteDir(out)
       }
     }
   } + forkJoinTask(spanBuilder("remove stalled directories not present in metadata")
@@ -393,7 +394,7 @@ private fun checkPreviouslyUnpackedDirectories(items: List<FetchAndUnpackItem>,
         try {
           Files.newDirectoryStream(subRoot).use { subRootStream ->
             for (module in subRootStream) {
-              val name = "${subRoot.name}/${module.name}"
+              val name = "${subRoot.fileName}/${module.fileName}"
               if (!expectedDirectories.contains(name)) {
                 stalledDirs.add(module)
               }
@@ -413,48 +414,40 @@ private fun checkPreviouslyUnpackedDirectories(items: List<FetchAndUnpackItem>,
   return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
 }
 
-internal val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
+private val sharedDigest = MessageDigest.getInstance("SHA-256", java.security.Security.getProvider("SUN"))
+internal fun sha256() = sharedDigest.clone() as MessageDigest
 
-private fun computeHash(file: Path): String? {
-  if (!Files.exists(file)) {
-    return null
+private fun computeHash(file: Path): String {
+  val messageDigest = sha256()
+  FileChannel.open(file, READ_OPERATION).use { channel ->
+    val fileSize = channel.size()
+    // java message digest doesn't support native buffer (copies to heap byte array in any case)
+    val bufferSize = 256 * 1024
+    val sourceBuffer = ByteBuffer.allocate(bufferSize)
+    var offset = 0L
+    while (offset < fileSize) {
+      sourceBuffer.limit(min((fileSize - offset).toInt(), bufferSize))
+      do {
+        offset += channel.read(sourceBuffer, offset)
+      }
+      while (sourceBuffer.hasRemaining())
+
+      messageDigest.update(sourceBuffer.array(), 0, sourceBuffer.limit())
+      sourceBuffer.position(0)
+    }
   }
-
-  val messageDigest = MessageDigest.getInstance("SHA-256", sunSecurityProvider)
-  Files.copy(file, DigestOutputStream(messageDigest))
   return digestToString(messageDigest)
 }
 
-internal fun digestToString(digest: MessageDigest): String = BigInteger(1, digest.digest()).toString(36)
-
-private class DigestOutputStream(private val digest: MessageDigest) : OutputStream() {
-  override fun write(b: Int) {
-    digest.update(b.toByte())
-  }
-
-  override fun write(b: ByteArray, off: Int, len: Int) {
-    digest.update(b, off, len)
-  }
-
-  override fun toString() = "[Digest Output Stream] $digest"
-}
+// we cannot change file extension or prefix, so, add suffix
+internal fun digestToString(digest: MessageDigest): String = BigInteger(1, digest.digest()).toString(36) + "-z"
 
 internal data class PackAndUploadItem(
   val output: Path,
   val name: String,
   val archive: Path,
-)
-
-// based on org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl.block
-internal inline fun <V> runUnderStatisticsTimer(messages: BuildMessages, name: String, body: () -> V): V {
-  val start = System.nanoTime()
-  try {
-    return body()
-  }
-  finally {
-    val time = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
-    messages.reportStatisticValue(name, time.toString())
-  }
+) {
+  var hash: String? = null
 }
 
 internal data class FetchAndUnpackItem(

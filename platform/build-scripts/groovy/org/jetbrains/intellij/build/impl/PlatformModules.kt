@@ -333,6 +333,10 @@ object PlatformModules {
     }
     layout.collectProjectLibrariesFromIncludedModules(context) { lib, module ->
       val name = lib.name
+      if (module.name == "intellij.platform.buildScripts.downloader" && name == "zstd-jni") {
+        return@collectProjectLibrariesFromIncludedModules
+      }
+
       layout.includedProjectLibraries
         .addOrGet(ProjectLibraryData(name, CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)))
         .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)

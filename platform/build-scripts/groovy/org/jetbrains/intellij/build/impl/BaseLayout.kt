@@ -17,11 +17,11 @@ open class BaseLayout {
   /** artifact name to relative output path */
   val includedArtifacts: MutableMap<String, String> = LinkedHashMap()
   /** list of additional resources which should be included into the distribution */
-  val resourcePaths: MutableList<ModuleResourceData> = mutableListOf()
+  internal val resourcePaths = mutableListOf<ModuleResourceData>()
   /** module name to entries which should be excluded from its output */
   val moduleExcludes: MultiMap<String, String> = MultiMap.createLinked()
   @Suppress("SSBasedInspection")
-  internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
+  internal val includedProjectLibraries = ObjectOpenHashSet<ProjectLibraryData>()
   val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
   /** module name to name of the module library */
   val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()

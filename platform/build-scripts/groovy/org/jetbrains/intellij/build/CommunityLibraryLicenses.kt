@@ -779,7 +779,10 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://git.tukaani.org/?p=xz-java.git;a=blob;f=COPYING;h=8dd17645c4610c3d5eed9bcdd2699ecfac00406b;hb=refs/heads/master"),
     LibraryLicense(name = "zip-signer", libraryName = "zip-signer",
                    url = "https://github.com/JetBrains/marketplace-zip-signer").apache(),
-
+    LibraryLicense(name = "zstd-jni", libraryName = "zstd-jni",
+                   url = "https://github.com/luben/zstd-jni",
+                   license = "BSD",
+                   licenseUrl = "https://github.com/luben/zstd-jni/blob/master/LICENSE"),
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("completion-log-events"),

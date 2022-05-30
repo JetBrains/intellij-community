@@ -43,6 +43,21 @@ object DigestUtil {
   fun sha256Hex(input: ByteArray): String = bytesToHex(sha256().digest(input))
 
   @JvmStatic
+  fun sha256Hex(file: Path): String {
+    try {
+      val digest = sha256()
+      val buffer = ByteArray(512 * 1024)
+      file.inputStream().use {
+        updateContentHash(digest, it, buffer)
+      }
+      return bytesToHex(digest.digest())
+    }
+    catch (e: IOException) {
+      throw RuntimeException("Failed to read $file. ${e.message}", e)
+    }
+  }
+
+  @JvmStatic
   fun sha1Hex(input: ByteArray): String = bytesToHex(sha1().digest(input))
 
   @JvmStatic
@@ -80,7 +95,9 @@ object DigestUtil {
     try {
       while (true) {
         val sz = inputStream.read(buffer)
-        if (sz <= 0) break
+        if (sz <= 0) {
+          break
+        }
         digest.update(buffer, 0, sz)
       }
     }

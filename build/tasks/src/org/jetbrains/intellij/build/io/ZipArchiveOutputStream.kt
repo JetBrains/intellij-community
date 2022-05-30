@@ -17,7 +17,7 @@ import java.util.zip.ZipEntry
 
 private const val INDEX_FORMAT_VERSION: Byte = 3
 
-internal const val INDEX_FILENAME = "__index__"
+const val INDEX_FILENAME = "__index__"
 
 internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
                                       private val withOptimizedMetadataEnabled: Boolean) : AutoCloseable {

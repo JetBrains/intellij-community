@@ -32,6 +32,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@SuppressWarnings("UnstableApiUsage")
 @ApiStatus.Internal
 public final class BuildDependenciesUtil {
   private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
@@ -134,11 +135,19 @@ public final class BuildDependenciesUtil {
       Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
       while (entries.hasMoreElements()) {
         ZipArchiveEntry entry = entries.nextElement();
+        if (entry.getName().equals("__index__")) {
+          // don't unpack a special index file for JetBrains ZIP
+          continue;
+        }
+
         Path entryPath = converter.getOutputPath(entry.getName(), entry.isDirectory());
-        if (entryPath == null) continue;
+        if (entryPath == null) {
+          continue;
+        }
 
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
+          createdDirs.add(entryPath);
         }
         else {
           Path parent = entryPath.getParent();
@@ -224,8 +233,7 @@ public final class BuildDependenciesUtil {
       this.target = target;
     }
 
-    @Nullable
-    private Path getOutputPath(String entryName, boolean isDirectory) {
+    private @Nullable Path getOutputPath(String entryName, boolean isDirectory) {
       String normalizedName = normalizeEntryName(entryName);
       if (!stripRoot) {
         return target.resolve(normalizedName);

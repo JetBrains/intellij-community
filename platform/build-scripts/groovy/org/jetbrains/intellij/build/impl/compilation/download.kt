@@ -13,6 +13,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okio.IOException
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import java.net.HttpURLConnection
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -62,7 +63,7 @@ internal fun downloadCompilationCache(serverUrl: String,
                        .url(url)
                        .build()).execute().use { response ->
         if (response.isSuccessful) {
-          val digest = MessageDigest.getInstance("SHA-256", sunSecurityProvider)
+          val digest = sha256()
           writeFile(item.file, response, bufferPool, url, digest)
           val computedHash = digestToString(digest)
           if (computedHash == item.hash) {
@@ -102,7 +103,7 @@ internal fun unpackArchive(item: FetchAndUnpackItem, saveHash: Boolean) {
     val createdDirs = HashSet<Path>()
     createdDirs.add(root)
     for (entry in zipFile.entries) {
-      if (entry.isDirectory) {
+      if (entry.isDirectory || entry.name == INDEX_FILENAME) {
         continue
       }
 
