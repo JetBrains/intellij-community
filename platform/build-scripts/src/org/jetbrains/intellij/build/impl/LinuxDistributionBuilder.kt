@@ -210,8 +210,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
         span.addEvent("prepare files")
 
-        val unixSnapDistPath = context.paths.buildOutputDir.resolve("dist.unix.snap")
-        copyDir(unixDistPath, unixSnapDistPath)
         val appInfo = context.applicationInfo
         val productName = appInfo.productNameWithEdition
         substituteTemplatePlaceholders(
@@ -249,10 +247,11 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           |# </${snapcraftConfig.name}>
         """.trimMargin())
 
-        val jsonText = generateProductJson(unixSnapDistPath, context, arch)
+        val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.product-info.json")
+        val jsonText = generateProductJson(productJsonDir, context, arch)
         validateProductJson(jsonText = jsonText,
                             relativePathToProductJson = "",
-                            installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, runtimeDir),
+                            installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir),
                             installationArchives = listOf(),
                             context = context)
         val resultDir = snapDir.resolve("result")
@@ -268,7 +267,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             "--volume=$snapDir/$snapName.png:/build/prime/meta/gui/icon.png:ro",
             "--volume=$snapDir/result:/build/result",
             "--volume=${context.paths.getDistAll()}:/build/dist.all:ro",
-            "--volume=$unixSnapDistPath:/build/dist.unix:ro",
+            "--volume=$productJsonDir:/build/dist.product-json:ro",
+            "--volume=$unixDistPath:/build/dist.unix:ro",
             "--volume=$runtimeDir:/build/jre:ro",
             "--workdir=/build",
             context.options.snapDockerImage,
