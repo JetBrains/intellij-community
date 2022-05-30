@@ -100,10 +100,6 @@ public final class SidePanel extends JPanel {
         layout();
         myCountLabel.setText("");
         Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (ExperimentalUI.isNewUI()) {
-          ((SelectablePanel)myExtraPanel).setSelectionColor(isSelected ? UIUtil.getListSelectionBackground(true) : null);
-        }
-
         if ("Problems".equals(descriptor.getTextFor(value))) {
           final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)value.myPlace.getPath("category");
           int errorsCount;
@@ -125,13 +121,7 @@ public final class SidePanel extends JPanel {
 
       @Override
       protected JComponent createItemComponent() {
-        if (ExperimentalUI.isNewUI()) {
-          myExtraPanel = new SelectablePanel();
-          PopupUtil.configSelectablePanel((SelectablePanel)myExtraPanel);
-        }
-        else {
-          myExtraPanel = new NonOpaquePanel(new BorderLayout());
-        }
+        myExtraPanel = new NonOpaquePanel(new BorderLayout());
 
         myCountLabel = new SidePanelCountLabel();
         final JComponent component = super.createItemComponent();
