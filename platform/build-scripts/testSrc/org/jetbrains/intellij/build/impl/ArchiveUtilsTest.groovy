@@ -41,7 +41,7 @@ class ArchiveUtilsTest {
   void testGnuTar() {
     Assume.assumeTrue(ArchiveUtils.isGnuTarAvailable())
     testTarReproducibility { archive, rootDir, paths, buildDateInSeconds ->
-      ArchiveUtils.tar(archive, rootDir, paths, buildDateInSeconds, false)
+      ArchiveUtils.gnuTarArchive(archive, rootDir, paths, buildDateInSeconds)
     }
   }
 
