@@ -384,7 +384,7 @@ public final class Utils {
         continue;
       }
       if (multiChoice && action instanceof Toggleable) {
-        presentation.setMultipleChoice(true);
+        presentation.setMultiChoice(true);
       }
 
       if (action instanceof Separator) {
@@ -448,7 +448,7 @@ public final class Utils {
 
   public static boolean isMultiChoiceGroup(@NotNull ActionGroup actionGroup) {
     Presentation p = actionGroup.getTemplatePresentation();
-    if (p.isMultipleChoice()) return true;
+    if (p.isMultiChoice()) return true;
     if (p.getIcon() == AllIcons.Actions.GroupBy ||
         p.getIcon() == AllIcons.Actions.Show ||
         p.getIcon() == AllIcons.General.GearPlain ||

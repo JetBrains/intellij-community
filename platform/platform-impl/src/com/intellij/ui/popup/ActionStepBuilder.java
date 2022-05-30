@@ -106,7 +106,7 @@ class ActionStepBuilder {
       else {
         Presentation presentation = myPresentationFactory.getPresentation(action);
         if (multiChoicePopup && action instanceof Toggleable) {
-          presentation.setMultipleChoice(true);
+          presentation.setMultiChoice(true);
         }
         appendAction(action, presentation);
       }

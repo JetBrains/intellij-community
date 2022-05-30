@@ -130,7 +130,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
     setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
     updateIcon(presentation);
     myDescription = presentation.getDescription();
-    myKeepMenuOpen = myKeepMenuOpen || myAction.getAction() instanceof KeepingPopupOpenAction || presentation.isMultipleChoice();
+    myKeepMenuOpen = myKeepMenuOpen || presentation.isMultiChoice() || myAction.getAction() instanceof KeepingPopupOpenAction;
 
     if (myScreenMenuItemPeer != null) {
       myScreenMenuItemPeer.setLabel(getText(), getAccelerator());

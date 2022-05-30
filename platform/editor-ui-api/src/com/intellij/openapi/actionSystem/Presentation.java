@@ -162,7 +162,7 @@ public final class Presentation implements Cloneable {
   /**
    * Sets the presentation text.
    *
-   * @param text presentation text. Use it if you need to localize text.
+   * @param text               presentation text. Use it if you need to localize text.
    * @param mayContainMnemonic if true, the text has {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format, otherwise
    *                           it's a plain text and no mnemonic will be used.
    */
@@ -174,7 +174,7 @@ public final class Presentation implements Cloneable {
   /**
    * Sets the presentation text.
    *
-   * @param text presentation text.
+   * @param text               presentation text.
    * @param mayContainMnemonic if true, the text has {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format, otherwise
    *                           it's a plain text and no mnemonic will be used.
    */
@@ -205,6 +205,7 @@ public final class Presentation implements Cloneable {
 
   /**
    * Sets the presentation text
+   *
    * @param textWithMnemonicSupplier text with mnemonic to set
    */
   public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
@@ -222,6 +223,7 @@ public final class Presentation implements Cloneable {
 
   /**
    * Sets the text with mnemonic.
+   *
    * @see #setText(String, boolean)
    */
   public void setText(@Nullable @ActionText String text) {
@@ -326,7 +328,7 @@ public final class Presentation implements Cloneable {
     return textWithMnemonic == null ? -1 : textWithMnemonic.getMnemonicIndex();
   }
 
-  /** @see Presentation#setVisible(boolean)  */
+  /** @see Presentation#setVisible(boolean) */
   public boolean isVisible() {
     return BitUtil.isSet(myFlags, IS_VISIBLE);
   }
@@ -377,7 +379,7 @@ public final class Presentation implements Cloneable {
     return BitUtil.isSet(myFlags, IS_TEMPLATE);
   }
 
-  /** @see Presentation#setEnabled(boolean)  */
+  /** @see Presentation#setEnabled(boolean) */
   public boolean isEnabled() {
     return BitUtil.isSet(myFlags, IS_ENABLED);
   }
@@ -521,16 +523,11 @@ public final class Presentation implements Cloneable {
 
   /**
    * Some action groups (like 'New...') may filter out actions with non-highest priority.
+   *
    * @param weight please use {@link #HIGHER_WEIGHT} or {@link #EVEN_HIGHER_WEIGHT}
    */
   public void setWeight(double weight) {
     myWeight = weight;
-  }
-
-  @Override
-  @Nls
-  public String toString() {
-    return getText() + " (" + myDescriptionSupplier.get() + ")";
   }
 
   public boolean isEnabledAndVisible() {
@@ -538,13 +535,19 @@ public final class Presentation implements Cloneable {
   }
 
   /**
-   * This parameter specifies if multiple actions can be taken in the same context
+   * Sets if multiple actions or toggles can be performed in the same menu or popup.
    */
-  public void setMultipleChoice(boolean b) {
+  public void setMultiChoice(boolean b) {
     myFlags = BitUtil.set(myFlags, IS_MULTI_CHOICE, b);
   }
 
-  public boolean isMultipleChoice(){
+  public boolean isMultiChoice() {
     return BitUtil.isSet(myFlags, IS_MULTI_CHOICE);
+  }
+
+  @Nls
+  @Override
+  public String toString() {
+    return getText() + " (" + myDescriptionSupplier.get() + ")";
   }
 }

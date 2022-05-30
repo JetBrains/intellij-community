@@ -690,7 +690,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myIsEnabled = presentation.isEnabled();
       myIsPerformGroup = myAction instanceof ActionGroup && presentation.isPerformGroup();
       myIsSubstepSuppressed = myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(presentation);
-      myIsKeepPopupOpen = myIsKeepPopupOpen || myAction instanceof KeepingPopupOpenAction || presentation.isMultipleChoice();
+      myIsKeepPopupOpen = myIsKeepPopupOpen || presentation.isMultiChoice() || myAction instanceof KeepingPopupOpenAction;
 
       Couple<Icon> icons = ActionStepBuilder.calcRawIcons(myAction, presentation);
       Icon icon = icons.first;
