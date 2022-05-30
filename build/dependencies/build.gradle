@@ -27,8 +27,6 @@ apply plugin: 'base'
 group 'intellij.tools'
 version '1.0'
 
-apply from: 'setupCidr.gradle'
-
 clean.dependsOn('cleanSetupJdks')
 
 wrapper {
