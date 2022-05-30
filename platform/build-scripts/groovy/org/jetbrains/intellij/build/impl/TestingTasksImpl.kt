@@ -57,22 +57,15 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
   }
 
   override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: Predicate<File>?) {
-    if (options.testDiscoveryEnabled && options.performanceTestsOnly) {
+    if (options.isTestDiscoveryEnabled && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
       return
     }
 
     checkOptions()
     val compilationTasks = create(context)
-    val projectArtifacts = if (options.beforeRunProjectArtifacts == null) {
-      null
-    }
-    else {
-      options.beforeRunProjectArtifacts.split(';').dropLastWhile(String::isEmpty).toSet()
-    }
-
-    if (projectArtifacts != null) {
-      compilationTasks.buildProjectArtifacts(projectArtifacts)
+    options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
+      compilationTasks.buildProjectArtifacts(it)
     }
 
     val runConfigurations = options.testConfigurations?.splitToSequence(';')
@@ -107,7 +100,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
       else {
         runTestsFromRunConfigurations(effectiveAdditionalJvmOptions, runConfigurations, additionalSystemProperties, context)
       }
-      if (options.testDiscoveryEnabled) {
+      if (options.isTestDiscoveryEnabled) {
         publishTestDiscovery(context.messages, testDiscoveryTraceFilePath)
       }
     }
@@ -203,7 +196,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
   }
 
   private fun loadTestDiscovery(additionalJvmOptions: MutableList<String>, additionalSystemProperties: LinkedHashMap<String, String>) {
-    if (!options.testDiscoveryEnabled) {
+    if (!options.isTestDiscoveryEnabled) {
       return
     }
 
@@ -230,10 +223,10 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     additionalSystemProperties.put("test.discovery.data.listener",
                                    "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener")
     additionalSystemProperties.put("org.jetbrains.instrumentation.trace.file", testDiscoveryTraceFilePath)
-    additionalSystemProperties.put("test.discovery.include.class.patterns", options.testDiscoveryIncludePatterns)
+    options.testDiscoveryIncludePatterns?.let { additionalSystemProperties.put("test.discovery.include.class.patterns", it) }
 
-    additionalSystemProperties.put("test.discovery.include.class.patterns", options.testDiscoveryIncludePatterns)
-    additionalSystemProperties.put("test.discovery.exclude.class.patterns", options.testDiscoveryExcludePatterns)
+    options.testDiscoveryIncludePatterns?.let { additionalSystemProperties.put("test.discovery.include.class.patterns", it) }
+    options.testDiscoveryExcludePatterns?.let { additionalSystemProperties.put("test.discovery.exclude.class.patterns", it) }
 
     additionalSystemProperties.put("test.discovery.excluded.roots", excludeRoots.joinToString(separator = ";"))
   }
@@ -309,7 +302,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     testGroups?.let { allSystemProperties.putIfAbsent("intellij.build.test.groups", it) }
     allSystemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
     allSystemProperties.putIfAbsent("bootstrap.testcases", "com.intellij.AllTests")
-    allSystemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.performanceTestsOnly.toString())
+    allSystemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
     prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath.toMutableList(), remoteDebugging)
     if (isRunningInBatchMode) {
@@ -440,9 +433,9 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
     if (PortableCompilationCache.CAN_BE_USED) {
       systemProperties.put(BuildOptions.USE_COMPILED_CLASSES_PROPERTY, "true")
     }
-    var suspendDebugProcess = options.suspendDebugProcess
+    var suspendDebugProcess = options.isSuspendDebugProcess
 
-    if (options.performanceTestsOnly) {
+    if (options.isPerformanceTestsOnly) {
       context.messages.info("Debugging disabled for performance tests")
       suspendDebugProcess = false
     }
@@ -453,11 +446,11 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
         suspendDebugProcess = false
       }
     }
-    else if (options.debugEnabled) {
+    else if (options.isDebugEnabled) {
       jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspendDebugProcess) "y" else "n"},address=${options.debugHost}:${options.debugPort}")
     }
 
-    if (options.enableCausalProfiling) {
+    if (options.isEnableCausalProfiling) {
       val causalProfilingOptions = CausalProfilingOptions.getIMPL()
       systemProperties.put("intellij.build.test.patterns", causalProfilingOptions.testClass.replace(".", "\\."))
       jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
@@ -520,7 +513,7 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
                              bootstrapClasspath: List<String>,
                              testClasspath: List<String>) {
     val mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findRequiredModule(mainModule))
-    val pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes))
+    val pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes!!))
     val root = Path.of(mainModuleTestsOutput)
     val testClasses = Files.walk(root).use { stream ->
          stream.filter { pattern.matcher(root.relativize(it).toString()).matches() }.toList()

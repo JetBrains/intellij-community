@@ -178,7 +178,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       val factory = Log4jFileLoggerFactory(buildLogFile.toFile(), categoriesWithDebugLevel)
       AntLoggerFactory.fileLoggerFactory = factory
       context.messages.info("Build log (${if (categoriesWithDebugLevel.isEmpty()) "info" else "debug level for $categoriesWithDebugLevel"}) " +
-                            "will be written to ${buildLogFile}")
+                            "will be written to $buildLogFile")
     }
     catch (t: Throwable) {
       context.messages.warning("Cannot setup additional logging to $buildLogFile.absolutePath: $t.message")
@@ -275,7 +275,7 @@ private class AntMessageHandler(private val context: CompilationContext) : Messa
   val errorMessagesByCompiler = MultiMap.createConcurrent<String, String>()
   private val compilationStartTimeForTarget = ConcurrentHashMap<String, Long>()
   private val compilationFinishTimeForTarget = ConcurrentHashMap<String, Long>()
-  private var progress = (-1.0).toFloat()
+  private var progress = -1.0.toFloat()
   override fun processMessage(message: BuildMessage) {
     val text = message.messageText
     when (message.kind) {
