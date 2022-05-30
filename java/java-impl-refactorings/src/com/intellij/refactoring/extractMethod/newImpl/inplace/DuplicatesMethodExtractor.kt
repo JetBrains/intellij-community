@@ -32,8 +32,6 @@ class DuplicatesMethodExtractor {
     var replaceDuplicatesDefault: Boolean? = true.takeIf { isSilentMode }
   }
 
-  private var duplicatesFinder: JavaDuplicatesFinder? = null
-
   private var callsToReplace: List<SmartPsiElementPointer<PsiElement>>? = null
 
   private var extractOptions: ExtractOptions? = null
@@ -47,8 +45,6 @@ class DuplicatesMethodExtractor {
     val copiedElements = elements.map { PsiTreeUtil.findSameElementInCopy(it, copiedFile) }
     val extractOptions = findExtractOptions(copiedClass, copiedElements, methodName, makeStatic)
     val anchor = PsiTreeUtil.findSameElementInCopy(extractOptions.anchor, file)
-
-    this.duplicatesFinder = JavaDuplicatesFinder(copiedElements)
     this.extractOptions = extractOptions
 
     val elementsToReplace = MethodExtractor().prepareRefactoringElements(extractOptions)
@@ -87,9 +83,9 @@ class DuplicatesMethodExtractor {
   fun postprocess(editor: Editor, method: PsiMethod) {
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val finder = duplicatesFinder ?: return
     val calls = callsToReplace?.map { it.element!! } ?: return
     val options = extractOptions ?: return
+    val finder = JavaDuplicatesFinder(options.elements)
     var duplicates = finder
       .findDuplicates(method.containingClass ?: file)
       .filterNot { duplicate ->
