@@ -180,7 +180,9 @@ public final class EditorNotificationsImpl extends EditorNotifications {
           }
 
           Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
-          PluginException pluginException = PluginException.createByClass(rejected, providerClass);
+          PluginException pluginException = rejected instanceof PluginException ?
+                                            (PluginException)rejected :
+                                            PluginException.createByClass(rejected, providerClass);
           Logger.getInstance(providerClass).error(pluginException);
           throw pluginException;
         });
@@ -272,8 +274,13 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       return panels;
     }
 
-    throw new IllegalStateException("User data is not supported; editorClass='" + editor.getClass().getName() +
-                                    "'; key='" + EDITOR_NOTIFICATION_PROVIDER + "'");
+    Class<? extends FileEditor> editorClass = editor.getClass();
+    PluginException pluginException = PluginException.createByClass("User data is not supported; editorClass='" + editorClass.getName() +
+                                                                    "'; key='" + EDITOR_NOTIFICATION_PROVIDER + "'",
+                                                                    null,
+                                                                    editorClass);
+    Logger.getInstance(editorClass).error(pluginException);
+    throw pluginException;
   }
 
   @TestOnly
