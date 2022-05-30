@@ -53,7 +53,7 @@ class ReportingTest : BasePlatformTestCase() {
 
   fun `test changed range highlighting`() {
     myFixture.enableInspections(GrazieInspection::class.java)
-    myFixture.configureByText("a.txt", "Hello there! You <TYPO>are <caret>best</TYPO> person!")
+    myFixture.configureByText("a.txt", "Hello there! You <GRAMMAR_ERROR>are <caret>best</GRAMMAR_ERROR> person!")
     myFixture.checkHighlighting()
 
     val editor = myFixture.editor
