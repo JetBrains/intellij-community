@@ -107,7 +107,7 @@ public final class BrowserUtil {
         }
       }
       else if (SystemInfo.isWindows) {
-        command.addAll(List.of(ExecUtil.getOpenCommandPath(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName));
+        command.addAll(List.of(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName));
         command.addAll(parameters);
         if (url != null) {
           command.add(url);
