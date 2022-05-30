@@ -34,21 +34,21 @@ class LinuxDistributionBuilder(private val context: BuildContext,
   override fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
     spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope {
       val distBinDir = targetPath.resolve("bin")
-      val bins =
-        when (arch) {
-          JvmArchitecture.aarch64 -> listOf(
-            "fsnotifier-aarch64",
-            "libdbm-aarch64.so",
-            "restart.py",
-          )
-          JvmArchitecture.x64 -> listOf(
-            "fsnotifier",
-            "libdbm-x86_64.so",
-            "restart.py",
-          )
-        }
+      @Suppress("SpellCheckingInspection")
+      val bins = when (arch) {
+        JvmArchitecture.aarch64 -> listOf(
+          "fsnotifier-aarch64",
+          "libdbm-aarch64.so",
+          "restart.py",
+        )
+        JvmArchitecture.x64 -> listOf(
+          "fsnotifier",
+          "libdbm-x86_64.so",
+          "restart.py",
+        )
+      }
       val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
-      bins.forEach { bin ->
+      for (bin in bins) {
         copyFileToDir(sourceBinDir.resolve(bin), distBinDir)
       }
       unpackPty4jNative(context, targetPath, "linux")
@@ -60,7 +60,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
       // for real installers we need to checkout all text files with 'lf' separators anyway
       convertLineSeparators(targetPath.resolve("bin/idea.properties"), "\n")
       if (iconPngPath != null) {
-        Files.copy(iconPngPath, distBinDir.resolve(context.productProperties.baseFileName + ".png"), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
       }
       generateVMOptions(distBinDir)
       generateUnixScripts(context, extraJarNames, distBinDir, OsFamily.LINUX)
