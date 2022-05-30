@@ -19,6 +19,12 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_IGNORE = "org.junit.Ignore";
   public static final String ORG_JUNIT_RULE = "org.junit.Rule";
   public static final String ORG_JUNIT_CLASS_RULE = "org.junit.ClassRule";
+  public static final String ORG_JUNIT_RULES_TEST_RULE = "org.junit.rules.TestRule";
+  public static final String ORG_JUNIT_RULES_METHOD_RULE = "org.junit.rules.MethodRule";
+  public static final String ORG_JUNIT_BEFORE = "org.junit.Before";
+  public static final String ORG_JUNIT_AFTER = "org.junit.After";
+  public static final String ORG_JUNIT_BEFORE_CLASS = "org.junit.BeforeClass";
+  public static final String ORG_JUNIT_AFTER_CLASS = "org.junit.AfterClass";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST = "org.junit.jupiter.params.ParameterizedTest";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE = "org.junit.jupiter.params.provider.MethodSource";
   public static final String ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF = "org.junit.jupiter.api.condition.EnabledIf";
@@ -29,6 +35,7 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_PARAMS_NULL_SOURCE = "org.junit.jupiter.params.provider.NullSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_EMPTY_SOURCE = "org.junit.jupiter.params.provider.EmptySource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_NULL_AND_EMPTY_SOURCE = "org.junit.jupiter.params.provider.NullAndEmptySource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_ENUM = "org.junit.jupiter.params.provider.NullEnum";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE = "org.junit.jupiter.params.provider.CsvSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE = "org.junit.jupiter.params.provider.CsvFileSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE = "org.junit.jupiter.params.provider.ArgumentsSource";
@@ -55,9 +62,14 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE = "org.junit.platform.engine.TestEngine";
   public static final String ORG_JUNIT_PLATFORM_ENGINE = "org.junit.platform.engine";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION = "org.junit.jupiter.api.extension.RegisterExtension";
+  public static final String ORG_JUNIT_JUPITER_API_EXTENSION_BEFORE_ALL_CALLBACK = "org.junit.jupiter.api.extension.BeforeAllCallback";
+  public static final String ORG_JUNIT_JUPITER_API_EXTENSION_AFTER_ALL_CALLBACK = "org.junit.jupiter.api.extension.AfterAllCallback";
+  public static final String ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER = "org.junit.jupiter.api.extension.ParameterResolver";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION = "org.junit.jupiter.api.extension.Extension";
   public static final String ORG_JUNIT_JUPITER_API_BEFORE_ALL = "org.junit.jupiter.api.BeforeAll";
   public static final String ORG_JUNIT_JUPITER_API_AFTER_ALL = "org.junit.jupiter.api.AfterAll";
   public static final String ORG_JUNIT_JUPITER_API_BEFORE_EACH = "org.junit.jupiter.api.BeforeEach";
   public static final String ORG_JUNIT_JUPITER_API_AFTER_EACH = "org.junit.jupiter.api.AfterEach";
+  public static final String ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINT = "org.junit.experimental.theories.DataPoint";
+  public static final String ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINTS = "org.junit.experimental.theories.DataPoints";
 }

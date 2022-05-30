@@ -751,15 +751,25 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
   }
 
-  public void testMergedMalformedSetUpTearDownInspections() throws Exception {
+  public void testJUnitMalformedMemberInspections() throws Exception {
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"BeforeClassOrAfterClassIsPublicStaticVoidNoArg\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"BeforeOrAfterIsPublicVoidNoArg\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"JUnit5MalformedExtensions\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"JUnit5MalformedNestedClass\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"JUnit5MalformedRepeated\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"JUnitDatapoint\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"JUnitRule\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"Junit5MalformedParameterized\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                         "  <inspection_tool class=\"MalformedSetUpTearDown\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
                          "  <inspection_tool class=\"SetupIsPublicVoidNoArg\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
                          "  <inspection_tool class=\"TeardownIsPublicVoidNoArg\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"TestMethodIsPublicVoidNoArg\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
                          "</profile>");
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                         "  <inspection_tool class=\"MalformedSetUpTearDown\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"JUnitMalformedMember\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
                          "</profile>");
   }
 
