@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.reference.PsiMemberUsageReference;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
@@ -874,9 +875,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (myRefCountHolder != null && !myHolder.hasErrorResults()) {
       for (PsiReference reference : expression.getReferences()) {
-        PsiElement resolve = reference.resolve();
-        if (resolve instanceof PsiMember) {
-          myRefCountHolder.registerReference(reference, new CandidateInfo(resolve, PsiSubstitutor.EMPTY));
+        if (reference instanceof PsiMemberUsageReference) {
+          PsiElement resolve = reference.resolve();
+          if (resolve instanceof PsiMember) {
+            myRefCountHolder.registerReference(reference, new CandidateInfo(resolve, PsiSubstitutor.EMPTY));
+          }
         }
       }
     }
