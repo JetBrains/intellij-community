@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,8 @@ import java.awt.*;
  * Use {@link AnActionEvent#getData(DataKey)} in {@link com.intellij.openapi.actionSystem.AnAction AnAction}.
  */
 public abstract class DataManager {
+  private static final Logger LOG = Logger.getInstance(DataManager.class);
+
   public static DataManager getInstance() {
     return ApplicationManager.getApplication().getService(DataManager.class);
   }
@@ -91,6 +94,15 @@ public abstract class DataManager {
   public abstract <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);
 
   public static void registerDataProvider(@NotNull JComponent component, @NotNull DataProvider provider) {
+    if (component instanceof DataProvider) {
+      LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing DataProvider. " +
+                             "The key will be ignored. Component: %s", component), new Throwable());
+    }
+    Object oldProvider = component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
+    if (oldProvider != null) {
+      LOG.warn(String.format("Overwriting an existing CLIENT_PROPERTY_DATA_PROVIDER. " +
+                             "Component: %s, old provider: %s, new provider: %s", component, oldProvider, provider), new Throwable());
+    }
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, provider);
   }
 
