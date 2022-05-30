@@ -146,11 +146,12 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchRulesWithPattern3() { doParserTest("case (Integer i && i > 10) && boolExpr() -> { }"); }
   public void testSwitchRulesWithPattern4() { doParserTest("case null, default -> { }"); }
   public void testSwitchRulesWithPattern5() { doParserTest("case null -> { }"); }
-
+  public void testSwitchRulesWithPattern6() { doParserTest("case Integer i when true -> { }"); }
   public void testSwitchRulesWithPatternIncomplete0() { doParserTest("case Integer i &&  -> { }"); }
   public void testSwitchRulesWithPatternIncomplete1() { doParserTest("case (Integer i  -> { }"); }
   public void testSwitchRulesWithPatternIncomplete2() { doParserTest("case Integer i, -> { }"); }
   public void testSwitchRulesWithPatternIncomplete3() { doParserTest("case (Integer i && ) && boolExpr() -> { }"); }
+  public void testSwitchRulesWithPatternIncomplete4() { doParserTest("case Integer i when -> { }"); }
 
   public void testSyncNormal() { doParserTest("synchronized(o){}"); }
   public void testSyncIncomplete0() { doParserTest("synchronized"); }

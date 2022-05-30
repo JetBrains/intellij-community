@@ -40,7 +40,9 @@ public final class JavaLexer extends LexerBase {
             level.isAtLeast(LanguageLevel.JDK_10) && VAR.contentEquals(id) ||
             level.isAtLeast(LanguageLevel.JDK_16) && RECORD.contentEquals(id) ||
             level.isAtLeast(LanguageLevel.JDK_14) && YIELD.contentEquals(id) ||
-            (level.isAtLeast(LanguageLevel.JDK_17) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))));
+            (level.isAtLeast(LanguageLevel.JDK_17) && (SEALED.contentEquals(id) || PERMITS.contentEquals(id))) ||
+            level.isAtLeast(LanguageLevel.JDK_X) && WHEN.contentEquals(id)
+           );
   }
 
   private final _JavaLexer myFlexLexer;
