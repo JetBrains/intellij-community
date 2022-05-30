@@ -45,12 +45,12 @@ class WorkspaceFolderTreeImporter(
         addSourceRootFolder(contentRootEntity, sourceFolder)
       }
 
-      for (folder in dataHolder.annotationProcessorFolders) {
-        addGeneratedJavaSourceFolder(folder.path, folder.rootType, contentRootEntity)
-      }
-
       for (folder in dataHolder.generatedFolders) {
         configGeneratedSourceFolder(File(folder.path), folder.rootType, contentRootEntity)
+      }
+
+      for (folder in dataHolder.annotationProcessorFolders) {
+        addGeneratedJavaSourceFolderIfNoRegisteredSourceOnThisPath(folder.path, folder.rootType, contentRootEntity)
       }
 
     }
@@ -104,7 +104,9 @@ class WorkspaceFolderTreeImporter(
     if (File(path).list().isNullOrEmpty()) return
 
     val url = virtualFileUrlManager.fromPath(path)
-    if (contentRootEntity.sourceRoots.any { it.url == url }) return
+    if (contentRootEntity.sourceRoots.any {
+        VfsUtilCore.isEqualOrAncestor(url.url, it.url.url) || VfsUtilCore.isEqualOrAncestor(it.url.url, url.url)
+      }) return
 
     val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, url,
                                                        rootType,
@@ -114,13 +116,13 @@ class WorkspaceFolderTreeImporter(
 
   private fun configGeneratedSourceFolder(targetDir: File, rootType: String, contentRootEntity: ContentRootEntity) {
     when (importingSettings.generatedSourcesFolder) {
-      GENERATED_SOURCE_FOLDER -> addGeneratedJavaSourceFolder(targetDir.path, rootType, contentRootEntity)
+      GENERATED_SOURCE_FOLDER -> addGeneratedJavaSourceFolderIfNoRegisteredSourceOnThisPath(targetDir.path, rootType, contentRootEntity)
       SUBFOLDER -> addAllSubDirsAsGeneratedSources(targetDir, rootType, contentRootEntity)
       AUTODETECT -> {
         val sourceRoots = JavaSourceRootDetectionUtil.suggestRoots(targetDir)
         for (root in sourceRoots) {
           if (FileUtil.filesEqual(targetDir, root.directory)) {
-            addGeneratedJavaSourceFolder(targetDir.path, rootType, contentRootEntity)
+            addGeneratedJavaSourceFolderIfNoRegisteredSourceOnThisPath(targetDir.path, rootType, contentRootEntity)
             return
           }
           addAsGeneratedSourceFolder(root.directory, rootType, contentRootEntity)
@@ -137,7 +139,7 @@ class WorkspaceFolderTreeImporter(
     val hasRegisteredSubfolder = contentRootEntity.sourceRoots.any { VfsUtilCore.isEqualOrAncestor(url, it.url.url) }
     if (!hasRegisteredSubfolder
         || folder != null && (folder.asJavaSourceRoot()?.generated == true || folder.asJavaResourceRoot()?.generated == true)) {
-      addGeneratedJavaSourceFolder(dir.path, rootType, contentRootEntity)
+      addGeneratedJavaSourceFolderIfNoRegisteredSourceOnThisPath(dir.path, rootType, contentRootEntity)
     }
   }
 
