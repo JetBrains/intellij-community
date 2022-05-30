@@ -103,9 +103,9 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
     c.gridy = 1;
     c.anchor = GridBagConstraints.NORTH;
     c.insets = JBInsets.emptyInsets();
-    c.fill = GridBagConstraints.BOTH;
+    c.fill = GridBagConstraints.HORIZONTAL;
     c.weightx = 1;
-    c.weighty = 1;
+    c.weighty = 0;
     JPanel comp = new JPanel(new GridBagLayout());
     myRunOnTargetPanel.buildUi(comp, null);
     panel.add(comp, c);
