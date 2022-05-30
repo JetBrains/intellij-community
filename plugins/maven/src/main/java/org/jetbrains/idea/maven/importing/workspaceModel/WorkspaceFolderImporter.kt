@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree.workspace
+package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -17,7 +17,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.io.File
 import java.nio.file.Path
 
-class WorkspaceFolderTreeImporter(
+class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val importingSettings: MavenImportingSettings) {
@@ -57,7 +57,7 @@ class WorkspaceFolderTreeImporter(
   }
 
   private fun addSourceRootFolder(contentRootEntity: ContentRootEntity,
-                                  sourceFolder: SourceFolder) {
+                                  sourceFolder: SourceFolderData) {
     if (!shouldAddSourceRootFor(sourceFolder.path, onlyIfNotEmpty = false)) return
 
     val sourceRootEntity = builder
@@ -80,8 +80,7 @@ class WorkspaceFolderTreeImporter(
                                   createContentRootForTarget: Boolean): Collection<ContentRootDataHolder> {
     val baseContentRoot = getBaseContentRoot(importData)
     val folderItemMap = getFolderItemMap(importData)
-    return ContentRootCollector
-      .collect(baseContentRoot, folderItemMap, excludedFolders, generatedFoldersHolder, createContentRootForTarget)
+    return ContentRootCollector.collect(baseContentRoot, folderItemMap, excludedFolders, generatedFoldersHolder, createContentRootForTarget)
   }
 
   private fun getBaseContentRoot(importData: MavenModuleImportData): String {

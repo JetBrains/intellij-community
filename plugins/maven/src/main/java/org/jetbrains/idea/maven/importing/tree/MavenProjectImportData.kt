@@ -25,18 +25,8 @@ class LegacyModuleData(val module: Module,
                        javaVersionHolder: MavenJavaVersionHolder,
                        val isNewModule: Boolean) : ModuleData(module.name, type, javaVersionHolder)
 
-data class MavenModuleImportData(val mavenProject: MavenProject,
-                                 val moduleData: ModuleData,
-                                 val dependencies: List<MavenImportDependency<*>>,
-                                 val changes: MavenProjectChanges?) {
-
-  val legacyModuleData: LegacyModuleData
-    get() = moduleData as LegacyModuleData
-
-  fun hasChanges(): Boolean {
-    return changes != null && changes.hasChanges()
-  }
-
+open class MavenModuleImportData(val mavenProject: MavenProject,
+                                 val moduleData: ModuleData) {
   override fun toString(): String {
     return moduleData.moduleName
   }
@@ -50,6 +40,19 @@ data class MavenModuleImportData(val mavenProject: MavenProject,
 
   override fun hashCode(): Int {
     return moduleData.moduleName.hashCode()
+  }
+}
+
+open class MavenTreeModuleImportData(mavenProject: MavenProject,
+                                     moduleData: ModuleData,
+                                     val dependencies: List<MavenImportDependency<*>>,
+                                     val changes: MavenProjectChanges?) : MavenModuleImportData(mavenProject, moduleData) {
+
+  val legacyModuleData: LegacyModuleData
+    get() = moduleData as LegacyModuleData
+
+  fun hasChanges(): Boolean {
+    return changes != null && changes.hasChanges()
   }
 }
 

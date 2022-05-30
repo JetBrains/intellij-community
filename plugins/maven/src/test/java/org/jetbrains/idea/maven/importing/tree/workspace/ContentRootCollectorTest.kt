@@ -2,6 +2,9 @@
 package org.jetbrains.idea.maven.importing.tree.workspace
 
 import com.intellij.maven.testFramework.MavenTestCase
+import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootCollector
+import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootDataHolder
+import org.jetbrains.idea.maven.importing.workspaceModel.GeneratedFoldersHolder
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.Assert

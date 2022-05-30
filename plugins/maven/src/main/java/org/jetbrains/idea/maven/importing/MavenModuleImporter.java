@@ -21,8 +21,8 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData;
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType;
+import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData;
 import org.jetbrains.idea.maven.importing.tree.dependency.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -109,7 +109,7 @@ public final class MavenModuleImporter {
     configLanguageLevel();
   }
 
-  public void config(MavenRootModelAdapter mavenRootModelAdapter, MavenModuleImportData importData) {
+  public void config(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
     myRootModelAdapter = mavenRootModelAdapter;
 
     configFolders();
@@ -118,7 +118,7 @@ public final class MavenModuleImporter {
     configLanguageLevel(level);
   }
 
-  public void configMainAndTestAggregator(MavenRootModelAdapter mavenRootModelAdapter, MavenModuleImportData importData) {
+  public void configMainAndTestAggregator(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
     assert importData.getModuleData().getType() == MavenModuleType.AGGREGATOR_MAIN_TEST;
     myRootModelAdapter = mavenRootModelAdapter;
 
@@ -128,7 +128,7 @@ public final class MavenModuleImporter {
     configLanguageLevel(level);
   }
 
-  public void configMainAndTest(MavenRootModelAdapter mavenRootModelAdapter, MavenModuleImportData importData) {
+  public void configMainAndTest(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
     MavenModuleType type = importData.getModuleData().getType();
     assert type == MavenModuleType.MAIN || type == MavenModuleType.TEST;
     myRootModelAdapter = mavenRootModelAdapter;

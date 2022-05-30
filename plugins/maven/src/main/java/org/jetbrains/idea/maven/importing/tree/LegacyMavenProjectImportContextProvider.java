@@ -44,7 +44,7 @@ public class LegacyMavenProjectImportContextProvider extends MavenProjectImportC
   }
 
   @Override
-  protected void addLegacyCreatedModule(List<Module> createdModules, MavenModuleImportData moduleImportData) {
+  protected void addLegacyCreatedModule(List<Module> createdModules, MavenTreeModuleImportData moduleImportData) {
     if (moduleImportData.getLegacyModuleData().isNewModule()) createdModules.add(moduleImportData.getLegacyModuleData().getModule());
   }
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing.tree.workspace
+package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -36,7 +36,7 @@ object ContentRootCollector {
       for (contentRootPath in sortedPotentialContentRootSet) {
         if (FileUtil.isAncestor(contentRootPath, entry.key, false)) {
           val contentRootDataHolder = contentRootDataHolderByPath.getOrPut(contentRootPath) { ContentRootDataHolder(contentRootPath) }
-          contentRootDataHolder.sourceFolders.add(SourceFolder(entry.key, entry.value))
+          contentRootDataHolder.sourceFolders.add(SourceFolderData(entry.key, entry.value))
           break
         }
       }
@@ -70,22 +70,22 @@ object ContentRootCollector {
     if (generatedFoldersHolder.annotationProcessorDirectory != null) {
       val folder = generatedFoldersHolder.annotationProcessorDirectory
       val contentRootHolder = getGeneratedContentRootDataHolder(sortedPotentialContentRootSet, folder, contentRootDataHolderByPath)
-      contentRootHolder.annotationProcessorFolders.add(SourceFolder(folder, JavaSourceRootType.SOURCE))
+      contentRootHolder.annotationProcessorFolders.add(SourceFolderData(folder, JavaSourceRootType.SOURCE))
     }
     if (generatedFoldersHolder.annotationProcessorTestDirectory != null) {
       val folder = generatedFoldersHolder.annotationProcessorTestDirectory
       val contentRootHolder = getGeneratedContentRootDataHolder(sortedPotentialContentRootSet, folder, contentRootDataHolderByPath)
-      contentRootHolder.annotationProcessorFolders.add(SourceFolder(folder, JavaSourceRootType.TEST_SOURCE))
+      contentRootHolder.annotationProcessorFolders.add(SourceFolderData(folder, JavaSourceRootType.TEST_SOURCE))
     }
     if (generatedFoldersHolder.generatedSourceFolder != null) {
       val folder = generatedFoldersHolder.generatedSourceFolder
       val contentRootHolder = getGeneratedContentRootDataHolder(sortedPotentialContentRootSet, folder, contentRootDataHolderByPath)
-      contentRootHolder.generatedFolders.add(SourceFolder(folder, JavaSourceRootType.SOURCE))
+      contentRootHolder.generatedFolders.add(SourceFolderData(folder, JavaSourceRootType.SOURCE))
     }
     if (generatedFoldersHolder.generatedTestSourceFolder != null) {
       val folder = generatedFoldersHolder.generatedTestSourceFolder
       val contentRootHolder = getGeneratedContentRootDataHolder(sortedPotentialContentRootSet, folder, contentRootDataHolderByPath)
-      contentRootHolder.generatedFolders.add(SourceFolder(folder, JavaSourceRootType.TEST_SOURCE))
+      contentRootHolder.generatedFolders.add(SourceFolderData(folder, JavaSourceRootType.TEST_SOURCE))
     }
   }
 
@@ -118,17 +118,17 @@ class GeneratedFoldersHolder(val annotationProcessorDirectory: String?,
 }
 
 class ContentRootDataHolder(val contentRoot: String) {
-  val sourceFolders = mutableListOf<SourceFolder>()
+  val sourceFolders = mutableListOf<SourceFolderData>()
   val excludedPaths = mutableListOf<String>()
-  val annotationProcessorFolders = mutableListOf<SourceFolder>()
-  val generatedFolders = mutableListOf<SourceFolder>()
+  val annotationProcessorFolders = mutableListOf<SourceFolderData>()
+  val generatedFolders = mutableListOf<SourceFolderData>()
 
   override fun toString(): String {
     return "ContentRootDataHolder(contentRoot='$contentRoot')"
   }
 }
 
-class SourceFolder(val path: String, sourceRootType: JpsModuleSourceRootType<*>) {
+class SourceFolderData(val path: String, sourceRootType: JpsModuleSourceRootType<*>) {
   val rootType = getRootType(sourceRootType)
 
   fun isResource() = JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID == rootType

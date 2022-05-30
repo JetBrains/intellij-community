@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleImportContext {
-  @NotNull public final List<MavenModuleImportData> changedModules;
-  @NotNull public final List<MavenModuleImportData> allModules;
+  @NotNull public final List<MavenTreeModuleImportData> changedModules;
+  @NotNull public final List<MavenTreeModuleImportData> allModules;
   @NotNull public final Map<MavenProject, String> moduleNameByProject;
   public final boolean hasChanges;
 
@@ -28,8 +28,8 @@ public class MavenModuleImportContext {
     this.legacyObsoleteModules = Collections.emptyList();
   }
 
-  public MavenModuleImportContext(@NotNull List<MavenModuleImportData> changedModules,
-                                  @NotNull List<MavenModuleImportData> allModules,
+  public MavenModuleImportContext(@NotNull List<MavenTreeModuleImportData> changedModules,
+                                  @NotNull List<MavenTreeModuleImportData> allModules,
                                   @NotNull Map<MavenProject, String> moduleNameByProject,
                                   boolean hasChanges,
 

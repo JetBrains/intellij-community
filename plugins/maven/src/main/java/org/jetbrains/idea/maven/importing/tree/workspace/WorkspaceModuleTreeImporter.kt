@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing.tree.workspace
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -11,11 +10,9 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsE
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
-import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
-import org.jetbrains.idea.maven.importing.tree.MavenModuleType
+import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.importing.tree.dependency.BaseDependency
 import org.jetbrains.idea.maven.importing.tree.dependency.LibraryDependency
 import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency
@@ -24,193 +21,25 @@ import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
-import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder
-import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
 
 class WorkspaceModuleTreeImporter(
-  private val importData: MavenModuleImportData,
-  private val virtualFileUrlManager: VirtualFileUrlManager,
+  private val importData: MavenTreeModuleImportData,
+  virtualFileUrlManager: VirtualFileUrlManager,
   builder: MutableEntityStorage,
-  private val importingSettings: MavenImportingSettings,
-  private val mavenImportFoldersByMavenId: MutableMap<String, MavenImportFolderHolder>,
-  private val project: Project) : WorkspaceModuleImporterBase(builder) {
+  importingSettings: MavenImportingSettings,
+  private val importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>,
+  private val project: Project) : WorkspaceModuleImporterBase(virtualFileUrlManager, builder, importingSettings) {
 
   fun importModule(): ModuleEntity {
-    val importFolderHolder = mavenImportFoldersByMavenId.getOrPut(importData.mavenProject.mavenId.key) { collectMavenFolders() }
-
     val baseModuleDirPath = importingSettings.dedicatedModuleDir.ifBlank { null } ?: importData.mavenProject.directory
     val baseModuleDir = virtualFileUrlManager.fromPath(baseModuleDirPath)
     val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource)
     val dependencies = collectDependencies(importData, entitySource)
-    val moduleName = importData.moduleData.moduleName
-    val moduleEntity = createModuleEntity(importData.mavenProject, moduleName, dependencies, entitySource)
-    val folderImporter = WorkspaceFolderTreeImporter(builder, virtualFileUrlManager, importingSettings)
 
-    when (importData.moduleData.type) {
-      MavenModuleType.MAIN -> configMain(moduleEntity, importFolderHolder, folderImporter)
-      MavenModuleType.TEST -> configTest(moduleEntity, importFolderHolder, folderImporter)
-      MavenModuleType.AGGREGATOR_MAIN_TEST -> configMainAndTestAggregator(moduleEntity, importFolderHolder, folderImporter)
-      MavenModuleType.AGGREGATOR -> configAggregator(moduleEntity, importFolderHolder, folderImporter)
-      else -> config(moduleEntity, importFolderHolder, folderImporter)
-    }
-
-    return moduleEntity
+    return createModuleEntity(importData, dependencies, entitySource, importFoldersByMavenIdCache)
   }
 
-  private fun config(moduleEntity: ModuleEntity, importFolderHolder: MavenImportFolderHolder, folderImporter: WorkspaceFolderTreeImporter) {
-    importJavaSettings(moduleEntity, importFolderHolder)
-
-    folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, importFolderHolder.generatedFoldersHolder)
-  }
-
-  private fun configAggregator(moduleEntity: ModuleEntity,
-                               importFolderHolder: MavenImportFolderHolder,
-                               folderImporter: WorkspaceFolderTreeImporter) {
-    importJavaSettingsAggregator(moduleEntity)
-
-    folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, importFolderHolder.generatedFoldersHolder, true)
-  }
-
-  private fun configMainAndTestAggregator(moduleEntity: ModuleEntity,
-                                          importFolderHolder: MavenImportFolderHolder,
-                                          folderImporter: WorkspaceFolderTreeImporter) {
-    importJavaSettingsMainAndTestAggregator(moduleEntity)
-
-    folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, null, true)
-  }
-
-  private fun configMain(moduleEntity: ModuleEntity,
-                         importFolderHolder: MavenImportFolderHolder,
-                         folderImporter: WorkspaceFolderTreeImporter) {
-    importJavaSettingsMain(moduleEntity, importFolderHolder)
-
-    folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, importFolderHolder.generatedFoldersHolder.toMain())
-  }
-
-  private fun configTest(moduleEntity: ModuleEntity,
-                         importFolderHolder: MavenImportFolderHolder,
-                         folderImporter: WorkspaceFolderTreeImporter) {
-    importJavaSettingsTest(moduleEntity, importFolderHolder)
-
-    folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, importFolderHolder.generatedFoldersHolder.toTest())
-  }
-
-  private fun importJavaSettings(moduleEntity: ModuleEntity, importFolderHolder: MavenImportFolderHolder) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    val inheritCompilerOutput: Boolean
-    val compilerOutputUrl: VirtualFileUrl?
-    val compilerOutputUrlForTests: VirtualFileUrl?
-    if (importingSettings.isUseMavenOutput) {
-      inheritCompilerOutput = false
-      compilerOutputUrl = virtualFileUrlManager.fromPath(importFolderHolder.outputPath)
-      compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
-    }
-    else {
-      inheritCompilerOutput = true
-      compilerOutputUrl = null
-      compilerOutputUrlForTests = null
-    }
-    builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, compilerOutputUrl, compilerOutputUrlForTests,
-                                        languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun importJavaSettingsMainAndTestAggregator(moduleEntity: ModuleEntity) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    builder.addJavaModuleSettingsEntity(true, false, null, null, languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun importJavaSettingsAggregator(moduleEntity: ModuleEntity) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    builder.addJavaModuleSettingsEntity(true, false, null, null, languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun importJavaSettingsMain(moduleEntity: ModuleEntity, importFolderHolder: MavenImportFolderHolder) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    val inheritCompilerOutput: Boolean
-    val compilerOutputUrl: VirtualFileUrl?
-    if (importingSettings.isUseMavenOutput) {
-      inheritCompilerOutput = false
-      compilerOutputUrl = virtualFileUrlManager.fromPath(importFolderHolder.outputPath)
-    }
-    else {
-      inheritCompilerOutput = true
-      compilerOutputUrl = null
-    }
-    builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, compilerOutputUrl, null,
-                                        languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun importJavaSettingsTest(moduleEntity: ModuleEntity, importFolderHolder: MavenImportFolderHolder) {
-    val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
-    val inheritCompilerOutput: Boolean
-    val compilerOutputUrlForTests: VirtualFileUrl?
-    if (importingSettings.isUseMavenOutput) {
-      inheritCompilerOutput = false
-      compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
-    }
-    else {
-      inheritCompilerOutput = true
-      compilerOutputUrlForTests = null
-    }
-    builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, null, compilerOutputUrlForTests,
-                                        languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  private fun collectMavenFolders(): MavenImportFolderHolder {
-    val mavenProject = importData.mavenProject
-    val outputPath = toAbsolutePath(mavenProject.outputDirectory)
-    val testOutputPath = toAbsolutePath(mavenProject.testOutputDirectory)
-    val targetDirPath = toAbsolutePath(mavenProject.buildDirectory)
-
-    val excludedFolders = mutableListOf<String>()
-    if (importingSettings.isExcludeTargetFolder) {
-      excludedFolders.add(targetDirPath)
-    }
-    if (!FileUtil.isAncestor(targetDirPath, outputPath, false)) {
-      excludedFolders.add(outputPath)
-    }
-    if (!FileUtil.isAncestor(targetDirPath, testOutputPath, false)) {
-      excludedFolders.add(testOutputPath)
-    }
-
-    var annotationProcessorDirectory: String? = null
-    var annotationProcessorTestDirectory: String? = null
-    var generatedSourceFolder: String? = null
-    var generatedTestSourceFolder: String? = null
-    if (importingSettings.generatedSourcesFolder != GeneratedSourcesFolder.IGNORE) {
-      annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(false)
-      annotationProcessorTestDirectory = mavenProject.getAnnotationProcessorDirectory(true)
-      if (File(annotationProcessorDirectory).list().isNullOrEmpty()) annotationProcessorDirectory = null
-      if (File(annotationProcessorTestDirectory).list().isNullOrEmpty()) annotationProcessorTestDirectory = null
-    }
-
-    val generatedDir = mavenProject.getGeneratedSourcesDirectory(false)
-    val generatedDirTest = mavenProject.getGeneratedSourcesDirectory(true)
-    val targetChildren = File(targetDirPath).listFiles()
-    if (targetChildren != null) {
-      for (f in targetChildren) {
-        if (!f.isDirectory) continue
-        if (FileUtil.pathsEqual(generatedDir, f.path)) {
-          generatedSourceFolder = toAbsolutePath(generatedDir)
-        }
-        else if (FileUtil.pathsEqual(generatedDirTest, f.path)) {
-          generatedTestSourceFolder = toAbsolutePath(generatedDirTest)
-        }
-      }
-    }
-    val generatedFoldersHolder = GeneratedFoldersHolder(annotationProcessorDirectory, annotationProcessorTestDirectory,
-                                                        generatedSourceFolder, generatedTestSourceFolder)
-
-    return MavenImportFolderHolder(outputPath, testOutputPath, targetDirPath, excludedFolders, generatedFoldersHolder)
-  }
-
-  private fun collectDependencies(importData: MavenModuleImportData, entitySource: EntitySource): List<ModuleDependencyItem> {
+  private fun collectDependencies(importData: MavenTreeModuleImportData, entitySource: EntitySource): List<ModuleDependencyItem> {
     val result = mutableListOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
     for (dependency in importData.dependencies) {
       if (dependency is SystemDependency) {
@@ -296,15 +125,4 @@ class WorkspaceModuleTreeImporter(
       MavenConstants.SCOPE_PROVIDED -> ModuleDependencyItem.DependencyScope.PROVIDED
       else -> ModuleDependencyItem.DependencyScope.COMPILE
     }
-
-  private fun toAbsolutePath(path: String) = MavenUtil.toPath(importData.mavenProject, path).path
-
 }
-
-class MavenImportFolderHolder(
-  val outputPath: String,
-  val testOutputPath: String,
-  val targetDirPath: String,
-  val excludedFolders: List<String>,
-  val generatedFoldersHolder: GeneratedFoldersHolder
-)

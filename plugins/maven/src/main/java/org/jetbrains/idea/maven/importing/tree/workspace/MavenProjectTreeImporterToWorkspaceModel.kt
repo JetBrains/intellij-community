@@ -11,9 +11,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
-import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
+import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterWorkspaceBase
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporterBase
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
@@ -52,8 +53,8 @@ class MavenProjectTreeImporterToWorkspaceModel(
                             postTasks: List<MavenProjectsProcessorTask>) {
     val builder = MutableEntityStorage.create()
 
-    val createdModuleIds = ArrayList<Pair<MavenModuleImportData, ModuleId>>()
-    val mavenFolderHolderByMavenId = TreeMap<String, MavenImportFolderHolder>()
+    val createdModuleIds = ArrayList<Pair<MavenTreeModuleImportData, ModuleId>>()
+    val mavenFolderHolderByMavenId = TreeMap<String, WorkspaceModuleImporterBase.MavenImportFolderHolder>()
 
     for (importData in context.allModules) {
       val moduleEntity = WorkspaceModuleTreeImporter(

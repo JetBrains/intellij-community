@@ -129,10 +129,11 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
       myModelsProvider = modelsProvider;
     }
 
-    public List<MavenModuleImporter> configModules(List<MavenModuleImportData> allModules, Map<MavenProject, String> moduleNameByProject) {
+    public List<MavenModuleImporter> configModules(List<MavenTreeModuleImportData> allModules,
+                                                   Map<MavenProject, String> moduleNameByProject) {
       List<MavenModuleImporter> importers = new ArrayList<>();
 
-      for (MavenModuleImportData importData : allModules) {
+      for (MavenTreeModuleImportData importData : allModules) {
         MavenModuleImporter moduleImporter = createModuleImporter(importData, moduleNameByProject);
         importers.add(moduleImporter);
 
@@ -153,7 +154,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
       return importers;
     }
 
-    private static void configModule(@NotNull MavenModuleImportData importData,
+    private static void configModule(@NotNull MavenTreeModuleImportData importData,
                                      @NotNull MavenModuleImporter moduleImporter,
                                      @NotNull MavenRootModelAdapter rootModelAdapter) {
       MavenModuleType type = importData.getModuleData().getType();
@@ -169,7 +170,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
       }
     }
 
-    private MavenModuleImporter createModuleImporter(MavenModuleImportData importData,
+    private MavenModuleImporter createModuleImporter(MavenTreeModuleImportData importData,
                                                      Map<MavenProject, String> moduleNameByProject) {
       return new MavenModuleImporter(importData.getLegacyModuleData().getModule(),
                                      myProjectsTree,
@@ -182,7 +183,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
     }
   }
 
-  private void removeUnusedProjectLibraries(List<MavenModuleImportData> changedModuleImportData) {
+  private void removeUnusedProjectLibraries(List<MavenTreeModuleImportData> changedModuleImportData) {
     Set<Library> unusedLibraries = new HashSet<>();
     Collections.addAll(unusedLibraries, myModelsProvider.getAllLibraries());
 
@@ -205,9 +206,9 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
     return library instanceof LibraryEx && ((LibraryEx)library).isDisposed();
   }
 
-  private Collection<ModuleRootModel> collectModuleModels(List<MavenModuleImportData> changedModuleImportData) {
+  private Collection<ModuleRootModel> collectModuleModels(List<MavenTreeModuleImportData> changedModuleImportData) {
     Map<Module, ModuleRootModel> rootModels = new HashMap<>();
-    for (MavenModuleImportData importData : changedModuleImportData) {
+    for (MavenTreeModuleImportData importData : changedModuleImportData) {
       Module module = importData.getLegacyModuleData().getModule();
       ModifiableRootModel rootModel = myModelsProvider.getModifiableRootModel(module);
       rootModels.put(module, rootModel);

@@ -95,16 +95,16 @@ public class MavenProjectImportContextProvider {
   private MavenProjectImportContextProvider.ModuleImportDataDependecyContext getFlattenModuleDataDependencyContext(
     ModuleImportDataContext context) {
     List<Module> legacyCreatedModules = new ArrayList<>();
-    List<MavenModuleImportData> allModuleDataWithDependencies = new ArrayList<>();
-    List<MavenModuleImportData> changedModuleDataWithDependencies = new ArrayList<>();
+    List<MavenTreeModuleImportData> allModuleDataWithDependencies = new ArrayList<>();
+    List<MavenTreeModuleImportData> changedModuleDataWithDependencies = new ArrayList<>();
 
     MavenModuleImportDependencyProvider dependencyProvider =
       new MavenModuleImportDependencyProvider(myProject, context.moduleImportDataByMavenId, myImportingSettings, myProjectsTree);
 
     for (MavenProjectImportData importData : context.importData) {
       MavenModuleImportDataWithDependencies importDataWithDependencies = dependencyProvider.getDependencies(importData);
-      List<MavenModuleImportData> mavenModuleImportDataList = splitToModules(importDataWithDependencies);
-      for (MavenModuleImportData moduleImportData : mavenModuleImportDataList) {
+      List<MavenTreeModuleImportData> mavenModuleImportDataList = splitToModules(importDataWithDependencies);
+      for (MavenTreeModuleImportData moduleImportData : mavenModuleImportDataList) {
         if (moduleImportData.hasChanges()) changedModuleDataWithDependencies.add(moduleImportData);
 
         addLegacyCreatedModule(legacyCreatedModules, moduleImportData);
@@ -116,32 +116,32 @@ public class MavenProjectImportContextProvider {
     return new ModuleImportDataDependecyContext(allModuleDataWithDependencies, changedModuleDataWithDependencies, legacyCreatedModules);
   }
 
-  protected void addLegacyCreatedModule(List<Module> createdModules, MavenModuleImportData moduleImportData) {
+  protected void addLegacyCreatedModule(List<Module> createdModules, MavenTreeModuleImportData moduleImportData) {
   }
 
   @NotNull
-  protected static List<MavenModuleImportData> splitToModules(MavenModuleImportDataWithDependencies dataWithDependencies) {
+  protected static List<MavenTreeModuleImportData> splitToModules(MavenModuleImportDataWithDependencies dataWithDependencies) {
     SplittedMainAndTestModules mainAndTestModules = dataWithDependencies.getModuleImportData().getSplittedMainAndTestModules();
     MavenProject project = dataWithDependencies.getModuleImportData().getMavenProject();
     ModuleData moduleData = dataWithDependencies.getModuleImportData().getModuleData();
     MavenProjectChanges changes = dataWithDependencies.getModuleImportData().getChanges();
 
     if (mainAndTestModules != null) {
-      List<MavenModuleImportData> result = new ArrayList<>(3);
-      result.add(new MavenModuleImportData(
+      List<MavenTreeModuleImportData> result = new ArrayList<>(3);
+      result.add(new MavenTreeModuleImportData(
         project, moduleData, Collections.emptyList(), dataWithDependencies.getModuleImportData().getChanges()
       ));
-      result.add(new MavenModuleImportData(
+      result.add(new MavenTreeModuleImportData(
         project, mainAndTestModules.getMainData(), dataWithDependencies.getMainDependencies(), changes
       ));
       List<MavenImportDependency<?>> dependencies = concat(dataWithDependencies.getTestDependencies(),
                                                            dataWithDependencies.getMainDependencies());
-      result.add(new MavenModuleImportData(project, mainAndTestModules.getTestData(), dependencies, changes
+      result.add(new MavenTreeModuleImportData(project, mainAndTestModules.getTestData(), dependencies, changes
       ));
       return result;
     }
 
-    return List.of(new MavenModuleImportData(
+    return List.of(new MavenTreeModuleImportData(
       project, moduleData, concat(dataWithDependencies.getMainDependencies(), dataWithDependencies.getTestDependencies()), changes
     ));
   }
@@ -211,12 +211,12 @@ public class MavenProjectImportContextProvider {
   }
 
   private static class ModuleImportDataDependecyContext {
-    @NotNull final List<MavenModuleImportData> allModuleDataWithDependencies;
-    @NotNull final List<MavenModuleImportData> changedModuleDataWithDependencies;
+    @NotNull final List<MavenTreeModuleImportData> allModuleDataWithDependencies;
+    @NotNull final List<MavenTreeModuleImportData> changedModuleDataWithDependencies;
     @NotNull final List<Module> legacyCreatedModules;
 
-    private ModuleImportDataDependecyContext(@NotNull List<MavenModuleImportData> allModuleDataWithDependencies,
-                                             @NotNull List<MavenModuleImportData> changedModuleDataWithDependencies,
+    private ModuleImportDataDependecyContext(@NotNull List<MavenTreeModuleImportData> allModuleDataWithDependencies,
+                                             @NotNull List<MavenTreeModuleImportData> changedModuleDataWithDependencies,
                                              @NotNull List<Module> legacyCreatedModules) {
       this.allModuleDataWithDependencies = allModuleDataWithDependencies;
       this.changedModuleDataWithDependencies = changedModuleDataWithDependencies;
