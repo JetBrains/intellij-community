@@ -42,6 +42,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import java.util.*
 import java.util.stream.Collectors
 import javax.swing.JComponent
+import kotlin.streams.asSequence
 
 class JUnitMalformedMemberInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
@@ -168,15 +169,16 @@ private class JUnitMalformedSignatureVisitor(
       if (isTestRuleInheritor) return
       val isMethodRuleInheritor = InheritanceUtil.isInheritor(aClass, false, ORG_JUNIT_RULES_METHOD_RULE)
       val typeErrorMessage = when {
-        ruleAnnotated && !isMethodRuleInheritor -> JvmAnalysisBundle.message(
-          "jvm.inspections.junit.rule.type.problem.descriptor", memberTypeDescription, ORG_JUNIT_RULES_TEST_RULE,
-          ORG_JUNIT_RULES_METHOD_RULE
-        )
-        classRuleAnnotated-> JvmAnalysisBundle.message(
-          "jvm.inspections.junit.class.rule.type.problem.descriptor", memberTypeDescription, ORG_JUNIT_RULES_TEST_RULE
-        )
-        else -> null
-      } ?: return
+                               ruleAnnotated && !isMethodRuleInheritor -> JvmAnalysisBundle.message(
+                                 "jvm.inspections.junit.rule.type.problem.descriptor", memberTypeDescription, ORG_JUNIT_RULES_TEST_RULE,
+                                 ORG_JUNIT_RULES_METHOD_RULE
+                               )
+                               classRuleAnnotated -> JvmAnalysisBundle.message(
+                                 "jvm.inspections.junit.class.rule.type.problem.descriptor", memberTypeDescription,
+                                 ORG_JUNIT_RULES_TEST_RULE
+                               )
+                               else -> null
+                             } ?: return
       val quickFix = IntentionWrapper.wrapToQuickFixes(actions, sourcePsi.containingFile).toTypedArray()
       holder.registerUProblem(declaration, typeErrorMessage, *quickFix)
     }
@@ -193,7 +195,8 @@ private class JUnitMalformedSignatureVisitor(
   private fun checkTest(method: UMethod) {
     val sourcePsi = method.sourcePsi ?: return
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java, UMethod::class.java))
-    val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull() ?: return // gets synthetic static method in case of Kotlin
+    val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull()
+                     ?: return // gets synthetic static method in case of Kotlin
     if (method.isConstructor) return
     if (!TestUtils.isJUnit3TestMethod(javaMethod.javaPsi) && !TestUtils.isJUnit4TestMethod(javaMethod.javaPsi)) return
     val containingClass = method.javaPsi.containingClass ?: return
@@ -314,16 +317,16 @@ private class JUnitMalformedSignatureVisitor(
       holder.registerUProblem(method, message, MakeNoArgVoidFix(method.name, false, JvmModifier.PUBLIC))
     }
   }
-  
+
   private fun isJUnit4(ann: String) = ann.endsWith(ORG_JUNIT_BEFORE) || ann.endsWith(ORG_JUNIT_AFTER)
 
   private fun isJUnit5(ann: String) = ann.endsWith(ORG_JUNIT_JUPITER_API_BEFORE_EACH) || ann.endsWith(ORG_JUNIT_JUPITER_API_AFTER_EACH)
 
-  private fun List<UParameter>.isValidBeforeTest(): Boolean {
-    return isEmpty() || all {
+  private fun UMethod.isValidBeforeAfterEachParamList(): Boolean {
+    return uastParameters.isEmpty() || uastParameters.all {
       it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO || it.type.canonicalText == ORG_JUNIT_JUPITER_API_REPETITION_INFO
-        || it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
-    }
+      || it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
+    } || hasParameterResolver()
   }
 
   private fun checkBeforeAfterTest(method: UMethod) {
@@ -332,7 +335,8 @@ private class JUnitMalformedSignatureVisitor(
     val returnType = method.returnType ?: return
     val parameterList = method.uastParameters
     if (isJUnit4(annotation) &&
-        (!javaMethod.hasModifier(JvmModifier.PUBLIC) || returnType != PsiType.VOID || javaMethod.hasModifier(JvmModifier.STATIC) || parameterList.isNotEmpty())
+        (!javaMethod.hasModifier(JvmModifier.PUBLIC) || returnType != PsiType.VOID || javaMethod.hasModifier(
+          JvmModifier.STATIC) || parameterList.isNotEmpty())
     ) {
       holder.registerUProblem(
         method,
@@ -342,7 +346,8 @@ private class JUnitMalformedSignatureVisitor(
     }
 
     if (isJUnit5(annotation) &&
-        (javaMethod.hasModifier(JvmModifier.PRIVATE) || returnType != PsiType.VOID || javaMethod.hasModifier(JvmModifier.STATIC) || !parameterList.isValidBeforeTest())
+        (javaMethod.hasModifier(JvmModifier.PRIVATE) || returnType != PsiType.VOID || javaMethod.hasModifier(
+          JvmModifier.STATIC) || !method.isValidBeforeAfterEachParamList())
     ) {
       holder.registerUProblem(
         method,
@@ -352,14 +357,24 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  private fun UMethod.isValidParameterList(alternatives: List<UMethod>): Boolean {
+  private fun UMethod.isValidParameterList(annotatedMethods: List<UMethod>): Boolean {
     if (uastParameters.isEmpty()) return true
     if (uastParameters.size != 1) return false
-    val extension = alternatives.firstNotNullOfOrNull {
-      it.javaPsi.containingClass?.getAnnotation(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)?.findAttributeValue("value")
-    }?.toUElement() ?: return false
-    if (extension !is UClassLiteralExpression) return false
-    return InheritanceUtil.isInheritor(extension.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+    return annotatedMethods.any { it.hasParameterResolver() }
+  }
+
+  private fun UMethod.hasParameterResolver(): Boolean {
+    val containingClass = javaPsi.containingClass ?: return false
+    val extension = MetaAnnotationUtil.findMetaAnnotations(containingClass, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
+      .asSequence()
+      .firstOrNull()
+      ?.findAttributeValue("value")
+      ?.toUElement() ?: return false
+    if (extension is UClassLiteralExpression) return InheritanceUtil.isInheritor(extension.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+    if (extension is UCallExpression && extension.kind == UastCallKind.NESTED_ARRAY_INITIALIZER) return extension.valueArguments.any {
+      it is UClassLiteralExpression && InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+    }
+    return false
   }
 
   private fun checkBeforeAfterTestCase(method: UMethod) {
@@ -847,7 +862,8 @@ private class JUnitMalformedSignatureVisitor(
       JvmAnalysisBundle.message("jvm.inspections.junit.datapoint.fix.single.name",
                                 memberDescription.lowercase(Locale.getDefault()), memberName, issues.first()
       )
-    } else { // size should always be 2
+    }
+    else { // size should always be 2
       JvmAnalysisBundle.message("jvm.inspections.junit.datapoint.fix.double.name",
                                 memberDescription.lowercase(Locale.getDefault()), memberName, issues.first(), issues.last()
       )
