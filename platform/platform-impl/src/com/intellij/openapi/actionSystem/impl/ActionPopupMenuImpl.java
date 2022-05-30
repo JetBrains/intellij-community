@@ -130,10 +130,11 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
                                         DataManager.getInstance().getDataContext(component, x2, y2));
       updateChildren(new RelativePoint(component, new Point(x, y)));
       if (getComponentCount() == 0) {
-        LOG.warn("no components in popup menu " + myPlace);
+        LOG.warn("'" + myPlace + "' popup menu fails to show: no menu items");
         return;
       }
       if (!component.isShowing()) {
+        LOG.warn("'" + myPlace + "' popup menu fails to show: component is not showing (" + component.getClass().getName() + ")");
         return;
       }
 
