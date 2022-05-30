@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.artifacts.*
+import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts.downloadArtifact
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.OLD_KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
@@ -93,14 +94,18 @@ private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot
 }
 
 private class KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout() {
+    companion object {
+        private const val KOTLINC_DIST_LIBRARY = "kotlinc_kotlin_dist.xml"
+    }
+
     private val bundledJpsVersion by lazy {
-        KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
+        KotlinMavenUtils.findLibraryVersion(KOTLINC_DIST_LIBRARY)
             ?: error("Cannot find version of kotlin-dist library")
     }
 
     override val kotlinc: File by lazy {
-        val distJar = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, OLD_KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion)
-        LazyZipUnpacker(KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")).lazyUnpack(distJar.toFile())
+        val distJar = downloadArtifact(libraryFileName = KOTLINC_DIST_LIBRARY, artifactId = OLD_KOTLIN_DIST_ARTIFACT_ID)
+        LazyZipUnpacker(KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")).lazyUnpack(distJar)
     }
 
     override val jpsPluginClasspath: List<File> by lazy {

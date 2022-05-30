@@ -72,7 +72,7 @@ object AdditionalKotlinArtifacts {
         return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
 
-    private fun downloadArtifact(libraryFileName: String, artifactId: String, extension: String = "jar"): File {
+    fun downloadArtifact(libraryFileName: String, artifactId: String, extension: String = "jar"): File {
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName) ?: error("Can't get '$libraryFileName' version")
 
         // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
