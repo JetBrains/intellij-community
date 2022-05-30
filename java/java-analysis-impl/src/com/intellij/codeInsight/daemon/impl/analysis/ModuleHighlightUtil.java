@@ -77,7 +77,7 @@ final class ModuleHighlightUtil {
               }
               return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(reference)
-                .descriptionAndTooltip(JavaErrorBundle.message("module.package.exists.in.another.module", anotherJavaModule.getName())).create();
+                .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", pack.getName(), anotherJavaModule.getName())).create();
             }
           }
         }
