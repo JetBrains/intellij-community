@@ -32,7 +32,6 @@ import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
@@ -408,7 +407,7 @@ public final class MavenServerManager implements Disposable {
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.downloadMavenCommonLibs(communityRoot);
+    BundledMavenDownloader.INSTANCE.downloadMavenCommonLibs(communityRoot);
 
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));

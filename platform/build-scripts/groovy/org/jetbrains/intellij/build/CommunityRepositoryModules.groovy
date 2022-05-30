@@ -8,11 +8,9 @@ import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
-import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiConsumer
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.simplePlugin
 import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
@@ -113,10 +111,10 @@ final class CommunityRepositoryModules {
       withGeneratedResources({ Path targetDir, BuildContext context ->
         Path targetLib = targetDir.resolve("lib")
 
-        Path mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+        Path mavenLibs = BundledMavenDownloader.INSTANCE.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
         FileUtil.copyDir(mavenLibs.toFile(), targetLib.resolve("maven3-server-lib").toFile())
 
-        Path mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
+        Path mavenDist = BundledMavenDownloader.INSTANCE.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
         FileUtil.copyDir(mavenDist.toFile(), targetLib.resolve("maven3").toFile())
       })
     },
