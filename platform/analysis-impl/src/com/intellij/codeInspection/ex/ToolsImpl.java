@@ -502,7 +502,7 @@ public final class ToolsImpl implements Tools {
   public TextAttributesKey getEditorAttributesKey(NamedScope scope, Project project) {
     if (myTools != null && scope != null) {
       for (ScopeToolState state : myTools) {
-        if (Objects.equals(state.getScopeName(), scope.getScopeId())) {
+        if (Objects.equals(state.getScope(project), scope)) {
           return state.getEditorAttributesKey();
         }
       }
