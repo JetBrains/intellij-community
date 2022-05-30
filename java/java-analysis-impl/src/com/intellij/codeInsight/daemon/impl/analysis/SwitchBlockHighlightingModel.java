@@ -781,13 +781,7 @@ public class SwitchBlockHighlightingModel {
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
       else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED)) {
-        final HighlightInfo info;
-        if (elements.isEmpty()) {
-          info = createCompletenessInfoForSwitch(false);
-        }
-        else {
-          info = checkSealedClassCompleteness(selectorClass, elements);
-        }
+        HighlightInfo info = checkSealedClassCompleteness(selectorClass, elements);
         if (info != null) {
           results.add(info);
         }
@@ -847,7 +841,7 @@ public class SwitchBlockHighlightingModel {
       else if (missingClasses.isEmpty()) {
         return null;
       }
-      HighlightInfo info = createCompletenessInfoForSwitch(true);
+      HighlightInfo info = createCompletenessInfoForSwitch(!elements.isEmpty());
       List<String> allNames = collectLabelElementNames(elements, missingClasses, patternClasses);
       Set<String> missingCases = ContainerUtil.map2Set(missingClasses, PsiClass::getQualifiedName);
       IntentionAction fix = getFixFactory().createAddMissingSealedClassBranchesFix(myBlock, missingCases, allNames);
@@ -859,7 +853,7 @@ public class SwitchBlockHighlightingModel {
     private static List<String> collectLabelElementNames(@NotNull List<PsiCaseLabelElement> elements,
                                                          @NotNull Set<PsiClass> missingClasses,
                                                          @NotNull LinkedHashMap<PsiClass, PsiPattern> patternClasses) {
-      List<String> result = ContainerUtil.map(elements, PsiElement::getText);
+      List<String> result = elements.isEmpty() ? new ArrayList<>() : ContainerUtil.map(elements, PsiElement::getText);
       for (PsiClass aClass : missingClasses) {
         String className = aClass.getQualifiedName();
         PsiPattern pattern = patternClasses.get(aClass);
