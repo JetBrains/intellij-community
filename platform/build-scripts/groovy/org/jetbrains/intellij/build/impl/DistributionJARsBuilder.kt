@@ -522,13 +522,13 @@ class DistributionJARsBuilder {
   // Filter out jars with relative paths in name
   val productModules: List<String>
     get() {
-      val result: MutableList<String> = ArrayList()
-      for (moduleJar: Map.Entry<String, Collection<String>?> in state.platform.getJarToIncludedModuleNames()) {
+      val result = ArrayList<String>()
+      for (moduleJar in state.platform.getJarToIncludedModuleNames()) {
         // Filter out jars with relative paths in name
-        if (moduleJar.key.contains("\\") || moduleJar.key.contains("/")) {
+        if (moduleJar.key.contains('\\') || moduleJar.key.contains('/')) {
           continue
         }
-        result.addAll((moduleJar.value)!!)
+        result.addAll((moduleJar.value))
       }
       return result
     }
