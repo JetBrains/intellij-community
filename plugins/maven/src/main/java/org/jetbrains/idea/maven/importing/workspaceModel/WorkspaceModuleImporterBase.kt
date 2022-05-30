@@ -7,8 +7,13 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRootTypeId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
@@ -23,7 +28,7 @@ import java.io.File
 abstract class WorkspaceModuleImporterBase<ImportDataType : MavenModuleImportData>(
   protected val project: Project,
   protected val virtualFileUrlManager: VirtualFileUrlManager,
-  protected val builder: WorkspaceEntityStorageBuilder,
+  protected val builder: MutableEntityStorage,
   protected val importingSettings: MavenImportingSettings,
 ) {
   protected val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
@@ -46,11 +51,12 @@ abstract class WorkspaceModuleImporterBase<ImportDataType : MavenModuleImportDat
                                  entitySource: EntitySource,
                                  importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>): ModuleEntity {
     val moduleEntity = builder.addModuleEntity(importData.moduleData.moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    builder.addEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, entitySource) {
+    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
       module = moduleEntity
       externalSystem = EXTERNAL_SOURCE_ID
       linkedProjectPath = linkedProjectPath(importData.mavenProject)
     }
+    builder.addEntity(externalSystemModuleOptionsEntity)
 
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings)
 
