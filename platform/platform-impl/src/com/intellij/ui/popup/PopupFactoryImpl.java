@@ -661,6 +661,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myMaxIconHeight = maxIconHeight;
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
+
+      // Make sure com.intellij.dvcs.ui.BranchActionGroupPopup.MoreAction.updateActionText is long dead before removing
+      myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
+        if (evt.getPropertyName() == Presentation.PROP_TEXT) {
+          myText = myAction.getTemplatePresentation().getText();
+        }
+      });
     }
 
     ActionItem(@NotNull AnAction action,
