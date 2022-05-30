@@ -83,24 +83,6 @@ class BuildContextImpl : BuildContext {
     configure(productProperties)
   }
 
-  private constructor(parent: BuildContextImpl,
-                      messages: BuildMessages,
-                      distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) {
-    compilationContext = parent.compilationContext.cloneForContext(messages)
-    this.distFiles = distFiles
-    global = compilationContext.global
-    productProperties = parent.productProperties
-    proprietaryBuildTools = parent.proprietaryBuildTools
-    windowsDistributionCustomizer = parent.windowsDistributionCustomizer
-    linuxDistributionCustomizer = parent.linuxDistributionCustomizer
-    macDistributionCustomizer = parent.macDistributionCustomizer
-    buildNumber = parent.buildNumber
-    xBootClassPathJarNames = parent.xBootClassPathJarNames
-    bootClassPathJarNames = parent.bootClassPathJarNames
-    applicationInfo = parent.applicationInfo
-    builtinModulesData = parent.builtinModulesData
-  }
-
   companion object {
     @JvmStatic
     fun createContext(communityHome: Path,
@@ -377,6 +359,6 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): List<Pair<Path, Strin
     if (!prefix.endsWith("/")) {
       prefix += "/"
     }
-    Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), Strings.trimStart(prefix, "/"))
+    Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
   }.collect(Collectors.toList())
 }

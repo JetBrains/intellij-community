@@ -205,7 +205,7 @@ abstract class ProductProperties {
    * Specified modules which tests need to be compiled when product is built.
    * todo[nik] get rid of this
    */
-  var modulesToCompileTests: MutableList<String> = mutableListOf()
+  var modulesToCompileTests: List<String> = emptyList()
 
   var runtimeDistribution: JetBrainsRuntimeDistribution = JetBrainsRuntimeDistribution.JCEF
 

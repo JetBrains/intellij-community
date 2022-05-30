@@ -123,7 +123,7 @@ class ProductModulesLayout {
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
-  var compatiblePluginsToIgnore: MutableList<String> = mutableListOf()
+  var compatiblePluginsToIgnore: List<String> = emptyList()
 
   /**
    * Module names which should be excluded from this product.
