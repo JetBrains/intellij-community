@@ -57,14 +57,14 @@ final class IntellijModulesPublication {
      * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
      */
     Path outputDir = property('intellij.modules.publication.prebuilt.artifacts.dir')?.with { Path.of(it).normalize() }
-    Collection<String> modulesToPublish = listProperty('intellij.modules.publication.list')
-    Collection<String> modulesToExclude = listProperty('intellij.modules.publication.excluded', ['fleet'])
+    public Collection<String> modulesToPublish = listProperty("intellij.modules.publication.list")
+    public Collection<String> modulesToExclude = listProperty("intellij.modules.publication.excluded", List.of("fleet"))
 
     private static String property(String property) {
       System.getProperty(property)
     }
 
-    private static List<String> listProperty(String propertyName, List<String> defaultList = []) {
+    private static List<String> listProperty(String propertyName, List<String> defaultList = List.of()) {
       property(propertyName)
         ?.split(',')?.toList()
         ?.collect { it.trim() }

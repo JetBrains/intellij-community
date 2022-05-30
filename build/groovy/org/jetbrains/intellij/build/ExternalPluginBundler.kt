@@ -2,34 +2,39 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.io.Decompressor
-import groovy.transform.CompileStatic
-
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
-@CompileStatic
-final class ExternalPluginBundler {
-  static void bundle(String pluginName,
-                     String dependenciesPath,
-                     BuildContext context,
-                     String targetDirectory,
-                     String buildTaskName = pluginName) {
-    Path dependenciesProjectDir = Path.of(dependenciesPath)
-    new GradleRunner(dependenciesProjectDir, context.options, context.paths.buildDependenciesCommunityRoot, Collections.<String>emptyList()).run(
-      "Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
-    Properties properties = new Properties()
-    Files.newInputStream(dependenciesProjectDir.resolve("gradle.properties")).withCloseable {
+object ExternalPluginBundler {
+  @JvmStatic
+  @JvmOverloads
+  fun bundle(pluginName: String,
+             dependenciesPath: String,
+             context: BuildContext,
+             targetDirectory: String,
+             buildTaskName: String = pluginName) {
+    val dependenciesProjectDir = Path.of(dependenciesPath)
+    GradleRunner(gradleProjectDir = dependenciesProjectDir,
+                 options = context.options,
+                 communityRoot = context.paths.buildDependenciesCommunityRoot,
+                 additionalParams = emptyList())
+      .run("Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
+    val properties = Properties()
+    Files.newInputStream(dependenciesProjectDir.resolve("gradle.properties")).use {
       properties.load(it)
     }
 
-    Path pluginZip = dependenciesProjectDir.resolve("build/$pluginName/$pluginName-${properties.getProperty("${buildTaskName}PluginVersion")}.zip")
-    if (!Files.exists(pluginZip)) {
-      throw new IllegalStateException("$pluginName bundled plugin is not found. Plugin path:${pluginZip}")
+    val pluginZip = dependenciesProjectDir.resolve(
+      "build/$pluginName/$pluginName-${properties.getProperty("${buildTaskName}PluginVersion")}.zip")
+    check(Files.exists(pluginZip)) {
+      "$pluginName bundled plugin is not found. Plugin path:${pluginZip}"
     }
     extractPlugin(pluginZip, targetDirectory)
   }
 
-  static void extractPlugin(Path pluginZip, String targetDirectory) {
-    new Decompressor.Zip(pluginZip).extract(Path.of(targetDirectory, "plugins"))
+  @JvmStatic
+  fun extractPlugin(pluginZip: Path, targetDirectory: String) {
+    Decompressor.Zip(pluginZip).extract(Path.of(targetDirectory, "plugins"))
   }
 }

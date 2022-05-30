@@ -17,7 +17,7 @@ private val JAVA_IDE_API_MODULES: List<String> = java.util.List.of(
   "intellij.jsp.base"
 )
 
-val JAVA_IDE_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
+private val JAVA_IDE_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.xml.dom.impl",
   "intellij.platform.testFramework",
   "intellij.tools.testsBootstrap"
