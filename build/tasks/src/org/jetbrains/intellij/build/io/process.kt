@@ -260,6 +260,7 @@ private fun readOutputAndBlock(process: Process,
           }
         } catch (e: Throwable)  {
           try {
+            firstError?.compareAndSet(null, e.message)
             logger.error("Unable to parse line: ${it}, error: ${e.message}\n${e.stackTraceToString()}")
           }
           catch (_: BuildScriptsLoggedError) {
