@@ -1,5 +1,7 @@
 package com.intellij.ide.starter.di
 
+import com.intellij.ide.starter.build.tool.GradleBuildTool
+import com.intellij.ide.starter.build.tool.MavenBuildTool
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.NoCIServer
 import com.intellij.ide.starter.community.PublicIdeResolver
@@ -31,11 +33,14 @@ var di = DI {
   bindSingleton<CodeInjector> { CodeBuilderHost() }
   bindFactory { testContext: IDETestContext -> PluginConfigurator(testContext) }
   bindSingleton<IDEResolver> { PublicIdeResolver }
-  bindFactory<IdeInfo ,IdeInstallator> { ideInfo ->
-    if(ideInfo.productCode == "AI") {
-       AndroidInstaller()
-    } else {
-       SimpleInstaller()
+  bindFactory<IdeInfo, IdeInstallator> { ideInfo ->
+    if (ideInfo.productCode == "AI") {
+      AndroidInstaller()
+    }
+    else {
+      SimpleInstaller()
     }
   }
+  bindFactory<IDETestContext, MavenBuildTool> { testContext: IDETestContext -> MavenBuildTool(testContext) }
+  bindFactory<IDETestContext, GradleBuildTool> { testContext: IDETestContext -> GradleBuildTool(testContext) }
 }

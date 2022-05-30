@@ -1,5 +1,8 @@
 package com.intellij.ide.starter.ide.command
 
+/**
+ * One or more commands, that will be "played" in sequence by IDE
+ */
 open class CommandChain : MarshallableCommand, Iterable<MarshallableCommand> {
   private val _chain = mutableListOf<MarshallableCommand>()
 
