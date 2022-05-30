@@ -80,7 +80,6 @@ private val LOG = logger<ToolWindowManagerImpl>()
 private typealias Mutation = ((WindowInfoImpl) -> Unit)
 
 @ApiStatus.Internal
-@State(name = "ToolWindowManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(val project: Project,
                                                                                @field:JvmField internal val isNewUi: Boolean,
                                                                                private val explicitButtonManager: ToolWindowButtonManager?,
