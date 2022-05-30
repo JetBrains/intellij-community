@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.ide
 
+import com.intellij.ide.starter.build.tool.BuildToolResolver
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.command.MarshallableCommand
@@ -33,7 +34,7 @@ data class IDETestContext(
   val testCase: TestCase,
   val testName: String,
   private val _resolvedProjectHome: Path?,
-  val patchVMOptions: VMOptions.() -> VMOptions,
+  var patchVMOptions: VMOptions.() -> VMOptions,
   val ciServer: CIServer,
   var profilerType: ProfilerType = ProfilerType.NONE
 ) {
@@ -44,17 +45,14 @@ data class IDETestContext(
   val resolvedProjectHome: Path
     get() = checkNotNull(_resolvedProjectHome) { "Project is not found for the test $testName" }
 
-  val localMavenRepo: Path
-    get() = paths.tempDir.resolve(".m3").resolve("repository")
-
-  val localGradleRepo: Path
-    get() = paths.tempDir.resolve("gradle")
-
   val pluginConfigurator: PluginConfigurator by di.newInstance { factory<IDETestContext, PluginConfigurator>().invoke(this@IDETestContext) }
 
-  fun addVMOptionsPatch(patchVMOptions: VMOptions.() -> VMOptions) = copy(
-    patchVMOptions = this.patchVMOptions.andThen(patchVMOptions)
-  )
+  val buildTools: BuildToolResolver by lazy { BuildToolResolver(this) }
+
+  fun addVMOptionsPatch(patchVMOptions: VMOptions.() -> VMOptions): IDETestContext {
+    this.patchVMOptions = this.patchVMOptions.andThen(patchVMOptions)
+    return this
+  }
 
   fun addLockFileForUITest(fileName: String): IDETestContext =
     addVMOptionsPatch {
@@ -78,20 +76,10 @@ data class IDETestContext(
         .withXmx(sizeMb)
     }
 
-  fun useNewMavenLocalRepository(): IDETestContext {
-    localMavenRepo.toFile().mkdirs()
-    return addVMOptionsPatch { addSystemProperty("idea.force.m2.home", localMavenRepo.toString()) }
-  }
-
   fun disableGitLogIndexing(): IDETestContext =
     addVMOptionsPatch {
       addSystemProperty("vcs.log.index.git", false)
     }
-
-  fun useNewGradleLocalCache(): IDETestContext {
-    localGradleRepo.toFile().mkdirs()
-    return addVMOptionsPatch { addSystemProperty("gradle.user.home", localGradleRepo.toString()) }
-  }
 
   fun executeAfterProjectOpening(executeAfterProjectOpening: Boolean = true) = addVMOptionsPatch {
     addSystemProperty("performance.execute.script.after.project.opened", executeAfterProjectOpening)
