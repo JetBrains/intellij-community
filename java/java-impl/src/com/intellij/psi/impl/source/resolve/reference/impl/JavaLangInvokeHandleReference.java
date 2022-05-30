@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInspection.reference.PsiMemberUsageReference;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +26,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  * @author Pavel.Dolgov
  */
 public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralExpression>
-  implements InsertHandler<LookupElement>, PsiMemberUsageReference {
+  implements InsertHandler<LookupElement>, PsiMemberReference {
 
   private final PsiExpression myContext;
 

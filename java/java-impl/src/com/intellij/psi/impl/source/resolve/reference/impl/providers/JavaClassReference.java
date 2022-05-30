@@ -11,7 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.codeInspection.reference.PsiMemberUsageReference;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -51,7 +51,7 @@ import java.util.*;
 /**
  * @author peter
  */
-public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider, PsiMemberUsageReference {
+public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider, PsiMemberReference {
   private static final Logger LOG = Logger.getInstance(JavaClassReference.class);
   protected final int myIndex;
   private TextRange myRange;

@@ -7,5 +7,5 @@ import com.intellij.psi.PsiReference;
  * Interface for references contributed to Java String literals that may {@link PsiReference#resolve()} to Java class members
  * ({@link com.intellij.psi.PsiMember}) and should be taken into account as the member usage in the unused declaration inspection.
  */
-public interface PsiMemberUsageReference extends PsiReference {
+public interface PsiMemberReference extends PsiReference {
 }
