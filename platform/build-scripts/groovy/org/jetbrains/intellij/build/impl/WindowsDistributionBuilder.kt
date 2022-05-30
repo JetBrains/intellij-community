@@ -243,7 +243,7 @@ internal class WindowsDistributionBuilder(
     val fileName = "${productProperties.baseFileName}64.exe.vmoptions"
     val isEAP = context.applicationInfo.isEAP
     val vmOptions = VmOptionsGenerator.computeVmOptions(isEAP, productProperties)
-    Files.writeString(distBinDir.resolve(fileName), vmOptions.joinToString { "\r\n" } + "\r\n", StandardCharsets.US_ASCII)
+    Files.writeString(distBinDir.resolve(fileName), vmOptions.joinToString(separator = "\r\n") + "\r\n", StandardCharsets.US_ASCII)
   }
 
   private fun buildWinLauncher(winDistPath: Path) {
