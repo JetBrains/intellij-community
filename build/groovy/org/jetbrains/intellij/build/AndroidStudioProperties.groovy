@@ -90,7 +90,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildSourcesArchive = true;
     buildCrossPlatformDistribution = true
 
-    allLibraryLicenses.addAll(AndroidStudioLibraryLicenses.LICENSES_LIST)
+    allLibraryLicenses += AndroidStudioLibraryLicenses.LICENSES_LIST
     includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true }
     additionalIdeJvmArguments = ["-XX:FlightRecorderOptions=stackdepth=256"]
 
