@@ -4,6 +4,9 @@ package com.intellij.psi;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -46,10 +49,10 @@ public abstract class JavaCompilerConfigurationProxy {
   /**
    * @param targetModuleName  jigsaw module name
    * @param module            ij module with compiler settings
-   * @param root              current source root path
+   * @param root              current source root
    * @return                  true if compiler settings for the module contains --patch-module=targetModuleName=root
    */
-  public static boolean isPatchedModuleRoot(String targetModuleName, Module module, String root) {
+  public static boolean isPatchedModuleRoot(@NotNull String targetModuleName, @NotNull Module module, @NotNull VirtualFile root) {
     List<String> options = getAdditionalOptions(module.getProject(), module);
     if (options.isEmpty()) {
       return false;
@@ -60,7 +63,7 @@ public abstract class JavaCompilerConfigurationProxy {
       if (option.startsWith(prefix)) {
         String[] patchingPaths = option.substring(prefix.length()).split(File.pathSeparator);
         for (String patchingPath : patchingPaths) {
-          if (patchingPath.startsWith(root)) {
+          if (VfsUtilCore.pathEqualsTo(root, FileUtil.toSystemIndependentName(patchingPath))) {
             return true;
           }
         }

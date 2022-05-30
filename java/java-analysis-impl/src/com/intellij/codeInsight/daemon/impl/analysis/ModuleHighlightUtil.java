@@ -72,7 +72,7 @@ final class ModuleHighlightUtil {
             VirtualFile moduleVFile = PsiUtilCore.getVirtualFile(anotherJavaModule);
             if (moduleVFile != null && ContainerUtil.find(fileIndex.getOrderEntriesForFile(moduleVFile), JdkOrderEntry.class::isInstance) != null) {
               VirtualFile rootForFile = fileIndex.getSourceRootForFile(file.getVirtualFile());
-              if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile.getPath())) {
+              if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile)) {
                 return null;
               }
               return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
