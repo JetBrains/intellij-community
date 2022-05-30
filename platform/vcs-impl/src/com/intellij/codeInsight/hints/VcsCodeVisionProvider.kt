@@ -62,10 +62,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction CodeVisionState.NotReady
       val language = file.language
 
-      val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file.virtualFile) ?: return@runReadAction READY_EMPTY
-      if ("Git" != vcs.name) {
-        return@runReadAction READY_EMPTY
-      }
+      if (!hasSupportedVcs(project, file, editor)) return@runReadAction READY_EMPTY
 
       val aspectResult = getAspect(file, editor)
       if (aspectResult.isSuccess.not()) return@runReadAction CodeVisionState.NotReady
@@ -92,6 +89,14 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
       }
       return@runReadAction CodeVisionState.Ready(lenses)
     }
+  }
+
+  private fun hasSupportedVcs(project: Project, file: PsiFile, editor: Editor) : Boolean {
+    if (hasPreviewInfo(editor)) {
+      return true
+    }
+    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file.virtualFile) ?: return false
+    return "Git" == vcs.name
   }
 
   override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
