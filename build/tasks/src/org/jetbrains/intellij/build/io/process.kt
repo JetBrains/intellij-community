@@ -260,8 +260,9 @@ private fun readOutputAndBlock(process: Process,
           }
         } catch (e: Throwable)  {
           try {
-            firstError?.compareAndSet(null, e.message)
-            logger.error("Unable to parse line: ${it}, error: ${e.message}\n${e.stackTraceToString()}")
+            val message = "Unable to parse line: ${it}, error: ${e.message}\n${e.stackTraceToString()}"
+            firstError?.compareAndSet(null, message)
+            logger.error(message)
           }
           catch (_: BuildScriptsLoggedError) {
             // skip exception thrown by logger.error
