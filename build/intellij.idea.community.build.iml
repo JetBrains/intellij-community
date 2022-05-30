@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
     <orderEntry type="library" name="org.codehaus.groovy:groovy-ant" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
   </component>
 </module>

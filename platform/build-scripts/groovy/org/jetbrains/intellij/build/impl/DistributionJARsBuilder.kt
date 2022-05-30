@@ -171,8 +171,9 @@ class DistributionJARsBuilder {
     private fun buildThirdPartyLibrariesList(projectStructureMapping: ProjectStructureMapping, context: BuildContext): ForkJoinTask<*>? {
       return createSkippableTask(spanBuilder("generate table of licenses for used third-party libraries"),
                                  BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
-        val generator = LibraryLicensesListGenerator.create(context.project, context.productProperties.allLibraryLicenses,
-                                                            projectStructureMapping.includedModules)
+        val generator = LibraryLicensesListGenerator.create(project = context.project,
+                                                            licensesList = context.productProperties.allLibraryLicenses,
+                                                            usedModulesNames = projectStructureMapping.includedModules)
         generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(context))
         generator.generateJson(getThirdPartyLibrariesJsonFilePath(context))
       }

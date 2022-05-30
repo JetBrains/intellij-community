@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.util.containers.ContainerUtil
+package org.jetbrains.intellij.build
 
 /**
  * Describes a library which is included into distribution of an IntelliJ-based IDE. This information is used to show list of Third-party
@@ -67,7 +67,8 @@ data class LibraryLicense(
 
   companion object {
     private const val APACHE_LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
-    private val PREDEFINED_LICENSE_URLS: Map<String, String> = mapOf("Apache 2.0" to APACHE_LICENSE_URL)
+    private val PREDEFINED_LICENSE_URLS = mapOf<String, String>("Apache 2.0" to APACHE_LICENSE_URL)
+
     @JvmStatic
     val JETBRAINS_OWN = "JetBrains"
 
@@ -81,20 +82,20 @@ data class LibraryLicense(
      * give link to their sites. For other libraries please fill all necessary fields of {@link LibraryLicense} instead of using this method.
      */
     @JvmStatic
-    fun jetbrainsLibrary(libraryName: String): LibraryLicense =
-      LibraryLicense(
+    fun jetbrainsLibrary(libraryName: String): LibraryLicense {
+      return LibraryLicense(
         libraryName = libraryName,
         license = JETBRAINS_OWN,
       )
     }
+  }
 
-  fun getLibraryNames(): List<String> =
-    ContainerUtil.createMaybeSingletonList(libraryName) + additionalLibraryNames
+  fun getLibraryNames(): List<String> = listOfNotNull(libraryName) + additionalLibraryNames
 
   val presentableName: String
     get() = name ?: libraryName!!
 
-  fun getLibraryLicenseUrl(): String? = licenseUrl ?: PREDEFINED_LICENSE_URLS[license]
+  fun getLibraryLicenseUrl(): String? = licenseUrl ?: PREDEFINED_LICENSE_URLS.get(license)
 
   fun apache(): LibraryLicense {
     require(license == null) { "No need to specify 'license' for Apache 2.0" }
@@ -141,7 +142,8 @@ data class LibraryLicense(
     require(licenseUrl?.contains("eclipse.org") != true) { "No need to specify default 'licenseUrl' for Eclipse Public License" }
     return copy(
       license = "Eclipse Public License $v.0",
-      licenseUrl = licenseUrl ?: (if (v == 1) "https://www.eclipse.org/org/documents/epl-v10.html" else "https://www.eclipse.org/legal/epl-2.0")
+      licenseUrl = licenseUrl
+                   ?: (if (v == 1) "https://www.eclipse.org/org/documents/epl-v10.html" else "https://www.eclipse.org/legal/epl-2.0")
     )
   }
 }
