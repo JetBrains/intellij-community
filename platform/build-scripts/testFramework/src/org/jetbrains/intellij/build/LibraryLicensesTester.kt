@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.assertj.core.api.SoftAssertions
@@ -9,7 +9,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 
-class LibraryLicensesTester(private val project: JpsProject, private val licenses: List<LibraryLicense>) {
+internal class LibraryLicensesTester(private val project: JpsProject, private val licenses: List<LibraryLicense>) {
   fun reportMissingLicenses(collector: SoftAssertions) {
     val nonPublicModules = setOf("intellij.idea.ultimate.build",
                                  "intellij.idea.community.build",
