@@ -11,11 +11,9 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackagesPaneSelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
-import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
-import com.intellij.ide.projectView.impl.nodes.PackageUtil;
-import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -168,17 +166,38 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
-    return new ProjectTreeStructure(myProject, ID){
-      @Override
-      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
-        return new PackageViewProjectNode(project, settings);
-      }
+    return new PackageViewPaneTreeStructure();
+  }
 
-      @Override
-      public boolean isToBuildChildrenInBackground(@NotNull Object element) {
-        return Registry.is("ide.projectView.PackageViewTreeStructure.BuildChildrenInBackground");
-      }
-    };
+  protected class PackageViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
+    protected PackageViewPaneTreeStructure() {
+      super(PackageViewPane.this.myProject, ID);
+    }
+
+    @Override
+    protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
+      return new PackageViewProjectNode(project, settings);
+    }
+
+    @Override
+    public boolean isToBuildChildrenInBackground(@NotNull Object element) {
+      return Registry.is("ide.projectView.PackageViewTreeStructure.BuildChildrenInBackground");
+    }
+
+    @Override
+    public boolean isShowExcludedFiles() {
+      return ProjectView.getInstance(myProject).isShowExcludedFiles(ID);
+    }
+
+    @Override
+    public boolean isShowVisibilityIcons() {
+      return ProjectView.getInstance(myProject).isShowVisibilityIcons(ID);
+    }
+
+    @Override
+    public boolean isUseFileNestingRules() {
+      return ProjectView.getInstance(myProject).isUseFileNestingRules(ID);
+    }
   }
 
   @NotNull
