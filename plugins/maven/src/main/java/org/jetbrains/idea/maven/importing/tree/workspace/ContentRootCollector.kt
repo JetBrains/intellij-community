@@ -30,6 +30,7 @@ object ContentRootCollector {
     folderItemMap.forEach { sortedPotentialContentRootSet.add(it.key) }
 
     val contentRootDataHolderByPath = mutableMapOf<String, ContentRootDataHolder>()
+    contentRootDataHolderByPath[baseContentRoot] = ContentRootDataHolder(baseContentRoot)
 
     for (entry in folderItemMap) {
       for (contentRootPath in sortedPotentialContentRootSet) {

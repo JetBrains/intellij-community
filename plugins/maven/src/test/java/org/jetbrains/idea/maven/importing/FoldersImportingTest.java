@@ -288,6 +288,10 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                          "</build>");
     importProject();
     assertModules("project", "m");
+
+    assertContentRoots("project",
+                       getProjectPath());
+
     assertContentRoots("m",
                        getProjectPath() + "/m",
                        getProjectPath() + "/src",
