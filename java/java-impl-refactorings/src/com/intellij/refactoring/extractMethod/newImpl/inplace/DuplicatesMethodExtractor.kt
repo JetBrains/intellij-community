@@ -139,18 +139,14 @@ class DuplicatesMethodExtractor {
     }
 
     duplicates.forEach { duplicate ->
-      val duplicateOptions = findExtractOptions(duplicate.candidate)
       val expressionMap = duplicate.changedExpressions.associate { (pattern, candidate) -> pattern to candidate }
-      val duplicateParameters = parameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
-
-      //TODO extract duplicate
-      val builder = CallBuilder(duplicateOptions.project, duplicateOptions.elements.first())
-      val call = builder.createMethodCall(replacedMethod, duplicateParameters.map { it.references.first() }).text
-      val callElements = if (options.elements.singleOrNull() is PsiExpression) {
-        builder.buildExpressionCall(call, duplicateOptions.dataOutput)
-      } else {
-        builder.buildCall(call, duplicateOptions.flowOutput, duplicateOptions.dataOutput, duplicateOptions.exposedLocalVariables)
+      fun getMappedParameter(parameter: InputParameter): InputParameter {
+        val references = parameter.references.map { expression -> expressionMap[expression] ?: expression }
+        return parameter.copy(references = references)
       }
+
+      val duplicateOptions = findExtractOptions(duplicate.candidate).copy(inputParameters = parameters.map(::getMappedParameter))
+      val callElements = CallBuilder(duplicateOptions.elements.first()).createCall(replacedMethod, duplicateOptions)
       runWriteAction {
         replacePsiRange(duplicate.candidate, callElements)
       }
