@@ -177,7 +177,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   private Dimension getPanelDimensionFromFontMetrics(String text) {
     Insets insets = getInsets();
     int width = insets.left + insets.right + (text != null ? getFontMetrics(getFont()).stringWidth(text) : 0);
-    int height = (myPrefHeight == null) ? getMinimumSize().height : myPrefHeight;
+    int height = ((myPrefHeight == null) ? getMinimumSize().height : myPrefHeight) + insets.top + insets.bottom;
     return new Dimension(width, height);
   }
 
@@ -220,7 +220,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
       if (myIcon == null) {
         return preferredSize;
       }
-      return new Dimension(Math.max(preferredSize.width + myIcon.getIconWidth(), getHeight()), preferredSize.height);
+      return new Dimension(Math.max(preferredSize.width + myIcon.getIconWidth(), getWidth()), preferredSize.height);
     }
 
     @Override
