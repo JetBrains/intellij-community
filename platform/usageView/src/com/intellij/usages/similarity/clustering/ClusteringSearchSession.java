@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageGroup;
+import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.bag.BagsDistanceCalculator;
@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
@@ -66,15 +66,15 @@ public class ClusteringSearchSession {
 
   @RequiresBackgroundThread
   @RequiresReadLock
-  public @NotNull List<UsageCluster> getClustersFilteredByGroups(@NotNull ProgressIndicator indicator,
-                                                                 @NotNull Collection<Collection<? extends UsageGroup>> selectedGroups) {
+  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator, Set<Usage> selectedUsages) {
     //create new ArrayList from clusters to avoid a comparator contract violation during search
     return new ArrayList<>(getClusters()).stream()
       .sorted((o1, o2) -> {
         indicator.checkCanceled();
-        return Integer.compare(o2.getUsageFilteredByGroup(selectedGroups).size(), o1.getUsageFilteredByGroup(selectedGroups).size());
+        return Integer.compare(o2.getOnlySelectedUsages(selectedUsages).size(), o1.getOnlySelectedUsages(selectedUsages).size());
       }).collect(Collectors.toList());
   }
+
 
   private @NotNull UsageCluster createNewCluster() {
     final UsageCluster newCluster = new UsageCluster(myClusters.size());

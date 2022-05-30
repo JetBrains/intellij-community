@@ -25,7 +25,6 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
@@ -49,7 +48,6 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.SIMILAR_USAGES_PREV
 public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel implements Disposable {
   private static final int CLUSTER_LIMIT = 20;
   private final @NotNull Project myProject;
-  private final @NotNull Collection<Collection<? extends UsageGroup>> myGroups;
   private final @NotNull UsageViewImpl myUsageView;
   private final @NotNull JBPanelWithEmptyText myMainPanel;
   private final @NotNull JScrollPane myScrollPane;
@@ -60,16 +58,14 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private @Nullable BackgroundableProcessIndicator myProcessIndicator;
   private int myAlreadyRenderedSnippets;
 
-  public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView,
-                                          @NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups) {
+  public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView) {
     super(false);
     myUsageView = usageView;
     myProject = usageView.getProject();
-    myGroups = groups;
     setToolbar((JComponent)createToolbar(SIMILAR_USAGES_PREVIEW_TOOLBAR));
     myMainPanel = new JBPanelWithEmptyText();
     myMainPanel.setLayout(new VerticalLayout(0));
-    addMostCommonUsagesForSelectedGroups(myGroups);
+    addMostCommonUsagesForSelectedGroups(myUsageView.getSelectedUsages());
     myScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     revalidate();
@@ -93,7 +89,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           myMainPanel.removeAll();
           myMainPanel.revalidate();
           myIsShowingSimilarUsages = false;
-          addMostCommonUsagesForSelectedGroups(myGroups);
+          addMostCommonUsagesForSelectedGroups(myUsageView.getSelectedUsages());
         }
 
         @Override
@@ -176,7 +172,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
                              @NotNull UsageCluster cluster) {
     final Set<SimilarUsage> usageFilteredByGroup = new HashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
-      usageFilteredByGroup.addAll(cluster.getUsageFilteredByGroup(myGroups));
+      usageFilteredByGroup.addAll(cluster.getOnlySelectedUsages(myUsageView.getSelectedUsages()));
     });
     SimilarUsage usage = ContainerUtil.getFirstItem(usageFilteredByGroup);
     if (usage instanceof UsageInfo2UsageAdapter) {
@@ -197,7 +193,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     }
   }
 
-  private void addMostCommonUsagesForSelectedGroups(@NotNull Collection<Collection<? extends UsageGroup>> selectedGroups) {
+  private void addMostCommonUsagesForSelectedGroups(@NotNull final Set<Usage> selectedUsages) {
     Ref<List<UsageCluster>> sortedClusters = new Ref<>();
     Task.Backgroundable loadMostCommonUsagePatternsTask =
       new Task.Backgroundable(myProject, UsageViewBundle.message(
@@ -217,7 +213,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           if (session != null) {
             final List<UsageCluster> groups = new ArrayList<>();
             ApplicationManager.getApplication().runReadAction(() -> {
-              groups.addAll(session.getClustersFilteredByGroups(indicator, selectedGroups));
+              groups.addAll(session.getClustersForSelectedUsages(indicator, selectedUsages));
             });
             sortedClusters.set(groups);
           }

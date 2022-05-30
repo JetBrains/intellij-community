@@ -34,10 +34,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageContextPanel;
-import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +48,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -64,7 +63,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private Pattern myCachedSearchPattern;
   private Pattern myCachedReplacePattern;
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private @Nullable UsageViewImpl myUsageView;
   private @Nullable MostCommonUsagePatternsComponent myCommonUsagePatternsComponent;
 
   public UsagePreviewPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
@@ -388,26 +386,23 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   @Override
   public void updateLayoutLater(@Nullable List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (usageView instanceof UsageViewImpl) {
-      myUsageView = (UsageViewImpl)usageView;
-    }
-    if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && myUsageView != null) {
-      @NotNull Collection<@NotNull Collection<? extends UsageGroup>> groups = myUsageView.getSelectedGroups();
-      if (isOnlyGroupNodesSelected(infos, groups)) {
-        releaseEditor();
-        disposeMostCommonUsageComponent();
-        removeAll();
-        myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(myUsageView, groups);
-        add(myCommonUsagePatternsComponent);
-      }
+    UsageViewImpl usageViewImpl = ObjectUtils.tryCast(usageView, UsageViewImpl.class);
+    if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() &&
+        usageViewImpl != null &&
+        isOnlyGroupNodesSelected(infos, usageViewImpl)) {
+      releaseEditor();
+      disposeMostCommonUsageComponent();
+      removeAll();
+      myCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl);
+      add(myCommonUsagePatternsComponent);
     }
     else {
       previewUsages(infos);
     }
   }
 
-  private static boolean isOnlyGroupNodesSelected(@Nullable List<? extends UsageInfo> infos, Collection<Collection<? extends UsageGroup>> groups) {
-    return (infos == null || infos.isEmpty()) && !groups.isEmpty();
+  private static boolean isOnlyGroupNodesSelected(@Nullable List<? extends UsageInfo> infos, @NotNull UsageViewImpl usageView) {
+    return (infos == null || infos.isEmpty()) && usageView.isGroupNodeSelected();
   }
 
   @Override
