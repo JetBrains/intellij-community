@@ -22,6 +22,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -105,12 +106,17 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           return null  // a target is not on the mandatory module path
         }
 
-        var isRoot = !targetName.startsWith("java.") || inAddedModules(module, targetName) || hasUpgrade(module, targetName, packageName, place)
-        if (!isRoot) {
-          val root = JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
-          isRoot = root == null || JavaModuleGraphUtil.reads(root, targetModule)
+        var javaModuleNotIncludedInGraph = targetName.startsWith("java.") &&
+                                           !inAddedModules(module, targetName) &&
+                                           !hasUpgrade(module, targetName, packageName, place)
+        if (javaModuleNotIncludedInGraph) {
+          val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
+            JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope) 
+          }
+
+          javaModuleNotIncludedInGraph = root != null && !JavaModuleGraphUtil.reads(root, targetModule)
         }
-        if (!isRoot) {
+        if (javaModuleNotIncludedInGraph) {
           return if (quick) ERR else ErrorWithFixes(
             JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
             listOf(AddModulesOptionFix(module, targetName)))
