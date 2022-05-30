@@ -2,11 +2,9 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +41,11 @@ public class PsiRecordPatternImpl extends CompositePsiElement implements PsiReco
   }
 
   @Override
+  public @Nullable PsiRecordPatternVariable getPatternVariable() {
+    return (PsiRecordPatternVariable)findPsiChildByType(JavaElementType.RECORD_PATTERN_VARIABLE);
+  }
+
+  @Override
   public String getName() {
     PsiElement identifier = getNameIdentifier();
     return identifier == null
@@ -56,22 +59,17 @@ public class PsiRecordPatternImpl extends CompositePsiElement implements PsiReco
   }
 
   @Override
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    PsiElement identifier = getNameIdentifier();
-    if (identifier == null) {
-      PsiRecordStructurePattern structurePattern = getStructurePattern();
-      if (!PsiUtil.isJavaToken(structurePattern.getLastChild(), JavaTokenType.RPARENTH)) {
-        // can't put identifier - after reparse it will be part of the PsiRecordStructurePattern
-        throw new IncorrectOperationException();
-      }
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(getManager().getProject());
-      PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
-      addAfter(newNameIdentifier, structurePattern);
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
+
+    PsiPatternVariable variable = getPatternVariable();
+    if (variable != lastParent && variable != null) {
+      return processor.execute(variable, state);
     }
-    else {
-      PsiImplUtil.setName(identifier, name);
-    }
-    return this;
+    return true;
   }
 
   @Override

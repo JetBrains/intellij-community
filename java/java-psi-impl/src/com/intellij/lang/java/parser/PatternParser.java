@@ -118,7 +118,20 @@ public class PatternParser {
       isRecord = true;
     }
 
-    boolean hasIdentifier = expect(builder, JavaTokenType.IDENTIFIER); // it is a name
+    final boolean hasIdentifier;
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER) { // pattern variable after the record structure pattern
+      if (isRecord) {
+        PsiBuilder.Marker variable = builder.mark();
+        builder.advanceLexer();
+        variable.done(JavaElementType.RECORD_PATTERN_VARIABLE);
+      } else {
+        builder.advanceLexer();
+      }
+      hasIdentifier = true;
+    } else {
+      hasIdentifier = false;
+    }
+
     if (isRecord) {
       patternVariable.drop();
       done(pattern, JavaElementType.RECORD_PATTERN);
