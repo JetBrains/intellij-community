@@ -57,7 +57,6 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
       return MavenCoordinates(groupId, artifactId, version)
     }
 
-    @JvmStatic
     internal fun scopedDependencies(module: JpsModule): Map<JpsDependencyElement, DependencyScope> {
       val result = HashMap<JpsDependencyElement, DependencyScope>()
       for (dependency in module.dependenciesList.dependencies) {
