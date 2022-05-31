@@ -18,10 +18,10 @@ import com.intellij.util.indexing.roots.origin.LibraryOriginImpl
 import org.jetbrains.annotations.Nls
 
 class LibraryIndexableFilesIteratorImpl
-private constructor(val libraryName: @NlsSafe String?,
-                    val presentableLibraryName: @Nls String,
-                    val classRootUrls: List<VirtualFilePointer>,
-                    val sourceRootUrls: List<VirtualFilePointer>) : LibraryIndexableFilesIterator {
+private constructor(private val libraryName: @NlsSafe String?,
+                    private val presentableLibraryName: @Nls String,
+                    private val classRootUrls: List<VirtualFilePointer>,
+                    private val sourceRootUrls: List<VirtualFilePointer>) : LibraryIndexableFilesIterator {
 
   override fun getDebugName() = "Library ${presentableLibraryName} " +
                                 "(#${classRootUrls.validCount()} class roots, " +
