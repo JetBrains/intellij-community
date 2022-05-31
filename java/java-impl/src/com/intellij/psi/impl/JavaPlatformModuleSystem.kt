@@ -107,6 +107,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
 
         var javaModuleNotIncludedInGraph = targetName.startsWith("java.") &&
+                                           targetName != PsiJavaModule.JAVA_BASE &&
                                            !inAddedModules(module, targetName) &&
                                            !hasUpgrade(module, targetName, packageName, place)
         if (javaModuleNotIncludedInGraph) {
