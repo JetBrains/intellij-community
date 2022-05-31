@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
@@ -147,6 +148,14 @@ public final class ApplyPatchAction extends DumbAwareAction {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) {
       return ApplyPatchStatus.FAILURE;
+    }
+
+    if (mergeData.getBase() == null && ApplyPatchStatus.PARTIAL.equals(status)) {
+      WriteAction.run(() -> {
+        VcsFacade.getInstance().runHeavyModificationTask(project, document, () -> document.setText(mergeData.getPatched()));
+        FileDocumentManager.getInstance().saveDocument(document);
+      });
+      return status;
     }
 
     String baseContent = convertLineSeparators(mergeData.getBase());
