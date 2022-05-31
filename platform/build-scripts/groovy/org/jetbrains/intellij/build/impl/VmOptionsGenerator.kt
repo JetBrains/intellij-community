@@ -9,10 +9,10 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
-import kotlin.jvm.Throws
 
 @Suppress("IdentifierGrammar")
 object VmOptionsGenerator {
+  @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
     "-XX:+UseG1GC",
     "-XX:SoftRefLRUPolicyMSPerMB=50",
