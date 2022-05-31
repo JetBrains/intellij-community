@@ -1194,10 +1194,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is PsiClass -> DfType.TOP
             is PsiVariable -> {
                 val constantValue = target.computeConstantValue()
+                val dfType = expr.getKotlinType().toDfType(expr)
                 if (constantValue != null && constantValue !is Boolean) {
-                    DfTypes.constant(constantValue, target.type)
+                    DfTypes.constant(constantValue, dfType)
                 } else {
-                    expr.getKotlinType().toDfType(expr)
+                    dfType
                 }
             }
             is KtEnumEntry -> {
