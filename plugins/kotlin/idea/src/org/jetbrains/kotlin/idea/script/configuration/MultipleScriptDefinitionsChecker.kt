@@ -61,7 +61,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                 val pattern = it.scriptFilePattern.pattern
                 return@all pattern.endsWith("\\.gradle\\.kts") || pattern.endsWith("\\.gradle\\.kts$")
             }
-            definition.fileExtension.endsWith(".gradle.kts")
+            definition.fileExtension.endsWith("gradle.kts")
         }
     }
 
