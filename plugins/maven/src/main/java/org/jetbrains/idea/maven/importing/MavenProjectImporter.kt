@@ -7,8 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeLegacyImporter
-import org.jetbrains.idea.maven.importing.tree.workspace.MavenProjectTreeImporterToWorkspaceModel
-import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspaceModel
+import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspace
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
 
@@ -57,14 +56,8 @@ interface MavenProjectImporter {
                                importingSettings: MavenImportingSettings,
                                dummyModule: Module?): MavenProjectImporter {
       if (isImportToWorkspaceModelEnabled()) {
-        if (isImportToTreeStructureEnabled(project)) {
-          return MavenProjectTreeImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges,
-                                                          importingSettings, modelsProvider, project)
-        }
-        else {
-          return MavenProjectImporterToWorkspaceModel(projectsTree, projectsToImportWithChanges,
-                                                      importingSettings, modelsProvider, project)
-        }
+        return MavenProjectImporterToWorkspace(projectsTree, projectsToImportWithChanges,
+                                               importingSettings, modelsProvider, project)
       }
 
       if (isImportToTreeStructureEnabled(project)) {

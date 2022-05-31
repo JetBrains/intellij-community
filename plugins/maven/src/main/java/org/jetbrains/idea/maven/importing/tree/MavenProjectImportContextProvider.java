@@ -15,7 +15,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static org.jetbrains.idea.maven.importing.MavenModelUtil.*;
@@ -25,8 +24,7 @@ public class MavenProjectImportContextProvider {
   protected final Project myProject;
   @NotNull
   protected final MavenProjectsTree myProjectsTree;
-  @NotNull
-  protected final Map<MavenId, MavenProjectChanges> myProjectsToImportWithChanges;
+  protected final @NotNull Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
   @NotNull
   protected final MavenImportingSettings myImportingSettings;
   @NotNull
@@ -39,14 +37,13 @@ public class MavenProjectImportContextProvider {
                                            @NotNull HashMap<MavenProject, String> mavenProjectToModuleName) {
     myProject = project;
     myProjectsTree = projectsTree;
-    myProjectsToImportWithChanges = changes.entrySet().stream()
-      .collect(Collectors.toMap(e -> e.getKey().getMavenId(), e -> e.getValue(), (v1, v2) -> v1));
+    myProjectsToImportWithChanges = changes;
     myImportingSettings = importingSettings;
     myMavenProjectToModuleName = mavenProjectToModuleName;
   }
 
-  public MavenModuleImportContext getContext() {
-    ModuleImportDataContext importDataContext = getModuleImportDataContext();
+  public MavenModuleImportContext getContext(@NotNull Collection<MavenProject> projectsToImport) {
+    ModuleImportDataContext importDataContext = getModuleImportDataContext(projectsToImport);
     ModuleImportDataDependecyContext importDataDependencyContext = getFlattenModuleDataDependencyContext(importDataContext);
 
     return new MavenModuleImportContext(
@@ -61,23 +58,21 @@ public class MavenProjectImportContextProvider {
   }
 
   @NotNull
-  private MavenProjectImportContextProvider.ModuleImportDataContext getModuleImportDataContext() {
+  private MavenProjectImportContextProvider.ModuleImportDataContext getModuleImportDataContext(@NotNull Collection<MavenProject> projectsToImport) {
     boolean hasChanges = false;
     List<MavenProjectImportData> allModules = new ArrayList<>();
     Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId = new TreeMap<>(Comparator.comparing(MavenId::getKey));
 
     Map<String, Module> legacyModuleByName = buildModuleByNameMap();
 
-    for (MavenProject project : myProjectsTree.getProjects()) {
-      if (myProjectsTree.isIgnored(project)) continue;
-
+    for (MavenProject project : projectsToImport) {
       String moduleName = getModuleName(project);
       if (StringUtil.isEmpty(moduleName)) {
         MavenLog.LOG.warn("[import context] empty module name for project " + project);
         continue;
       }
 
-      MavenProjectChanges changes = myProjectsToImportWithChanges.get(project.getMavenId());
+      MavenProjectChanges changes = myProjectsToImportWithChanges.get(project);
       MavenProjectImportData mavenProjectImportData = getModuleImportData(project, moduleName, legacyModuleByName, changes);
 
       if (changes != null && changes.hasChanges()) {

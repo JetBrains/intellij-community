@@ -56,7 +56,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
 
   @Nullable
   private List<MavenProjectsProcessorTask> importProjectTree() {
-    myContext = contextProvider.getContext();
+    myContext = contextProvider.getContext(ContainerUtil.filter(myProjectsTree.getProjects(), it -> !myProjectsTree.isIgnored(it)));
     boolean hasChanges = false;
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<>();
 

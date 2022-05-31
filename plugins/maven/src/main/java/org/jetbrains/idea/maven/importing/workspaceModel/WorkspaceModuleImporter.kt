@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -9,95 +10,70 @@ import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
-import org.jetbrains.idea.maven.importing.MavenModuleImporter
-import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
-import org.jetbrains.idea.maven.importing.tree.MavenModuleType
-import org.jetbrains.idea.maven.importing.tree.ModuleData
+import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
+import org.jetbrains.idea.maven.importing.tree.dependency.BaseDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.LibraryDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.SystemDependency
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectsTree
-import org.jetbrains.idea.maven.project.SupportedRequestType
 
 class WorkspaceModuleImporter(
-  private val mavenProject: MavenProject,
+  private val importData: MavenTreeModuleImportData,
   virtualFileUrlManager: VirtualFileUrlManager,
-  private val projectsTree: MavenProjectsTree,
   builder: MutableEntityStorage,
   importingSettings: MavenImportingSettings,
-  private val mavenProjectToModuleName: HashMap<MavenProject, String>,
-  project: Project) : WorkspaceModuleImporterBase<MavenModuleImportData>(project, virtualFileUrlManager, builder, importingSettings) {
+  private val importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>,
+  project: Project) : WorkspaceModuleImporterBase<MavenTreeModuleImportData>(project, virtualFileUrlManager, builder, importingSettings) {
 
   fun importModule(): ModuleEntity {
-    val moduleData = ModuleData(mavenProjectToModuleName.getValue(mavenProject),
-                                MavenModuleType.MAIN_TEST,
-                                MavenModelUtil.getMavenJavaVersions(mavenProject))
-    val importData = MavenModuleImportData(mavenProject, moduleData)
-
-    return importModule(importData, mutableMapOf())
+    return importModule(importData, importFoldersByMavenIdCache)
   }
 
-  override fun collectDependencies(importData: MavenModuleImportData,
-                                   entitySource: EntitySource): List<ModuleDependencyItem> {
-    val dependencyTypes = importingSettings.dependencyTypesAsSet
-    dependencyTypes.addAll(importData.mavenProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT))
-    return listOf(ModuleDependencyItem.InheritedSdkDependency,
-                  ModuleDependencyItem.ModuleSourceDependency) +
-           importData.mavenProject.dependencies.filter { dependencyTypes.contains(it.type) }.mapNotNull {
-             createDependency(it, entitySource)
-           }
-
-  }
-
-  private fun createDependency(artifact: MavenArtifact, moduleEntitySource: EntitySource): ModuleDependencyItem? {
-    val depProject = projectsTree.findProject(artifact.mavenId)
-    if (depProject == null) {
-      if (artifact.scope == "system") {
-        return createSystemDependency(artifact, moduleEntitySource)
+  override fun collectDependencies(importData: MavenTreeModuleImportData, entitySource: EntitySource): List<ModuleDependencyItem> {
+    val result = mutableListOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
+    for (dependency in importData.dependencies) {
+      if (dependency is SystemDependency) {
+        result.add(createSystemDependency(importData.mavenProject, dependency.artifact, entitySource))
       }
-      if (artifact.type == "bundle") {
-        return addBundleDependency(artifact)
+      else if (dependency is LibraryDependency) {
+        result.add(createLibraryDependency(dependency.artifact))
       }
-      return createLibraryDependency(artifact)
+      else if (dependency is ModuleDependency) {
+        result.add(ModuleDependencyItem.Exportable
+                     .ModuleDependency(ModuleId(dependency.artifact), false, toScope(dependency.scope), dependency.isTestJar))
+      }
+      else if (dependency is BaseDependency) {
+        result.add(createLibraryDependency(dependency.artifact))
+      }
     }
-    if (depProject === mavenProject) {
-      return null
-    }
-    val depModuleName = mavenProjectToModuleName[depProject]
-    if (depModuleName == null || projectsTree.isIgnored(depProject)) {
-      return createLibraryDependency(MavenModuleImporter.createCopyForLocalRepo(artifact, mavenProject))
-    }
-    return createModuleDependency(artifact, depModuleName)
+    return result
   }
 
-  private fun addBundleDependency(artifact: MavenArtifact): ModuleDependencyItem {
-    val newArtifact = MavenArtifact(
-      artifact.groupId,
-      artifact.artifactId,
-      artifact.version,
-      artifact.baseVersion,
-      "jar",
-      artifact.classifier,
-      artifact.scope,
-      artifact.isOptional,
-      "jar",
-      null,
-      mavenProject.localRepository,
-      false, false
-    )
-    return createLibraryDependency(newArtifact)
-  }
+  private fun toScope(scope: DependencyScope): ModuleDependencyItem.DependencyScope =
+    when (scope) {
+      DependencyScope.RUNTIME -> ModuleDependencyItem.DependencyScope.RUNTIME
+      DependencyScope.TEST -> ModuleDependencyItem.DependencyScope.TEST
+      DependencyScope.PROVIDED -> ModuleDependencyItem.DependencyScope.PROVIDED
+      else -> ModuleDependencyItem.DependencyScope.COMPILE
+    }
 
-  private fun createSystemDependency(artifact: MavenArtifact, moduleEntitySource: EntitySource): ModuleDependencyItem.Exportable.LibraryDependency {
+
+  private fun createSystemDependency(mavenProject: MavenProject,
+                                     artifact: MavenArtifact,
+                                     moduleEntitySource: EntitySource): ModuleDependencyItem.Exportable.LibraryDependency {
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope)
     val roots = ArrayList<LibraryRoot>()
 
-    roots.add(LibraryRoot(virtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId.COMPILED))
+    roots.add(LibraryRoot(
+      virtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+      LibraryRootTypeId.COMPILED)
+    )
 
-    val libraryTableId = LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(mavenProject.displayName)) //(ModuleId(moduleEntity.name))
-
+    val libraryTableId = LibraryTableId.ModuleLibraryTableId(
+      moduleId = ModuleId(mavenProject.displayName)) //(ModuleId(moduleEntity.name))
 
     builder.addLibraryEntity(artifact.libraryName, libraryTableId,
                              roots,
@@ -105,11 +81,6 @@ class WorkspaceModuleImporter(
 
     return ModuleDependencyItem.Exportable.LibraryDependency(LibraryId(artifact.libraryName, libraryTableId), false,
                                                              artifact.dependencyScope)
-  }
-
-  private fun createModuleDependency(artifact: MavenArtifact, moduleName: String): ModuleDependencyItem {
-    val isTestJar = MavenConstants.TYPE_TEST_JAR == artifact.type || "tests" == artifact.classifier
-    return ModuleDependencyItem.Exportable.ModuleDependency(ModuleId(moduleName), false, artifact.dependencyScope, isTestJar)
   }
 
   private fun createLibraryDependency(artifact: MavenArtifact): ModuleDependencyItem.Exportable.LibraryDependency {

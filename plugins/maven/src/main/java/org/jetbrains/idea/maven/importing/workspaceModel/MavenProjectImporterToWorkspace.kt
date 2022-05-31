@@ -18,10 +18,12 @@ import org.jetbrains.idea.maven.importing.MavenModuleImporter
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
+import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.util.*
 
-abstract class MavenProjectImporterWorkspaceBase(
+class MavenProjectImporterToWorkspace(
   projectsTree: MavenProjectsTree,
   private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
   importingSettings: MavenImportingSettings,
@@ -84,10 +86,24 @@ abstract class MavenProjectImporterWorkspaceBase(
     return mavenProjectToModuleName
   }
 
-  protected abstract fun importModules(builder: MutableEntityStorage,
-                                       projectToImport: Map<MavenProject, MavenProjectChanges>,
-                                       mavenProjectToModuleName: HashMap<MavenProject, String>,
-                                       postTasks: ArrayList<MavenProjectsProcessorTask>): List<ImportedModuleData>
+  private fun importModules(builder: MutableEntityStorage,
+                            projectsToImport: Map<MavenProject, MavenProjectChanges>,
+                            mavenProjectToModuleName: java.util.HashMap<MavenProject, String>,
+                            postTasks: java.util.ArrayList<MavenProjectsProcessorTask>): List<ImportedModuleData> {
+    val context = MavenProjectImportContextProvider(myProject, myProjectsTree, projectsToImport, myImportingSettings,
+                                                    mavenProjectToModuleName).getContext(projectsToImport.keys)
+
+    val createdModules = mutableListOf<ImportedModuleData>()
+    val mavenFolderHolderByMavenId = TreeMap<String, WorkspaceModuleImporterBase.MavenImportFolderHolder>()
+
+    for (importData in context.allModules) {
+      val moduleEntity = WorkspaceModuleImporter(
+        importData, virtualFileUrlManager, builder, myImportingSettings, mavenFolderHolderByMavenId, myProject
+      ).importModule()
+      createdModules.add(ImportedModuleData(moduleEntity.persistentId, importData.mavenProject, importData.moduleData.type))
+    }
+    return createdModules
+  }
 
   private fun applyModulesToWorkspaceModel(builder: MutableEntityStorage,
                                            createdModules: List<ImportedModuleData>): MutableList<AppliedModuleData> {
