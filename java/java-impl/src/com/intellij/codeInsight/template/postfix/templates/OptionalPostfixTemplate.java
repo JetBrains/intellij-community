@@ -22,7 +22,7 @@ public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
           "java.util.$OPTIONAL_CLASS$.$OPTIONAL_METHOD$($EXPR$)",
           "Optional.ofNullable(expr)",
           Collections.singleton(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition()),
-          LanguageLevel.JDK_1_8, true, provider);
+          LanguageLevel.JDK_1_8, false, provider);
   }
 
   @Override
