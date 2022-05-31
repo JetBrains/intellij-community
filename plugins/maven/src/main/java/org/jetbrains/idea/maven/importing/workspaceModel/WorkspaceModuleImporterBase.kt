@@ -41,15 +41,16 @@ abstract class WorkspaceModuleImporterBase<ImportDataType : MavenModuleImportDat
 
     val dependencies = collectDependencies(importData, entitySource)
 
-    return createModuleEntity(importData, dependencies, entitySource, importFoldersByMavenIdCache)
+    val moduleEntity = createModuleEntity(importData, dependencies, entitySource)
+    configureModuleEntity(importData, moduleEntity, importFoldersByMavenIdCache)
+    return moduleEntity
   }
 
   protected abstract fun collectDependencies(importData: ImportDataType, entitySource: EntitySource): List<ModuleDependencyItem>
 
   private fun createModuleEntity(importData: MavenModuleImportData,
                                  dependencies: List<ModuleDependencyItem>,
-                                 entitySource: EntitySource,
-                                 importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>): ModuleEntity {
+                                 entitySource: EntitySource): ModuleEntity {
     val moduleEntity = builder.addModuleEntity(importData.moduleData.moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
     val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
       module = moduleEntity
@@ -57,7 +58,13 @@ abstract class WorkspaceModuleImporterBase<ImportDataType : MavenModuleImportDat
       linkedProjectPath = linkedProjectPath(importData.mavenProject)
     }
     builder.addEntity(externalSystemModuleOptionsEntity)
+    return moduleEntity
 
+  }
+
+  private fun configureModuleEntity(importData: MavenModuleImportData,
+                                    moduleEntity: ModuleEntity,
+                                    importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>) {
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings)
 
     val importFolderHolder = importFoldersByMavenIdCache.getOrPut(importData.mavenProject.mavenId.key) { collectMavenFolders(importData) }
@@ -68,8 +75,6 @@ abstract class WorkspaceModuleImporterBase<ImportDataType : MavenModuleImportDat
       MavenModuleType.AGGREGATOR -> configAggregator(moduleEntity, importData, importFolderHolder, folderImporter)
       else -> config(moduleEntity, importData, importFolderHolder, folderImporter)
     }
-    return moduleEntity
-
   }
 
   private fun config(moduleEntity: ModuleEntity,
