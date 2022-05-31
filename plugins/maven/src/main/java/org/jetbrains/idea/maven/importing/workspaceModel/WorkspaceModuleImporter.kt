@@ -5,13 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.MavenModuleImporter
-import org.jetbrains.idea.maven.importing.tree.MavenJavaVersionHolder
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.ModuleData
@@ -34,7 +32,7 @@ class WorkspaceModuleImporter(
   fun importModule(): ModuleEntity {
     val moduleData = ModuleData(mavenProjectToModuleName.getValue(mavenProject),
                                 MavenModuleType.MAIN_TEST,
-                                MavenJavaVersionHolder(null, null))
+                                MavenModelUtil.getMavenJavaVersions(mavenProject))
     val importData = MavenModuleImportData(mavenProject, moduleData)
 
     return importModule(importData, mutableMapOf())
