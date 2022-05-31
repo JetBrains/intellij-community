@@ -85,11 +85,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
     val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
-
-    var useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
-    if (useModule is LightJavaModule) {
-      useModule = null
-    }
+    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place).let { if (it is LightJavaModule) null else it }
 
     if (targetModule != null) {
       if (targetModule == useModule) {
@@ -106,21 +102,19 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           return null  // a target is not on the mandatory module path
         }
 
-        var javaModuleNotIncludedInGraph = targetName.startsWith("java.") &&
-                                           targetName != PsiJavaModule.JAVA_BASE &&
-                                           !inAddedModules(module, targetName) &&
-                                           !hasUpgrade(module, targetName, packageName, place)
-        if (javaModuleNotIncludedInGraph) {
+        if (targetName.startsWith("java.") &&
+            targetName != PsiJavaModule.JAVA_BASE &&
+            !inAddedModules(module, targetName) &&
+            !hasUpgrade(module, targetName, packageName, place)) {
           val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
-            JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope) 
+            JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
           }
-
-          javaModuleNotIncludedInGraph = root != null && !JavaModuleGraphUtil.reads(root, targetModule)
-        }
-        if (javaModuleNotIncludedInGraph) {
-          return if (quick) ERR else ErrorWithFixes(
-            JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
-            listOf(AddModulesOptionFix(module, targetName)))
+          if (root != null && !JavaModuleGraphUtil.reads(root, targetModule)) {
+            return if (quick) ERR
+            else ErrorWithFixes(
+              JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
+              listOf(AddModulesOptionFix(module, targetName)))
+          }
         }
       }
 

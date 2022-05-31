@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -139,7 +139,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return isAccessible(moduleSystem -> moduleSystem.isAccessible(pkg.getQualifiedName(), null, place));
   }
 
-  private static boolean isAccessible(Predicate<? super JavaModuleSystem> predicate) {
+  @SuppressWarnings("SSBasedInspection")
+  private static boolean isAccessible(Predicate<JavaModuleSystem> predicate) {
     return Stream.of(JavaModuleSystem.EP_NAME.getExtensions()).allMatch(predicate);
   }
 
