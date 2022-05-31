@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
@@ -34,7 +35,12 @@ class MavenProjectTreeImporterToWorkspaceModel(
 
     val (hasChanges, projectsWithChanges) = collectProjectsAndChanges(projectsToImportWithChanges)
 
-    val contextProvider = MavenProjectImportContextProvider(myProject, myProjectsTree, projectsWithChanges, myImportingSettings)
+    val mavenProjectToModuleName = HashMap<MavenProject, String>()
+    MavenModuleNameMapper.map(projectsWithChanges.keys, emptyMap(), mavenProjectToModuleName, HashMap(),
+                              myImportingSettings.dedicatedModuleDir)
+
+    val contextProvider = MavenProjectImportContextProvider(myProject, myProjectsTree, projectsWithChanges, myImportingSettings,
+                                                            mavenProjectToModuleName)
 
     val context = contextProvider.context
     if (hasChanges || context.hasChanges) {

@@ -72,35 +72,41 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
                   "  <module>m2</module>" +
                   "</modules>");
 
-    assertModules("project", "project.m1", "project.m2", "project.m1.main", "project.m1.test", "project.m2.main", "project.m2.test");
-    assertModuleModuleDeps("project.m1.test", "project.m1.main");
-    assertModuleModuleDeps("project.m2.test", "project.m2.main", "project.m1.main");
-    assertModuleModuleDeps("project.m2.main", "project.m1.main");
+    assertModules("project",
+                  mn("project", "m1"),
+                  mn("project", "m2"),
+                  mn("project", "m1.main"),
+                  mn("project", "m1.test"),
+                  mn("project", "m2.main"),
+                  mn("project", "m2.test"));
+    assertModuleModuleDeps(mn("project", "m1.test"), mn("project", "m1.main"));
+    assertModuleModuleDeps(mn("project", "m2.test"), mn("project", "m2.main"), mn("project", "m1.main"));
+    assertModuleModuleDeps(mn("project", "m2.main"), mn("project", "m1.main"));
 
     assertSources("project");
-    assertSources("project.m1");
-    assertSources("project.m2");
+    assertSources(mn("project", "m1"));
+    assertSources(mn("project", "m2"));
     assertTestSources("project");
     assertResources("project");
     assertTestResources("project");
 
-    assertSources("project.m1.main", "java");
-    assertSources("project.m2.main", "java");
-    assertTestSources("project.m1.test", "java");
-    assertTestSources("project.m2.test", "java");
+    assertSources(mn("project", "m1.main"), "java");
+    assertSources(mn("project", "m2.main"), "java");
+    assertTestSources(mn("project", "m1.test"), "java");
+    assertTestSources(mn("project", "m2.test"), "java");
 
-    assertResources("project.m1.main", "resources");
-    assertTestResources("project.m1.test", "resources");
-    assertResources("project.m2.main", "resources");
-    assertTestResources("project.m2.test", "resources");
+    assertResources(mn("project", "m1.main"), "resources");
+    assertTestResources(mn("project", "m1.test"), "resources");
+    assertResources(mn("project", "m2.main"), "resources");
+    assertTestResources(mn("project", "m2.test"), "resources");
 
     assertExcludes("project", "target");
-    assertExcludes("project.m1", "target");
-    assertExcludes("project.m2", "target");
-    assertExcludes("project.m1.main");
-    assertExcludes("project.m2.main");
-    assertExcludes("project.m1.test");
-    assertExcludes("project.m2.test");
+    assertExcludes(mn("project", "m1"), "target");
+    assertExcludes(mn("project", "m2"), "target");
+    assertExcludes(mn("project", "m1.main"));
+    assertExcludes(mn("project", "m2.main"));
+    assertExcludes(mn("project", "m1.test"));
+    assertExcludes(mn("project", "m2.test"));
   }
 
   @Test
@@ -169,8 +175,8 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
                   "  <module>m1</module>" +
                   "</modules>");
 
-    assertModules("project", "project.m1", "project.m1.main", "project.m1.test");
-    assertContentRoots("project.m1.main", getProjectPath() + "/m1/src/main", getProjectPath() + "/custom-sources");
+    assertModules("project", mn("project", "m1"), mn("project", "m1.main"), mn("project", "m1.test"));
+    assertContentRoots(mn("project", "m1.main"), getProjectPath() + "/m1/src/main", getProjectPath() + "/custom-sources");
   }
 
   @Test

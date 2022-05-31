@@ -204,12 +204,14 @@ public final class MavenModelUtil {
   }
 
   @NotNull
+  @Deprecated // only user for experimental tree importer. Not used in Workpsace import
   public static String getModuleName(@NotNull MavenProject mavenProject, @NotNull Project project) {
     MavenProjectsTree projectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
     return projectsTree != null ? getModuleName(mavenProject, projectsTree, new HashMap<>()) : StringUtils.EMPTY;
   }
 
   @NotNull
+  @Deprecated // only user for experimental tree importer. Not used in Workpsace import
   public static String getModuleName(@NotNull MavenProject project,
                                       @NotNull MavenProjectsTree projectsTree,
                                       @NotNull Map<MavenProject, String> moduleNameMap) {

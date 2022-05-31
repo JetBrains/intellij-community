@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.MavenModelUtil;
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
 import org.jetbrains.idea.maven.importing.ModuleModelProxy;
 import org.jetbrains.idea.maven.project.*;
@@ -16,6 +18,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -30,8 +33,13 @@ public class LegacyMavenProjectImportContextProvider extends MavenProjectImportC
                                                  @NotNull Map<MavenProject, MavenProjectChanges> changes,
                                                  @NotNull ModuleModelProxy moduleModel,
                                                  @NotNull MavenImportingSettings importingSettings) {
-    super(project, projectsTree, changes, importingSettings);
+    super(project, projectsTree, changes, importingSettings, new HashMap<>());
     myModuleModel = moduleModel;
+  }
+
+  @Override
+  protected @Nullable String getModuleName(MavenProject project) {
+    return MavenModelUtil.getModuleName(project, myProjectsTree, myMavenProjectToModuleName);
   }
 
   @NotNull

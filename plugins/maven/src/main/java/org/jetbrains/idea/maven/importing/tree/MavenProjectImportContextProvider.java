@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
@@ -28,16 +29,20 @@ public class MavenProjectImportContextProvider {
   protected final Map<MavenId, MavenProjectChanges> myProjectsToImportWithChanges;
   @NotNull
   protected final MavenImportingSettings myImportingSettings;
+  @NotNull
+  protected final HashMap<MavenProject, String> myMavenProjectToModuleName;
 
   public MavenProjectImportContextProvider(@NotNull Project project,
                                            @NotNull MavenProjectsTree projectsTree,
                                            @NotNull Map<MavenProject, MavenProjectChanges> changes,
-                                           @NotNull MavenImportingSettings importingSettings) {
+                                           @NotNull MavenImportingSettings importingSettings,
+                                           @NotNull HashMap<MavenProject, String> mavenProjectToModuleName) {
     myProject = project;
     myProjectsTree = projectsTree;
     myProjectsToImportWithChanges = changes.entrySet().stream()
       .collect(Collectors.toMap(e -> e.getKey().getMavenId(), e -> e.getValue(), (v1, v2) -> v1));
     myImportingSettings = importingSettings;
+    myMavenProjectToModuleName = mavenProjectToModuleName;
   }
 
   public MavenModuleImportContext getContext() {
@@ -60,14 +65,13 @@ public class MavenProjectImportContextProvider {
     boolean hasChanges = false;
     List<MavenProjectImportData> allModules = new ArrayList<>();
     Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId = new TreeMap<>(Comparator.comparing(MavenId::getKey));
-    Map<MavenProject, String> moduleNameByProject = new HashMap<>();
 
     Map<String, Module> legacyModuleByName = buildModuleByNameMap();
 
     for (MavenProject project : myProjectsTree.getProjects()) {
       if (myProjectsTree.isIgnored(project)) continue;
 
-      String moduleName = getModuleName(project, myProjectsTree, moduleNameByProject);
+      String moduleName = getModuleName(project);
       if (StringUtil.isEmpty(moduleName)) {
         MavenLog.LOG.warn("[import context] empty module name for project " + project);
         continue;
@@ -83,8 +87,13 @@ public class MavenProjectImportContextProvider {
       allModules.add(mavenProjectImportData);
     }
 
-    return new ModuleImportDataContext(allModules, moduleNameByProject, moduleImportDataByMavenId,
+    return new ModuleImportDataContext(allModules, myMavenProjectToModuleName, moduleImportDataByMavenId,
                                        new ArrayList<>(legacyModuleByName.values()), hasChanges);
+  }
+
+  @Nullable
+  protected String getModuleName(MavenProject project) {
+    return myMavenProjectToModuleName.get(project);
   }
 
   protected Map<String, Module> buildModuleByNameMap() {

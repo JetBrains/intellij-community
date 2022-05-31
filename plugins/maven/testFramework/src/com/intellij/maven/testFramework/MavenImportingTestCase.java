@@ -159,7 +159,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected String mn(String parent, String moduleName) {
-    if (!MavenProjectImporter.isImportToTreeStructureEnabled(myProject)) return moduleName;
+    if (MavenProjectImporter.isImportToWorkspaceModelEnabled() || !MavenProjectImporter.isImportToTreeStructureEnabled(myProject)) {
+      return moduleName;
+    }
     return parent + "." + moduleName;
   }
 
