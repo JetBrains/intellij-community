@@ -255,6 +255,7 @@ internal data class MavenArtifactDependency(
 
 internal fun generatePomXmlFile(pomXmlPath: String, artifactData: MavenArtifactData) {
   val pomModel = Model()
+  pomModel.modelVersion = "4.0.0"
   pomModel.groupId = artifactData.coordinates.groupId
   pomModel.artifactId = artifactData.coordinates.artifactId
   pomModel.version = artifactData.coordinates.version
