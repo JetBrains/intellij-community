@@ -61,6 +61,8 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
   private static final String RSYNC = "rsync";
+  private static final String RSYNC_CHECKSUM_OPTION = "--checksum";
+  private static final String RSYNC_RECURSIVE_OPTION = "--recursive";
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
@@ -163,30 +165,22 @@ public class WSLDistribution implements AbstractWslDistribution {
 
   /**
    * Copying changed files recursively from wslPath/ to windowsPath/; with rsync
-   * Consider using ``WslSync`` class
    *
    * @param wslPath           source path inside wsl, e.g. /usr/bin
    * @param windowsPath       target windows path, e.g. C:/tmp; Directory going to be created
    * @param additionalOptions may be used for --delete (not recommended), --include and so on
    * @param handlerConsumer   consumes process handler just before execution. Can be used for fast cancellation
-   * @return process output
+   * @deprecated copying using rsync is very slow on WSL2, instead consider using
+   * {@link com.intellij.execution.wsl.sync.WslSync.Companion#syncWslFolders(String, Path, AbstractWslDistribution, boolean, String[])}.
    */
-
-  public void copyFromWsl(@NotNull String wslPath,
-                          @NotNull String windowsPath,
-                          @Nullable List<String> additionalOptions,
-                          @Nullable Consumer<? super ProcessHandler> handlerConsumer
-  )
-    throws ExecutionException {
-
-
+  @Deprecated(forRemoval = true)
+  public void copyFromWsl(final @NotNull String wslPath,
+                          final @NotNull String windowsPath,
+                          final @Nullable List<String> additionalOptions,
+                          final @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
     //noinspection ResultOfMethodCallIgnored
     new File(windowsPath).mkdirs();
-    List<String> command = new ArrayList<>(Arrays.asList(RSYNC, "-cr"));
-
-    if (additionalOptions != null) {
-      command.addAll(additionalOptions);
-    }
+    List<String> command = getRsyncBaseCommand(additionalOptions);
 
     command.add(wslPath + "/");
     String targetWslPath = getWslPath(windowsPath);
@@ -194,16 +188,8 @@ public class WSLDistribution implements AbstractWslDistribution {
       throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
     }
     command.add(targetWslPath + "/");
-    var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
-    if (process.getExitCode() != 0) {
-      // Most common problem is rsync not onstalled
-      if (executeOnWsl(10_000, "type", RSYNC).getExitCode() != 0) {
-        throw new ExecutionException(IdeBundle.message("wsl.no.rsync", this.myDescriptor.getMsId()));
-      }
-      else {
-        throw new ExecutionException(process.getStderr());
-      }
-    }
+
+    executeRsyncOnWsl(command, handlerConsumer);
   }
 
   /**
@@ -226,27 +212,14 @@ public class WSLDistribution implements AbstractWslDistribution {
    * {@link com.intellij.execution.wsl.sync.WslSync.Companion#syncWslFolders(String, Path, AbstractWslDistribution, boolean, String[])}.
    */
   @Deprecated
-  public void copyFromWslToWinDir(@NotNull String sourceWslPath,
-                                  @NotNull String targetWinDirPath,
-                                  @Nullable List<String> additionalOptions,
-                                  @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
-    var command = ContainerUtil.newArrayList(RSYNC, "--checksum", "--recursive");
-    if (additionalOptions != null) {
-      command.addAll(additionalOptions);
-    }
+  public void copyFromWslToWinDir(final @NotNull String sourceWslPath,
+                                  final @NotNull String targetWinDirPath,
+                                  final @Nullable List<String> additionalOptions,
+                                  final @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
+    var command = getRsyncBaseCommand(additionalOptions);
     command.add(getSourceWslPath(sourceWslPath));
     command.add(getTargetWslPath(targetWinDirPath));
-
-    var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
-    if (process.getExitCode() != 0) {
-      // Most common problem is rsync not installed
-      if (executeOnWsl(10_000, "type", RSYNC).getExitCode() != 0) {
-        throw new ExecutionException(IdeBundle.message("wsl.no.rsync", this.myDescriptor.getMsId()));
-      }
-      else {
-        throw new ExecutionException(process.getStderr());
-      }
-    }
+    executeRsyncOnWsl(command, handlerConsumer);
   }
 
   /**
@@ -742,6 +715,14 @@ public class WSLDistribution implements AbstractWslDistribution {
                                                               true);
   }
 
+  private static @NotNull List<String> getRsyncBaseCommand(final @Nullable List<String> additionalOptions) {
+    var command = ContainerUtil.newArrayList(RSYNC, RSYNC_CHECKSUM_OPTION, RSYNC_RECURSIVE_OPTION);
+    if (additionalOptions != null) {
+      command.addAll(additionalOptions);
+    }
+    return command;
+  }
+
   /**
    * @return {@code wslPath} without trailing slashes.
    */
@@ -764,5 +745,19 @@ public class WSLDistribution implements AbstractWslDistribution {
       throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsDirPath));
     }
     return targetWslPath.endsWith("/") ? targetWslPath : targetWslPath + "/";
+  }
+
+  private void executeRsyncOnWsl(final @NotNull List<String> command,
+                                 final @Nullable Consumer<? super ProcessHandler> handlerConsumer) throws ExecutionException {
+    var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
+    if (process.getExitCode() != 0) {
+      // Most common problem is rsync not installed
+      if (executeOnWsl(10_000, "type", RSYNC).getExitCode() != 0) {
+        throw new ExecutionException(IdeBundle.message("wsl.no.rsync", this.myDescriptor.getMsId()));
+      }
+      else {
+        throw new ExecutionException(process.getStderr());
+      }
+    }
   }
 }
