@@ -75,7 +75,6 @@ class MermaidLineIndentProvider : LineIndentProvider {
             MermaidTokens.Sequence.ALT,
             MermaidTokens.Sequence.PAR,
             MermaidTokens.Sequence.RECT,
-            MermaidTokens.Sequence.MESSAGE,
             MermaidTokens.ClassDiagram.CLASS_DIAGRAM,
             MermaidTokens.OPEN_CURLY,
             MermaidTokens.StateDiagram.STATE_DIAGRAM
