@@ -634,11 +634,17 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   public @NotNull PersistentEnumeratorStatistics getStatistics() throws IOException {
-    return new PersistentEnumeratorStatistics(myBTree.getStatistics(),
-                                              myCollisions,
-                                              myValuesCount,
-                                              myKeyStorage.getCurrentLength(),
-                                              myStorage.length());
+    lockStorageRead();
+    try {
+      return new PersistentEnumeratorStatistics(myBTree.getStatistics(),
+                                                myCollisions,
+                                                myValuesCount,
+                                                myKeyStorage.getCurrentLength(),
+                                                myStorage.length());
+    }
+    finally {
+      unlockStorageRead();
+    }
   }
 
   @Override
