@@ -64,10 +64,13 @@ class RecentProjectFilteringTree(
       Disposer.register(parentDisposable, filePathChecker)
 
       addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(this) }
+      addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(tree) }
+
       val mouseListener = ProjectActionMouseListener(this, projectActionButtonViewModel)
       addMouseListener(mouseListener)
       addMouseMotionListener(mouseListener)
       addTreeWillExpandListener(ToggleStateListener())
+
       putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
       putClientProperty(
         RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
