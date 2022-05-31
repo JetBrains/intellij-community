@@ -11,10 +11,7 @@
   <action id="EditorDeleteLine">
     <keyboard-shortcut first-keystroke="meta shift L"/>
   </action>
-  <action id="ShowErrorDescription">
-    <keyboard-shortcut first-keystroke="meta F1"/>
-    <keyboard-shortcut first-keystroke="alt T"/>
-  </action>
+  <action id="ShowErrorDescription"/>
   <action id="StepInto">
     <keyboard-shortcut first-keystroke="meta F11"/>
     <keyboard-shortcut first-keystroke="F11"/>
