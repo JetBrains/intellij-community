@@ -854,7 +854,7 @@ public class SwitchBlockHighlightingModel {
     private static List<String> collectLabelElementNames(@NotNull List<PsiCaseLabelElement> elements,
                                                          @NotNull Set<PsiClass> missingClasses,
                                                          @NotNull LinkedHashMap<PsiClass, PsiPattern> patternClasses) {
-      List<String> result = elements.isEmpty() ? new ArrayList<>() : ContainerUtil.map(elements, PsiElement::getText);
+      List<String> result = new ArrayList<>(ContainerUtil.map(elements, PsiElement::getText));
       for (PsiClass aClass : missingClasses) {
         String className = aClass.getQualifiedName();
         PsiPattern pattern = patternClasses.get(aClass);
