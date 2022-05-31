@@ -3,21 +3,26 @@ package com.jetbrains.packagesearch.intellij.plugin.maven
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.psi.xml.XmlTag
+import com.intellij.refactoring.suggested.startOffset
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineModuleTransformer
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
+import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 internal class MavenModuleTransformer : CoroutineModuleTransformer {
 
     override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule> =
         nativeModules.parallelMap { nativeModule ->
-            runCatching { readAction { MavenProjectsManager.getInstance(project).findProject(nativeModule) } }
+            readAction { runCatching { MavenProjectsManager.getInstance(project).findProject(nativeModule) } }
                 .onFailure {
                     logDebug(contextName = "MavenModuleTransformer", it) { "Error finding Maven module ${nativeModule.name}" }
                 }
@@ -39,12 +44,42 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
             buildFile = buildFile,
             buildSystemType = BuildSystemType.MAVEN,
             moduleType = MavenProjectModuleType,
-            navigatableDependency = { groupId, artifactId, _ ->
-                mavenProject.findDependencies(groupId, artifactId).firstOrNull()?.let {
-                    MavenNavigationUtil.createNavigatableForDependency(project, buildFile, it)
-                }
-            },
             availableScopes = PackageSearchMavenConfiguration.getInstance(project).getMavenScopes(),
+            dependencyDeclarationCallback = { dependency ->
+                readAction {
+                    val projectModel = MavenDomUtil.getMavenDomProjectModel(project, buildFile) ?: return@readAction null
+
+                    val mavenDependency = MavenNavigationUtil.findDependency(
+                        projectModel,
+                        dependency.groupId,
+                        dependency.artifactId,
+                        dependency.version,
+                        dependency.scope
+                    )
+                    val dependencyIndex = when (val elem = mavenDependency?.xmlElement) {
+                        is XmlTag -> elem.value.textElements.firstOrNull()?.startOffset
+                        else -> null
+                    }
+                    dependencyIndex?.let {
+                        DependencyDeclarationIndexes(
+                            wholeDeclarationStartIndex = it,
+                            coordinatesStartIndex = it,
+                            versionStartIndex = when (val elem = mavenDependency?.version?.xmlElement) {
+                                is XmlTag -> elem.value.textElements.firstOrNull()?.startOffset
+                                else -> null
+                            }
+                        )
+                    }
+                }
+            }
         )
     }
 }
+
+val BuildSystemType.Companion.MAVEN
+    get() = BuildSystemType(
+        name = "MAVEN",
+        language = "xml",
+        dependencyAnalyzerKey = MavenUtil.SYSTEM_ID,
+        statisticsKey = "maven"
+    )

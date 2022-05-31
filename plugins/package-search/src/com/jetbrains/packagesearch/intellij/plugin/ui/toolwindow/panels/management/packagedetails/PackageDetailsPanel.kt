@@ -107,6 +107,7 @@ internal class PackageDetailsPanel(
     }
 
     override fun build(): JPanel = cardPanel
+    override fun getData(dataId: String) = null
 
     companion object {
 

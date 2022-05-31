@@ -7,13 +7,13 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.module.Module
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.intentions.PackageSearchDependencyUpgradeQuickFix
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.NotifyingOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.toUnifiedDependency
 import javax.swing.JPanel
 
 /**
@@ -53,7 +53,6 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
                 else -> false
             }
         }
-
     }
 
     override fun createOptionsPanel(): JPanel {
@@ -69,16 +68,18 @@ abstract class PackageUpdateInspection : AbstractPackageUpdateInspectionCheck() 
 
     override fun ProblemsHolder.checkFile(file: PsiFile, fileModule: Module) {
         file.project.packageSearchProjectService.packageUpgradesStateFlow.value
-            .getPackagesToUpgrade(onlyStable).upgradesByModule[fileModule]
+            .getPackagesToUpgrade(onlyStable)
+            .upgradesByModule[fileModule]
             ?.filter { isNotExcluded(it.packageModel.identifier) }
             ?.filter { it.computeUpgradeOperationsForSingleModule.isNotEmpty() }
             ?.forEach { (packageModel, usageInfo,
                 targetVersion, precomputedOperations) ->
 
-                val currentVersion = usageInfo.version
-                val scope = usageInfo.scope
-                val unifiedDependency = packageModel.toUnifiedDependency(currentVersion, scope)
-                val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: return@forEach
+                val versionElement = tryDoing {
+                    usageInfo.declarationIndexInBuildFile
+                        ?.let { selectPsiElementIndex(it) }
+                        ?.let { PsiUtil.getElementAtOffset(file, it) }
+                } ?: return@forEach
 
                 registerProblem(
                     versionElement,

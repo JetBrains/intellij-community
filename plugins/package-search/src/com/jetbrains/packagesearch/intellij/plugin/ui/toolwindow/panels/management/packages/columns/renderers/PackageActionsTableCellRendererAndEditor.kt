@@ -62,30 +62,29 @@ internal class PackageActionsTableCellRendererAndEditor(
         }
 
         return JLabel().apply {
-          colors.applyTo(this, isSelected)
-          isOpaque = true
-          horizontalAlignment = SwingConstants.RIGHT
-          border = emptyBorder(right = 10)
+            colors.applyTo(this, isSelected)
+            isOpaque = true
+            horizontalAlignment = SwingConstants.RIGHT
+            border = emptyBorder(right = 10)
 
-          foreground = if (isSelected) {
-            table.colors.selectionForeground
-          }
-          else {
-            JBUI.CurrentTheme.Link.Foreground.ENABLED
-          }
+            foreground = if (isSelected) {
+                table.colors.selectionForeground
+            } else {
+                JBUI.CurrentTheme.Link.Foreground.ENABLED
+            }
 
-          if (viewModel.infoMessage != null) {
-            icon = AllIcons.General.BalloonInformation
-            iconTextGap = 4.scaled()
+            if (viewModel.infoMessage != null) {
+                icon = AllIcons.General.BalloonInformation
+                iconTextGap = 4.scaled()
 
-            toolTipText = viewModel.infoMessage
-          }
+                toolTipText = viewModel.infoMessage
+            }
 
-          text = when (viewModel.operationType) {
-            PackageOperationType.SET -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.set")
-            PackageOperationType.INSTALL -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.install")
-            PackageOperationType.UPGRADE -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.upgrade")
-          }
+            text = when (viewModel.operationType) {
+                PackageOperationType.SET -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.set")
+                PackageOperationType.INSTALL -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.install")
+                PackageOperationType.UPGRADE -> PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.actions.upgrade")
+            }
         }
     }
 

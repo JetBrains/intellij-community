@@ -26,7 +26,8 @@ internal sealed class KnownRepositories(
                     targetModules.modules.map { it.projectModule }
                         .contains(usageInfo.projectModule)
                 }
-            }, this)
+            }, this
+        )
 
         companion object {
 

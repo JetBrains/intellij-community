@@ -39,5 +39,4 @@ class PackageSearchGeneralConfiguration : BaseState(), PersistentStateComponent<
 
     @get:OptionTag("PACKAGE_DETAILS_SPLITTER_PROPORTION")
     var packageDetailsSplitterProportion by property(DefaultPackageDetailsSplitterProportion)
-
 }

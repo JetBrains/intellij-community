@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 
@@ -19,14 +20,18 @@ abstract class PackageVersionRangeInspection : AbstractPackageUpdateInspectionCh
             .entries
             .find { it.key.nativeModule == fileModule }
             ?.value
-            ?.filter { dependency -> dependency.coordinates.version?.let { isRange(it) } ?: false }
+            ?.filter { it.dependency.coordinates.version?.let { isRange(it) } ?: false }
             ?.mapNotNull { coordinates ->
-                runCatching { getVersionPsiElement(file, coordinates) }.getOrNull()
+                runCatching {
+                    coordinates.declarationIndexes
+                        ?.let { selectPsiElementIndex(it) }
+                        ?.let { PsiUtil.getElementAtOffset(file, it) }
+                }.getOrNull()
                     ?.let { coordinates to it }
             }
-            ?.forEach { (dependency, psiElement) ->
+            ?.forEach { (coordinatesWithResolvedVersion, psiElement) ->
 
-                val message = dependency.coordinates.version
+                val message = coordinatesWithResolvedVersion.dependency.coordinates.version
                     ?.let { PackageSearchBundle.message("packagesearch.inspection.upgrade.range.withVersion", it) }
                     ?: PackageSearchBundle.message("packagesearch.inspection.upgrade.range")
 

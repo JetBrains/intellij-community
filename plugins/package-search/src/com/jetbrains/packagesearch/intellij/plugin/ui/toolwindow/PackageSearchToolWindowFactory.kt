@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.take
 
 internal class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
     companion object {
+
         internal val ToolWindowId = PackageSearchBundle.message("toolwindow.stripe.Dependencies")
 
         private fun getToolWindow(project: Project) = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId)

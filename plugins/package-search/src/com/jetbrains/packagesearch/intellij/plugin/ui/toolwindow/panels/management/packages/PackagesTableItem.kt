@@ -100,7 +100,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
             appendLine()
             append("${PackageSearchBundle.message("packagesearch.package.copyableInfo.installedVersions")} ")
             append(
-                packageModel.usageInfo.map { it.version }
+                packageModel.usageInfo.map { it.declaredVersion }
                     .distinct()
                     .joinToString(", ")
                     .removeSuffix(", ")

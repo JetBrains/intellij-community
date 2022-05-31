@@ -17,16 +17,16 @@ import javax.swing.JLabel
 @Suppress("MagicNumber") // Swing dimension constants
 class TagComponent(@Nls name: String) : JLabel() {
 
-  init {
-    foreground = JBColor.namedColor("Plugins.tagForeground", JBColor(0x808080, 0x808080))
-    background = JBColor.namedColor("Plugins.tagBackground", JBColor(0xE8E8E8, 0xE8E8E8))
-    isOpaque = false
-    border = emptyBorder(vSize = 1, hSize = 8)
-    RelativeFont.TINY.install(this)
-    text = name
-    toolTipText = PackageSearchBundle.message("packagesearch.terminology.kotlinMultiplatform.tooltip")
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
-  }
+    init {
+        foreground = JBColor.namedColor("Plugins.tagForeground", JBColor(0x808080, 0x808080))
+        background = JBColor.namedColor("Plugins.tagBackground", JBColor(0xE8E8E8, 0xE8E8E8))
+        isOpaque = false
+        border = emptyBorder(vSize = 1, hSize = 8)
+        RelativeFont.TINY.install(this)
+        text = name
+        toolTipText = PackageSearchBundle.message("packagesearch.terminology.kotlinMultiplatform.tooltip")
+        GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
+    }
 
     @ScaledPixels
     var tagDiameterPx: Int = 4.scaled()

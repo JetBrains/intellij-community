@@ -11,6 +11,7 @@ import kotlinx.serialization.json.Json
 import org.apache.commons.httpclient.util.URIUtil
 
 internal object ServerURLs {
+
     const val base = "https://package-search.services.jetbrains.com/api"
 }
 
@@ -34,6 +35,7 @@ internal class PackageSearchApiClient(
         Pair("JB-IDE-Version", PluginEnvironment.ideVersion)
     )
 ) {
+
     private val maxRequestResultsCount = 25
     private val maxMavenCoordinatesParts = 3
 

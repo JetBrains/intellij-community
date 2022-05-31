@@ -6,7 +6,7 @@ import com.intellij.buildsystem.model.OperationType
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.externalSystem.DependencyModifierService
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
@@ -95,11 +95,13 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         }
     }
 
-    override fun listDependenciesInModule(module: ProjectModule): Collection<UnifiedDependency> = runReadAction {
+    override suspend fun declaredDependenciesInModule(module: ProjectModule) = readAction {
         DependencyModifierService.getInstance(module.nativeModule.project)
             .declaredDependencies(module.nativeModule)
             .map { dep -> dep.unifiedDependency }
     }
+
+    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> = emptyList()
 
     override fun addRepositoryToModule(repository: UnifiedDependencyRepository, module: ProjectModule): List<OperationFailure<out OperationItem>> {
         try {

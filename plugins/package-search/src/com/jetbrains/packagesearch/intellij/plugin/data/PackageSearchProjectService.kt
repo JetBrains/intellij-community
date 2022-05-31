@@ -188,7 +188,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         )
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
-    val allInstalledKnownRepositoriesFlow =
+    val allInstalledKnownRepositoriesStateFlow =
         combine(moduleModelsStateFlow, knownRepositoriesFlow) { moduleModels, repos -> moduleModels to repos }
             .mapLatestTimedWithLoading(
                 loggingContext = "allInstalledKnownRepositoriesFlow",
@@ -276,7 +276,10 @@ internal class PackageSearchProjectService(private val project: Project) {
         packageUpgradesStateFlow.throttle(5.seconds)
             .map { projectModulesStateFlow.value.map { it.buildFile.path }.toSet() }
             .filter { it.isNotEmpty() }
-            .flatMapLatest { knownBuildFiles -> FileEditorManager.getInstance(project).openFiles.filter { it.path in knownBuildFiles }.asFlow() }
+            .flatMapLatest { knownBuildFiles ->
+                FileEditorManager.getInstance(project).openFiles
+                    .filter { it.path in knownBuildFiles }.asFlow()
+            }
             .mapNotNull { readAction { PsiManager.getInstance(project).findFile(it) } }
             .onEach { DaemonCodeAnalyzer.getInstance(project).restart(it) }
             .launchIn(project.lifecycleScope)

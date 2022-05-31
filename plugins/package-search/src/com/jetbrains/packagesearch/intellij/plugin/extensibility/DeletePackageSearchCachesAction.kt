@@ -4,14 +4,12 @@ import com.intellij.ide.actions.cache.AsyncRecoveryResult
 import com.intellij.ide.actions.cache.ProjectRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.ide.actions.cache.RecoveryScope
-import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchApplicationCaches
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import kotlinx.coroutines.future.future
-import java.util.concurrent.CompletableFuture
 
 class DeletePackageSearchProjectCachesAction : RecoveryAction {
 

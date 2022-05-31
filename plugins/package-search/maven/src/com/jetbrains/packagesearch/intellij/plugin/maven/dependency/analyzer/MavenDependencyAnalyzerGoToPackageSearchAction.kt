@@ -1,11 +1,11 @@
 package com.jetbrains.packagesearch.intellij.plugin.maven.dependency.analyzer
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.module.Module
 import com.jetbrains.packagesearch.intellij.plugin.dependency.analyzer.DependencyAnalyzerGoToPackageSearchAction
 import org.jetbrains.idea.maven.project.actions.getParentModule
 import org.jetbrains.idea.maven.project.actions.getUnifiedCoordinates

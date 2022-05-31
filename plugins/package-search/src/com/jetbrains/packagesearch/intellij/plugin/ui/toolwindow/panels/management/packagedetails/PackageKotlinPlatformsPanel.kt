@@ -13,11 +13,11 @@ import javax.swing.BoxLayout
 
 internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {
 
-  init {
-    layout = BoxLayout(this, BoxLayout.Y_AXIS)
-    border = emptyBorder(top = 8)
-    background = PackageSearchUI.UsualBackgroundColor
-  }
+    init {
+        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+        border = emptyBorder(top = 8)
+        background = PackageSearchUI.UsualBackgroundColor
+    }
 
     fun display(platforms: List<ApiStandardPackage.ApiPlatform>) {
         clear()

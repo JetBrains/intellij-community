@@ -30,7 +30,7 @@ internal suspend fun computePackageUpgrades(
         if (installedPackageModel.remoteInfo == null || availableVersions.isEmpty()) continue
 
         for (usageInfo in installedPackageModel.usageInfo) {
-            val currentVersion = usageInfo.version
+            val currentVersion = usageInfo.getResolvedVersionOrFallback()
             if (currentVersion !is PackageVersion.Named) continue
 
             val normalizedPackageVersion = runCatching { NormalizedPackageVersion.parseFrom(currentVersion, normalizer) }

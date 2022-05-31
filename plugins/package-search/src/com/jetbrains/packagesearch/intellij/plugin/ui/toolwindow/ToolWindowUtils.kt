@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -55,9 +56,9 @@ internal fun ToolWindow.initialize(project: Project) {
     contentManager.removeAllContents(true)
 
     val panels = buildList {
-        this.add(PackageManagementPanel(project))
+        add(PackageManagementPanel(project))
         if (FeatureFlags.showRepositoriesTab) {
-            this.add(RepositoryManagementPanel(project))
+            add(RepositoryManagementPanel(project))
         }
     }
 
@@ -93,7 +94,7 @@ internal fun PackageSearchPanelBase.initialize(
     val titleActions = titleActions
 
     if (topToolbar == null) {
-        contentManager.addTab(title, panelContent, toolbar, gearActions, titleActions, contentFactory)
+        contentManager.addTab(title, panelContent, toolbar, gearActions, titleActions, contentFactory, this)
     } else {
         val content = contentFactory.createContent(
             toolbar?.let {
@@ -121,15 +122,15 @@ internal fun ContentManager.addTab(
     toolbar: JComponent?,
     gearActions: ActionGroup?,
     titleActions: Array<AnAction>?,
-    contentFactory: ContentFactory
+    contentFactory: ContentFactory,
+    provider: DataProvider
 ) {
     addContent(
         contentFactory.createContent(null, title, false).apply {
-            component = SimpleToolWindowWithToolWindowActionsPanel(gearActions, titleActions, false).apply {
+            component = SimpleToolWindowWithToolWindowActionsPanel(gearActions, titleActions, false, provider = provider).apply {
                 setProvideQuickActions(true)
                 setContent(content)
                 toolbar?.let { setToolbar(it) }
-
                 isCloseable = false
             }
         }

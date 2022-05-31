@@ -88,11 +88,21 @@ interface ProjectModuleOperationProvider {
     ): List<OperationFailure<out OperationItem>>
 
     /**
-     * Lists all dependencies in the given [module].
+     * Lists all dependencies declared in the given [module]. A declared dependency
+     * have to be explicitly written in the build file.
      * @return A [Collection]<[UnifiedDependency]> found in the project.
      */
-    fun listDependenciesInModule(
+    suspend fun declaredDependenciesInModule(
         module: ProjectModule
+    ): Collection<UnifiedDependency>
+
+    /**
+     * Lists all resolved dependencies in the given [module].
+     * @return A [Collection]<[UnifiedDependency]> found in the project.
+     */
+    suspend fun resolvedDependenciesInModule(
+        module: ProjectModule,
+        scopes: Set<String> = emptySet()
     ): Collection<UnifiedDependency>
 
     /**

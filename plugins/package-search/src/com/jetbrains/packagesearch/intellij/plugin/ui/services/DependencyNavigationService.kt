@@ -29,11 +29,11 @@ class DependencyNavigationService(private val project: Project) {
         return when {
             entry != null -> {
                 val (projectModule, installedDependencies) = entry
-                val isFound = installedDependencies.find { it.coordinates == coordinates }
+                val isFound = installedDependencies.find { it.dependency.coordinates == coordinates }
                 val moduleModel = project.packageSearchProjectService.moduleModelsStateFlow.value
                     .find { it.projectModule == projectModule }
                 when {
-                    isFound != null && moduleModel != null -> onSuccess(moduleModel, isFound)
+                    isFound != null && moduleModel != null -> onSuccess(moduleModel, isFound.dependency)
                     else -> NavigationResult.CoordinatesNotFound(module, coordinates)
                 }
             }
@@ -57,7 +57,7 @@ class DependencyNavigationService(private val project: Project) {
                 val moduleModel = project.packageSearchProjectService.moduleModelsStateFlow.value
                     .find { it.projectModule == projectModule }
                 when {
-                    dependency in installedDependencies && moduleModel != null -> onSuccess(moduleModel, dependency)
+                    installedDependencies.any { it.dependency == dependency } && moduleModel != null -> onSuccess(moduleModel, dependency)
                     else -> NavigationResult.DependencyNotFound(module, dependency)
                 }
             }

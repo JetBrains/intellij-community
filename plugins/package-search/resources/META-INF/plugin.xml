@@ -118,5 +118,11 @@ Supports Maven and Gradle projects.
                 class="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction">
             <add-to-group group-id="GenerateGroup" anchor="first"/>
         </action>
+        <action id="com.jetbrains.packagesearch.intellij.plugin.actions.PkgsToDAAction"
+                class="com.jetbrains.packagesearch.intellij.plugin.actions.PkgsToDAAction">
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+        </action>
     </actions>
 </idea-plugin>

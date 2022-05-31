@@ -1,8 +1,13 @@
+@file:Suppress("ThrowableNotThrown")
+
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
+import com.intellij.buildsystem.model.unified.UnifiedDependency
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.AbstractProjectModuleOperationProvider
@@ -10,6 +15,14 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOpera
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import java.io.File
+import kotlin.random.Random
 
 private const val FILE_TYPE_GROOVY = "groovy"
 private const val FILE_TYPE_KOTLIN = "kotlin"
@@ -18,21 +31,30 @@ private const val EXTENSION_GRADLE_KTS = "gradle.kts"
 
 internal open class GradleProjectModuleOperationProvider : AbstractProjectModuleOperationProvider() {
 
-    override fun usesSharedPackageUpdateInspection() = true
+    companion object {
 
-    override fun hasSupportFor(project: Project, psiFile: PsiFile?): Boolean {
-        // Logic based on com.android.tools.idea.gradle.project.sync.GradleFiles.isGradleFile()
-        val file = psiFile?.virtualFile ?: return false
+        fun hasSupportFor(psiFile: PsiFile?): Boolean {
+            // Logic based on com.android.tools.idea.gradle.project.sync.GradleFiles.isGradleFile()
+            val file = psiFile?.virtualFile ?: return false
 
-        val isGroovyFile = FILE_TYPE_GROOVY.equals(psiFile.fileType.name, ignoreCase = true)
-        val isKotlinFile = FILE_TYPE_KOTLIN.equals(psiFile.fileType.name, ignoreCase = true)
+            val isGroovyFile = FILE_TYPE_GROOVY.equals(psiFile.fileType.name, ignoreCase = true)
+            val isKotlinFile = FILE_TYPE_KOTLIN.equals(psiFile.fileType.name, ignoreCase = true)
 
-        if (!isGroovyFile && !isKotlinFile) return false
-        return file.name.endsWith(EXTENSION_GRADLE, ignoreCase = true) || file.name.endsWith(EXTENSION_GRADLE_KTS, ignoreCase = true)
+            if (!isGroovyFile && !isKotlinFile) return false
+            return file.name.endsWith(EXTENSION_GRADLE, ignoreCase = true) || file.name.endsWith(EXTENSION_GRADLE_KTS, ignoreCase = true)
+        }
+
+        fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean =
+            projectModuleType is GradleProjectModuleType
     }
 
-    override fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean =
-        projectModuleType is GradleProjectModuleType
+    private val gradleMutex = Mutex()
+
+    override fun usesSharedPackageUpdateInspection() = true
+
+    override fun hasSupportFor(project: Project, psiFile: PsiFile?) = Companion.hasSupportFor(psiFile)
+
+    override fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean = Companion.hasSupportFor(projectModuleType)
 
     override fun addDependencyToModule(
         operationMetadata: DependencyOperationMetadata,
@@ -60,5 +82,63 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
         if (configuration.updateScopesOnUsage) {
             configuration.addGradleScope(scopeName)
         }
+    }
+
+    override suspend fun resolvedDependenciesInModule(module: ProjectModule, scopes: Set<String>): List<UnifiedDependency> {
+        if (scopes.isEmpty()) return emptyList()
+        val fullGradlePath = CachedModuleDataFinder.getGradleModuleData(module.nativeModule)?.fullGradlePath ?: return emptyList()
+        return getGradleConfigurations(module, fullGradlePath, scopes).flatMap { configuration ->
+            configuration.dependencies.map { UnifiedDependency(it.groupId, it.artifactId, it.version, configuration.configurationName) }
+        }
+    }
+
+    private fun getDependencyTaskScript(taskName: String, outputFile: File, scopes: Set<String>, gradlePath: String) = """
+        allprojects {
+            if (project.path == '${gradlePath}' || ':' + rootProject.projectDir.name + project.path == '$gradlePath}') {
+                tasks.register('${taskName}') {
+                    def outputFile = project.file("${FileUtil.toCanonicalPath(outputFile.absolutePath)}")
+                    outputs.file(outputFile)
+                    doLast {
+                        def json = []
+                        def scopes = [${scopes.joinToString { "'$it'" }}]
+                        for (configuration in configurations) {
+                            if (configuration.name in scopes) {
+                                def deps = []
+                                for (dependency in configuration.allDependencies) {
+                                    if (dependency.group != null && dependency.version != null) {
+                                        deps.add([groupId: dependency.group, artifactId: dependency.name, version: dependency.version])
+                                    }
+                                }
+                                json.add([configurationName: configuration.name, dependencies: deps])
+                            }
+                        }
+                        outputFile.write(groovy.json.JsonOutput.toJson(json))
+                    }
+                }
+            }
+        }
+    """.trimIndent()
+
+    private suspend fun getGradleConfigurations(
+        module: ProjectModule,
+        gradlePath: String,
+        scopes: Set<String>
+    ): List<ConfigurationReport> {
+        val outputFile = FileUtil.createTempFile("dependencies", ".json", true)
+        val isTaskSuccessful = gradleMutex.withLock {
+            val taskName = "generateDependenciesOutput${Random.nextLong()}"
+            CoroutineGradleTaskManager.runTask(
+                taskScript = getDependencyTaskScript(taskName, outputFile, scopes, gradlePath),
+                taskName = taskName,
+                project = module.nativeModule.project,
+                executionName = GradleBundle.message("gradle.dependency.analyzer.loading"),
+                projectPath = module.buildFile.parent.path,
+                gradlePath = gradlePath,
+                progressExecutionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC
+            )
+        }
+        val result: List<ConfigurationReport> = if (isTaskSuccessful) Json.decodeFromString(outputFile.readText()) else emptyList()
+        outputFile.delete()
+        return result
     }
 }

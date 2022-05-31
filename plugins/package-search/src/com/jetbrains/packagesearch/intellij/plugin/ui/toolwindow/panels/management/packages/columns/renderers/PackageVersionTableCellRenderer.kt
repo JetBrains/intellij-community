@@ -68,7 +68,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
     @Nls
     private fun versionMessage(packageModel: PackageModel.Installed, packageOperations: PackageOperations): String {
         val installedVersions = packageModel.usageInfo.asSequence()
-            .map { it.version }
+            .map { it.getResolvedVersionOrFallback() }
             .distinct()
             .sorted()
             .joinToString { if (looksLikeGradleVariable(it)) "[${it.displayName}]" else it.displayName }

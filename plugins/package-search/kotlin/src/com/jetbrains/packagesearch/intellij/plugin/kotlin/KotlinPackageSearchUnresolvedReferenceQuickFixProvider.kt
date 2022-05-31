@@ -16,6 +16,7 @@ class KotlinPackageSearchUnresolvedReferenceQuickFixProvider : PackageSearchUnre
     }
 
     private class DummyPsiReference : PsiReference {
+
         override fun getElement(): PsiElement {
             TODO("This is a fakeReference")
         }

@@ -126,7 +126,7 @@ private fun <T : PackageModel> decidePrimaryOperationTypeFor(
         is PackageModel.Installed -> {
             when {
                 targetVersion == null -> null
-                packageModel.usageInfo.any { it.version is PackageVersion.Missing } -> PackageOperationType.SET
+                packageModel.usageInfo.any { it.declaredVersion is PackageVersion.Missing } -> PackageOperationType.SET
                 else -> PackageOperationType.UPGRADE
             }
         }

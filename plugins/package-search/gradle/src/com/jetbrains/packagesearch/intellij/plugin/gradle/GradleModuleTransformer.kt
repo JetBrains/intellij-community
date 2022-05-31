@@ -1,21 +1,21 @@
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.Dependency
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationCallback
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
@@ -26,16 +26,42 @@ internal class GradleModuleTransformer : ModuleTransformer {
 
     companion object {
 
-        fun findDependencyElement(file: PsiFile, groupId: String, artifactId: String): PsiElement? {
+        private fun findDependencyElementIndex(file: PsiFile, dependency: Dependency): DependencyDeclarationIndexes? {
             val isKotlinDependencyInKts = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
-                && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
+                && dependency.groupId == "org.jetbrains.kotlin" && dependency.artifactId.startsWith("kotlin-")
 
-            val textToSearchFor = if (isKotlinDependencyInKts) {
-                "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
-            } else {
-                "$groupId:$artifactId"
+            val textToSearchFor = buildString {
+                appendEscapedToRegexp(dependency.scope)
+                append("[\\(\\s]+")
+                if (isKotlinDependencyInKts) {
+                    append("(")
+                    appendEscapedToRegexp("kotlin(\"")
+                    appendEscapedToRegexp(dependency.artifactId.removePrefix("kotlin-"))
+                    appendEscapedToRegexp("\")")
+                } else {
+                    append("[\\'\\\"]")
+                    append("(")
+                    appendEscapedToRegexp("${dependency.groupId}:${dependency.artifactId}:")
+                    append("(\\\$?\\{?")
+                    appendEscapedToRegexp(dependency.version)
+                    append("\\}?)")
+                }
+                append(")")
+                append("[\\'\\\"]")
+                appendEscapedToRegexp(")")
+                append("?")
             }
-            return file.firstElementContainingExactly(textToSearchFor)
+
+            val groups = Regex(textToSearchFor).find(file.text)?.groups ?: return null
+
+            return groups[0]?.range?.first?.let {
+                DependencyDeclarationIndexes(
+                    wholeDeclarationStartIndex = it,
+                    coordinatesStartIndex = groups[1]?.range?.first
+                        ?: error("Cannot find coordinatesStartIndex for dependency $dependency in ${file.virtualFile.path}"),
+                    versionStartIndex = groups[2]?.range?.first
+                )
+            }
         }
     }
 
@@ -62,8 +88,8 @@ internal class GradleModuleTransformer : ModuleTransformer {
                     buildFile = buildVirtualFile,
                     buildSystemType = buildSystemType,
                     moduleType = GradleProjectModuleType,
-                    navigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile),
-                    availableScopes = scopes
+                    availableScopes = scopes,
+                    dependencyDeclarationCallback = getDependencyDeclarationCallback(project, buildVirtualFile)
                 )
             }
             .flatMap { getAllSubmodules(project, it) }
@@ -168,8 +194,8 @@ internal class GradleModuleTransformer : ModuleTransformer {
                 buildFile = projectBuildFile,
                 buildSystemType = BuildSystemType.GRADLE_GROOVY,
                 moduleType = GradleProjectModuleType,
-                navigatableDependency = createNavigatableDependencyCallback(project, projectBuildFile),
-                availableScopes = emptyList()
+                availableScopes = emptyList(),
+                dependencyDeclarationCallback = getDependencyDeclarationCallback(project, projectBuildFile)
             )
 
             modules += projectModule
@@ -177,24 +203,23 @@ internal class GradleModuleTransformer : ModuleTransformer {
         }
     }
 
-    private fun createNavigatableDependencyCallback(project: Project, file: VirtualFile) =
-        { groupId: String, artifactId: String, _: PackageVersion ->
-            runReadAction {
-                PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
-                    val dependencyElement = findDependencyElement(psiFile, groupId, artifactId) ?: return@let null
-                    return@let dependencyElement as Navigatable
-                }
-            }
+    private fun getDependencyDeclarationCallback(
+        project: Project,
+        buildVirtualFile: VirtualFile
+    ): DependencyDeclarationCallback = { dependency ->
+        readAction {
+            PsiManager.getInstance(project)
+                .findFile(buildVirtualFile)
+                ?.let { findDependencyElementIndex(it, dependency) }
         }
+    }
 }
 
-private fun PsiFile.firstElementContainingExactly(value: String): PsiElement? {
-    val index = text.indexOf(value)
-    if (index < 0) return null
-    if (text.length > value.length && text[index + value.length] != ':') return null
-    val element = getElementAtOffsetOrNull(index)
-    return element
-}
+private fun StringBuilder.appendEscapedToRegexp(text: String) =
+    StringUtil.escapeToRegexp(text, this)
 
-private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
-    PsiUtil.getElementAtOffset(this, index).takeIf { it != this }
+val BuildSystemType.Companion.GRADLE_GROOVY
+    get() = BuildSystemType(name = "GRADLE", language = "groovy", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID, statisticsKey = "gradle-groovy")
+
+val BuildSystemType.Companion.GRADLE_KOTLIN
+    get() = BuildSystemType(name = "GRADLE", language = "kotlin", dependencyAnalyzerKey = GradleConstants.SYSTEM_ID, statisticsKey = "gradle-kts")

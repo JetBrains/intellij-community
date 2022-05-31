@@ -353,6 +353,30 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                   ProgressExecutionMode.IN_BACKGROUND_ASYNC, callback);
   }
 
+  public static void runCustomTaskScript(@NotNull Project project,
+                                   @NotNull @Nls String executionName,
+                                   @NotNull String projectPath,
+                                   @NotNull String gradlePath,
+                                   @NotNull ProgressExecutionMode progressExecutionMode,
+                                   @Nullable TaskCallback callback,
+                                   @NotNull String initScript,
+                                   @NotNull String taskName) {
+    UserDataHolderBase userData = new UserDataHolderBase();
+    userData.putUserData(INIT_SCRIPT_KEY, initScript);
+    userData.putUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY, SyncViewManager.class);
+
+    String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
+    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
+    settings.setExecutionName(executionName);
+    settings.setExternalProjectPath(projectPath);
+    String taskPrefix = gradlePath.endsWith(":") ? gradlePath : gradlePath + ':';
+    settings.setTaskNames(Collections.singletonList(taskPrefix + taskName));
+    settings.setVmOptions(gradleVmOptions);
+    settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
+    ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID, callback,
+                               progressExecutionMode, false, userData);
+  }
+
   public static void runCustomTask(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,
@@ -360,10 +384,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                    @NotNull String gradlePath,
                                    @Nullable String taskConfiguration,
                                    @NotNull ProgressExecutionMode progressExecutionMode,
-                                   @Nullable TaskCallback callback) {
-
+                                   @Nullable TaskCallback callback,
+                                   @NotNull Set<Class<?>> toolingExtensionClasses) {
     String taskName = taskClass.getSimpleName();
-    String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(set(taskClass, GsonBuilder.class, THash.class, ExternalSystemException.class));
+    Set<Class<?>> tools = new HashSet<>(toolingExtensionClasses);
+    tools.addAll(set(taskClass, GsonBuilder.class, THash.class, ExternalSystemException.class));
+    String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(tools);
     String initScript = "initscript {\n" +
                         "  dependencies {\n" +
                         "    classpath files(" + paths + ")\n" +
@@ -379,19 +405,18 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                         "    }\n" +
                         "  }\n" +
                         "}\n";
-    UserDataHolderBase userData = new UserDataHolderBase();
-    userData.putUserData(INIT_SCRIPT_KEY, initScript);
-    userData.putUserData(ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY, SyncViewManager.class);
+    runCustomTaskScript(project, executionName, projectPath, gradlePath, progressExecutionMode, callback, initScript, taskName);
+  }
 
-    String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
-    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
-    settings.setExecutionName(executionName);
-    settings.setExternalProjectPath(projectPath);
-    String taskPrefix = gradlePath.endsWith(":") ? gradlePath : gradlePath + ':';
-    settings.setTaskNames(Collections.singletonList(taskPrefix + taskName));
-    settings.setVmOptions(gradleVmOptions);
-    settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
-    ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID, callback,
-                               progressExecutionMode, false, userData);
+  public static void runCustomTask(@NotNull Project project,
+                                   @NotNull @Nls String executionName,
+                                   @NotNull Class<? extends Task> taskClass,
+                                   @NotNull String projectPath,
+                                   @NotNull String gradlePath,
+                                   @Nullable String taskConfiguration,
+                                   @NotNull ProgressExecutionMode progressExecutionMode,
+                                   @Nullable TaskCallback callback) {
+    runCustomTask(project, executionName, taskClass, projectPath, gradlePath, taskConfiguration, progressExecutionMode, callback,
+                  new HashSet<>());
   }
 }

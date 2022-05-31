@@ -2,10 +2,11 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataProvider
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-internal abstract class PackageSearchPanelBase(@Nls val title: String) {
+internal abstract class PackageSearchPanelBase(@Nls val title: String) : DataProvider {
 
     val content: JComponent by lazy { build() }
 

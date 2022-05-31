@@ -1,11 +1,11 @@
 package com.jetbrains.packagesearch.intellij.plugin.gradle.dependency.analyzer
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.module.Module
 import com.jetbrains.packagesearch.intellij.plugin.dependency.analyzer.DependencyAnalyzerGoToPackageSearchAction
 import org.jetbrains.plugins.gradle.dependency.analyzer.getParentModule
 import org.jetbrains.plugins.gradle.dependency.analyzer.getUnifiedCoordinates

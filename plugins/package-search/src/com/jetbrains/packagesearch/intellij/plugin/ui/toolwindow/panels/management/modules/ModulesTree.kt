@@ -40,7 +40,7 @@ internal class ModulesTree(
 ) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider {
 
     private val targetModulesChannel = Channel<TargetModules>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val targetModulesFlow = targetModulesChannel.consumeAsFlow()
+    val targetModulesStateFlow = targetModulesChannel.consumeAsFlow()
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, TargetModules.None)
 
     init {
@@ -124,7 +124,7 @@ internal class ModulesTree(
     }
 
     override fun performCopy(dataContext: DataContext) {
-        val dataToCopy = targetModulesFlow.value.takeIf { it !is TargetModules.None }?.joinToString { it.projectModule.getFullName() }
+        val dataToCopy = targetModulesStateFlow.value.takeIf { it !is TargetModules.None }?.joinToString { it.projectModule.getFullName() }
             ?: return
 
         CopyPasteManager.getInstance().setContents(StringSelection(dataToCopy))

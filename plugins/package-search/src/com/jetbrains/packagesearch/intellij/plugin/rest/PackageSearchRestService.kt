@@ -31,6 +31,7 @@ import java.net.URI
 import java.net.URISyntaxException
 
 internal class PackageSearchRestService : RestService() {
+
     override fun getServiceName() = "packageSearch"
 
     override fun isMethodSupported(method: HttpMethod) = method === HttpMethod.GET || method === HttpMethod.POST
@@ -129,6 +130,7 @@ internal class PackageSearchRestService : RestService() {
 }
 
 internal class InstallPackageRequest {
+
     var project: String? = null
     @NlsSafe var `package`: String? = null
     @NonNls var query: String? = null

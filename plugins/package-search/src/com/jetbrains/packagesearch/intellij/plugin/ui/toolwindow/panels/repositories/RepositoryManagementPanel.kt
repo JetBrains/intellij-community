@@ -41,7 +41,7 @@ internal class RepositoryManagementPanel(
         }
 
     init {
-        project.packageSearchProjectService.allInstalledKnownRepositoriesFlow
+        project.packageSearchProjectService.allInstalledKnownRepositoriesStateFlow
             .onEach { repositoriesTree.display(it) }
             .launchIn(project.lifecycleScope)
     }
@@ -52,4 +52,6 @@ internal class RepositoryManagementPanel(
         ShowSettingsAction(project),
         autoScrollToSourceHandler.createToggleAction()
     )
+
+    override fun getData(dataId: String) = null
 }

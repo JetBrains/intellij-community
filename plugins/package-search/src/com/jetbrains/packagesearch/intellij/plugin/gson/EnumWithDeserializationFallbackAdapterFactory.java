@@ -18,7 +18,7 @@ import java.util.Map;
  * to overcome Gson assigning null values to enums.
  * <br/><br/>
  * Works around cases like <a href="https://discuss.kotlinlang.org/t/json-enum-deserialization-breakes-kotlin-null-safety/11670">https://discuss.kotlinlang.org/t/json-enum-deserialization-breakes-kotlin-null-safety/11670</a>.
-*/
+ */
 public class EnumWithDeserializationFallbackAdapterFactory implements TypeAdapterFactory {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -38,9 +38,9 @@ public class EnumWithDeserializationFallbackAdapterFactory implements TypeAdapte
 
     private static final class EnumTypeAdapter<TT extends Enum<TT>> extends TypeAdapter<TT> {
 
-        private TT defaultValue = null;
         private final Map<String, TT> nameToConstant = new HashMap<>();
         private final Map<TT, String> constantToName = new HashMap<>();
+        private TT defaultValue = null;
 
         EnumTypeAdapter(Class<TT> classOfT) {
             for (TT constant : classOfT.getEnumConstants()) {

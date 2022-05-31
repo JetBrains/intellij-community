@@ -69,7 +69,7 @@ internal class PackageSearchOperationFactory {
             .flatMap { usageInfo ->
                 createRemovePackageOperations(
                     packageModel = packageModel,
-                    version = usageInfo.version,
+                    version = usageInfo.declaredVersion,
                     scope = usageInfo.scope,
                     targetModules = TargetModules.from(moduleModel)
                 )
@@ -141,9 +141,9 @@ internal class PackageSearchOperationFactory {
         return usagesByModule(targetModules, packageModel)
             .flatMap { (module, usageInfo) ->
                 val packageOperation = PackageSearchOperation.Package.ChangeInstalled(
-                    model = packageModel.toUnifiedDependency(usageInfo.version, usageInfo.scope),
+                    model = packageModel.toUnifiedDependency(usageInfo.declaredVersion, usageInfo.scope),
                     projectModule = module.projectModule,
-                    currentVersion = usageInfo.version,
+                    currentVersion = usageInfo.declaredVersion,
                     currentScope = usageInfo.scope,
                     newVersion = newVersion,
                     newScope = newScope
@@ -195,7 +195,7 @@ internal class PackageSearchOperationFactory {
         return usagesByModule(targetModules, packageModel)
             .map { (module, usageInfo) ->
                 PackageSearchOperation.Package.Remove(
-                    model = packageModel.toUnifiedDependency(usageInfo.version, usageInfo.scope),
+                    model = packageModel.toUnifiedDependency(usageInfo.declaredVersion, usageInfo.scope),
                     projectModule = module.projectModule,
                     currentVersion = version,
                     currentScope = scope

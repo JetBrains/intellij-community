@@ -139,9 +139,8 @@ internal class ModuleOperationExecutor {
     private suspend fun changePackage(operation: PackageSearchOperation.Package.ChangeInstalled): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider = readAction {
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
-                projectModule
-            )
+            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
+                ?: throw OperationException.unsupportedBuildSystem(projectModule)
         }
 
         logDebug("ModuleOperationExecutor#changePackage()") { "Changing package ${operation.model.displayName} in ${projectModule.name}" }

@@ -64,14 +64,14 @@ internal sealed class PackageModel(
                 val remoteVersions = async { evaluateRemoteVersions(remoteInfo, normalizer) }
                 val latestInstalledVersion = async {
                     usageInfo.asFlow()
-                        .map { it.version }
+                        .map { it.declaredVersion }
                         .map { NormalizedPackageVersion.parseFrom(it, normalizer) }
                         .toList()
                         .maxOrNull()
                         ?: error("An installed package must always have at least one usage")
                 }
                 val declaredVersions = async {
-                    usageInfo.map { it.version }.map { NormalizedPackageVersion.parseFrom(it, normalizer) }
+                    usageInfo.map { it.declaredVersion }.map { NormalizedPackageVersion.parseFrom(it, normalizer) }
                 }
                 Installed(
                     groupId,
@@ -104,7 +104,7 @@ internal sealed class PackageModel(
             buildString {
                 appendLine(identifier)
                 for (usage in usageInfo) {
-                    appendLine(usage.version)
+                    appendLine(usage.declaredVersion)
                 }
 
                 if (remoteInfo != null) {

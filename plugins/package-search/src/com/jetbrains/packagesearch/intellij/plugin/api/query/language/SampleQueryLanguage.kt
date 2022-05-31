@@ -10,6 +10,7 @@ import com.jetbrains.packagesearch.intellij.plugin.api.query.SearchQueryParser
 // artifact. Keep it around until we start using something else than the no-op version.
 
 class SampleQueryCompletionProvider : SearchQueryCompletionProvider(true) {
+
     override fun getAttributes(): List<String> {
         return listOf("/onlyMpp", "/onlyStable", "/tag")
     }
@@ -28,6 +29,7 @@ class SampleQueryCompletionProvider : SearchQueryCompletionProvider(true) {
 }
 
 class SampleQuery(query: String) : SearchQueryParser() {
+
     private val tags = mutableSetOf<String>()
     private var onlyStable = true
     private var onlyMpp = false

@@ -8,10 +8,12 @@ import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.actions.PkgsToDAAction
 import com.jetbrains.packagesearch.intellij.plugin.actions.ShowSettingsAction
 import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsAction
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
@@ -23,12 +25,16 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JScrollPane
@@ -49,8 +55,8 @@ internal class PackageManagementPanel(
     )
 
     private val knownRepositoriesInTargetModulesFlow = combine(
-        modulesTree.targetModulesFlow,
-        project.packageSearchProjectService.allInstalledKnownRepositoriesFlow
+        modulesTree.targetModulesStateFlow,
+        project.packageSearchProjectService.allInstalledKnownRepositoriesStateFlow
     ) { targetModules, installedRepositories ->
         installedRepositories.filterOnlyThoseUsedIn(targetModules)
     }
@@ -60,7 +66,7 @@ internal class PackageManagementPanel(
         operationExecutor = operationExecutor,
         operationFactory = operationFactory,
         viewModelFlow = combine(
-            modulesTree.targetModulesFlow,
+            modulesTree.targetModulesStateFlow,
             project.packageSearchProjectService.installedPackagesStateFlow,
             project.packageSearchProjectService.packageUpgradesStateFlow,
             knownRepositoriesInTargetModulesFlow
@@ -70,6 +76,11 @@ internal class PackageManagementPanel(
         },
         dataProvider = project.packageSearchProjectService.dataProvider
     )
+
+    private val dataModelStateFlow = packagesListPanel.selectedPackageStateFlow
+        .mapNotNull { it?.packageModel }
+        .filterIsInstance<PackageModel.Installed>()
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, null)
 
     private val packageDetailsPanel = PackageDetailsPanel(project, operationExecutor)
 
@@ -114,14 +125,14 @@ internal class PackageManagementPanel(
             .onEach { PackageSearchEventsLogger.logPackageSelected(it is UiPackageModel.Installed) }
             .launchIn(project.lifecycleScope)
 
-        modulesTree.targetModulesFlow
+        modulesTree.targetModulesStateFlow
             .onEach { PackageSearchEventsLogger.logTargetModuleSelected(it) }
             .launchIn(project.lifecycleScope)
 
         combine(
             knownRepositoriesInTargetModulesFlow,
             packagesListPanel.selectedPackageStateFlow,
-            modulesTree.targetModulesFlow,
+            modulesTree.targetModulesStateFlow,
             packagesListPanel.onlyStableStateFlow
         ) { knownRepositoriesInTargetModules, selectedUiPackageModel,
             targetModules, onlyStable ->
@@ -164,4 +175,9 @@ internal class PackageManagementPanel(
     )
 
     override fun buildTitleActions(): Array<AnAction> = arrayOf(togglePackageDetailsAction)
+
+    override fun getData(dataId: String) = when {
+        PkgsToDAAction.PACKAGES_LIST_PANEL_DATA_KEY.`is`(dataId) -> dataModelStateFlow.value
+        else -> null
+    }
 }

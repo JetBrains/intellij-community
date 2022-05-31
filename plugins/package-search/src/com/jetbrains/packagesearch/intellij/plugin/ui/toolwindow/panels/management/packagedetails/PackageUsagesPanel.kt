@@ -15,11 +15,11 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
 
     private val linkActionsMap = mutableMapOf<String, Navigatable?>()
 
-  init {
-    layout = BoxLayout(this, BoxLayout.Y_AXIS)
-    border = emptyBorder(top = 8)
-    background = PackageSearchUI.UsualBackgroundColor
-  }
+    init {
+        layout = BoxLayout(this, BoxLayout.Y_AXIS)
+        border = emptyBorder(top = 8)
+        background = PackageSearchUI.UsualBackgroundColor
+    }
 
     override fun onLinkClicked(anchor: String) {
         val navigatable = linkActionsMap[anchor] ?: return
@@ -36,11 +36,10 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
         chunks += HtmlChunk.ul().children(
             packageModel.usageInfo.mapIndexed { index, usageInfo ->
                 val anchor = "#$index"
-                linkActionsMap[anchor] = usageInfo.projectModule.navigatableDependency(
-                    packageModel.groupId,
-                    packageModel.artifactId,
-                    usageInfo.version
-                )
+
+                usageInfo.declarationIndexInBuildFile
+                    ?.let { usageInfo.projectModule.getBuildFileNavigatableAtOffset(it.wholeDeclarationStartIndex) }
+                    ?.let { linkActionsMap[anchor] = it }
 
                 HtmlChunk.li().child(
                     HtmlChunk.link(anchor, usageInfo.projectModule.name)

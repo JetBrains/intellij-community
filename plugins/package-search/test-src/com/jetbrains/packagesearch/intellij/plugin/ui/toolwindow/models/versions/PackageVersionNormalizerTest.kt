@@ -132,12 +132,14 @@ internal class PackageVersionNormalizerTest {
         ) {
             val aVersion = aNamedPackageVersion(versionName = versionName)
             assertThat(normalizer.parseBlocking(aVersion)).isInstanceOf(NormalizedPackageVersion.TimestampLike::class)
-                .isEqualTo(NormalizedPackageVersion.TimestampLike(
-                    aVersion,
-                    timestampPrefix,
-                    stabilityMarker.asNullable(),
-                    nonSemanticSuffix.asNullable()
-                ))
+                .isEqualTo(
+                    NormalizedPackageVersion.TimestampLike(
+                        aVersion,
+                        timestampPrefix,
+                        stabilityMarker.asNullable(),
+                        nonSemanticSuffix.asNullable()
+                    )
+                )
         }
 
         @ParameterizedTest(name = "[{index}] {0}")
