@@ -33,9 +33,6 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
   private val dataEventDispatcher = EventDispatcher.create(GHListLoader.ListDataListener::class.java)
   override val loadedData = ArrayList<T>()
 
-  override val hasLoadedItems: Boolean
-    get() = loadedData.isNotEmpty()
-
   override fun canLoadMore() = !loading && (error != null)
 
   override fun loadMore(update: Boolean) {
