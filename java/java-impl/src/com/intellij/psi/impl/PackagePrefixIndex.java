@@ -1,21 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * @author peter
@@ -27,11 +36,44 @@ public class PackagePrefixIndex {
 
   public PackagePrefixIndex(Project project) {
     myProject = project;
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(project.getMessageBus().connect(), new WorkspaceModelChangeListener() {
       @Override
-      public void rootsChanged(@NotNull final ModuleRootEvent event) {
+      public void changed(@NotNull VersionedStorageChange event) {
+        MultiMap<String, Module> map;
         synchronized (LOCK) {
-          myMap = null;
+          map = myMap;
+        }
+        if (map != null) {
+          for (EntityChange<JavaSourceRootEntity> change : event.getChanges(JavaSourceRootEntity.class)) {
+            if (change instanceof EntityChange.Added<?>) {
+              updateMap(((EntityChange.Added<JavaSourceRootEntity>)change).getEntity(), 
+                        event.getStorageAfter(), 
+                        (prefix, module) -> map.putValue(prefix, module));
+            }
+            else if (change instanceof EntityChange.Removed<?>) {
+              updateMap(((EntityChange.Removed<JavaSourceRootEntity>)change).getEntity(), 
+                        event.getStorageBefore(),
+                        (prefix, module) -> map.remove(prefix, module));
+            }
+            else if (change instanceof EntityChange.Replaced<?>) {
+              updateMap(((EntityChange.Replaced<JavaSourceRootEntity>)change).getOldEntity(),
+                        event.getStorageBefore(),
+                        (prefix, module) -> map.remove(prefix, module));
+              updateMap(((EntityChange.Replaced<JavaSourceRootEntity>)change).getNewEntity(),
+                        event.getStorageAfter(),
+                        (prefix, module) -> map.putValue(prefix, module));
+            }
+          }
+        }
+      }
+      
+      private void updateMap(@NotNull JavaSourceRootEntity entity, @NotNull EntityStorage storageAfter, @NotNull BiConsumer<String, Module> updater) {
+        String prefix = entity.getPackagePrefix();
+        if (StringUtil.isNotEmpty(prefix)) {
+          Module module = ModuleEntityUtils.findModuleBridge(entity.getSourceRoot().getContentRoot().getModule(), storageAfter);
+          if (module != null) {
+            updater.accept(prefix, module);
+          }
         }
       }
     });
