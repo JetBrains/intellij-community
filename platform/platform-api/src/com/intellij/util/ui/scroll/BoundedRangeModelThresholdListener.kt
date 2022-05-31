@@ -6,10 +6,17 @@ import javax.swing.JScrollBar
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
-abstract class BoundedRangeModelThresholdListener private constructor(private val model: BoundedRangeModel)
-  : ChangeListener {
+abstract class BoundedRangeModelThresholdListener(
+  private val model: BoundedRangeModel,
+  private val thresholdPercent: Float
+) : ChangeListener {
+
+  init {
+    require(thresholdPercent > 0 && thresholdPercent < 1) { "Threshold should be a value greater than 0 and lesser than 1" }
+  }
 
   override fun stateChanged(e: ChangeEvent) {
+    if (model.valueIsAdjusting) return
     if (isAtThreshold()) onThresholdReached()
   }
 
@@ -21,16 +28,16 @@ abstract class BoundedRangeModelThresholdListener private constructor(private va
     val maximum = model.maximum
     if (maximum == 0) return false
     val scrollFraction = (visibleAmount + value) / maximum.toFloat()
-    if (scrollFraction < 0.5) return false
+    if (scrollFraction < thresholdPercent) return false
     return true
   }
 
   companion object {
-    fun install(scrollBar: JScrollBar, listener: () -> Unit) {
-      scrollBar.model.addChangeListener(object : BoundedRangeModelThresholdListener(scrollBar.model) {
-        override fun onThresholdReached() {
-          listener()
-        }
+    @JvmStatic
+    @JvmOverloads
+    fun install(scrollBar: JScrollBar, threshold: Float = 0.5f, listener: () -> Unit) {
+      scrollBar.model.addChangeListener(object : BoundedRangeModelThresholdListener(scrollBar.model, threshold) {
+        override fun onThresholdReached() = listener()
       })
     }
   }

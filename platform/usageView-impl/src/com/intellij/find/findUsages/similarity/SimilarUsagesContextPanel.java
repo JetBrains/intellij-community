@@ -89,7 +89,7 @@ public class SimilarUsagesContextPanel extends UsageContextPanelBase {
         mySimilarUsagesComponent.renderSimilarUsages(cluster.getUsages());
         myScrollPane = ScrollPaneFactory.createScrollPane(mainPanel);
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        BoundedRangeModelThresholdListener.Companion.install(myScrollPane.getVerticalScrollBar(), () -> {
+        BoundedRangeModelThresholdListener.install(myScrollPane.getVerticalScrollBar(), () -> {
           mySimilarUsagesComponent.renderSimilarUsages(cluster.getUsages());
           return Unit.INSTANCE;
         });

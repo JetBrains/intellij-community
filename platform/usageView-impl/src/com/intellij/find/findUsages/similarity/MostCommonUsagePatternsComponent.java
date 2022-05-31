@@ -135,7 +135,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       final JScrollBar scrollBar = scroll.getVerticalScrollBar();
       mySimilarComponent.renderOriginalUsage();
       mySimilarComponent.renderSimilarUsages(usagesToRender);
-      BoundedRangeModelThresholdListener.Companion.install(scrollBar, () -> {
+      BoundedRangeModelThresholdListener.install(scrollBar, () -> {
         mySimilarComponent.renderSimilarUsages(usagesToRender);
         return Unit.INSTANCE;
       });
@@ -163,7 +163,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       renderCluster(summaryPanel, cluster);
     });
     final JScrollBar verticalScrollBar = myScrollPane.getVerticalScrollBar();
-    BoundedRangeModelThresholdListener.Companion.install(verticalScrollBar, () -> {
+    BoundedRangeModelThresholdListener.install(verticalScrollBar, () -> {
       topClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
         renderCluster(summaryPanel, cluster);
       });
