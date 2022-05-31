@@ -1,6 +1,14 @@
 // WITH_STDLIB
 import Enum.*
 
+fun libraryEnum(x: AnnotationTarget) {
+    if (x == AnnotationTarget.TYPE) {
+        if (<warning descr="Condition 'x == AnnotationTarget.CLASS' is always false">x == AnnotationTarget.CLASS</warning>) {
+
+        }
+    }
+}
+
 enum class Enum {
     A, B, C
 }
