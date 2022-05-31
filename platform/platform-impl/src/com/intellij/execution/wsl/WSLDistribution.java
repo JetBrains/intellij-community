@@ -162,6 +162,51 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   /**
+   * Copying changed files recursively from wslPath/ to windowsPath/; with rsync
+   * Consider using ``WslSync`` class
+   *
+   * @param wslPath           source path inside wsl, e.g. /usr/bin
+   * @param windowsPath       target windows path, e.g. C:/tmp; Directory going to be created
+   * @param additionalOptions may be used for --delete (not recommended), --include and so on
+   * @param handlerConsumer   consumes process handler just before execution. Can be used for fast cancellation
+   * @return process output
+   */
+
+  public void copyFromWsl(@NotNull String wslPath,
+                          @NotNull String windowsPath,
+                          @Nullable List<String> additionalOptions,
+                          @Nullable Consumer<? super ProcessHandler> handlerConsumer
+  )
+    throws ExecutionException {
+
+
+    //noinspection ResultOfMethodCallIgnored
+    new File(windowsPath).mkdirs();
+    List<String> command = new ArrayList<>(Arrays.asList(RSYNC, "-cr"));
+
+    if (additionalOptions != null) {
+      command.addAll(additionalOptions);
+    }
+
+    command.add(wslPath + "/");
+    String targetWslPath = getWslPath(windowsPath);
+    if (targetWslPath == null) {
+      throw new ExecutionException(IdeBundle.message("wsl.rsync.unable.to.copy.files.dialog.message", windowsPath));
+    }
+    command.add(targetWslPath + "/");
+    var process = executeOnWsl(command, new WSLCommandLineOptions(), -1, handlerConsumer);
+    if (process.getExitCode() != 0) {
+      // Most common problem is rsync not onstalled
+      if (executeOnWsl(10_000, "type", RSYNC).getExitCode() != 0) {
+        throw new ExecutionException(IdeBundle.message("wsl.no.rsync", this.myDescriptor.getMsId()));
+      }
+      else {
+        throw new ExecutionException(process.getStderr());
+      }
+    }
+  }
+
+  /**
    * Recursively copies {@code sourceWslPath} to {@code targetWinDirPath} using rsync.
    * <p>
    * Examples:
