@@ -480,19 +480,18 @@ class RecentProjectFilteringTree(
         cursor = Cursor(Cursor.HAND_CURSOR)
 
         projectProgressBar.apply {
-          val isProgressIndeterminate = progressIndicator.isIndeterminate
-          if (isProgressIndeterminate) {
+          val fraction = progressIndicator.fraction
+          if (fraction <= 0.0 || progressIndicator.isIndeterminate) {
+            isIndeterminate = true
             val progressBarUI = projectProgressBar.ui
             if (progressBarUI is DarculaProgressBarUI) {
               progressBarUI.updateIndeterminateAnimationIndex(START_MILLIS)
             }
           }
-
-          if (cloneStatus == CloneStatus.PROGRESS) {
-            value = (progressIndicator.fraction * 100).toInt()
+          else {
+            isIndeterminate = false
+            value = (fraction * 100).toInt()
           }
-
-          isIndeterminate = isProgressIndeterminate
         }
 
         projectCloneStatusPanel.apply {
