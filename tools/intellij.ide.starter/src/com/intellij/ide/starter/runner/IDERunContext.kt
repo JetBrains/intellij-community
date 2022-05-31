@@ -275,10 +275,10 @@ data class IDERunContext(
 
       ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", contextName)
       val (artifactPath, artifactName) = if (successfulRun) contextName to "logs" else "run/$contextName" to "crash"
-      testContext.publishArtifact(logsDir, artifactPath, artifactName)
+      testContext.publishArtifact(logsDir, artifactPath, formatArtifactName(artifactName, testContext.testName))
       val snapshotFiles = Files.list(testContext.paths.snapshotsDir).use { it.filter { it.isRegularFile() }.toList() }
       if (snapshotFiles.isNotEmpty()) {
-        testContext.publishArtifact(testContext.paths.snapshotsDir, contextName, "snapshots")
+        testContext.publishArtifact(testContext.paths.snapshotsDir, contextName, formatArtifactName("snapshots", testContext.testName))
       }
       if (codeBuilder != null) {
         host.tearDown(testContext)

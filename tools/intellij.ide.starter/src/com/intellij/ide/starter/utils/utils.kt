@@ -13,9 +13,16 @@ import java.nio.charset.Charset
 import java.nio.file.FileStore
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.io.path.*
 import kotlin.time.Duration
 
+fun formatArtifactName(artifactType: String, testName: String): String{
+  val testNameFormatted = testName.replace("/", "-").replace(" ", "")
+  val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+  return "$artifactType-$testNameFormatted-$time"
+}
 
 fun getThrowableText(t: Throwable): String {
   val writer = StringWriter()
