@@ -57,16 +57,8 @@ class CompilationTasksImpl(private val context: CompilationContext) : Compilatio
         }
       }
       else {
-        val invalidModules = mutableListOf<String>()
-        val modules = moduleNames.mapNotNull {
-          val module = context.findModule(it)
-          if (module == null) {
-            invalidModules.add(it)
-          }
-          module
-        }
-        if (!invalidModules.isEmpty()) {
-          messages.warning("The following modules won\'t be compiled: $invalidModules")
+        val modules = moduleNames.map {
+          context.findRequiredModule(it)
         }
         runner.buildModules(modules)
       }
