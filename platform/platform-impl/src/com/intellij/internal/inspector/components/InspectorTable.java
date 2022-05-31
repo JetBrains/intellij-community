@@ -62,6 +62,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
   private final @Nullable Project myProject;
   private final MyModel myModel;
   private StripeTable myTable;
+  private ConsoleView myPreviewComponent;
 
   InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo, @Nullable Project project) {
     super(true, 0.75f);
@@ -161,25 +162,15 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
   public void refresh() {
     myModel.refresh();
     if (myModel.myComponent != null) {
-      setPreviewComponent(new DimensionsComponent(myModel.myComponent));
-    }
-  }
-
-  private void setPreviewComponent(JComponent component) {
-    disposePreviewComponent();
-    setSecondComponent(component);
-  }
-
-  private void disposePreviewComponent() {
-    JComponent preview = getSecondComponent();
-    if (preview instanceof Disposable) {
-      Disposer.dispose((Disposable)preview);
+      setSecondComponent(new DimensionsComponent(myModel.myComponent));
     }
   }
 
   @Override
   public void dispose() {
-    disposePreviewComponent();
+    if (myPreviewComponent != null) {
+      Disposer.dispose(myPreviewComponent);
+    }
   }
 
   @NotNull
@@ -386,67 +377,67 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
         return;
       }
       String property = myTable.getValueAt(row, 0).toString();
-      Object value = myTable.getValueAt(row, 1);
-      if (value == null || property.equals(selectedProperty)) {
+      @Nullable Object value = myTable.getValueAt(row, 1);
+      if (property.equals(selectedProperty)) {
         return;
       }
       selectedProperty = property;
 
       if (value instanceof Dimension || value instanceof Rectangle || value instanceof Border || value instanceof Insets) {
         if (myModel.myComponent != null) {
-          setPreviewComponent(new DimensionsComponent(myModel.myComponent));
+          setSecondComponent(new DimensionsComponent(myModel.myComponent));
         }
       }
       else if (myProject != null) {
-        String strValue = value.toString();
-        ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
-        JComponent consoleComponent = consoleView.getComponent();
-        consoleComponent.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
+        if (myPreviewComponent == null) {
+          myPreviewComponent = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+          JComponent consoleComponent = myPreviewComponent.getComponent();
+          consoleComponent.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
+          setSecondComponent(consoleComponent);
+        }
 
+        String strValue = String.valueOf(value);
+        myPreviewComponent.clear();
         if (property.equals("added-at")) {
-          consoleView.print(strValue, ERROR_OUTPUT);
+          myPreviewComponent.print(strValue, ERROR_OUTPUT);
         }
         else if (property.equals("text")) {
-          consoleView.print(strValue, NORMAL_OUTPUT);
+          myPreviewComponent.print(strValue, NORMAL_OUTPUT);
         }
         else if (property.trim().equals("hierarchy")) {
           String[] classNames = strValue.split(" *→ *");
-          printClassNamesToConsole(consoleView, classNames, true);
+          printClassNamesToConsole(myPreviewComponent, classNames, true);
         }
         else if (property.equals("toString")) {
-          printToStringProperty(consoleView, strValue);
+          printToStringProperty(myPreviewComponent, strValue);
         }
-        else if (property.contains("Listeners")) {
+        else if (property.contains("Listeners") && value != null) {
           String listeners = ValueCellRenderer.getToStringValue(value);
           String[] classNames = listeners.split(" *, *");
-          if (classNames.length > 1) {
-            printClassNamesToConsole(consoleView, classNames, false);
-          }
+          printClassNamesToConsole(myPreviewComponent, classNames, false);
         }
-        else if (property.equals("clientProperties")) {
+        else if (property.equals("clientProperties") && value != null) {
           Map<Object, Object> properties = ValueCellRenderer.parseClientProperties(value);
           if (properties != null) {
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
               if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
-              consoleView.print(entry.getKey() + " -> ", NORMAL_OUTPUT);
-              printClassName(consoleView, String.valueOf(entry.getValue()));
-              consoleView.print("\n", NORMAL_OUTPUT);
+              myPreviewComponent.print(entry.getKey() + " -> ", NORMAL_OUTPUT);
+              printClassName(myPreviewComponent, String.valueOf(entry.getValue()));
+              myPreviewComponent.print("\n", NORMAL_OUTPUT);
             }
           }
         }
         else if (value instanceof IconLoader.CachedImageIcon) {
-          consoleView.print("Icon path: ", NORMAL_OUTPUT);
-          printIconPath(consoleView, (IconLoader.CachedImageIcon)value);
-        }
-
-        consoleView.scrollTo(0);
-
-        if (consoleView.getContentSize() > 0) {
-          setPreviewComponent(consoleComponent);
+          myPreviewComponent.print("Icon path: ", NORMAL_OUTPUT);
+          printIconPath(myPreviewComponent, (IconLoader.CachedImageIcon)value);
         }
         else {
-          Disposer.dispose(consoleView);
+          String renderedValue = getCellTextValue(row, column);
+          printClassName(myPreviewComponent, renderedValue);
         }
+
+        myPreviewComponent.scrollTo(0);
+        setSecondComponent(myPreviewComponent.getComponent());
       }
     }
 
