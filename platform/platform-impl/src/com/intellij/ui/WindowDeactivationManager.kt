@@ -9,12 +9,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Frame
 import java.awt.Window
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
+@ApiStatus.Experimental
 class WindowDeactivationManager {
   companion object {
     @JvmStatic
