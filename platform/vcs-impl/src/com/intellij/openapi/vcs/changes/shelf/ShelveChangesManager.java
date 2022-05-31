@@ -744,27 +744,27 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @CalledInAny
-  private void unshelveChangeList(final ShelvedChangeList changeList,
-                                  @Nullable final List<ShelvedChange> changes,
-                                  @Nullable final List<? extends ShelvedBinaryFile> binaryFiles,
-                                  @Nullable final LocalChangeList targetChangeList,
-                                  boolean showSuccessNotification,
-                                  boolean removeFilesFromShelf) {
-    unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, false, false, null, null,
-                       removeFilesFromShelf);
+  private ApplyPatchStatus unshelveChangeList(final ShelvedChangeList changeList,
+                                              @Nullable final List<ShelvedChange> changes,
+                                              @Nullable final List<? extends ShelvedBinaryFile> binaryFiles,
+                                              @Nullable final LocalChangeList targetChangeList,
+                                              boolean showSuccessNotification,
+                                              boolean removeFilesFromShelf) {
+    return unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, false, false, null, null,
+                              removeFilesFromShelf);
   }
 
   @CalledInAny
-  public void unshelveChangeList(final ShelvedChangeList changeList,
-                                 @Nullable final List<ShelvedChange> changes,
-                                 @Nullable final List<? extends ShelvedBinaryFile> binaryFiles,
-                                 @Nullable final LocalChangeList targetChangeList,
-                                 final boolean showSuccessNotification,
-                                 final boolean systemOperation,
-                                 final boolean reverse,
-                                 @NlsContexts.Label String leftConflictTitle,
-                                 @NlsContexts.Label String rightConflictTitle,
-                                 boolean removeFilesFromShelf) {
+  public ApplyPatchStatus unshelveChangeList(final ShelvedChangeList changeList,
+                                             @Nullable final List<ShelvedChange> changes,
+                                             @Nullable final List<? extends ShelvedBinaryFile> binaryFiles,
+                                             @Nullable final LocalChangeList targetChangeList,
+                                             final boolean showSuccessNotification,
+                                             final boolean systemOperation,
+                                             final boolean reverse,
+                                             @NlsContexts.Label String leftConflictTitle,
+                                             @NlsContexts.Label String rightConflictTitle,
+                                             boolean removeFilesFromShelf) {
     List<FilePatch> remainingPatches = new ArrayList<>();
 
     CommitContext commitContext = new CommitContext();
@@ -775,7 +775,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     catch (IOException | PatchSyntaxException e) {
       LOG.info(e);
       PatchApplier.showError(myProject, VcsBundle.message("unshelve.loading.patch.error", e.getMessage()));
-      return;
+      return ApplyPatchStatus.FAILURE;
     }
 
     List<FilePatch> patches = new ArrayList<>(textFilePatches);
@@ -791,7 +791,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     PatchApplier patchApplier = new PatchApplier(myProject, baseDir,
                                                  patches, targetChangeList, commitContext, reverse, leftConflictTitle,
                                                  rightConflictTitle);
-    patchApplier.execute(showSuccessNotification, systemOperation);
+    ApplyPatchStatus status = patchApplier.execute(showSuccessNotification, systemOperation);
     if (removeFilesFromShelf) {
       remainingPatches.addAll(patchApplier.getRemainingPatches());
       remainingPatches.addAll(patchApplier.getFailedPatches());
@@ -799,6 +799,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         updateListAfterUnshelve(changeList, remainingPatches, remainingBinaries, commitContext);
       });
     }
+    return status;
   }
 
   @NotNull
@@ -1058,11 +1059,18 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
           List<ShelvedBinaryFile> binariesForChangelist =
             new ArrayList<>(ContainerUtil.intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
           boolean shouldUnshelveAllList = changesForChangelist.isEmpty() && binariesForChangelist.isEmpty();
-          unshelveChangeList(changeList, shouldUnshelveAllList ? null : changesForChangelist,
-                             shouldUnshelveAllList ? null : binariesForChangelist,
-                             forcePredefinedOneChangelist != null ? forcePredefinedOneChangelist : getChangeListUnshelveTo(changeList),
-                             true, removeFilesFromShelf);
+          ApplyPatchStatus status = unshelveChangeList(
+            changeList,
+            shouldUnshelveAllList ? null : changesForChangelist,
+            shouldUnshelveAllList ? null : binariesForChangelist,
+            forcePredefinedOneChangelist != null ? forcePredefinedOneChangelist : getChangeListUnshelveTo(changeList),
+            true,
+            removeFilesFromShelf);
           ChangeListManagerEx.getInstanceEx(myProject).waitForUpdate();
+
+          if (status == ApplyPatchStatus.ABORT) {
+            break;
+          }
         }
       }
     });
