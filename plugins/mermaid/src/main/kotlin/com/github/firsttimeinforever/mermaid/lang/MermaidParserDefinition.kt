@@ -1,5 +1,10 @@
 package com.github.firsttimeinforever.mermaid.lang
 
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidLexer
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens
+import com.github.firsttimeinforever.mermaid.lang.parser.MermaidElements
+import com.github.firsttimeinforever.mermaid.lang.parser.MermaidParser
+import com.github.firsttimeinforever.mermaid.lang.psi.MermaidFile
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.PsiParser
@@ -10,11 +15,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidLexer
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens
-import com.github.firsttimeinforever.mermaid.lang.parser.MermaidElements
-import com.github.firsttimeinforever.mermaid.lang.parser.MermaidParser
-import com.github.firsttimeinforever.mermaid.lang.psi.MermaidFile
 
 internal class MermaidParserDefinition: ParserDefinition {
   override fun createLexer(project: Project?): Lexer {
@@ -30,7 +30,7 @@ internal class MermaidParserDefinition: ParserDefinition {
   }
 
   override fun getCommentTokens(): TokenSet {
-    return TokenSet.create(MermaidElements.COMMENT)
+    return TokenSet.create(MermaidTokens.LINE_COMMENT, MermaidTokens.COMMENT_TEXT)
   }
 
   override fun getStringLiteralElements(): TokenSet {

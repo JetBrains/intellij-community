@@ -1,6 +1,8 @@
 package com.github.firsttimeinforever.mermaid.editor
 
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens
+import com.github.firsttimeinforever.mermaid.lang.parser.MermaidElements
+import com.github.firsttimeinforever.mermaid.lang.psi.MermaidDirective
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidFlowchartDocumentImpl
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidJourneyDocumentImpl
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidPieDocumentImpl
@@ -19,7 +21,7 @@ class MermaidCompletionContributor : CompletionContributor() {
   init {
     extend(
       CompletionType.BASIC,
-      psiElement(),
+      not(psiElement().insideDiagram(psiElement().diagramHeader())),
       MermaidDiagramCompletionProvider()
     )
 
@@ -31,12 +33,12 @@ class MermaidCompletionContributor : CompletionContributor() {
           psiElement(MermaidTokens.DIRECTION)
         )
       ),
-      MermaidDirectionCompletionProvider()
+      DirectionCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
       psiElement().inside(MermaidFlowchartDocumentImpl::class.java),
-      MermaidFlowchartCompletionProvider()
+      FlowchartCompletionProvider()
     )
 
     extend(
@@ -47,12 +49,12 @@ class MermaidCompletionContributor : CompletionContributor() {
           psiElement(MermaidTokens.EOL).afterLeaf(psiElement(MermaidTokens.Pie.PIE))
         )
       ),
-      MermaidPieShowDataCompletionProvider()
+      PieShowDataCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
       psiElement(),
-      MermaidTitleCompletionProvider(MermaidTokens.Pie.PIE, MermaidPieDocumentImpl::class.java)
+      TitleCompletionProvider(MermaidTokens.Pie.PIE, MermaidPieDocumentImpl::class.java)
     )
 
     extend(
@@ -61,28 +63,28 @@ class MermaidCompletionContributor : CompletionContributor() {
         not(psiElement(MermaidSequenceDocumentImpl::class.java)),
         psiElement(MermaidSequenceDocumentImpl::class.java)
       ),
-      MermaidSequenceCompletionProvider()
+      SequenceCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
       psiElement().insideBlock(psiElement(MermaidTokens.Sequence.ALT)),
-      MermaidBranchCompletionProvider("else")
+      BranchCompletionProvider("else")
     )
     extend(
       CompletionType.BASIC,
       psiElement().insideBlock(psiElement(MermaidTokens.Sequence.PAR)),
-      MermaidBranchCompletionProvider("and")
+      BranchCompletionProvider("and")
     )
 
     extend(
       CompletionType.BASIC,
       psiElement(),
-      MermaidTitleCompletionProvider(MermaidTokens.Journey.JOURNEY, MermaidJourneyDocumentImpl::class.java)
+      TitleCompletionProvider(MermaidTokens.Journey.JOURNEY, MermaidJourneyDocumentImpl::class.java)
     )
     extend(
       CompletionType.BASIC,
       psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.Journey.JOURNEY))),
-      MermaidBranchCompletionProvider("section")
+      BranchCompletionProvider("section")
     )
 
     extend(
@@ -91,7 +93,7 @@ class MermaidCompletionContributor : CompletionContributor() {
         not(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)),
         psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)
       ),
-      MermaidClassDiagramSimpleCompletionProvider()
+      ClassDiagramSimpleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
@@ -99,7 +101,7 @@ class MermaidCompletionContributor : CompletionContributor() {
         psiElement().insideBlock(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)),
         psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)))
       ),
-      MermaidClassDiagramCompletionProvider()
+      ClassDiagramCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
@@ -110,16 +112,13 @@ class MermaidCompletionContributor : CompletionContributor() {
           psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM)))
         )
       ),
-      MermaidClassDiagramAnnotationCompletionProvider()
+      ClassDiagramAnnotationCompletionProvider()
     )
 
     extend(
       CompletionType.BASIC,
-      psiElement().afterLeafSkipping(
-        not(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)),
-        psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)
-      ),
-      MermaidStateDiagramSimpleCompletionProvider()
+      psiElement().insideDiagram(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)),
+      StateDiagramSimpleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
@@ -130,7 +129,7 @@ class MermaidCompletionContributor : CompletionContributor() {
           psiElement().inside(psiElement().insideBlock(psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)))
         )
       ),
-      MermaidStateDiagramAnnotationCompletionProvider()
+      StateDiagramAnnotationCompletionProvider()
     )
   }
 
@@ -153,5 +152,39 @@ class MermaidCompletionContributor : CompletionContributor() {
         return false
       }
     })
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.insideDiagram(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {
+    return with(object : PatternCondition<PsiElement>("insideDiagram") {
+      override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
+        val file = psiElement.containingFile
+        for (child in file.children) {
+          if (whitespaceCommentEmptyErrorEolOrDirective().accepts(child, context)) {
+            continue
+          }
+          return pattern.accepts(child, context)
+        }
+        return false
+      }
+    })
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.whitespaceCommentEmptyErrorEolOrDirective(): PsiElementPattern.Capture<PsiElement> {
+    return andOr(
+      psiElement().whitespaceCommentEmptyOrError(),
+      psiElement(MermaidTokens.EOL),
+      psiElement(MermaidDirective::class.java)
+    )
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.diagramHeader(): PsiElementPattern.Capture<PsiElement> {
+    return andOr(
+      psiElement(MermaidElements.PIE_HEADER),
+      psiElement(MermaidElements.FLOWCHART_HEADER),
+      psiElement(MermaidTokens.Sequence.SEQUENCE),
+      psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM),
+      psiElement(MermaidTokens.Journey.JOURNEY),
+      psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)
+    )
   }
 }

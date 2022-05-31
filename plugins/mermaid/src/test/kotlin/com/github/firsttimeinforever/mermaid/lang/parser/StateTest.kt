@@ -616,9 +616,8 @@ class StateTest : MermaidParserTestCase() {
     """.trimIndent()
     val expectedTree = """
     Element(FILE)
-    >Element(COMMENT)
-    >>PsiElement(LINE_COMMENT)
-    >>PsiElement(COMMENT_TEXT)
+    >PsiComment(LINE_COMMENT)
+    >PsiComment(COMMENT_TEXT)
     >PsiElement(EOL)
     >PsiElement(STATE_DIAGRAM)
     >Element(STATE_DOCUMENT)
@@ -633,17 +632,14 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
     >>>>PsiElement(ID)
-    >>PsiWhiteSpace
-    >>Element(STATE_LINE)
-    >>>Element(COMMENT)
-    >>>>PsiElement(LINE_COMMENT)
-    >>>>PsiElement(COMMENT_TEXT)
+    >>>PsiWhiteSpace
+    >>>PsiComment(LINE_COMMENT)
+    >>>PsiComment(COMMENT_TEXT)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
+    >>PsiComment(LINE_COMMENT)
+    >>PsiComment(COMMENT_TEXT)
     >>Element(STATE_LINE)
-    >>>Element(COMMENT)
-    >>>>PsiElement(LINE_COMMENT)
-    >>>>PsiElement(COMMENT_TEXT)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -665,20 +661,16 @@ class StateTest : MermaidParserTestCase() {
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
     >>>>>>PsiElement(ID)
-    >>>>PsiWhiteSpace
-    >>>>Element(INNER_STATE_LINE)
-    >>>>>Element(COMMENT)
-    >>>>>>PsiElement(LINE_COMMENT)
-    >>>>>>PsiElement(COMMENT_TEXT)
+    >>>>>PsiWhiteSpace
+    >>>>>PsiComment(LINE_COMMENT)
+    >>>>>PsiComment(COMMENT_TEXT)
     >>>>>PsiElement(EOL)
     >>>PsiWhiteSpace
     >>>PsiElement(CLOSE_CURLY)
     >>>PsiElement(EOL)
-    >>PsiWhiteSpace
-    >>Element(STATE_LINE)
-    >>>Element(COMMENT)
-    >>>>PsiElement(LINE_COMMENT)
-    >>>>PsiElement(COMMENT_TEXT)
+    >PsiWhiteSpace
+    >PsiComment(LINE_COMMENT)
+    >PsiComment(COMMENT_TEXT)
     """.trimIndent()
     doTest(content, expectedTree)
   }

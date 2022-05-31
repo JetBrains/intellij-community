@@ -10,9 +10,8 @@ class PieTest : MermaidParserTestCase() {
     """.trimIndent()
     val expectedTree = """
     Element(FILE)
-    >Element(COMMENT)
-    >>PsiElement(LINE_COMMENT)
-    >>PsiElement(COMMENT_TEXT)
+    >PsiComment(LINE_COMMENT)
+    >PsiComment(COMMENT_TEXT)
     >PsiElement(EOL)
     >Element(PIE_HEADER)
     >>PsiElement(Pie.PIE)

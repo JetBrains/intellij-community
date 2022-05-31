@@ -1,6 +1,5 @@
 package com.github.firsttimeinforever.mermaid.editor
 
-import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens
 import com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidSubgraphStatementImpl
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
@@ -14,25 +13,16 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 
 class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters>() {
-  private val diagrams = listOf("pie", "journey", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2")
+  private val diagrams =
+    listOf("pie", "journey", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2")
+
   override fun addCompletions(
     parameters: CompletionParameters,
     context: ProcessingContext,
     result: CompletionResultSet
   ) {
     parameters.position.parentOfType<PsiFile>()?.let {
-      if (it.children.all { element ->
-          PlatformPatterns.not(
-            PlatformPatterns.or(
-              PlatformPatterns.psiElement(MermaidTokens.Flowchart.FLOWCHART),
-              PlatformPatterns.psiElement(MermaidTokens.Pie.PIE),
-              PlatformPatterns.psiElement(MermaidTokens.Journey.JOURNEY),
-              PlatformPatterns.psiElement(MermaidTokens.Sequence.SEQUENCE)
-            )
-          ).accepts(element)
-        }) {
-        result.addAllElements(diagrams.map { d -> createKeywordLookupElement(d) })
-      }
+      result.addAllElements(diagrams.map { d -> createKeywordLookupElement(d) })
     }
   }
 
@@ -51,7 +41,7 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
   }
 }
 
-class MermaidTitleCompletionProvider(diagram: IElementType, document: Class<out PsiElement>) :
+class TitleCompletionProvider(diagram: IElementType, document: Class<out PsiElement>) :
   CompletionProvider<CompletionParameters>() {
 
   private val pattern = PlatformPatterns.psiElement().withParent(
@@ -74,7 +64,7 @@ class MermaidTitleCompletionProvider(diagram: IElementType, document: Class<out 
   }
 }
 
-class MermaidBranchCompletionProvider(private val branch: String) :
+class BranchCompletionProvider(private val branch: String) :
   MermaidLiveTemplateCompletionProvider(deleteIndent = true) {
   override fun addCompletions(
     parameters: CompletionParameters,
@@ -98,7 +88,7 @@ open class MermaidSimpleCompletionProvider(private val keywords: List<String>) :
   }
 }
 
-class MermaidFlowchartCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+class FlowchartCompletionProvider : MermaidLiveTemplateCompletionProvider() {
   override fun addCompletions(
     parameters: CompletionParameters,
     context: ProcessingContext,
@@ -118,12 +108,12 @@ class MermaidFlowchartCompletionProvider : MermaidLiveTemplateCompletionProvider
   }
 }
 
-class MermaidDirectionCompletionProvider :
+class DirectionCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("LR", "RL", "TB", "BT", "TD", "BR", "<", ">", "^", "v"))
 
-class MermaidPieShowDataCompletionProvider : MermaidSimpleCompletionProvider(listOf("showData"))
+class PieShowDataCompletionProvider : MermaidSimpleCompletionProvider(listOf("showData"))
 
-class MermaidSequenceCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+class SequenceCompletionProvider : MermaidLiveTemplateCompletionProvider() {
   private val keywords = listOf("loop", "alt", "opt", "par", "rect")
 
   override fun addCompletions(
@@ -136,9 +126,9 @@ class MermaidSequenceCompletionProvider : MermaidLiveTemplateCompletionProvider(
   }
 }
 
-class MermaidClassDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(listOf("class", "direction"))
+class ClassDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(listOf("class", "direction"))
 
-class MermaidClassDiagramCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+class ClassDiagramCompletionProvider : MermaidLiveTemplateCompletionProvider() {
   private val keywords = listOf("<<", "~")
   override fun addCompletions(
     parameters: CompletionParameters,
@@ -150,10 +140,11 @@ class MermaidClassDiagramCompletionProvider : MermaidLiveTemplateCompletionProvi
   }
 }
 
-class MermaidClassDiagramAnnotationCompletionProvider :
+class ClassDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("interface", "abstract", "service", "enumeration"))
 
-class MermaidStateDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(listOf("state", "direction", "as", "note", "end"))
+class StateDiagramSimpleCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("state", "direction", "as", "note", "end"))
 
-class MermaidStateDiagramAnnotationCompletionProvider :
+class StateDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("choice", "fork", "join"))

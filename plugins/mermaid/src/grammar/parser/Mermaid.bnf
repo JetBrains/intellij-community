@@ -21,7 +21,7 @@
 }
 
 file ::= start
-private start ::= EOL start | comment start | directive start | diagram
+private start ::= EOL start | directive start | diagram
 
 private diagram ::= pieHeader pieDocument
 	| JOURNEY journeyDocument
@@ -40,7 +40,6 @@ pieLine ::= pieStatement [EOL] | EOL
 private pieStatement ::= string COLON VALUE
 	| TITLE TITLE_VALUE
 	| directive
-	| comment
 
 
 journeyDocument ::= journeyLines
@@ -50,7 +49,6 @@ private journeyStatement ::= TASK_NAME COLON (IGNORED | TASK_DATA (COLON TASK_DA
 	| SECTION SECTION_TITLE
 	| TITLE TITLE_VALUE
 	| directive
-	| comment
 
 
 flowchartHeader ::= FLOWCHART [DIR]
@@ -65,7 +63,6 @@ private flowchartStatement ::= vertex_statement (separator vertex_statement)*
 	| class_def_statement
 	| class_statement
 //	| directive
-	| comment
 
 private separator ::= EOL | SEMICOLON
 vertex_statement ::= node_statement [link_statement vertex_statement]
@@ -118,7 +115,7 @@ private sequenceStatement ::= (PARTICIPANT | ACTOR) identifier [AS idAlias]
 	| ALT [MESSAGE] elseSections END
 	| PAR [MESSAGE] parSections END
 	| directive
-  | comment
+
 idAlias ::= ALIAS+
 
 signalStatement ::= identifier signalType [PLUS | MINUS] identifier COLON MESSAGE
@@ -153,7 +150,6 @@ private classDiagramStatement ::= DIRECTION DIR
   | memberStatement
   | annotationStatement
 	| directive
-  | comment
 
 classStatement ::= CLASS ID [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR ID] [OPEN_CURLY members CLOSE_CURLY]
 
@@ -165,7 +161,7 @@ annotationStatement ::= annotation ID
 annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
 private members ::= memberLine [members]
-memberLine ::= (attrOrMethod | annotation | directive | comment) [EOL] | EOL
+memberLine ::= (attrOrMethod | annotation | directive) [EOL] | EOL
 attrOrMethod ::= [visibilityAtStart] (method | attribute)
 visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
 visibilityAtEnd ::= STAR | DOLLAR
@@ -203,7 +199,6 @@ private stateDiagramStatement ::= state_id [ COLON LABEL | ARROW state_id [COLON
   | MINUS MINUS
   | DIRECTION DIR
 	| directive
-  | comment
 
 innerStateDocument ::= innerStateLines
 private innerStateLines ::= innerStateLine [innerStateLines]
@@ -215,9 +210,7 @@ description ::= string
 private noteContent ::= (EOL NOTE_CONTENT)* [EOL] END
   | COLON [NOTE_CONTENT]
 
-comment ::= LINE_COMMENT [COMMENT_TEXT]
-
-directive ::= OPEN_DIRECTIVE directiveContent CLOSE_DIRECTIVE
+directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
 private directiveContent ::= property [COMMA directiveContent]
 property ::= directiveKey COLON directiveValue
 directiveKey ::= string | DIRECTIVE_TEXT
