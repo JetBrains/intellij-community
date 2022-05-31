@@ -77,7 +77,8 @@ class MermaidLineIndentProvider : LineIndentProvider {
             MermaidTokens.Sequence.RECT,
             MermaidTokens.ClassDiagram.CLASS_DIAGRAM,
             MermaidTokens.OPEN_CURLY,
-            MermaidTokens.StateDiagram.STATE_DIAGRAM
+            MermaidTokens.StateDiagram.STATE_DIAGRAM,
+            MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP
           )
         ) {
           return getIndentString(editor, position.getStartOffset(), true)

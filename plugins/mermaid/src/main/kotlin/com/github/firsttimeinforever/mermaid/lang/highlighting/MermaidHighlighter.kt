@@ -110,6 +110,26 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
   }
 
+  private fun getEntityRelationshipDiagramHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP -> arrayOf(MermaidTextAttributes.keyword)
+
+      MermaidTokens.EntityRelationship.ZERO_OR_ONE_LEFT,
+      MermaidTokens.EntityRelationship.ONE_OR_MORE_LEFT,
+      MermaidTokens.EntityRelationship.ZERO_OR_MORE_LEFT,
+      MermaidTokens.EntityRelationship.ONLY_ONE,
+      MermaidTokens.EntityRelationship.ZERO_OR_ONE_RIGHT,
+      MermaidTokens.EntityRelationship.ONE_OR_MORE_RIGHT,
+      MermaidTokens.EntityRelationship.ZERO_OR_MORE_RIGHT,
+      MermaidTokens.EntityRelationship.IDENTIFYING,
+      MermaidTokens.EntityRelationship.NON_IDENTIFYING -> arrayOf(MermaidTextAttributes.operationSign)
+
+      MermaidTokens.EntityRelationship.ATTR_KEY -> arrayOf(MermaidTextAttributes.constant)
+
+      else -> null
+    }
+  }
+
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
     val pieHighlights = getPieHighlights(tokenType)
     val journeyHighlighter = getJourneyHighlights(tokenType)
@@ -117,12 +137,14 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     val sequenceHighlighter = getSequenceHighlights(tokenType)
     val classDiagramHighlights = getClassDiagramHighlights(tokenType)
     val stateDiagramHighlights = getStateDiagramHighlights(tokenType)
+    val entityRelationshipDiagramHighlights = getEntityRelationshipDiagramHighlights(tokenType)
     return pieHighlights
       ?: journeyHighlighter
       ?: flowchartHighlighter
       ?: sequenceHighlighter
       ?: classDiagramHighlights
       ?: stateDiagramHighlights
+      ?: entityRelationshipDiagramHighlights
       ?: when (tokenType) {
         MermaidTokens.END,
         MermaidTokens.TITLE,

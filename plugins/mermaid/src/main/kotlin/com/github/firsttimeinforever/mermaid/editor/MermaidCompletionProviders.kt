@@ -14,7 +14,7 @@ import com.intellij.util.ProcessingContext
 
 class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters>() {
   private val diagrams =
-    listOf("pie", "journey", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2")
+    listOf("pie", "journey", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2", "erDiagram")
 
   override fun addCompletions(
     parameters: CompletionParameters,

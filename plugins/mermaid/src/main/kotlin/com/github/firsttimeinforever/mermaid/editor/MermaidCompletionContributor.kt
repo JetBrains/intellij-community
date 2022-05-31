@@ -184,7 +184,8 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement(MermaidTokens.Sequence.SEQUENCE),
       psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM),
       psiElement(MermaidTokens.Journey.JOURNEY),
-      psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM)
+      psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM),
+      psiElement(MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP)
     )
   }
 }

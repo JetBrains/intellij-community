@@ -16,6 +16,7 @@
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Sequence.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.StateDiagram.*'
+    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EntityRelationship.*'
   ]
   generateTokens=false
 }
@@ -29,6 +30,7 @@ private diagram ::= pieHeader pieDocument
 	| SEQUENCE sequenceDocument
 	| CLASS_DIAGRAM classDocument
 	| STATE_DIAGRAM stateDocument
+	| ENTITY_RELATIONSHIP erDocument
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
@@ -56,20 +58,20 @@ flowchartHeader ::= FLOWCHART [DIR]
 flowchartDocument ::= flowchartLines
 private flowchartLines ::= (flowchartLine | IGNORED) [flowchartLines]
 flowchartLine ::= flowchartStatement [separator] | separator
-private flowchartStatement ::= vertex_statement (separator vertex_statement)*
-	| subgraph_statement
-	| style_statement
-	| link_style_statement
-	| class_def_statement
-	| class_statement
+private flowchartStatement ::= vertexStatement (separator vertexStatement)*
+	| subgraphStatement
+	| styleStatement
+	| linkStyleStatement
+	| classDefStatement
+	| flowchartClassStatement
 //	| directive
 
 private separator ::= EOL | SEMICOLON
-vertex_statement ::= node_statement [link_statement vertex_statement]
-link_statement ::= START_ARROW LINK_TEXT ARROW | ARROW [SEP LINK_TEXT SEP]
-node_statement ::= vertex STYLE_SEPARATOR STYLE_TARGET | vertex [AMPERSAND node_statement]
-vertex ::= identifier [vertex_text]
-vertex_text ::= OPEN_SQUARE ALIAS CLOSE_SQUARE
+vertexStatement ::= nodeStatement [flowchartLinkStatement vertexStatement]
+flowchartLinkStatement ::= START_ARROW LINK_TEXT ARROW | ARROW [SEP LINK_TEXT SEP]
+nodeStatement ::= vertex STYLE_SEPARATOR STYLE_TARGET | vertex [AMPERSAND nodeStatement]
+vertex ::= identifier [vertexText]
+vertexText ::= OPEN_SQUARE ALIAS CLOSE_SQUARE
 							| OPEN_ROUND ALIAS CLOSE_ROUND
 							| STADIUM_START ALIAS STADIUM_END
 							| SUBROUTINE_START ALIAS SUBROUTINE_END
@@ -84,18 +86,18 @@ vertex_text ::= OPEN_SQUARE ALIAS CLOSE_SQUARE
 							| INV_TRAP_START ALIAS INV_TRAP_END
 							| DOUBLE_CIRCLE_START ALIAS DOUBLE_CIRCLE_END
 
-subgraph_statement ::= SUBGRAPH ID separator (DIRECTION DIR separator | flowchartDocument)* END
+subgraphStatement ::= SUBGRAPH ID separator (DIRECTION DIR separator | flowchartDocument)* END
 
-style_statement ::= STYLE STYLE_TARGET style_options
+styleStatement ::= STYLE STYLE_TARGET styleOptions
 
-link_style_statement ::= LINK_STYLE link_style_target style_options
-private link_style_target ::= STYLE_TARGET (COMMA STYLE_TARGET)* | DEFAULT
+linkStyleStatement ::= LINK_STYLE linkStyleTarget styleOptions
+private linkStyleTarget ::= STYLE_TARGET (COMMA STYLE_TARGET)* | DEFAULT
 
-class_def_statement ::= CLASS_DEF (STYLE_TARGET | DEFAULT) style_options
+classDefStatement ::= CLASS_DEF (STYLE_TARGET | DEFAULT) styleOptions
 
-class_statement ::= CLASS ID (COMMA ID)* STYLE_TARGET
+flowchartClassStatement ::= CLASS ID (COMMA ID)* STYLE_TARGET
 
-style_options ::= STYLE_OPT COLON STYLE_VAL (COMMA  STYLE_OPT COLON STYLE_VAL)*
+styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA  STYLE_OPT COLON STYLE_VAL)*
 
 
 sequenceDocument ::= sequenceLines
@@ -166,9 +168,10 @@ attrOrMethod ::= [visibilityAtStart] (method | attribute)
 visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
 visibilityAtEnd ::= STAR | DOLLAR
 
-attribute ::= attrType attrName [visibilityAtEnd] | attrName [COLON attrType]
-method ::= attrName OPEN_ROUND [attribute] CLOSE_ROUND [visibilityAtEnd] [attrType]
-attrType ::= ID (TILDA GENERIC_TYPE TILDA)?
+attribute ::= attrTypeWithGeneric attrName [visibilityAtEnd] | attrName [COLON attrTypeWithGeneric]
+method ::= attrName OPEN_ROUND [attribute] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric]
+attrType ::= ID
+attrTypeWithGeneric ::= attrType (TILDA GENERIC_TYPE TILDA)?
 attrName ::= ID
 
 
@@ -191,11 +194,11 @@ lineType ::= LINE | DOTTED_LINE
 stateDocument ::= stateLines
 private stateLines ::= stateLine [stateLines]
 stateLine ::= stateDiagramStatement [EOL] | EOL
-private stateDiagramStatement ::= state_id [ COLON LABEL | ARROW state_id [COLON LABEL] ]
-  | STATE description AS state_id
-  | STATE state_id OPEN_CURLY innerStateDocument CLOSE_CURLY
-  | STATE state_id ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
-  | NOTE (RIGHT_OF | LEFT_OF) state_id noteContent
+private stateDiagramStatement ::= stateId [ COLON LABEL | ARROW stateId [COLON LABEL] ]
+  | STATE description AS stateId
+  | STATE stateId OPEN_CURLY innerStateDocument CLOSE_CURLY
+  | STATE stateId ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
+  | NOTE (RIGHT_OF | LEFT_OF) stateId noteContent
   | MINUS MINUS
   | DIRECTION DIR
 	| directive
@@ -205,10 +208,28 @@ private innerStateLines ::= innerStateLine [innerStateLines]
 innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
 private innerStateDiagramStatement ::= stateDiagramStatement | MINUS MINUS
 
-state_id ::= ID | OPEN_SQUARE STAR CLOSE_SQUARE
+stateId ::= ID | OPEN_SQUARE STAR CLOSE_SQUARE
 description ::= string
 private noteContent ::= (EOL NOTE_CONTENT)* [EOL] END
   | COLON [NOTE_CONTENT]
+
+
+erDocument ::= erLines
+private erLines ::= erLine [erLines]
+erLine ::= erStatement [EOL] | EOL
+private erStatement ::= ID [entityStatement]
+	| directive
+
+private entityStatement ::= relationship ID COLON (LABEL | string)
+  | OPEN_CURLY erAttributesLines CLOSE_CURLY
+
+relationship ::= relationshipLeft (IDENTIFYING | NON_IDENTIFYING) relationshipRight
+private relationshipLeft ::= ZERO_OR_ONE_LEFT | ONE_OR_MORE_LEFT | ZERO_OR_MORE_LEFT | ONLY_ONE
+private relationshipRight ::= ZERO_OR_ONE_RIGHT | ONE_OR_MORE_RIGHT | ZERO_OR_MORE_RIGHT | ONLY_ONE
+
+private erAttributesLines ::= erAttributeLine [erAttributesLines]
+erAttributeLine ::= erAttribute [EOL] | EOL
+erAttribute ::= attrType attrName [ATTR_KEY] [string]
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
 private directiveContent ::= property [COMMA directiveContent]
@@ -217,5 +238,5 @@ directiveKey ::= string | DIRECTIVE_TEXT
 directiveValue ::= string | DIRECTIVE_TEXT | object
 object ::= OPEN_CURLY directiveContent CLOSE_CURLY
 
-string ::= DOUBLE_QUOTE STRING_VALUE DOUBLE_QUOTE
+string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
 identifier ::= ID+
