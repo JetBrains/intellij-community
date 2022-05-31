@@ -34,13 +34,13 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
+import org.jetbrains.kotlin.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
@@ -80,7 +80,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         allKotlinFilesScope
     )
 
-    override fun getAcceptedFileTypes(): Set<FileType> = KotlinFileTypeFactoryUtils.KOTLIN_FILE_TYPES_SET
+    override fun getAcceptedFileTypes(): Set<FileType> = KOTLIN_FILE_TYPES
 
     override fun evaluateCondition(
         context: EvaluationContext,

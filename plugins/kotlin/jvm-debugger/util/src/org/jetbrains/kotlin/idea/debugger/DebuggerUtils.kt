@@ -12,8 +12,8 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
+import org.jetbrains.kotlin.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil.findFilesWithExactPackage
 import org.jetbrains.kotlin.idea.stubindex.StaticFacadeIndexUtil
@@ -95,7 +95,7 @@ object DebuggerUtils {
 
     fun isKotlinSourceFile(fileName: String): Boolean {
         val extension = FileUtilRt.getExtension(fileName).lowercase(Locale.getDefault())
-        return extension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
+        return extension in KOTLIN_FILE_EXTENSIONS
     }
 
     fun String.trimIfMangledInBytecode(isMangledInBytecode: Boolean): String =

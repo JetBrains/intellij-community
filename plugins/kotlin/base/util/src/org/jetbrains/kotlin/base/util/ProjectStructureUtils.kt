@@ -14,6 +14,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Paths
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.KotlinFileType
+
+val KOTLIN_FILE_EXTENSIONS: Set<String> = setOf("kt", "kts")
+val KOTLIN_FILE_TYPES: Set<KotlinFileType> = setOf(KotlinFileType.INSTANCE)
 
 fun Module.isAndroidModule(modelsProvider: IdeModifiableModelsProvider? = null): Boolean {
     val facetModel = modelsProvider?.getModifiableFacetModel(this) ?: FacetManager.getInstance(this)

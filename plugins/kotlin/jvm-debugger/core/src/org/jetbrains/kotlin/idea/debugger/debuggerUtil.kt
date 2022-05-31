@@ -10,12 +10,12 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
+import org.jetbrains.kotlin.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.codegen.topLevelClassAsmType
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineEndOffset
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
@@ -36,14 +36,14 @@ fun Location.isInKotlinSources(): Boolean {
 
 fun ReferenceType.isInKotlinSources(): Boolean {
     val fileExtension = safeSourceName()?.substringAfterLast('.')?.toLowerCase() ?: ""
-    return fileExtension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS || containsKotlinStrata()
+    return fileExtension in KOTLIN_FILE_EXTENSIONS || containsKotlinStrata()
 }
 
 fun ReferenceType.isInKotlinSourcesAsync(): CompletableFuture<Boolean> {
     return DebuggerUtilsAsync.sourceName(this)
         .thenApply {
             val fileExtension = it?.substringAfterLast('.')?.toLowerCase() ?: ""
-            fileExtension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
+            fileExtension in KOTLIN_FILE_EXTENSIONS
         }
         .exceptionally {
             if (DebuggerUtilsAsync.unwrap(it) is AbsentInformationException) {
