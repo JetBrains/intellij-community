@@ -17,7 +17,9 @@ abstract class BoundedRangeModelThresholdListener(
 
   override fun stateChanged(e: ChangeEvent) {
     if (model.valueIsAdjusting) return
-    if (isAtThreshold()) onThresholdReached()
+    if (isAtThreshold()) {
+      onThresholdReached()
+    }
   }
 
   abstract fun onThresholdReached()
