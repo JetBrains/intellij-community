@@ -89,6 +89,8 @@ public class MavenProjectTreeImporterToWorkspaceModelTest extends MavenMultiVers
                     "</dependencies>");
     createProjectSubFile("m2/src/main/java/com/B.java", "package com; class B {}");
     createProjectSubFile("m2/src/test/java/com/BTest.java", "package com; class BTest {}");
+    createProjectSubFile("m2/src/main/resources/test.txt", "resource");
+    createProjectSubFile("m2/src/test/resources/test.txt", "test resource");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
