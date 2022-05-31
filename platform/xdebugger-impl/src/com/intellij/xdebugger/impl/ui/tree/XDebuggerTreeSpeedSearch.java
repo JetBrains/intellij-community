@@ -158,6 +158,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       .setPreferredPosition(Balloon.Position.above)
       .setAwtTooltip(true)
       .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setBorderColor(HintUtil.getHintBorderColor())
       .setTextBg(HintUtil.getInformationColor())
       .setShowImmediately(true);
 

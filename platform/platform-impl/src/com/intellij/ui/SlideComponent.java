@@ -127,7 +127,7 @@ class SlideComponent extends JComponent {
 
       final HintHint hint = new HintHint(this, point)
         .setPreferredPosition(myVertical ? Balloon.Position.atLeft : Balloon.Position.above)
-        .setBorderColor(Color.BLACK)
+        .setBorderColor(HintUtil.getHintBorderColor())
         .setAwtTooltip(true)
         .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
         .setTextBg(HintUtil.getInformationColor())

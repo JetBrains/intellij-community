@@ -1041,6 +1041,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
       .setPreferredPosition(above ? Balloon.Position.above : Balloon.Position.below)
       .setAwtTooltip(true)
       .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setBorderColor(HintUtil.getHintBorderColor())
       .setTextBg(HintUtil.getInformationColor())
       .setShowImmediately(true);
   }

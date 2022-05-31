@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -219,6 +220,12 @@ public class HintHint {
     myTextFg = component.getForeground();
     myTextBg = component.getBackground();
     myFont = component.getFont();
+    if (component instanceof HintUtil.HintLabel) {
+      HintHint componentHintLabel = ((HintUtil.HintLabel)component).getHintHint();
+      if (componentHintLabel != null) {
+        setBorderColor(componentHintLabel.getBorderColor());
+      }
+    }
   }
 
   public HintHint setTextFg(Color textFg) {
