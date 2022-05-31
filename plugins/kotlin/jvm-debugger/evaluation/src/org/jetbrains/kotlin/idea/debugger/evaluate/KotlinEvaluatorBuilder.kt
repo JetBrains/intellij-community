@@ -31,8 +31,6 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
-import org.jetbrains.kotlin.idea.core.util.attachmentByPsiFile
-import org.jetbrains.kotlin.idea.core.util.mergeAttachments
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus.EvaluationContextLanguage
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches.Companion.compileCodeFragmentCacheAware
@@ -47,6 +45,8 @@ import org.jetbrains.kotlin.idea.debugger.safeLocation
 import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.idea.debugger.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
+import org.jetbrains.kotlin.idea.util.application.merge
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -533,7 +533,7 @@ private fun reportError(codeFragment: KtCodeFragment, position: SourcePosition?,
     runReadAction {
         val contextFile = codeFragment.context?.containingFile
 
-        val attachments = arrayOf(
+        val attachments = listOfNotNull(
             attachmentByPsiFile(contextFile),
             attachmentByPsiFile(codeFragment),
             Attachment("breakpoint.info", "Position: " + position?.run { "${file.name}:$line" }),
@@ -544,7 +544,7 @@ private fun reportError(codeFragment: KtCodeFragment, position: SourcePosition?,
         LOG.error(
             "Cannot evaluate a code fragment of type ${codeFragment::class.java}: $decapitalizedMessage",
             throwable,
-            mergeAttachments(*attachments)
+            attachments.merge()
         )
     }
 }
