@@ -53,7 +53,16 @@ class ExperimentalUIImpl : ExperimentalUI() {
     val mgr = LafManager.getInstance() as LafManagerImpl
     val currentLafName = mgr.currentLookAndFeel?.name
     if (currentLafName == "Dark" || currentLafName == "Light") {
-      mgr.setCurrentLookAndFeel(if (JBColor.isBright()) mgr.defaultLightLaf else mgr.defaultDarkLaf)
+      val laf = if (JBColor.isBright()) mgr.defaultLightLaf else mgr.defaultDarkLaf
+      mgr.setCurrentLookAndFeel(laf)
+      if (mgr.autodetect) {
+        if (JBColor.isBright()) {
+          mgr.setPreferredLightLaf(laf)
+        }
+        else {
+          mgr.setPreferredDarkLaf(laf)
+        }
+      }
     }
     ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
   }
