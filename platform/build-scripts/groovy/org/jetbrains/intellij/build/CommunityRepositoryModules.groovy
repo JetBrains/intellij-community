@@ -43,7 +43,7 @@ final class CommunityRepositoryModules {
       mainJarName = "uiDesigner.jar"
       withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
-    KotlinPluginBuilder.kotlinPlugin(),
+    KotlinPluginBuilder.kotlinPlugin(KotlinPluginBuilder.KotlinUltimateSources.WITH_COMMUNITY_MODULES),
     plugin("intellij.properties") {
       withModule("intellij.properties.psi", "properties.jar")
       withModule("intellij.properties.psi.impl", "properties.jar")

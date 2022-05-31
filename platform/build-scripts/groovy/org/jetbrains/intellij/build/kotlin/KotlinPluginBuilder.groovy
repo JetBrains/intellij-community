@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.ArchiveKt
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -172,28 +173,20 @@ final class KotlinPluginBuilder {
     this.properties = properties
   }
 
-  static PluginLayout kotlinPlugin() {
+  static PluginLayout kotlinPlugin(KotlinUltimateSources ultimateSources) {
     return kotlinPlugin(
       KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
       KotlinPluginType.valueOf(System.getProperty("kotlin.plugin.type", KotlinPluginType.FE10.name())),
+      ultimateSources,
     )
   }
 
-  static PluginLayout kotlinPlugin(KotlinPluginKind kind, KotlinPluginType type) {
+  static PluginLayout kotlinPlugin(KotlinPluginKind kind, KotlinPluginType type, KotlinUltimateSources ultimateSources) {
     return PluginLayoutGroovy.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
       switch (kind) {
         default:
           directoryName = "Kotlin"
           mainJarName = "kotlin-plugin.jar"
-      }
-
-      boolean isUltimate
-      try {
-        Class.forName("org.jetbrains.intellij.build.IdeaUltimateProperties")
-        isUltimate = true
-      }
-      catch (ClassNotFoundException ignored) {
-        isUltimate = false
       }
 
       for (String moduleName : MODULES + type.additionalModules) {
@@ -206,7 +199,7 @@ final class KotlinPluginBuilder {
         withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
       }
 
-      if (isUltimate && kind == KotlinPluginKind.IJ) {
+      if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES && kind == KotlinPluginKind.IJ) {
         withModule("kotlin-ultimate.common-native")
         withModule("kotlin-ultimate.common-for-kotlin")
         //noinspection SpellCheckingInspection
@@ -350,7 +343,7 @@ final class KotlinPluginBuilder {
         }
       })
 
-      if (kind == KotlinPluginKind.IJ && isUltimate) {
+      if (kind == KotlinPluginKind.IJ && ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
         // TODO KTIJ-11539 change to `System.getenv("TEAMCITY_VERSION") == null` later but make sure
         //  that `IdeaUltimateBuildTest.testBuild` passes on TeamCity
         boolean skipIfDoesntExist = true
@@ -367,7 +360,12 @@ final class KotlinPluginBuilder {
 
   private static String replace(String oldText, String regex, String newText) {
     String result = oldText.replaceFirst(regex, newText)
-    if (result == oldText && /* Update IDE from Sources */!oldText.contains(newText)) {
+    if (result == oldText) {
+      if (oldText.contains(newText) && !TeamCityHelper.isUnderTeamCity) {
+        // Locally e.g. in 'Update IDE from Sources' allow data to be already present
+        return result
+      }
+
       throw new IllegalStateException("Cannot find '$regex' in '$oldText'")
     }
     return result
@@ -391,6 +389,10 @@ final class KotlinPluginBuilder {
     }
   }
 
+  enum KotlinUltimateSources {
+    WITH_COMMUNITY_MODULES,
+    WITH_ULTIMATE_MODULES,
+  }
 
   enum KotlinPluginKind {
     IJ, AS, MI,
