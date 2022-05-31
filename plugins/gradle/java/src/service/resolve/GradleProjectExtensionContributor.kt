@@ -51,6 +51,7 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
       val type = GradleExtensionType(delegateType)
       if (processProperties) {
         val extensionProperty = GradleExtensionProperty(extension.name, type, containingFile)
+        extensionProperty.navigationElement = delegateType.resolve() ?: extensionProperty
         if (!processor.execute(extensionProperty, state)) {
           return
         }
