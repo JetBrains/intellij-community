@@ -11,6 +11,9 @@ abstract class SearchEverywhereMlService {
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereMlService> = ExtensionPointName.create("com.intellij.searchEverywhereMlService")
 
+    /**
+     * Returns an instance of the service if Machine Learning in Search Everywhere is enabled (see [isEnabled]), null otherwise.
+     */
     @JvmStatic
     fun getInstance(): SearchEverywhereMlService? {
       val extensions = EP_NAME.extensions
@@ -19,9 +22,16 @@ abstract class SearchEverywhereMlService {
         logger.warn("Multiple implementations of ${SearchEverywhereMlService::class.java.name}. Using the first.")
       }
 
-      return extensions.firstOrNull()
+      return extensions.firstOrNull()?.takeIf { it.isEnabled() }
     }
   }
+
+  /**
+   * Indicates whether machine learning in Search Everywhere is enabled.
+   * This method can return false if ML-ranking is disabled and no experiments are allowed
+   * (see [com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlExperiment.isAllowed])
+   */
+  abstract fun isEnabled(): Boolean
 
   abstract fun shouldOrderByMl(): Boolean
 

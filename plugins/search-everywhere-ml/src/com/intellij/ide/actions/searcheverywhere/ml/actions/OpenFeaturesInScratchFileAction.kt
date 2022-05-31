@@ -32,7 +32,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
   private fun shouldActionBeEnabled(e: AnActionEvent): Boolean {
     val seManager = SearchEverywhereManager.getInstance(e.project)
-    val session = SearchEverywhereMlSessionService.getService().getCurrentSession()
+    val session = SearchEverywhereMlSessionService.getService()?.getCurrentSession()
 
     return e.project != null
            && seManager.isShown
@@ -52,7 +52,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   }
 
   private fun getFeaturesReport(searchEverywhereUI: SearchEverywhereUI): Map<String, Any> {
-    val mlSessionService = SearchEverywhereMlSessionService.getService()
+    val mlSessionService = SearchEverywhereMlSessionService.getService() ?: return emptyMap()
     val searchSession = mlSessionService.getCurrentSession()!!
     val state = searchSession.getCurrentSearchState()
 

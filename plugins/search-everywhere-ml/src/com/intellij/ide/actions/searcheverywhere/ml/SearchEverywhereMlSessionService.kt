@@ -12,13 +12,18 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   companion object {
     internal const val RECORDER_CODE = "MLSE"
 
-    fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlSessionService::class.java)
+    fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlSessionService::class.java).takeIf { it.isEnabled() }
   }
 
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
   private val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
+
+  override fun isEnabled(): Boolean {
+    val settings = service<SearchEverywhereMlSettings>()
+    return settings.isSortingByMlEnabledInAnyTab() || experiment.isAllowed
+  }
 
   override fun shouldOrderByMl(): Boolean {
     val state = getCurrentSession()?.getCurrentSearchState()
@@ -36,14 +41,14 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   }
 
   fun getCurrentSession(): SearchEverywhereMLSearchSession? {
-    if (experiment.isAllowed) {
+    if (isEnabled()) {
       return activeSession.get()
     }
     return null
   }
 
   override fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo) {
-    if (experiment.isAllowed) {
+    if (isEnabled()) {
       activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet()) }
     }
   }
@@ -55,12 +60,12 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
                                backspacesTyped: Int,
                                searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    if (experiment.isAllowed) {
-      val orderByMl = shouldOrderByMlInTab(tabId)
-      getCurrentSession()?.onSearchRestart(
-        project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, previousElementsProvider
-      )
-    }
+    if (!isEnabled()) return
+
+    val orderByMl = shouldOrderByMlInTab(tabId)
+    getCurrentSession()?.onSearchRestart(
+      project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, previousElementsProvider
+    )
   }
 
   private fun shouldOrderByMlInTab(tabId: String): Boolean {
@@ -79,21 +84,15 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
   override fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    if (experiment.isAllowed) {
-      getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, elementsProvider)
-    }
+    getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, elementsProvider)
   }
 
   override fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    if (experiment.isAllowed) {
-      getCurrentSession()?.onSearchFinished(project, experiment, elementsProvider)
-    }
+    getCurrentSession()?.onSearchFinished(project, experiment, elementsProvider)
   }
 
   override fun notifySearchResultsUpdated() {
-    if (experiment.isAllowed) {
-      getCurrentSession()?.notifySearchResultsUpdated()
-    }
+    getCurrentSession()?.notifySearchResultsUpdated()
   }
 
   override fun onDialogClose() {
