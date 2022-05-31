@@ -13,6 +13,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.zip.Deflater
 import kotlin.io.path.extension
 import kotlin.io.path.name
 
@@ -80,13 +81,13 @@ class DirectorySpec(originalFile: Path? = null) : DirectorySpecBase(originalFile
   }
 }
 
-class ZipSpec : DirectorySpecBase(null) {
+class ZipSpec(val level: Int = Deflater.DEFAULT_COMPRESSION) : DirectorySpecBase(null) {
   override fun generate(target: File) {
     val contentDir = FileUtil.createTempDirectory("zip-content", null, false)
     try {
       generateInDirectory(contentDir)
       FileUtil.createParentDirs(target)
-      Compressor.Zip(target).use { it.addDirectory(contentDir) }
+      Compressor.Zip(target).withLevel(level).use { it.addDirectory(contentDir) }
     }
     finally {
       FileUtil.delete(contentDir)

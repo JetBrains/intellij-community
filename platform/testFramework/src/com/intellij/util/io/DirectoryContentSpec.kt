@@ -9,6 +9,7 @@ import com.intellij.util.io.impl.*
 import org.junit.rules.ErrorCollector
 import java.io.File
 import java.nio.file.Path
+import java.util.zip.Deflater
 
 /**
  * Builds a data structure specifying content (files, their content, sub-directories, archives) of a directory. It can be used to either check
@@ -58,7 +59,15 @@ abstract class DirectoryContentBuilder {
   }
 
   inline fun zip(name: String, content: DirectoryContentBuilder.() -> Unit) {
-    val zipDefinition = ZipSpec()
+    zip(name, Deflater.DEFAULT_COMPRESSION, content)
+  }
+
+  inline fun uncompressedZip(name: String, content: DirectoryContentBuilder.() -> Unit) {
+    zip(name, Deflater.NO_COMPRESSION, content)
+  }
+
+  inline fun zip(name: String, compression: Int, content: DirectoryContentBuilder.() -> Unit) {
+    val zipDefinition = ZipSpec(compression)
     DirectoryContentBuilderImpl(zipDefinition).content()
     addChild(name, zipDefinition)
   }
