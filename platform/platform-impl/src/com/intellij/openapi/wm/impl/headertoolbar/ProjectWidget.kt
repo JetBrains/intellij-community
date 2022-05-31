@@ -145,12 +145,15 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
   private class MyStep(private val actionsMap: Map<AnAction, Presentation?>, private val widget: Component): ListPopupStep<AnAction> {
     private val actions: List<AnAction> = actionsMap.keys.toList()
     private val presentationMapper: (AnAction?) -> Presentation? = { action -> action?.let { actionsMap[it] } }
+    private var finalRunnable: Runnable? = null
 
     override fun getTitle(): String? = null
 
     override fun onChosen(selectedValue: AnAction?, finalChoice: Boolean): PopupStep<*>? {
-      val context = DataManager.getInstance().getDataContext(widget)
-      selectedValue?.actionPerformed(AnActionEvent.createFromDataContext("", selectedValue.templatePresentation, context))
+      finalRunnable = Runnable {
+        val context = DataManager.getInstance().getDataContext(widget)
+        selectedValue?.actionPerformed(AnActionEvent.createFromDataContext("", selectedValue.templatePresentation, context))
+      }
       return PopupStep.FINAL_CHOICE
     }
 
@@ -169,7 +172,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
     override fun isAutoSelectionEnabled(): Boolean = false
 
-    override fun getFinalRunnable(): Runnable? = null
+    override fun getFinalRunnable(): Runnable? = finalRunnable
 
     override fun getValues(): MutableList<AnAction> = actions.toMutableList()
 
