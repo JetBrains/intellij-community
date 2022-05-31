@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,35 +77,5 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     return findMatchingElement(element, editor) != null;
-  }
-
-  private String getPrefix() {
-    final Class<? extends Intention> aClass = getClass();
-    final String name = aClass.getSimpleName();
-    final StringBuilder buffer = new StringBuilder(name.length() + 10);
-    buffer.append(Character.toLowerCase(name.charAt(0)));
-    for (int i = 1; i < name.length(); i++) {
-      final char c = name.charAt(i);
-      if (Character.isUpperCase(c)) {
-        buffer.append('.');
-        buffer.append(Character.toLowerCase(c));
-      }
-      else {
-        buffer.append(c);
-      }
-    }
-    return buffer.toString();
-  }
-
-  @Override
-  @NotNull
-  public String getText() {
-    return IntentionPowerPackBundle.message(getPrefix() + ".name");
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return IntentionPowerPackBundle.message(getPrefix() + ".family.name");
   }
 }

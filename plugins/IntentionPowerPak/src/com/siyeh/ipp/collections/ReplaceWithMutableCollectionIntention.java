@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.openapi.editor.Editor;
@@ -12,6 +12,11 @@ import com.siyeh.ipp.collections.ImmutableCollectionModelUtils.ImmutableCollecti
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithMutableCollectionIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("replace.with.mutable.collection.intention.family.name");
+  }
 
   @Override
   protected void processIntention(Editor editor, @NotNull PsiElement element) {

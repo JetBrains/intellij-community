@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -12,7 +12,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class CopyConcatenatedStringToClipboardIntention extends MutablyNamedIntention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("copy.concatenated.string.to.clipboard.intention.family.name");
+  }
 
   @Override
   @NotNull
