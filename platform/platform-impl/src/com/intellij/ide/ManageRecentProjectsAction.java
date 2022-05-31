@@ -30,6 +30,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 final class ManageRecentProjectsAction extends DumbAwareAction {
+  private static final int DEFAULT_POPUP_HEIGHT = 485;
   private static final int DEFAULT_POPUP_WIDTH = 300;
   private static final int SEPARATOR_HEIGHT = 1;
 
@@ -65,7 +66,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
         panel.add(separatorComponent);
         panel.add(scrollPane);
 
-        panel.setPreferredSize(JBUI.size(panel.getPreferredSize()).withWidth(DEFAULT_POPUP_WIDTH));
+        panel.setPreferredSize(JBUI.size(DEFAULT_POPUP_WIDTH, DEFAULT_POPUP_HEIGHT));
 
         return panel;
       }
