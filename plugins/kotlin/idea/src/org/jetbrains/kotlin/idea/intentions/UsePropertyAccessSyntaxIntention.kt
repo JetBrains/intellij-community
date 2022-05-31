@@ -66,10 +66,10 @@ import javax.swing.JComponent
 class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtCallExpression>(UsePropertyAccessSyntaxIntention::class),
     CleanupLocalInspectionTool {
 
-    val fqNameList = NotPropertiesServiceImpl.default.map(::FqNameUnsafe).toMutableList()
+    val fqNameList = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableList()
 
     @Suppress("CAN_BE_PRIVATE")
-    var fqNameStrings = NotPropertiesServiceImpl.default.toMutableList()
+    var fqNameStrings = NotPropertiesService.DEFAULT.toMutableList()
 
     override fun readSettings(node: Element) {
         super.readSettings(node)
@@ -107,25 +107,10 @@ class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesServ
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
         val tool = profile.getUnwrappedTool(USE_PROPERTY_ACCESS_INSPECTION, element)
-        return (tool?.fqNameList ?: default.map(::FqNameUnsafe)).toSet()
+        return (tool?.fqNameList ?: NotPropertiesService.DEFAULT.map(::FqNameUnsafe)).toSet()
     }
 
     companion object {
-        private val atomicMethods = listOf(
-            "getAndIncrement", "getAndDecrement", "getAcquire", "getOpaque", "getPlain"
-        )
-
-        private val atomicClasses = listOf("AtomicInteger", "AtomicLong")
-
-        val default: List<String> = listOf(
-            "java.net.Socket.getInputStream",
-            "java.net.Socket.getOutputStream",
-            "java.net.URLConnection.getInputStream",
-            "java.net.URLConnection.getOutputStream"
-        ) + atomicClasses.flatMap { klass ->
-            atomicMethods.map { method -> "java.util.concurrent.atomic.$klass.$method" }
-        }
-
         val USE_PROPERTY_ACCESS_INSPECTION: Key<UsePropertyAccessSyntaxInspection> = Key.create("UsePropertyAccessSyntax")
     }
 }
