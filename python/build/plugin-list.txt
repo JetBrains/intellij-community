@@ -1,3 +1,7 @@
+intellij.color.scheme.github
+intellij.color.scheme.monokai
+intellij.color.scheme.twilight
+intellij.color.scheme.warmNeon
 intellij.completionMlRanking
 intellij.completionMlRankingModels
 intellij.configurationScript
@@ -25,7 +29,3 @@ intellij.vcs.github
 intellij.vcs.hg
 intellij.vcs.svn
 intellij.yaml
-intellij.color.scheme.monokai
-intellij.color.scheme.twilight
-intellij.color.scheme.warmNeon
-intellij.color.scheme.github
