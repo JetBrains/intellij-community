@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.context.withProject
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.frontend.di.createContainerForBodyResolve
-import org.jetbrains.kotlin.idea.DaemonCodeAnalyzerStatusService
+import org.jetbrains.kotlin.base.fe10.analysis.DaemonCodeAnalyzerStatusService
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
