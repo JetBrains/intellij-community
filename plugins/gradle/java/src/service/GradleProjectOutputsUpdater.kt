@@ -6,11 +6,10 @@ import com.intellij.openapi.compiler.CompilerPaths
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -18,10 +17,10 @@ import org.jetbrains.plugins.gradle.service.task.GradleTaskResultListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleProjectOutputsUpdater: GradleTaskResultListener {
-  override fun onSuccess(projectPath: String) {
+  override fun onSuccess(id: ExternalSystemTaskId, projectPath: String) {
     if (!Registry.`is`("gradle.refresh.project.outputs")) return
 
-    val ideaProject = findAffectedProject(projectPath)
+    val ideaProject = id.findProject()
     if (ideaProject == null) {
       LOG.warn("Project path [$projectPath] does not belong to any open Gradle projects")
       return
@@ -38,9 +37,6 @@ class GradleProjectOutputsUpdater: GradleTaskResultListener {
     val affectedRoots = ContainerUtil.newHashSet(*CompilerPaths.getOutputPaths(affectedModules.toTypedArray()))
     CompilerUtil.refreshOutputRoots(affectedRoots)
   }
-
-  private fun findAffectedProject(gradleProjectPath: String): Project? =
-    ProjectManager.getInstance().openProjects.find { ExternalSystemApiUtil.findProjectInfo(it, GradleConstants.SYSTEM_ID, gradleProjectPath) != null }
 
   companion object {
     private val LOG = logger<GradleProjectOutputsUpdater>()

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.task;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +18,9 @@ public interface GradleTaskResultListener {
 
   /**
    * Called right after successful execution of Gradle task, before returning to External System API
+   *
+   * @param id
    * @param projectPath
    */
-  void onSuccess(@NotNull String projectPath);
+  void onSuccess(@NotNull ExternalSystemTaskId id, @NotNull String projectPath);
 }
