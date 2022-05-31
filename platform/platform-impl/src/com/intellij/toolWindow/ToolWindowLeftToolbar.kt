@@ -39,11 +39,12 @@ internal class ToolWindowLeftToolbar : ToolWindowToolbar() {
   val moreButton = MoreSquareStripeButton(this)
 
   init {
+    val topWrapper = JPanel(BorderLayout())
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 0, 0, 1)
     topPane.background = JBUI.CurrentTheme.ToolWindow.background()
     bottomPane.background = JBUI.CurrentTheme.ToolWindow.background()
+    topWrapper.background = JBUI.CurrentTheme.ToolWindow.background()
 
-    val topWrapper = JPanel(BorderLayout())
     topWrapper.add(topPane, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)
     add(bottomPane, BorderLayout.SOUTH)
