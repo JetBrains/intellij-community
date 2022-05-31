@@ -16,7 +16,10 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeUICustomization;
+import com.intellij.ui.ListFocusTraversalPolicy;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
@@ -32,7 +35,6 @@ import java.util.List;
 final class ManageRecentProjectsAction extends DumbAwareAction {
   private static final int DEFAULT_POPUP_HEIGHT = 485;
   private static final int DEFAULT_POPUP_WIDTH = 300;
-  private static final int SEPARATOR_HEIGHT = 1;
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -44,7 +46,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     );
     Tree recentProjectTree = recentProjectFilteringTree.getTree();
     SearchTextField searchTextField = recentProjectFilteringTree.installSearchField();
-    SeparatorComponent separatorComponent = new SeparatorComponent(SEPARATOR_HEIGHT, WelcomeScreenUIManager.getSeparatorColor(), null);
+    searchTextField.setBorder(JBUI.Borders.customLineBottom(WelcomeScreenUIManager.getSeparatorColor()));
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(recentProjectTree, true);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -63,7 +65,6 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
         panel.setFocusCycleRoot(true);
 
         panel.add(searchTextField);
-        panel.add(separatorComponent);
         panel.add(scrollPane);
 
         panel.setPreferredSize(JBUI.size(DEFAULT_POPUP_WIDTH, DEFAULT_POPUP_HEIGHT));
