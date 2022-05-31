@@ -352,9 +352,8 @@ public class JavaCoverageEngine extends CoverageEngine {
           ProjectTaskManager taskManager = ProjectTaskManager.getInstance(project);
           Promise<ProjectTaskManager.Result> promise = taskManager.buildAllModules();
           promise.onSuccess(result -> ApplicationManager.getApplication().invokeLater(() -> {
-                              if (project.isDisposed()) return;
                               CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
-                            })
+                            }, o -> project.isDisposed())
           );
         } else if (!project.isDisposed()) {
           CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
