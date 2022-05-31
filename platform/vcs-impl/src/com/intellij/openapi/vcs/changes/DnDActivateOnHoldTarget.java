@@ -3,14 +3,16 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.openapi.Disposable;
+import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DnDActivateOnHoldTarget implements DnDTarget {
   private final SingleAlarm myAlarm;
 
-  protected DnDActivateOnHoldTarget() {
-    myAlarm = new SingleAlarm(() -> activateContent(), 700);
+  protected DnDActivateOnHoldTarget(Disposable parentDisposable) {
+    myAlarm = new SingleAlarm(() -> activateContent(), 700, Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
   }
 
   @Override

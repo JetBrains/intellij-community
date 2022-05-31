@@ -14,6 +14,7 @@ public abstract class VcsToolwindowDnDTarget extends DnDActivateOnHoldTarget {
   @NotNull protected final Content myContent;
 
   protected VcsToolwindowDnDTarget(@NotNull Project project, @NotNull Content content) {
+    super(content);
     myProject = project;
     myContent = content;
   }
