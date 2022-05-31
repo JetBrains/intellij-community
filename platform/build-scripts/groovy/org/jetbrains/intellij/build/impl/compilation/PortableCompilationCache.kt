@@ -184,6 +184,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
       context.compilationData.compiledModuleTests.clear()
       context.compilationData.statisticsReported = false
       jps.buildAll()
+      context.messages.info(successMessage)
       println("##teamcity[buildStatus status='SUCCESS' text='$successMessage']")
     }
   }
