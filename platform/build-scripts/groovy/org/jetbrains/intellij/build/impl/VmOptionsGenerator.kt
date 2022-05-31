@@ -14,8 +14,6 @@ import kotlin.jvm.Throws
 @Suppress("IdentifierGrammar")
 object VmOptionsGenerator {
   private val COMMON_VM_OPTIONS: List<String> = listOf(
-    "-XX:+IgnoreUnrecognizedVMOptions",
-    "--jbr-illegal-access",
     "-XX:+UseG1GC",
     "-XX:SoftRefLRUPolicyMSPerMB=50",
     "-XX:CICompilerCount=2",
