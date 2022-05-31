@@ -13,6 +13,8 @@ import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -101,8 +103,12 @@ internal class IntentionPreviewComputable(private val project: Project,
         // in this case, the absence of diff could be intended, thus should not be logged as error
         val action = findCopyIntention(project, editorCopy, psiFileCopy, action) ?: return null
         val unwrapped = IntentionActionDelegate.unwrap(action)
-        val actionClass = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.qualifiedName
-        logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action $actionClass|${action.familyName}")
+        val cls = (if (unwrapped is QuickFixWrapper) unwrapped.fix else unwrapped)::class.java
+        val loader = cls.classLoader
+        val thirdParty = loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
+        if (!thirdParty) {
+          logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
+        }
         action.invoke(project, editorCopy, psiFileCopy)
         result = IntentionPreviewInfo.DIFF
       }
