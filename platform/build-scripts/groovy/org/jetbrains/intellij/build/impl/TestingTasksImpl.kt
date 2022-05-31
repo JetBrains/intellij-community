@@ -38,6 +38,24 @@ import java.util.stream.Stream
 import kotlin.streams.toList
 
 class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
+  private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
+    val projectHome = context.paths.projectHomeDir
+    val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
+    val configuration = RunConfigurationProperties.getConfiguration(file)
+    return when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
+      JUnitRunConfigurationProperties.TYPE -> {
+        listOf(JUnitRunConfigurationProperties.loadRunConfiguration(file))
+      }
+
+      CompoundRunConfigurationProperties.TYPE -> {
+        val runConfiguration = CompoundRunConfigurationProperties.loadRunConfiguration(file)
+        runConfiguration.toRun.flatMap { loadRunConfigurations(it) }
+      }
+
+      else -> throw RuntimeException("Unsupported run configuration type '$type' in run configuration '$name' of project '$projectHome'")
+    }
+  }
+
   override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: Predicate<File>?) {
     if (options.testDiscoveryEnabled && options.performanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
@@ -59,9 +77,8 @@ class TestingTasksImpl(private val context: CompilationContext, private val opti
 
     val runConfigurations = options.testConfigurations?.splitToSequence(';')
       ?.filter(String::isNotEmpty)
-      ?.map {
-        val file = RunConfigurationProperties.findRunConfiguration(context.paths.projectHomeDir, it)
-        JUnitRunConfigurationProperties.loadRunConfiguration(file)
+      ?.flatMap {
+        loadRunConfigurations(it)
       }
       ?.toList()
     if (runConfigurations != null) {

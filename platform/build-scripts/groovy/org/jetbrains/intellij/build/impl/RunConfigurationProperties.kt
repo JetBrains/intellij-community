@@ -33,6 +33,11 @@ abstract class RunConfigurationProperties(
              ?: throw RuntimeException("Cannot load configuration from '$file.name': 'configuration' tag is not found")
     }
 
+    fun getConfigurationType(configuration: XmlElement): String {
+      return configuration.getAttributeValue("type")
+             ?: throw RuntimeException("Cannot load configuration: 'type' attribute is missing: ${configuration}")
+    }
+
     fun getVmParameters(options: Map<String, String?>): List<String> {
       return (options.get("VM_PARAMETERS") ?: "-ea").split(whitespaceRegex)
     }

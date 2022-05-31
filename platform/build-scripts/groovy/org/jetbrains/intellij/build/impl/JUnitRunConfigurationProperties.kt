@@ -15,9 +15,11 @@ class JUnitRunConfigurationProperties(
   envVariables: Map<String, String>
 ) : RunConfigurationProperties(name, moduleName, vmParameters, envVariables) {
   companion object {
+    const val TYPE = "JUnit"
+
     fun loadRunConfiguration(file: Path): JUnitRunConfigurationProperties {
       val configuration = getConfiguration(file)
-      if (!configuration.getAttributeValue("type").equals("JUnit")) {
+      if (!configuration.getAttributeValue("type").equals(TYPE)) {
         throw RuntimeException("Cannot load configuration from \'${file.name}\': only JUnit run configuration are supported")
       }
 
