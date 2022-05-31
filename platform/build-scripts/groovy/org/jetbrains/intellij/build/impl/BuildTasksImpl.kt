@@ -137,9 +137,11 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     CompilationTasks.create(context).compileModules(moduleNames)
   }
 
-  override fun buildFullUpdaterJar() {
-    doBuildUpdaterJar(context)
-  }
+  override fun buildFullUpdaterJar() =
+    doBuildUpdaterJar(context, "updater-full.jar")
+
+  fun buildUpdaterJar() =
+    doBuildUpdaterJar(context, "updater.jar")
 
   override fun runTestBuild() {
     checkProductProperties(context)
@@ -936,7 +938,7 @@ internal fun logFreeDiskSpace(buildMessages: BuildMessages, dir: Path, phase: St
     "Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).usableSpace)} (on disk containing $dir)")
 }
 
-private fun doBuildUpdaterJar(context: BuildContext) {
+private fun doBuildUpdaterJar(context: BuildContext, artifactName: String) {
   val updaterModule = context.findRequiredModule("intellij.platform.updater")
   val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule))
   val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
@@ -947,7 +949,7 @@ private fun doBuildUpdaterJar(context: BuildContext) {
     .flatMap { it.getRootUrls(JpsOrderRootType.COMPILED) }
     .filter { !JpsPathUtil.isJrtUrl(it) }
     .map { ZipSource(Path.of(JpsPathUtil.urlToPath(it)), listOf(Regex("^META-INF/.*"))) }
-  val updaterJar = context.paths.artifactDir.resolve("updater-full.jar")
+  val updaterJar = context.paths.artifactDir.resolve(artifactName)
   buildJar(targetFile = updaterJar, sources = (sequenceOf(updaterModuleSource) + librarySources).toList(), compress = true)
   context.notifyArtifactBuilt(updaterJar)
 }
