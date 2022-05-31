@@ -38,9 +38,9 @@ public class KotlinNotSurrounder extends KotlinExpressionSurrounder {
     public TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull KtExpression expression) {
         KtPrefixExpression prefixExpr = (KtPrefixExpression) KtPsiFactoryKt.KtPsiFactory(expression).createExpression("!(a)");
         KtParenthesizedExpression parenthesizedExpression = (KtParenthesizedExpression) prefixExpr.getBaseExpression();
-        assert parenthesizedExpression != null : "JetParenthesizedExpression should exists for " + prefixExpr.getText() + " expression";
+        assert parenthesizedExpression != null : "KtParenthesizedExpression should exists for " + prefixExpr.getText() + " expression";
         KtExpression expressionWithoutParentheses = parenthesizedExpression.getExpression();
-        assert expressionWithoutParentheses != null : "JetExpression should exists for " + parenthesizedExpression.getText() + " expression";
+        assert expressionWithoutParentheses != null : "KtExpression should exists for " + parenthesizedExpression.getText() + " expression";
         expressionWithoutParentheses.replace(expression);
 
         expression = (KtExpression) expression.replace(prefixExpr);
