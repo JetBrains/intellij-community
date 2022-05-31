@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension;
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
@@ -87,6 +89,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   private static final Logger LOG = Logger.getInstance(CommonGradleProjectResolverExtension.class);
 
   @NotNull @NonNls private static final String UNRESOLVED_DEPENDENCY_PREFIX = "unresolved dependency - ";
+
+  public static final Key<DependencyAccessorsModel> ACCESSORS = Key.create(DependencyAccessorsModel.class, BuildScriptClasspathData.KEY.getProcessingWeight());
 
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
@@ -329,6 +333,11 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (intellijSettings != null) {
       ideModule.createChild(ProjectKeys.CONFIGURATION,
                             new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
+    }
+
+    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(gradleModule, DependencyAccessorsModel.class);
+    if (dependencyAccessorsModel != null) {
+      ideModule.createChild(ACCESSORS, dependencyAccessorsModel);
     }
 
     ProjectImportAction.AllModels models = resolverCtx.getModels();
@@ -839,7 +848,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       GradleExtensions.class,
       ExternalTestsModel.class,
       IntelliJProjectSettings.class,
-      IntelliJSettings.class
+      IntelliJSettings.class,
+      DependencyAccessorsModel.class
     );
   }
 
