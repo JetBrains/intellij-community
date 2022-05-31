@@ -23,7 +23,9 @@ private constructor(val libraryName: @NlsSafe String?,
                     val classRootUrls: List<VirtualFilePointer>,
                     val sourceRootUrls: List<VirtualFilePointer>) : LibraryIndexableFilesIterator {
 
-  override fun getDebugName() = "Library ${presentableLibraryName}"
+  override fun getDebugName() = "Library ${presentableLibraryName} " +
+                                "(#${classRootUrls.validCount()} class roots, " +
+                                "#${sourceRootUrls.validCount()} source roots)"
 
   override fun getIndexingProgressText(): String = IndexingBundle.message("indexable.files.provider.indexing.library.name",
                                                                           presentableLibraryName)
@@ -72,4 +74,6 @@ private constructor(val libraryName: @NlsSafe String?,
     fun createIteratorList(library: Library): List<IndexableFilesIterator> =
       createIterator(library)?.run { listOf(this) } ?: emptyList()
   }
+
+  private fun List<VirtualFilePointer>.validCount(): Int = filter { it.isValid }.size
 }
