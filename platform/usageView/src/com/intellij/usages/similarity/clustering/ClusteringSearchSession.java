@@ -30,7 +30,7 @@ public class ClusteringSearchSession {
   private final double mySimilarityThreshold;
 
   public ClusteringSearchSession() {
-    myClusters = new CopyOnWriteArrayList<>();
+    myClusters = Collections.synchronizedList(new ArrayList<>());
     mySimilarityThreshold = Registry.doubleValue("similarity.find.usages.groups.threshold");
   }
 
@@ -52,7 +52,8 @@ public class ClusteringSearchSession {
    * This method is designed to use from {@link com.intellij.usages.UsageContextPanel#updateLayout(List)}
    */
   public @Nullable UsageCluster findCluster(@Nullable UsageInfo usageInfo) {
-    for (UsageCluster cluster : myClusters) {
+    final List<UsageCluster> clustersSnapshot = new ArrayList<>(myClusters);
+    for (UsageCluster cluster : clustersSnapshot) {
       for (SimilarUsage usage : cluster.getUsages()) {
         if (usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(usageInfo)) {
           return cluster;
@@ -86,14 +87,16 @@ public class ClusteringSearchSession {
     }
     UsageCluster mostUsageCluster = null;
     double maxSimilarity = Double.MIN_VALUE;
-    for (UsageCluster currentGroup : myClusters) {
-      double similarity = findMinimalSimilarity(currentGroup, features, mySimilarityThreshold);
-      if (maxSimilarity < similarity) {
-        if (similarity == 1.0) {
-          return currentGroup;
+    synchronized (myClusters) {
+      for (UsageCluster currentGroup : myClusters) {
+        double similarity = findMinimalSimilarity(currentGroup, features, mySimilarityThreshold);
+        if (maxSimilarity < similarity) {
+          if (similarity == 1.0) {
+            return currentGroup;
+          }
+          mostUsageCluster = currentGroup;
+          maxSimilarity = similarity;
         }
-        mostUsageCluster = currentGroup;
-        maxSimilarity = similarity;
       }
     }
     return mostUsageCluster;
