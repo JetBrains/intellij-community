@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.contracts.description.ContractProviderKey
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
@@ -1203,10 +1202,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             is KtEnumEntry -> {
                 val ktClass = target.containingClass()
-                val classDescriptor = ktClass?.resolveToDescriptorIfAny()
                 val enumConstant = ktClass?.toLightClass()?.fields?.firstOrNull { f -> f is PsiEnumConstant && f.name == target.name }
-                if (enumConstant != null && classDescriptor != null) {
-                    DfTypes.referenceConstant(enumConstant, TypeConstraints.exactClass(KtClassDef(classDescriptor, expr)).instanceOf())
+                val dfType = expr.getKotlinType().toDfType(expr)
+                if (enumConstant != null && dfType is DfReferenceType) {
+                    DfTypes.constant(enumConstant, dfType)
                 } else {
                     DfType.TOP
                 }
