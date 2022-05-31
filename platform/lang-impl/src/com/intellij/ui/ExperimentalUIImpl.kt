@@ -30,9 +30,18 @@ class ExperimentalUIImpl : ExperimentalUI() {
       ProjectViewState.getInstance(it).autoscrollFromSource = true
     }
     val name = if (JBColor.isBright()) "Light" else "Dark"
-    val laf = LafManagerImpl.getInstance().installedLookAndFeels.first { x: LookAndFeelInfo -> x.name == name }
+    val lafManager = LafManagerImpl.getInstance()
+    val laf = lafManager.installedLookAndFeels.first { x: LookAndFeelInfo -> x.name == name }
     if (laf != null) {
-      LafManagerImpl.getInstance().currentLookAndFeel = laf
+      lafManager.currentLookAndFeel = laf
+      if (lafManager.autodetect) {
+        if (JBColor.isBright()) {
+          lafManager.setPreferredLightLaf(laf)
+        }
+        else {
+          lafManager.setPreferredDarkLaf(laf)
+        }
+      }
     }
     ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
   }
