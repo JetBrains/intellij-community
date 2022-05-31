@@ -4,6 +4,8 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.OpenInRightSplitAction;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
+import com.intellij.ide.ui.NavBarLocation;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -98,7 +100,9 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private void show(final NavBarItem item, boolean checkRepaint) {
     UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
-    int relativeY = ExperimentalUI.isNewUI() ? -getComponent().getPreferredSize().height : item.getHeight();
+    int relativeY = ExperimentalUI.isNewUI() && UISettings.getInstance().getNavBarLocation() == NavBarLocation.BOTTOM
+                    ? -getComponent().getPreferredSize().height
+                    : item.getHeight();
 
     final RelativePoint point = new RelativePoint(item, new Point(0, relativeY));
     final Point p = point.getPoint(myPanel);
