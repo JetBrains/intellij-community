@@ -23,6 +23,7 @@ class Some {
 // EXIST: {"lookupString":"plus","typeText":"+"}
 // EXIST: {"lookupString":"plusAssign","typeText":"+="}
 // EXIST: {"lookupString":"rangeTo","typeText":".."}
+// EXIST: {"lookupString":"rangeUntil","typeText":"..<"}
 // EXIST: {"lookupString":"rem","typeText":"%"}
 // EXIST: {"lookupString":"remAssign","typeText":"%="}
 // EXIST: {"lookupString":"set","typeText":"[...] = ..."}
