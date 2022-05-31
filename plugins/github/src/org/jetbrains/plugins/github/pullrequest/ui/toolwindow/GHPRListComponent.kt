@@ -40,6 +40,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
+import javax.swing.event.ChangeEvent
 
 internal object GHPRListComponent {
 
@@ -170,8 +171,17 @@ internal object GHPRListComponent {
         ClientProperty.put(this, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, false)
       }
 
-      BoundedRangeModelThresholdListener.install(verticalScrollBar) {
-        if (loader.canLoadMore()) loader.loadMore()
+      val model = verticalScrollBar.model
+      val listener = object : BoundedRangeModelThresholdListener(model, 0.7f) {
+        override fun onThresholdReached() {
+          if (!loader.loading && loader.canLoadMore()) {
+            loader.loadMore()
+          }
+        }
+      }
+      model.addChangeListener(listener)
+      loader.addLoadingStateChangeListener(disposable) {
+        if (!loader.loading) listener.stateChanged(ChangeEvent(loader))
       }
     }
     loader.addDataListener(disposable, object : GHListLoader.ListDataListener {
