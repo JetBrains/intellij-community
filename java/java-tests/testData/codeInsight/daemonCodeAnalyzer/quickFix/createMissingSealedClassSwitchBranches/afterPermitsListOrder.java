@@ -1,7 +1,7 @@
-// "Create missing branches: 'AA', 'AB', 'AC', and 'A'" "true"
-sealed class A {}
+// "Create missing branches: 'AC', 'AA', 'AB', and 'A'" "true"
+sealed class A permits AC, AA, AB {}
 final class AA extends A {}
-sealed class AB extends A {}
+sealed class AB extends A permits ABC, ABA {}
 non-sealed class AC extends A {}
 final class ABA extends AB {}
 non-sealed class ABC extends AB {}
@@ -9,11 +9,11 @@ non-sealed class ABC extends AB {}
 class Test {
   void test(A a) {
     switch (a) {
+        case AC ac -> {
+        }
         case AA aa -> {
         }
         case AB ab -> {
-        }
-        case AC ac -> {
         }
         case A a1 -> {
         }
