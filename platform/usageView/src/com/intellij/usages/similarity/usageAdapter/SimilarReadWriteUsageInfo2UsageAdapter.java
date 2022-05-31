@@ -6,24 +6,19 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.ReadWriteAccessUsageInfo2UsageAdapter;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
-import com.intellij.usages.similarity.clustering.UsageCluster;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class SimilarReadWriteUsageInfo2UsageAdapter extends ReadWriteAccessUsageInfo2UsageAdapter implements SimilarUsage {
   private final @NotNull Bag myFeatures;
   private final @NotNull ClusteringSearchSession mySession;
 
-  private final @Nullable UsageCluster myCluster;
-
   public SimilarReadWriteUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo,
                                                 @NotNull ReadWriteAccessDetector.Access rwAccess,
                                                 @NotNull Bag features,
-                                                @NotNull ClusteringSearchSession session, @Nullable UsageCluster cluster) {
+                                                @NotNull ClusteringSearchSession session) {
     super(usageInfo, rwAccess);
     myFeatures = features;
     mySession = session;
-    myCluster = cluster;
   }
 
   @Override
@@ -34,10 +29,5 @@ public class SimilarReadWriteUsageInfo2UsageAdapter extends ReadWriteAccessUsage
   @Override
   public @NotNull ClusteringSearchSession getClusteringSession() {
     return mySession;
-  }
-
-  @Override
-  public @Nullable UsageCluster getCluster() {
-    return myCluster;
   }
 }

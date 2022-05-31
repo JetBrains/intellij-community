@@ -22,7 +22,7 @@ public class UsageCluster {
     return myIndex;
   }
 
-  public synchronized void addUsage(@NotNull SimilarUsage usage) {
+  public void addUsage(@NotNull SimilarUsage usage) {
     myUsages.add(usage);
   }
 

@@ -9,10 +9,8 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
-import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
 import com.intellij.usages.similarity.usageAdapter.SimilarReadWriteUsageInfo2UsageAdapter;
-import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -126,18 +124,16 @@ public final class UsageInfoToUsageConverter {
       UsageSimilarityFeaturesProvider.EP_NAME.forEachExtensionSafe(provider -> {
         features.addAll(provider.getFeatures(usageElement));
       });
-      final UsageCluster cluster = session.findOrCreateCluster(features);
-      if (cluster != null) {
+      if (!features.isEmpty()) {
         final ReadWriteAccessDetector.Access readWriteAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
         final Usage similarUsageAdapter;
         if (readWriteAccess != null) {
-          similarUsageAdapter = new SimilarReadWriteUsageInfo2UsageAdapter(usageInfo, readWriteAccess, features, session, cluster);
+          similarUsageAdapter = new SimilarReadWriteUsageInfo2UsageAdapter(usageInfo, readWriteAccess, features, session);
         }
         else {
-          similarUsageAdapter = new SimilarUsageInfo2UsageAdapter(usageInfo, features, session, cluster);
+          similarUsageAdapter = new SimilarUsageInfo2UsageAdapter(usageInfo, features, session);
         }
-        cluster.addUsage((SimilarUsage)similarUsageAdapter);
-        return similarUsageAdapter;
+        return session.clusterUsage(features, similarUsageAdapter);
       }
     }
     return convert(primaryElements, usageInfo);
