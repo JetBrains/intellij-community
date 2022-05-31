@@ -1,6 +1,6 @@
 package com.intellij.ide.starter.ide
 
-import com.intellij.ide.starter.build.tool.BuildToolResolver
+import com.intellij.ide.starter.build.tool.BuildToolProvider
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.command.MarshallableCommand
@@ -44,7 +44,7 @@ data class IDETestContext(
 
   val pluginConfigurator: PluginConfigurator by di.newInstance { factory<IDETestContext, PluginConfigurator>().invoke(this@IDETestContext) }
 
-  val buildTools: BuildToolResolver by lazy { BuildToolResolver(this) }
+  val buildTools: BuildToolProvider by di.newInstance { factory<IDETestContext, BuildToolProvider>().invoke(this@IDETestContext) }
 
   fun addVMOptionsPatch(patchVMOptions: VMOptions.() -> VMOptions): IDETestContext {
     this.patchVMOptions = this.patchVMOptions.andThen(patchVMOptions)

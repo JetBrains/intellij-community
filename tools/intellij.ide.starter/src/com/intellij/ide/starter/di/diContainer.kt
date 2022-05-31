@@ -1,7 +1,7 @@
 package com.intellij.ide.starter.di
 
-import com.intellij.ide.starter.build.tool.GradleBuildTool
-import com.intellij.ide.starter.build.tool.MavenBuildTool
+import com.intellij.ide.starter.build.tool.BuildToolDefaultProvider
+import com.intellij.ide.starter.build.tool.BuildToolProvider
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.ci.NoCIServer
 import com.intellij.ide.starter.community.PublicIdeResolver
@@ -41,6 +41,5 @@ var di = DI {
       SimpleInstaller()
     }
   }
-  bindFactory<IDETestContext, MavenBuildTool> { testContext: IDETestContext -> MavenBuildTool(testContext) }
-  bindFactory<IDETestContext, GradleBuildTool> { testContext: IDETestContext -> GradleBuildTool(testContext) }
+  bindFactory<IDETestContext, BuildToolProvider> { testContext: IDETestContext -> BuildToolDefaultProvider(testContext) }
 }
