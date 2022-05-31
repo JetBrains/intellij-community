@@ -3,10 +3,8 @@ package com.intellij.usages.similarity.usageAdapter;
 
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
-import com.intellij.usages.similarity.clustering.UsageCluster;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This interface marks {@link com.intellij.usages.UsageInfo2UsageAdapter} implementation as a subject of clustering
@@ -22,6 +20,4 @@ public interface SimilarUsage {
   @NotNull Bag getFeatures();
 
   @NotNull ClusteringSearchSession getClusteringSession();
-
-  @Nullable UsageCluster getCluster();
 }

@@ -16,9 +16,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 
@@ -39,15 +39,13 @@ public class ClusteringSearchSession {
   }
 
   @RequiresBackgroundThread
-  public synchronized @Nullable UsageCluster findOrCreateCluster(@NotNull Bag usageFeatures) {
-    if (usageFeatures.getBag().isEmpty()) {
-      return null;
-    }
+  public synchronized Usage clusterUsage(@NotNull Bag usageFeatures, @NotNull Usage similarUsageAdapter) {
     UsageCluster cluster = getTheMostSimilarCluster(usageFeatures);
     if (cluster == null) {
       cluster = createNewCluster();
     }
-    return cluster;
+    cluster.addUsage((SimilarUsage)similarUsageAdapter);
+    return similarUsageAdapter;
   }
 
   /**
@@ -116,9 +114,8 @@ public class ClusteringSearchSession {
     return min;
   }
 
-  @Nullable
-  public static ClusteringSearchSession createClusteringSessionIfEnabled() {
-    return isSimilarUsagesClusteringEnabled() ? (new ClusteringSearchSession()) : null;
+  public static @Nullable ClusteringSearchSession createClusteringSessionIfEnabled() {
+    return isSimilarUsagesClusteringEnabled() ? new ClusteringSearchSession() : null;
   }
 
   public static boolean isSimilarUsagesClusteringEnabled() {
