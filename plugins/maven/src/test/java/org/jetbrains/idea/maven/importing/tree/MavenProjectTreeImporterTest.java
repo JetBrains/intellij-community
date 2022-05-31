@@ -2,13 +2,11 @@
 package org.jetbrains.idea.maven.importing.tree;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 
 public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTestCase {
   @Override
@@ -16,34 +14,7 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
     super.setUp();
     MavenProjectsManager.getInstance(myProject).getImportingSettings().setImportToTreeStructure(true);
   }
-  @Test
-  public void testSimpleImport() {
-    createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
-    createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>" +
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>test</groupId>" +
-                    "    <artifactId>m1</artifactId>" +
-                    "    <version>1</version>" +
-                    "  </dependency>\n" +
-                    "</dependencies>");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
-                  "<modules>" +
-                  "  <module>m1</module>" +
-                  "  <module>m2</module>" +
-                  "</modules>");
-    assertModules("project", "m1", "m2");
-  }
   @Test
   public void testImportWithTestSourceAndTestTargetVersion() throws IOException {
     createModulePom("m1",
@@ -81,6 +52,8 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
                     "</dependencies>");
     createProjectSubFile("m2/src/main/java/com/B.java", "package com; class B {}");
     createProjectSubFile("m2/src/test/java/com/BTest.java", "package com; class BTest {}");
+    createProjectSubFile("m2/src/main/resources/test.txt", "resource");
+    createProjectSubFile("m2/src/test/resources/test.txt", "test resource");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -118,8 +91,8 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
 
     assertResources("project.m1.main", "resources");
     assertTestResources("project.m1.test", "resources");
-    assertResources("project.m2.main");
-    assertTestResources("project.m2.test");
+    assertResources("project.m2.main", "resources");
+    assertTestResources("project.m2.test", "resources");
 
     assertExcludes("project", "target");
     assertExcludes("project.m1", "target");
@@ -129,6 +102,7 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
     assertExcludes("project.m1.test");
     assertExcludes("project.m2.test");
   }
+
   @Test
   public void testMultiplyContentRootsWithGeneratedSources() throws IOException {
     createProjectSubFile("target/generated-sources/src1/com/GenA.java", "package com; class GenA {}");
@@ -148,10 +122,18 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
     assertModules("project", "project.main", "project.test");
     assertModuleModuleDeps("project.test", "project.main");
 
-    List<String> contentRoots = ContainerUtil.map(getContentRoots("project.main"), c -> c.getUrl());
-    Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("src/main")));
-    Assert.assertTrue(contentRoots.stream().anyMatch(r -> r.contains("target/generated-sources/src1")));
+    if (MavenProjectImporter.isImportToWorkspaceModelEnabled()) {
+      assertContentRoots("project.main",
+                         getProjectPath() + "/src/main",
+                         getProjectPath() + "/target/generated-sources");
+    }
+    else {
+      assertContentRoots("project.main",
+                         getProjectPath() + "/src/main",
+                         getProjectPath() + "/target/generated-sources/src1"); // bug in implementation
+    }
   }
+
   @Test
   public void testContentRootOutsideOfModuleDir() throws Exception {
     createModulePom("m1",
