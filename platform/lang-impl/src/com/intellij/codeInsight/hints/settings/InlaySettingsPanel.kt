@@ -195,8 +195,9 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
         rightPanel.add(item.component)
       }
       is Language -> {
-        configureLanguageNode(treeNode)
-        configurePreview((treeNode.firstChild as CheckedTreeNode).userObject as InlayProviderSettingsModel)
+        configureLanguageNode(treeNode)?.let {
+          configurePreview((treeNode.firstChild as CheckedTreeNode).userObject as InlayProviderSettingsModel)
+        }
       }
       is InlayProviderSettingsModel -> {
         if (item.isMergedNode && item.description == null) {
@@ -247,8 +248,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     }
   }
 
-  private fun configureLanguageNode(treeNode: CheckedTreeNode) {
-    addDescription(((treeNode.parent as CheckedTreeNode).userObject as InlayGroup).description)
+  private fun configureLanguageNode(treeNode: CheckedTreeNode): String? {
+    val description = ((treeNode.parent as CheckedTreeNode).userObject as InlayGroup).description
+    addDescription(description)
+    return description
   }
 
   private fun addPreview(previewText: String?, model: InlayProviderSettingsModel, case: ImmediateConfigurable.Case?) {
