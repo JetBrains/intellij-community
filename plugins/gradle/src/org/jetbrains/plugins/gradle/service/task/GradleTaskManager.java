@@ -157,6 +157,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         launcher.withCancellationToken(cancellationTokenSource.token());
         launcher.run();
       }
+      GradleTaskResultListener.EP_NAME.forEachExtensionSafe(ext -> ext.onSuccess(projectPath));
     }
     catch (RuntimeException e) {
       LOG.debug("Gradle build launcher error", e);

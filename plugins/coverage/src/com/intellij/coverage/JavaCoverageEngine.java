@@ -45,7 +45,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
@@ -56,7 +55,6 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.util.ui.EDT;
 import jetbrains.coverage.report.ReportGenerationFailedException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -335,8 +333,8 @@ public class JavaCoverageEngine extends CoverageEngine {
       return false;
     }
 
-    final VirtualFile outputpath = getOutputWithRefresh(compilerModuleExtension);
-    final VirtualFile testOutputpath = getOutputWithRefresh(compilerModuleExtension, true);
+    final VirtualFile outputpath = compilerModuleExtension.getCompilerOutputPath();
+    final VirtualFile testOutputpath = compilerModuleExtension.getCompilerOutputPathForTests();
 
     if (outputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.SOURCE)
         || suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.TEST_SOURCE)) {
@@ -366,22 +364,6 @@ public class JavaCoverageEngine extends CoverageEngine {
       return true;
     }
     return false;
-  }
-
-  @Nullable
-  private static VirtualFile getOutputWithRefresh(@NotNull CompilerModuleExtension extension) {
-    return getOutputWithRefresh(extension, false);
-  }
-
-  @Nullable
-  private static VirtualFile getOutputWithRefresh(@NotNull CompilerModuleExtension extension, boolean forTest) {
-    VirtualFile outputpath = forTest ? extension.getCompilerOutputPathForTests() : extension.getCompilerOutputPath();
-    String compilerOutputUrl = forTest ? extension.getCompilerOutputUrlForTests() : extension.getCompilerOutputUrl();
-    boolean safeToRefresh = !EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isReadAccessAllowed();
-    if (outputpath == null && compilerOutputUrl != null && safeToRefresh) {
-      return VirtualFileManager.getInstance().refreshAndFindFileByUrl(compilerOutputUrl);
-    }
-    return outputpath;
   }
 
   private static boolean isModuleOutputNeeded(Module module, final JavaSourceRootType rootType) {
