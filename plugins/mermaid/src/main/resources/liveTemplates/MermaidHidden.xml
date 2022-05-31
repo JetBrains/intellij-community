@@ -119,4 +119,107 @@
     </context>
   </template>
 
+  <template id="mermaid_requirement" name="mermaid_requirement"
+            value="requirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            description="requirement statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
+    <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_functionalRequirement" name="mermaid_functionalRequirement"
+            value="functionalRequirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            description="functionalRequirement statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
+    <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_interfaceRequirement" name="mermaid_interfaceRequirement"
+            value="interfaceRequirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            description="interfaceRequirement statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
+    <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_performanceRequirement" name="mermaid_performanceRequirement"
+            value="performanceRequirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            description="performanceRequirement statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
+    <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_physicalRequirement" name="mermaid_physicalRequirement"
+            value="physicalRequirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            description="physicalRequirement statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
+    <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_designConstraint" name="mermaid_designConstraint"
+            value="designConstraint $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            description="designConstraint statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
+    <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
+  <template id="mermaid_element" name="mermaid_element"
+            value="element $NAME$ {&#10;    type: $TYPE$&#10;    docref: $DOCREF$&#10;}$END$$SELECTION$"
+            description="element statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <variable name="TYPE" expression="" defaultValue="&quot;type&quot;" alwaysStopAt="true"/>
+    <variable name="DOCREF" expression="" defaultValue="&quot;docref&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
 </templateSet>

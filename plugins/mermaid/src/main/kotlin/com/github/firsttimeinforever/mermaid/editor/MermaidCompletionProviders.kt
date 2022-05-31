@@ -20,7 +20,8 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "stateDiagram",
       "stateDiagram-v2",
       "erDiagram",
-      "gantt"
+      "gantt",
+      "requirementDiagram"
     )
 
   override fun addCompletions(
@@ -136,4 +137,45 @@ class StateDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("choice", "fork", "join"))
 
 class GanttSimpleCompletionProvider :
-  MermaidSimpleCompletionProvider(listOf("dateFormat", "excludes", "includes", "done", "active", "crit", "after", "milestone", "axisFormat"))
+  MermaidSimpleCompletionProvider(
+    listOf(
+      "dateFormat",
+      "excludes",
+      "includes",
+      "done",
+      "active",
+      "crit",
+      "after",
+      "milestone",
+      "axisFormat"
+    )
+  )
+
+class RequirementCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+  private val keywords = listOf(
+    "requirement",
+    "functionalRequirement",
+    "interfaceRequirement",
+    "performanceRequirement",
+    "physicalRequirement",
+    "designConstraint",
+    "element"
+  )
+
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
+  ) {
+    val project = parameters.originalFile.project
+    result.addAllElements(keywords.map { createKeywordLookupElement(project, it) })
+  }
+}
+
+class RequirementRiskCompletionProvider : MermaidSimpleCompletionProvider(listOf("high", "medium", "low"))
+
+class RequirementVerifyMethodCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("analysis", "inspection", "test", "demonstration"))
+
+class RequirementRelationshipCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("contains", "copies", "derives", "satisfies", "verifies", "refines", "traces"))

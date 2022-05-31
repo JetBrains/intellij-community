@@ -135,6 +135,46 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
   }
 
+  private fun getRequirementHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.Requirement.REQUIREMENT_DIAGRAM,
+      MermaidTokens.Requirement.REQUIREMENT,
+      MermaidTokens.Requirement.FUNCTIONAL_REQUIREMENT,
+      MermaidTokens.Requirement.INTERFACE_REQUIREMENT,
+      MermaidTokens.Requirement.PERFORMANCE_REQUIREMENT,
+      MermaidTokens.Requirement.PHYSICAL_REQUIREMENT,
+      MermaidTokens.Requirement.DESIGN_CONSTRAINT,
+      MermaidTokens.Requirement.ELEMENT,
+      MermaidTokens.Requirement.ID_KEYWORD,
+      MermaidTokens.Requirement.TEXT,
+      MermaidTokens.Requirement.RISK,
+      MermaidTokens.Requirement.VERIFY_METHOD,
+      MermaidTokens.Requirement.TYPE,
+      MermaidTokens.Requirement.DOCREF -> arrayOf(MermaidTextAttributes.keyword)
+
+      MermaidTokens.Requirement.LOW,
+      MermaidTokens.Requirement.MEDIUM,
+      MermaidTokens.Requirement.HIGH,
+      MermaidTokens.Requirement.ANALYSIS,
+      MermaidTokens.Requirement.INSPECTION,
+      MermaidTokens.Requirement.TEST,
+      MermaidTokens.Requirement.DEMONSTRATION,
+      MermaidTokens.Requirement.CONTAINS,
+      MermaidTokens.Requirement.COPIES,
+      MermaidTokens.Requirement.DERIVES,
+      MermaidTokens.Requirement.SATISFIES,
+      MermaidTokens.Requirement.VERIFIES,
+      MermaidTokens.Requirement.REFINES,
+      MermaidTokens.Requirement.TRACES -> arrayOf(MermaidTextAttributes.constant)
+
+      MermaidTokens.Requirement.ARROW_LEFT,
+      MermaidTokens.Requirement.ARROW_RIGHT,
+      MermaidTokens.Requirement.REQ_LINE -> arrayOf(MermaidTextAttributes.operationSign)
+
+      else -> null
+    }
+  }
+
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
     val pieHighlights = getPieHighlights(tokenType)
     val journeyHighlighter = getJourneyHighlights(tokenType)
@@ -144,6 +184,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     val stateDiagramHighlights = getStateDiagramHighlights(tokenType)
     val entityRelationshipDiagramHighlights = getEntityRelationshipDiagramHighlights(tokenType)
     val ganttDiagramHighlights = getGanttDiagramHighlights(tokenType)
+    val requirementHighlights = getRequirementHighlights(tokenType)
     return pieHighlights
       ?: journeyHighlighter
       ?: flowchartHighlighter
@@ -152,6 +193,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       ?: stateDiagramHighlights
       ?: entityRelationshipDiagramHighlights
       ?: ganttDiagramHighlights
+      ?: requirementHighlights
       ?: when (tokenType) {
         MermaidTokens.END,
         MermaidTokens.TITLE,

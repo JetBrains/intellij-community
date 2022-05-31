@@ -1,5 +1,6 @@
 package com.github.firsttimeinforever.mermaid.editor
 
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidToken
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens
 import com.github.firsttimeinforever.mermaid.lang.parser.MermaidElements
 import com.github.firsttimeinforever.mermaid.lang.psi.MermaidDirective
@@ -147,6 +148,35 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement().insideDiagram(psiElement(MermaidTokens.Gantt.GANTT)),
       BranchCompletionProvider("section")
     )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterSiblingSkipping(
+        not(psiElement(MermaidElements.REQUIREMENT_DOCUMENT)),
+        psiElement(MermaidElements.REQUIREMENT_DOCUMENT)
+      ),
+      RequirementCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().isRequirementAttribute(MermaidTokens.Requirement.RISK),
+      RequirementRiskCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().isRequirementAttribute(MermaidTokens.Requirement.VERIFY_METHOD),
+      RequirementVerifyMethodCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterSiblingSkippingElementsAndWhitespaces(
+        or(
+          psiElement(MermaidTokens.Requirement.ARROW_LEFT),
+          psiElement(MermaidTokens.Requirement.REQ_LINE)
+        ), MermaidTokens.ID
+      ),
+      RequirementRelationshipCompletionProvider()
+    )
   }
 
   private fun PsiElementPattern.Capture<PsiElement>.insideBlock(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {
@@ -202,7 +232,35 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement(MermaidTokens.Journey.JOURNEY),
       psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM),
       psiElement(MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP),
-      psiElement(MermaidTokens.Gantt.GANTT)
+      psiElement(MermaidTokens.Gantt.GANTT),
+      psiElement(MermaidTokens.Requirement.REQUIREMENT_DIAGRAM)
+    )
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.isRequirementAttribute(attribute: MermaidToken): PsiElementPattern.Capture<PsiElement> {
+    return withParent(
+      psiElement().afterSiblingSkipping(
+        psiElement().whitespace(),
+        psiElement(MermaidTokens.COLON).afterSiblingSkipping(
+          psiElement().whitespace(),
+          psiElement(attribute)
+        )
+      )
+    )
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.afterSiblingSkippingElementsAndWhitespaces(
+    skip: ElementPattern<in PsiElement>,
+    attribute: MermaidToken
+  ): PsiElementPattern.Capture<PsiElement> {
+    return withParent(
+      psiElement().afterSiblingSkipping(
+        psiElement().whitespace(),
+        andOr(psiElement(MermaidTokens.COLON), skip).afterSiblingSkipping(
+          psiElement().whitespace(),
+          psiElement(attribute)
+        )
+      )
     )
   }
 }

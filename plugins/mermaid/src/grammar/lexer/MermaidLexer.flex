@@ -108,7 +108,15 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 
 
 %xstate gantt
+
 %xstate gantt_task_data
+
+
+%xstate requirement_diagram
+
+%xstate requirement
+%xstate requirement_value
+%xstate req_element
 
 %%
 
@@ -126,6 +134,7 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   "stateDiagram" { yybegin(state_diagram); return StateDiagram.STATE_DIAGRAM; }
   "erDiagram" { yybegin(entity_relationship); return EntityRelationship.ENTITY_RELATIONSHIP; }
   "gantt" { yybegin(gantt); return Gantt.GANTT; }
+  "requirementDiagram" { yybegin(requirement_diagram); return Requirement.REQUIREMENT_DIAGRAM; }
   ";" { return SEMICOLON; }
 }
 <directive> {
@@ -146,12 +155,12 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
 //  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 //}
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   "%%" { yypushstate(line_comment); return LINE_COMMENT; }
 }
-<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, note_content, entity_relationship, entity_attributes, gantt> {
+<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, note_content, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element> {
   [\n\r]+ { return EOL; }
   ";" { return SEMICOLON; }
 }
@@ -572,6 +581,58 @@ import static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Pie
   [^#\n;,]+ { return TASK_DATA; }
   "," { return COMMA; }
   [\n\r] { yybegin(gantt); return EOL; }
+}
+
+//---gantt------------------------------------------------------------------------
+<requirement_diagram> {
+	"requirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.REQUIREMENT; }
+  "functionalRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.FUNCTIONAL_REQUIREMENT; }
+  "interfaceRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.INTERFACE_REQUIREMENT; }
+  "performanceRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.PERFORMANCE_REQUIREMENT; }
+  "physicalRequirement"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.PHYSICAL_REQUIREMENT; }
+	"designConstraint"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(requirement); return Requirement.DESIGN_CONSTRAINT; }
+	"element"/\s+[\w][^\r\n\{\<\>\-\=:;]*\s*\{ { yybegin(req_element); return Requirement.ELEMENT; }
+  "contains"/\s*\- { return Requirement.CONTAINS; }
+  "copies"/\s*\- { return Requirement.COPIES; }
+  "derives"/\s*\- { return Requirement.DERIVES; }
+  "satisfies"/\s*\- { return Requirement.SATISFIES; }
+  "verifies"/\s*\- { return Requirement.VERIFIES; }
+  "refines"/\s*\- { return Requirement.REFINES; }
+  "traces"/\s*\- { return Requirement.TRACES; }
+  "<-" { return Requirement.ARROW_LEFT; }
+  "->" { return Requirement.ARROW_RIGHT; }
+  "-" { return Requirement.REQ_LINE; }
+}
+<requirement, req_element> {
+  ":" { yypushstate(requirement_value); return COLON; }
+  "{" { return OPEN_CURLY; }
+  "}" { yybegin(requirement_diagram); return CLOSE_CURLY; }
+}
+<requirement> {
+	"id" { return Requirement.ID_KEYWORD; }
+  "text" { return Requirement.TEXT; }
+	"risk" { return Requirement.RISK; }
+  "verifymethod" { return Requirement.VERIFY_METHOD; }
+}
+<req_element> {
+	"type" { return Requirement.TYPE; }
+  "docref" { return Requirement.DOCREF; }
+}
+<requirement_diagram, requirement, req_element> {
+	[\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [\w][^\r\n\{\<\>\-\=:;]*/\s*[\{\-<]? { return ID; }
+}
+<requirement_value> {
+	"high" { return Requirement.HIGH; }
+	"medium" { return Requirement.MEDIUM; }
+	"low" { return Requirement.LOW; }
+  "analysis" { return Requirement.ANALYSIS; }
+  "inspection" { return Requirement.INSPECTION; }
+  "test" { return Requirement.TEST; }
+  "demonstration" { return Requirement.DEMONSTRATION; }
+	[\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+	[\w][^\r\n\{\<\>\-\=]* { return LABEL; }
+  [\n\r] { yypopstate(); return EOL; }
 }
 
 //--------------------------------------------------------------------------------

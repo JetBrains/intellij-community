@@ -18,6 +18,7 @@
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.StateDiagram.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EntityRelationship.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.*'
+    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Requirement.*'
   ]
   generateTokens=false
 }
@@ -33,6 +34,7 @@ private diagram ::= pieHeader pieDocument
 	| STATE_DIAGRAM stateDocument
 	| ENTITY_RELATIONSHIP erDocument
 	| GANTT ganttDocument
+	| REQUIREMENT_DIAGRAM requirementDocument
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
@@ -235,7 +237,7 @@ erAttribute ::= attrType attrName [ATTR_KEY] [string]
 
 
 ganttDocument ::= ganttLines
-private ganttLines ::= (ganttLine) [ganttLines]
+private ganttLines ::= ganttLine [ganttLines]
 ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
 private ganttStatement ::= DATE_FORMAT
   | TITLE TITLE_VALUE
@@ -246,6 +248,47 @@ private ganttStatement ::= DATE_FORMAT
   | TASK_NAME COLON TASK_DATA (COMMA TASK_DATA)*
 	| directive
 
+
+requirementDocument ::= requirementLines
+private requirementLines ::= requirementLine [requirementLines]
+requirementLine ::= requirementStatement [EOL] | EOL
+private requirementStatement ::= requirementDef
+  | elementDef
+  | relationshipDef
+	| directive
+
+requirementDef ::= requirementType ID OPEN_CURLY requirementBody CLOSE_CURLY
+requirementType ::= REQUIREMENT
+  | FUNCTIONAL_REQUIREMENT
+  | INTERFACE_REQUIREMENT
+  | PERFORMANCE_REQUIREMENT
+  | PHYSICAL_REQUIREMENT
+  | DESIGN_CONSTRAINT
+private requirementValue ::= LABEL | string
+
+requirementBody ::= requirementBodyLines
+private requirementBodyLines ::= requirementBodyLine [requirementBodyLines]
+requirementBodyLine ::= requirementBodyStatement [EOL] | EOL
+private requirementBodyStatement ::= ID_KEYWORD COLON requirementValue
+  | TEXT COLON requirementValue
+  | RISK COLON riskLevel
+  | VERIFY_METHOD COLON verifyType
+
+riskLevel ::= LOW | MEDIUM | HIGH
+verifyType ::= ANALYSIS | DEMONSTRATION | INSPECTION | TEST
+
+elementDef ::= ELEMENT ID OPEN_CURLY elementBody CLOSE_CURLY
+
+elementBody ::= elementBodyLines
+private elementBodyLines ::= elementBodyLine [elementBodyLines]
+elementBodyLine ::= elementBodyStatement [EOL] | EOL
+private elementBodyStatement ::= TYPE COLON requirementValue
+  | DOCREF COLON requirementValue
+
+relationshipDef ::= ID ARROW_LEFT reqRelationship REQ_LINE ID
+  | ID REQ_LINE reqRelationship ARROW_RIGHT ID
+
+reqRelationship ::= CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES | TRACES
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
 private directiveContent ::= property [COMMA directiveContent]

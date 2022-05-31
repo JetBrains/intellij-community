@@ -446,4 +446,99 @@ object MermaidTokens {
     @JvmField
     val AXIS_FORMAT = MermaidToken("AXIS_FORMAT")
   }
+
+  object Requirement {
+    @JvmField
+    val REQUIREMENT_DIAGRAM = MermaidToken("REQUIREMENT_DIAGRAM")
+
+    @JvmField
+    val REQUIREMENT = MermaidToken("REQUIREMENT")
+
+    @JvmField
+    val FUNCTIONAL_REQUIREMENT = MermaidToken("FUNCTIONAL_REQUIREMENT")
+
+    @JvmField
+    val INTERFACE_REQUIREMENT = MermaidToken("INTERFACE_REQUIREMENT")
+
+    @JvmField
+    val PERFORMANCE_REQUIREMENT = MermaidToken("PERFORMANCE_REQUIREMENT")
+
+    @JvmField
+    val PHYSICAL_REQUIREMENT = MermaidToken("PHYSICAL_REQUIREMENT")
+
+    @JvmField
+    val DESIGN_CONSTRAINT = MermaidToken("DESIGN_CONSTRAINT")
+
+    @JvmField
+    val ELEMENT = MermaidToken("ELEMENT")
+
+    @JvmField
+    val LOW = MermaidToken("LOW")
+
+    @JvmField
+    val MEDIUM = MermaidToken("MEDIUM")
+
+    @JvmField
+    val HIGH = MermaidToken("HIGH")
+
+    @JvmField
+    val ANALYSIS = MermaidToken("ANALYSIS")
+
+    @JvmField
+    val INSPECTION = MermaidToken("INSPECTION")
+
+    @JvmField
+    val TEST = MermaidToken("TEST")
+
+    @JvmField
+    val DEMONSTRATION = MermaidToken("DEMONSTRATION")
+
+    @JvmField
+    val ID_KEYWORD = MermaidToken("ID_KEYWORD")
+
+    @JvmField
+    val TEXT = MermaidToken("TEXT")
+
+    @JvmField
+    val RISK = MermaidToken("RISK")
+
+    @JvmField
+    val VERIFY_METHOD = MermaidToken("VERIFY_METHOD")
+
+    @JvmField
+    val TYPE = MermaidToken("TYPE")
+
+    @JvmField
+    val DOCREF = MermaidToken("DOCREF")
+
+    @JvmField
+    val CONTAINS = MermaidToken("CONTAINS")
+
+    @JvmField
+    val COPIES = MermaidToken("COPIES")
+
+    @JvmField
+    val DERIVES = MermaidToken("DERIVES")
+
+    @JvmField
+    val SATISFIES = MermaidToken("SATISFIES")
+
+    @JvmField
+    val VERIFIES = MermaidToken("VERIFIES")
+
+    @JvmField
+    val REFINES = MermaidToken("REFINES")
+
+    @JvmField
+    val TRACES = MermaidToken("TRACES")
+
+    @JvmField
+    val ARROW_LEFT = MermaidToken("ARROW_LEFT")
+
+    @JvmField
+    val ARROW_RIGHT = MermaidToken("ARROW_RIGHT")
+
+    @JvmField
+    val REQ_LINE = MermaidToken("REQ_LINE")
+  }
 }
