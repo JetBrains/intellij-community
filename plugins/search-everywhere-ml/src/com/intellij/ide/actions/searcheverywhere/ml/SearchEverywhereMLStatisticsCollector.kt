@@ -94,6 +94,8 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
                              selectedItems: List<Any>,
                              mixedListInfo: SearchEverywhereMixedListInfo,
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    if (!isLoggingEnabled()) return
+
     val elements = elementsProvider.invoke()
     NonUrgentExecutor.getInstance().execute {
       val data = ArrayList<EventPair<*>>()
@@ -139,6 +141,8 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       eventId.log(data)
     }
   }
+
+  private fun isLoggingEnabled() = !Registry.`is`("search.everywhere.force.disable.logging.ml")
 
   private fun getElementsData(selectedElements: IntArray,
                               elements: List<SearchEverywhereFoundElementInfo>,
