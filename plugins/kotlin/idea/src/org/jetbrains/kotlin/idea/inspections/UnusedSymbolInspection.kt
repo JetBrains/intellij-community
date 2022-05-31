@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSuppo
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
-import org.jetbrains.kotlin.idea.highlighter.isAnnotationClass
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
 import org.jetbrains.kotlin.idea.isMainFunction
@@ -135,11 +134,8 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         }
 
         private fun isAnnotationParameter(parameter: KtParameter): Boolean {
-            val ktConstructor = parameter.ownerFunction
-            if (ktConstructor !is KtConstructor<*>) return false
-
-            val containingClass = ktConstructor.containingClass()
-            return containingClass?.isAnnotationClass() ?: false
+            val constructor = parameter.ownerFunction as? KtConstructor<*> ?: return false
+            return constructor.containingClassOrObject?.isAnnotation() ?: false
         }
 
         private fun isCheapEnoughToSearchUsages(declaration: KtNamedDeclaration): SearchCostResult {

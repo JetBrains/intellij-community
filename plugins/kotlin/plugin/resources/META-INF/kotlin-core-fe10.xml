@@ -21,6 +21,10 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.core.NotPropertiesService"
             serviceImplementation="org.jetbrains.kotlin.idea.intentions.NotPropertiesServiceImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10QuickFixProviderImpl"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
     <lang.importOptimizer

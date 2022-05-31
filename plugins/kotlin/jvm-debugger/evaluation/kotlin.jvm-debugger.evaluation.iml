@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.statistics" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />

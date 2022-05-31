@@ -8,10 +8,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.canDropBraces
-import org.jetbrains.kotlin.idea.core.dropBraces
-import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -81,7 +80,7 @@ class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
                 .entries
                 .forEach {
                     val blockEntry = (it as? KtBlockStringTemplateEntry)
-                    if (blockEntry?.canDropBraces() == true) blockEntry.dropBraces()
+                    blockEntry?.dropCurlyBracketsIfPossible()
                 }
         }
     }

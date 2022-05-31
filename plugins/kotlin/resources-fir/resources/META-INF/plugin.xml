@@ -191,7 +191,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
 
-    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinBeforeResolveHighlightingPass$Registrar"/>
+    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinBeforeResolveHighlightingPass$Registrar"/>
 
     <java.elementFinder implementation="org.jetbrains.kotlin.asJava.finder.JavaElementFinder"/>
 
@@ -234,7 +234,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <compileServer.plugin classpath="jps/kotlin-jps-plugin.jar;kotlin-stdlib.jar;kotlin-stdlib-jdk7.jar;kotlin-stdlib-jdk8.jar;kotlin-reflect.jar;kotlin-plugin.jar;kotlin-jps-common.jar;kotlin-common.jar"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService"
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService"
                         serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFirMainFunctionLocatingService"/>
 
     <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>

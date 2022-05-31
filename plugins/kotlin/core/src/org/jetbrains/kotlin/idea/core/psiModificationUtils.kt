@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -650,20 +651,4 @@ fun KtModifierList.normalize(): KtModifierList {
         modifiers.sortBy { MODIFIERS_ORDER.indexOf(it.node.elementType) }
         modifiers.forEach { newList.add(it) }
     }
-}
-
-fun KtBlockStringTemplateEntry.canDropBraces(): Boolean {
-    val expression = this.expression
-    return (expression is KtNameReferenceExpression || (expression is KtThisExpression && expression.labelQualifier == null))
-            && canPlaceAfterSimpleNameEntry(nextSibling)
-}
-
-fun KtBlockStringTemplateEntry.dropBraces(): KtSimpleNameStringTemplateEntry {
-    val name = if (expression is KtThisExpression) {
-        KtTokens.THIS_KEYWORD.value
-    } else {
-        (expression as KtNameReferenceExpression).getReferencedNameElement().text
-    }
-    val newEntry = KtPsiFactory(this).createSimpleNameStringTemplateEntry(name)
-    return replaced(newEntry)
 }

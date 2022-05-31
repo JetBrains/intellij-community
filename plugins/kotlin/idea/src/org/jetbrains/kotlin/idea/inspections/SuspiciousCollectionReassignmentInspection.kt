@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix

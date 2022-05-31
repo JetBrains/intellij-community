@@ -6,11 +6,12 @@
 package org.jetbrains.kotlin.idea.fir.highlighter.beforeResolve
 
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.util.PsiUtilCore
-import org.jetbrains.kotlin.idea.highlighter.textAttributesForClass
-import org.jetbrains.kotlin.idea.highlighter.textAttributesForKtParameterDeclaration
-import org.jetbrains.kotlin.idea.highlighter.textAttributesForKtPropertyDeclaration
+import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
+import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForClass
+import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtParameterDeclaration
+import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDeclaration
+import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.idea.highlighter.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -41,9 +42,7 @@ internal class DeclarationHighlightingVisitor(holder: AnnotationHolder) : Abstra
     }
 
     override fun visitParameter(parameter: KtParameter) {
-        textAttributesForKtParameterDeclaration(parameter)?.let { attributes ->
-            highlightNamedDeclaration(parameter, attributes)
-        }
+        highlightNamedDeclaration(parameter, textAttributesForKtParameterDeclaration(parameter))
         highlightMutability(parameter)
         super.visitParameter(parameter)
     }

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.core.copied
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical

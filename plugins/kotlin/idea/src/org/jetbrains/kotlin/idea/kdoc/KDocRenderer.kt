@@ -29,8 +29,8 @@ import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForKtElement
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
-import org.jetbrains.kotlin.idea.highlighter.textAttributesKeyForKtElement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.wrapTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink

@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingUtil
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.junit.Assert
 import java.io.File
@@ -157,7 +158,10 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             configureScratchByText(sourceFile.name, fileText)
         }
 
-        if (!KotlinHighlightingUtil.shouldHighlight(myFixture.file)) error("Highlighting for scratch file is switched off")
+        val containingFile = myFixture.file
+        if (containingFile !is KtFile || !containingFile.shouldHighlightFile()) {
+            error("Highlighting for scratch file is switched off")
+        }
 
         launchScratch()
         waitUntilScratchFinishes(isRepl)

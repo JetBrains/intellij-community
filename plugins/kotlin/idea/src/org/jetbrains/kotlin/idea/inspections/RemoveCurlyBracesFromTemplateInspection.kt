@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.canDropBraces
-import org.jetbrains.kotlin.idea.core.dropBraces
+import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 
 class RemoveCurlyBracesFromTemplateInspection(@JvmField var reportWithoutWhitespace: Boolean = false) :
@@ -23,12 +23,10 @@ class RemoveCurlyBracesFromTemplateInspection(@JvmField var reportWithoutWhitesp
 
     override val defaultFixText: String get() = KotlinBundle.message("remove.curly.braces")
 
-    override fun isApplicable(element: KtBlockStringTemplateEntry): Boolean = element.canDropBraces()
+    override fun isApplicable(element: KtBlockStringTemplateEntry): Boolean = element.canDropCurlyBrackets()
 
     override fun applyTo(element: KtBlockStringTemplateEntry, project: Project, editor: Editor?) {
-        if (element.canDropBraces()) {
-            element.dropBraces()
-        }
+        element.dropCurlyBracketsIfPossible()
     }
 
     override fun createOptionsPanel() = MultipleCheckboxOptionsPanel(this).apply {

@@ -11,10 +11,10 @@ import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.base.highlighting.KotlinNameHighlightingStateUtils;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils;
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor;
-import org.jetbrains.kotlin.idea.highlighter.NameHighlighter;
 import org.jetbrains.kotlin.idea.refactoring.ElementSelectionUtilsKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
@@ -52,19 +52,16 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
     }
 
     public void doTestWithInfos(@NotNull String filePath) throws Exception {
-        try {
-            myFixture.configureByFile(fileName());
+        myFixture.configureByFile(fileName());
 
-            //noinspection unchecked
-            myFixture.enableInspections(SpellCheckingInspection.class);
+        //noinspection unchecked
+        myFixture.enableInspections(SpellCheckingInspection.class);
 
-            NameHighlighter.INSTANCE.setNamesHighlightingEnabled(false);
+        KotlinNameHighlightingStateUtils.withNameHighlightingDisabled(myFixture.getProject(), () -> {
             checkHighlighting(true, true, false);
             checkResolveToDescriptor();
-        }
-        finally {
-            NameHighlighter.INSTANCE.setNamesHighlightingEnabled(true);
-        }
+            return null;
+        });
     }
 
     protected long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {

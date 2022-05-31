@@ -8,13 +8,13 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
+import org.jetbrains.kotlin.idea.base.analysis.canAddRootPrefix
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.completion.PsiClassLookupObject
 import org.jetbrains.kotlin.idea.completion.isAfterDot
 import org.jetbrains.kotlin.idea.completion.isArtificialImportAliasedDescriptor
 import org.jetbrains.kotlin.idea.completion.shortenReferences
-import org.jetbrains.kotlin.idea.core.canAddRootPrefix
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers

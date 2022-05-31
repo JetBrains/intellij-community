@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.quickfix.AddWhenRemainingBranchesFix
 
 class KotlinWhenSurrounder : KotlinExpressionSurrounder() {

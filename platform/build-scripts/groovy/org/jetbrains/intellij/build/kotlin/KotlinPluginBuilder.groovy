@@ -60,7 +60,6 @@ final class KotlinPluginBuilder {
     "kotlinc.symbol-light-classes",
   )
 
-
   @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> MODULES = List.of(
     "kotlin.base.util",
@@ -73,6 +72,9 @@ final class KotlinPluginBuilder {
     "kotlin.base.project-structure",
     "kotlin.base.scripting",
     "kotlin.base.analysis",
+    "kotlin.base.highlighting",
+    "kotlin.base.line-markers",
+    "kotlin.base.code-insight",
     "kotlin.base.jps",
     "kotlin.base.compiler-configuration-ui",
     "kotlin.base.obsolete-compat",
@@ -80,7 +82,7 @@ final class KotlinPluginBuilder {
     "kotlin.base.statistics",
     "kotlin.base.fe10.analysis",
     "kotlin.base.fe10.kdoc",
-    "kotlin.base.fe10.refactorings",
+    "kotlin.base.fe10.highlighting",
     "kotlin.base.fe10.code-insight",
     "kotlin.base.fe10.obsolete-compat",
     "kotlin.core",

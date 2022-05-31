@@ -3,15 +3,15 @@
 package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.highlighter.isAnnotationClass
-import org.jetbrains.kotlin.idea.highlighter.textAttributesKeyForTypeDeclaration
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.highlighter.NameHighlighter
+import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
+import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForTypeDeclaration
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
 internal class TypeHighlightingVisitor(
@@ -19,7 +19,7 @@ internal class TypeHighlightingVisitor(
     holder: AnnotationHolder
 ) : FirAfterResolveHighlightingVisitor(analysisSession, holder) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-        if (!NameHighlighter.namesHighlightingEnabled) return
+        if (!expression.project.isNameHighlightingEnabled) return
         if (expression.isCalleeExpression()) return
         val parent = expression.parent
 
@@ -37,15 +37,24 @@ internal class TypeHighlightingVisitor(
                 // Do not highlight constructor call as class reference
                 return@let
             }
-            highlightName(expression.textRange, key)
+            highlightName(expression.project, expression.textRange, key)
         }
     }
 
     private fun isAnnotationCall(expression: KtSimpleNameExpression, target: PsiElement): Boolean {
-        val expressionRange = expression.textRange
+        val isKotlinAnnotation = target is KtPrimaryConstructor && target.containingClassOrObject?.isAnnotation() == true
 
-        val isKotlinAnnotation = target is KtPrimaryConstructor && target.parent.isAnnotationClass()
-        if (!isKotlinAnnotation && !target.isAnnotationClass()) return false
+        if (!isKotlinAnnotation) {
+            val targetIsAnnotation = when (target) {
+                is KtClass -> target.isAnnotation()
+                is PsiClass -> target.isAnnotationType
+                else -> false
+            }
+
+            if (!targetIsAnnotation) {
+                return false
+            }
+        }
 
         val annotationEntry = PsiTreeUtil.getParentOfType(
             expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.configuration.isGradleModule
 import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.konan.target.HostManager

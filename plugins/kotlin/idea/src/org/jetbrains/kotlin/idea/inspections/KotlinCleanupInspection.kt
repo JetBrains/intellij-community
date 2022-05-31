@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.targetDescriptors
-import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor
+import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.quickfix.CleanupFix
 import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.ReplaceObsoleteLabelSyntaxFix
@@ -63,7 +63,7 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
         file.forEachDescendantOfType<PsiElement> { element ->
             for (diagnostic in diagnostics.forElement(element)) {
                 if (diagnostic.isCleanup()) {
-                    val fixes = diagnostic.toCleanupFixes()
+                    val fixes = getCleanupFixes(element.project, diagnostic)
                     if (fixes.isNotEmpty()) {
                         problemDescriptors.add(diagnostic.toProblemDescriptor(fixes, file, manager))
                     }
@@ -129,8 +129,9 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
         return ReplaceObsoleteLabelSyntaxFix.looksLikeObsoleteLabel(annotationEntry)
     }
 
-    private fun Diagnostic.toCleanupFixes(): Collection<CleanupFix> {
-        return AbstractKotlinHighlightVisitor.createQuickFixes(this).filterIsInstance<CleanupFix>()
+    private fun getCleanupFixes(project: Project, diagnostic: Diagnostic): Collection<CleanupFix> {
+        val quickFixes = Fe10QuickFixProvider.getInstance(project).createQuickFixes(listOf(diagnostic))
+        return quickFixes[diagnostic].filterIsInstance<CleanupFix>()
     }
 
     private class Wrapper(val intention: IntentionAction) : IntentionWrapper(intention) {

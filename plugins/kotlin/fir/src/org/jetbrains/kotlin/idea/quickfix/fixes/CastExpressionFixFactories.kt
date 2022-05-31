@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.fir.api.fixes.HLApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.fir.api.fixes.withInput

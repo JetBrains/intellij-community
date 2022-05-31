@@ -1027,16 +1027,19 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.all-tests/kotlin.all-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.all-tests/kotlin.all-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/analysis/kotlin.base.analysis.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/analysis/kotlin.base.analysis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/code-insight/kotlin.base.code-insight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/code-insight/kotlin.base.code-insight.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration/kotlin.base.compiler-configuration.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration/kotlin.base.compiler-configuration.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration-ui/kotlin.base.compiler-configuration-ui.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration-ui/kotlin.base.compiler-configuration-ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/facet/kotlin.base.facet.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/facet/kotlin.base.facet.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/analysis/kotlin.base.fe10.analysis.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/analysis/kotlin.base.fe10.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/code-insight/kotlin.base.fe10.code-insight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/code-insight/kotlin.base.fe10.code-insight.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/highlighting/kotlin.base.fe10.highlighting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/highlighting/kotlin.base.fe10.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/kdoc/kotlin.base.fe10.kdoc.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/kdoc/kotlin.base.fe10.kdoc.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/obsolete-compat/kotlin.base.fe10.obsolete-compat.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/obsolete-compat/kotlin.base.fe10.obsolete-compat.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/refactorings/kotlin.base.fe10.refactorings.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/refactorings/kotlin.base.fe10.refactorings.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/highlighting/kotlin.base.highlighting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/highlighting/kotlin.base.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/jps/kotlin.base.jps.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/jps/kotlin.base.jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/line-markers/kotlin.base.line-markers.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/line-markers/kotlin.base.line-markers.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/obsolete-compat/kotlin.base.obsolete-compat.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/obsolete-compat/kotlin.base.obsolete-compat.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/platforms/kotlin.base.platforms.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/platforms/kotlin.base.platforms.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/plugin/kotlin.base.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/plugin/kotlin.base.plugin.iml" />

@@ -15,14 +15,17 @@
     <orderEntry type="module" module-name="kotlin.base.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.base.scripting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.facet" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.highlighting" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.line-markers" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.jps" exported="" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" exported="" />
     <orderEntry type="module" module-name="kotlin.base.resources" exported="" />
     <orderEntry type="module" module-name="kotlin.base.statistics" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.kdoc" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.highlighting" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fe10.code-insight" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.refactorings" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.maven" exported="" />

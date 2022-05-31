@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.run
 
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 

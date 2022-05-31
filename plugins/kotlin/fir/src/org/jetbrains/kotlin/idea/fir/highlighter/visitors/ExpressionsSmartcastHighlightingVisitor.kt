@@ -6,7 +6,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
-import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
+import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
 import org.jetbrains.kotlin.psi.*
 
@@ -17,13 +17,13 @@ internal class ExpressionsSmartcastHighlightingVisitor(
     override fun visitExpression(expression: KtExpression) = with(analysisSession) {
         expression.getImplicitReceiverSmartCast().forEach {
             val receiverName = when (it.kind) {
-                KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinIdeaAnalysisBundle.message("extension.implicit.receiver")
-                KtImplicitReceiverSmartCastKind.DISPATCH -> KotlinIdeaAnalysisBundle.message("implicit.receiver")
+                KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
+                KtImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
             }
 
             createInfoAnnotation(
                 expression,
-                KotlinIdeaAnalysisBundle.message(
+                KotlinBaseHighlightingBundle.message(
                     "0.smart.cast.to.1",
                     receiverName,
                     it.type.asStringForDebugging()
@@ -34,7 +34,7 @@ internal class ExpressionsSmartcastHighlightingVisitor(
         expression.getSmartCastInfo()?.let { info ->
             createInfoAnnotation(
                 getSmartCastTarget(expression),
-                KotlinIdeaAnalysisBundle.message(
+                KotlinBaseHighlightingBundle.message(
                     "smart.cast.to.0",
                     info.smartCastType.asStringForDebugging()
                 ),

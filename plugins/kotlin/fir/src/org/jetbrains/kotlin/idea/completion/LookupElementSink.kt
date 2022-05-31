@@ -9,10 +9,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
 import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
-import org.jetbrains.kotlin.idea.core.canDropBraces
-import org.jetbrains.kotlin.idea.core.dropBraces
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -88,9 +89,7 @@ private class WrapSingleStringTemplateEntryWithBraces(lookupElement: LookupEleme
 
     private fun removeUnneededBraces(context: InsertionContext) {
         val templateEntry = getContainingTemplateEntry(context) as? KtBlockStringTemplateEntry ?: return
-        if (templateEntry.canDropBraces()) {
-            templateEntry.dropBraces()
-        }
+        templateEntry.dropCurlyBracketsIfPossible()
     }
 
     private fun needInsertBraces(context: InsertionContext): Boolean =

@@ -102,7 +102,7 @@
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-        <applicationService serviceInterface="org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService"
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionLocatingService"
                             serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionLocatingService"/>
 
         <library.type implementation="org.jetbrains.kotlin.idea.framework.JSLibraryType"/>

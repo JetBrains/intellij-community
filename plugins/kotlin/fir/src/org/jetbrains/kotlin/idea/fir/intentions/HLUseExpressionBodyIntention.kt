@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider

@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
 import org.jetbrains.kotlin.idea.intentions.negate

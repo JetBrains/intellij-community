@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiComment
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
-import org.jetbrains.kotlin.idea.highlighter.dsl.DslHighlighterExtension
+import org.jetbrains.kotlin.idea.highlighter.dsl.DslKotlinHighlightingVisitorExtension
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtElement
@@ -18,7 +18,7 @@ abstract class AbstractDslHighlighterTest : KotlinLightCodeInsightFixtureTestCas
 
     protected fun doTest(unused: String) {
         val psiFile = myFixture.configureByFile(fileName()) as KtFile
-        val extension = DslHighlighterExtension()
+        val extension = DslKotlinHighlightingVisitorExtension()
         val bindingContext = psiFile.analyzeWithAllCompilerChecks().bindingContext
 
         fun checkCall(element: KtElement) {
@@ -26,7 +26,9 @@ abstract class AbstractDslHighlighterTest : KotlinLightCodeInsightFixtureTestCas
             val lineNumber = editor.document.getLineNumber(element.textOffset)
             val endOffset = editor.document.getLineEndOffset(lineNumber)
             val commentText = (file.findElementAt(endOffset - 1) as? PsiComment)?.text
-            val styleIdByComment = commentText?.replace("//", "")?.trim()?.toInt()?.let { DslHighlighterExtension.externalKeyName(it) }
+            val styleIdByComment = commentText?.replace("//", "")?.trim()?.toInt()
+                ?.let { DslKotlinHighlightingVisitorExtension.externalKeyName(it) }
+
             val styleIdByCall = extension.highlightCall(element, call)?.externalName
             if (styleIdByCall != null && styleIdByCall == styleIdByComment) {
                 val holder = HighlightInfoHolder(psiFile)

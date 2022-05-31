@@ -15,13 +15,13 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
-import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.core.thisOrParentIsRoot
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
@@ -131,7 +131,11 @@ private fun replaceExpressionWithQualifier(
     return referenceExpression.replaced(expressionWithQualifier)
 }
 
-private val DeclarationDescriptor.isInRoot: Boolean get() = importableFqName?.thisOrParentIsRoot() != false
+private val DeclarationDescriptor.isInRoot: Boolean
+    get() {
+        val fqName = importableFqName ?: return true
+        return fqName.isRoot || fqName.parentOrNull()?.isRoot == true
+    }
 
 private val DeclarationDescriptor.isTopLevelCallable: Boolean
     get() = safeAs<CallableMemberDescriptor>()?.containingDeclaration is PackageFragmentDescriptor ||

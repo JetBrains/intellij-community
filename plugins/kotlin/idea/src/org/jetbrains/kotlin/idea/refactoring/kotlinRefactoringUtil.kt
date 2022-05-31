@@ -64,6 +64,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -852,8 +853,7 @@ fun <T> Pass(body: (T) -> Unit) = object : Pass<T>() {
 
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
     val parent = parent as? KtBlockStringTemplateEntry ?: return this
-    val newEntry = if (parent.canDropBraces()) parent.dropBraces() else parent
-    return newEntry.expression!!
+    return parent.dropCurlyBracketsIfPossible().expression!!
 }
 
 fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {

@@ -11,7 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.getSubjectToIntroduce
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.introduceSubject

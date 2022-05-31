@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.idea.fir.highlighter
 
-import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinMainRunLineMarkerContributor
+import org.jetbrains.kotlin.idea.base.lineMarkers.run.AbstractKotlinMainRunLineMarkerContributor
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class KotlinFirMainRunLineMarkerContributor : AbstractKotlinMainRunLineMarkerContributor() {

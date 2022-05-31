@@ -14,11 +14,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
-import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render

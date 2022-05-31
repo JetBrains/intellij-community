@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companio
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingUtil
+import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -326,7 +326,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
     protected fun checkHighlighting(file: KtFile = myFile as KtFile) {
         val reports = IdeScriptReportSink.getReports(file)
         val isFatalErrorPresent = reports.any { it.severity == ScriptDiagnostic.Severity.FATAL }
-        assert(isFatalErrorPresent || KotlinHighlightingUtil.shouldHighlight(file)) {
+        assert(isFatalErrorPresent || file.shouldHighlightFile()) {
             "Highlighting is switched off for ${file.virtualFile.path}\n" +
                     "reports=$reports\n" +
                     "scriptDefinition=${file.findScriptDefinition()}"

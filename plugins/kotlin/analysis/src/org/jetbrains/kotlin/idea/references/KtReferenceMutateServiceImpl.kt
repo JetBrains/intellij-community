@@ -8,6 +8,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
@@ -365,4 +369,23 @@ class KtReferenceMutateServiceImpl : KtReferenceMutateService {
             ?: error("No selector for $newElement")
         return selector as KtNameReferenceExpression
     }
+}
+
+internal fun AbstractKtReference<out KtExpression>.renameImplicitConventionalCall(newName: String?): KtExpression {
+    if (newName == null) return expression
+
+    val (newExpression, newNameElement) = OperatorToFunctionIntention.convert(expression)
+    if (OperatorNameConventions.INVOKE.asString() == newName && newExpression is KtDotQualifiedExpression) {
+        val canMoveLambda = newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
+        OperatorToFunctionIntention.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
+            newQualifiedExpression.getPossiblyQualifiedCallExpression()
+                ?.takeIf { canMoveLambda }
+                ?.let(KtCallExpression::moveFunctionLiteralOutsideParentheses)
+
+            return newQualifiedExpression
+        }
+    }
+
+    newNameElement.mainReference.handleElementRename(newName)
+    return newExpression
 }

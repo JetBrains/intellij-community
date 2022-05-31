@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.WeakSuccess
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange

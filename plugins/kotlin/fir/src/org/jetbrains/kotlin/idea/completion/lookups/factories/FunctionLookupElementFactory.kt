@@ -13,13 +13,13 @@ import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
-import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile

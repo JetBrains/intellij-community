@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
 import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject
 import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
-import org.jetbrains.kotlin.idea.highlighter.dsl.DslHighlighterExtension
+import org.jetbrains.kotlin.idea.highlighter.dsl.DslKotlinHighlightingVisitorExtension
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -252,7 +252,7 @@ class BasicLookupElementFactory(
         if (descriptor is CallableDescriptor) {
             appendContainerAndReceiverInformation(descriptor) { element = element.appendTailText(it, true) }
 
-            val dslTextAttributes = DslHighlighterExtension.dslCustomTextStyle(descriptor)?.let {
+            val dslTextAttributes = DslKotlinHighlightingVisitorExtension.dslCustomTextStyle(descriptor)?.let {
                 EditorColorsManager.getInstance().globalScheme.getAttributes(it)
             }
             if (dslTextAttributes != null) {

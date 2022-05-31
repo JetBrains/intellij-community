@@ -14,7 +14,7 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.idea.completion.handlers.indexOfSkippingSpace
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
