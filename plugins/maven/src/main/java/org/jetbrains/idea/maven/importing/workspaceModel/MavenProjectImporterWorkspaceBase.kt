@@ -6,11 +6,16 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModuleImporter
+import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.project.*
@@ -18,13 +23,38 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 
 abstract class MavenProjectImporterWorkspaceBase(
   projectsTree: MavenProjectsTree,
+  private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
   importingSettings: MavenImportingSettings,
   modelsProvider: IdeModifiableModelsProvider,
   project: Project
 ) : MavenProjectImporterBase(project, projectsTree, importingSettings, modelsProvider) {
   protected val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
+  private val createdModulesList = java.util.ArrayList<Module>()
 
-  protected fun collectProjectsAndChanges(originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): Pair<Boolean, Map<MavenProject, MavenProjectChanges>> {
+  override fun importProject(): List<MavenProjectsProcessorTask> {
+    val postTasks = ArrayList<MavenProjectsProcessorTask>()
+    val (hasChanges, projectToImport) = collectProjectsAndChanges(projectsToImportWithChanges)
+    if (hasChanges) {
+      try {
+        val mavenProjectToModuleName = buildModuleNameMap(projectToImport)
+
+        val builder = MutableEntityStorage.create()
+        val importedModules = importModules(builder, projectToImport, mavenProjectToModuleName, postTasks)
+        val appliedModules = applyModulesToWorkspaceModel(builder, importedModules)
+
+        finalizeImport(appliedModules, mavenProjectToModuleName, projectToImport, postTasks)
+
+        createdModulesList.addAll(appliedModules.map { it.module })
+      }
+      finally {
+        MavenUtil.invokeAndWaitWriteAction(myProject) { myModelsProvider.dispose() }
+      }
+    }
+    return postTasks
+
+  }
+
+  private fun collectProjectsAndChanges(originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): Pair<Boolean, Map<MavenProject, MavenProjectChanges>> {
     val projectFilesFromPreviousImport = WorkspaceModel.getInstance(myProject).entityStorage.current
       .entities(ExternalSystemModuleOptionsEntity::class.java)
       .filter { it.externalSystem == WorkspaceModuleImporterBase.EXTERNAL_SOURCE_ID }
@@ -47,10 +77,44 @@ abstract class MavenProjectImporterWorkspaceBase(
     return (projectFilesToImport != projectFilesFromPreviousImport) to allProjectToImport
   }
 
-  protected fun finalizeImport(modules: List<ModuleImportData>,
-                               moduleNameByProject: Map<MavenProject, String>,
-                               projectChanges: Map<MavenProject, MavenProjectChanges>,
-                               postTasks: List<MavenProjectsProcessorTask>) {
+  private fun buildModuleNameMap(projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
+    val mavenProjectToModuleName = HashMap<MavenProject, String>()
+    MavenModuleNameMapper.map(projectToImport.keys, emptyMap(), mavenProjectToModuleName, HashMap(),
+                              myImportingSettings.dedicatedModuleDir)
+    return mavenProjectToModuleName
+  }
+
+  protected abstract fun importModules(builder: MutableEntityStorage,
+                                       projectToImport: Map<MavenProject, MavenProjectChanges>,
+                                       mavenProjectToModuleName: HashMap<MavenProject, String>,
+                                       postTasks: ArrayList<MavenProjectsProcessorTask>): List<ImportedModuleData>
+
+  private fun applyModulesToWorkspaceModel(builder: MutableEntityStorage,
+                                           createdModules: List<ImportedModuleData>): MutableList<AppliedModuleData> {
+    val importModuleData = mutableListOf<AppliedModuleData>()
+    MavenUtil.invokeAndWaitWriteAction(myProject) {
+      WorkspaceModel.getInstance(myProject).updateProjectModel { current ->
+        current.replaceBySource(
+          { (it as? JpsImportedEntitySource)?.externalSystemId == WorkspaceModuleImporterBase.EXTERNAL_SOURCE_ID }, builder)
+      }
+      val storage = WorkspaceModel.getInstance(myProject).entityStorage.current
+      for ((moduleId, mavenProject, moduleType) in createdModules) {
+        val entity = storage.resolve(moduleId)
+        if (entity == null) continue
+        val module = storage.findModuleByEntity(entity)
+        if (module != null) {
+          importModuleData.add(AppliedModuleData(module, mavenProject, moduleType))
+        }
+      }
+    }
+
+    return importModuleData
+  }
+
+  private fun finalizeImport(modules: List<AppliedModuleData>,
+                             moduleNameByProject: Map<MavenProject, String>,
+                             projectChanges: Map<MavenProject, MavenProjectChanges>,
+                             postTasks: List<MavenProjectsProcessorTask>) {
     val importers = mutableListOf<MavenModuleImporter>()
 
     for ((module, mavenProject, moduleType) in modules) {
@@ -74,5 +138,10 @@ abstract class MavenProjectImporterWorkspaceBase(
     scheduleRefreshResolvedArtifacts(postTasks, projectChanges.filterValues { it.hasChanges() }.keys)
   }
 
-  protected data class ModuleImportData(val module: Module, val mavenProject: MavenProject, val moduleType: MavenModuleType?)
+  override fun createdModules(): List<Module> {
+    return createdModulesList
+  }
+
+  protected data class ImportedModuleData(val moduleId: ModuleId, val mavenProject: MavenProject, val moduleType: MavenModuleType?)
+  private data class AppliedModuleData(val module: Module, val mavenProject: MavenProject, val moduleType: MavenModuleType?)
 }
