@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.TestModuleProperties
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,8 +22,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
-import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
-import org.jetbrains.kotlin.caches.resolve.resolution
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.descriptors.ModuleCapability
@@ -32,8 +29,6 @@ import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.caches.resolve.util.enlargedSearchScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.framework.effectiveKind
-import org.jetbrains.kotlin.idea.framework.platform
 import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.project.findAnalyzerServices
@@ -56,7 +51,6 @@ import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.concurrent.ConcurrentHashMap
 
 internal val LOG = Logger.getInstance(IdeaModuleInfo::class.java)
 
@@ -74,20 +68,8 @@ interface IdeaModuleInfo : org.jetbrains.kotlin.idea.caches.resolve.IdeaModuleIn
     override fun dependencies(): List<IdeaModuleInfo>
 }
 
-private val Project.libraryInfoCache: MutableMap<Library, List<LibraryInfo>>
-    get() = cacheInvalidatingOnRootModifications { ConcurrentHashMap<Library, List<LibraryInfo>>() }
-
 fun createLibraryInfo(project: Project, library: Library): List<LibraryInfo> =
-    project.libraryInfoCache.getOrPut(library) {
-        val approximatePlatform = if (library is LibraryEx && !library.isDisposed) {
-            // for Native returns 'unspecifiedNativePlatform', thus "approximate"
-            library.effectiveKind(project).platform
-        } else {
-            DefaultIdeTargetPlatformKindProvider.defaultPlatform
-        }
-
-        approximatePlatform.idePlatformKind.resolution.createLibraryInfo(project, library)
-    }
+    LibraryInfoCache.getInstance(project).createLibraryInfo(library)
 
 internal fun TargetPlatform.canDependOn(other: IdeaModuleInfo, isHmppEnabled: Boolean): Boolean {
     if (isHmppEnabled) {

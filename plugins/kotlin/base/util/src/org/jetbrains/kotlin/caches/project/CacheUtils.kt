@@ -30,6 +30,7 @@ fun <T> Project.cacheByClass(classForKey: Class<*>, vararg dependencies: Any, pr
     return CachedValuesManager.getManager(this).cache(this, dependencies, classForKey, provider)
 }
 
+@Deprecated("consider to use WorkspaceModelChangeListener")
 fun <T> Project.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*>, provider: () -> T): T {
     return cacheByClass(classForKey, ProjectRootModificationTracker.getInstance(this), provider = provider)
 }
@@ -39,6 +40,7 @@ fun <T> Project.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*
  * by the one and the same key.
  * It is encouraged to use explicit class, just for the sake of readability.
  */
+@Deprecated("consider to use WorkspaceModelChangeListener")
 fun <T> Project.cacheInvalidatingOnRootModifications(provider: () -> T): T {
     return cacheByClassInvalidatingOnRootModifications(provider::class.java, provider)
 }
