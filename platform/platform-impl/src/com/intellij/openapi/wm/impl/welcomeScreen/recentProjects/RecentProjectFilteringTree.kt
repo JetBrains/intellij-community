@@ -99,7 +99,7 @@ class RecentProjectFilteringTree(
 
   override fun getNodeClass() = DefaultMutableTreeNode::class.java
 
-  override fun getText(item: RecentProjectTreeItem?): String = when(item) {
+  override fun getText(item: RecentProjectTreeItem?): String = when (item) {
     is RecentProjectItem -> item.searchName()
     else -> item?.displayName().orEmpty()
   }
@@ -295,12 +295,12 @@ class RecentProjectFilteringTree(
       tree: JTree, value: Any,
       selected: Boolean, expanded: Boolean,
       leaf: Boolean, row: Int, hasFocus: Boolean
-    ): Component {
+    ): Component? {
       return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
-        is RootItem -> JBUI.Panels.simplePanel()
         is RecentProjectItem -> recentProjectComponent.customizeComponent(item, row, selected)
         is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, row, selected)
         is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item, row)
+        is RootItem -> null
       }
     }
 
