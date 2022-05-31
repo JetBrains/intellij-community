@@ -151,6 +151,17 @@ object MermaidTokens {
   @JvmField
   val ANNOTATION_VALUE = MermaidToken("ANNOTATION_VALUE")
 
+  @JvmField
+  val SECTION = MermaidToken("SECTION")
+
+  @JvmField
+  val SECTION_TITLE = MermaidToken("SECTION_TITLE")
+
+  @JvmField
+  val TASK_NAME = MermaidToken("TASK_NAME")
+
+  @JvmField
+  val TASK_DATA = MermaidToken("TASK_DATA")
 
   object Pie {
     @JvmField
@@ -166,18 +177,6 @@ object MermaidTokens {
   object Journey {
     @JvmField
     val JOURNEY = MermaidToken("Journey.JOURNEY")
-
-    @JvmField
-    val SECTION = MermaidToken("Journey.SECTION")
-
-    @JvmField
-    val SECTION_TITLE = MermaidToken("Journey.SECTION_TITLE")
-
-    @JvmField
-    val TASK_NAME = MermaidToken("Journey.TASK_NAME")
-
-    @JvmField
-    val TASK_DATA = MermaidToken("Journey.TASK_DATA")
   }
 
   object Flowchart {
@@ -429,5 +428,22 @@ object MermaidTokens {
     @JvmField
     val ATTR_KEY = MermaidToken("ATTR_KEY")
 
+  }
+
+  object Gantt {
+    @JvmField
+    val GANTT = MermaidToken("GANTT")
+
+    @JvmField
+    val DATE_FORMAT = MermaidToken("DATE_FORMAT")
+
+    @JvmField
+    val EXCLUDES = MermaidToken("EXCLUDES")
+
+    @JvmField
+    val INCLUDES = MermaidToken("INCLUDES")
+
+    @JvmField
+    val AXIS_FORMAT = MermaidToken("AXIS_FORMAT")
   }
 }

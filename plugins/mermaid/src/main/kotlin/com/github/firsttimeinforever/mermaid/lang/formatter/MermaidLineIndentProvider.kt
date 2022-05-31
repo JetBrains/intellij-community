@@ -67,7 +67,7 @@ class MermaidLineIndentProvider : LineIndentProvider {
             MermaidTokens.Pie.PIE,
             MermaidTokens.Pie.SHOW_DATA,
             MermaidTokens.Journey.JOURNEY,
-            MermaidTokens.Journey.SECTION_TITLE,
+            MermaidTokens.SECTION_TITLE,
             MermaidTokens.Flowchart.FLOWCHART,
             MermaidTokens.Flowchart.SUBGRAPH,
             MermaidTokens.Sequence.SEQUENCE,
@@ -78,7 +78,8 @@ class MermaidLineIndentProvider : LineIndentProvider {
             MermaidTokens.ClassDiagram.CLASS_DIAGRAM,
             MermaidTokens.OPEN_CURLY,
             MermaidTokens.StateDiagram.STATE_DIAGRAM,
-            MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP
+            MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP,
+            MermaidTokens.Gantt.GANTT
           )
         ) {
           return getIndentString(editor, position.getStartOffset(), true)

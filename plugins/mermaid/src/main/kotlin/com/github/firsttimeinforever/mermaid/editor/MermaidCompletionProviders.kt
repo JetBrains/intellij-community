@@ -5,16 +5,23 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
-import com.intellij.patterns.PlatformPatterns
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 
 class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters>() {
   private val diagrams =
-    listOf("pie", "journey", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram", "stateDiagram-v2", "erDiagram")
+    listOf(
+      "pie",
+      "journey",
+      "flowchart",
+      "sequenceDiagram",
+      "classDiagram",
+      "stateDiagram",
+      "stateDiagram-v2",
+      "erDiagram",
+      "gantt"
+    )
 
   override fun addCompletions(
     parameters: CompletionParameters,
@@ -41,28 +48,7 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
   }
 }
 
-class TitleCompletionProvider(diagram: IElementType, document: Class<out PsiElement>) :
-  CompletionProvider<CompletionParameters>() {
-
-  private val pattern = PlatformPatterns.psiElement().withParent(
-    PlatformPatterns.psiElement().afterSiblingSkipping(
-      PlatformPatterns.not(PlatformPatterns.psiElement(diagram))
-        .andOr(PlatformPatterns.not(PlatformPatterns.psiElement(document))),
-      PlatformPatterns.or(PlatformPatterns.psiElement(diagram), PlatformPatterns.psiElement(document))
-    )
-  )
-
-  override fun addCompletions(
-    parameters: CompletionParameters,
-    context: ProcessingContext,
-    result: CompletionResultSet
-  ) {
-    val element = parameters.position
-    if (pattern.accepts(element)) {
-      result.addElement(LookupElementBuilder.create("title"))
-    }
-  }
-}
+class TitleCompletionProvider : MermaidSimpleCompletionProvider(listOf("title"))
 
 class BranchCompletionProvider(private val branch: String) :
   MermaidLiveTemplateCompletionProvider(deleteIndent = true) {
@@ -148,3 +134,6 @@ class StateDiagramSimpleCompletionProvider :
 
 class StateDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("choice", "fork", "join"))
+
+class GanttSimpleCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("dateFormat", "excludes", "includes", "done", "active", "crit", "after", "milestone", "axisFormat"))

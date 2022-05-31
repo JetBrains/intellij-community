@@ -6,6 +6,10 @@ import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EOL
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.IGNORED
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Journey
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.LINE_COMMENT
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.SECTION
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.SECTION_TITLE
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TASK_DATA
+import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TASK_NAME
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.TITLE_VALUE
 import com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
@@ -26,9 +30,9 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 16, 30, "My working day"),
       Token(EOL, 30, 31, "\n"),
       Token(WHITE_SPACE, 31, 33, "  "),
-      Token(Journey.SECTION, 33, 40, "section"),
+      Token(SECTION, 33, 40, "section"),
       Token(WHITE_SPACE, 40, 41, " "),
-      Token(Journey.SECTION_TITLE, 41, 51, "Go to work")
+      Token(SECTION_TITLE, 41, 51, "Go to work")
     )
     doTest(content, expected)
   }
@@ -48,9 +52,9 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 20, 34, "My working day"),
       Token(EOL, 34, 35, "\n"),
       Token(WHITE_SPACE, 35, 37, "  "),
-      Token(Journey.SECTION, 37, 44, "section"),
+      Token(SECTION, 37, 44, "section"),
       Token(WHITE_SPACE, 44, 51, "       "),
-      Token(Journey.SECTION_TITLE, 51, 61, "Go to work")
+      Token(SECTION_TITLE, 51, 61, "Go to work")
     )
     doTest(content, expected)
   }
@@ -72,9 +76,9 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(IGNORED, 30, 35, "# day"),
       Token(EOL, 35, 36, "\n"),
       Token(WHITE_SPACE, 36, 38, "  "),
-      Token(Journey.SECTION, 38, 45, "section"),
+      Token(SECTION, 38, 45, "section"),
       Token(WHITE_SPACE, 45, 52, "       "),
-      Token(Journey.SECTION_TITLE, 52, 57, "Go to"),
+      Token(SECTION_TITLE, 52, 57, "Go to"),
       Token(IGNORED, 57, 63, "# work"),
       Token(EOL, 63, 64, "\n")
     )
@@ -98,27 +102,27 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 16, 30, "My working day"),
       Token(EOL, 30, 31, "\n"),
       Token(WHITE_SPACE, 31, 33, "  "),
-      Token(Journey.SECTION, 33, 40, "section"),
+      Token(SECTION, 33, 40, "section"),
       Token(WHITE_SPACE, 40, 41, " "),
-      Token(Journey.SECTION_TITLE, 41, 51, "Go to work"),
+      Token(SECTION_TITLE, 41, 51, "Go to work"),
       Token(EOL, 51, 52, "\n"),
       Token(WHITE_SPACE, 52, 56, "    "),
-      Token(Journey.TASK_NAME, 56, 64, "Make tea"),
+      Token(TASK_NAME, 56, 64, "Make tea"),
       Token(COLON, 64, 65, ":"),
       Token(WHITE_SPACE, 65, 66, " "),
-      Token(Journey.TASK_DATA, 66, 67, "5"),
+      Token(TASK_DATA, 66, 67, "5"),
       Token(COLON, 67, 68, ":"),
       Token(WHITE_SPACE, 68, 69, " "),
-      Token(Journey.TASK_DATA, 69, 71, "Me"),
+      Token(TASK_DATA, 69, 71, "Me"),
       Token(EOL, 71, 72, "\n"),
       Token(WHITE_SPACE, 72, 76, "    "),
-      Token(Journey.TASK_NAME, 76, 87, "Go upstairs"),
+      Token(TASK_NAME, 76, 87, "Go upstairs"),
       Token(COLON, 87, 88, ":"),
       Token(WHITE_SPACE, 88, 89, " "),
-      Token(Journey.TASK_DATA, 89, 90, "3"),
+      Token(TASK_DATA, 89, 90, "3"),
       Token(COLON, 90, 91, ":"),
       Token(WHITE_SPACE, 91, 92, " "),
-      Token(Journey.TASK_DATA, 92, 94, "Me")
+      Token(TASK_DATA, 92, 94, "Me")
     )
     doTest(content, expected)
   }
@@ -139,18 +143,18 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 16, 30, "My working day"),
       Token(EOL, 30, 31, "\n"),
       Token(WHITE_SPACE, 31, 33, "  "),
-      Token(Journey.SECTION, 33, 40, "section"),
+      Token(SECTION, 33, 40, "section"),
       Token(WHITE_SPACE, 40, 41, " "),
-      Token(Journey.SECTION_TITLE, 41, 51, "Go to work"),
+      Token(SECTION_TITLE, 41, 51, "Go to work"),
       Token(EOL, 51, 52, "\n"),
       Token(WHITE_SPACE, 52, 56, "    "),
-      Token(Journey.TASK_NAME, 56, 64, "Make tea"),
+      Token(TASK_NAME, 56, 64, "Make tea"),
       Token(COLON, 64, 65, ":"),
       Token(WHITE_SPACE, 65, 66, " "),
-      Token(Journey.TASK_DATA, 66, 67, "5"),
+      Token(TASK_DATA, 66, 67, "5"),
       Token(COLON, 67, 68, ":"),
       Token(WHITE_SPACE, 68, 69, " "),
-      Token(Journey.TASK_DATA, 69, 71, "Me"),
+      Token(TASK_DATA, 69, 71, "Me"),
       Token(IGNORED, 71, 75, "#123")
     )
     doTest(content, expected)
@@ -172,12 +176,12 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 16, 30, "My working day"),
       Token(EOL, 30, 31, "\n"),
       Token(WHITE_SPACE, 31, 33, "  "),
-      Token(Journey.SECTION, 33, 40, "section"),
+      Token(SECTION, 33, 40, "section"),
       Token(WHITE_SPACE, 40, 41, " "),
-      Token(Journey.SECTION_TITLE, 41, 51, "Go to work"),
+      Token(SECTION_TITLE, 41, 51, "Go to work"),
       Token(EOL, 51, 52, "\n"),
       Token(WHITE_SPACE, 52, 56, "    "),
-      Token(Journey.TASK_NAME, 56, 64, "Make tea"),
+      Token(TASK_NAME, 56, 64, "Make tea"),
       Token(COLON, 64, 65, ":"),
       Token(WHITE_SPACE, 65, 66, " "),
       Token(IGNORED, 66, 72, "#5: Me")
@@ -203,32 +207,32 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 16, 30, "My working day"),
       Token(EOL, 30, 31, "\n"),
       Token(WHITE_SPACE, 31, 33, "  "),
-      Token(Journey.SECTION, 33, 40, "section"),
+      Token(SECTION, 33, 40, "section"),
       Token(WHITE_SPACE, 40, 41, " "),
-      Token(Journey.SECTION_TITLE, 41, 51, "Go to work"),
+      Token(SECTION_TITLE, 41, 51, "Go to work"),
       Token(EOL, 51, 52, "\n"),
       Token(WHITE_SPACE, 52, 56, "    "),
-      Token(Journey.TASK_NAME, 56, 64, "Make tea"),
+      Token(TASK_NAME, 56, 64, "Make tea"),
       Token(COLON, 64, 65, ":"),
       Token(WHITE_SPACE, 65, 66, " "),
-      Token(Journey.TASK_DATA, 66, 67, "5"),
+      Token(TASK_DATA, 66, 67, "5"),
       Token(COLON, 67, 68, ":"),
       Token(WHITE_SPACE, 68, 69, " "),
-      Token(Journey.TASK_DATA, 69, 71, "Me"),
+      Token(TASK_DATA, 69, 71, "Me"),
       Token(EOL, 71, 72, "\n"),
       Token(WHITE_SPACE, 72, 74, "  "),
-      Token(Journey.SECTION, 74, 81, "section"),
+      Token(SECTION, 74, 81, "section"),
       Token(WHITE_SPACE, 81, 82, " "),
-      Token(Journey.SECTION_TITLE, 82, 89, "Go home"),
+      Token(SECTION_TITLE, 82, 89, "Go home"),
       Token(EOL, 89, 90, "\n"),
       Token(WHITE_SPACE, 90, 94, "    "),
-      Token(Journey.TASK_NAME, 94, 107, "Go downstairs"),
+      Token(TASK_NAME, 94, 107, "Go downstairs"),
       Token(COLON, 107, 108, ":"),
       Token(WHITE_SPACE, 108, 109, " "),
-      Token(Journey.TASK_DATA, 109, 110, "5"),
+      Token(TASK_DATA, 109, 110, "5"),
       Token(COLON, 110, 111, ":"),
       Token(WHITE_SPACE, 111, 112, " "),
-      Token(Journey.TASK_DATA, 112, 114, "Me")
+      Token(TASK_DATA, 112, 114, "Me")
     )
     doTest(content, expected)
   }
@@ -249,18 +253,18 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 16, 30, "My working day"),
       Token(EOL, 30, 31, "\n"),
       Token(WHITE_SPACE, 31, 33, "  "),
-      Token(Journey.SECTION, 33, 40, "section"),
+      Token(SECTION, 33, 40, "section"),
       Token(WHITE_SPACE, 40, 41, " "),
-      Token(Journey.SECTION_TITLE, 41, 51, "Go to work"),
+      Token(SECTION_TITLE, 41, 51, "Go to work"),
       Token(EOL, 51, 52, "\n"),
       Token(WHITE_SPACE, 52, 60, "        "),
-      Token(Journey.TASK_NAME, 60, 70, "Make tea  "),
+      Token(TASK_NAME, 60, 70, "Make tea  "),
       Token(COLON, 70, 71, ":"),
       Token(WHITE_SPACE, 71, 75, "    "),
-      Token(Journey.TASK_DATA, 75, 79, "5   "),
+      Token(TASK_DATA, 75, 79, "5   "),
       Token(COLON, 79, 80, ":"),
       Token(WHITE_SPACE, 80, 83, "   "),
-      Token(Journey.TASK_DATA, 83, 85, "Me")
+      Token(TASK_DATA, 83, 85, "Me")
     )
     doTest(content, expected)
   }
@@ -281,20 +285,20 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 16, 30, "My working day"),
       Token(EOL, 30, 31, "\n"),
       Token(WHITE_SPACE, 31, 33, "  "),
-      Token(Journey.SECTION, 33, 40, "section"),
+      Token(SECTION, 33, 40, "section"),
       Token(WHITE_SPACE, 40, 41, " "),
-      Token(Journey.SECTION_TITLE, 41, 51, "Go to work"),
+      Token(SECTION_TITLE, 41, 51, "Go to work"),
       Token(EOL, 51, 52, "\n"),
       Token(WHITE_SPACE, 52, 57, "     "),
       Token(COLON, 57, 58, ":"),
       Token(WHITE_SPACE, 58, 59, " "),
-      Token(Journey.TASK_DATA, 59, 67, "Make tea"),
+      Token(TASK_DATA, 59, 67, "Make tea"),
       Token(COLON, 67, 68, ":"),
       Token(WHITE_SPACE, 68, 69, " "),
-      Token(Journey.TASK_DATA, 69, 70, "5"),
+      Token(TASK_DATA, 69, 70, "5"),
       Token(COLON, 70, 71, ":"),
       Token(WHITE_SPACE, 71, 72, " "),
-      Token(Journey.TASK_DATA, 72, 74, "Me")
+      Token(TASK_DATA, 72, 74, "Me")
     )
     doTest(content, expected)
   }
@@ -319,18 +323,18 @@ class JourneyTest: MermaidLexerTestCase() {
       Token(TITLE_VALUE, 36, 73, "My working day %% This is not comment"),
       Token(EOL, 73, 74, "\n"),
       Token(WHITE_SPACE, 74, 76, "  "),
-      Token(Journey.SECTION, 76, 83, "section"),
+      Token(SECTION, 76, 83, "section"),
       Token(WHITE_SPACE, 83, 84, " "),
-      Token(Journey.SECTION_TITLE, 84, 117, "Go to work %% This is not comment"),
+      Token(SECTION_TITLE, 84, 117, "Go to work %% This is not comment"),
       Token(EOL, 117, 118, "\n"),
       Token(WHITE_SPACE, 118, 122, "    "),
-      Token(Journey.TASK_NAME, 122, 130, "Make tea"),
+      Token(TASK_NAME, 122, 130, "Make tea"),
       Token(COLON, 130, 131, ":"),
       Token(WHITE_SPACE, 131, 132, " "),
-      Token(Journey.TASK_DATA, 132, 133, "5"),
+      Token(TASK_DATA, 132, 133, "5"),
       Token(COLON, 133, 134, ":"),
       Token(WHITE_SPACE, 134, 135, " "),
-      Token(Journey.TASK_DATA, 135, 160, "Me %% This is not comment"),
+      Token(TASK_DATA, 135, 160, "Me %% This is not comment"),
       Token(EOL, 160, 161, "\n"),
       Token(WHITE_SPACE, 161, 165, "    "),
       Token(LINE_COMMENT, 165, 167, "%%"),

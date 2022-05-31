@@ -17,6 +17,7 @@
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.ClassDiagram.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.StateDiagram.*'
     'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.EntityRelationship.*'
+    'static com.github.firsttimeinforever.mermaid.lang.lexer.MermaidTokens.Gantt.*'
   ]
   generateTokens=false
 }
@@ -31,6 +32,7 @@ private diagram ::= pieHeader pieDocument
 	| CLASS_DIAGRAM classDocument
 	| STATE_DIAGRAM stateDocument
 	| ENTITY_RELATIONSHIP erDocument
+	| GANTT ganttDocument
 
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
@@ -230,6 +232,20 @@ private relationshipRight ::= ZERO_OR_ONE_RIGHT | ONE_OR_MORE_RIGHT | ZERO_OR_MO
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
 erAttributeLine ::= erAttribute [EOL] | EOL
 erAttribute ::= attrType attrName [ATTR_KEY] [string]
+
+
+ganttDocument ::= ganttLines
+private ganttLines ::= (ganttLine) [ganttLines]
+ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
+private ganttStatement ::= DATE_FORMAT
+  | TITLE TITLE_VALUE
+  | EXCLUDES
+  | INCLUDES
+  | AXIS_FORMAT
+  | SECTION SECTION_TITLE
+  | TASK_NAME COLON TASK_DATA (COMMA TASK_DATA)*
+	| directive
+
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE
 private directiveContent ::= property [COMMA directiveContent]

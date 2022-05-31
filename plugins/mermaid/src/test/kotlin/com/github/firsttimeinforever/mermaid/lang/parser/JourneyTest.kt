@@ -27,65 +27,65 @@ class JourneyTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.SECTION)
+    >>>PsiElement(SECTION)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.SECTION_TITLE)
+    >>>PsiElement(SECTION_TITLE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.TASK_NAME)
+    >>>PsiElement(TASK_NAME)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.TASK_NAME)
+    >>>PsiElement(TASK_NAME)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.TASK_NAME)
+    >>>PsiElement(TASK_NAME)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.SECTION)
+    >>>PsiElement(SECTION)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.SECTION_TITLE)
+    >>>PsiElement(SECTION_TITLE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.TASK_NAME)
+    >>>PsiElement(TASK_NAME)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.TASK_NAME)
+    >>>PsiElement(TASK_NAME)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -113,21 +113,21 @@ class JourneyTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.SECTION)
+    >>>PsiElement(SECTION)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.SECTION_TITLE)
+    >>>PsiElement(SECTION_TITLE)
     >>PsiElement(IGNORED)
     >>Element(JOURNEY_LINE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.TASK_NAME)
+    >>>PsiElement(TASK_NAME)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.TASK_DATA)
+    >>>PsiElement(TASK_DATA)
     >>PsiElement(IGNORED)
     """.trimIndent()
     doTest(content, expectedTree)
@@ -154,13 +154,13 @@ class JourneyTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.SECTION)
+    >>>PsiElement(SECTION)
     >>>PsiWhiteSpace
-    >>>PsiElement(Journey.SECTION_TITLE)
+    >>>PsiElement(SECTION_TITLE)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(JOURNEY_LINE)
-    >>>PsiElement(Journey.TASK_NAME)
+    >>>PsiElement(TASK_NAME)
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
     >>>PsiElement(IGNORED)

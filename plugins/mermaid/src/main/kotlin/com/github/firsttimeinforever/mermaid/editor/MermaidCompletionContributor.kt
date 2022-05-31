@@ -53,8 +53,8 @@ class MermaidCompletionContributor : CompletionContributor() {
     )
     extend(
       CompletionType.BASIC,
-      psiElement(),
-      TitleCompletionProvider(MermaidTokens.Pie.PIE, MermaidPieDocumentImpl::class.java)
+      psiElement().insideDiagram(psiElement(MermaidElements.PIE_HEADER)),
+      TitleCompletionProvider()
     )
 
     extend(
@@ -78,8 +78,8 @@ class MermaidCompletionContributor : CompletionContributor() {
 
     extend(
       CompletionType.BASIC,
-      psiElement(),
-      TitleCompletionProvider(MermaidTokens.Journey.JOURNEY, MermaidJourneyDocumentImpl::class.java)
+      psiElement().insideDiagram(psiElement(MermaidTokens.Journey.JOURNEY)),
+      TitleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
@@ -130,6 +130,22 @@ class MermaidCompletionContributor : CompletionContributor() {
         )
       ),
       StateDiagramAnnotationCompletionProvider()
+    )
+
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagram(psiElement(MermaidTokens.Gantt.GANTT)),
+      TitleCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagram(psiElement(MermaidTokens.Gantt.GANTT)),
+      GanttSimpleCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagram(psiElement(MermaidTokens.Gantt.GANTT)),
+      BranchCompletionProvider("section")
     )
   }
 
@@ -185,7 +201,8 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM),
       psiElement(MermaidTokens.Journey.JOURNEY),
       psiElement(MermaidTokens.StateDiagram.STATE_DIAGRAM),
-      psiElement(MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP)
+      psiElement(MermaidTokens.EntityRelationship.ENTITY_RELATIONSHIP),
+      psiElement(MermaidTokens.Gantt.GANTT)
     )
   }
 }

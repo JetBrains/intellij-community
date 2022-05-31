@@ -23,11 +23,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
 
   private fun getJourneyHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
     return when (tokenType) {
-      MermaidTokens.Journey.JOURNEY,
-      MermaidTokens.Journey.SECTION -> arrayOf(MermaidTextAttributes.keyword)
-
-      MermaidTokens.Journey.TASK_NAME,
-      MermaidTokens.Journey.SECTION_TITLE -> arrayOf(MermaidTextAttributes.string)
+      MermaidTokens.Journey.JOURNEY -> arrayOf(MermaidTextAttributes.keyword)
       else -> null
     }
   }
@@ -130,6 +126,15 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     }
   }
 
+  private fun getGanttDiagramHighlights(tokenType: IElementType): Array<TextAttributesKey>? {
+    return when (tokenType) {
+      MermaidTokens.Gantt.GANTT -> arrayOf(MermaidTextAttributes.keyword)
+
+
+      else -> null
+    }
+  }
+
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
     val pieHighlights = getPieHighlights(tokenType)
     val journeyHighlighter = getJourneyHighlights(tokenType)
@@ -138,6 +143,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     val classDiagramHighlights = getClassDiagramHighlights(tokenType)
     val stateDiagramHighlights = getStateDiagramHighlights(tokenType)
     val entityRelationshipDiagramHighlights = getEntityRelationshipDiagramHighlights(tokenType)
+    val ganttDiagramHighlights = getGanttDiagramHighlights(tokenType)
     return pieHighlights
       ?: journeyHighlighter
       ?: flowchartHighlighter
@@ -145,6 +151,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       ?: classDiagramHighlights
       ?: stateDiagramHighlights
       ?: entityRelationshipDiagramHighlights
+      ?: ganttDiagramHighlights
       ?: when (tokenType) {
         MermaidTokens.END,
         MermaidTokens.TITLE,
@@ -153,13 +160,16 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.AS,
         MermaidTokens.NOTE,
         MermaidTokens.RIGHT_OF,
-        MermaidTokens.LEFT_OF -> arrayOf(MermaidTextAttributes.keyword)
+        MermaidTokens.LEFT_OF,
+        MermaidTokens.SECTION -> arrayOf(MermaidTextAttributes.keyword)
 
         MermaidTokens.TITLE_VALUE,
         MermaidTokens.DOUBLE_QUOTE,
         MermaidTokens.STRING_VALUE,
         MermaidTokens.ALIAS,
-        MermaidTokens.LABEL -> arrayOf(MermaidTextAttributes.string)
+        MermaidTokens.LABEL,
+        MermaidTokens.SECTION_TITLE,
+        MermaidTokens.TASK_NAME-> arrayOf(MermaidTextAttributes.string)
 
         MermaidTokens.LINE_COMMENT,
         MermaidTokens.COMMENT_TEXT,
