@@ -133,14 +133,14 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   }
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     for (IntOption option : myOptions) {
       option.setValue(option.getFieldValue(settings));
     }
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     for (IntOption option : myOptions) {
       option.myIntField.validateContent();
     }

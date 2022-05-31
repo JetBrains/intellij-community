@@ -2,8 +2,9 @@
 package com.intellij.psi.codeStyle;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public interface CustomCodeStyleSettingsFactory {
-  CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings);
+  CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings);
 }

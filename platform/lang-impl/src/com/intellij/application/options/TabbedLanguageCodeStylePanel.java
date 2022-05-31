@@ -248,7 +248,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     ensureTabs();
     return myActiveTab.createHighlighter(scheme);
   }
@@ -284,7 +284,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
       tab.apply(settings);
@@ -316,7 +316,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
       tab.resetImpl(settings);
@@ -325,7 +325,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
 
   @Override
-  public void setupCopyFromMenu(JPopupMenu copyMenu) {
+  public void setupCopyFromMenu(@NotNull JPopupMenu copyMenu) {
     super.setupCopyFromMenu(copyMenu);
     if (myPredefinedCodeStyles.length > 0) {
       fillPredefinedStylesAndLanguages(copyMenu);
@@ -507,7 +507,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Nullable
     @Override
-    protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+    protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
       return null;
     }
 
@@ -535,7 +535,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    public void apply(CodeStyleSettings settings) throws ConfigurationException {
+    public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
       if (myConfigurable instanceof CodeStyleConfigurable) {
         ((CodeStyleConfigurable)myConfigurable).apply(settings);
       }
@@ -559,7 +559,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected void resetImpl(CodeStyleSettings settings) {
+    protected void resetImpl(@NotNull CodeStyleSettings settings) {
       if (myConfigurable instanceof CodeStyleConfigurable) {
         ((CodeStyleConfigurable)myConfigurable).reset(settings);
       }
@@ -612,7 +612,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+    protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
       return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
     }
 
@@ -630,16 +630,17 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected String getFileExt() {
-      if (getProvider() != null) {
-        String ext = getProvider().getFileExt();
+    protected @NotNull String getFileExt() {
+      LanguageCodeStyleSettingsProvider provider = getProvider();
+      if (provider != null) {
+        String ext = provider.getFileExt();
         if (ext != null) return ext;
       }
       return super.getFileExt();
     }
 
     @Override
-    public void apply(CodeStyleSettings settings) {
+    public void apply(@NotNull CodeStyleSettings settings) {
       CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
       if (indentOptions == null) return;
       myEditor.apply(settings, indentOptions);
@@ -658,7 +659,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
-    protected void resetImpl(CodeStyleSettings settings) {
+    protected void resetImpl(@NotNull CodeStyleSettings settings) {
       CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
       if (indentOptions == null && getProvider() != null) {
         myEditor.setEnabled(false);

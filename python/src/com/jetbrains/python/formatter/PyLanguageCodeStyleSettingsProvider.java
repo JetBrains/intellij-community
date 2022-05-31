@@ -165,7 +165,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PyCodeStyleSettings(settings);
   }
 
@@ -175,7 +175,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings,
                                              PyBundle.message("configurable.PyLanguageCodeStyleSettingsProvider.display.name")) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new PyCodeStyleMainPanel(getCurrentSettings(), settings);
       }
 

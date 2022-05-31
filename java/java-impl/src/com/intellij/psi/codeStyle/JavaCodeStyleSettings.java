@@ -25,7 +25,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   private static final String DO_NOT_IMPORT_INNER_ITEM = "CLASS";
   private static final String COLLECTION_ITEM_ATTRIBUTE = "name";
 
-  public JavaCodeStyleSettings(CodeStyleSettings container) {
+  public JavaCodeStyleSettings(@NotNull CodeStyleSettings container) {
     super("JavaCodeStyleSettings", container);
     initImportsByDefault();
   }

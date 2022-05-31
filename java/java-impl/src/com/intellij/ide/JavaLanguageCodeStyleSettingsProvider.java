@@ -33,7 +33,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, JavaLanguage.INSTANCE.getDisplayName()) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
       }
       @Override
@@ -45,7 +45,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JavaCodeStyleSettings(settings);
   }
 
@@ -329,7 +329,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   }
 
   @Override
-  public PsiFile createFileFromText(final Project project, final String text) {
+  public PsiFile createFileFromText(final @NotNull Project project, final @NotNull String text) {
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(
       "sample.java", JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), false, false
     );

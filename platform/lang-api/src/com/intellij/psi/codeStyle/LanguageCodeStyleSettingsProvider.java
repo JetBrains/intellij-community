@@ -93,7 +93,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * @return a PSI file instance with given text, or null for default implementation using provider's language.
    */
   @Nullable
-  public PsiFile createFileFromText(final Project project, final String text) {
+  public PsiFile createFileFromText(@NotNull Project project, @NotNull String text) {
     return null;
   }
 
@@ -209,12 +209,6 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     String providerLangName = provider != null ? provider.getLanguageName() : null;
     return providerLangName != null ? providerLangName : lang.getDisplayName();
-  }
-
-  @Nullable
-  public static PsiFile createFileFromText(final Language language, final Project project, final String text) {
-    final LanguageCodeStyleSettingsProvider provider = forLanguage(language);
-    return provider != null ? provider.createFileFromText(project, text) : null;
   }
 
   @Nullable

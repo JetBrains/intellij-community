@@ -75,7 +75,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return HighlighterFactory.createHighlighter(new PyHighlighter(LanguageLevel.PYTHON26), scheme);
   }
 
@@ -96,7 +96,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     final PyCodeStyleSettings pySettings = getCustomSettings(settings);
     for (DictAlignment alignment : DictAlignment.values()) {
       if (pySettings.DICT_ALIGNMENT == alignment.asInt()) {
@@ -111,7 +111,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     customSettings.DICT_ALIGNMENT = getDictAlignmentAsInt();
     customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();

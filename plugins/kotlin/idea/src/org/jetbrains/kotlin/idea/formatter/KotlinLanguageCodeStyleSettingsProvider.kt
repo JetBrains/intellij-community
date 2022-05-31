@@ -34,7 +34,7 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
         initIndentOptions()
     }
 
-    override fun createCustomSettings(settings: CodeStyleSettings?): CustomCodeStyleSettings = KotlinCodeStyleSettings(settings)
+    override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings = KotlinCodeStyleSettings(settings)
 
     override fun getAccessor(codeStyleObject: Any, field: Field): CodeStyleFieldAccessor<*, *>? {
         if (codeStyleObject is KotlinCodeStyleSettings && KotlinPackageEntryTable::class.java.isAssignableFrom(field.type)) {

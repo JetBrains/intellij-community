@@ -116,7 +116,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
-  public void setParentSettings(CodeStyleSettings parent) {
+  public void setParentSettings(@NotNull CodeStyleSettings parent) {
     myParentSettings = parent;
   }
 

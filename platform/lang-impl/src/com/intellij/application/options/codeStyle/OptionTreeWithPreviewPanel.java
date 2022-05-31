@@ -274,7 +274,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   protected abstract void initTables();
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
@@ -304,7 +304,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     applyNode(root, settings);
