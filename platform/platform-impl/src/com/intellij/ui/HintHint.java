@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -147,8 +148,13 @@ public class HintHint {
     return getTooltipManager().isOwnBorderAllowed(myAwtTooltip);
   }
 
+  @NotNull
   public Color getBorderColor() {
     return myBorderColor != null ? myBorderColor : JBUI.CurrentTheme.Tooltip.borderColor();
+  }
+
+  public boolean isBorderColorSet() {
+    return myBorderColor != null;
   }
 
   public Insets getBorderInsets() {
