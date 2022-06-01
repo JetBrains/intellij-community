@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.ExecutionBundle;
@@ -79,7 +79,7 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
   @Override
   public Dimension getInitialSize() {
     var size = super.getInitialSize();
-    if (size != null){
+    if (size != null) {
       return size;
     }
 
