@@ -77,6 +77,7 @@ public class Notification {
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
   private String myRemindLaterHandlerId;
+  private @Nullable String myToolWindowId;
 
   private final AtomicBoolean myExpired = new AtomicBoolean(false);
   private final AtomicReference<WeakReference<Balloon>> myBalloonRef = new AtomicReference<>();
@@ -403,6 +404,18 @@ public class Notification {
 
   public boolean isImportant() {
     return myImportant != null ? myImportant : getListener() != null || myActions != null && !myActions.isEmpty();
+  }
+
+  /**
+   * Sets the tool window ID, overriding the ID specified in the notification group registration.
+   */
+  public @NotNull Notification setToolWindowId(@Nullable String toolWindowId) {
+    myToolWindowId = toolWindowId;
+    return this;
+  }
+
+  public @Nullable String getToolWindowId() {
+    return myToolWindowId;
   }
 
   public final void assertHasTitleOrContent() {

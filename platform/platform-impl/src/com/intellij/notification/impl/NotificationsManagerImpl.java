@@ -174,7 +174,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     String groupId = notification.getGroupId();
     NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
     NotificationDisplayType type = settings.getDisplayType();
-    String toolWindowId = NotificationsConfigurationImpl.getInstanceImpl().getToolWindowId(groupId);
+    String toolWindowId = notification.getToolWindowId();
+    if (toolWindowId == null) {
+      toolWindowId = NotificationsConfigurationImpl.getInstanceImpl().getToolWindowId(groupId);
+    }
 
     if (type == NotificationDisplayType.TOOL_WINDOW &&
         (toolWindowId == null || project == null || !ToolWindowManager.getInstance(project).canShowNotification(toolWindowId))) {
