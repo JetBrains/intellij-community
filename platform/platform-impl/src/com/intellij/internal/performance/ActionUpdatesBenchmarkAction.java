@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiManager;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.LongSupplier;
 
 public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
 
@@ -158,6 +160,7 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
                                             @NotNull Component component,
                                             @NotNull MyRunner activityRunner) {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
+    boolean isDumb = DumbService.isDumb(project);
     List<Pair<Integer, String>> results = new ArrayList<>();
     List<Pair<String, String>> results2 = new ArrayList<>();
 
@@ -180,6 +183,17 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       }
     });
     LOG.info(TimeoutUtil.getDurationMillis(startPrecache) + " ms to pre-cache data-context");
+    Set<String> nonUniqueClasses = new HashSet<>();
+    {
+      Set<String> visited = new HashSet<>();
+      for (String id : actionManager.getActionIds()) {
+        AnAction action = actionManager.getAction(id);
+        if (action == null) continue;
+        if (action.getClass() == DefaultActionGroup.class) continue;
+        String className = action.getClass().getName();
+        if (!visited.add(className)) nonUniqueClasses.add(className);
+      }
+    }
 
     int count = 0;
     long startActions = System.nanoTime();
@@ -187,35 +201,20 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       AnAction action = actionManager.getAction(id);
       if (action == null) continue;
       if (action.getClass() == DefaultActionGroup.class) continue;
+      if (isDumb && !DumbService.isDumbAware(action)) continue;
+      ActionUpdateThread updateThread = action.getActionUpdateThread();
+      String className = action.getClass().getName();
+      String actionIdIfNeeded = nonUniqueClasses.contains(className) ? " (" + id + ")" : "";
+      String actionName = className + actionIdIfNeeded;
       ProgressManager.checkCanceled();
       AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.MAIN_MENU, wrappedContext);
-      ReadAction.run(() -> {
-        HashSet<String> ruleKeys = new HashSet<String>();
-        long elapsed;
-        String actionName = action.getClass().getName();
-        try {
-          ourMissingKeysConsumer = ruleKeys::add;
-          elapsed = activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true));
-        }
-        finally {
-          ourMissingKeysConsumer = null;
-        }
-        if (elapsed > 0) {
-          results.add(Pair.create((int)elapsed, actionName));
-        }
-        ActionUpdateThread updateThread = action.getActionUpdateThread();
-        if (updateThread == ActionUpdateThread.OLD_EDT) {
-          if (ruleKeys.isEmpty()) {
-            if (event.getPresentation().isEnabled()) {
-              results2.add(Pair.create("UI only?", actionName));
-            }
-          }
-          else {
-            results2.add(Pair.create(ContainerUtil.sorted(ruleKeys).toString(), actionName));
-          }
-        }
-      });
+      runAndMeasure(results, results2, actionName, event, updateThread,
+                    () -> activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true)));
       count++;
+      if (!(action instanceof ActionGroup)) continue;
+      String childrenActionName = className + ".getChildren-" + (event.getPresentation().isEnabled() ? "enabled" : "disabled") + actionIdIfNeeded;
+      runAndMeasure(results, results2, childrenActionName, event, updateThread,
+                    () -> activityRunner.run(actionName, id, () -> ((ActionGroup)action).getChildren(event)));
     }
     long elapsedActions = TimeoutUtil.getDurationMillis(startActions);
     LOG.info(elapsedActions + " ms total to update " + count + " actions");
@@ -229,6 +228,39 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     for (Pair<String, String> pair : results2) {
       LOG.info(pair.first + " - " + pair.second);
     }
+  }
+
+  private static void runAndMeasure(@NotNull List<Pair<Integer, String>> results,
+                                    @NotNull List<Pair<String, String>> results2,
+                                    @NotNull String actionName,
+                                    @NotNull AnActionEvent event,
+                                    @NotNull ActionUpdateThread updateThread,
+                                    @NotNull LongSupplier runnable) {
+    ReadAction.run(() -> {
+      HashSet<String> ruleKeys = new HashSet<String>();
+      long elapsed;
+
+      try {
+        ourMissingKeysConsumer = ruleKeys::add;
+        elapsed = runnable.getAsLong();
+      }
+      finally {
+        ourMissingKeysConsumer = null;
+      }
+      if (elapsed > 0) {
+        results.add(Pair.create((int)elapsed, actionName));
+      }
+      if (updateThread == ActionUpdateThread.OLD_EDT) {
+        if (ruleKeys.isEmpty()) {
+          if (event.getPresentation().isEnabled()) {
+            results2.add(Pair.create("BGT or EDT", actionName));
+          }
+        }
+        else {
+          results2.add(Pair.create(ContainerUtil.sorted(ruleKeys).toString(), actionName));
+        }
+      }
+    });
   }
 
   private static class TraceData {
