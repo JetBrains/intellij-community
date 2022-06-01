@@ -2,11 +2,9 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.ui.ColorUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
@@ -26,48 +24,35 @@ public class ListenerPluginDescriptorDeclarationRelatedItemLineMarkerProviderTes
   }
 
   public void testListenerSameTopic() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginListener.xml");
+    myFixture.copyFileToProject("pluginListener.xml");
 
     GutterMark gutter = myFixture.findGutter("MyListener.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 151, "MyListenerTopic") +
-                                                  buildTooltipText(pluginXmlFile, 44, "MyListenerTopic") +
-                                                  "</body></html>",
+                                                  buildTooltipText("MyListenerTopic"),
                                                   DevKitIcons.Gutter.Plugin, "listener");
   }
 
   public void testListenerMultipleTopics() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginListenerMultipleTopics.xml");
+    myFixture.copyFileToProject("pluginListenerMultipleTopics.xml");
 
     GutterMark gutter = myFixture.findGutter("MyListener.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 151, "AnotherTopic") +
-                                                  buildTooltipText(pluginXmlFile, 207, "YetAnotherTopic") +
-                                                  buildTooltipText(pluginXmlFile, 44, "MyListenerTopic") +
-                                                  "</body></html>",
+                                                  buildTooltipText("AnotherTopic", "MyListenerTopic", "YetAnotherTopic"),
                                                   DevKitIcons.Gutter.Plugin, "listener");
   }
 
   public void testTopicMultipleListeners() {
-    VirtualFile pluginXmlFile = myFixture.copyFileToProject("pluginTopicMultipleListener.xml");
+    myFixture.copyFileToProject("pluginTopicMultipleListener.xml");
 
     GutterMark gutter = myFixture.findGutter("MyTopic.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
-                                                  "<html><body>" +
-                                                  buildTooltipText(pluginXmlFile, 143, "AnotherListener") +
-                                                  buildTooltipText(pluginXmlFile, 44, "MyListener") +
-                                                  "</body></html>",
+                                                  buildTooltipText("AnotherListener", "MyListener"),
                                                   DevKitIcons.Gutter.Plugin, "listener");
   }
 
-  private String buildTooltipText(VirtualFile pluginXmlFile, int expectedTagPosition, String topicFqn) {
-    String pluginXmlPath = pluginXmlFile.getPath();
-
-    String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    return "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + pluginXmlPath
-           + ":" + expectedTagPosition + "\">" + topicFqn + "</a> listener in " + pluginXmlFile.getName() +
-           " <font color=\"" + color + "\">[" + getModule().getName() + "]</font><br>";
+  private static String buildTooltipText(String... topics) {
+    return "<html><body>" +
+           StringUtil.join(topics, s -> "&nbsp;&nbsp;&nbsp;&nbsp;" + s + "<br>", "") +
+           "</body></html>";
   }
 }
