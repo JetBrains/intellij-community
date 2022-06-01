@@ -422,11 +422,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  public Promise<AbstractTreeNode<?>> expandPathToElement(Object element) {
-    return expandSelectFocusInner(element, false, false)
-      .then(p -> TreeUtil.getLastUserObject(AbstractTreeNode.class, p));
-  }
-
   @NotNull
   public Promise<TreePath> select(Object element, boolean requestFocus) {
     return expandSelectFocusInner(element, true, requestFocus);
