@@ -7,6 +7,7 @@ import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionRole
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
@@ -38,10 +39,11 @@ private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
 private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.tests")
 
-class ModuleStructureValidator(private val buildContext: BuildContext, moduleJars: MultiMap<String, String>) {
+class ModuleStructureValidator(private val context: BuildContext, moduleJars: MultiMap<String, String>) {
   private val moduleJars = MultiMap<String, String>()
   private val moduleNames = HashSet<String>()
   private val errors = ArrayList<AssertionError>()
+  private val libraryFiles = HashMap<JpsLibrary, Set<String>>()
 
   init {
     for (moduleJar in moduleJars.entrySet()) {
@@ -55,26 +57,42 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
     }
   }
 
+  private fun getLibraryFiles(library: JpsLibrary): Set<String> {
+    @Suppress("NAME_SHADOWING")
+    return libraryFiles.computeIfAbsent(library) { library ->
+      val result = HashSet<String>()
+      for (libraryRootUrl in library.getRootUrls(JpsOrderRootType.COMPILED)) {
+        val path = Path.of(JpsPathUtil.urlToPath(libraryRootUrl))
+        JarInputStream(FileInputStream(path.toFile())).use { jarStream ->
+          while (true) {
+            result.add((jarStream.nextJarEntry ?: break).name)
+          }
+        }
+      }
+      result
+    }
+  }
+
   fun validate(): List<AssertionError> {
     errors.clear()
 
-    buildContext.messages.info("Validating jars...")
+    context.messages.info("Validating jars...")
     validateJarModules()
 
-    buildContext.messages.info("Validating modules...")
+    context.messages.info("Validating modules...")
     val visitedModules = HashSet<JpsModule>()
     for (moduleName in moduleNames) {
       if (ignoreModules.contains(moduleName)) {
         continue
       }
-      validateModuleDependencies(visitedModules, buildContext.findRequiredModule(moduleName))
+      validateModuleDependencies(visitedModules, context.findRequiredModule(moduleName))
     }
 
-    buildContext.messages.info("Validating xml descriptors...")
+    context.messages.info("Validating xml descriptors...")
     validateXmlDescriptors()
 
     if (errors.isEmpty()) {
-      buildContext.messages.info("Validation finished successfully")
+      context.messages.info("Validation finished successfully")
     }
 
     return errors
@@ -91,7 +109,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
     for (module in modulesInJars.keySet()) {
       val jars = modulesInJars.get(module)
       if (jars.size > 1) {
-        buildContext.messages.warning("Module '$module' contains in several JARs: ${jars.joinToString(separator = "; ")}")
+        context.messages.warning("Module '$module' contains in several JARs: ${jars.joinToString(separator = "; ")}")
       }
     }
   }
@@ -131,15 +149,22 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
 
   private fun validateXmlDescriptors() {
     val roots = ArrayList<Path>()
+    val libraries = HashSet<JpsLibrary>()
     for (moduleName in moduleNames) {
-      val module = buildContext.findRequiredModule(moduleName)
+      val module = context.findRequiredModule(moduleName)
       for (root in module.sourceRoots) {
         roots.add(root.path)
+      }
+
+      for (dependencyElement in module.dependenciesList.dependencies) {
+        if (dependencyElement is JpsLibraryDependency) {
+          libraries.add(dependencyElement.library!!)
+        }
       }
     }
 
     // start validating from product xml descriptor
-    val productDescriptorName = "META-INF/${buildContext.productProperties.platformPrefix}Plugin.xml"
+    val productDescriptorName = "META-INF/${context.productProperties.platformPrefix}Plugin.xml"
     val productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
     if (productDescriptorFile == null) {
       errors.add(AssertionError("Can not find product descriptor $productDescriptorName"))
@@ -147,11 +172,15 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
     }
 
     val allDescriptors = HashSet<Path>()
-    validateXmlDescriptorsRec(productDescriptorFile, roots, allDescriptors)
+    validateXmlDescriptorsRec(productDescriptorFile, roots, libraries, allDescriptors)
     validateXmlRegistrations(allDescriptors)
   }
 
-  private fun validateXmlDescriptorsRec(descriptor: Path, roots: List<Path>, allDescriptors: MutableSet<Path>) {
+  private fun findLibraryWithFile(name: String, libraries: Set<JpsLibrary>): JpsLibrary? {
+    return libraries.firstOrNull { getLibraryFiles(it).contains(name) }
+  }
+
+  private fun validateXmlDescriptorsRec(descriptor: Path, roots: List<Path>, libraries: Set<JpsLibrary>, allDescriptors: MutableSet<Path>) {
     allDescriptors.add(descriptor)
 
     val descriptorFiles = ArrayList<Path>()
@@ -161,12 +190,18 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
       val ref = includeNode.getAttributeValue("href") ?: continue
       val descriptorFile = findDescriptorFile(ref, roots + descriptor.parent)
       if (descriptorFile == null) {
-        val isOptional = includeNode.children.any { it.name == fallbackName }
-        if (isOptional) {
-          buildContext.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
+        val library1 = findLibraryWithFile(removePrefixStrict(ref, "/"), libraries)
+        if (library1 != null) {
+          context.messages.warning("Descriptor '$ref' came from library '${library1.name}', referenced in '${descriptor.name}'")
         }
         else {
-          errors.add(AssertionError("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'"))
+          val isOptional = includeNode.children.any { it.name == fallbackName }
+          if (isOptional) {
+            context.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
+          }
+          else {
+            errors.add(AssertionError("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'"))
+          }
         }
       }
       else {
@@ -175,7 +210,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
     }
 
     for (descriptorFile in descriptorFiles) {
-      validateXmlDescriptorsRec(descriptorFile, roots, allDescriptors)
+      validateXmlDescriptorsRec(descriptorFile, roots, libraries, allDescriptors)
     }
   }
 
@@ -183,7 +218,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
     val classes = HashSet<String>(predefinedTypes)
     val visitedLibraries = HashSet<String>()
     for (moduleName in moduleNames) {
-      val jpsModule = buildContext.findRequiredModule(moduleName)
+      val jpsModule = context.findRequiredModule(moduleName)
 
       val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(jpsModule, false)!!.toPath()
       val outputDirectoryPrefix = outputDirectory.toString().replace('\\', '/') + "/"
@@ -214,46 +249,30 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
 
       for (dependencyElement in jpsModule.dependenciesList.dependencies) {
         if (dependencyElement is JpsLibraryDependency) {
-          val library = dependencyElement.library ?: continue
+          val jpsLibrary = dependencyElement.library
+          val library = jpsLibrary ?: continue
           if (!visitedLibraries.add(library.name)) {
             continue
           }
 
-          for (libraryRootUrl in library.getRootUrls(JpsOrderRootType.COMPILED)) {
-            val path = Path.of(JpsPathUtil.urlToPath(libraryRootUrl))
-            JarInputStream(FileInputStream(path.toFile())).use { jarStream ->
-              while (true) {
-                val je = jarStream.nextJarEntry ?: break
-                if (!je.name.endsWith(".class") || je.name.endsWith("Kt.class")) {
-                  return
-                }
-
-                classes.add(removeSuffixStrict(je.name, ".class").replace("/", "."))
-              }
+          val libraryFiles = getLibraryFiles(jpsLibrary)
+          for (fileName in libraryFiles) {
+            if (!fileName.endsWith(".class") || fileName.endsWith("Kt.class")) {
+              return
             }
+
+            classes.add(removeSuffixStrict(fileName, ".class").replace("/", "."))
           }
         }
       }
     }
 
-    buildContext.messages.info("Found ${classes.size} classes in ${moduleNames.size} modules and ${visitedLibraries.size} libraries")
+    context.messages.info("Found ${classes.size} classes in ${moduleNames.size} modules and ${visitedLibraries.size} libraries")
 
     for (descriptor in descriptors) {
       val xml = Files.newInputStream(descriptor).use(::readXmlAsModel)
       validateXmlRegistrationsRec(descriptor.name, xml, classes)
     }
-  }
-
-  private fun removePrefixStrict(string: String, prefix: String?): String {
-    if (prefix.isNullOrEmpty()) {
-      throw IllegalArgumentException("'prefix' is null or empty")
-    }
-
-    if (!string.startsWith(prefix)) {
-      throw IllegalStateException("String must start with '$prefix': $string")
-    }
-
-    return string.substring(prefix.length)
   }
 
   private fun validateXmlRegistrationsRec(source: String, xml: XmlElement, classes: HashSet<String>) {
@@ -267,7 +286,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
       }
 
       if (value.startsWith("com.") || value.startsWith("org.")) {
-        buildContext.messages.warning(
+        context.messages.warning(
           "Attribute '$name' contains qualified path '$value'. " +
           "Add attribute into 'ModuleStructureValidator.pathAttributes' or 'ModuleStructureValidator.nonPathAttributes' collection."
         )
@@ -313,4 +332,16 @@ private fun findDescriptorFile(name: String, roots: List<Path>): Path? {
     }
   }
   return null
+}
+
+private fun removePrefixStrict(string: String, prefix: String?): String {
+  if (prefix.isNullOrEmpty()) {
+    throw IllegalArgumentException("'prefix' is null or empty")
+  }
+
+  if (!string.startsWith(prefix)) {
+    throw IllegalStateException("String must start with '$prefix': $string")
+  }
+
+  return string.substring(prefix.length)
 }
