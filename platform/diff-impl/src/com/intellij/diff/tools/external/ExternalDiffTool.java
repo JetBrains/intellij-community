@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ThrowableConvertor;
@@ -65,6 +66,14 @@ public final class ExternalDiffTool {
              .first() != null;
   }
 
+  public static boolean checkNotTooManyRequests(@Nullable Project project, @NotNull List<? extends DiffRequestProducer> diffProducers) {
+    if (diffProducers.size() <= Registry.intValue("diff.external.tool.file.limit")) return true;
+    new Notification("Diff Changes Loading Error",
+                     DiffBundle.message("can.t.show.diff.in.external.tool.too.many.files", diffProducers.size()),
+                     NotificationType.WARNING).notify(project);
+    return false;
+  }
+
   @Nullable
   private static ExternalDiffSettings.ExternalTool getExternalToolFor(@NotNull ContentDiffRequest request) {
     ExternalDiffSettings.ExternalTool diffTool = JBIterable.from(request.getContents())
@@ -89,14 +98,17 @@ public final class ExternalDiffTool {
     return show(project, hints, indicator -> {
       List<? extends DiffRequestProducer> producers = loadProducersFromChain(chain);
       if (!wantShowExternalToolFor(producers)) return null;
+      if (!checkNotTooManyRequests(project, producers)) return null;
       return collectRequests(project, producers, indicator);
     });
   }
 
-  public static void show(@Nullable Project project,
-                          @NotNull List<? extends DiffRequestProducer> requestProducers,
-                          @NotNull DiffDialogHints hints) {
-    show(project, hints, indicator -> {
+  public static boolean showIfNeeded(@Nullable Project project,
+                                     @NotNull List<? extends DiffRequestProducer> requestProducers,
+                                     @NotNull DiffDialogHints hints) {
+    return show(project, hints, indicator -> {
+      if (!wantShowExternalToolFor(requestProducers)) return null;
+      if (!checkNotTooManyRequests(project, requestProducers)) return null;
       return collectRequests(project, requestProducers, indicator);
     });
   }
