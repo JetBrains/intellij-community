@@ -19,8 +19,10 @@ import com.intellij.openapi.wm.StatusBarCentralWidget;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBThinOverlappingScrollBar;
+import com.intellij.ui.hover.HoverListener;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
@@ -242,7 +244,29 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     myNavBarPanel.add(myScrollPane, BorderLayout.CENTER);
     myNavBarPanel.setOpaque(!ExperimentalUI.isNewUI());
     myNavBarPanel.updateUI();
+
+    HoverListener hoverListener = new HoverListener() {
+      @Override
+      public void mouseEntered(@NotNull Component component, int x, int y) {
+        toggleScrollBar(true);
+      }
+
+      @Override
+      public void mouseMoved(@NotNull Component component, int x, int y) {}
+
+      @Override
+      public void mouseExited(@NotNull Component component) {
+        toggleScrollBar(false);
+      }
+    };
+    hoverListener.addTo(myNavBarPanel);
+
     return myNavBarPanel;
+  }
+
+  private void toggleScrollBar(boolean isOn) {
+    JScrollBar scrollBar = myScrollPane.getHorizontalScrollBar();
+    if (scrollBar instanceof JBScrollBar) ((JBScrollBar)scrollBar).toggle(isOn);
   }
 
   @Override
