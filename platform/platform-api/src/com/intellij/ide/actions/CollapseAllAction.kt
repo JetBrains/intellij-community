@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.TreeExpander
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL
@@ -10,6 +11,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.ui.ExperimentalUI
 
 class CollapseAllAction : DumbAwareAction {
   private val getTreeExpander: (AnActionEvent) -> TreeExpander?
@@ -34,6 +36,9 @@ class CollapseAllAction : DumbAwareAction {
     event.presentation.isVisible = expander == null && !hideIfMissing ||
                                    expander != null && expander.isCollapseAllVisible && expander.isVisible(event)
     event.presentation.isEnabled = expander != null && expander.canCollapse()
+    if (ExperimentalUI.isNewUI() && ActionPlaces.isPopupPlace(event.place)) {
+      event.presentation.icon = null
+    }
   }
 
   companion object {
