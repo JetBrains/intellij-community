@@ -176,6 +176,7 @@ class BuildOptions {
     .asSequence()
     .filter { s: String -> !s.isBlank() }
     .toHashSet()
+
   var buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE,
                                                                       SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
   var buildDmgWithBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITH_BUNDLED_JRE, true)

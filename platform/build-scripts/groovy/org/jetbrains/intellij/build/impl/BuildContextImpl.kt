@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -8,9 +10,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.ProprietaryBuildTools.Companion.DUMMY
-import org.jetbrains.intellij.build.projector.configure
-import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -24,7 +23,13 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.Collectors
 
-class BuildContextImpl : BuildContext {
+class BuildContextImpl private constructor(private val compilationContext: CompilationContextImpl,
+                                           override val productProperties: ProductProperties,
+                                           override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
+                                           override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
+                                           override val macDistributionCustomizer: MacDistributionCustomizer?,
+                                           override val proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                           private val distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) : BuildContext {
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
 
@@ -32,47 +37,24 @@ class BuildContextImpl : BuildContext {
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
 
-  override val productProperties: ProductProperties
-  override val windowsDistributionCustomizer: WindowsDistributionCustomizer?
-  override val linuxDistributionCustomizer: LinuxDistributionCustomizer?
-  override val macDistributionCustomizer: MacDistributionCustomizer?
-  override val proprietaryBuildTools: ProprietaryBuildTools
-  override val buildNumber: String
-  override var xBootClassPathJarNames: List<String>
-  override var bootClassPathJarNames: List<String>
+  override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
+
+  override val xBootClassPathJarNames: List<String>
+    get() = productProperties.xBootClassPathJarNames
+
+  override var bootClassPathJarNames: List<String> = java.util.List.of("util.jar", "util_rt.jar")
+
   override var classpathCustomizer: (MutableSet<String>) -> Unit = {}
 
-  override val applicationInfo: ApplicationInfoProperties
-  private val global: JpsGlobal
-  private val compilationContext: CompilationContextImpl
-  private val distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>
+  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(project, productProperties, options).patch(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
-  private constructor(compilationContext: CompilationContextImpl,
-                      productProperties: ProductProperties,
-                      windowsDistributionCustomizer: WindowsDistributionCustomizer?,
-                      linuxDistributionCustomizer: LinuxDistributionCustomizer?,
-                      macDistributionCustomizer: MacDistributionCustomizer?,
-                      proprietaryBuildTools: ProprietaryBuildTools?,
-                      distFiles: ConcurrentLinkedQueue<Map.Entry<Path, String>>) {
-    this.compilationContext = compilationContext
-    global = compilationContext.global
-    this.productProperties = productProperties
-    this.distFiles = distFiles
-    this.proprietaryBuildTools = proprietaryBuildTools ?: DUMMY
-    this.windowsDistributionCustomizer = windowsDistributionCustomizer
-    this.linuxDistributionCustomizer = linuxDistributionCustomizer
-    this.macDistributionCustomizer = macDistributionCustomizer
-    val number = options.buildNumber
-    buildNumber = number ?: readSnapshotBuildNumber(paths.communityHomeDir)
-    xBootClassPathJarNames = productProperties.xBootClassPathJarNames
-    bootClassPathJarNames = listOf("util.jar", "util_rt.jar")
-    applicationInfo = ApplicationInfoPropertiesImpl(project, productProperties, options).patch(this)
+  init {
     if (productProperties.productCode == null) {
       productProperties.productCode = applicationInfo.productCode
     }
-    if (systemSelector.contains(" ")) {
-      messages.error("System selector must not contain spaces: $systemSelector")
+    check(!systemSelector.contains(' ')) {
+      "System selector must not contain spaces: $systemSelector"
     }
     options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     if (!options.buildStepsToSkip.isEmpty()) {
@@ -80,7 +62,7 @@ class BuildContextImpl : BuildContext {
         AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip),
       ))
     }
-    configure(productProperties)
+    configureProjectorPlugin(productProperties)
   }
 
   companion object {
@@ -114,7 +96,7 @@ class BuildContextImpl : BuildContext {
       return createContext(communityHome = communityHome,
                            projectHome = projectHome,
                            productProperties = productProperties,
-                           proprietaryBuildTools = DUMMY,
+                           proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                            options = BuildOptions())
     }
 
@@ -134,13 +116,13 @@ class BuildContextImpl : BuildContext {
         buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
         options = options
       )
-      return BuildContextImpl(compilationContext, productProperties, windowsDistributionCustomizer, linuxDistributionCustomizer,
-                              macDistributionCustomizer, proprietaryBuildTools, ConcurrentLinkedQueue())
-    }
-
-    @JvmStatic
-    fun readSnapshotBuildNumber(communityHome: Path): String {
-      return Files.readString(communityHome.resolve("build.txt")).trim { it <= ' ' }
+      return BuildContextImpl(compilationContext = compilationContext,
+                              productProperties = productProperties,
+                              windowsDistributionCustomizer = windowsDistributionCustomizer,
+                              linuxDistributionCustomizer = linuxDistributionCustomizer,
+                              macDistributionCustomizer = macDistributionCustomizer,
+                              proprietaryBuildTools = proprietaryBuildTools ?: ProprietaryBuildTools.DUMMY,
+                              distFiles = ConcurrentLinkedQueue())
     }
   }
 
@@ -361,4 +343,17 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): List<Pair<Path, Strin
     }
     Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
   }.collect(Collectors.toList())
+}
+
+private const val projectorPlugin = "intellij.cwm.plugin.projector"
+private const val projectorJar = "plugins/cwm-plugin-projector/lib/projector/projector.jar"
+
+private fun configureProjectorPlugin(properties: ProductProperties) {
+  if (properties.productLayout.bundledPluginModules.contains(projectorPlugin) && !properties.versionCheckerConfig.containsKey(projectorJar)) {
+    properties.versionCheckerConfig = java.util.Map.copyOf(properties.versionCheckerConfig + mapOf(projectorJar to "17"))
+  }
+}
+
+private fun readSnapshotBuildNumber(communityHome: Path): String {
+  return Files.readString(communityHome.resolve("build.txt")).trim { it <= ' ' }
 }

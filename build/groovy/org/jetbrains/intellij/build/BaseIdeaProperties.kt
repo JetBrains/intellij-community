@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -23,7 +25,7 @@ private val JAVA_IDE_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
   "intellij.tools.testsBootstrap"
 )
 
-private val BASE_CLASS_VERSIONS: Map<String, String> = java.util.Map.copyOf(mapOf(
+private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "" to "11",
   "lib/idea_rt.jar" to "1.6",
   "lib/forms_rt.jar" to "1.6",
@@ -49,13 +51,14 @@ private val BASE_CLASS_VERSIONS: Map<String, String> = java.util.Map.copyOf(mapO
   "plugins/xpath/lib/rt/xslt-rt.jar" to "1.6",
   "plugins/xslt-debugger/lib/xslt-debugger-rt.jar" to "1.6",
   "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar" to "1.8",
-))
+)
 
 /**
  * Base class for all editions of IntelliJ IDEA
  */
 abstract class BaseIdeaProperties : JetBrainsProductProperties() {
   companion object {
+    @Suppress("SpellCheckingInspection")
     @JvmStatic
     val BUNDLED_PLUGIN_MODULES: List<String> = java.util.List.of(
       "intellij.java.plugin",
@@ -126,12 +129,12 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
     )
 
     @JvmStatic
-    val CE_CLASS_VERSIONS: Map<String, String> = java.util.Map.copyOf(BASE_CLASS_VERSIONS + java.util.Map.of(
-      "plugins/java/lib/jshell-frontend.jar", "9",
-      "plugins/java/lib/sa-jdwp", "",  // ignored
-      "plugins/java/lib/rt/debugger-agent.jar", "1.6",
-      "plugins/Groovy/lib/groovy-rt.jar", "1.6",
-      "plugins/Groovy/lib/groovy-constants-rt.jar", "1.6",
+    val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
+      "plugins/java/lib/jshell-frontend.jar" to "9",
+      "plugins/java/lib/sa-jdwp" to "",  // ignored
+      "plugins/java/lib/rt/debugger-agent.jar" to "1.6",
+      "plugins/Groovy/lib/groovy-rt.jar" to "1.6",
+      "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.6",
     ))
   }
 

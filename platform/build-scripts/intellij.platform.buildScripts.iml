@@ -78,5 +78,6 @@
     <orderEntry type="library" name="okhttp" level="project" />
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
   </component>
 </module>

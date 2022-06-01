@@ -53,7 +53,7 @@ final class ClassVersionChecker {
   private AtomicInteger checkedJarCount = new AtomicInteger()
   private AtomicInteger checkedClassCount = new AtomicInteger()
 
-  private ClassVersionChecker(List<Rule> rules) {
+  private ClassVersionChecker(@NotNull List<Rule> rules) {
     this.rules = rules
   }
 

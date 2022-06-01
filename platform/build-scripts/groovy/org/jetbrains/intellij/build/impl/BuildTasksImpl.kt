@@ -1008,8 +1008,8 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
 }
 
 private fun checkClassVersion( targetFile: Path, context: BuildContext) {
-  val checkerConfig = context.productProperties.versionCheckerConfig ?: return
-  if (!context.options.buildStepsToSkip.contains(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
+  val checkerConfig = context.productProperties.versionCheckerConfig
+  if (checkerConfig.isNotEmpty() && !context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
     ClassVersionChecker.checkVersions(checkerConfig, context.messages, targetFile)
   }
 }
@@ -1130,7 +1130,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         relativeFile.toString() != "bin/idea.properties"
       }, entryCustomizer = entryCustomizer)
 
-      val zipFiles = mutableMapOf<String, Path>()
+      val zipFiles = LinkedHashMap<String, Path>()
       out.dir(startDir = macX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
         val p = relativeFile.toString().replace('\\', '/')
         !p.startsWith("bin/fsnotifier") &&

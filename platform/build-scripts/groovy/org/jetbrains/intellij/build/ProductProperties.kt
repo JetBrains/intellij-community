@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.jps.model.module.JpsModule
@@ -148,7 +150,7 @@ abstract class ProductProperties {
    * A {@link org.jetbrains.intellij.build.impl.ClassVersionChecker class version checker} config map
    * when .class file version verification inside {@link #buildCrossPlatformDistribution cross-platform distribution} is needed.
    */
-  var versionCheckerConfig: Map<String, String>? = null
+  var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file
