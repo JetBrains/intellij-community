@@ -634,18 +634,21 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
-      if (myComponent.getMousePosition() != null) {
-        alarm.cancelAllRequests();
-        toolbar.getVisibilityController().scheduleShow();
-        if (isMouseOutsideToolbar) {
-          alarm.addRequest(() -> {
-            toolbar.getVisibilityController().scheduleHide();
-          }, 1400);
+      try {
+        var isMouseOutsideToolbar = toolbar.getMousePosition() == null;
+        if (myComponent.getMousePosition() != null) {
+          alarm.cancelAllRequests();
+          toolbar.getVisibilityController().scheduleShow();
+          if (isMouseOutsideToolbar) {
+            alarm.addRequest(() -> {
+              toolbar.getVisibilityController().scheduleHide();
+            }, 1400);
+          }
         }
-      }
-      else if (isMouseOutsideToolbar) {
-        toolbar.getVisibilityController().scheduleHide();
+        else if (isMouseOutsideToolbar) {
+          toolbar.getVisibilityController().scheduleHide();
+        }
+      } catch (NullPointerException ignore) { //EA-356093 problem inside OpenJDK
       }
     }
   }
