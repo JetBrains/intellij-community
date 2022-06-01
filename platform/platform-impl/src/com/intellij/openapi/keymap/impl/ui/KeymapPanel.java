@@ -819,6 +819,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
+  private static final BadgeIconSupplier SHORTCUT_FILTER_ICON = new BadgeIconSupplier(AllIcons.Actions.ShortcutFilter);
+
   private class FindByShortcutAction extends DumbAwareAction {
     private final JComponent mySearchToolbar;
 
@@ -826,6 +828,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       super(KeyMapBundle.message("filter.shortcut.action.text"), KeyMapBundle.message("filter.shortcut.action.description"),
             AllIcons.Actions.ShortcutFilter);
       mySearchToolbar = searchToolbar;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setIcon(SHORTCUT_FILTER_ICON.getSuccessIcon(myFilteringPanel.getShortcut() != null));
     }
 
     @Override
