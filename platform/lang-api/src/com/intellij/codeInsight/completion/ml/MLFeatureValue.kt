@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.ml
 
 import org.jetbrains.annotations.ApiStatus
@@ -58,14 +58,31 @@ sealed class MLFeatureValue {
     fun <T : Class<*>> className(value: T, useSimpleName: Boolean = true): MLFeatureValue = ClassNameValue(value, useSimpleName)
 
     @JvmStatic
+    fun string(value: String): MLFeatureValue = StringValue(value)
+
+    @JvmStatic
+    fun list(value: List<*>): MLFeatureValue = ListValue(value)
+
+    @JvmStatic
     fun version(value: String): MLFeatureValue = VersionValue(value)
   }
 
   abstract val value: Any
+  abstract val isSafe: Boolean
 
-  data class BinaryValue internal constructor(override val value: Boolean) : MLFeatureValue()
-  data class FloatValue internal constructor(override val value: Double) : MLFeatureValue()
-  data class CategoricalValue internal constructor(override val value: String) : MLFeatureValue()
-  data class ClassNameValue internal constructor(override val value: Class<*>, val useSimpleName: Boolean) : MLFeatureValue()
-  data class VersionValue internal constructor(override val value: String) : MLFeatureValue()
+  abstract class SafeValue : MLFeatureValue() {
+    override val isSafe: Boolean = true
+  }
+
+  abstract class UnSafeValue : MLFeatureValue() {
+    override val isSafe: Boolean = false
+  }
+
+  data class BinaryValue internal constructor(override val value: Boolean) : SafeValue()
+  data class FloatValue internal constructor(override val value: Double) : SafeValue()
+  data class CategoricalValue internal constructor(override val value: String) : SafeValue()
+  data class ClassNameValue internal constructor(override val value: Class<*>, val useSimpleName: Boolean) : UnSafeValue()
+  data class VersionValue internal constructor(override val value: String) : UnSafeValue()
+  data class StringValue internal constructor(override val value: String) : UnSafeValue()
+  data class ListValue internal constructor(override val value: List<*>) : UnSafeValue()
 }
