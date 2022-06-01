@@ -167,11 +167,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            visitClass(((UObjectLiteralExpression)node).getDeclaration());
                          }
                          if (node.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-                           PsiElement resolvedMethod = node.resolve();
-                           if (resolvedMethod instanceof LightElement) {
-                             UElement uElement = UastContextKt.toUElement(resolvedMethod);
-                             resolvedMethod = uElement == null ? null : uElement.getSourcePsi();
-                           }
+                           PsiElement resolvedMethod = returnToPhysical(node.resolve());
                            final List<UExpression> argumentList = node.getValueArguments();
                            RefMethod refConstructor = processNewLikeConstruct(resolvedMethod, argumentList);
 
@@ -226,12 +222,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            }
                          }
                          else {
-                           if (psiResolved instanceof LightElement) {
-                             UElement uElement = UastContextKt.toUElement(psiResolved);
-                             PsiElement sourcePsi = uElement != null ? uElement.getSourcePsi() : null;
-                             psiResolved = sourcePsi != null ? sourcePsi : psiResolved.getNavigationElement();
-                           }
-
+                           psiResolved = returnToPhysical(psiResolved);
                            refResolved = refManager.getReference(psiResolved);
                          }
                          boolean writing = isAccessedForWriting(node);
@@ -778,5 +769,15 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
   private static UElement skipParentheses(@NotNull UElement expression) {
     return UastUtils.skipParentOfType(expression, true, UParenthesizedExpression.class);
+  }
+
+  public static PsiElement returnToPhysical(PsiElement element) {
+    if (element instanceof LightElement) {
+      UElement uElement = UastContextKt.toUElement(element);
+      PsiElement el = uElement == null ? null : uElement.getSourcePsi();
+      if (el != null) return el;
+      return element.getNavigationElement();
+    }
+    return element;
   }
 }
