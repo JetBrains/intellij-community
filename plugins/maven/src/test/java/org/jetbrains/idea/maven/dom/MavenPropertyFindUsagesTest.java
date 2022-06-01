@@ -111,7 +111,7 @@ public class MavenPropertyFindUsagesTest extends MavenDomTestCase {
     createProjectSubDir("res");
 
     importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
+                  "<artifactId>module1</artifactId>" +
                   "<version>1</version>" +
                   "<name>${user.home}</name>" +
 
