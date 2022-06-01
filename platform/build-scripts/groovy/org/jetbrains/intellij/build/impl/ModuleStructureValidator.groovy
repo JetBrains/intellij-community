@@ -5,9 +5,11 @@ import com.intellij.util.containers.MultiMap
 import groovy.io.FileType
 import groovy.transform.CompileStatic
 import groovy.xml.QName
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionRole
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsDependencyElement
 import org.jetbrains.jps.model.module.JpsLibraryDependency
@@ -43,7 +45,8 @@ final class ModuleStructureValidator {
   private BuildContext buildContext
   private MultiMap<String, String> moduleJars = new MultiMap<String, String>()
   private Set<String> moduleNames = new HashSet<String>()
-  private List<Throwable> errors = new ArrayList<>()
+  private List<AssertionError> errors = new ArrayList<>()
+  private Map<JpsLibrary, Set<String>> libraryFiles = new HashMap<>()
 
   ModuleStructureValidator(BuildContext buildContext, MultiMap<String, String> moduleJars) {
     this.buildContext = buildContext
@@ -57,7 +60,24 @@ final class ModuleStructureValidator {
     }
   }
 
-  List<Throwable> validate() {
+  private Set<String> getLibraryFiles(JpsLibrary library) {
+    libraryFiles.computeIfAbsent(library, {
+      Set<String> result = new HashSet<>()
+      for (String libraryRootUrl in library.getRootUrls(JpsOrderRootType.COMPILED)) {
+        def path = Path.of(JpsPathUtil.urlToPath(libraryRootUrl))
+
+        try (JarInputStream jarStream = new JarInputStream(new FileInputStream(path.toFile()))) {
+          JarEntry je
+          while ((je = jarStream.getNextJarEntry()) != null) {
+            result.add(je.name)
+          }
+        }
+      }
+      return result
+    })
+  }
+
+  List<AssertionError> validate() {
     errors.clear()
 
     buildContext.messages.info("Validating jars...")
@@ -118,7 +138,7 @@ final class ModuleStructureValidator {
         }
 
         if (!moduleNames.contains(dependantModule.name)) {
-          errors.add(new IllegalStateException("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name()}]".toString()))
+          errors.add(new AssertionError("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name()}]".toString(), null))
           continue
         }
 
@@ -129,10 +149,17 @@ final class ModuleStructureValidator {
 
   private void validateXmlDescriptors() {
     List<File> roots = new ArrayList<File>()
+    Set<JpsLibrary> libraries = new HashSet<>()
     for (moduleName in moduleNames) {
       def module = buildContext.findModule(moduleName)
       for (root in module.sourceRoots) {
         roots.add(root.file)
+      }
+
+      for (JpsDependencyElement dependencyElement in module.dependenciesList.getDependencies()) {
+        if (dependencyElement instanceof JpsLibraryDependency) {
+          libraries.add(dependencyElement.library)
+        }
       }
     }
 
@@ -140,16 +167,26 @@ final class ModuleStructureValidator {
     String productDescriptorName = "META-INF/${buildContext.productProperties.platformPrefix}Plugin.xml"
     File productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
     if (productDescriptorFile == null) {
-      errors.add(new IllegalStateException("Can not find product descriptor $productDescriptorName".toString()))
+      errors.add(new AssertionError("Can not find product descriptor $productDescriptorName".toString(), null))
       return
     }
 
     HashSet<File> allDescriptors = new HashSet<File>()
-    validateXmlDescriptorsRec(productDescriptorFile, roots, allDescriptors)
+    validateXmlDescriptorsRec(productDescriptorFile, roots, libraries, allDescriptors)
     validateXmlRegistrations(allDescriptors)
   }
 
-  private void validateXmlDescriptorsRec(File descriptor, List<File> roots, HashSet<File> allDescriptors) {
+  @Nullable
+  private JpsLibrary findLibraryWithFile(String name, Set<JpsLibrary> libraries) {
+    for (library in libraries) {
+      if (getLibraryFiles(library).contains(name)) {
+        return library
+      }
+    }
+    return null
+  }
+
+  private void validateXmlDescriptorsRec(File descriptor, List<File> roots, Set<JpsLibrary> libraries, HashSet<File> allDescriptors) {
 
     allDescriptors.add(descriptor)
 
@@ -163,12 +200,18 @@ final class ModuleStructureValidator {
 
       def descriptorFile = findDescriptorFile(ref, roots + descriptor.parentFile)
       if (descriptorFile == null) {
-        def isOptional = (((Node)includeNode).children().any { it instanceof Node && ((Node)it).name() == fallbackName })
-        if (isOptional) {
-          buildContext.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
+        JpsLibrary library1 = findLibraryWithFile(removePrefixStrict(ref, "/"), libraries)
+        if (library1 != null) {
+          buildContext.messages.warning("Descriptor '$ref' came from library '${library1.name}', referenced in '${descriptor.name}'")
         }
         else {
-          errors.add(new IllegalStateException("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'".toString()))
+          def isOptional = (((Node)includeNode).children().any { it instanceof Node && ((Node)it).name() == fallbackName })
+          if (isOptional) {
+            buildContext.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
+          }
+          else {
+            errors.add(new AssertionError("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'".toString(), null))
+          }
         }
       }
       else {
@@ -177,7 +220,7 @@ final class ModuleStructureValidator {
     }
 
     for (descriptorFile in descriptorFiles) {
-      validateXmlDescriptorsRec(descriptorFile, roots, allDescriptors)
+      validateXmlDescriptorsRec(descriptorFile, roots, libraries, allDescriptors)
     }
   }
 
@@ -225,19 +268,13 @@ final class ModuleStructureValidator {
             continue
           }
 
-          for (String libraryRootUrl in dependencyElement.library.getRootUrls(JpsOrderRootType.COMPILED)) {
-            def path = Path.of(JpsPathUtil.urlToPath(libraryRootUrl))
-
-            try (JarInputStream jarStream = new JarInputStream(new FileInputStream(path.toFile()))) {
-              JarEntry je
-              while ((je = jarStream.getNextJarEntry()) != null) {
-                if (!je.name.endsWith('.class') || je.name.endsWith("Kt.class")) {
-                  return
-                }
-
-                classes.add(removeSuffixStrict(je.name, ".class").replace("/", "."))
-              }
+          Set<String> libraryFiles = getLibraryFiles(dependencyElement.library)
+          for (String fileName in libraryFiles) {
+            if (!fileName.endsWith('.class') || fileName.endsWith("Kt.class")) {
+              return
             }
+
+            classes.add(removeSuffixStrict(fileName, ".class").replace("/", "."))
           }
         }
       }
@@ -251,7 +288,7 @@ final class ModuleStructureValidator {
     }
   }
 
-  private String removePrefixStrict(String string, String prefix) {
+  private static String removePrefixStrict(String string, String prefix) {
     if (prefix == null || prefix.isEmpty()) {
       throw new IllegalArgumentException("'prefix' is null or empty")
     }
@@ -263,7 +300,7 @@ final class ModuleStructureValidator {
     return string.substring(prefix.length())
   }
 
-  private String removeSuffixStrict(String string, String suffix) {
+  private static String removeSuffixStrict(String string, String suffix) {
     if (suffix == null || suffix.isEmpty()) {
       throw new IllegalArgumentException("'suffix' is null or empty")
     }
@@ -312,6 +349,6 @@ final class ModuleStructureValidator {
     if (value.isEmpty() || classes.contains(value)) {
       return
     }
-    errors.add(new IllegalStateException("Unresolved registration '$value' in $source".toString()))
+    errors.add(new AssertionError("Unresolved registration '$value' in $source".toString(), null))
   }
 }
