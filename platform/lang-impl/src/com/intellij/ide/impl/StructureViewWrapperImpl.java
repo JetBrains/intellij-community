@@ -329,15 +329,10 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
   public void rebuild() {
     if (myProject.isDisposed()) return;
 
-    Dimension referenceSize = null;
-
     Container container = myToolWindow.getComponent();
     boolean wasFocused = UIUtil.isFocusAncestor(container);
 
     if (myStructureView != null) {
-      if (myStructureView instanceof StructureView.Scrollable) {
-        referenceSize = ((StructureView.Scrollable)myStructureView).getCurrentSize();
-      }
 
       myStructureView.storeState();
       Disposer.dispose(myStructureView);
@@ -385,10 +380,6 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
           myStructureView = structureViewBuilder.createStructureView(editor, myProject);
           myFileEditor = editor;
           Disposer.register(this, myStructureView);
-
-          if (myStructureView instanceof StructureView.Scrollable) {
-            ((StructureView.Scrollable)myStructureView).setReferenceSizeWhileInitializing(referenceSize);
-          }
 
           if (myStructureView instanceof StructureViewComposite) {
             final StructureViewComposite composite = (StructureViewComposite)myStructureView;
