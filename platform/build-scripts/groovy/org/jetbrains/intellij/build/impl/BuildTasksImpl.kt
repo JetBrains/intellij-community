@@ -80,10 +80,10 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
   }
 
   override fun buildDmg(macZipDir: Path) {
-    fun createTask(arch: JvmArchitecture, context: BuildContext): ForkJoinTask<*>? {
+    fun createTask(arch: JvmArchitecture, context: BuildContext): ForkJoinTask<*> {
       val macZip = find(macZipDir, "${arch}.zip", context)
       val builtModule = BuiltinModulesFileUtils.readBuiltinModulesFile(find(macZipDir, "builtinModules.json", context))
-      return MacDistributionBuilder(context, context.macDistributionCustomizer, null)
+      return MacDistributionBuilder(context = context, customizer = context.macDistributionCustomizer!!, ideaProperties = null)
         .buildAndSignDmgFromZip(macZip, arch, builtModule)
     }
     invokeAllSettled(listOfNotNull(createTask(JvmArchitecture.x64, context), createTask(JvmArchitecture.aarch64, context)))
@@ -1010,7 +1010,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
 private fun checkClassVersion( targetFile: Path, context: BuildContext) {
   val checkerConfig = context.productProperties.versionCheckerConfig
   if (checkerConfig.isNotEmpty() && !context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
-    ClassVersionChecker.checkVersions(checkerConfig, context.messages, targetFile)
+    checkClassVersions(checkerConfig, targetFile)
   }
 }
 
@@ -1023,7 +1023,7 @@ fun getOsDistributionBuilder(os: OsFamily, ideaProperties: Path? = null, context
     OsFamily.LINUX -> LinuxDistributionBuilder(context = context,
                                                customizer = context.linuxDistributionCustomizer ?: return null,
                                                ideaProperties = ideaProperties)
-    OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer, ideaProperties)
+    OsFamily.MACOS -> MacDistributionBuilder(context, context.macDistributionCustomizer!!, ideaProperties)
   }
 }
 

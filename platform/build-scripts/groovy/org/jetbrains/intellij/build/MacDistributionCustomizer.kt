@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 import java.util.function.Predicate
@@ -19,7 +20,7 @@ abstract class MacDistributionCustomizer {
   var icnsPathForEAP: String? = null
 
   /**
-   * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), the dot ("."), and the hyphen ("-")
+   * A unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), the dot ("."), and the hyphen ("-")
    * See <a href="https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070">CFBundleIdentifier</a> for details
    */
   lateinit var bundleIdentifier: String
@@ -70,7 +71,7 @@ abstract class MacDistributionCustomizer {
   /**
    * CPU architectures app can be launched on, currently arm64 and x86_64 are supported
    */
-  var architectures: MutableList<String> = mutableListOf("arm64", "x86_64")
+  var architectures: PersistentList<String> = persistentListOf("arm64", "x86_64")
 
   /**
    * If {@code true} *.ipr files will be associated with the product in Info.plist

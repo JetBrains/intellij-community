@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
@@ -21,7 +20,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.stream.Collectors
 
 class BuildContextImpl private constructor(private val compilationContext: CompilationContextImpl,
                                            override val productProperties: ProductProperties,
@@ -197,8 +195,8 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String): Path? {
     for (info in getSourceRootsWithPrefixes(findRequiredModule(moduleName))) {
-      if (relativePath.startsWith(info.getSecond()!!)) {
-        val result = info.getFirst().resolve(Strings.trimStart(Strings.trimStart(relativePath, info.getSecond()!!), "/"))
+      if (relativePath.startsWith(info.second)) {
+        val result = info.first.resolve(Strings.trimStart(Strings.trimStart(relativePath, info.second), "/"))
         if (Files.exists(result)) {
           return result
         }
@@ -287,7 +285,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     jvmArgs.add("-Didea.vendor.name=" + applicationInfo.shortCompanyName)
     jvmArgs.add("-Didea.paths.selector=$systemSelector")
     if (productProperties.platformPrefix != null) {
-      jvmArgs.add("-Didea.platform.prefix=" + productProperties.platformPrefix)
+      jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
     if (productProperties.toolsJarRequired) {
@@ -319,38 +317,44 @@ private fun createBuildOutputRootEvaluator(projectHome: Path,
                                            productProperties: ProductProperties,
                                            buildOptions: BuildOptions): (JpsProject) -> Path {
   return { project ->
-    val applicationInfo = ApplicationInfoPropertiesImpl(project = project,
-                                                        productProperties = productProperties,
-                                                        buildOptions = buildOptions)
-    projectHome.resolve("out/${productProperties.getOutputDirectoryName(applicationInfo)}")
+    val appInfo = ApplicationInfoPropertiesImpl(project = project,
+                                                productProperties = productProperties,
+                                                buildOptions = buildOptions)
+    projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
   }
 }
 
-private fun getSourceRootsWithPrefixes(module: JpsModule): List<Pair<Path, String?>> {
-  return module.sourceRoots.stream().filter { root: JpsModuleSourceRoot ->
-    JavaModuleSourceRootTypes.PRODUCTION.contains(root.rootType)
-  }.map { moduleSourceRoot: JpsModuleSourceRoot ->
-    var prefix: String
-    val properties = moduleSourceRoot.properties
-    prefix = if (properties is JavaSourceRootProperties) {
-      properties.packagePrefix.replace(".", "/")
+private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, String>> {
+  return module.sourceRoots.asSequence()
+    .filter { root: JpsModuleSourceRoot ->
+      JavaModuleSourceRootTypes.PRODUCTION.contains(root.rootType)
     }
-    else {
-      (properties as JavaResourceRootProperties).relativeOutputPath
+    .map { moduleSourceRoot: JpsModuleSourceRoot ->
+      var prefix: String
+      val properties = moduleSourceRoot.properties
+      prefix = if (properties is JavaSourceRootProperties) {
+        properties.packagePrefix.replace(".", "/")
+      }
+      else {
+        (properties as JavaResourceRootProperties).relativeOutputPath
+      }
+      if (!prefix.endsWith("/")) {
+        prefix += "/"
+      }
+      Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
     }
-    if (!prefix.endsWith("/")) {
-      prefix += "/"
-    }
-    Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
-  }.collect(Collectors.toList())
 }
 
 private const val projectorPlugin = "intellij.cwm.plugin.projector"
 private const val projectorJar = "plugins/cwm-plugin-projector/lib/projector/projector.jar"
 
 private fun configureProjectorPlugin(properties: ProductProperties) {
-  if (properties.productLayout.bundledPluginModules.contains(projectorPlugin) && !properties.versionCheckerConfig.containsKey(projectorJar)) {
-    properties.versionCheckerConfig = properties.versionCheckerConfig.putAll(mapOf(projectorJar to "17"))
+  // configure only if versionCheckerConfig is not empty -
+  // otherwise will be an error because versionCheckerConfig expected to contain a default version (e.g. "" to "11")
+  if (properties.versionCheckerConfig.isNotEmpty() &&
+      properties.productLayout.bundledPluginModules.contains(projectorPlugin) &&
+      !properties.versionCheckerConfig.containsKey(projectorJar)) {
+    properties.versionCheckerConfig = properties.versionCheckerConfig.put(projectorJar, "17")
   }
 }
 

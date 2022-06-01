@@ -35,8 +35,8 @@ final class MacDmgBuilder {
       javaExePath = "../${rootDir}/Contents/Home/bin/java"
     }
 
-    String productJson = MacDistributionBuilder.generateProductJson(builtinModule, context, javaExePath)
-    String zipRoot = MacDistributionBuilder.getZipRoot(context, customizer)
+    String productJson = MacDistributionBuilderKt.generateMacProductJson(builtinModule, context, javaExePath)
+    String zipRoot = MacDistributionBuilderKt.getMacZipRoot(context, customizer)
     List<Path> installationDirectories = new ArrayList<>()
     List<Pair<Path, String>> installationArchives = new ArrayList<>(2)
     installationArchives.add(new Pair<>(macZip, zipRoot))
