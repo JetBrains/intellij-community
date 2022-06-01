@@ -8,6 +8,7 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.DiffRequestSelectionChain;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
@@ -90,6 +91,10 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
   }
 
   public interface Producer extends DiffRequestProducer, PresentableChange {
+    @Override
+    default @NotNull FileType getContentType() {
+      return getFilePath().getFileType();
+    }
   }
 
   public static abstract class Async extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {

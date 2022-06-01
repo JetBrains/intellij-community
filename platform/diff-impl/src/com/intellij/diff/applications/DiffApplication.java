@@ -15,12 +15,15 @@ import com.intellij.idea.SplashManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +108,12 @@ final class DiffApplication extends DiffApplicationBase {
       else {
         return DiffRequestFactory.getInstance().getTitle(myFiles.get(0), myFiles.get(1));
       }
+    }
+
+    @Override
+    public @Nullable FileType getContentType() {
+      VirtualFile file = ContainerUtil.find(myFiles, Conditions.notNull());
+      return file != null ? file.getFileType() : null;
     }
 
     @Override

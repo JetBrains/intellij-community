@@ -6,6 +6,7 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -59,6 +60,11 @@ public abstract class CommonBinaryFilePatchInProgress<T extends FilePatch> exten
       public @NotNull String getName() {
         File file1 = new File(VfsUtilCore.virtualToIoFile(getBase()), myPatch.getAfterName() == null ? myPatch.getBeforeName() : myPatch.getAfterName());
         return FileUtil.toSystemDependentName(file1.getPath());
+      }
+
+      @Override
+      public @NotNull FileType getContentType() {
+        return getFilePath().getFileType();
       }
     };
   }

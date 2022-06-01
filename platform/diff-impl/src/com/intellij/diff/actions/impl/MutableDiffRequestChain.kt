@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
@@ -57,6 +58,8 @@ class MutableDiffRequestChain(
     override fun getName(): String {
       return DiffBundle.message("diff.files.generic.request.title")
     }
+
+    override fun getContentType(): FileType? = content1.contentType ?: content2.contentType
 
     override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
       val request = if (baseContent != null) {

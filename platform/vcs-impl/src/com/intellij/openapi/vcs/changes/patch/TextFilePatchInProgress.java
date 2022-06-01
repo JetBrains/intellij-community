@@ -8,6 +8,7 @@ import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -90,6 +91,11 @@ public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<T
       public String getName() {
         final File ioCurrentBase = getIoCurrentBase();
         return ioCurrentBase == null ? getCurrentPath() : ioCurrentBase.getPath();
+      }
+
+      @Override
+      public @NotNull FileType getContentType() {
+        return getFilePath().getFileType();
       }
     };
   }
