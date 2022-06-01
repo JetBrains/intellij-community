@@ -189,7 +189,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return true;
   }
 
-  @Override
+  /**
+   * Returns the editor whose structure is displayed in the structure view.
+   *
+   * @return the editor linked to the structure view.
+   */
   public FileEditor getFileEditor() {
     return myFileEditor;
   }
