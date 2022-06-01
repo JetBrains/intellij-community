@@ -24,6 +24,7 @@ public class CodeStyleStatusBarPanel extends JPanel {
     setAlignmentY(Component.CENTER_ALIGNMENT);
     myLabel = new TextPanel() {};
     myLabel.setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+    myLabel.recomputeSize();
     add(myLabel);
     myIconLabel = new JLabel("");
 
