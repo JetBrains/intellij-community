@@ -13,7 +13,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,7 +206,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            psiResolved = ((UUnaryExpression)node).resolveOperator();
                          }
                          if (psiResolved == null) {
-                           psiResolved = tryFindKotlinParameter(node, decl);
+                           psiResolved = tryFindKotlinParameter(node);
                          }
 
                          RefElement refResolved;
@@ -410,18 +409,11 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
   }
 
-  private static PsiElement tryFindKotlinParameter(@NotNull UExpression node, @NotNull UElement decl) {
-    //TODO see KT-25524
+  private static PsiElement tryFindKotlinParameter(@NotNull UExpression node) {
     if (node instanceof UCallExpression && "invoke".equals(((UCallExpression)node).getMethodName())) {
-      UIdentifier identifier = ((UCallExpression)node).getMethodIdentifier();
-      if (identifier != null) {
-        String name = identifier.getName();
-        if (decl instanceof UMethod) {
-          UParameter parameter = ContainerUtil.find(((UMethod)decl).getUastParameters(), p -> name.equals(p.getName()));
-          if (parameter != null) {
-            return parameter.getSourcePsi();
-          }
-        }
+      UExpression receiver = ((UCallExpression)node).getReceiver();
+      if (receiver instanceof UResolvable) {
+        return ((UResolvable)receiver).resolve();
       }
     }
     return null;
