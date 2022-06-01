@@ -263,6 +263,9 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
       }
     }
     catch (VcsException ex) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(ex);
+      }
       return null;
     }
   }
