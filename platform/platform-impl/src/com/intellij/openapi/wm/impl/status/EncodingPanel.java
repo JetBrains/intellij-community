@@ -49,7 +49,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
+  protected ListPopup createPopup(@NotNull DataContext context) {
     ChangeFileEncodingAction action = new ChangeFileEncodingAction();
     action.getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.EncodingPanel.text"));
     return action.createPopup(context, (ActionGroup)ActionManager.getInstance().getAction("EncodingPanelActions"));

@@ -463,7 +463,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
+  protected ListPopup createPopup(@NotNull DataContext context) {
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file == null) return null;
 

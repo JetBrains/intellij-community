@@ -38,7 +38,7 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
+  protected ListPopup createPopup(@NotNull DataContext context) {
     AnAction group = ActionManager.getInstance().getAction("ChangeLineSeparators");
     if (!(group instanceof ActionGroup)) {
       return null;

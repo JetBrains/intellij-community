@@ -376,7 +376,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   @Nullable
-  protected abstract ListPopup createPopup(DataContext context);
+  protected abstract ListPopup createPopup(@NotNull DataContext context);
 
   protected void registerCustomListeners() {
   }
