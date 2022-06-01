@@ -323,7 +323,9 @@ public final class DfTypes {
     if (constant == null) return NULL;
     DfConstantType<?> primitiveConstant = primitiveConstantImpl(constant);
     if (primitiveConstant != null) return primitiveConstant;
-    if (!(type instanceof DfReferenceType)) throw new IllegalArgumentException("Not reference type: " + type + "; constant: " + constant);
+    if (!(type instanceof DfReferenceType)) {
+      throw new IllegalArgumentException("Not reference type: " + type + "; constant: " + constant);
+    }
     return new DfReferenceConstantType(constant, ((DfReferenceType)type).getConstraint(), false);
   }
 

@@ -1174,8 +1174,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addImplicitConversion(expr, declaredType, exprType)
             return
         }
+        var topExpr: KtExpression = expr
+        while ((topExpr.parent as? KtQualifiedExpression)?.selectorExpression === topExpr) {
+            topExpr = topExpr.parent as KtExpression
+        }
         val target = expr.mainReference.resolve()
-        val value: DfType? = getReferenceValue(expr, target)
+        val value: DfType? = getReferenceValue(topExpr, target)
         if (value != null) {
             if (qualifierOnStack) {
                 addInstruction(PopInstruction())
@@ -1194,7 +1198,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is PsiVariable -> {
                 val constantValue = target.computeConstantValue()
                 val dfType = expr.getKotlinType().toDfType(expr)
-                if (constantValue != null && constantValue !is Boolean) {
+                if (constantValue != null && constantValue !is Boolean && dfType != DfType.TOP) {
                     DfTypes.constant(constantValue, dfType)
                 } else {
                     dfType
