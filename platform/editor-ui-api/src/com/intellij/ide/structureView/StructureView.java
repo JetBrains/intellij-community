@@ -19,13 +19,6 @@ import javax.swing.*;
 
 public interface StructureView extends Disposable {
   /**
-   * Returns the editor whose structure is displayed in the structure view.
-   *
-   * @return the editor linked to the structure view.
-   */
-  FileEditor getFileEditor();
-
-  /**
    * Selects the element which corresponds to the current cursor position in the editor
    * linked to the structure view.
    *
