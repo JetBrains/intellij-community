@@ -14,12 +14,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -2511,5 +2513,77 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     importProjectWithProfiles("test");
     assertModuleLibDeps("m2", "Maven: junit:junit:4.0");
+  }
+
+  @Test
+  public void testAttachedJarDependency() throws IOException {
+    // IDEA-86815 Recognize attached jar as library dependency
+    //  @author Sergey Evdokimov
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+                          "    <dependencies>" +
+                          "        <dependency>" +
+                          "            <groupId>test</groupId>" +
+                          "            <artifactId>m2</artifactId>" +
+                          "            <version>1</version>" +
+                          "        </dependency>" +
+                          "    </dependencies>");
+
+    var file = createProjectSubFile("m1/src/main/java/Foo.java",
+                                    "class Foo {\n" +
+                                    "  void foo() {\n" +
+                                    "    junit.framework.TestCase a = null;\n" +
+                                    "    junit.framework.<error>TestCase123</error> b = null;\n" +
+                                    "  }\n" +
+                                    "}");
+
+    var jarPath = PlatformTestUtil.getCommunityPath() + "/plugins/maven/src/test/data/local1/junit/junit/3.8.1/junit-3.8.1.jar";
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+                          "<packaging>pom</packaging>" +
+                          "" +
+                          "  <build>" +
+                          "    <plugins>" +
+                          "      <plugin>" +
+                          "        <groupId>org.codehaus.mojo</groupId>" +
+                          "        <artifactId>build-helper-maven-plugin</artifactId>" +
+                          "        <executions>" +
+                          "          <execution>" +
+                          "            <phase>compile</phase>" +
+                          "            <goals>" +
+                          "              <goal>attach-artifact</goal>" +
+                          "            </goals>" +
+                          "            <configuration>" +
+                          "              <artifacts>" +
+                          "                <artifact>" +
+                          "                  <file>" + jarPath + "</file>" +
+                          "                  <type>jar</type>" +
+                          "                </artifact>" +
+                          "              </artifacts>" +
+                          "            </configuration>" +
+                          "          </execution>" +
+                          "        </executions>" +
+                          "      </plugin>" +
+                          "    </plugins>" +
+                          "  </build>");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
+                  "" +
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m2</module>" +
+                  "</modules>");
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDeps("m1", "Maven: ATTACHED-JAR: test:m2:1");
+    assertModuleLibDep("m1", "Maven: ATTACHED-JAR: test:m2:1", "jar://" + jarPath + "!/");
+    assertModuleLibDeps("m2");
   }
 }
