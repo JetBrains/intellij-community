@@ -48,6 +48,7 @@ public final class IntToIntBtree {
   private final int hashPageCapacity;
 
   private static final int UNDEFINED_ADDRESS = -1;
+  private static final int DEFAULT_PAGE_SIZE = 1024 * 1024;
 
   public IntToIntBtree(int pageSize, @NotNull Path file, @NotNull StorageLockContext storageLockContext, boolean initial) throws IOException {
     this.pageSize = pageSize;
@@ -56,7 +57,7 @@ public final class IntToIntBtree {
       Files.deleteIfExists(file);
     }
 
-    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.useNativeByteOrderForByteBuffers());
+    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, SystemProperties.getIntProperty("idea.IntToIntBtree.page.size", DEFAULT_PAGE_SIZE), true, IOUtil.useNativeByteOrderForByteBuffers());
     storage.setRoundFactor(pageSize);
     root = new BtreeRootNode();
 
