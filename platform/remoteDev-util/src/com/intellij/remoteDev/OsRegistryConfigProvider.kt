@@ -14,6 +14,8 @@ class OsRegistryConfigProvider(private val configName: String) {
   companion object {
     private val logger = logger<OsRegistryConfigProvider>()
     private const val configJsonFilename = "config.json"
+    const val etcXdgPath = "/etc/xdg/"
+    fun getConfigSubDirectoryPath(configName: String) = "JetBrains/$configName"
   }
 
   init {
@@ -90,12 +92,12 @@ class OsRegistryConfigProvider(private val configName: String) {
   // https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.6.html
   private fun getFromXdgConfig(key: String): OsRegistrySystemSetting<String>? {
 
-    val configDirectoryPath = "JetBrains/$configName"
+    val configDirectoryPath = getConfigSubDirectoryPath(configName)
     val env = EnvironmentUtil.getEnvironmentMap()
     val home = System.getProperty("user.home")
 
     // non-user writable location first, even if that's wrong according to spec as that's what we want
-    val configLookupDirs = listOf("/etc/xdg/", env["XDG_CONFIG_HOME"] ?: "$home/.config/").toMutableList()
+    val configLookupDirs = listOf(etcXdgPath, env["XDG_CONFIG_HOME"] ?: "$home/.config/").toMutableList()
     logger.info("Looking for $key in xdg config dirs: $configLookupDirs")
 
     // we already set /etc/xdg as the first one, so no need to default to it
