@@ -15,6 +15,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiUtilCore;
@@ -173,7 +174,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   public static @NotNull Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
-    FileViewProvider viewProvider = element.getContainingFile().getViewProvider();
+    PsiFile file = element.getContainingFile();
+    if (file == null) {
+      return Collections.emptySet();
+    }
+    FileViewProvider viewProvider = file.getViewProvider();
     final List<InspectionSuppressor> elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage());
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
@@ -230,7 +235,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     String getDefaultGroupDisplayName();
   }
 
-  protected volatile DefaultNameProvider myNameProvider;
+  volatile DefaultNameProvider myNameProvider;
 
   /**
    * @see InspectionEP#groupDisplayName
@@ -338,7 +343,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
-   * @return true iff default configuration options should be shown for the tool. E.g. scope-severity settings.
+   * @return true iff default configuration options should be shown for the tool. E.g., scope-severity settings.
    * @apiNote if {@code false} returned, only panel provided by {@link #createOptionsPanel()} is shown if any.
    */
   public boolean showDefaultConfigurationOptions() {
@@ -347,7 +352,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   /**
    * Read in settings from XML config.
-   * Default implementation uses XmlSerializer so you may use public fields (like {@code int TOOL_OPTION})
+   * Default implementation uses XmlSerializer, so you may use public fields (like {@code int TOOL_OPTION})
    * and bean-style getters/setters (like {@code int getToolOption(), void setToolOption(int)}) to store your options.
    *
    * @param node to read settings from.
@@ -370,7 +375,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   /**
    * Store current settings in XML config.
-   * Default implementation uses XmlSerializer so you may use public fields (like {@code int TOOL_OPTION})
+   * Default implementation uses XmlSerializer, so you may use public fields (like {@code int TOOL_OPTION})
    * and bean-style getters/setters (like {@code int getToolOption(), void setToolOption(int)}) to store your options.
    *
    * @param node to store settings to.
@@ -430,14 +435,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return serialization filter.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
   protected @Nullable SerializationFilter getSerializationFilter() {
     return XmlSerializer.getJdomSerializer().getDefaultSerializationFilter();
   }
 
   /**
-   * Override this method to return a HTML inspection description. Otherwise it will be loaded from resources using ID.
+   * Override this method to return an HTML inspection description. Otherwise, it will be loaded from resources using ID.
    *
    * @return hard-coded inspection description.
    */
@@ -449,7 +453,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return null;
   }
 
-  protected @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  @NotNull
+  private Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
   }
 
