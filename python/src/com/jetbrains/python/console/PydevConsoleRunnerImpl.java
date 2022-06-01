@@ -57,10 +57,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.PathMappingSettings;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.NetUtils;
@@ -135,7 +132,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final PyConsoleType myConsoleType;
   @NotNull private final Map<String, String> myEnvironmentVariables;
   @NotNull protected final PyConsoleOptions.PyConsoleSettings myConsoleSettings;
-  private final String[] myStatementsToExecute;
+  private final String @Nullable [] myStatementsToExecute;
 
   private RemoteConsoleProcessData myRemoteConsoleProcessData;
 
@@ -279,7 +276,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           }
           initAndRun(sdk);
           indicator.setText(PyBundle.message("connecting.to.console.progress"));
-          connect(myStatementsToExecute);
+          connect(getStatementsToExecute());
           if (requestEditorFocus) {
             myConsoleView.requestFocus();
           }
@@ -292,6 +289,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     });
   }
 
+  private String @NotNull [] getStatementsToExecute() {
+    if (myResolvedStatementsToExecute != null) {
+      return new String[]{myResolvedStatementsToExecute};
+    }
+    else {
+      if (myStatementsToExecute == null) {
+        return ArrayUtil.EMPTY_STRING_ARRAY;
+      }
+      else {
+        return myStatementsToExecute;
+      }
+    }
+  }
 
   @Override
   public void run(boolean requestEditorFocus) {
@@ -308,14 +318,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
               throw new ExecutionException(PyBundle.message("pydev.console.python.interpreter.is.not.selected"));
             }
             initAndRun(mySdk);
-            String[] statementsToExecute;
-            if (myResolvedStatementsToExecute != null) {
-              statementsToExecute = new String[]{myResolvedStatementsToExecute};
-            }
-            else {
-              statementsToExecute = myStatementsToExecute;
-            }
-            connect(statementsToExecute);
+            connect(getStatementsToExecute());
             if (requestEditorFocus) {
               myConsoleView.requestFocus();
             }
@@ -845,7 +848,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     showContentDescriptor(contentDescriptor);
   }
 
-  private void connect(final String[] statements2execute) {
+  private void connect(final String @NotNull [] statements2execute) {
     if (handshake()) {
       ApplicationManager.getApplication().invokeLater(() -> {
         // Propagate console communication to language console
