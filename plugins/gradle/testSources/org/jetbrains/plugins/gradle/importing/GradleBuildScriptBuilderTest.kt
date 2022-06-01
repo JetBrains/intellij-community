@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradle
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.KotlinDslGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.junit.Test
 
 class GradleBuildScriptBuilderTest {

@@ -15,8 +15,8 @@ import org.jetbrains.plugins.groovy.util.ExpressionTest
 import org.junit.Test
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
-import static org.jetbrains.plugins.gradle.testFramework.GradleFileTestUtil.withBuildFile
-import static org.jetbrains.plugins.gradle.testFramework.GradleFileTestUtil.withSettingsFile
+import static org.jetbrains.plugins.gradle.testFramework.util.GradleFileTestUtil.withBuildFile
+import static org.jetbrains.plugins.gradle.testFramework.util.GradleFileTestUtil.withSettingsFile
 
 @CompileStatic
 class GradleExtensionsTest extends GradleHighlightingLightTestCase implements ExpressionTest {

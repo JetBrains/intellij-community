@@ -11,6 +11,8 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Assume
 import org.junit.runner.RunWith
@@ -27,8 +29,7 @@ abstract class GradleLightTestCase : UsefulTestCase() {
 
   private lateinit var fixture: GradleTestFixture
 
-  val projectFixture: IdeaProjectTestFixture
-    get() = fixture
+  val projectFixture: IdeaProjectTestFixture get() = fixture
 
   open fun createGradleTestFixture(gradleVersion: GradleVersion): GradleTestFixture =
     createEmptyGradleTestFixture(gradleVersion)

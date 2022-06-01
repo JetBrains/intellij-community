@@ -35,10 +35,4 @@ class GradleSettingScriptBuilder {
     }
     return joiner.toString()
   }
-
-  companion object {
-    @JvmStatic
-    fun settingsScript(configure: GradleSettingScriptBuilder.() -> Unit) =
-      GradleSettingScriptBuilder().apply(configure).generate()
-  }
 }

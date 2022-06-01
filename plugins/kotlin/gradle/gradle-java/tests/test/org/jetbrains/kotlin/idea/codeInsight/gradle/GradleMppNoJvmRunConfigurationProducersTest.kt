@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNa
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test

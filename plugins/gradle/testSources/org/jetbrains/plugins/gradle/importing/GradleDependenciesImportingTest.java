@@ -55,7 +55,7 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Override
-  protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+  public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
     config += "\n" +
               "allprojects {\n" +
               "  afterEvaluate {\n" +

@@ -14,9 +14,9 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
@@ -132,11 +132,8 @@ class GradleTaskManagerTest: UsefulTestCase() {
   }
 
   private fun createBuildFile(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) {
-    runWriteAction {
-      val baseFile = PlatformTestUtil.getOrCreateProjectBaseDir(myProject)
-      val buildScriptFile = baseFile.createChildData(null, "build.gradle")
-      VfsUtil.saveText(buildScriptFile, buildscript(gradleVersion, configure))
-    }
+    val projectRoot = runWriteAction { PlatformTestUtil.getOrCreateProjectBaseDir(myProject) }
+    projectRoot.createBuildFile(gradleVersion, configure)
   }
 }
 

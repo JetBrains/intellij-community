@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureFactory
 import org.junit.Test
 
-import static org.jetbrains.plugins.gradle.testFramework.GradleFileTestUtil.withSettingsFile
+import static org.jetbrains.plugins.gradle.testFramework.util.GradleFileTestUtil.withSettingsFile
 
 @CompileStatic
 class GradleProjectReferenceTest extends GradleHighlightingLightTestCase {
