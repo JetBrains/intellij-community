@@ -39,6 +39,15 @@ class JaegerJsonSpanExporter : SpanExporter {
       val w = JsonFactory().createGenerator(Files.newBufferedWriter(file)).useDefaultPrettyPrinter()
       writer.set(w)
       Companion.file = file
+      synchronized(w) {
+        beginWriter(w, serviceName, serviceVersion, serviceNamespace)
+      }
+    }
+
+    private fun beginWriter(w: JsonGenerator,
+                            serviceName: String,
+                            serviceVersion: String?,
+                            serviceNamespace: String?) {
       w.writeStartObject()
       w.writeArrayFieldStart("data")
       w.writeStartObject()
@@ -111,22 +120,31 @@ class JaegerJsonSpanExporter : SpanExporter {
     }
 
     private fun finishWriter(w: JsonGenerator) {
-      // close spans
-      w.writeEndArray()
+      synchronized(w) {
+        // close spans
+        w.writeEndArray()
 
-      // close data item object
-      w.writeEndObject()
+        // close data item object
+        w.writeEndObject()
 
-      // close data
-      w.writeEndArray()
-      // close root object
-      w.writeEndObject()
-      w.close()
+        // close data
+        w.writeEndArray()
+        // close root object
+        w.writeEndObject()
+        w.close()
+      }
     }
   }
 
   override fun export(spans: Collection<SpanData>): CompletableResultCode {
     val w = writer.get() ?: return CompletableResultCode.ofSuccess()
+    synchronized(w) {
+      doExport(spans, w)
+    }
+    return CompletableResultCode.ofSuccess()
+  }
+
+  private fun doExport(spans: Collection<SpanData>, w: JsonGenerator) {
     for (span in spans) {
       w.writeStartObject()
       w.writeStringField("traceID", span.traceId)
@@ -189,11 +207,14 @@ class JaegerJsonSpanExporter : SpanExporter {
       }
       w.writeEndObject()
     }
-    return CompletableResultCode.ofSuccess()
   }
 
   override fun flush(): CompletableResultCode {
-    writer.get()?.flush()
+    writer.get()?.let {
+      synchronized(it) {
+        it.flush()
+      }
+    }
     return CompletableResultCode.ofSuccess()
   }
 
