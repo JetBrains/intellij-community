@@ -323,12 +323,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   @Override
   public void load(@Nullable Path path) {
-    if (path == null || path.isAbsolute()) {
-      load(path, null, 0, true);
+    if (path != null && !path.isAbsolute()) {
+      LOG.info("unexpected relative path: " + path);
+      path = null;
     }
-    else {
-      throw new IllegalArgumentException("Not absolute: " + path);
-    }
+    load(path, null, 0, true);
   }
 
   @Override
