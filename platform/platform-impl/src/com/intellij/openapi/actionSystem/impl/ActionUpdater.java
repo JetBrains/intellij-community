@@ -61,6 +61,7 @@ final class ActionUpdater {
 
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
   private static FList<String> ourInEDTActionOperationStack = FList.emptyList();
+  private static boolean ourNoRulesInEDTSection;
 
   private final PresentationFactory myPresentationFactory;
   private final DataContext myDataContext;
@@ -160,14 +161,15 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
+    ActionUpdateThread updateThread = action.getActionUpdateThread();
     String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ", " + myPlace + ")";
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
     boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
-    boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
+    boolean shallAsync = myForceAsync || canAsync && updateThread == ActionUpdateThread.BGT;
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
     if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
-      LOG.error("Calling on EDT " + operationName + (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
+      LOG.error("Calling on EDT " + operationName + (myForceAsync ? "(forceAsync=true)" : "(actionUpdateThread=" + updateThread + ")"));
     }
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
@@ -184,14 +186,14 @@ final class ActionUpdater {
         }
       }
     }
-    if (myPreCacheSlowDataKeys) {
+    if (myPreCacheSlowDataKeys && updateThread == ActionUpdateThread.OLD_EDT) {
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> ensureSlowDataKeysPreCached(operationName));
     }
-    return computeOnEdt(operationName, call);
+    return computeOnEdt(operationName, call, updateThread == ActionUpdateThread.EDT);
   }
 
   /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
-  <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call) {
+  <T> T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> call, boolean noRulesInEDT) {
     long start0 = System.nanoTime();
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     ConcurrentList<String> warns = ContainerUtil.createConcurrentList();
@@ -210,8 +212,13 @@ final class ActionUpdater {
       ourInEDTActionOperationStack = prevStack.prepend(operationName);
       try {
         return ProgressManager.getInstance().runProcess(() -> {
+          boolean prevNoRules = ourNoRulesInEDTSection;
           try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
+            ourNoRulesInEDTSection = noRulesInEDT;
             return call.get();
+          }
+          finally {
+            ourNoRulesInEDTSection = prevNoRules;
           }
         }, ProgressWrapper.wrap(progress));
       }
@@ -219,7 +226,7 @@ final class ActionUpdater {
         ourInEDTActionOperationStack = prevStack;
         long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          warns.add(elapsedReport(elapsed, true, operationName) + ". Use `UpdateInBackground`.");
+          warns.add(elapsedReport(elapsed, true, operationName) + ". Use `ActionUpdateThread.BGT`.");
         }
       }
     };
@@ -235,6 +242,10 @@ final class ActionUpdater {
 
   static @Nullable String currentInEDTOperationName() {
     return ourInEDTActionOperationStack.getHead();
+  }
+
+  static boolean isNoRulesInEDTSection() {
+    return ourNoRulesInEDTSection;
   }
 
   /**
@@ -315,7 +326,7 @@ final class ActionUpdater {
       if (myLaterInvocator == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
         boolean noFqn = group.getClass() == DefaultActionGroup.class;
         LOG.warn(edtWaitMillis + " ms total to grab EDT " + myEDTCallsCount + " times at '" + myPlace + "' to expand " +
-                 group.getClass().getSimpleName() + (noFqn ? "" : " (" + group.getClass().getName() + ")") + ". Use `UpdateInBackground`.");
+                 group.getClass().getSimpleName() + (noFqn ? "" : " (" + group.getClass().getName() + ")") + ". Use `ActionUpdateThread.BGT`.");
       }
     });
 
@@ -770,7 +781,7 @@ final class ActionUpdater {
 
     @Override
     public <T> @NotNull T computeOnEdt(@NotNull String operationName, @NotNull Supplier<T> supplier) {
-      return updater.computeOnEdt(operationName, supplier);
+      return updater.computeOnEdt(operationName, supplier, true);
     }
   }
 }
