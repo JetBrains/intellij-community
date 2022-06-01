@@ -30,7 +30,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.io.File
 
 @Retention(AnnotationRetention.SOURCE)
@@ -210,7 +209,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                           LibraryRootTypeId.COMPILED))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
-                  WorkspaceModuleImporterBase.JAVADOC_TYPE))
+                  WorkspaceModuleImporter.JAVADOC_TYPE))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
                   LibraryRootTypeId.SOURCES))
