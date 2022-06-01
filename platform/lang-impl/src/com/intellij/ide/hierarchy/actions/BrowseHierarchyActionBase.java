@@ -29,12 +29,17 @@ import java.awt.*;
 import java.util.List;
 
 
-public abstract class BrowseHierarchyActionBase extends AnAction implements UpdateInBackground {
+public abstract class BrowseHierarchyActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance(BrowseHierarchyActionBase.class);
   private final LanguageExtension<HierarchyProvider> myExtension;
 
   protected BrowseHierarchyActionBase(@NotNull LanguageExtension<HierarchyProvider> extension) {
     myExtension = extension;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

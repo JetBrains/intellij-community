@@ -21,7 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigurationBase> extends AnAction implements UpdateInBackground {
+public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigurationBase> extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @NotNull protected abstract AbstractPatternBasedConfigurationProducer<T> getPatternBasedProducer();
 
   @NotNull protected abstract ConfigurationType getConfigurationType();

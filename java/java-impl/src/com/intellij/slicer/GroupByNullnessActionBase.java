@@ -17,17 +17,22 @@ package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class GroupByNullnessActionBase extends AnAction implements UpdateInBackground {
+public abstract class GroupByNullnessActionBase extends AnAction {
   protected final SliceTreeBuilder myTreeBuilder;
 
   protected GroupByNullnessActionBase(@NotNull SliceTreeBuilder treeBuilder) {
     super(JavaRefactoringBundle.message("dataflow.to.here.group.by.leaf.action.text", 1), JavaRefactoringBundle.message("dataflow.to.here.group.by.leaf.action.description"), AllIcons.Debugger.Db_disabled_breakpoint_process);
     myTreeBuilder = treeBuilder;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected abstract boolean isAvailable();

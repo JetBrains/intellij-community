@@ -15,7 +15,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class GenerateAction extends DumbAwareAction implements UpdateInBackground {
+public class GenerateAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();

@@ -28,8 +28,13 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 import java.util.Collection;
 import java.util.Optional;
 
-public class I18nizeAction extends AnAction implements UpdateInBackground {
+public class I18nizeAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(I18nizeAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

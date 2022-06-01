@@ -20,13 +20,18 @@ import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
-public class FindUsagesAction extends AnAction implements UpdateInBackground {
+public class FindUsagesAction extends AnAction {
 
   @Experimental
   public static final DataKey<Collection<SearchTarget>> SEARCH_TARGETS = DataKey.create("search.targets");
 
   public FindUsagesAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean toShowDialog() {

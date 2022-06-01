@@ -84,7 +84,12 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
 import static com.intellij.openapi.util.Pair.pair;
 
-public class ShowAffectedTestsAction extends AnAction implements UpdateInBackground {
+public class ShowAffectedTestsAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

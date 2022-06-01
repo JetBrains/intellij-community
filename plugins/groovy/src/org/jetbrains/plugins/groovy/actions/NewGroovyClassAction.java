@@ -30,11 +30,16 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import static org.jetbrains.plugins.groovy.projectRoots.RootTypesKt.ROOT_TYPES;
 
-public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware, UpdateInBackground {
+public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
 
   public NewGroovyClassAction() {
     super(GroovyBundle.message("new.class.action.text"), GroovyBundle.message("new.class.action.description"),
           JetgroovyIcons.Groovy.Class, ROOT_TYPES);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

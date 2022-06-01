@@ -23,7 +23,12 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class GotoRelatedSymbolAction extends AnAction implements UpdateInBackground {
+public class GotoRelatedSymbolAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

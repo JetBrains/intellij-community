@@ -25,7 +25,13 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Dmitry Avdeev
  */
-public abstract class CodeInsightAction extends AnAction implements UpdateInBackground, PerformWithDocumentsCommitted {
+public abstract class CodeInsightAction extends AnAction implements PerformWithDocumentsCommitted {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
