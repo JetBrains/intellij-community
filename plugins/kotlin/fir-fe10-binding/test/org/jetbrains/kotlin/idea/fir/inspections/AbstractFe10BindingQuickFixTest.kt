@@ -2,7 +2,10 @@
 package org.jetbrains.kotlin.idea.fir.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractFe10BindingQuickFixTest : AbstractQuickFixTest() {
@@ -12,6 +15,13 @@ abstract class AbstractFe10BindingQuickFixTest : AbstractQuickFixTest() {
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10_BINDING_BY_FIR, "after") {
             super.doTest(beforeFileName)
         }
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { project.invalidateCaches() },
+            ThrowableRunnable { super.tearDown() }
+        )
     }
 
     // TODO: Enable these as more actions/inspections are enabled, and/or add more FIR-specific directives
