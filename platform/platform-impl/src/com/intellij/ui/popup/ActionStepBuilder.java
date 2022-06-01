@@ -77,7 +77,7 @@ class ActionStepBuilder {
     for (AnAction action : actions) {
       if (action instanceof Separator) continue;
       Presentation presentation = myPresentationFactory.getPresentation(action);
-      Couple<Icon> icons = calcRawIcons(action, presentation);
+      Couple<Icon> icons = calcRawIcons(action, presentation, true);
       Icon icon = ObjectUtils.chooseNotNull(icons.first, icons.second);
       if (icon == null) continue;
       int width = icon.getIconWidth();
@@ -138,7 +138,7 @@ class ActionStepBuilder {
     mySeparatorText = null;
   }
 
-  static @NotNull Couple<Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation) {
+  static @NotNull Couple<Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation, boolean forceChecked) {
     boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
     Icon icon = hideIcon ? null : presentation.getIcon();
     Icon selectedIcon = hideIcon ? null : presentation.getSelectedIcon();
@@ -149,7 +149,7 @@ class ActionStepBuilder {
       if (actionId != null && actionId.startsWith("QuickList.")) {
         //icon =  null; // AllIcons.Actions.QuickList;
       }
-      else if (action instanceof Toggleable && Toggleable.isSelected(presentation)) {
+      else if (action instanceof Toggleable && (Toggleable.isSelected(presentation) || forceChecked)) {
         icon = LafIconLookup.getIcon("checkmark");
         selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
         disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
