@@ -62,6 +62,8 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
                 is KtVariableSymbol -> getVariableUsageType(refExpr)
                 is KtFunctionLikeSymbol -> getFunctionUsageType(targetElement)
                 is KtValueParameterSymbol -> getVariableUsageType(refExpr)
+                is KtBackingFieldSymbol -> getVariableUsageType(refExpr)
+                is KtJavaFieldSymbol -> getVariableUsageType(refExpr)
                 else -> null
             }
         }
