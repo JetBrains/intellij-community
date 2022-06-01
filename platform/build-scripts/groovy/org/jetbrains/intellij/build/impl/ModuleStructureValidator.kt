@@ -41,7 +41,7 @@ private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.p
 class ModuleStructureValidator(private val buildContext: BuildContext, moduleJars: MultiMap<String, String>) {
   private val moduleJars = MultiMap<String, String>()
   private val moduleNames = HashSet<String>()
-  private val errors = ArrayList<String>()
+  private val errors = ArrayList<AssertionError>()
 
   init {
     for (moduleJar in moduleJars.entrySet()) {
@@ -55,7 +55,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
     }
   }
 
-  fun validate(): List<String> {
+  fun validate(): List<AssertionError> {
     errors.clear()
 
     buildContext.messages.info("Validating jars...")
@@ -120,7 +120,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
         }
 
         if (!moduleNames.contains(dependantModule.name)) {
-          errors.add("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name}]")
+          errors.add(AssertionError("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name}]", null))
           continue
         }
 
@@ -142,7 +142,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
     val productDescriptorName = "META-INF/${buildContext.productProperties.platformPrefix}Plugin.xml"
     val productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
     if (productDescriptorFile == null) {
-      errors.add("Can not find product descriptor $productDescriptorName")
+      errors.add(AssertionError("Can not find product descriptor $productDescriptorName"))
       return
     }
 
@@ -166,7 +166,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
           buildContext.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
         }
         else {
-          errors.add("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'")
+          errors.add(AssertionError("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'"))
         }
       }
       else {
@@ -223,7 +223,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
             val path = Path.of(JpsPathUtil.urlToPath(libraryRootUrl))
             JarInputStream(FileInputStream(path.toFile())).use { jarStream ->
               while (true) {
-                val je = jarStream.getNextJarEntry() ?: break
+                val je = jarStream.nextJarEntry ?: break
                 if (!je.name.endsWith(".class") || je.name.endsWith("Kt.class")) {
                   return
                 }
@@ -289,7 +289,7 @@ class ModuleStructureValidator(private val buildContext: BuildContext, moduleJar
     if (value.isNullOrEmpty() || classes.contains(value)) {
       return
     }
-    errors.add("Unresolved registration '$value' in $source")
+    errors.add(AssertionError("Unresolved registration '$value' in $source"))
   }
 }
 
