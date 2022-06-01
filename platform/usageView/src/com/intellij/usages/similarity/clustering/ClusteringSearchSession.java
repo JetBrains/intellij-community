@@ -8,8 +8,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.similarity.bag.Bag;
-import com.intellij.usages.similarity.bag.BagsDistanceCalculator;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
+import com.intellij.util.MathUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
  * Does usage clustering during the find usage process. Clusters are used on find usages results presentation.
  */
 public class ClusteringSearchSession {
+  public static final double MAXIMUM_SIMILARITY = 1.0;
+  public static final double PRECISION = 1e-4;
   private final @NotNull List<UsageCluster> myClusters;
   private final double mySimilarityThreshold;
 
@@ -74,7 +76,6 @@ public class ClusteringSearchSession {
       }).collect(Collectors.toList());
   }
 
-
   private @NotNull UsageCluster createNewCluster() {
     final UsageCluster newCluster = new UsageCluster(myClusters.size());
     myClusters.add(newCluster);
@@ -82,19 +83,16 @@ public class ClusteringSearchSession {
   }
 
   private @Nullable UsageCluster getTheMostSimilarCluster(@NotNull Bag features) {
-    if (myClusters.size() == 0) {
-      return null;
-    }
     UsageCluster mostUsageCluster = null;
-    double maxSimilarity = Double.MIN_VALUE;
+    double maxSimilarity = 0;
     synchronized (myClusters) {
-      for (UsageCluster currentGroup : myClusters) {
-        double similarity = findMinimalSimilarity(currentGroup, features, mySimilarityThreshold);
-        if (maxSimilarity < similarity) {
-          if (similarity == 1.0) {
-            return currentGroup;
-          }
-          mostUsageCluster = currentGroup;
+      for (UsageCluster cluster : myClusters) {
+        double similarity = findMinimalSimilarity(cluster, features, mySimilarityThreshold);
+        if (isCompleteMatch(similarity)) {
+          return cluster;
+        }
+        if (lessThen(maxSimilarity, similarity)) {
+          mostUsageCluster = cluster;
           maxSimilarity = similarity;
         }
       }
@@ -102,16 +100,23 @@ public class ClusteringSearchSession {
     return mostUsageCluster;
   }
 
+  private static boolean isCompleteMatch(double similarity) {
+    return MathUtil.equals(similarity, MAXIMUM_SIMILARITY, PRECISION);
+  }
+
+  private static boolean lessThen(double similarity1, double similarity2) {
+    return similarity1 < similarity2 && !MathUtil.equals(similarity1, similarity2, PRECISION);
+  }
+
   private static double findMinimalSimilarity(@NotNull UsageCluster usageCluster, Bag newUsageFeatures, double threshold) {
-    final BagsDistanceCalculator bagsDistanceCalculator = new BagsDistanceCalculator(newUsageFeatures, threshold);
-    double min = Double.MAX_VALUE;
+    double min = MAXIMUM_SIMILARITY;
     for (SimilarUsage usage : usageCluster.getUsages()) {
-      final double similarity = bagsDistanceCalculator.similarity(usage.getFeatures());
-      if (similarity < min) {
+      final double similarity = jaccardSimilarity(usage.getFeatures(), newUsageFeatures);
+      if (lessThen(similarity, min)) {
         min = similarity;
       }
-      if (min == 0.0) {
-        return min;
+      if (lessThen(min, threshold)) {
+        return 0;
       }
     }
     return min;
@@ -123,5 +128,12 @@ public class ClusteringSearchSession {
 
   public static boolean isSimilarUsagesClusteringEnabled() {
     return Registry.is("similarity.find.usages.enable") && ApplicationManager.getApplication().isInternal();
+  }
+
+  public static double jaccardSimilarity(@NotNull Bag bag1, @NotNull Bag bag2) {
+    final int cardinality1 = bag1.getCardinality();
+    final int cardinality2 = bag2.getCardinality();
+    int intersectionSize = Bag.intersectionSize(bag1, bag2);
+    return intersectionSize / (double)(cardinality1 + cardinality2 - intersectionSize);
   }
 }
