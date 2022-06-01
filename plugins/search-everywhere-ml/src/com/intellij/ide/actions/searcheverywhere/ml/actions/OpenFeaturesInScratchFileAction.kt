@@ -7,6 +7,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereTabWithMl
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.ML_FEATURES_KEY
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.ML_WEIGHT_KEY
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
@@ -57,12 +59,14 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     val searchSession = mlSessionService.getCurrentSession()!!
     val state = searchSession.getCurrentSearchState()
 
-    val tabId = searchEverywhereUI.selectedTabID
     val features = searchEverywhereUI.foundElementsInfo.map { info ->
       val rankingWeight = info.priority
       val contributor = info.contributor.searchProviderId
       val elementName = StringUtil.notNullize(info.element.toString(), "undefined")
-      val mlWeight = if (isTabWithMl(tabId)) mlSessionService.getMlWeight(info.contributor, info.element, rankingWeight) else null
+      val mlWeight = info.getUserData(ML_WEIGHT_KEY)
+      val mlFeatures: Map<String, Any> = info.getUserData(ML_FEATURES_KEY)
+                                           ?.associate { it.field.name to it.data as Any }
+                                         ?: emptyMap()
 
       val elementId = searchSession.itemIdProvider.getId(info.element)
       return@map ElementFeatures(
@@ -71,7 +75,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
         mlWeight,
         rankingWeight,
         contributor,
-        state!!.getElementFeatures(elementId, info.element, info.contributor, rankingWeight).featuresAsMap().toSortedMap()
+        mlFeatures.toSortedMap()
       )
     }
 
@@ -85,10 +89,6 @@ class OpenFeaturesInScratchFileAction : AnAction() {
       CONTRIBUTORS_KEY to contributorFeatures.map { c -> c.associate { it.field.name to it.data }.toSortedMap() },
       FOUND_ELEMENTS_KEY to features
     )
-  }
-
-  private fun isTabWithMl(tabId: String): Boolean {
-    return SearchEverywhereTabWithMl.findById(tabId) != null
   }
 
   private fun createScratchFileContext(json: String) = ScratchFileCreationHelper.Context().apply {

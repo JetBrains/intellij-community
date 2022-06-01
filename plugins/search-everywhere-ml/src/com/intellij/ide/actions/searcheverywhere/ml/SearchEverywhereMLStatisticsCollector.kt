@@ -124,7 +124,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       data.addAll(additional)
       data.addAll(context.features)
 
-      val elementData = getElementsData(selectedElements, elements, elementIdProvider, selectedItems, project, state)
+      val elementData = getElementsData(selectedElements, elements, elementIdProvider, selectedItems, project)
       data.add(IS_PROJECT_DISPOSED_KEY.with(elementData == null))
       if (elementData != null) {
         data.addAll(elementData)
@@ -145,11 +145,10 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
                               elements: List<SearchEverywhereFoundElementInfo>,
                               elementIdProvider: SearchEverywhereMlItemIdProvider,
                               selectedItems: List<Any>,
-                              project: Project?,
-                              state: SearchEverywhereMlSearchState): List<EventPair<*>>? {
+                              project: Project?): List<EventPair<*>>? {
     return ArrayList<EventPair<*>>().apply {
       addAll(getSelectedElementsData(selectedElements, elements, elementIdProvider, selectedItems))
-      addAll(getCollectedElementsData(elements, project, elementIdProvider, state) ?: return null)
+      addAll(getCollectedElementsData(elements, project, elementIdProvider) ?: return null)
     }
   }
 
@@ -182,8 +181,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
    */
   private fun getCollectedElementsData(elements: List<SearchEverywhereFoundElementInfo>,
                                        project: Project?,
-                                       elementIdProvider: SearchEverywhereMlItemIdProvider,
-                                       state: SearchEverywhereMlSearchState): ArrayList<EventPair<*>>? {
+                                       elementIdProvider: SearchEverywhereMlItemIdProvider): ArrayList<EventPair<*>>? {
     val data = ArrayList<EventPair<*>>()
     val actionManager = ActionManager.getInstance()
     val value = elements.take(REPORTED_ITEMS_LIMIT).map {
@@ -195,7 +193,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
         CONTRIBUTOR_ID_KEY.with(it.contributor.searchProviderId)
       )
 
-      addElementFeatures(elementIdProvider.getId(it.element), it, state, result, actionManager)
+      addElementFeatures(elementIdProvider.getId(it.element), it, result, actionManager)
       ObjectEventData(result)
     }
     data.add(COLLECTED_RESULTS_DATA_KEY.with(value))
@@ -219,19 +217,19 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
 
   private fun addElementFeatures(elementId: Int?,
                                  elementInfo: SearchEverywhereFoundElementInfo,
-                                 state: SearchEverywhereMlSearchState,
                                  result: MutableList<EventPair<*>>,
                                  actionManager: ActionManager) {
-    val itemInfo = state.getElementFeatures(elementId, elementInfo.element, elementInfo.contributor, elementInfo.priority)
-    if (itemInfo.features.isNotEmpty()) {
-      result.add(FEATURES_DATA_KEY.with(ObjectEventData(itemInfo.features)))
+    val mlFeatures = elementInfo.getUserData(SearchEverywhereMlSessionService.ML_FEATURES_KEY) ?: emptyList()
+    if (mlFeatures.isNotEmpty()) {
+      result.add(FEATURES_DATA_KEY.with(ObjectEventData(mlFeatures)))
     }
 
-    state.getMLWeightIfDefined(elementId)?.let { score ->
-      result.add(ML_WEIGHT_KEY.with(roundDouble(score)))
+    val mlWeight = elementInfo.getUserData(SearchEverywhereMlSessionService.ML_WEIGHT_KEY) ?: -1.0
+    if (mlWeight >= 0.0) {
+      result.add(ML_WEIGHT_KEY.with(roundDouble(mlWeight)))
     }
 
-    itemInfo.id?.let { result.add(ID_KEY.with(it)) }
+    elementId?.let { result.add(ID_KEY.with(it)) }
 
     doWhenIsActionWrapper(elementInfo.element) {
       val action = it.action

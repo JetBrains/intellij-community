@@ -25,8 +25,10 @@ internal abstract class SearchEverywhereRankingModelTest
   protected fun performSearchFor(searchQuery: String, featuresProviderCache: FeaturesProviderCache? = null): RankingAssertion {
     VirtualFileManager.getInstance().syncRefresh()
     val rankedElements: List<FoundItemDescriptor<*>> = filterElements(searchQuery)
-      .map { it.withMlWeight(getMlWeight(it, searchQuery, featuresProviderCache)) }
-      .sortedByDescending { it.mlWeight }
+      .associateWith { getMlWeight(it, searchQuery, featuresProviderCache) }
+      .entries
+      .sortedByDescending { it.value }
+      .map { it.key }
 
     assert(rankedElements.size > 1) { "Found ${rankedElements.size} which is unsuitable for ranking assertions" }
 
@@ -52,8 +54,6 @@ internal abstract class SearchEverywhereRankingModelTest
       featuresAsMap
     }.fold(emptyMap()) { acc, value -> acc + value }
   }
-
-  private fun FoundItemDescriptor<*>.withMlWeight(mlWeight: Double) = FoundItemDescriptor(this.item, this.weight, mlWeight)
 
   protected class RankingAssertion(private val results: List<FoundItemDescriptor<*>>) {
     fun thenAssertElement(element: FoundItemDescriptor<*>) = ElementAssertion(element)

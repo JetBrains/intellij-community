@@ -109,15 +109,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
           return true;
         }
 
-        final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
-        SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
-        if (mlService != null) {
-          descriptor = getMLWeightedItemDescriptor(mlService, element);
-        }
-        else {
-          descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
-        }
-
+        final var descriptor = new FoundItemDescriptor<GotoActionModel.MatchedValue>(element, element.getMatchingDegree());
         return consumer.process(descriptor);
       });
     }, progressIndicator);
@@ -229,19 +221,6 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
       KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, window);
     });
-  }
-
-  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull SearchEverywhereMlService service,
-                                                                                        @NotNull GotoActionModel.MatchedValue element) {
-    double mlWeight = service.getMlWeight(this, element, element.getMatchingDegree());
-    if (mlWeight > 0 && service.shouldOrderByMl()) {
-      if (element.getType() == GotoActionModel.MatchedValueType.ABBREVIATION) {
-        return new FoundItemDescriptor<>(element, element.getMatchingDegree(), 1.0);
-      }
-
-      return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
-    }
-    return new FoundItemDescriptor<>(element, element.getMatchingDegree());
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<GotoActionModel.MatchedValue> {

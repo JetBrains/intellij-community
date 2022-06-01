@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 
 @ApiStatus.Internal
 abstract class SearchEverywhereMlService {
@@ -38,6 +39,11 @@ abstract class SearchEverywhereMlService {
   abstract fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double
 
   abstract fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
+
+  @Contract("_, _, _ -> new")
+  abstract fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
+                                      element: Any,
+                                      priority: Int): SearchEverywhereFoundElementInfo
 
   abstract fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
                                keysTyped: Int, backspacesTyped: Int, searchQuery: String,

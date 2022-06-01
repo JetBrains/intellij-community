@@ -275,7 +275,14 @@ class GroupedResultsSearcher implements SESearcher {
       assert contributor == myExpandedContributor; // Only expanded contributor items allowed
 
       Collection<SearchEverywhereFoundElementInfo> section = sections.get(contributor);
-      SearchEverywhereFoundElementInfo newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      final var mlService = SearchEverywhereMlService.getInstance();
+      final SearchEverywhereFoundElementInfo newElementInfo;
+      if (mlService == null) {
+        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      }
+      else {
+        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority);
+      }
 
       if (section.size() >= myNewLimit) {
         return false;
@@ -347,7 +354,15 @@ class GroupedResultsSearcher implements SESearcher {
 
     @Override
     public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException {
-      SearchEverywhereFoundElementInfo newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      final var mlService = SearchEverywhereMlService.getInstance();
+      SearchEverywhereFoundElementInfo newElementInfo;
+      if (mlService == null) {
+        newElementInfo = new SearchEverywhereFoundElementInfo(element, priority, contributor);
+      }
+      else {
+        newElementInfo = mlService.createFoundElementInfo(contributor, element, priority);
+      }
+
       Condition condition = conditionsMap.get(contributor);
       Collection<SearchEverywhereFoundElementInfo> section = sections.get(contributor);
       int limit = sectionsLimits.get(contributor);
