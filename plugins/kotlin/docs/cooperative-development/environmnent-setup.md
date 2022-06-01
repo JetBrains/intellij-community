@@ -3,7 +3,7 @@
 ## Repositories
 
 * `kotlin` repository. Default branch is `master`
-* `intellij` repository. Default branch is `kt-222-master`. `kt-222-master` can be compiled against the latest Kotlin compiler from `master`.
+* `intellij` repository. Default branch is `kt-master`. `kt-master` can be compiled against the latest Kotlin compiler from `master`.
 
 ## Setup
 
@@ -13,10 +13,10 @@
 kotlin.build.isObsoleteJdkOverrideEnabled=true
 ```
 
-3. Clone IntelliJ Ultimate/IntelliJ Community (this repository) with branch `kt-222-master` into `kotlin` repository directory, so directory structure is the following:
+3. Clone IntelliJ Ultimate/IntelliJ Community (this repository) with branch `kt-222` into `kotlin` repository directory, so directory structure is the following:
 ```
 kotlin [branch = master]
-├── intellij [branch = kt-222-master]
+├── intellij [branch = kt-master]
 │   └── ...
 └── ...
 ```
