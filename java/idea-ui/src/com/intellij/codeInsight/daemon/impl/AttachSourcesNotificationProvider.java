@@ -8,6 +8,8 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -45,6 +47,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.Nls;
@@ -56,6 +59,8 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -119,26 +124,51 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
       actions.add(defaultAction);
 
       for (AttachSourcesProvider.AttachSourcesAction action : actions) {
-        String escapedName = GuiUtils.getTextWithoutMnemonicEscaping(action.getName());
-        panel.createActionLabel(escapedName, () -> {
-          List<? extends LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
-          if (!Comparing.equal(libraries, entries)) {
-            Messages.showErrorDialog(project,
-                                     JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
-                                     CommonBundle.message("title.error"));
-            return;
-          }
-          String originalText = panel.getText();
-          panel.setText(action.getBusyText());
+        panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
+          findLibraryEntriesForFile(project, file, libraries, entries -> {
+            String originalText = panel.getText();
+            panel.setText(action.getBusyText());
 
-          action.perform(entries).doWhenProcessed(() -> {
-            panel.setText(originalText);
+            action.perform(entries).doWhenProcessed(() -> {
+              panel.setText(originalText);
+            });
           });
         });
       }
 
       return panel;
     });
+  }
+
+  @SuppressWarnings("IncorrectParentDisposable")
+  private static void findLibraryEntriesForFile(@NotNull Project project,
+                                                @NotNull VirtualFile file,
+                                                @NotNull List<? extends LibraryOrderEntry> originalLibraries,
+                                                @NotNull Consumer<? super List<? extends LibraryOrderEntry>> uiThreadAction) {
+    ReadAction.nonBlocking(() -> {
+        List<? extends LibraryOrderEntry> libraries = findLibraryEntriesForFile(file, project);
+        if (Comparing.equal(originalLibraries, libraries)) {
+          return libraries;
+        }
+
+        throw new RuntimeException(JavaUiBundle.message("can.t.find.library.for.0", file.getName()));
+      })
+      .expireWith(project)
+      .expireWhen(() -> !file.isValid())
+      .coalesceBy(file, project)
+      .finishOnUiThread(ModalityState.any(), uiThreadAction)
+      .submit(NonUrgentExecutor.getInstance())
+      .onError(rejected -> {
+        if (rejected instanceof CancellationException) {
+          return;
+        }
+
+        SwingUtilities.invokeLater(() -> {
+          Messages.showErrorDialog(project,
+                                   rejected.getLocalizedMessage(),
+                                   CommonBundle.message("title.error"));
+        });
+      });
   }
 
   private static @NotNull List<? extends AttachSourcesProvider.AttachSourcesAction> collectActions(@NotNull List<? extends LibraryOrderEntry> libraries,
@@ -227,9 +257,9 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
   private static class AttachJarAsSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
 
-    private final VirtualFile myClassFile;
+    private final @NotNull VirtualFile myClassFile;
 
-    AttachJarAsSourcesAction(VirtualFile classFile) {
+    AttachJarAsSourcesAction(@NotNull VirtualFile classFile) {
       myClassFile = classFile;
     }
 
@@ -277,10 +307,11 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
   private static class ChooseAndAttachSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
 
-    private final Project myProject;
-    private final JComponent myParentComponent;
+    private final @NotNull Project myProject;
+    private final @NotNull JComponent myParentComponent;
 
-    ChooseAndAttachSourcesAction(Project project, JComponent parentComponent) {
+    ChooseAndAttachSourcesAction(@NotNull Project project,
+                                 @NotNull JComponent parentComponent) {
       myProject = project;
       myParentComponent = parentComponent;
     }
