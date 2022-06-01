@@ -44,6 +44,9 @@ class WorkspaceModuleImporter(
       else if (dependency is ModuleDependency) {
         result.add(ModuleDependencyItem.Exportable
                      .ModuleDependency(ModuleId(dependency.artifact), false, toScope(dependency.scope), dependency.isTestJar))
+        dependency.libraryDependency?.let {
+          result.add(createLibraryDependency(it.artifact))
+        }
       }
       else if (dependency is BaseDependency) {
         result.add(createLibraryDependency(dependency.artifact))
