@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -16,15 +16,17 @@ import org.jetbrains.annotations.NotNull;
  * <p></p>
  *
  * Update methods should call {@link ProgressManager#checkCanceled()} often enough to guard against UI freezes.
+ *
+ * @deprecated Use {@link AnAction#getActionUpdateThread()} instead.
  */
+@Deprecated
 public interface UpdateInBackground {
   default boolean isUpdateInBackground() {
     return true;
   }
 
   static boolean isUpdateInBackground(@NotNull AnAction action) {
-    return action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground() ||
-           action.getClass() == DefaultActionGroup.class;
+    return action.getActionUpdateThread() == ActionUpdateThread.BGT;
   }
 
   @ApiStatus.Experimental

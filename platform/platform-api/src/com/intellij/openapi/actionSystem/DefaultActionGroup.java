@@ -101,6 +101,11 @@ public class DefaultActionGroup extends ActionGroup {
     return createPopupGroup(() -> "");
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return this.getClass() == DefaultActionGroup.class ? ActionUpdateThread.BGT : super.getActionUpdateThread();
+  }
+
   private void incrementModificationStamp() {
     myModificationStamp++;
   }
