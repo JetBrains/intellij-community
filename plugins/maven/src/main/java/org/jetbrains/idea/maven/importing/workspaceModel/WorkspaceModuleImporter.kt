@@ -13,10 +13,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
-import org.jetbrains.idea.maven.importing.tree.dependency.BaseDependency
-import org.jetbrains.idea.maven.importing.tree.dependency.LibraryDependency
-import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency
-import org.jetbrains.idea.maven.importing.tree.dependency.SystemDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.*
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -43,27 +40,18 @@ class WorkspaceModuleImporter(
       else if (dependency is LibraryDependency) {
         result.add(createLibraryDependency(dependency.artifact))
       }
+      else if (dependency is AttachedJarDependency) {
+        result.add(createLibraryDependency(
+          dependency.artifact,
+          toScope(dependency.scope),
+          classUrls = dependency.classes.map(::pathToUrl),
+          sourceUrls = dependency.sources.map(::pathToUrl),
+          javadocUrls = dependency.javadocs.map(::pathToUrl),
+        ))
+      }
       else if (dependency is ModuleDependency) {
         result.add(ModuleDependencyItem.Exportable
                      .ModuleDependency(ModuleId(dependency.artifact), false, toScope(dependency.scope), dependency.isTestJar))
-        dependency.attachedJarDependency?.let {
-          result.add(createLibraryDependency(
-            it.artifact,
-            toScope(it.scope),
-            classUrls = it.classes.map {
-              VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, it) + JarFileSystem.JAR_SEPARATOR
-            },
-            sourceUrls = it.sources.map {
-              VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, it) + JarFileSystem.JAR_SEPARATOR
-            },
-            javadocUrls = it.javadocs.map {
-              VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, it) + JarFileSystem.JAR_SEPARATOR
-            },
-          ))
-        }
-        dependency.libraryDependency?.let {
-          result.add(createLibraryDependency(it.artifact))
-        }
       }
       else if (dependency is BaseDependency) {
         result.add(createLibraryDependency(dependency.artifact))
@@ -71,6 +59,8 @@ class WorkspaceModuleImporter(
     }
     return result
   }
+
+  private fun pathToUrl(it: String) = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, it) + JarFileSystem.JAR_SEPARATOR
 
   private fun toScope(scope: DependencyScope): ModuleDependencyItem.DependencyScope =
     when (scope) {

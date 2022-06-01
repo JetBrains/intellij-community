@@ -334,10 +334,6 @@ public final class MavenModuleImporter {
       else if (dependency instanceof ModuleDependency) {
         ModuleDependency moduleDependency = (ModuleDependency)dependency;
         myRootModelAdapter.addModuleDependency(moduleDependency.getArtifact(), dependency.getScope(), moduleDependency.isTestJar());
-        if (moduleDependency.getLibraryDependency() != null) {
-          myRootModelAdapter.addLibraryDependency(moduleDependency.getLibraryDependency().getArtifact(), dependency.getScope(),
-                                                  myModifiableModelsProvider, myMavenProject);
-        }
       }
       else if (dependency instanceof BaseDependency) {
         MavenArtifact artifact = ((BaseDependency)dependency).getArtifact();

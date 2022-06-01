@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing.tree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +17,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.SupportedRequestType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.idea.maven.importing.MavenModuleImporter.*;
 
@@ -50,13 +48,13 @@ public class MavenModuleImportDependencyProvider {
     addMainDependencyToTestModule(importData, mavenProject, testDependencies);
     boolean hasSeparateTestModule = importData.getSplittedMainAndTestModules() != null;
     for (MavenArtifact artifact : mavenProject.getDependencies()) {
-      MavenImportDependency<?> dependency = getDependency(artifact, mavenProject);
-      if (dependency == null) continue;
-      if (hasSeparateTestModule && dependency.getScope() == DependencyScope.TEST) {
-        testDependencies.add(dependency);
-      }
-      else {
-        mainDependencies.add(dependency);
+      for (MavenImportDependency<?> dependency : getDependency(artifact, mavenProject)) {
+        if (hasSeparateTestModule && dependency.getScope() == DependencyScope.TEST) {
+          testDependencies.add(dependency);
+        }
+        else {
+          mainDependencies.add(dependency);
+        }
       }
     }
     return new MavenModuleImportDataWithDependencies(importData, mainDependencies, testDependencies);
@@ -67,20 +65,18 @@ public class MavenModuleImportDependencyProvider {
                                                     List<MavenImportDependency<?>> testDependencies) {
     if (importData.getSplittedMainAndTestModules() != null) {
       testDependencies.add(
-        new ModuleDependency(
-          importData.getSplittedMainAndTestModules().getMainData().getModuleName(),
-          null, null, DependencyScope.COMPILE, false)
+        new ModuleDependency(importData.getSplittedMainAndTestModules().getMainData().getModuleName(), DependencyScope.COMPILE, false)
       );
     }
   }
 
-  @Nullable
-  private MavenImportDependency<?> getDependency(MavenArtifact artifact, MavenProject mavenProject) {
+  @NotNull
+  private List<MavenImportDependency<?>> getDependency(MavenArtifact artifact, MavenProject mavenProject) {
     String dependencyType = artifact.getType();
 
     if (!dependencyTypesFromSettings.contains(dependencyType)
         && !mavenProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT).contains(dependencyType)) {
-      return null;
+      return Collections.emptyList();
     }
 
     DependencyScope scope = selectScope(artifact.getScope());
@@ -88,36 +84,34 @@ public class MavenModuleImportDependencyProvider {
     MavenProject depProject = myProjectTree.findProject(artifact.getMavenId());
 
     if (depProject != null) {
-      if (depProject == mavenProject) return null;
+      if (depProject == mavenProject) return Collections.emptyList();
 
       MavenProjectImportData mavenProjectImportData = moduleImportDataByMavenId.get(depProject.getMavenId());
 
       if (mavenProjectImportData == null || myProjectTree.isIgnored(depProject)) {
-        return new BaseDependency(createCopyForLocalRepo(artifact, mavenProject), scope);
+        return List.of(new BaseDependency(createCopyForLocalRepo(artifact, mavenProject), scope));
       }
       else {
+        var result = new ArrayList<MavenImportDependency<?>>();
         boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(dependencyType) || "tests".equals(artifact.getClassifier());
         String moduleName = getModuleName(mavenProjectImportData);
 
-        AttachedJarDependency attachedJarDependency = null;
-        Element buildHelperCfg = depProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
-        if (buildHelperCfg != null) {
-          attachedJarDependency = createAttachArtifactDependency(buildHelperCfg, scope, artifact);
-        }
+        ContainerUtil.addIfNotNull(result, createAttachArtifactDependency(depProject, scope, artifact));
 
-        LibraryDependency libraryDependency = null;
         String classifier = artifact.getClassifier();
         if (classifier != null && IMPORTED_CLASSIFIERS.contains(classifier)
             && !isTestJar
             && !"system".equals(artifact.getScope())
             && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
-          libraryDependency = new LibraryDependency(createCopyForLocalRepo(artifact, mavenProject), mavenProject, scope);
+          result.add(new LibraryDependency(createCopyForLocalRepo(artifact, mavenProject), mavenProject, scope));
         }
-        return new ModuleDependency(moduleName, libraryDependency, attachedJarDependency, scope, isTestJar);
+
+        result.add(new ModuleDependency(moduleName, scope, isTestJar));
+        return result;
       }
     }
     else if ("system".equals(artifact.getScope())) {
-      return new SystemDependency(artifact, scope);
+      return List.of(new SystemDependency(artifact, scope));
     }
     else {
       if ("bundle".equals(dependencyType)) {
@@ -136,7 +130,7 @@ public class MavenModuleImportDependencyProvider {
           false, false
         );
       }
-      return new BaseDependency(artifact, scope);
+      return List.of(new BaseDependency(artifact, scope));
     }
   }
 
@@ -146,9 +140,12 @@ public class MavenModuleImportDependencyProvider {
   }
 
   @Nullable
-  private static AttachedJarDependency createAttachArtifactDependency(@NotNull Element buildHelperCfg,
+  private static AttachedJarDependency createAttachArtifactDependency(@NotNull MavenProject mavenproject,
                                                                       @NotNull DependencyScope scope,
                                                                       @NotNull MavenArtifact artifact) {
+    Element buildHelperCfg = mavenproject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
+    if (buildHelperCfg == null) return null;
+
     var classes = new ArrayList<String>();
     var sources = new ArrayList<String>();
     var javadocs = new ArrayList<String>();
