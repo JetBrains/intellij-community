@@ -45,7 +45,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +54,7 @@ import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -85,42 +82,44 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
     VirtualFile sourceFile = JavaEditorFileSwapper.findSourceFile(project, file);
     if (sourceFile == null) {
-      List<LibraryOrderEntry> libraries = findLibraryEntriesForFile(file, project);
-      List<AttachSourcesProvider.AttachSourcesAction> actions = libraries != null ?
-                                                                collectActions(libraries,
-                                                                               PsiManager.getInstance(project).findFile(file)) :
-                                                                null;
+      List<? extends LibraryOrderEntry> libraries = findLibraryEntriesForFile(file, project);
+      if (libraries.isEmpty()) {
+        return fileEditor -> createNotificationPanel(fileEditor, file);
+      }
+
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      List<? extends AttachSourcesProvider.AttachSourcesAction> actionsByFile = psiFile != null ?
+                                                                                collectActions(libraries, psiFile) :
+                                                                                List.of();
 
       boolean sourceFileIsInSameJar = sourceFileIsInSameJar(file);
 
       return fileEditor -> {
         EditorNotificationPanel panel = createNotificationPanel(fileEditor, file);
 
-        if (actions != null) {
-          AttachSourcesProvider.AttachSourcesAction defaultAction = sourceFileIsInSameJar ?
-                                                                    new AttachJarAsSourcesAction(file) :
-                                                                    new ChooseAndAttachSourcesAction(project, panel);
-          actions.add(defaultAction);
+        List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>(actionsByFile);
+        AttachSourcesProvider.AttachSourcesAction defaultAction = sourceFileIsInSameJar ?
+                                                                  new AttachJarAsSourcesAction(file) :
+                                                                  new ChooseAndAttachSourcesAction(project, panel);
+        actions.add(defaultAction);
 
-          for (AttachSourcesProvider.AttachSourcesAction action : actions) {
-            String escapedName = GuiUtils.getTextWithoutMnemonicEscaping(action.getName());
-            panel.createActionLabel(escapedName, () -> {
-              List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
-              if (!Comparing.equal(libraries, entries)) {
-                Messages.showErrorDialog(project,
-                                         JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
-                                         CommonBundle.message("title.error"));
-                return;
-              }
+        for (AttachSourcesProvider.AttachSourcesAction action : actions) {
+          String escapedName = GuiUtils.getTextWithoutMnemonicEscaping(action.getName());
+          panel.createActionLabel(escapedName, () -> {
+            List<? extends LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
+            if (!Comparing.equal(libraries, entries)) {
+              Messages.showErrorDialog(project,
+                                       JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
+                                       CommonBundle.message("title.error"));
+              return;
+            }
+            String originalText = panel.getText();
+            panel.setText(action.getBusyText());
 
-              String originalText = panel.getText();
-              panel.setText(action.getBusyText());
-
-              action.perform(entries).doWhenProcessed(() -> {
-                panel.setText(originalText);
-              });
+            action.perform(entries).doWhenProcessed(() -> {
+              panel.setText(originalText);
             });
-          }
+          });
         }
 
         return panel;
@@ -148,9 +147,9 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
       .text(getTextWithClassFileInfo(file));
   }
 
-  private static @NotNull List<AttachSourcesProvider.AttachSourcesAction> collectActions(@NotNull List<LibraryOrderEntry> libraries,
-                                                                                         @Nullable PsiFile classFile) {
-    ArrayList<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>();
+  private static @NotNull List<? extends AttachSourcesProvider.AttachSourcesAction> collectActions(@NotNull List<? extends LibraryOrderEntry> libraries,
+                                                                                                   @NotNull PsiFile classFile) {
+    List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>();
 
     boolean hasNonLightAction = false;
     for (AttachSourcesProvider provider : EXTENSION_POINT_NAME.getExtensionList()) {
@@ -171,7 +170,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
     }
 
     actions.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-    return actions;
+    return Collections.unmodifiableList(actions);
   }
 
   private static @NotNull @NlsContexts.Label String getTextWithClassFileInfo(@NotNull VirtualFile file) {
@@ -208,14 +207,13 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
            (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) && isPreview ? "-preview" : "");
   }
 
-  private static @Nullable List<LibraryOrderEntry> findLibraryEntriesForFile(@NotNull VirtualFile file,
-                                                                             @NotNull Project project) {
-    List<LibraryOrderEntry> entries = null;
+  @RequiresReadLock
+  private static @NotNull List<? extends LibraryOrderEntry> findLibraryEntriesForFile(@NotNull VirtualFile file,
+                                                                                      @NotNull Project project) {
+    List<LibraryOrderEntry> entries = new ArrayList<>();
 
-    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-    for (OrderEntry entry : index.getOrderEntriesForFile(file)) {
+    for (OrderEntry entry : ProjectFileIndex.getInstance(project).getOrderEntriesForFile(file)) {
       if (entry instanceof LibraryOrderEntry) {
-        if (entries == null) entries = new SmartList<>();
         entries.add((LibraryOrderEntry)entry);
       }
     }
@@ -233,6 +231,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
   }
 
   private static class AttachJarAsSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
+
     private final VirtualFile myClassFile;
 
     AttachJarAsSourcesAction(VirtualFile classFile) {
@@ -250,7 +249,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
     }
 
     @Override
-    public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
+    public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
       final List<Library.ModifiableModel> modelsToCommit = new ArrayList<>();
       for (LibraryOrderEntry orderEntry : orderEntriesContainingFile) {
         final Library library = orderEntry.getLibrary();
@@ -282,6 +281,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
   }
 
   private static class ChooseAndAttachSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
+
     private final Project myProject;
     private final JComponent myParentComponent;
 
@@ -301,7 +301,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
     }
 
     @Override
-    public ActionCallback perform(final List<LibraryOrderEntry> libraries) {
+    public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> libraries) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       descriptor.setTitle(JavaUiBundle.message("library.attach.sources.action"));
       descriptor.setDescription(JavaUiBundle.message("library.attach.sources.description"));
