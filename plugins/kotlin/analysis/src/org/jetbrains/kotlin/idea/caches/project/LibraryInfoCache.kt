@@ -43,19 +43,18 @@ class LibraryInfoCache(private val project: Project): Disposable {
             val changes = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
 
             val cache = getInstance(project).libraryInfoCache.ifEmpty { return }
-            val size = cache.size
             for (change in changes) {
-                val entity = when (change) {
+                val oldEntity = when (change) {
                     is EntityChange.Added -> null
                     is EntityChange.Removed -> change.entity
                     is EntityChange.Replaced -> change.oldEntity
                 } ?: continue
-                entity.findLibraryBridge(storageBefore)?.let {
+                // cache refers to an old library entity
+                oldEntity.findLibraryBridge(storageBefore)?.let {
+                    // drop outdated library from a cache
                     cache.remove(it)
                 }
             }
-            val newSize = cache.size
-            val i = newSize - size
         }
     }
 
