@@ -23,13 +23,15 @@ class WindowDeactivationManager {
     @JvmStatic
     fun getInstance(): WindowDeactivationManager = service()
   }
+
   fun addWindowDeactivationListener(window: Window, project: Project, disposable: Disposable, onWindowDeactivated: Runnable) {
     val focusListener = object : WindowAdapter() {
       override fun windowGainedFocus(e: WindowEvent?) {
         onWindowDeactivated.run()
       }
     }
-    Frame.getFrames().filter { it is IdeFrame && it.project == project}.forEach {
+
+    Frame.getFrames().asSequence().filter { it is IdeFrame && it.project === project }.forEach {
       it.addWindowFocusListener(focusListener)
       Disposer.register(disposable) {
         it.removeWindowFocusListener(focusListener)
@@ -40,11 +42,15 @@ class WindowDeactivationManager {
       override fun windowDeactivated(e: WindowEvent) {
         // At the moment of deactivation there is just "temporary" focus owner (main frame),
         // true focus owner (Search Everywhere popup etc.) appears later so the check should be postponed too
-        ApplicationManager.getApplication().invokeLater({
-          val focusOwner = IdeFocusManager.getInstance(project).focusOwner ?: return@invokeLater
-          if (SwingUtilities.isDescendingFrom(focusOwner, window)) return@invokeLater
-          onWindowDeactivated.run()
-        }, ModalityState.current())
+        ApplicationManager.getApplication().invokeLater(
+          {
+            val focusOwner = IdeFocusManager.getInstance(project).focusOwner ?: return@invokeLater
+            if (SwingUtilities.isDescendingFrom(focusOwner, window)) {
+              onWindowDeactivated.run()
+            }
+          },
+          ModalityState.current()
+        )
       }
     })
   }
