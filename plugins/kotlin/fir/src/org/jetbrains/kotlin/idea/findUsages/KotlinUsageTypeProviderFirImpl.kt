@@ -61,6 +61,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
                     if (targetElement is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
                 is KtVariableSymbol -> getVariableUsageType(refExpr)
                 is KtFunctionLikeSymbol -> getFunctionUsageType(targetElement)
+                is KtValueParameterSymbol -> getVariableUsageType(refExpr)
                 else -> null
             }
         }
