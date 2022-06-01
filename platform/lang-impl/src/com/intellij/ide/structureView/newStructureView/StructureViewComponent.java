@@ -73,7 +73,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
+public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
@@ -763,31 +763,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public String getHelpID() {
     return HelpID.STRUCTURE_VIEW;
   }
-
-  @Override
-  public Dimension getCurrentSize() {
-    return getTree().getSize();
-  }
-
-  @Override
-  public void setReferenceSizeWhileInitializing(Dimension size) {
-    //_setRefSize(size);
-    //
-    //if (size != null) {
-    //  todo com.intellij.ui.tree.AsyncTreeModelTest.invokeWhenProcessingDone() //
-    //  myAbstractTreeBuilder.getReady(this).doWhenDone(() -> _setRefSize(null));
-    //}
-  }
-
-  //private void _setRefSize(Dimension size) {
-  //  JTree tree = getTree();
-  //  tree.setPreferredSize(size);
-  //  tree.setMinimumSize(size);
-  //  tree.setMaximumSize(size);
-  //
-  //  tree.revalidate();
-  //  tree.repaint();
-  //}
 
   private static int getMinimumExpandDepth(@NotNull StructureViewModel structureViewModel) {
     final StructureViewModel.ExpandInfoProvider provider =

@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * Defines the implementation of a custom structure view or file structure popup component.
@@ -67,9 +66,4 @@ public interface StructureView extends Disposable {
 
   @NotNull
   StructureViewModel getTreeModel();
-
-  interface Scrollable extends StructureView {
-    Dimension getCurrentSize();
-    void setReferenceSizeWhileInitializing(Dimension size);
-  }
 }
