@@ -641,6 +641,10 @@ public final class PathManager {
     if (Files.isDirectory(Paths.get(homePath, "ultimate/community/.idea"))) {
       return homePath + "/ultimate/community";
     }
+    if (Files.isDirectory(Paths.get(homePath, "../../../community/.idea"))) {
+      // support projects in ULTIMATE_REPO/remote-dev/extras/SUBDIR
+      return homePath + "/../../../community";
+    }
     if (Files.isRegularFile(Paths.get(homePath, "../../Product.Root"))) { // .NET products directory
       return homePath + "/../ultimate/community";
     }
