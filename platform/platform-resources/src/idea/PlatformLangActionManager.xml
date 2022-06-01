@@ -58,7 +58,7 @@
     </group>
 
     <group id="ProblemsView.ToolWindow.Toolbar">
-      <group id="ProblemsView.Options" icon="AllIcons.Actions.Show" popup="true">
+      <group id="ProblemsView.Options" icon="AllIcons.Actions.Show" popup="true" class="com.intellij.analysis.problemsView.toolWindow.ProblemsViewOptionsGroup">
         <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
         <separator/>
         <action id="ProblemsView.GroupByToolId"
