@@ -151,7 +151,7 @@ public class MacWinTabsHandler {
     ApplicationManager.getApplication().invokeLater(() -> updateTabBars(myFrame));
   }
 
-  private static void updateTabBars(@Nullable JFrame newFrame) {
+  static void updateTabBars(@Nullable JFrame newFrame) {
     if (!isAllowedFrame(newFrame) || !JdkEx.isTabbingModeAvailable()) {
       return;
     }

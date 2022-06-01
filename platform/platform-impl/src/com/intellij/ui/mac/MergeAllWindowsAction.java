@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -54,13 +55,16 @@ public class MergeAllWindowsAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Window window = Objects.requireNonNull(UIUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)));
 
-    mergeAllWindows(window);
+    mergeAllWindows(window, true);
   }
 
-  private static void mergeAllWindows(Window window) {
+  private static void mergeAllWindows(@NotNull Window window, boolean updateTabBars) {
     Foundation.executeOnMainThread(true, false, () -> {
       ID id = MacUtil.getWindowFromJavaWindow(window);
       Foundation.invoke(id, "mergeAllWindows:", ID.NIL);
+      if (updateTabBars) {
+        ApplicationManager.getApplication().invokeLater(() -> MacWinTabsHandler.updateTabBars(null));
+      }
     });
   }
 
@@ -82,7 +86,7 @@ public class MergeAllWindowsAction extends DumbAwareAction {
         }
 
         if (Foundation.invoke("NSWindow", "userTabbingPreference").intValue() == 2/*NSWindowUserTabbingPreferenceInFullScreen*/) {
-          mergeAllWindows(((ProjectFrameHelper)frames[0]).getFrame());
+          mergeAllWindows(Objects.requireNonNull(((ProjectFrameHelper)frames[0]).getFrame()), false);
         }
       }
     }
