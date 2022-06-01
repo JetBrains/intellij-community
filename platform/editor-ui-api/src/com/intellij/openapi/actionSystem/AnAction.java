@@ -259,6 +259,14 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
+   * Specifies the thread and the way {@link AnAction#update(AnActionEvent)} shall be called.
+   */
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground() ?
+           ActionUpdateThread.BGT : ActionUpdateThread.OLD_EDT;
+  }
+
+  /**
    * Updates the state of the action. Default implementation does nothing.
    * Override this method to provide the ability to dynamically change action's
    * state and(or) presentation depending on the context (For example

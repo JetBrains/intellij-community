@@ -158,15 +158,17 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
     if (myCachedData.isEmpty()) return null;
 
-    boolean rulesSuppressed = EDT.isCurrentThreadEdt() && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
+    boolean isEDT = EDT.isCurrentThreadEdt();
+    boolean noRulesSection = isEDT && ActionUpdater.isNoRulesInEDTSection();
+    boolean rulesSuppressed = isEDT && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed;
-    Object answer = getDataInner(dataId, rulesAllowed);
+    Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
 
     int keyIndex; // for use with `nullsByContextRules` only, always != -1
     ProviderData map = myCachedData.get(0);
     if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1))) {
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
-        Object o = getDataInner(id, !CommonDataKeys.PROJECT.is(id));
+        Object o = getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
         return o == ourExplicitNull ? null : o;
       });
       if (answer != null) {
@@ -188,14 +190,14 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         if (ReadAction.compute(() -> getData(dataId)) != null) {
           LOG.warn(dataId + " is not available on EDT. " +
                    "Code that depends on data rules and slow data providers must be run in background. " +
-                   "For example, an action must be `UpdateInBackground`.", throwable);
+                   "For example, an action must use `ActionUpdateThread.BGT`.", throwable);
         }
       });
     }
     return answer == ourExplicitNull ? null : answer;
   }
 
-  private @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase) {
+  private @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
     int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
     if (keyIndex == -1) return ourExplicitNull; // newly created data key => no data provider => no value
     boolean rulesAllowed = rulesAllowedBase && keyIndex < myDataKeysCount;
@@ -207,6 +209,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       if (answer == ourExplicitNull) break;
       if (answer != null) {
         if (map.valueByRules.get(keyIndex)) {
+          if (!ruleValuesAllowed) return null;
           reportValueProvidedByRulesUsage(dataId);
         }
         answer = DataValidators.validOrNull(answer, dataId, this);
@@ -242,7 +245,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
     if (EDT.isCurrentThreadEdt() && SlowOperations.isInsideActivity(SlowOperations.ACTION_UPDATE) &&
         ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
-      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName();
+      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
       //noinspection StringEquality
       if (message == ourEDTWarnsInterner.intern(message)) {
         LOG.warn(message);

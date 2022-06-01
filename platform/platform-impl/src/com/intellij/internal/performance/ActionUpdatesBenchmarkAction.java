@@ -203,7 +203,8 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
         if (elapsed > 0) {
           results.add(Pair.create((int)elapsed, actionName));
         }
-        if (!(action instanceof UpdateInBackground)) {
+        ActionUpdateThread updateThread = action.getActionUpdateThread();
+        if (updateThread == ActionUpdateThread.OLD_EDT) {
           if (ruleKeys.isEmpty()) {
             if (event.getPresentation().isEnabled()) {
               results2.add(Pair.create("UI only?", actionName));
