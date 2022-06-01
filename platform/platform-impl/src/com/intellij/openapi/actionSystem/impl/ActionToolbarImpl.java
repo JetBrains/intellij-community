@@ -1271,8 +1271,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 
-      Component compForSize = mySkipWindowAdjustments ? null : guessBestParentForSizeAdjustment();
-      boolean skipSizeAdjustments = compForSize == null || compForSize.getWidth() == 0 && compForSize.getHeight() == 0;
+      boolean skipSizeAdjustments = mySkipWindowAdjustments;
+      Component compForSize = skipSizeAdjustments ? null : guessBestParentForSizeAdjustment();
       Dimension oldSize = skipSizeAdjustments ? null : compForSize.getPreferredSize();
 
       removeAll();
@@ -1343,6 +1343,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       Dimension pSize = p.getSize();
       if (myOrientation == SwingConstants.HORIZONTAL && pSize.height - availSize.height > 8 ||
           myOrientation == SwingConstants.VERTICAL && pSize.width - availSize.width > 8) {
+        if (availSize.width == 0 && availSize.height == 0) result = p;
         break;
       }
       result = p;
