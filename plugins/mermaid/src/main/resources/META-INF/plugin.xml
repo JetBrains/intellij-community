@@ -34,6 +34,9 @@
 
     <lang.elementManipulator forClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
                              implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidIdentifierManipulator" />
+    <lang.findUsagesProvider language="MyMermaid"
+                             implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidFindUsagesProvider"/>
+
 
   </extensions>
 </idea-plugin>
