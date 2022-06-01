@@ -28,4 +28,6 @@ public class TailRecursionInspectionFixTest extends IGQuickFixesTestCase {
   public void testUnmodifiedParameter() { doTest(); }
   public void testRemoveEmptyElse() { doTest(); }
   public void testRemoveEmptyElseCommentAtLineStart() { doTest(); }
+  public void testVoidMethod1() { doTest(); }
+  public void testVoidMethod2() { doTest(); }
 }

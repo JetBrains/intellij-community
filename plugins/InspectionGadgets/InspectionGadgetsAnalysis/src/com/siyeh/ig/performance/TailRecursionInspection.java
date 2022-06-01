@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.graph.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -116,7 +117,13 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         tailCallIsContainedInLoop = false;
       }
       builder.append("while(true)");
-      replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, builder);
+      final boolean methodMayCompleteNormally = ControlFlowUtils.methodMayCompleteNormally(method);
+      final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(body);
+      final boolean isReturnAtTheEndOfWhileLoop = lastStatement instanceof PsiReturnStatement || methodMayCompleteNormally;
+      replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, isReturnAtTheEndOfWhileLoop, builder);
+      if (methodMayCompleteNormally) {
+        builder.insert(builder.length() - 1, "return;");
+      }
       builder.append('}');
       final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(builder.toString(), method);
       removeEmptyElse(block);
@@ -218,7 +225,9 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
                                          PsiMethod method,
                                          @Nullable String thisVariableName,
                                          boolean tailCallIsContainedInLoop,
+                                         boolean isReturnAtTheEndOfWhileLoop,
                                          @NonNls StringBuilder out) {
+      PsiMethodCallExpression tailCall;
       if (isImplicitCallOnThis(element, method)) {
         if (thisVariableName != null) {
           out.append(thisVariableName).append('.');
@@ -228,13 +237,11 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       else if (element instanceof PsiQualifiedExpression) {
         out.append(thisVariableName == null ? element.getText() : thisVariableName);
       }
-      else if (isTailCallReturn(element, method)) {
-        final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-        assert call != null;
-        final PsiExpression[] arguments = call.getArgumentList().getExpressions();
+      else if ((tailCall = getTailCall(element, method)) != null) {
+        assert element instanceof PsiStatement;
+        final PsiExpression[] arguments = tailCall.getArgumentList().getExpressions();
         final PsiParameter[] parameters = method.getParameterList().getParameters();
-        final boolean isInBlock = returnStatement.getParent() instanceof PsiCodeBlock;
+        final boolean isInBlock = element.getParent() instanceof PsiCodeBlock;
         if (!isInBlock) {
           out.append('{');
         }
@@ -297,17 +304,18 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           seen.add(index);
         }
         if (thisVariableName != null) {
-          final PsiReferenceExpression methodExpression = call.getMethodExpression();
+          final PsiReferenceExpression methodExpression = tailCall.getMethodExpression();
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
           if (qualifier != null) {
             out.append(thisVariableName).append('=');
-            replaceTailCalls(qualifier, method, thisVariableName, tailCallIsContainedInLoop, out);
+            replaceTailCalls(qualifier, method, thisVariableName, tailCallIsContainedInLoop, isReturnAtTheEndOfWhileLoop, out);
             out.append(';');
           }
         }
         final PsiCodeBlock body = method.getBody();
         assert body != null;
-        if (ControlFlowUtils.blockCompletesWithStatement(body, returnStatement)) {
+        if ((element instanceof PsiReturnStatement && ControlFlowUtils.blockCompletesWithStatement(body, (PsiStatement)element)) ||
+            (element instanceof PsiExpressionStatement && (!isReturnAtTheEndOfWhileLoop || isBeforeVoidReturn(element, method)))) {
           //don't do anything, as the continue is unnecessary
         }
         else if (tailCallIsContainedInLoop) {
@@ -321,13 +329,24 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         }
       }
       else {
+        final PsiCodeBlock body = method.getBody();
+        assert body != null;
+        if (isVoidReturn(element)) {
+          final PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
+          final PsiExpressionStatement prevExpressionStatement = ObjectUtils.tryCast(prevElement, PsiExpressionStatement.class);
+          tailCall = getTailCall(prevExpressionStatement, method);
+          if (tailCall != null) {
+            out.append("continue;");
+            return;
+          }
+        }
         final PsiElement[] children = element.getChildren();
         if (children.length == 0) {
           out.append(element.getText());
         }
         else {
           for (final PsiElement child : children) {
-            replaceTailCalls(child, method, thisVariableName, tailCallIsContainedInLoop, out);
+            replaceTailCalls(child, method, thisVariableName, tailCallIsContainedInLoop, isReturnAtTheEndOfWhileLoop, out);
           }
         }
       }
@@ -408,20 +427,6 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         return false;
       }
     }
-
-    private static boolean isTailCallReturn(PsiElement element, PsiMethod containingMethod) {
-      if (!(element instanceof PsiReturnStatement)) {
-        return false;
-      }
-      final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
-      final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-      if (!(returnValue instanceof PsiMethodCallExpression)) {
-        return false;
-      }
-      final PsiMethodCallExpression call = (PsiMethodCallExpression)returnValue;
-      final PsiMethod method = call.resolveMethod();
-      return containingMethod.equals(method);
-    }
   }
 
   @Override
@@ -430,22 +435,20 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
   }
 
   private static class TailRecursionVisitor extends BaseInspectionVisitor {
-
     @Override
-    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
-      super.visitReturnStatement(statement);
-      final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(statement.getReturnValue());
-      if (!(returnValue instanceof PsiMethodCallExpression)) {
-        return;
-      }
-      final PsiMethodCallExpression returnCall = (PsiMethodCallExpression)returnValue;
-      final PsiReferenceExpression methodExpression = returnCall.getMethodExpression();
+    public void visitStatement(@NotNull PsiStatement statement) {
+      super.visitStatement(statement);
       final PsiMethod containingMethod =
         PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (containingMethod == null) {
         return;
       }
-      final JavaResolveResult resolveResult = returnCall.resolveMethodGenerics();
+      final PsiMethodCallExpression tailCall = getTailCall(statement, containingMethod);
+      if (tailCall == null) {
+        return;
+      }
+      final PsiReferenceExpression methodExpression = tailCall.getMethodExpression();
+      final JavaResolveResult resolveResult = tailCall.resolveMethodGenerics();
       if (!resolveResult.isValidResult() || !containingMethod.equals(resolveResult.getElement())) {
         return;
       }
@@ -453,7 +456,36 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       if (qualifier != null && !(qualifier instanceof PsiThisExpression) && MethodUtils.isOverridden(containingMethod)) {
         return;
       }
-      registerMethodCallError(returnCall, containingMethod);
+      registerMethodCallError(tailCall, containingMethod);
     }
+  }
+
+  @Nullable
+  private static PsiMethodCallExpression getTailCall(@Nullable PsiElement element, @NotNull PsiMethod method) {
+    PsiMethodCallExpression tailCall = null;
+    if (element instanceof PsiReturnStatement) {
+      final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
+      final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
+      tailCall = ObjectUtils.tryCast(returnValue, PsiMethodCallExpression.class);
+    }
+    else if (element instanceof PsiExpressionStatement &&
+             (ControlFlowUtils.blockCompletesWithStatement(Objects.requireNonNull(method.getBody()), (PsiStatement)element) ||
+              isBeforeVoidReturn(element, method))) {
+      final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(((PsiExpressionStatement)element).getExpression());
+      tailCall = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
+    }
+    if (tailCall == null) return null;
+    final PsiMethod resolvedMethod = tailCall.resolveMethod();
+    return method.equals(resolvedMethod) ? tailCall : null;
+  }
+
+  private static boolean isBeforeVoidReturn(PsiElement element, PsiMethod method) {
+    PsiReturnStatement returnStatement =
+      ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(element), PsiReturnStatement.class);
+    return isVoidReturn(returnStatement) && PsiType.VOID.equals(method.getReturnType());
+  }
+
+  private static boolean isVoidReturn(PsiElement element) {
+    return element instanceof PsiReturnStatement && ((PsiReturnStatement)element).getReturnValue() == null;
   }
 }
