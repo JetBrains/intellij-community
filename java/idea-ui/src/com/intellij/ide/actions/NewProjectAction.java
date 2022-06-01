@@ -34,7 +34,7 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
       NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e);
     }
-    else if (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+    else if (ExperimentalUI.isNewUI() && ActionPlaces.PROJECT_WIDGET_POPUP.equals(e.getPlace())) {
       e.getPresentation().setIcon(IconManager.getInstance().getIcon("expui/general/add.svg", AllIcons.class));
     }
   }
@@ -56,6 +56,7 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
       actionText = action.getActionText(fromNewSubMenu, inJavaIde);
     }
     e.getPresentation().setText(actionText);
+    action.applyTextOverride(e);
   }
 
   private static boolean isInvokedFromNewSubMenu(@NotNull AnAction action, @NotNull AnActionEvent e) {
