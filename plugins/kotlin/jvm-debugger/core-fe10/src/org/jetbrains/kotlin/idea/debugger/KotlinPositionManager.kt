@@ -57,6 +57,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterS
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
@@ -491,6 +492,25 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 }
 
+// This method detects whether we should highlight the entire line of a source position or not.
+// Consider the example:
+//
+//    1.also { // Stop on a breakpoint here and perform a step over
+//        println(it)
+//    }.also { // You will get to this line
+//        println(it)
+//    }
+//
+// In this example the entire line with `also` should be highlighted.
+// Another example:
+//
+//    1.also {
+//        println(it) // Stop on a breakpoint here and perform a step over
+//    }.also { // You will get to this line
+//        println(it)
+//    }
+//
+// Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
 private fun decorateSourcePosition(location: Location, sourcePosition: SourcePosition): SourcePosition {
     val lambda = sourcePosition.elementAt.parent
     if (lambda !is KtFunctionLiteral) return sourcePosition
