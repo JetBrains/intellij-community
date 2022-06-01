@@ -121,14 +121,14 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     myEventCounter.eventHappened(session);
   }
 
-  private void startIndicator(@NlsContexts.ProgressText String text) {
+  private synchronized void startIndicator(@NlsContexts.ProgressText String text) {
     if (myActivityCounter++ == 0) {
       myRefreshIndicator.setText(text);
       myRefreshIndicator.start();
     }
   }
 
-  private void stopIndicator() {
+  private synchronized void stopIndicator() {
     if (--myActivityCounter == 0) {
       myRefreshIndicator.stop();
     }
