@@ -69,10 +69,16 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     List<UParameter> paramList = method.getUastParameters();
     if (!paramList.isEmpty()) {
+      // Empty constructor body signals Java record header or Kotlin primary constructor (or red code): uses all parameters implicitly
+      // TODO create an extension point for this kind of thing.
+      boolean parameterUsed = method.isConstructor() && method.getUastBody() == null;
       for (int i = 0; i < paramList.size(); i++) {
         UParameter param = paramList.get(i);
         if (param.getSourcePsi() != null) {
-          getRefJavaManager().getParameterReference(param, i, this);
+          RefParameterImpl parameter = (RefParameterImpl)getRefJavaManager().getParameterReference(param, i, this);
+          if (parameterUsed && parameter != null) {
+            parameter.setUsedForReading();
+          }
         }
       }
     }
@@ -688,5 +694,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       parentRef = refManager.getReference(containingDeclaration, true);
     }
     return parentRef;
+  }
+
+  public static void main(String[] args) {
+    System.out.println(1 << 16);
   }
 }

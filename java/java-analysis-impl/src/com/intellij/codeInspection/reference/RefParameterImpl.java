@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
@@ -37,15 +36,13 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
       owner.add(this);
     }
 
-    if (psi instanceof PsiRecordComponent) {
-      setUsedForReading();
-    }
-
-    //TODO kotlin receiver parameter must be used
-    if (myIndex == 0) {
-      String name = getName();
-      if ("$receiver".equals(name) || name.startsWith("$this$")) {
-        setUsedForReading();
+    if (psi.getLanguage().isKindOf("kotlin")) {
+      //TODO kotlin receiver parameter must be used
+      if (myIndex == 0) {
+        String name = getName();
+        if ("$receiver".equals(name) || name.startsWith("$this$")) {
+          setUsedForReading();
+        }
       }
     }
   }
@@ -65,7 +62,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     return checkFlag(USED_FOR_READING_MASK);
   }
 
-  private void setUsedForReading() {
+  void setUsedForReading() {
     setFlag(true, USED_FOR_READING_MASK);
   }
 
