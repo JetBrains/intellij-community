@@ -1681,6 +1681,11 @@
         <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="p" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="stream statements can be replaced with ContainerUtil" text="$m$.stream().anyMatch($p$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.exists($m$, $p$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="m" nameOfExprType="java\.util\.Collection" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="p" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="String.getBytes() is current locale-dependant, use String.getBytes(Charset) instead" text="$s$.getBytes()" recursive="false" caseInsensitive="true" type="JAVA">
         <constraint name="s" nameOfExprType="java.lang.String" exprTypeWithinHierarchy="true" within="" contains="" />
       </searchConfiguration>
