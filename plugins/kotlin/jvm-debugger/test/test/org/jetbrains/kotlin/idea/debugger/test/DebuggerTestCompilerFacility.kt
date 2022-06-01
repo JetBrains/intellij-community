@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -217,7 +218,12 @@ class DebuggerTestCompilerFacility(
     private fun analyzeAndCompileFiles(project: Project, files: List<KtFile>, compile: (AnalysisResult) -> Unit): String {
         val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeWithForcedPlatform(files, JvmPlatforms.unspecifiedJvmPlatform)
 
-        val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(files)
+        val analysisResult = try {
+            resolutionFacade.analyzeWithAllCompilerChecks(files)
+        } catch (_: ProcessCanceledException) {
+            // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
+            resolutionFacade.analyzeWithAllCompilerChecks(files)
+        }
         analysisResult.throwIfError()
 
         compile(analysisResult)

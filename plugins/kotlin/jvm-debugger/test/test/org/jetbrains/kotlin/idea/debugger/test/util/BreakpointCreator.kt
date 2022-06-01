@@ -11,6 +11,7 @@ import com.intellij.debugger.ui.breakpoints.LineBreakpoint
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -24,11 +25,13 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isKotlinSourceFile
 import org.jetbrains.kotlin.idea.debugger.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import java.util.*
 import javax.swing.SwingUtilities
 
 internal class BreakpointCreator(
@@ -136,7 +139,11 @@ internal class BreakpointCreator(
 
     private fun createBreakpoint(fileName: String, lineMarker: String, action: (PsiFile, Int) -> Unit) {
         val sourceFiles = runReadAction {
-            FilenameIndex.getAllFilesByExt(project, "kt")
+            val actualType = FileUtilRt.getExtension(fileName).lowercase(Locale.getDefault())
+            assert(isKotlinSourceFile(fileName)) {
+                "Could not set a breakpoint on a non-kt file"
+            }
+            FilenameIndex.getAllFilesByExt(project, actualType)
                 .filter { it.name == fileName && it.contentsToByteArray().toString(Charsets.UTF_8).contains(lineMarker) }
         }
 
