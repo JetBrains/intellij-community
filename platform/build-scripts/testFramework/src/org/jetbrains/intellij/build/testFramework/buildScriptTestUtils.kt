@@ -12,7 +12,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
-import org.junit.AssumptionViolatedException
+import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -150,7 +150,7 @@ fun runTestBuild(
 
       if (ExceptionUtil.causedBy(e, HttpConnectTimeoutException::class.java)) {
         //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
-        throw AssumptionViolatedException("failed to load data for build scripts", e)
+        throw TestAbortedException("failed to load data for build scripts", e)
       }
       else {
         throw e

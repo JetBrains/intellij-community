@@ -1,17 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import junit.framework.AssertionFailedError
+import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.impl.LibraryLicensesListGenerator
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
-import org.junit.rules.ErrorCollector
 
 class LibraryLicensesTester(private val project: JpsProject, private val licenses: List<LibraryLicense>) {
-  fun reportMissingLicenses(collector: ErrorCollector) {
+  fun reportMissingLicenses(collector: SoftAssertions) {
     val nonPublicModules = setOf("intellij.idea.ultimate.build",
                                  "intellij.idea.community.build",
                                  "buildSrc",
@@ -32,7 +31,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     for ((jpsLibrary, jpsModule) in libraries) {
       val libraryName = LibraryLicensesListGenerator.getLibraryName(jpsLibrary)
       if (libraryName !in librariesWithLicenses) {
-        collector.addError(AssertionFailedError("""
+        collector.collectAssertionError(AssertionError("""
                   |License isn't specified for '$libraryName' library (used in module '${jpsModule.name}' in ${jpsModule.contentRootsList.urls})
                   |If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files
                   |If a library is used in tests only change its scope to 'Test'
