@@ -1,0 +1,54 @@
+Index: community/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.java	(revision d5030f9d964dacc64a7fdff240d9ab43f1efde31)
++++ community/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.java	(revision e23f588912cee254cb5c415d9909be0dca430197)
+@@ -669,7 +669,7 @@
+     return result;
+   }
+ 
+-  private static void disableIncompatiblePlugins(@NotNull PluginSetBuilder builder,
++  private static void disableIncompatiblePlugins(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
+                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
+                                                  @NotNull Map<PluginId, PluginLoadingError> errors) {
+     String selectedIds = System.getProperty("idea.load.plugins.id");
+@@ -693,7 +693,7 @@
+     }
+     else if (selectedCategory != null) {
+       explicitlyEnabled = new LinkedHashSet<>();
+-      for (IdeaPluginDescriptorImpl descriptor : builder.getUnsortedPlugins()) {
++      for (IdeaPluginDescriptorImpl descriptor : descriptors) {
+         if (selectedCategory.equals(descriptor.getCategory())) {
+           explicitlyEnabled.add(descriptor);
+         }
+@@ -703,9 +703,8 @@
+     if (explicitlyEnabled != null) {
+       // add all required dependencies
+       List<IdeaPluginDescriptorImpl> nonOptionalDependencies = new ArrayList<>();
+-      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = buildPluginIdMap();
+       for (IdeaPluginDescriptorImpl descriptor : explicitlyEnabled) {
+-        processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
++        processAllNonOptionalDependencies(descriptor, idMap, dependency -> {
+           nonOptionalDependencies.add(dependency);
+           return FileVisitResult.CONTINUE;
+         });
+@@ -716,7 +715,7 @@
+ 
+     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
+     boolean shouldLoadPlugins = Boolean.parseBoolean(System.getProperty("idea.load.plugins", "true"));
+-    for (IdeaPluginDescriptorImpl descriptor : builder.getUnsortedPlugins()) {
++    for (IdeaPluginDescriptorImpl descriptor : descriptors) {
+       if (descriptor == coreDescriptor) {
+         continue;
+       }
+@@ -859,7 +858,7 @@
+     }
+ 
+     PluginSetBuilder pluginSetBuilder = new PluginSetBuilder(loadingResult.getEnabledPlugins());
+-    disableIncompatiblePlugins(pluginSetBuilder, idMap, pluginErrorsById);
++    disableIncompatiblePlugins(pluginSetBuilder.getUnsortedPlugins(), idMap, pluginErrorsById);
+     pluginSetBuilder.checkPluginCycles(globalErrors);
+ 
+     Set<IdeaPluginDescriptorImpl> disabledAfterInit = new HashSet<>();

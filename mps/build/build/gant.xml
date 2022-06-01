@@ -178,6 +178,20 @@
 
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
+
+        <!-- Temporary patch for 2022.1 NPE. Fixed already in 2022.2 -->
+        <property name="patchPMC" value="${basedir}/patches/PluginManagerCore.patch"/>
+        <echo message="Applying ${patchPMC}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchPMC}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchPMC}"/>
+        </exec>
+
         <property name="patchFileApplicationNamesInfo"
                   value="${basedir}/patches/ApplicationNamesInfo.patch"/>
         <echo message="Applying ${patchFileApplicationNamesInfo}"/>
