@@ -5,11 +5,11 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.IntentionListStep
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ModalityState
@@ -26,7 +26,9 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil.isAncestor
 import java.awt.event.MouseEvent
 
-internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
+internal class ShowQuickFixesAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     val node = event.getData(SELECTED_ITEM) as? ProblemNode
