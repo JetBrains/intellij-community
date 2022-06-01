@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class CustomisedActionGroup extends ActionGroup implements UpdateInBackground {
+public class CustomisedActionGroup extends ActionGroup {
   private final ActionGroup myGroup;
   private AnAction[] myChildren;
   private final CustomActionsSchema mySchema;
@@ -35,8 +35,8 @@ public class CustomisedActionGroup extends ActionGroup implements UpdateInBackgr
   }
 
   @Override
-  public boolean isUpdateInBackground() {
-    return UpdateInBackground.isUpdateInBackground(myGroup);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myGroup.getActionUpdateThread();
   }
 
   @Override

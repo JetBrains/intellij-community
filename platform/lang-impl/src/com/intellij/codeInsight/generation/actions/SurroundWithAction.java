@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageSurrounders;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryFile;
@@ -16,20 +17,20 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class SurroundWithAction extends BaseCodeInsightAction{
+public class SurroundWithAction extends BaseCodeInsightAction {
   public SurroundWithAction() {
     setEnabledInModalContext(true);
   }
 
   @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler(){
+  protected CodeInsightActionHandler getHandler() {
     return new SurroundWithHandler();
   }
 
   @Override
-  public boolean isUpdateInBackground() {
-    return false;
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.OLD_EDT;
   }
 
   @Override

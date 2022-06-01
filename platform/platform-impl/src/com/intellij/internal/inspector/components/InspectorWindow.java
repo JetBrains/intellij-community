@@ -109,17 +109,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
     DataProvider provider = dataId -> {
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return new Navigatable() {
+          final String selectedClassName = findSelectedClassName();
+
           @Override
           public void navigate(boolean requestFocus) {
-            String className = findSelectedClassName();
-            if (className != null) {
-              UiInspectorUtil.openClassByFqn(myProject, className, requestFocus);
+            if (selectedClassName != null) {
+              UiInspectorUtil.openClassByFqn(myProject, selectedClassName, requestFocus);
             }
           }
 
           @Override
           public boolean canNavigate() {
-            return findSelectedClassName() != null;
+            return selectedClassName != null;
           }
 
           @Override
@@ -524,11 +525,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
     @Override
     public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
       component.setEnabled(presentation.isEnabled());
-    }
-
-    @Override
-    public boolean isUpdateInBackground() {
-      return false;
     }
   }
 }
