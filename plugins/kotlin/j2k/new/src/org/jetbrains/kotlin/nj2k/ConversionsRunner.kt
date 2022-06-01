@@ -28,7 +28,7 @@ object ConversionsRunner {
         TryStatementConversion(context),
         EnumFieldAccessConversion(context),
         SynchronizedStatementConversion(context),
-        JetbrainsNullableAnnotationsConverter(context),
+        NullabilityAnnotationsConverter(context),
         DefaultArgumentsConversion(context),
         ConstructorConversion(context),
         MoveConstructorsAfterFieldsConversion(context),
