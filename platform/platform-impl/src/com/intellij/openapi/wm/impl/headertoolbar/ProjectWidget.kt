@@ -6,14 +6,15 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListPopupStep
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -36,6 +38,7 @@ import kotlin.properties.Delegates
 private const val MAX_RECENT_COUNT = 100
 
 internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
+
   override fun createWidget(project: Project): JComponent {
     val widget = ProjectWidget(project)
     ProjectWidgetUpdater(project, widget).subscribe()
@@ -99,15 +102,20 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
 }
 
 private class ProjectWidget(private val project: Project): ToolbarComboWidget(), Disposable {
+
+  private val ACTION_PLACE = ActionPlaces.PROJECT_WIDGET_POPUP
+
   override fun doExpand(e: InputEvent) {
     val dataContext = DataManager.getInstance().getDataContext(this)
-    val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.MAIN_TOOLBAR, null, dataContext)
-    val step = MyStep(createActionsList(anActionEvent), this)
+    val anActionEvent = AnActionEvent.createFromInputEvent(e, ACTION_PLACE, null, dataContext)
+    val step = createStep(createActionGroup(anActionEvent))
+
     val widgetRenderer = ProjectWidgetRenderer(step::getSeparatorAbove)
 
-    val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
-      ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
-        if (value is ReopenProjectAction) {
+    val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<out Any>> { base ->
+      ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
+        val action = (value as PopupFactoryImpl.ActionItem).action
+        if (action is ReopenProjectAction) {
           widgetRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
         }
         else {
@@ -121,6 +129,23 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     popup.showUnderneathOf(this)
   }
 
+  private fun createActionGroup(initEvent: AnActionEvent): ActionGroup {
+    val res = DefaultActionGroup()
+
+    val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
+    group.getChildren(initEvent).forEach { res.add(it) }
+    res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
+    RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res.add(it) }
+
+    return res
+  }
+
+  private fun createStep(actionGroup: ActionGroup): ListPopupStep<Any> {
+    val context = DataManager.getInstance().getDataContext(this)
+    return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ACTION_PLACE, false, false,
+                                                          null, this, false, 0, false)
+  }
+
   override fun removeNotify() {
     super.removeNotify()
     Disposer.dispose(this)
@@ -128,86 +153,20 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
   override fun dispose() {}
 
-  private fun createActionsList(initEvent: AnActionEvent): Map<AnAction, Presentation?> {
-    val res = mutableMapOf<AnAction, Presentation?>()
-
-    val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
-    group.getChildren(initEvent).forEach { action ->
-      val e = AnActionEvent.createFromAnAction(action, initEvent.inputEvent, initEvent.place, initEvent.dataContext)
-      ActionUtil.performDumbAwareUpdate(action, e, false)
-      res[action] = e.presentation
-    }
-    RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res[it] = null }
-
-    return res
-  }
-
-  private class MyStep(private val actionsMap: Map<AnAction, Presentation?>, private val widget: Component): ListPopupStep<AnAction> {
-    private val actions: List<AnAction> = actionsMap.keys.toList()
-    private val presentationMapper: (AnAction?) -> Presentation? = { action -> action?.let { actionsMap[it] } }
-    private var finalRunnable: Runnable? = null
-
-    override fun getTitle(): String? = null
-
-    override fun onChosen(selectedValue: AnAction?, finalChoice: Boolean): PopupStep<*>? {
-      finalRunnable = Runnable {
-        val context = DataManager.getInstance().getDataContext(widget)
-        selectedValue?.actionPerformed(AnActionEvent.createFromDataContext("", selectedValue.templatePresentation, context))
-      }
-      return PopupStep.FINAL_CHOICE
-    }
-
-    override fun hasSubstep(selectedValue: AnAction?): Boolean = false
-
-    override fun canceled() {}
-
-    override fun isMnemonicsNavigationEnabled(): Boolean = false
-
-    override fun getMnemonicNavigationFilter(): MnemonicNavigationFilter<AnAction>? = null
-
-    override fun isSpeedSearchEnabled(): Boolean = true
-
-    override fun getSpeedSearchFilter(): SpeedSearchFilter<AnAction> =
-      SpeedSearchFilter { (it as? ReopenProjectAction)?.projectNameToDisplay ?: getTextFor(it) }
-
-    override fun isAutoSelectionEnabled(): Boolean = false
-
-    override fun getFinalRunnable(): Runnable? = finalRunnable
-
-    override fun getValues(): MutableList<AnAction> = actions.toMutableList()
-
-    override fun isSelectable(value: AnAction?): Boolean = value !is SeparatorAction
-
-    override fun getIconFor(value: AnAction?): Icon? = presentationMapper(value)?.icon
-
-    override fun getTextFor(value: AnAction?): String = presentationMapper(value)?.text ?: ""
-
-    override fun getSeparatorAbove(value: AnAction?): ListSeparator? {
-      val index = actions.indexOf(value)
-      if (index == 0) return null
-
-      val prev = actions[index - 1]
-      return if ((prev !is ReopenProjectAction) && (value is ReopenProjectAction))
-        ListSeparator(IdeBundle.message("project.widget.recent.projects"))
-        else null
-    }
-
-    override fun getDefaultOptionIndex(): Int = 0
-  }
-
-  private class ProjectWidgetRenderer(val separatorSupplier: (AnAction) -> ListSeparator?): ListCellRenderer<Any> {
+  private class ProjectWidgetRenderer(val separatorSupplier: (PopupFactoryImpl.ActionItem) -> ListSeparator?): ListCellRenderer<PopupFactoryImpl.ActionItem> {
 
     private val recentProjectsManager = RecentProjectsManagerBase.instanceEx
 
-    override fun getListCellRendererComponent(list: JList<out Any>?,
-                                              value: Any?,
+    override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>?,
+                                              value: PopupFactoryImpl.ActionItem?,
                                               index: Int,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
-      return createRecentProjectPane(value as ReopenProjectAction, isSelected, separatorSupplier.invoke(value))
+      return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, separatorSupplier.invoke(value))
     }
 
-    private fun createRecentProjectPane(action: ReopenProjectAction, isSelected: Boolean, separator: ListSeparator?): JComponent {
+    private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?): JComponent {
+      val action = value.action as ReopenProjectAction
       val projectPath = action.projectPath
       val nameLbl = JLabel(action.projectNameToDisplay ?: "")
       val pathLbl = JLabel(projectPath)

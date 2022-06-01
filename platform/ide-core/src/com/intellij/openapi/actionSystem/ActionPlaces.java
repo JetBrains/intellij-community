@@ -168,6 +168,8 @@ public abstract class ActionPlaces {
 
   public static final String SETTINGS_HISTORY = "SettingsHistory";
 
+  public static final String PROJECT_WIDGET_POPUP = "ProjectWidgetPopup";
+
   // Vcs Log
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
   public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
@@ -230,7 +232,7 @@ public abstract class ActionPlaces {
     EDITOR_ANNOTATIONS_AREA_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_TOOLBAR_WIDGET,
-    ACTION_SEARCH_INDUCED_POPUP, MAIN_MENU_IN_POPUP
+    ACTION_SEARCH_INDUCED_POPUP, MAIN_MENU_IN_POPUP, PROJECT_WIDGET_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
