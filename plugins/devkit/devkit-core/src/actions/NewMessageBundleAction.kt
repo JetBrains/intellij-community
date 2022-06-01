@@ -7,9 +7,9 @@ import com.intellij.ide.actions.JavaCreateTemplateInPackageAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -37,7 +37,10 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-class NewMessageBundleAction : CreateElementActionBase(), UpdateInBackground {
+class NewMessageBundleAction : CreateElementActionBase() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun invokeDialog(project: Project, directory: PsiDirectory, elementsConsumer: Consumer<in Array<PsiElement>>) {
     val module = ModuleUtilCore.findModuleForPsiElement(directory) ?: return
     if (module.name.endsWith(".impl") && ModuleManager.getInstance(project).findModuleByName(module.name.removeSuffix(".impl")) != null) {

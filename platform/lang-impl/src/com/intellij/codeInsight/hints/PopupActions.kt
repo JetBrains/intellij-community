@@ -18,10 +18,10 @@ import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
@@ -35,11 +35,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import java.util.function.Predicate
 
 
-class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
+class ShowSettingsWithAddedPattern : AnAction() {
   init {
     templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
     templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
@@ -64,7 +66,10 @@ class ShowSettingsWithAddedPattern : AnAction(), UpdateInBackground {
   }
 }
 
-class ShowParameterHintsSettings : AnAction(), UpdateInBackground {
+class ShowParameterHintsSettings : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     showParameterHintsDialog(e) {null}
   }
@@ -259,7 +264,9 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 }
 
 
-class ToggleInlineHintsAction : AnAction(), UpdateInBackground {
+class ToggleInlineHintsAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     if (!InlayParameterHintsExtension.hasAnyExtensions()) {
