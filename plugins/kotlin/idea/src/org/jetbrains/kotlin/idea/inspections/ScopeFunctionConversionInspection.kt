@@ -12,9 +12,9 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
@@ -291,9 +291,9 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         }
 
         return if (parameterType != null)
-            KotlinNameSuggester.suggestNamesByType(parameterType, ::isNameUnique).first()
+            Fe10KotlinNameSuggester.suggestNamesByType(parameterType, ::isNameUnique).first()
         else {
-            KotlinNameSuggester.suggestNameByName("p", ::isNameUnique)
+            Fe10KotlinNameSuggester.suggestNameByName("p", ::isNameUnique)
         }
     }
 }

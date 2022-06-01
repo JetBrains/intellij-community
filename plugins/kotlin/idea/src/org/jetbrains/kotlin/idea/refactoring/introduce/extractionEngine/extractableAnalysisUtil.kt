@@ -27,12 +27,13 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.refactoring.createTempCopy
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult.ErrorMessage
@@ -798,20 +799,22 @@ private fun ExtractionData.suggestFunctionNames(returnType: KotlinType): List<St
     val functionNames = LinkedHashSet<String>()
 
     val validator =
-        NewDeclarationNameValidator(
+        Fe10KotlinNewDeclarationNameValidator(
             targetSibling.parent,
             if (targetSibling is KtAnonymousInitializer) targetSibling.parent else targetSibling,
-            if (options.extractAsProperty) NewDeclarationNameValidator.Target.VARIABLES else NewDeclarationNameValidator.Target
-                .FUNCTIONS_AND_CLASSES
+            when {
+                options.extractAsProperty -> KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+                else -> KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION
+            }
         )
     if (!KotlinBuiltIns.isUnit(returnType)) {
-        functionNames.addAll(KotlinNameSuggester.suggestNamesByType(returnType, validator))
+        functionNames.addAll(Fe10KotlinNameSuggester.suggestNamesByType(returnType, validator))
     }
 
     expressions.singleOrNull()?.let { expr ->
         val property = expr.getStrictParentOfType<KtProperty>()
         if (property?.initializer == expr) {
-            property.name?.let { functionNames.add(KotlinNameSuggester.suggestNameByName("get" + it.capitalizeAsciiOnly(), validator)) }
+            property.name?.let { functionNames.add(Fe10KotlinNameSuggester.suggestNameByName("get" + it.capitalizeAsciiOnly(), validator)) }
         }
     }
 

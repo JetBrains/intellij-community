@@ -11,13 +11,13 @@ import com.intellij.util.containers.LinkedMultiMap
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.introduce.insertDeclaration
@@ -94,7 +94,7 @@ fun IntroduceTypeAliasData.analyze(): IntroduceTypeAliasAnalysisResult {
 
     val typeParameterNameValidator = CollectingNameValidator()
     val brokenReferences = groupedReferencesToExtract.keySet().filter { groupedReferencesToExtract[it].isNotEmpty() }
-    val typeParameterNames = KotlinNameSuggester.suggestNamesForTypeParameters(brokenReferences.size, typeParameterNameValidator)
+    val typeParameterNames = Fe10KotlinNameSuggester.suggestNamesForTypeParameters(brokenReferences.size, typeParameterNameValidator)
     val typeParameters = (typeParameterNames zip brokenReferences).map { TypeParameter(it.first, groupedReferencesToExtract[it.second]) }
 
     if (typeParameters.any { it.typeReferenceInfos.any { info -> info.reference.typeElement == originalTypeElement } }) {
@@ -103,7 +103,7 @@ fun IntroduceTypeAliasData.analyze(): IntroduceTypeAliasAnalysisResult {
 
     val descriptor = IntroduceTypeAliasDescriptor(this, "Dummy", null, typeParameters)
 
-    val initialName = KotlinNameSuggester.suggestTypeAliasNameByPsi(descriptor.generateTypeAlias(true).getTypeReference()!!.typeElement!!) {
+    val initialName = Fe10KotlinNameSuggester.suggestTypeAliasNameByPsi(descriptor.generateTypeAlias(true).getTypeReference()!!.typeElement!!) {
         targetScope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null
     }
 

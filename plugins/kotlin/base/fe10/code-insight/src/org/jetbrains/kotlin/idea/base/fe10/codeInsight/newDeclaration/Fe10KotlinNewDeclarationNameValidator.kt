@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.core
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider.ValidatorTarget
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getAllAccessibleFunctions
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
@@ -27,37 +28,17 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import java.util.*
 
-class CollectingNameValidator @JvmOverloads constructor(
-    existingNames: Collection<String> = Collections.emptySet(),
-    private val filter: (String) -> Boolean = { true }
-) : (String) -> Boolean {
-    private val existingNames = HashSet(existingNames)
-
-    override fun invoke(name: String): Boolean {
-        if (name !in existingNames && filter(name)) {
-            existingNames.add(name)
-            return true
-        }
-        return false
-    }
-
-    fun addName(name: String) {
-        existingNames.add(name)
-    }
-}
-
-class NewDeclarationNameValidator(
+open class Fe10KotlinNewDeclarationNameValidator constructor(
     private val visibleDeclarationsContext: KtElement?,
     private val checkDeclarationsIn: Sequence<PsiElement>,
-    private val target: Target,
+    private val target: ValidatorTarget,
     private val excludedDeclarations: List<KtDeclaration> = emptyList()
 ) : (String) -> Boolean {
     constructor(
         container: PsiElement,
         anchor: PsiElement?,
-        target: Target,
+        target: ValidatorTarget,
         excludedDeclarations: List<KtDeclaration> = emptyList()
     ) : this(
         (anchor ?: container).parentsWithSelf.firstIsInstanceOrNull<KtElement>(),
@@ -65,11 +46,6 @@ class NewDeclarationNameValidator(
         target,
         excludedDeclarations
     )
-
-    enum class Target {
-        VARIABLES,
-        FUNCTIONS_AND_CLASSES
-    }
 
     override fun invoke(name: String): Boolean {
         val identifier = Name.identifier(name)
@@ -97,11 +73,15 @@ class NewDeclarationNameValidator(
         }
 
         return when (target) {
-            Target.VARIABLES ->
-                getAllAccessibleVariables(name).any { !it.isExtension && it.isVisible() && !isExcluded(it) }
-            Target.FUNCTIONS_AND_CLASSES ->
-                getAllAccessibleFunctions(name).any { !it.isExtension && it.isVisible() && !isExcluded(it) } ||
-                        findClassifier(name, NoLookupLocation.FROM_IDE)?.let { it.isVisible() && !isExcluded(it) } ?: false
+            ValidatorTarget.PROPERTY, ValidatorTarget.PARAMETER, ValidatorTarget.VARIABLE -> {
+                getAllAccessibleVariables(name)
+                    .any { !it.isExtension && it.isVisible() && !isExcluded(it) }
+            }
+            ValidatorTarget.CLASS, ValidatorTarget.FUNCTION -> {
+                getAllAccessibleFunctions(name)
+                    .any { !it.isExtension && it.isVisible() && !isExcluded(it) }
+                        || findClassifier(name, NoLookupLocation.FROM_IDE)?.let { it.isVisible() && !isExcluded(it) } ?: false
+            }
         }
     }
 
@@ -109,9 +89,12 @@ class NewDeclarationNameValidator(
         if (this in excludedDeclarations) return false
         if (nameAsName != name) return false
         if (this is KtCallableDeclaration && receiverTypeReference != null) return false
+
         return when (target) {
-            Target.VARIABLES -> this is KtVariableDeclaration || this is KtParameter
-            Target.FUNCTIONS_AND_CLASSES -> this is KtNamedFunction || this is KtClassOrObject || this is KtTypeAlias
+            ValidatorTarget.PROPERTY, ValidatorTarget.PARAMETER, ValidatorTarget.VARIABLE ->
+                this is KtVariableDeclaration || this is KtParameter
+            ValidatorTarget.CLASS, ValidatorTarget.FUNCTION ->
+                this is KtNamedFunction || this is KtClassOrObject || this is KtTypeAlias
         }
     }
 }

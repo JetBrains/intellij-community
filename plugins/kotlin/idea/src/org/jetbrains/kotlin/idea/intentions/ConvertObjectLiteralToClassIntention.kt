@@ -11,8 +11,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
@@ -43,9 +43,9 @@ class ConvertObjectLiteralToClassIntention : SelfTargetingRangeIntention<KtObjec
 
         val validator: (String) -> Boolean = { scope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null }
         val classNames = element.objectDeclaration.superTypeListEntries
-            .mapNotNull { it.typeReference?.typeElement?.let { KotlinNameSuggester.suggestTypeAliasNameByPsi(it, validator) } }
+            .mapNotNull { it.typeReference?.typeElement?.let { Fe10KotlinNameSuggester.suggestTypeAliasNameByPsi(it, validator) } }
             .takeIf { it.isNotEmpty() }
-            ?: listOf(KotlinNameSuggester.suggestNameByName("O", validator))
+            ?: listOf(Fe10KotlinNameSuggester.suggestNameByName("O", validator))
 
         val className = classNames.first()
         val psiFactory = KtPsiFactory(element)

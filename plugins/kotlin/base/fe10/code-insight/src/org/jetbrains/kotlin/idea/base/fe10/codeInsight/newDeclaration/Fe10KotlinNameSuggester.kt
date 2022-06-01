@@ -1,6 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.core
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -9,7 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isFunctionType
-import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
+import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
 import org.jetbrains.kotlin.idea.util.application.executeInBackgroundWithProgress
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 
-object KotlinNameSuggester : AbstractNameSuggester() {
+object Fe10KotlinNameSuggester : AbstractKotlinNameSuggester() {
     fun suggestNamesByExpressionAndType(
         expression: KtExpression,
         type: KotlinType?,
@@ -64,7 +64,7 @@ object KotlinNameSuggester : AbstractNameSuggester() {
         if (isDispatchThread() && !ApplicationManager.getApplication().isWriteAccessAllowed) {
             executeInBackgroundWithProgress(
                 project,
-                KotlinIdeaCoreBundle.message("progress.title.calculating.names")
+                KotlinBaseFe10CodeInsightBundle.message("progress.title.calculating.names")
             ) { runReadAction { blockToExecute() } }
         } else {
             blockToExecute()
@@ -233,5 +233,4 @@ object KotlinNameSuggester : AbstractNameSuggester() {
             addName(parameter.name.asString(), validator)
         }
     }
-
 }

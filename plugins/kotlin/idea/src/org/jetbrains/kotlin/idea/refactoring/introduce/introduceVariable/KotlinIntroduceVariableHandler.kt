@@ -25,6 +25,10 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInfoInContext
@@ -564,17 +568,17 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
 
             physicalExpression.chooseApplicableComponentFunctionsForVariableDeclaration(replaceOccurrence, editor) { componentFunctions ->
-                val validator = NewDeclarationNameValidator(
+                val validator = Fe10KotlinNewDeclarationNameValidator(
                     commonContainer,
                     calculateAnchor(commonParent, commonContainer, allReplaces),
-                    NewDeclarationNameValidator.Target.VARIABLES
+                    KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                 )
 
                 val suggestedNames = if (componentFunctions.isNotEmpty()) {
                     val collectingValidator = CollectingNameValidator(filter = validator)
                     componentFunctions.map { suggestNamesForComponent(it, project, collectingValidator) }
                 } else {
-                    KotlinNameSuggester.suggestNamesByExpressionAndType(
+                    Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(
                         expression,
                         substringInfo?.type,
                         bindingContext,

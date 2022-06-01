@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -40,8 +40,8 @@ class AutomaticVariableRenamer(
     private val toUnpluralize = ArrayList<KtNamedDeclaration>()
 
     init {
-        val oldClassName = klass.name!!.unquote()
-        val newClassNameUnquoted = newClassName.unquote()
+        val oldClassName = klass.name!!.unquoteKotlinIdentifier()
+        val newClassNameUnquoted = newClassName.unquoteKotlinIdentifier()
         for (usage in usages) {
             val usageElement = usage.element ?: continue
 

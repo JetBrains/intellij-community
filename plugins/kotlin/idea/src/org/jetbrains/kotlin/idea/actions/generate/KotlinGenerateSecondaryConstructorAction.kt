@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -161,7 +163,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             for (parameter in superConstructor.valueParameters) {
                 val isVararg = parameter.varargElementType != null
 
-                val paramName = KotlinNameSuggester.suggestNameByName(parameter.name.asString(), validator)
+                val paramName = Fe10KotlinNameSuggester.suggestNameByName(parameter.name.asString(), validator)
 
                 val typeToUse = parameter.varargElementType ?: parameter.type
                 val paramType = IdeDescriptorRenderers.SOURCE_CODE.renderType(
@@ -183,7 +185,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
             val body = psiFactory.createEmptyBody()
             for (property in propertiesToInitialize) {
                 val propertyName = property.name
-                val paramName = KotlinNameSuggester.suggestNameByName(propertyName.asString(), validator)
+                val paramName = Fe10KotlinNameSuggester.suggestNameByName(propertyName.asString(), validator)
                 val paramType = IdeDescriptorRenderers.SOURCE_CODE.renderType(property.type)
 
                 parameterList.addParameter(psiFactory.createParameter("$paramName: $paramType"))

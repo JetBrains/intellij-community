@@ -11,11 +11,11 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.DeferredJavaMethodKotlinCallerUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.JavaMethodKotlinUsageWithDelegate
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
@@ -130,7 +130,7 @@ fun suggestReceiverNames(project: Project, descriptor: CallableDescriptor): List
         }
     } ?: CollectingNameValidator(paramNames)
     val receiverType = descriptor.extensionReceiverParameter?.type ?: return emptyList()
-    return KotlinNameSuggester.suggestNamesByType(receiverType, validator, "receiver")
+    return Fe10KotlinNameSuggester.suggestNamesByType(receiverType, validator, "receiver")
 }
 
 internal val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?

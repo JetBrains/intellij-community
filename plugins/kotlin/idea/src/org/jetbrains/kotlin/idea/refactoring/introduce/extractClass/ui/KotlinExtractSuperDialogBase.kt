@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.base.util.onTextChange
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.unquote
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
@@ -162,7 +162,7 @@ abstract class KotlinExtractSuperDialogBase(
     override fun validateName(name: String): String? {
         return when {
             !name.quoteIfNeeded().isIdentifier() -> RefactoringMessageUtil.getIncorrectIdentifierMessage(name)
-            name.unquote() == mySourceClass.name -> KotlinBundle.message("error.text.different.name.expected")
+            name.unquoteKotlinIdentifier() == mySourceClass.name -> KotlinBundle.message("error.text.different.name.expected")
             else -> null
         }
     }

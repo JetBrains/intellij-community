@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionFactoryWithDelegate
 import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
@@ -48,7 +48,7 @@ object CreateTypeParameterUnmatchedTypeArgumentActionFactory :
         if (missingParameterCount <= 0) return null
 
         val scope = referencedDeclaration.getResolutionScope()
-        val suggestedNames = KotlinNameSuggester.suggestNamesForTypeParameters(
+        val suggestedNames = Fe10KotlinNameSuggester.suggestNamesForTypeParameters(
             missingParameterCount,
             CollectingNameValidator(referencedDeclaration.typeParameters.mapNotNull { it.name }) {
                 scope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null

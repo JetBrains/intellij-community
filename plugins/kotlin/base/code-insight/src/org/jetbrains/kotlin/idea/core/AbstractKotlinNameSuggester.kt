@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core
 
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
 
-abstract class AbstractNameSuggester {
+abstract class AbstractKotlinNameSuggester {
     fun suggestNamesByFqName(
         fqName: FqName,
         ignoreCompanion: Boolean = true,
@@ -48,7 +48,6 @@ abstract class AbstractNameSuggester {
 
         return name + i
     }
-
 
     fun suggestNamesForTypeParameters(count: Int, validator: (String) -> Boolean): List<String> {
         val result = ArrayList<String>()
@@ -103,7 +102,7 @@ abstract class AbstractNameSuggester {
     }
 
     protected fun MutableCollection<String>.addCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true) {
-        if (name === "" || !name.unquote().isIdentifier()) return
+        if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return
         var s = extractIdentifiers(name)
 
         for (prefix in ACCESSOR_PREFIXES) {
@@ -166,7 +165,6 @@ abstract class AbstractNameSuggester {
         }
         add(suggestNameByName(correctedName, validator))
     }
-
 
     private fun String.withPrefix(prefix: String): String {
         if (isEmpty()) return prefix

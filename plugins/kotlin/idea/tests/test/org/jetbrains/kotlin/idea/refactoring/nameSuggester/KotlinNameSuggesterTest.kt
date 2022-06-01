@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.refactoring.nameSuggester
 
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.refactoring.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.selectElement
@@ -85,7 +85,7 @@ class KotlinNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase() {
             val expectedResultText = KotlinTestUtils.getLastCommentInFile(file)
 
             selectElement(myFixture.editor, file, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
-                val names = KotlinNameSuggester
+                val names = Fe10KotlinNameSuggester
                     .suggestNamesByExpressionAndType(
                         it as KtExpression,
                         null,

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.SharedImplUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.core.unquote
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -53,7 +53,7 @@ class RemoveRedundantBackticksQuickFix : LocalQuickFix {
         val element = descriptor.psiElement
         if (!isRedundantBackticks(element.node)) return
         val factory = KtPsiFactory(project)
-        element.replace(factory.createIdentifier(element.text.unquote()))
+        element.replace(factory.createIdentifier(element.text.unquoteKotlinIdentifier()))
     }
 }
 
@@ -63,7 +63,7 @@ private fun isKeyword(text: String): Boolean =
 private fun isRedundantBackticks(node: ASTNode): Boolean {
     val identifier = node.text
     if (!(identifier.startsWith("`") && identifier.endsWith("`"))) return false
-    val unquotedText = identifier.unquote()
+    val unquotedText = identifier.unquoteKotlinIdentifier()
     if (!unquotedText.isIdentifier() || isKeyword(unquotedText)) return false
     val simpleNameStringTemplateEntry = node.psi.getStrictParentOfType<KtSimpleNameStringTemplateEntry>()
     return simpleNameStringTemplateEntry == null || canPlaceAfterSimpleNameEntry(simpleNameStringTemplateEntry.nextSibling)

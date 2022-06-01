@@ -19,6 +19,10 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
@@ -246,14 +250,14 @@ open class KotlinIntroduceParameterHandler(
             else -> null
         }
         val bodyValidator: ((String) -> Boolean)? =
-            body?.let { NewDeclarationNameValidator(it, sequenceOf(it), NewDeclarationNameValidator.Target.VARIABLES) }
+            body?.let { Fe10KotlinNewDeclarationNameValidator(it, sequenceOf(it), KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER) }
         val nameValidator = CollectingNameValidator(targetParent.getValueParameters().mapNotNull { it.name }, bodyValidator ?: { true })
 
         val suggestedNames = SmartList<String>().apply {
             if (physicalExpression is KtProperty && !isUnitTestMode()) {
                 addIfNotNull(physicalExpression.name)
             }
-            addAll(KotlinNameSuggester.suggestNamesByType(replacementType, nameValidator, "p"))
+            addAll(Fe10KotlinNameSuggester.suggestNamesByType(replacementType, nameValidator, "p"))
         }
 
         val parametersUsages = findInternalUsagesOfParametersAndReceiver(targetParent, functionDescriptor) ?: return

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.*
@@ -85,7 +86,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
             }
 
             val receiverNameAndType = receiverType?.let {
-                KotlinNameSuggester.suggestNamesByType(it, validator = { name ->
+                Fe10KotlinNameSuggester.suggestNamesByType(it, validator = { name ->
                     name !in parameterNamesAndTypes.map { pair -> pair.first }
                 }, defaultName = "receiver").first() to it
             }

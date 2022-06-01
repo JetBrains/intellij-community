@@ -4,22 +4,29 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.FileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
+import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
@@ -87,5 +94,17 @@ fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRoo
         isUnderSourceRootOfType(virtualFile, testRootTypes) -> TestSourceKotlinRootType
         isInSourceContent(virtualFile) -> SourceKotlinRootType
         else -> null
+    }
+}
+
+@RequiresReadLock
+fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
+    return project.runWithAlternativeResolveEnabled {
+        try {
+            val markerClassName = StandardNames.FqNames.unit.asString()
+            JavaPsiFacade.getInstance(project).findClass(markerClassName, this@hasKotlinJvmRuntime) != null
+        } catch (e: IndexNotReadyException) {
+            false
+        }
     }
 }

@@ -23,8 +23,9 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.InvalidStackFrameException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
+import org.jetbrains.kotlin.idea.configuration.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
-import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.idea.debugger.getContextElement
 import org.jetbrains.kotlin.idea.debugger.hopelessAware
@@ -275,7 +276,9 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             contextElement == null -> false
             contextElement.language == KotlinFileType.INSTANCE.language -> true
             contextElement.language == JavaFileType.INSTANCE.language -> {
-                getKotlinJvmRuntimeMarkerClass(contextElement.project, contextElement.resolveScope) != null
+                val project = contextElement.project
+                val scope = contextElement.resolveScope
+                project.syncNonBlockingReadAction { scope.hasKotlinJvmRuntime(project) }
             }
             else -> false
         }

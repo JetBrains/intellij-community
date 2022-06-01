@@ -7,8 +7,8 @@ import com.intellij.util.ArrayUtil
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassInfo
 import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -36,7 +36,7 @@ abstract class TypeInfo(val variance: Variance) {
 
     class ByExpression(val expression: KtExpression, variance: Variance) : TypeInfo(variance) {
         override fun getPossibleNamesFromExpression(bindingContext: BindingContext): Array<String> {
-            return KotlinNameSuggester.suggestNamesByExpressionOnly(expression, bindingContext, { true }).toTypedArray()
+            return Fe10KotlinNameSuggester.suggestNamesByExpressionOnly(expression, bindingContext, { true }).toTypedArray()
         }
 
         override fun getPossibleTypes(builder: CallableBuilder): List<KotlinType> = expression.guessTypes(

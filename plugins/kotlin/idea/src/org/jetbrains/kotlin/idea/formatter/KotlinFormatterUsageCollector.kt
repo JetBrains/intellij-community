@@ -12,10 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 
 class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
     override fun requiresReadAccess() = true

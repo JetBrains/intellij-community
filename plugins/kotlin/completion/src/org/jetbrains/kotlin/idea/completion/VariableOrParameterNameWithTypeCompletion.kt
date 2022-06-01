@@ -12,10 +12,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.handlers.skipSpaces
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -134,7 +134,7 @@ class VariableOrParameterNameWithTypeCompletion(
         ProgressManager.checkCanceled()
         if (suggestionsByTypesAdded.contains(type)) return // don't add suggestions for the same with longer user prefix
 
-        val nameSuggestions = KotlinNameSuggester.getCamelNames(className, { true }, userPrefix.isEmpty())
+        val nameSuggestions = Fe10KotlinNameSuggester.getCamelNames(className, { true }, userPrefix.isEmpty())
         for (name in nameSuggestions) {
             val parameterName = userPrefix + name
             if (prefixMatcher.isStartMatch(parameterName)) {

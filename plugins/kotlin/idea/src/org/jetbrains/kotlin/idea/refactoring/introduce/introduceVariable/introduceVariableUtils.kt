@@ -9,10 +9,10 @@ import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -94,8 +94,8 @@ internal fun suggestNamesForComponent(descriptor: FunctionDescriptor, project: P
         val componentName = (DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor) as? PsiNamedElement)?.name
             ?: descriptorName
         if (componentName == descriptorName) {
-            descriptor.returnType?.let { addAll(KotlinNameSuggester.suggestNamesByType(it, validator)) }
+            descriptor.returnType?.let { addAll(Fe10KotlinNameSuggester.suggestNamesByType(it, validator)) }
         }
-        add(KotlinNameSuggester.suggestNameByName(componentName, validator))
+        add(Fe10KotlinNameSuggester.suggestNameByName(componentName, validator))
     }
 }

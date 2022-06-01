@@ -10,11 +10,11 @@ import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.IterableTypesDetection
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.resolve.ideService
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -53,7 +53,7 @@ class SuggestVariableNameMacro : KotlinMacro() {
         val initializer = (declaration as? KtDeclarationWithInitializer)?.initializer
         if (initializer != null) {
             val bindingContext = initializer.analyze(BodyResolveMode.PARTIAL)
-            return KotlinNameSuggester.suggestNamesByExpressionAndType(initializer, null, bindingContext, nameValidator, null)
+            return Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(initializer, null, bindingContext, nameValidator, null)
         }
 
         val parent = declaration.parent
@@ -62,7 +62,7 @@ class SuggestVariableNameMacro : KotlinMacro() {
         }
 
         val descriptor = declaration.resolveToDescriptorIfAny() as? VariableDescriptor ?: return emptyList()
-        return KotlinNameSuggester.suggestNamesByType(descriptor.type, nameValidator, null)
+        return Fe10KotlinNameSuggester.suggestNamesByType(descriptor.type, nameValidator, null)
     }
 
     private fun suggestIterationVariableName(forExpression: KtForExpression, nameValidator: (String) -> Boolean): Collection<String>? {
@@ -73,6 +73,6 @@ class SuggestVariableNameMacro : KotlinMacro() {
         val scope = loopRange.getResolutionScope(bindingContext, resolutionFacade)
         val detector = resolutionFacade.ideService<IterableTypesDetection>().createDetector(scope)
         val elementType = detector.elementType(type)?.type ?: return null
-        return KotlinNameSuggester.suggestIterationVariableNames(loopRange, elementType, bindingContext, nameValidator, null)
+        return Fe10KotlinNameSuggester.suggestIterationVariableNames(loopRange, elementType, bindingContext, nameValidator, null)
     }
 }

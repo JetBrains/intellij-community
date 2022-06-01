@@ -14,10 +14,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
 import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.core.ExpectedInfos
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.fuzzyType
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -191,7 +191,7 @@ object LambdaSignatureTemplates {
     }
 
     private fun nameSuggestions(parameterType: KotlinType, suffix: String? = null): List<String> {
-        val suggestions = KotlinNameSuggester.suggestNamesByType(parameterType, { true }, "p")
+        val suggestions = Fe10KotlinNameSuggester.suggestNamesByType(parameterType, { true }, "p")
         return if (suffix != null) suggestions.map { "$it$suffix" } else suggestions
     }
 

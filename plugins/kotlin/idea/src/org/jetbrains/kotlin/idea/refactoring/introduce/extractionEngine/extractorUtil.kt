@@ -18,6 +18,9 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.WeakSuccess
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
@@ -354,8 +357,8 @@ private fun makeCall(
         if (inlinableCall) {
             controlFlow.outputValueBoxer.getUnboxingExpressions(callText ?: return)
         } else {
-            val varNameValidator = NewDeclarationNameValidator(block, anchorInBlock, NewDeclarationNameValidator.Target.VARIABLES)
-            val resultVal = KotlinNameSuggester.suggestNamesByType(extractableDescriptor.returnType, varNameValidator, null).first()
+            val varNameValidator = Fe10KotlinNewDeclarationNameValidator(block, anchorInBlock, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE)
+            val resultVal = Fe10KotlinNameSuggester.suggestNamesByType(extractableDescriptor.returnType, varNameValidator, null).first()
             block.addBefore(psiFactory.createDeclaration("val $resultVal = $callText"), anchorInBlock)
             block.addBefore(newLine, anchorInBlock)
             controlFlow.outputValueBoxer.getUnboxingExpressions(resultVal)
@@ -582,8 +585,8 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
             if (!generatorOptions.inTempFile && defaultValue != null && descriptor.controlFlow.outputValueBoxer
                     .boxingRequired && lastExpression!!.isMultiLine()
             ) {
-                val varNameValidator = NewDeclarationNameValidator(body, lastExpression, NewDeclarationNameValidator.Target.VARIABLES)
-                val resultVal = KotlinNameSuggester.suggestNamesByType(defaultValue.valueType, varNameValidator, null).first()
+                val varNameValidator = Fe10KotlinNewDeclarationNameValidator(body, lastExpression, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE)
+                val resultVal = Fe10KotlinNameSuggester.suggestNamesByType(defaultValue.valueType, varNameValidator, null).first()
                 body.addBefore(psiFactory.createDeclaration("val $resultVal = ${lastExpression.text}"), lastExpression)
                 body.addBefore(psiFactory.createNewLine(), lastExpression)
                 psiFactory.createExpression(resultVal)
@@ -707,7 +710,7 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         }
         if ((declaration.descriptor as? PropertyDescriptor)?.let { DescriptorUtils.isOverride(it) } == true) {
             val scope = declaration.getResolutionScope()
-            val newName = KotlinNameSuggester.suggestNameByName(descriptor.name) {
+            val newName = Fe10KotlinNameSuggester.suggestNameByName(descriptor.name) {
                 it != descriptor.name && scope.getAllAccessibleVariables(Name.identifier(it)).isEmpty()
             }
             declaration.setName(newName)

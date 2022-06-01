@@ -11,9 +11,9 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -83,7 +83,7 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
             }
         }
 
-        val suggestionsName = KotlinNameSuggester.suggestNamesByFqName(
+        val suggestionsName = Fe10KotlinNameSuggester.suggestNamesByFqName(
             fqName,
             validator = validator,
             defaultName = { fqName.asString().replace('.', '_') })

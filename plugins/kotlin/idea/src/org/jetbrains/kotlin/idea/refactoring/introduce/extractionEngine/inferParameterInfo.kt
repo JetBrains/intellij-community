@@ -13,11 +13,12 @@ import org.jetbrains.kotlin.cfg.pseudocode.getExpectedTypePredicate
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.InstructionWithReceivers
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtToken
@@ -123,10 +124,10 @@ internal fun ExtractionData.inferParametersInfo(
         }
     }
 
-    val varNameValidator = NewDeclarationNameValidator(
+    val varNameValidator = Fe10KotlinNewDeclarationNameValidator(
         commonParent.getNonStrictParentOfType<KtExpression>()!!,
         physicalElements.firstOrNull(),
-        NewDeclarationNameValidator.Target.VARIABLES
+        KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
     )
 
     val existingParameterNames = hashSetOf<String>()
@@ -138,7 +139,7 @@ internal fun ExtractionData.inferParametersInfo(
 
         with(parameter) {
             if (currentName == null) {
-                currentName = KotlinNameSuggester.suggestNamesByType(parameterType, varNameValidator, "p").first()
+                currentName = Fe10KotlinNameSuggester.suggestNamesByType(parameterType, varNameValidator, "p").first()
             }
 
             require(currentName != null)
@@ -151,7 +152,7 @@ internal fun ExtractionData.inferParametersInfo(
                 currentName = "$currentName$index"
             }
 
-            mirrorVarName = if (descriptorToExtract in modifiedVarDescriptors) KotlinNameSuggester.suggestNameByName(
+            mirrorVarName = if (descriptorToExtract in modifiedVarDescriptors) Fe10KotlinNameSuggester.suggestNameByName(
                 name,
                 varNameValidator
             ) else null

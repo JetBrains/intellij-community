@@ -16,10 +16,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.usageView.UsageViewTypeLocation
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterByUnresolvedRefActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix
@@ -83,7 +83,7 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
         val typeElementToExtractPointer = typeElementToExtract.createSmartPointer()
 
         val scope = targetOwner.getResolutionScope()
-        val suggestedNames = KotlinNameSuggester.suggestNamesForTypeParameters(
+        val suggestedNames = Fe10KotlinNameSuggester.suggestNamesForTypeParameters(
             1,
             CollectingNameValidator(targetOwner.typeParameters.mapNotNull { it.name }) {
                 scope.findClassifier(Name.identifier(it), NoLookupLocation.FROM_IDE) == null

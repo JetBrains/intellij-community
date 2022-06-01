@@ -10,8 +10,12 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
@@ -122,7 +126,7 @@ class KtReferenceMutateServiceImpl : KtReferenceMutateService {
             is KtSimpleNameReference -> with(ktReference) {
                 if (!canRename()) throw IncorrectOperationException()
 
-                if (newElementName.unquote() == "") {
+                if (newElementName.unquoteKotlinIdentifier() == "") {
                     return when (val qualifiedElement = expression.getQualifiedElement()) {
                         is KtQualifiedExpression -> {
                             expression.replace(qualifiedElement.receiverExpression)
@@ -224,12 +228,12 @@ class KtReferenceMutateServiceImpl : KtReferenceMutateService {
                             return unaryExpr.replaced(newSetterCall).getQualifiedElementSelector()
                         } else {
                             val anchor = parent.parentsWithSelf.firstOrNull { it.parent == context }
-                            val validator = NewDeclarationNameValidator(
+                            val validator = Fe10KotlinNewDeclarationNameValidator(
                                 context,
                                 anchor,
-                                NewDeclarationNameValidator.Target.VARIABLES
+                                KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                             )
-                            val varName = KotlinNameSuggester.suggestNamesByExpressionAndType(
+                            val varName = Fe10KotlinNameSuggester.suggestNamesByExpressionAndType(
                                 unaryExpr,
                                 null,
                                 unaryExpr.analyze(),

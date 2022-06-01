@@ -15,6 +15,8 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -80,7 +82,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
             val validator = CollectingNameValidator()
             val parameterNames = lambdaType.arguments
                 .dropLast(1)
-                .map { KotlinNameSuggester.suggestNamesByType(it.type, validator, "p").first() }
+                .map { Fe10KotlinNameSuggester.suggestNamesByType(it.type, validator, "p").first() }
 
             val receiver = parameterNames.getOrNull(data.typeParameterIndex) ?: return
             val arguments = parameterNames.filter { it != receiver }
@@ -135,7 +137,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
                 if (expression !is KtCallableReferenceExpression) listOf(calleeText) else emptyList()
             )
             val parameterNamesWithReceiver = originalParameterTypes.mapIndexed { i, type ->
-                if (i != data.typeParameterIndex) KotlinNameSuggester.suggestNamesByType(type, parameterNameValidator, "p")
+                if (i != data.typeParameterIndex) Fe10KotlinNameSuggester.suggestNamesByType(type, parameterNameValidator, "p")
                     .first() else "this"
             }
             val parameterNames = parameterNamesWithReceiver.filter { it != "this" }

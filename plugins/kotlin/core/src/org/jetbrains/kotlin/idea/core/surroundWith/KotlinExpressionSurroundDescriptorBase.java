@@ -11,8 +11,7 @@ import org.jetbrains.kotlin.psi.KtExpression;
 
 public abstract class KotlinExpressionSurroundDescriptorBase implements SurroundDescriptor {
     @Override
-    @NotNull
-    public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+    public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
         KtExpression expression = (KtExpression) CodeInsightUtils.findElement(
                 file, startOffset, endOffset, CodeInsightUtils.ElementKind.EXPRESSION);
 

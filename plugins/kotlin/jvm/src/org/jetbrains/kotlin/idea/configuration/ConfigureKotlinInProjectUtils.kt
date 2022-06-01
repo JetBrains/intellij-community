@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
 import org.jetbrains.kotlin.idea.quickfix.KotlinAddRequiredModuleFix
 import org.jetbrains.kotlin.idea.search.projectScope
@@ -302,9 +302,9 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
     return module.project.syncNonBlockingReadAction {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-            getKotlinJvmRuntimeMarkerClass(module.project, scope) != null ||
-                    hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) ||
-                    hasKotlinCommonRuntimeInScope(scope)
+            scope.hasKotlinJvmRuntime(module.project)
+                    || hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind))
+                    || hasKotlinCommonRuntimeInScope(scope)
         })
     }
 }
@@ -313,7 +313,7 @@ fun hasKotlinJvmRuntimeInScope(module: Module): Boolean {
     return module.project.syncNonBlockingReadAction {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-            getKotlinJvmRuntimeMarkerClass(module.project, scope) != null
+            scope.hasKotlinJvmRuntime(module.project)
         })
     }
 }

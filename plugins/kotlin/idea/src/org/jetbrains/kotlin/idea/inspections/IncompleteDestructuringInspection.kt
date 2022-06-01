@@ -11,10 +11,11 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
@@ -70,10 +71,10 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
             val primaryParameters = destructuringDeclaration.primaryParameters() ?: return
 
             val nameValidator = CollectingNameValidator(
-                filter = NewDeclarationNameValidator(
+                filter = Fe10KotlinNewDeclarationNameValidator(
                     destructuringDeclaration.parent,
                     null,
-                    NewDeclarationNameValidator.Target.VARIABLES
+                    KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
                 )
             )
             val psiFactory = KtPsiFactory(destructuringDeclaration)
@@ -82,7 +83,7 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
             val additionalEntries = primaryParameters
                 .drop(currentEntries.size)
                 .map {
-                    val name = KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
+                    val name = Fe10KotlinNameSuggester.suggestNameByName(it.name.asString(), nameValidator)
                     if (hasType) {
                         val type = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type)
                         "$name: $type"

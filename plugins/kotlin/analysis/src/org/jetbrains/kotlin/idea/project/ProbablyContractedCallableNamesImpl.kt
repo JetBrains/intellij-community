@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.project
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.resolve.lazy.ProbablyContractedCallableNames
 
 class ProbablyContractedCallableNamesImpl(project: Project) : ProbablyContractedCallableNames {

@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 
 enum class CoroutineDebuggerMode {
     DISABLED,

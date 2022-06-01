@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -233,7 +235,7 @@ class CodeInliner<TCallElement : KtElement>(
         for (declaration in declarations) {
             val oldName = declaration.name
             if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope, languageVersionSettings)) {
-                val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
+                val newName = Fe10KotlinNameSuggester.suggestNameByName(oldName, validator)
                 for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
                     if (reference.element.startOffset < endOfScope) {
                         reference.handleElementRename(newName)

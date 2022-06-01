@@ -2,4 +2,4 @@
 
 package org.jetbrains.kotlin.idea.core
 
-object FirKotlinNameSuggester : AbstractNameSuggester()
+object FirKotlinNameSuggester : AbstractKotlinNameSuggester()

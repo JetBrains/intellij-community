@@ -45,3 +45,17 @@ fun KtBlockStringTemplateEntry.dropCurlyBrackets(): KtSimpleNameStringTemplateEn
     val newEntry = KtPsiFactory(this).createSimpleNameStringTemplateEntry(name)
     return replaced(newEntry)
 }
+
+fun KtExpression.dropEnclosingParenthesesIfPossible(): KtExpression {
+    val innermostExpression = this
+    var current = innermostExpression
+
+    while (true) {
+        val parent = current.parent as? KtParenthesizedExpression ?: break
+        if (!KtPsiUtil.areParenthesesUseless(parent)) break
+        current = parent
+    }
+    return current.replaced(innermostExpression)
+}
+
+fun String.unquoteKotlinIdentifier(): String = KtPsiUtil.unquoteIdentifier(this)

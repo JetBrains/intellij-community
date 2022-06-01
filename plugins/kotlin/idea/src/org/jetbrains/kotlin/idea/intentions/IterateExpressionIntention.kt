@@ -9,6 +9,10 @@ import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -63,7 +67,11 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
     override fun applyTo(element: KtExpression, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val elementType = data(element)!!.elementType
-        val nameValidator = NewDeclarationNameValidator(element, element.siblings(), NewDeclarationNameValidator.Target.VARIABLES)
+        val nameValidator = Fe10KotlinNewDeclarationNameValidator(
+            element,
+            element.siblings(),
+            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+        )
         val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
 
         val project = element.project
@@ -76,7 +84,7 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
                     val collectingValidator = CollectingNameValidator(filter = nameValidator)
                     componentFunctions.map { suggestNamesForComponent(it, project, collectingValidator) }
                 } else {
-                    listOf(KotlinNameSuggester.suggestIterationVariableNames(element, elementType, bindingContext, nameValidator, "e"))
+                    listOf(Fe10KotlinNameSuggester.suggestIterationVariableNames(element, elementType, bindingContext, nameValidator, "e"))
                 }
 
                 val paramPattern = (names.singleOrNull()?.first()
