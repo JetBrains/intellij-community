@@ -74,7 +74,7 @@ private separator ::= EOL | SEMICOLON
 vertexStatement ::= nodeStatement [flowchartLinkStatement vertexStatement]
 flowchartLinkStatement ::= START_ARROW LINK_TEXT ARROW | ARROW [SEP LINK_TEXT SEP]
 nodeStatement ::= vertex STYLE_SEPARATOR STYLE_TARGET | vertex [AMPERSAND nodeStatement]
-vertex ::= identifier [vertexText]
+vertex ::= complexIdentifier [vertexText]
 vertexText ::= OPEN_SQUARE ALIAS CLOSE_SQUARE
 							| OPEN_ROUND ALIAS CLOSE_ROUND
 							| STADIUM_START ALIAS STADIUM_END
@@ -90,7 +90,7 @@ vertexText ::= OPEN_SQUARE ALIAS CLOSE_SQUARE
 							| INV_TRAP_START ALIAS INV_TRAP_END
 							| DOUBLE_CIRCLE_START ALIAS DOUBLE_CIRCLE_END
 
-subgraphStatement ::= SUBGRAPH ID separator (DIRECTION DIR separator | flowchartDocument)* END
+subgraphStatement ::= SUBGRAPH complexIdentifier separator (DIRECTION DIR separator | flowchartDocument)* END
 
 styleStatement ::= STYLE STYLE_TARGET styleOptions
 
@@ -107,11 +107,11 @@ styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA  STYLE_OPT COLON STYLE_VAL)*
 sequenceDocument ::= sequenceLines
 private sequenceLines ::= (sequenceLine | IGNORED) [sequenceLines]
 sequenceLine ::= sequenceStatement [separator] | separator
-private sequenceStatement ::= (PARTICIPANT | ACTOR) identifier [AS idAlias]
+private sequenceStatement ::= (PARTICIPANT | ACTOR) complexIdentifier [AS idAlias]
 	| signalStatement
 	| AUTONUMBER
-	| ACTIVATE identifier
-	| DEACTIVATE identifier
+	| ACTIVATE complexIdentifier
+	| DEACTIVATE complexIdentifier
 	| noteStatement
 	| linksStatement
 	| linkStatement
@@ -124,7 +124,7 @@ private sequenceStatement ::= (PARTICIPANT | ACTOR) identifier [AS idAlias]
 
 idAlias ::= ALIAS+
 
-signalStatement ::= identifier signalType [PLUS | MINUS] identifier COLON MESSAGE
+signalStatement ::= complexIdentifier signalType [PLUS | MINUS] complexIdentifier COLON MESSAGE
 signalType ::= SOLID_OPEN_ARROW
   | DOTTED_OPEN_ARROW
   | SOLID_ARROW
@@ -134,14 +134,14 @@ signalType ::= SOLID_OPEN_ARROW
   | SOLID_POINT
   | DOTTED_POINT
 
-noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) identifier COLON MESSAGE
-	| NOTE OVER identifier [COMMA identifier] COLON MESSAGE
+noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) complexIdentifier COLON MESSAGE
+	| NOTE OVER complexIdentifier [COMMA complexIdentifier] COLON MESSAGE
 
-linksStatement ::= LINKS identifier COLON linksValues
+linksStatement ::= LINKS complexIdentifier COLON linksValues
 linksValues ::= OPEN_CURLY linkContent CLOSE_CURLY
 private linkContent ::= string COLON string [COMMA linkContent]
 
-linkStatement ::= LINK identifier MESSAGE
+linkStatement ::= LINK complexIdentifier MESSAGE
 
 elseSections ::= sequenceDocument [ELSE [MESSAGE] elseSections]
 parSections ::= sequenceDocument [AND [MESSAGE] parSections]
@@ -157,13 +157,13 @@ private classDiagramStatement ::= DIRECTION DIR
   | annotationStatement
 	| directive
 
-classStatement ::= CLASS ID [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR ID] [OPEN_CURLY members CLOSE_CURLY]
+classStatement ::= CLASS identifier [TILDA GENERIC_TYPE TILDA] [STYLE_SEPARATOR identifier] [OPEN_CURLY members CLOSE_CURLY]
 
-memberStatement ::= ID COLON attrOrMethod
+memberStatement ::= identifier COLON attrOrMethod
 
-relationStatement ::= ID relation ID [COLON LABEL]
+relationStatement ::= identifier relation identifier [COLON LABEL]
 
-annotationStatement ::= annotation ID
+annotationStatement ::= annotation identifier
 annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
 private members ::= memberLine [members]
@@ -212,7 +212,7 @@ private innerStateLines ::= innerStateLine [innerStateLines]
 innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
 private innerStateDiagramStatement ::= stateDiagramStatement | MINUS MINUS
 
-stateId ::= ID | OPEN_SQUARE STAR CLOSE_SQUARE
+stateId ::= identifier | OPEN_SQUARE STAR CLOSE_SQUARE
 description ::= string
 private noteContent ::= (EOL NOTE_CONTENT)* [EOL] END
   | COLON [NOTE_CONTENT]
@@ -221,10 +221,10 @@ private noteContent ::= (EOL NOTE_CONTENT)* [EOL] END
 erDocument ::= erLines
 private erLines ::= erLine [erLines]
 erLine ::= erStatement [EOL] | EOL
-private erStatement ::= ID [entityStatement]
+private erStatement ::= identifier [entityStatement]
 	| directive
 
-private entityStatement ::= relationship ID COLON (LABEL | string)
+private entityStatement ::= relationship identifier COLON (LABEL | string)
   | OPEN_CURLY erAttributesLines CLOSE_CURLY
 
 relationship ::= relationshipLeft (IDENTIFYING | NON_IDENTIFYING) relationshipRight
@@ -257,7 +257,7 @@ private requirementStatement ::= requirementDef
   | relationshipDef
 	| directive
 
-requirementDef ::= requirementType ID OPEN_CURLY requirementBody CLOSE_CURLY
+requirementDef ::= requirementType identifier OPEN_CURLY requirementBody CLOSE_CURLY
 requirementType ::= REQUIREMENT
   | FUNCTIONAL_REQUIREMENT
   | INTERFACE_REQUIREMENT
@@ -277,7 +277,7 @@ private requirementBodyStatement ::= ID_KEYWORD COLON requirementValue
 riskLevel ::= LOW | MEDIUM | HIGH
 verifyType ::= ANALYSIS | DEMONSTRATION | INSPECTION | TEST
 
-elementDef ::= ELEMENT ID OPEN_CURLY elementBody CLOSE_CURLY
+elementDef ::= ELEMENT identifier OPEN_CURLY elementBody CLOSE_CURLY
 
 elementBody ::= elementBodyLines
 private elementBodyLines ::= elementBodyLine [elementBodyLines]
@@ -285,8 +285,8 @@ elementBodyLine ::= elementBodyStatement [EOL] | EOL
 private elementBodyStatement ::= TYPE COLON requirementValue
   | DOCREF COLON requirementValue
 
-relationshipDef ::= ID ARROW_LEFT reqRelationship REQ_LINE ID
-  | ID REQ_LINE reqRelationship ARROW_RIGHT ID
+relationshipDef ::= identifier ARROW_LEFT reqRelationship REQ_LINE identifier
+  | identifier REQ_LINE reqRelationship ARROW_RIGHT identifier
 
 reqRelationship ::= CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES | TRACES
 
@@ -298,4 +298,12 @@ directiveValue ::= string | DIRECTIVE_TEXT | object
 object ::= OPEN_CURLY directiveContent CLOSE_CURLY
 
 string ::= DOUBLE_QUOTE STRING_VALUE? DOUBLE_QUOTE
-identifier ::= ID+
+complexIdentifier ::= ID+ {
+	mixin="com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+	implements="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
+}
+identifier ::= ID {
+	mixin="com.github.firsttimeinforever.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+	implements="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
+}
+

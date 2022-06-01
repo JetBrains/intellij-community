@@ -22,12 +22,18 @@
     <lang.braceMatcher language="MyMermaid"
                        implementationClass="com.github.firsttimeinforever.mermaid.lang.highlighting.MermaidPairMatcher"/>
     <quoteHandler fileType="MyMermaid"
-                  className="com.github.firsttimeinforever.mermaid.editor.MermaidQuoteHandler" />
+                  className="com.github.firsttimeinforever.mermaid.editor.MermaidQuoteHandler"/>
 
     <defaultLiveTemplates file="liveTemplates/MermaidHidden.xml" hidden="true"/>
     <liveTemplateContext implementation="com.github.firsttimeinforever.mermaid.editor.MermaidContextType"/>
 
 
-    <lineIndentProvider implementation="com.github.firsttimeinforever.mermaid.lang.formatter.MermaidLineIndentProvider"/>
+    <lineIndentProvider
+      implementation="com.github.firsttimeinforever.mermaid.lang.formatter.MermaidLineIndentProvider"/>
+
+
+    <lang.elementManipulator forClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidNamedElement"
+                             implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidIdentifierManipulator" />
+
   </extensions>
 </idea-plugin>
