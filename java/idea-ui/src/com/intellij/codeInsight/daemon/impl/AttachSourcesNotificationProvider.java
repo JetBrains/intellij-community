@@ -45,6 +45,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -80,55 +81,14 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
       return CONST_NULL;
     }
 
+    String classFileInfo = getTextWithClassFileInfo(file);
+    Function<? super FileEditor, ? extends EditorNotificationPanel> notificationPanelCreator = fileEditor ->
+      new EditorNotificationPanel(fileEditor)
+        .text(classFileInfo);
+
     VirtualFile sourceFile = JavaEditorFileSwapper.findSourceFile(project, file);
-    if (sourceFile == null) {
-      List<? extends LibraryOrderEntry> libraries = findLibraryEntriesForFile(file, project);
-      if (libraries.isEmpty()) {
-        return fileEditor -> createNotificationPanel(fileEditor, file);
-      }
-
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      List<? extends AttachSourcesProvider.AttachSourcesAction> actionsByFile = psiFile != null ?
-                                                                                collectActions(libraries, psiFile) :
-                                                                                List.of();
-
-      boolean sourceFileIsInSameJar = sourceFileIsInSameJar(file);
-
-      return fileEditor -> {
-        EditorNotificationPanel panel = createNotificationPanel(fileEditor, file);
-
-        List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>(actionsByFile);
-        AttachSourcesProvider.AttachSourcesAction defaultAction = sourceFileIsInSameJar ?
-                                                                  new AttachJarAsSourcesAction(file) :
-                                                                  new ChooseAndAttachSourcesAction(project, panel);
-        actions.add(defaultAction);
-
-        for (AttachSourcesProvider.AttachSourcesAction action : actions) {
-          String escapedName = GuiUtils.getTextWithoutMnemonicEscaping(action.getName());
-          panel.createActionLabel(escapedName, () -> {
-            List<? extends LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
-            if (!Comparing.equal(libraries, entries)) {
-              Messages.showErrorDialog(project,
-                                       JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
-                                       CommonBundle.message("title.error"));
-              return;
-            }
-            String originalText = panel.getText();
-            panel.setText(action.getBusyText());
-
-            action.perform(entries).doWhenProcessed(() -> {
-              panel.setText(originalText);
-            });
-          });
-        }
-
-        return panel;
-      };
-    }
-    else {
-      return fileEditor -> {
-        EditorNotificationPanel panel = createNotificationPanel(fileEditor, file);
-
+    if (sourceFile != null) {
+      return notificationPanelCreator.andThen(panel -> {
         panel.createActionLabel(JavaUiBundle.message("class.file.open.source.action"), () -> {
           if (sourceFile.isValid()) {
             OpenFileDescriptor descriptor = new OpenFileDescriptor(project, sourceFile);
@@ -137,14 +97,48 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
         });
 
         return panel;
-      };
+      });
     }
-  }
 
-  private static @NotNull EditorNotificationPanel createNotificationPanel(@NotNull FileEditor fileEditor,
-                                                                          @NotNull VirtualFile file) {
-    return new EditorNotificationPanel(fileEditor)
-      .text(getTextWithClassFileInfo(file));
+    List<? extends LibraryOrderEntry> libraries = findLibraryEntriesForFile(file, project);
+    if (libraries.isEmpty()) {
+      return notificationPanelCreator;
+    }
+
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    List<? extends AttachSourcesProvider.AttachSourcesAction> actionsByFile = psiFile != null ?
+                                                                              collectActions(libraries, psiFile) :
+                                                                              List.of();
+
+    boolean sourceFileIsInSameJar = sourceFileIsInSameJar(file);
+    return notificationPanelCreator.andThen(panel -> {
+      List<AttachSourcesProvider.AttachSourcesAction> actions = new ArrayList<>(actionsByFile);
+      AttachSourcesProvider.AttachSourcesAction defaultAction = sourceFileIsInSameJar ?
+                                                                new AttachJarAsSourcesAction(file) :
+                                                                new ChooseAndAttachSourcesAction(project, panel);
+      actions.add(defaultAction);
+
+      for (AttachSourcesProvider.AttachSourcesAction action : actions) {
+        String escapedName = GuiUtils.getTextWithoutMnemonicEscaping(action.getName());
+        panel.createActionLabel(escapedName, () -> {
+          List<? extends LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
+          if (!Comparing.equal(libraries, entries)) {
+            Messages.showErrorDialog(project,
+                                     JavaUiBundle.message("can.t.find.library.for.0", file.getName()),
+                                     CommonBundle.message("title.error"));
+            return;
+          }
+          String originalText = panel.getText();
+          panel.setText(action.getBusyText());
+
+          action.perform(entries).doWhenProcessed(() -> {
+            panel.setText(originalText);
+          });
+        });
+      }
+
+      return panel;
+    });
   }
 
   private static @NotNull List<? extends AttachSourcesProvider.AttachSourcesAction> collectActions(@NotNull List<? extends LibraryOrderEntry> libraries,
@@ -173,6 +167,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
     return Collections.unmodifiableList(actions);
   }
 
+  @RequiresBackgroundThread
   private static @NotNull @NlsContexts.Label String getTextWithClassFileInfo(@NotNull VirtualFile file) {
     @Nls StringBuilder info = new StringBuilder(JavaUiBundle.message("class.file.decompiled.text"));
 
