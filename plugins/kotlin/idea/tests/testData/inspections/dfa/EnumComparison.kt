@@ -1,9 +1,18 @@
 // WITH_STDLIB
 import Enum.*
+import java.util.concurrent.TimeUnit
 
 fun libraryEnum(x: AnnotationTarget) {
     if (x == AnnotationTarget.TYPE) {
         if (<warning descr="Condition 'x == AnnotationTarget.CLASS' is always false">x == AnnotationTarget.CLASS</warning>) {
+
+        }
+    }
+}
+
+fun javaEnum(x: TimeUnit) {
+    if (x == TimeUnit.DAYS) {
+        if (<warning descr="Condition 'x == TimeUnit.MINUTES' is always false">x == TimeUnit.MINUTES</warning>) {
 
         }
     }
