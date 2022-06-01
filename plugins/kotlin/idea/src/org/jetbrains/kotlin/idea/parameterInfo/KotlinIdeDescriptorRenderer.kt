@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.ClassifierNamePolicyEx
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.name.FqName
@@ -189,6 +190,17 @@ open class KotlinIdeDescriptorRenderer(
     } else
         classifierNamePolicy.renderClassifier(klass, this)
 
+    fun renderClassifierNameWithType(klass: ClassifierDescriptor, type: KotlinType): String = if (ErrorUtils.isError(klass)) {
+        klass.typeConstructor.toString()
+    } else {
+        val policy = classifierNamePolicy
+        if (policy is ClassifierNamePolicyEx) {
+            policy.renderClassifierWithType(klass, this, type)
+        } else {
+            policy.renderClassifier(klass, this)
+        }
+    }
+
     /* TYPES RENDERING */
     override fun renderType(type: KotlinType): String = buildString {
         appendNormalizedType(typeNormalizer(type))
@@ -354,8 +366,10 @@ open class KotlinIdeDescriptorRenderer(
             appendHighlighted("?") { asNullityMarker }
         }
 
-        if (type.isDefinitelyNotNullType) {
-            appendHighlighted("!!") { asNonNullAssertion }
+        if (classifierNamePolicy !is ClassifierNamePolicyEx) {
+            if (type.isDefinitelyNotNullType) {
+                appendHighlighted(" & Any") { asNonNullAssertion }
+            }
         }
     }
 
@@ -365,7 +379,7 @@ open class KotlinIdeDescriptorRenderer(
     ) {
         val possiblyInnerType = type.buildPossiblyInnerType()
         if (possiblyInnerType == null) {
-            append(renderTypeConstructor(typeConstructor))
+            append(renderTypeConstructorOfType(typeConstructor, type))
             append(renderTypeArguments(type.arguments))
             return
         }
@@ -390,6 +404,15 @@ open class KotlinIdeDescriptorRenderer(
         null -> highlight(escape(typeConstructor.toString())) { asClassName }
         else -> error("Unexpected classifier: " + cd::class.java)
     }
+
+    fun renderTypeConstructorOfType(typeConstructor: TypeConstructor, type: KotlinType): String =
+        when (val cd = typeConstructor.declarationDescriptor) {
+            is TypeParameterDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asTypeParameterName }
+            is ClassDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asClassName }
+            is TypeAliasDescriptor -> highlight(renderClassifierNameWithType(cd, type)) { asTypeAlias }
+            null -> highlight(escape(typeConstructor.toString())) { asClassName }
+            else -> error("Unexpected classifier: " + cd::class.java)
+        }
 
     override fun renderTypeProjection(typeProjection: TypeProjection) = buildString {
         appendTypeProjections(listOf(typeProjection))

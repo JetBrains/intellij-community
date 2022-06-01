@@ -72,12 +72,21 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isDefinitelyNotNullType
 import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.function.Consumer
 
-class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNamePolicy {
-    override fun renderClassifier(classifier: ClassifierDescriptor, renderer: DescriptorRenderer): String {
+class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNamePolicyEx {
+
+    override fun renderClassifier(classifier: ClassifierDescriptor, renderer: DescriptorRenderer): String =
+        render(classifier, renderer, null)
+
+    override fun renderClassifierWithType(classifier: ClassifierDescriptor, renderer: DescriptorRenderer, type: KotlinType): String =
+        render(classifier, renderer, type)
+
+    private fun render(classifier: ClassifierDescriptor, renderer: DescriptorRenderer, type: KotlinType?): String {
         if (DescriptorUtils.isAnonymousObject(classifier)) {
 
             val supertypes = classifier.typeConstructor.supertypes
@@ -97,7 +106,9 @@ class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNameP
             }
         }
 
-        val name = base.renderClassifier(classifier, renderer)
+        val name =
+            base.renderClassifier(classifier, renderer) + (type?.takeIf { it.isDefinitelyNotNullType }?.let { " & Any" } ?: "")
+
         if (classifier.isBoringBuiltinClass())
             return name
         return buildString {
