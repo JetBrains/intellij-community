@@ -32,7 +32,7 @@
 
     <pluginReplacement implementation="com.intellij.appengine.converter.AppEnginePluginReplacement"/>
     <postStartupActivity implementation="com.intellij.appengine.converter.MigrateToCloudToolsNotification"/>
-    <notificationGroup id="Migrate to Google Cloud SDK" displayType="BALLOON"/>
+    <notificationGroup id="Migrate to Google Cloud SDK" displayType="BALLOON" bundle="messages.AppEngineBundle" key="notification.group.migrate"/>
   </extensions>
 
   <actions>
