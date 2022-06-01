@@ -852,7 +852,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           project.isDefault() ||
           !project.isInitialized() ||
           project.isDisposed() ||
-          PowerSaveMode.isEnabled() ||
           LightEdit.owns(project) ||
           (dca = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).myDisposed) {
         return;
@@ -1013,7 +1012,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
               return result;
             });
             info.myHighlightingPasses = passes;
-            hasPasses |= passes.length != 0;
+            hasPasses = hasPasses || passes.length != 0;
           }
         }
         if (!hasPasses) {
