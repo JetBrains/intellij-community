@@ -669,7 +669,7 @@ public final class PluginManagerCore {
     return result;
   }
 
-  private static void disableIncompatiblePlugins(@NotNull PluginSetBuilder builder,
+  private static void disableIncompatiblePlugins(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                                  @NotNull Map<PluginId, PluginLoadingError> errors) {
     String selectedIds = System.getProperty("idea.load.plugins.id");
@@ -693,7 +693,7 @@ public final class PluginManagerCore {
     }
     else if (selectedCategory != null) {
       explicitlyEnabled = new LinkedHashSet<>();
-      for (IdeaPluginDescriptorImpl descriptor : builder.getUnsortedPlugins()) {
+      for (IdeaPluginDescriptorImpl descriptor : descriptors) {
         if (selectedCategory.equals(descriptor.getCategory())) {
           explicitlyEnabled.add(descriptor);
         }
@@ -703,9 +703,8 @@ public final class PluginManagerCore {
     if (explicitlyEnabled != null) {
       // add all required dependencies
       List<IdeaPluginDescriptorImpl> nonOptionalDependencies = new ArrayList<>();
-      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = buildPluginIdMap();
       for (IdeaPluginDescriptorImpl descriptor : explicitlyEnabled) {
-        processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
+        processAllNonOptionalDependencies(descriptor, idMap, dependency -> {
           nonOptionalDependencies.add(dependency);
           return FileVisitResult.CONTINUE;
         });
@@ -716,7 +715,7 @@ public final class PluginManagerCore {
 
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
     boolean shouldLoadPlugins = Boolean.parseBoolean(System.getProperty("idea.load.plugins", "true"));
-    for (IdeaPluginDescriptorImpl descriptor : builder.getUnsortedPlugins()) {
+    for (IdeaPluginDescriptorImpl descriptor : descriptors) {
       if (descriptor == coreDescriptor) {
         continue;
       }
@@ -859,7 +858,7 @@ public final class PluginManagerCore {
     }
 
     PluginSetBuilder pluginSetBuilder = new PluginSetBuilder(loadingResult.getEnabledPlugins());
-    disableIncompatiblePlugins(pluginSetBuilder, idMap, pluginErrorsById);
+    disableIncompatiblePlugins(pluginSetBuilder.getUnsortedPlugins(), idMap, pluginErrorsById);
     pluginSetBuilder.checkPluginCycles(globalErrors);
 
     Set<IdeaPluginDescriptorImpl> disabledAfterInit = new HashSet<>();
