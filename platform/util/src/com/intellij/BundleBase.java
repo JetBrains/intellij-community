@@ -221,9 +221,6 @@ public abstract class BundleBase {
               mnemonicAdded = true;
               builder.append(MNEMONIC);
             }
-            else {
-              LOG.warn("ignore extra mnemonic in " + value);
-            }
           }
           i++;
         }
@@ -231,9 +228,6 @@ public abstract class BundleBase {
           if (!mnemonicAdded) {
             mnemonicAdded = true;
             builder.append(MNEMONIC);
-          }
-          else {
-            LOG.warn("ignore extra mnemonic in " + value);
           }
         }
       }
