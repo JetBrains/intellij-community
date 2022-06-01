@@ -19,7 +19,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>Element(SEQUENCE_LINE)
     >>>PsiElement(Sequence.PARTICIPANT)
     >>>PsiWhiteSpace
-    >>>Element(IDENTIFIER)
+    >>>Element(COMPLEX_IDENTIFIER)
     >>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(ID)
@@ -35,7 +35,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>Element(SEQUENCE_LINE)
     >>>PsiElement(Sequence.ACTOR)
     >>>PsiWhiteSpace
-    >>>Element(IDENTIFIER)
+    >>>Element(COMPLEX_IDENTIFIER)
     >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(AS)
@@ -46,7 +46,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
     >>>Element(SIGNAL_STATEMENT)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>>PsiWhiteSpace
     >>>>>PsiElement(ID)
@@ -54,7 +54,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>>>Element(SIGNAL_TYPE)
     >>>>>PsiElement(Sequence.DOTTED_OPEN_ARROW)
     >>>>PsiWhiteSpace
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COLON)
     >>>>PsiElement(Sequence.MESSAGE)
@@ -62,13 +62,13 @@ class SequenceTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
     >>>Element(SIGNAL_STATEMENT)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(SIGNAL_TYPE)
     >>>>>PsiElement(Sequence.DOTTED_ARROW)
     >>>>PsiWhiteSpace
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>>PsiWhiteSpace
     >>>>>PsiElement(ID)
@@ -95,12 +95,12 @@ class SequenceTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
     >>>Element(SIGNAL_STATEMENT)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>Element(SIGNAL_TYPE)
     >>>>>PsiElement(Sequence.SOLID_ARROW)
     >>>>PsiElement(PLUS)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COLON)
     >>>>PsiElement(Sequence.MESSAGE)
@@ -108,12 +108,12 @@ class SequenceTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
     >>>Element(SIGNAL_STATEMENT)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>Element(SIGNAL_TYPE)
     >>>>>PsiElement(Sequence.DOTTED_ARROW)
     >>>>PsiElement(MINUS)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COLON)
     >>>>PsiElement(Sequence.MESSAGE)
@@ -139,7 +139,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>Element(SEQUENCE_LINE)
     >>>PsiElement(Sequence.PARTICIPANT)
     >>>PsiWhiteSpace
-    >>>Element(IDENTIFIER)
+    >>>Element(COMPLEX_IDENTIFIER)
     >>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
@@ -149,7 +149,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>PsiElement(RIGHT_OF)
     >>>>PsiWhiteSpace
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COLON)
     >>>>PsiElement(Sequence.MESSAGE)
@@ -157,11 +157,11 @@ class SequenceTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
     >>>Element(SIGNAL_STATEMENT)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>Element(SIGNAL_TYPE)
     >>>>>PsiElement(Sequence.SOLID_OPEN_ARROW)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COLON)
     >>>>PsiElement(Sequence.MESSAGE)
@@ -173,10 +173,10 @@ class SequenceTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>PsiElement(Sequence.OVER)
     >>>>PsiWhiteSpace
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COMMA)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COLON)
     >>>>PsiElement(Sequence.MESSAGE)
@@ -200,7 +200,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>Element(SEQUENCE_LINE)
     >>>PsiElement(Sequence.PARTICIPANT)
     >>>PsiWhiteSpace
-    >>>Element(IDENTIFIER)
+    >>>Element(COMPLEX_IDENTIFIER)
     >>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
@@ -208,7 +208,7 @@ class SequenceTest : MermaidParserTestCase() {
     >>>Element(LINKS_STATEMENT)
     >>>>PsiElement(Sequence.LINKS)
     >>>>PsiWhiteSpace
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COLON)
     >>>>PsiWhiteSpace
@@ -258,11 +258,11 @@ class SequenceTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(SEQUENCE_LINE)
     >>>Element(SIGNAL_STATEMENT)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>Element(SIGNAL_TYPE)
     >>>>>PsiElement(Sequence.SOLID_OPEN_ARROW)
-    >>>>Element(IDENTIFIER)
+    >>>>Element(COMPLEX_IDENTIFIER)
     >>>>>PsiElement(ID)
     >>>>PsiElement(COLON)
     >>>>PsiElement(Sequence.MESSAGE)
@@ -278,17 +278,17 @@ class SequenceTest : MermaidParserTestCase() {
     >>>>Element(SEQUENCE_LINE)
     >>>>>PsiElement(Sequence.PARTICIPANT)
     >>>>>PsiWhiteSpace
-    >>>>>Element(IDENTIFIER)
+    >>>>>Element(COMPLEX_IDENTIFIER)
     >>>>>>PsiElement(ID)
     >>>>>PsiElement(SEMICOLON)
     >>>>PsiWhiteSpace
     >>>>Element(SEQUENCE_LINE)
     >>>>>Element(SIGNAL_STATEMENT)
-    >>>>>>Element(IDENTIFIER)
+    >>>>>>Element(COMPLEX_IDENTIFIER)
     >>>>>>>PsiElement(ID)
     >>>>>>Element(SIGNAL_TYPE)
     >>>>>>>PsiElement(Sequence.DOTTED_OPEN_ARROW)
-    >>>>>>Element(IDENTIFIER)
+    >>>>>>Element(COMPLEX_IDENTIFIER)
     >>>>>>>PsiElement(ID)
     >>>>>>PsiElement(COLON)
     >>>>>>PsiElement(Sequence.MESSAGE)
@@ -296,13 +296,13 @@ class SequenceTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>Element(SEQUENCE_LINE)
     >>>>>Element(SIGNAL_STATEMENT)
-    >>>>>>Element(IDENTIFIER)
+    >>>>>>Element(COMPLEX_IDENTIFIER)
     >>>>>>>PsiElement(ID)
     >>>>>>PsiWhiteSpace
     >>>>>>Element(SIGNAL_TYPE)
     >>>>>>>PsiElement(Sequence.SOLID_OPEN_ARROW)
     >>>>>>PsiWhiteSpace
-    >>>>>>Element(IDENTIFIER)
+    >>>>>>Element(COMPLEX_IDENTIFIER)
     >>>>>>>PsiElement(ID)
     >>>>>>PsiElement(COLON)
     >>>>>>PsiElement(Sequence.MESSAGE)

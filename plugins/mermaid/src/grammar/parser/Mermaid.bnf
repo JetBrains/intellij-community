@@ -172,10 +172,10 @@ attrOrMethod ::= [visibilityAtStart] (method | attribute)
 visibilityAtStart ::= PLUS | MINUS | POUND | TILDA
 visibilityAtEnd ::= STAR | DOLLAR
 
-attribute ::= attrTypeWithGeneric attrName [visibilityAtEnd] | attrName [COLON attrTypeWithGeneric]
-method ::= attrName OPEN_ROUND [attribute] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric]
+attribute ::= (attrTypeWithGeneric | attrType) attrName [visibilityAtEnd] | attrName [COLON (attrTypeWithGeneric | attrType)]
+method ::= attrName OPEN_ROUND [attribute] CLOSE_ROUND [visibilityAtEnd] [attrTypeWithGeneric | attrType]
 attrType ::= ID
-attrTypeWithGeneric ::= attrType (TILDA GENERIC_TYPE TILDA)?
+attrTypeWithGeneric ::= attrType TILDA GENERIC_TYPE TILDA
 attrName ::= ID
 
 

@@ -16,14 +16,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONLY_ONE)
     >>>>PsiElement(IDENTIFYING)
     >>>>PsiElement(ZERO_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -31,14 +33,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONLY_ONE)
     >>>>PsiElement(IDENTIFYING)
     >>>>PsiElement(ONE_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -46,14 +50,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONE_OR_MORE_LEFT)
     >>>>PsiElement(NON_IDENTIFYING)
     >>>>PsiElement(ONE_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -81,14 +87,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONLY_ONE)
     >>>>PsiElement(IDENTIFYING)
     >>>>PsiElement(ZERO_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -96,7 +104,8 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(OPEN_CURLY)
     >>>Element(ER_ATTRIBUTE_LINE)
@@ -133,14 +142,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONLY_ONE)
     >>>>PsiElement(IDENTIFYING)
     >>>>PsiElement(ONE_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -169,14 +180,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONLY_ONE)
     >>>>PsiElement(IDENTIFYING)
     >>>>PsiElement(ZERO_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -184,7 +197,8 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(OPEN_CURLY)
     >>>Element(ER_ATTRIBUTE_LINE)
@@ -244,14 +258,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONLY_ONE)
     >>>>PsiElement(IDENTIFYING)
     >>>>PsiElement(ZERO_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -274,14 +290,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONLY_ONE)
     >>>>PsiElement(IDENTIFYING)
     >>>>PsiElement(ZERO_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -292,14 +310,16 @@ class EntityRelationshipTest : MermaidParserTestCase() {
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(ER_LINE)
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>Element(RELATIONSHIP)
     >>>>PsiElement(ONLY_ONE)
     >>>>PsiElement(IDENTIFYING)
     >>>>PsiElement(ONE_OR_MORE_RIGHT)
     >>>PsiWhiteSpace
-    >>>PsiElement(ID)
+    >>>Element(IDENTIFIER)
+    >>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace

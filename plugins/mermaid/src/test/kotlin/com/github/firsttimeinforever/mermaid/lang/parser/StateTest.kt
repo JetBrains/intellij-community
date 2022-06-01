@@ -17,7 +17,8 @@ class StateTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -32,12 +33,14 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(AS)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiElement(LABEL)
@@ -60,22 +63,26 @@ class StateTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(COLON)
     >>>PsiElement(LABEL)
     """.trimIndent()
@@ -104,12 +111,14 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
@@ -153,14 +162,16 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>PsiElement(STATE)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(OPEN_CURLY)
     >>>Element(INNER_STATE_DOCUMENT)
@@ -176,14 +187,16 @@ class StateTest : MermaidParserTestCase() {
     >>>>>PsiElement(ARROW)
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>Element(INNER_STATE_LINE)
     >>>>>PsiElement(STATE)
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiWhiteSpace
     >>>>>PsiElement(OPEN_CURLY)
     >>>>>Element(INNER_STATE_DOCUMENT)
@@ -199,17 +212,20 @@ class StateTest : MermaidParserTestCase() {
     >>>>>>>PsiElement(ARROW)
     >>>>>>>PsiWhiteSpace
     >>>>>>>Element(STATE_ID)
-    >>>>>>>>PsiElement(ID)
+    >>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>PsiElement(ID)
     >>>>>>>PsiElement(EOL)
     >>>>>>PsiWhiteSpace
     >>>>>>Element(INNER_STATE_LINE)
     >>>>>>>Element(STATE_ID)
-    >>>>>>>>PsiElement(ID)
+    >>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>PsiElement(ID)
     >>>>>>>PsiWhiteSpace
     >>>>>>>PsiElement(ARROW)
     >>>>>>>PsiWhiteSpace
     >>>>>>>Element(STATE_ID)
-    >>>>>>>>PsiElement(ID)
+    >>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>PsiElement(ID)
     >>>>>>>PsiWhiteSpace
     >>>>>>>PsiElement(EOL)
     >>>>>PsiWhiteSpace
@@ -220,7 +236,8 @@ class StateTest : MermaidParserTestCase() {
     >>>>>PsiElement(STATE)
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiWhiteSpace
     >>>>>PsiElement(OPEN_CURLY)
     >>>>>Element(INNER_STATE_DOCUMENT)
@@ -236,12 +253,14 @@ class StateTest : MermaidParserTestCase() {
     >>>>>>>PsiElement(ARROW)
     >>>>>>>PsiWhiteSpace
     >>>>>>>Element(STATE_ID)
-    >>>>>>>>PsiElement(ID)
+    >>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>PsiElement(ID)
     >>>>>>>PsiElement(EOL)
     >>>>>>PsiWhiteSpace
     >>>>>>Element(INNER_STATE_LINE)
     >>>>>>>Element(STATE_ID)
-    >>>>>>>>PsiElement(ID)
+    >>>>>>>>Element(IDENTIFIER)
+    >>>>>>>>>PsiElement(ID)
     >>>>>>>PsiWhiteSpace
     >>>>>>>PsiElement(ARROW)
     >>>>>>>PsiWhiteSpace
@@ -283,7 +302,8 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(STATE)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ANNOTATION_START)
     >>>PsiElement(ANNOTATION_VALUE)
@@ -299,17 +319,20 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -319,7 +342,8 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(STATE)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ANNOTATION_START)
     >>>PsiElement(ANNOTATION_VALUE)
@@ -335,16 +359,16 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
-    >>>PsiElement(EOL)
-    >>Element(STATE_LINE)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>PsiElement(STATE)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ANNOTATION_START)
     >>>PsiElement(ANNOTATION_VALUE)
@@ -353,12 +377,14 @@ class StateTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -383,7 +409,8 @@ class StateTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(COLON)
     >>>PsiElement(LABEL)
     >>>PsiElement(EOL)
@@ -394,7 +421,8 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(RIGHT_OF)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>>PsiWhiteSpace
     >>>PsiElement(NOTE_CONTENT)
@@ -408,12 +436,14 @@ class StateTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
@@ -422,7 +452,8 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(LEFT_OF)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(COLON)
     >>>PsiWhiteSpace
@@ -460,16 +491,16 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
-    >>>PsiElement(EOL)
-    >>Element(STATE_LINE)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>PsiElement(STATE)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(OPEN_CURLY)
     >>>Element(INNER_STATE_DOCUMENT)
@@ -485,7 +516,8 @@ class StateTest : MermaidParserTestCase() {
     >>>>>PsiElement(ARROW)
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>Element(INNER_STATE_LINE)
@@ -502,7 +534,8 @@ class StateTest : MermaidParserTestCase() {
     >>>>>PsiElement(ARROW)
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiElement(EOL)
     >>>>PsiWhiteSpace
     >>>>Element(INNER_STATE_LINE)
@@ -519,7 +552,8 @@ class StateTest : MermaidParserTestCase() {
     >>>>>PsiElement(ARROW)
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiElement(EOL)
     >>>PsiWhiteSpace
     >>>PsiElement(CLOSE_CURLY)
@@ -553,19 +587,22 @@ class StateTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>PsiElement(STATE)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(OPEN_CURLY)
     >>>Element(INNER_STATE_DOCUMENT)
@@ -580,12 +617,14 @@ class StateTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>Element(INNER_STATE_LINE)
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiWhiteSpace
     >>>>>PsiElement(ARROW)
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiElement(EOL)
     >>>PsiWhiteSpace
     >>>PsiElement(CLOSE_CURLY)
@@ -593,12 +632,14 @@ class StateTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -626,12 +667,14 @@ class StateTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(STATE_LINE)
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(ARROW)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiComment(LINE_COMMENT)
     >>>PsiComment(COMMENT_TEXT)
@@ -646,7 +689,8 @@ class StateTest : MermaidParserTestCase() {
     >>>PsiElement(STATE)
     >>>PsiWhiteSpace
     >>>Element(STATE_ID)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiWhiteSpace
     >>>PsiElement(OPEN_CURLY)
     >>>Element(INNER_STATE_DOCUMENT)
@@ -655,12 +699,14 @@ class StateTest : MermaidParserTestCase() {
     >>>>PsiWhiteSpace
     >>>>Element(INNER_STATE_LINE)
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiWhiteSpace
     >>>>>PsiElement(ARROW)
     >>>>>PsiWhiteSpace
     >>>>>Element(STATE_ID)
-    >>>>>>PsiElement(ID)
+    >>>>>>Element(IDENTIFIER)
+    >>>>>>>PsiElement(ID)
     >>>>>PsiWhiteSpace
     >>>>>PsiComment(LINE_COMMENT)
     >>>>>PsiComment(COMMENT_TEXT)

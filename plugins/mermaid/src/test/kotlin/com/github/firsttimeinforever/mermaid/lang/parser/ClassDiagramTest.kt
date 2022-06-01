@@ -19,12 +19,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>Element(CLASS_STATEMENT)
     >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(MEMBER_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiWhiteSpace
@@ -41,7 +43,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(MEMBER_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiWhiteSpace
@@ -79,7 +82,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>Element(CLASS_STATEMENT)
     >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(OPEN_CURLY)
     >>>>Element(MEMBER_LINE)
@@ -143,7 +147,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>Element(CLASS_STATEMENT)
     >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiElement(TILDA)
     >>>>PsiElement(GENERIC_TYPE)
     >>>>PsiElement(TILDA)
@@ -164,8 +169,9 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>Element(MEMBER_LINE)
     >>>>>Element(ATTR_OR_METHOD)
     >>>>>>Element(ATTRIBUTE)
-    >>>>>>>Element(ATTR_TYPE)
-    >>>>>>>>PsiElement(ID)
+    >>>>>>>Element(ATTR_TYPE_WITH_GENERIC)
+    >>>>>>>>Element(ATTR_TYPE)
+    >>>>>>>>>PsiElement(ID)
     >>>>>>>>PsiElement(TILDA)
     >>>>>>>>PsiElement(GENERIC_TYPE)
     >>>>>>>>PsiElement(TILDA)
@@ -181,8 +187,9 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>>>>PsiElement(ID)
     >>>>>>>PsiElement(OPEN_ROUND)
     >>>>>>>Element(ATTRIBUTE)
-    >>>>>>>>Element(ATTR_TYPE)
-    >>>>>>>>>PsiElement(ID)
+    >>>>>>>>Element(ATTR_TYPE_WITH_GENERIC)
+    >>>>>>>>>Element(ATTR_TYPE)
+    >>>>>>>>>>PsiElement(ID)
     >>>>>>>>>PsiElement(TILDA)
     >>>>>>>>>PsiElement(GENERIC_TYPE)
     >>>>>>>>>PsiElement(TILDA)
@@ -200,8 +207,9 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>>>PsiElement(OPEN_ROUND)
     >>>>>>>PsiElement(CLOSE_ROUND)
     >>>>>>>PsiWhiteSpace
-    >>>>>>>Element(ATTR_TYPE)
-    >>>>>>>>PsiElement(ID)
+    >>>>>>>Element(ATTR_TYPE_WITH_GENERIC)
+    >>>>>>>>Element(ATTR_TYPE)
+    >>>>>>>>>PsiElement(ID)
     >>>>>>>>PsiElement(TILDA)
     >>>>>>>>PsiElement(GENERIC_TYPE)
     >>>>>>>>PsiElement(TILDA)
@@ -212,7 +220,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(MEMBER_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiWhiteSpace
@@ -220,8 +229,9 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(VISIBILITY_AT_START)
     >>>>>>PsiElement(MINUS)
     >>>>>Element(ATTRIBUTE)
-    >>>>>>Element(ATTR_TYPE)
-    >>>>>>>PsiElement(ID)
+    >>>>>>Element(ATTR_TYPE_WITH_GENERIC)
+    >>>>>>>Element(ATTR_TYPE)
+    >>>>>>>>PsiElement(ID)
     >>>>>>>PsiElement(TILDA)
     >>>>>>>PsiElement(GENERIC_TYPE)
     >>>>>>>PsiElement(TILDA)
@@ -232,7 +242,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(MEMBER_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiWhiteSpace
@@ -244,8 +255,9 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>>>PsiElement(ID)
     >>>>>>PsiElement(OPEN_ROUND)
     >>>>>>Element(ATTRIBUTE)
-    >>>>>>>Element(ATTR_TYPE)
-    >>>>>>>>PsiElement(ID)
+    >>>>>>>Element(ATTR_TYPE_WITH_GENERIC)
+    >>>>>>>>Element(ATTR_TYPE)
+    >>>>>>>>>PsiElement(ID)
     >>>>>>>>PsiElement(TILDA)
     >>>>>>>>PsiElement(GENERIC_TYPE)
     >>>>>>>>PsiElement(TILDA)
@@ -257,7 +269,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(MEMBER_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiWhiteSpace
@@ -270,8 +283,9 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>>PsiElement(OPEN_ROUND)
     >>>>>>PsiElement(CLOSE_ROUND)
     >>>>>>PsiWhiteSpace
-    >>>>>>Element(ATTR_TYPE)
-    >>>>>>>PsiElement(ID)
+    >>>>>>Element(ATTR_TYPE_WITH_GENERIC)
+    >>>>>>>Element(ATTR_TYPE)
+    >>>>>>>>PsiElement(ID)
     >>>>>>>PsiElement(TILDA)
     >>>>>>>PsiElement(GENERIC_TYPE)
     >>>>>>>PsiElement(TILDA)
@@ -297,12 +311,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>Element(CLASS_STATEMENT)
     >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(MEMBER_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiWhiteSpace
@@ -320,7 +336,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(MEMBER_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiWhiteSpace
@@ -359,7 +376,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(RELATION_TYPE_LEFT)
@@ -367,12 +385,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(RELATION_TYPE_LEFT)
@@ -380,12 +400,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(RELATION_TYPE_LEFT)
@@ -393,12 +415,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(RELATION_TYPE_LEFT)
@@ -406,23 +430,27 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(RELATION_TYPE_LEFT)
@@ -430,12 +458,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(DOTTED_LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(RELATION_TYPE_LEFT)
@@ -443,18 +473,21 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(DOTTED_LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(DOTTED_LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -480,7 +513,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
@@ -488,12 +522,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(RELATION_TYPE_RIGHT)
     >>>>>>PsiElement(EXTENSION_END)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
@@ -501,12 +537,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(RELATION_TYPE_RIGHT)
     >>>>>>PsiElement(COMPOSITION)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
@@ -514,12 +552,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(RELATION_TYPE_RIGHT)
     >>>>>>PsiElement(AGGREGATION)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
@@ -527,23 +567,27 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(RELATION_TYPE_RIGHT)
     >>>>>>PsiElement(DEPENDENCY_END)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
@@ -551,12 +595,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(RELATION_TYPE_RIGHT)
     >>>>>>PsiElement(DEPENDENCY_END)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
@@ -564,18 +610,21 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(RELATION_TYPE_RIGHT)
     >>>>>>PsiElement(EXTENSION_END)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(DOTTED_LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -594,7 +643,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(RELATION_TYPE_LEFT)
@@ -604,7 +654,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(RELATION_TYPE_RIGHT)
     >>>>>>PsiElement(EXTENSION_END)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -623,7 +674,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(RELATION_TYPE_LEFT)
@@ -631,7 +683,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>Element(LINE_TYPE)
     >>>>>>PsiElement(LINE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiElement(LABEL)
@@ -655,7 +708,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(CARDINALITY)
@@ -675,12 +729,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>>>PsiElement(STRING_VALUE)
     >>>>>>>PsiElement(DOUBLE_QUOTE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(CARDINALITY)
@@ -700,12 +756,14 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>>>PsiElement(STRING_VALUE)
     >>>>>>>PsiElement(DOUBLE_QUOTE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
     >>>Element(RELATION_STATEMENT)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>Element(RELATION)
     >>>>>Element(LINE_TYPE)
@@ -719,7 +777,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>>>PsiElement(STRING_VALUE)
     >>>>>>>PsiElement(DOUBLE_QUOTE)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(COLON)
     >>>>PsiElement(LABEL)
@@ -744,7 +803,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>Element(CLASS_STATEMENT)
     >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>PsiElement(EOL)
     >>PsiWhiteSpace
     >>Element(CLASS_LINE)
@@ -754,7 +814,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>>>PsiElement(ANNOTATION_VALUE)
     >>>>>PsiElement(ANNOTATION_END)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     """.trimIndent()
     doTest(content, expectedTree)
   }
@@ -779,7 +840,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>Element(CLASS_STATEMENT)
     >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(OPEN_CURLY)
     >>>>Element(MEMBER_LINE)
@@ -836,7 +898,8 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>Element(CLASS_STATEMENT)
     >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(OPEN_CURLY)
     >>>>Element(MEMBER_LINE)
@@ -880,9 +943,11 @@ class ClassDiagramTest : MermaidParserTestCase() {
     >>>Element(CLASS_STATEMENT)
     >>>>PsiElement(CLASS)
     >>>>PsiWhiteSpace
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiElement(STYLE_SEPARATOR)
-    >>>>PsiElement(ID)
+    >>>>Element(IDENTIFIER)
+    >>>>>PsiElement(ID)
     >>>>PsiWhiteSpace
     >>>>PsiElement(OPEN_CURLY)
     >>>>Element(MEMBER_LINE)
