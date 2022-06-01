@@ -2,9 +2,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionGroupUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +14,12 @@ import org.jetbrains.annotations.NotNull;
  * @see NonEmptyActionGroup
  * @see NonTrivialActionGroup
  */
-public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAware, UpdateInBackground {
+public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected int getChildrenCountThreshold() {
     return 2;

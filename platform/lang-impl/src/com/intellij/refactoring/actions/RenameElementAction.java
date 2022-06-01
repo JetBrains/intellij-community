@@ -23,10 +23,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class RenameElementAction extends AnAction implements UpdateInBackground {
+public class RenameElementAction extends AnAction {
 
   public RenameElementAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

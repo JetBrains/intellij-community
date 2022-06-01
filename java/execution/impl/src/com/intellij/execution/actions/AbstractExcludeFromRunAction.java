@@ -18,8 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 
-public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>> extends AnAction implements UpdateInBackground {
+public abstract class AbstractExcludeFromRunAction<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>> extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractExcludeFromRunAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   protected abstract Set<String> getPattern(T configuration);
   protected abstract boolean isPatternBasedConfiguration(RunConfiguration configuration);

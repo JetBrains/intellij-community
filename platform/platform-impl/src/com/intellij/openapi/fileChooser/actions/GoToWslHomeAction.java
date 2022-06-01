@@ -5,8 +5,8 @@ import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -29,8 +29,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public final class GoToWslHomeAction extends FileChooserAction implements LightEditCompatible, UpdateInBackground {
+public final class GoToWslHomeAction extends FileChooserAction implements LightEditCompatible {
   private static final NotNullLazyValue<Boolean> ourHasWsl = PathExecLazyValue.create("wsl.exe");
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {

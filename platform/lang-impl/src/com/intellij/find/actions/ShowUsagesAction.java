@@ -105,7 +105,7 @@ import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocat
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
-public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore, UpdateInBackground {
+public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
   public static final String ID = "ShowUsages";
   private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
@@ -115,6 +115,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
   public ShowUsagesAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static final class UsageNodeComparator implements Comparator<UsageNode> {

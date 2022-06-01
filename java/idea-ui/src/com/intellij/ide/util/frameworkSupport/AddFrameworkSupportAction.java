@@ -5,7 +5,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
-public class AddFrameworkSupportAction extends AnAction implements UpdateInBackground {
+public class AddFrameworkSupportAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE_CONTEXT);

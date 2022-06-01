@@ -29,7 +29,12 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
     }
     List<AnAction> result = new SmartList<>();
     for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
-      class Action extends AnAction implements UpdateInBackground {
+      class Action extends AnAction {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           creator.createTest(project, editor, file);

@@ -54,12 +54,17 @@ import static org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames.JAVAFX_APPLICA
 /**
  * @author pdolgov
  */
-public final class CreateFxmlFileAction extends CreateFromTemplateActionBase implements UpdateInBackground {
+public final class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
 
   public CreateFxmlFileAction() {
     super(JavaFXBundle.message("javafx.create.new.fxml.file.title"), JavaFXBundle.message("javafx.create.new.fxml.file.description"),
           AllIcons.FileTypes.Xml);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

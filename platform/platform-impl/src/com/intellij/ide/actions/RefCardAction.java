@@ -2,8 +2,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -17,9 +17,14 @@ import java.io.File;
 /**
  * @author Vladimir Kondratyev
  */
-public class RefCardAction extends DumbAwareAction implements UpdateInBackground {
+public class RefCardAction extends DumbAwareAction {
   private static final @NonNls String REF_CARD_PATH =
     PathManager.getHomePath() + "/help/" + (SystemInfo.isMac ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
