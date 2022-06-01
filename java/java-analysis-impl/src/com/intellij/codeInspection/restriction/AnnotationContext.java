@@ -174,7 +174,12 @@ public final class AnnotationContext {
     if (!(owner instanceof PsiMethod)) return null;
     // Looks ugly but without this check, owner.getNavigationElement() may load PSI or even call decompiler
     if (!owner.getClass().getSimpleName().equals("KtUltraLightMethodForSourceDeclaration")) return null;
-    // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
+    PsiMethod method = (PsiMethod)owner;
+    String name = method.getName();
+    boolean maybeGetter = (name.startsWith("get") || name.startsWith("is")) && method.getParameterList().isEmpty();
+    boolean maybeSetter = name.startsWith("set") && method.getParameterList().getParametersCount() == 1;
+    if (!maybeGetter && !maybeSetter) return null;
+    // If assignment target is Kotlin property, it resolves to the getter or setter but annotation will be applied to the field
     // (unless @get:MyAnno is used), so we have to navigate to the corresponding field.
     UElement element = UastContextKt.toUElement(owner.getNavigationElement());
     if (element instanceof UField) {
