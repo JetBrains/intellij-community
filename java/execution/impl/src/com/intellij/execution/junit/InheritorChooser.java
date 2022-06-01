@@ -128,7 +128,7 @@ public class InheritorChooser {
       return true;
     }
     
-    if (containingClass != null) {
+    if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
       PsiClass gContainingClass = containingClass.getContainingClass();
       if (gContainingClass != null && !containingClass.isInheritor(gContainingClass, true)) {
         return runMethodInAbstractClass(context, performRunnable, psiMethod, gContainingClass, acceptAbstractCondition);
