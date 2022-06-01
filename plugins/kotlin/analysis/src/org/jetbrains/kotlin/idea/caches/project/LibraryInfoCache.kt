@@ -8,12 +8,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.LowMemoryWatcher
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.caches.resolve.resolution
 import org.jetbrains.kotlin.idea.framework.effectiveKind
 import org.jetbrains.kotlin.idea.framework.platform
@@ -22,7 +24,12 @@ import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class LibraryInfoCache(private val project: Project): Disposable {
-    private val libraryInfoCache: MutableMap<Library, List<LibraryInfo>> = hashMapOf()
+    private val cache: MutableMap<Library, List<LibraryInfo>> = hashMapOf()
+
+    private val libraryInfoCache: MutableMap<Library, List<LibraryInfo>>
+        get() = if (fineGrainedCacheInvalidation) cache else project.oldLibraryInfoCache
+
+    private val lock = Any()
 
     init {
         // drop entire cache when it is low free memory
@@ -31,14 +38,14 @@ class LibraryInfoCache(private val project: Project): Disposable {
 
     fun createLibraryInfo(library: Library): List<LibraryInfo> {
         library.safeAs<LibraryEx>()?.takeIf { it.isDisposed }?.let {
-            synchronized(libraryInfoCache) {
+            synchronized(lock) {
                 libraryInfoCache.remove(library)
             }
             throw AlreadyDisposedException("${library.name} is already disposed")
         }
 
         // fast check
-        synchronized(libraryInfoCache) {
+        synchronized(lock) {
             libraryInfoCache[library]?.let { return it }
         }
 
@@ -54,7 +61,7 @@ class LibraryInfoCache(private val project: Project): Disposable {
         val libraryInfos = approximatePlatform.idePlatformKind.resolution.createLibraryInfo(project, library)
 
         ProgressManager.checkCanceled()
-        synchronized(libraryInfoCache) {
+        synchronized(lock) {
             libraryInfoCache.putIfAbsent(library, libraryInfos)?.let { return it }
         }
 
@@ -66,13 +73,13 @@ class LibraryInfoCache(private val project: Project): Disposable {
     }
 
     private fun clean() {
-        synchronized(libraryInfoCache) {
+        synchronized(lock) {
             libraryInfoCache.clear()
         }
     }
 
     private fun cleanupCache(libraries: Collection<Library>) {
-        synchronized(libraryInfoCache) {
+        synchronized(lock) {
             libraries.forEach(libraryInfoCache::remove)
         }
     }
@@ -98,6 +105,11 @@ class LibraryInfoCache(private val project: Project): Disposable {
     }
 
     companion object {
+        val fineGrainedCacheInvalidation = Registry.`is`("kotlin.caches.fine.grained.invalidation")
+
         fun getInstance(project: Project): LibraryInfoCache = project.service()
     }
 }
+
+private val Project.oldLibraryInfoCache: MutableMap<Library, List<LibraryInfo>>
+    get() = cacheInvalidatingOnRootModifications { hashMapOf() }

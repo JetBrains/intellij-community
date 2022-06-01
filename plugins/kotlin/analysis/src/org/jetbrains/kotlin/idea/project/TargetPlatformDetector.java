@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -64,8 +65,13 @@ public class TargetPlatformDetector {
         return DefaultIdeTargetPlatformKindProvider.Companion.getDefaultPlatform();
     }
 
+    public static final boolean fineGrainedCacheInvalidation = Registry.is("kotlin.caches.fine.grained.invalidation");
+
     @NotNull
     public static TargetPlatform getPlatform(@NotNull Module module) {
+        if (fineGrainedCacheInvalidation) {
+            return ModulePlatformCache.Companion.getInstance(module.getProject()).getPlatformForModule(module);
+        }
         return ProjectStructureUtil.getCachedPlatformForModule(module);
     }
 
