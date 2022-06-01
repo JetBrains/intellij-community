@@ -29,7 +29,7 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
       .filter { it != HighlightSeverity.INFO && it > HighlightSeverity.INFORMATION && it < HighlightSeverity.ERROR }
     val (mainSeverities, otherSeverities) = severities.partition { it >= HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING }
     val actions = mainSeverities.mapTo(ArrayList<AnAction>()) {
-      SeverityFilterAction(ProblemsViewBundle.message("problems.view.highlighting.severity.show", renderSeverity(it)), it.myVal, panel)
+      SeverityFilterAction(renderSeverity(it), it.myVal, panel)
     }
     actions.add(OtherSeveritiesFilterAction(otherSeverities.map { it.myVal }, panel))
     return actions.toTypedArray()
