@@ -13,8 +13,7 @@ internal class A( // comment for field2 setter
     // comment for field3 setter
     // comment for field3 getter
     // comment before field3
-    var field3 // comment for field3
-            = 0
+    var field3 = 0 // comment for field3
 
     // comment for setProperty
     // end of setProperty

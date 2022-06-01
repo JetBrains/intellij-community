@@ -40,6 +40,8 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
             else -> null
         }
         newInitializer?.also {
+            it.leadingComments += element.name.leadingComments
+            element.name.leadingComments.clear()
             element.initializer = it
         }
         return element
