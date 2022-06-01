@@ -74,6 +74,17 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       }
       handleAnyKeyPressed();
 
+      if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_ENTER) {
+        String prompt = myPrompt.myPrompt;
+        if (!prompt.isEmpty() && !getTypedShellCommand().isEmpty()) {
+          myVfsRefreshAlarm.cancelAllRequests();
+          getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener);
+          myPrevPromptWhenCommandStarted = prompt;
+          if (!getTerminalTextBuffer().isUsingAlternateBuffer()) {
+            getTerminalTextBuffer().addModelListener(myVfsRefreshModelListener);
+          }
+        }
+      }
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
         TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(project);
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
@@ -86,14 +97,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       }
       else {
         myShellCommandHandlerHelper.processKeyPressed(e);
-      }
-      if (!e.isConsumed() && e.getKeyCode() == KeyEvent.VK_ENTER) {
-        myVfsRefreshAlarm.cancelAllRequests();
-        getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener);
-        myPrevPromptWhenCommandStarted = Strings.nullize(myPrompt.myPrompt);
-        if (myPrevPromptWhenCommandStarted != null && !getTerminalTextBuffer().isUsingAlternateBuffer()) {
-          getTerminalTextBuffer().addModelListener(myVfsRefreshModelListener);
-        }
       }
     });
     Disposer.register(this, () -> getTerminalTextBuffer().removeModelListener(myVfsRefreshModelListener));
