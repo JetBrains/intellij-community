@@ -137,7 +137,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         ensureSelectedContentVisible();
         rebuild();
 
-        if (contentManager.isEmpty()) {
+        if (contentManager.isEmpty() && contentManager == window.getContentManager()) {
           boolean removeFromStripe;
           if (window.isToHideOnEmptyContent()) {
             removeFromStripe = true;
