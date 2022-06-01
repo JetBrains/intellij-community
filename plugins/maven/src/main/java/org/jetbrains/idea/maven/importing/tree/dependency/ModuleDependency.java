@@ -4,26 +4,29 @@ package org.jetbrains.idea.maven.importing.tree.dependency;
 import com.intellij.openapi.roots.DependencyScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.project.MavenProject;
 
 public class ModuleDependency extends MavenImportDependency<String> {
-
   @Nullable private final LibraryDependency libraryDependency;
+  @Nullable private final AttachedJarDependency attachedJarDependency;
   private final boolean testJar;
 
-  public ModuleDependency(@Nullable MavenArtifact artifact,
-                          @NotNull MavenProject project,
-                          @NotNull String moduleName,
+  public ModuleDependency(@NotNull String moduleName,
+                          @Nullable LibraryDependency libraryDependency,
+                          @Nullable AttachedJarDependency attachedJarDependency,
                           @NotNull DependencyScope scope,
                           boolean testJar) {
     super(moduleName, scope);
-    this.libraryDependency = artifact == null ? null : new LibraryDependency(artifact, project, scope);
+    this.libraryDependency = libraryDependency;
+    this.attachedJarDependency = attachedJarDependency;
     this.testJar = testJar;
   }
 
   public @Nullable LibraryDependency getLibraryDependency() {
     return libraryDependency;
+  }
+
+  public @Nullable AttachedJarDependency getAttachedJarDependency() {
+    return attachedJarDependency;
   }
 
   public boolean isTestJar() {

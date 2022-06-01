@@ -3,12 +3,11 @@ package org.jetbrains.idea.maven.importing.tree;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.tree.dependency.BaseDependency;
-import org.jetbrains.idea.maven.importing.tree.dependency.MavenImportDependency;
-import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency;
-import org.jetbrains.idea.maven.importing.tree.dependency.SystemDependency;
+import org.jetbrains.idea.maven.importing.tree.dependency.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -68,9 +67,9 @@ public class MavenModuleImportDependencyProvider {
                                                     List<MavenImportDependency<?>> testDependencies) {
     if (importData.getSplittedMainAndTestModules() != null) {
       testDependencies.add(
-        new ModuleDependency(null, mavenProject,
-                             importData.getSplittedMainAndTestModules().getMainData().getModuleName(),
-                             DependencyScope.COMPILE, false)
+        new ModuleDependency(
+          importData.getSplittedMainAndTestModules().getMainData().getModuleName(),
+          null, null, DependencyScope.COMPILE, false)
       );
     }
   }
@@ -100,15 +99,21 @@ public class MavenModuleImportDependencyProvider {
         boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(dependencyType) || "tests".equals(artifact.getClassifier());
         String moduleName = getModuleName(mavenProjectImportData);
 
-        MavenArtifact a = null;
+        AttachedJarDependency attachedJarDependency = null;
+        Element buildHelperCfg = depProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
+        if (buildHelperCfg != null) {
+          attachedJarDependency = createAttachArtifactDependency(buildHelperCfg, scope, artifact);
+        }
+
+        LibraryDependency libraryDependency = null;
         String classifier = artifact.getClassifier();
         if (classifier != null && IMPORTED_CLASSIFIERS.contains(classifier)
             && !isTestJar
             && !"system".equals(artifact.getScope())
             && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
-          a = createCopyForLocalRepo(artifact, mavenProject);
+          libraryDependency = new LibraryDependency(createCopyForLocalRepo(artifact, mavenProject), mavenProject, scope);
         }
-        return new ModuleDependency(a, mavenProject, moduleName, scope, isTestJar);
+        return new ModuleDependency(moduleName, libraryDependency, attachedJarDependency, scope, isTestJar);
       }
     }
     else if ("system".equals(artifact.getScope())) {
@@ -138,5 +143,40 @@ public class MavenModuleImportDependencyProvider {
   private static String getModuleName(MavenProjectImportData data) {
     SplittedMainAndTestModules modules = data.getSplittedMainAndTestModules();
     return modules == null ? data.getModuleData().getModuleName() : modules.getMainData().getModuleName();
+  }
+
+  @Nullable
+  private static AttachedJarDependency createAttachArtifactDependency(@NotNull Element buildHelperCfg,
+                                                                      @NotNull DependencyScope scope,
+                                                                      @NotNull MavenArtifact artifact) {
+    var classes = new ArrayList<String>();
+    var sources = new ArrayList<String>();
+    var javadocs = new ArrayList<String>();
+    var create = false;
+
+    for (Element artifactsElement : buildHelperCfg.getChildren("artifacts")) {
+      for (Element artifactElement : artifactsElement.getChildren("artifact")) {
+        String typeString = artifactElement.getChildTextTrim("type");
+        if (typeString != null && !typeString.equals("jar")) continue;
+
+        String filePath = artifactElement.getChildTextTrim("file");
+        if (StringUtil.isEmpty(filePath)) continue;
+
+        String classifier = artifactElement.getChildTextTrim("classifier");
+        if ("sources".equals(classifier)) {
+          sources.add(filePath);
+        }
+        else if ("javadoc".equals(classifier)) {
+          javadocs.add(filePath);
+        }
+        else {
+          classes.add(filePath);
+        }
+
+        create = true;
+      }
+    }
+
+    return create ? new AttachedJarDependency(getAttachedJarsLibName(artifact), classes, sources, javadocs, scope) : null;
   }
 }

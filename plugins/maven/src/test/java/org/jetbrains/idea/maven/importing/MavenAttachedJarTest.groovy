@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import org.junit.Test
 
 /**
@@ -95,7 +95,15 @@ class Foo {
 </modules>
 """)
 
-    checkHighlighting(file, true, false, true)
+    assertModuleModuleDeps("m1", "m2")
+    assertModuleLibDeps("m1", "Maven: ATTACHED-JAR: test:m2:1")
+    assertModuleLibDep("m1", "Maven: ATTACHED-JAR: test:m2:1", "jar://" + jarPath + "!/")
+    assertModuleLibDeps("m2")
+
+    // todo uncomment when a problem with libraries indexing is fixed
+    if (!MavenProjectImporter.isImportToWorkspaceModelEnabled()) {
+      checkHighlighting(file, true, false, true)
+    }
   }
 
 }
