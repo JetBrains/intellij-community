@@ -43,7 +43,7 @@ final class ModuleStructureValidator {
   private BuildContext buildContext
   private MultiMap<String, String> moduleJars = new MultiMap<String, String>()
   private Set<String> moduleNames = new HashSet<String>()
-  private List<String> errors = new ArrayList<>()
+  private List<Throwable> errors = new ArrayList<>()
 
   ModuleStructureValidator(BuildContext buildContext, MultiMap<String, String> moduleJars) {
     this.buildContext = buildContext
@@ -57,7 +57,7 @@ final class ModuleStructureValidator {
     }
   }
 
-  List<String> validate() {
+  List<Throwable> validate() {
     errors.clear()
 
     buildContext.messages.info("Validating jars...")
@@ -118,7 +118,7 @@ final class ModuleStructureValidator {
         }
 
         if (!moduleNames.contains(dependantModule.name)) {
-          errors.add("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name()}]".toString())
+          errors.add(new IllegalStateException("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name()}]".toString()))
           continue
         }
 
@@ -140,7 +140,7 @@ final class ModuleStructureValidator {
     String productDescriptorName = "META-INF/${buildContext.productProperties.platformPrefix}Plugin.xml"
     File productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
     if (productDescriptorFile == null) {
-      errors.add("Can not find product descriptor $productDescriptorName".toString())
+      errors.add(new IllegalStateException("Can not find product descriptor $productDescriptorName".toString()))
       return
     }
 
@@ -168,7 +168,7 @@ final class ModuleStructureValidator {
           buildContext.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
         }
         else {
-          errors.add("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'".toString())
+          errors.add(new IllegalStateException("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'".toString()))
         }
       }
       else {
@@ -229,7 +229,7 @@ final class ModuleStructureValidator {
             def path = Path.of(JpsPathUtil.urlToPath(libraryRootUrl))
 
             try (JarInputStream jarStream = new JarInputStream(new FileInputStream(path.toFile()))) {
-              JarEntry je;
+              JarEntry je
               while ((je = jarStream.getNextJarEntry()) != null) {
                 if (!je.name.endsWith('.class') || je.name.endsWith("Kt.class")) {
                   return
@@ -312,6 +312,6 @@ final class ModuleStructureValidator {
     if (value.isEmpty() || classes.contains(value)) {
       return
     }
-    errors.add("Unresolved registration '$value' in $source".toString())
+    errors.add(new IllegalStateException("Unresolved registration '$value' in $source".toString()))
   }
 }

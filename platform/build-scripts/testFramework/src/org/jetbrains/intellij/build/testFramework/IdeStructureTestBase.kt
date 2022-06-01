@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
@@ -21,20 +22,23 @@ abstract class IdeStructureTestBase {
   @JvmField
   val errorCollector: ErrorCollector = ErrorCollector()
 
-  protected abstract fun createProductProperties(homePath: Path): ProductProperties
+  protected open val projectHome: Path
+    get() = Path.of(PathManager.getHomePathFor(javaClass)!!)
+
+  protected abstract fun createProductProperties(projectHome: Path): ProductProperties
   protected abstract fun createBuildTools(): ProprietaryBuildTools
-  protected abstract val missingModulesException: Set<MissingModuleException>
+  protected open val missingModulesException: Set<MissingModuleException>
+    get() = emptySet()
 
   data class MissingModuleException(val fromModule: String, val toModule: String, val scope: JpsJavaDependencyScope)
 
   private fun createBuildContext(): BuildContext {
-    val homePath = Path.of(PathManager.getHomePathFor(javaClass)!!)
-    val productProperties = createProductProperties(homePath)
-    return createBuildContext(homePath = homePath,
+    val productProperties = createProductProperties(projectHome)
+    return createBuildContext(homePath = projectHome,
                               productProperties = productProperties,
                               buildTools = createBuildTools(),
                               skipDependencySetup = false,
-                              communityHomePath = homePath.resolve("community"))
+                              communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass))
   }
 
   @Test
@@ -52,7 +56,7 @@ abstract class IdeStructureTestBase {
     val validator = ModuleStructureValidator(buildContext, moduleJars)
     val errors = validator.validate()
     for (error in errors) {
-      errorCollector.addError(IllegalStateException(error))
+      errorCollector.addError(error)
     }
   }
 
