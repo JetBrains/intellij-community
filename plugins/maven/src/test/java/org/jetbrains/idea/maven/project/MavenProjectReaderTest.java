@@ -14,6 +14,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.model.*;
+import org.junit.Assume;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,8 +67,12 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
     assertProblems(readProject(myProjectPom, new NullProjectLocator()));
 
-    createProjectPom("<name>a" + new String(new byte[]{0x0}, StandardCharsets.UTF_8) + "a</name><fo" + new String(new byte[]{0x0},
-                                                                                                                  StandardCharsets.UTF_8) + "o></foo>");
+    createProjectPom("<name>a" +
+                     new String(new byte[]{0x0}, StandardCharsets.UTF_8) +
+                     "a</name><fo" +
+                     new String(new byte[]{0x0},
+                                StandardCharsets.UTF_8) +
+                     "o></foo>");
 
     MavenProjectReaderResult result = readProject(myProjectPom, new NullProjectLocator());
     assertProblems(result, "'pom.xml' has syntax errors");
@@ -151,6 +156,8 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   // These tests fail until issue https://youtrack.jetbrains.com/issue/IDEA-272809 is fixed
   public void testInvalidXmlWithWrongClosingTag() {
+    //waiting for IDEA-272809
+    Assume.assumeTrue(false);
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</vers>" +
@@ -1017,7 +1024,8 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</profiles>");
 
     MavenModel p = readProject(module);
-    assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), (Function<MavenProfile, Object>)profile -> profile.getId()), "profileFromChild", "profileFromParent");
+    assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), (Function<MavenProfile, Object>)profile -> profile.getId()),
+                                  "profileFromChild", "profileFromParent");
   }
 
   public void testCorrectlyCollectProfilesFromDifferentSources() throws Exception {
@@ -1552,9 +1560,9 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                                MavenProjectReaderProjectLocator locator,
                                                String... profiles) {
     MavenProjectReaderResult result = new MavenProjectReader(myProject).readProject(getMavenGeneralSettings(),
-                                                                           file,
-                                                                           new MavenExplicitProfiles(Arrays.asList(profiles)),
-                                                                           locator);
+                                                                                    file,
+                                                                                    new MavenExplicitProfiles(Arrays.asList(profiles)),
+                                                                                    locator);
     return result;
   }
 

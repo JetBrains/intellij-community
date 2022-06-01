@@ -80,19 +80,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected VirtualFile myProjectPom;
   protected List<VirtualFile> myAllPoms = new ArrayList<>();
 
-  private final Set<String> FAILED_IN_MASTER =
-    ContainerUtil.set("MavenProjectsManagerTest.testUpdatingProjectsWhenMovingModuleFile",
-                      "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
-                      "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
-                      "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
-                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload",
-                      "InvalidEnvironmentImportingTest.testShouldShowLogsOfMavenServerIfNotStarted",
-                      "MavenProjectReaderTest.testInvalidXmlWithWrongClosingTag");
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Assume.assumeFalse(FAILED_IN_MASTER.contains(getClass().getSimpleName() + "." + getName()));
 
     setUpFixtures();
     myProject = myTestFixture.getProject();
