@@ -107,13 +107,13 @@ abstract class MacDistributionCustomizer {
 
   /**
    * Application bundle name: &lt;name&gt;.app. Current convention is to have ProductName.app for release and ProductName Version EAP.app.
-   * @param applicationInfo application info that can be used to check for EAP and building version
+   * @param appInfo application info that can be used to check for EAP and building version
    * @param buildNumber current build number
    * @return application bundle directory name
    */
-  open fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
-    val suffix = if (applicationInfo.isEAP) " ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} EAP" else ""
-    return "${applicationInfo.productName}${suffix}.app"
+  open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    val suffix = if (appInfo.isEAP) " ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} EAP" else ""
+    return "${appInfo.productName}${suffix}.app"
   }
 
   /**

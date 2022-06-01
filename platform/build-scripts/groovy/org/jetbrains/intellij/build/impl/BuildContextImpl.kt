@@ -350,7 +350,7 @@ private const val projectorJar = "plugins/cwm-plugin-projector/lib/projector/pro
 
 private fun configureProjectorPlugin(properties: ProductProperties) {
   if (properties.productLayout.bundledPluginModules.contains(projectorPlugin) && !properties.versionCheckerConfig.containsKey(projectorJar)) {
-    properties.versionCheckerConfig = java.util.Map.copyOf(properties.versionCheckerConfig + mapOf(projectorJar to "17"))
+    properties.versionCheckerConfig = properties.versionCheckerConfig.putAll(mapOf(projectorJar to "17"))
   }
 }
 

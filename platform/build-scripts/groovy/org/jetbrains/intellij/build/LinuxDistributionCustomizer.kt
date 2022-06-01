@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import java.nio.file.Path
 
 abstract class LinuxDistributionCustomizer {
@@ -17,7 +19,7 @@ abstract class LinuxDistributionCustomizer {
   /**
    * Relative paths to files in Linux distribution which should take 'executable' permissions
    */
-  var extraExecutables: List<String> = emptyList()
+  var extraExecutables: PersistentList<String> = persistentListOf()
 
   /**
    * If {@code true} a separate *-no-jdk.tar.gz artifact without runtime will be produced.

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.BaseLayout
 
 import java.nio.file.Path
@@ -95,7 +96,7 @@ open class IdeaCommunityProperties(home: Path) : BaseIdeaProperties() {
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
           "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
-        extraExecutables = listOf(
+        extraExecutables = persistentListOf(
           "plugins/Kotlin/kotlinc/bin/kotlin",
           "plugins/Kotlin/kotlinc/bin/kotlinc",
           "plugins/Kotlin/kotlinc/bin/kotlinc-js",
@@ -120,9 +121,9 @@ open class IdeaCommunityProperties(home: Path) : BaseIdeaProperties() {
         icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"
       }
 
-      override fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
-        return if (applicationInfo.isEAP) {
-          "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} CE EAP.app"
+      override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+        return if (appInfo.isEAP) {
+          "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
         }
         else {
           "IntelliJ IDEA CE.app"
