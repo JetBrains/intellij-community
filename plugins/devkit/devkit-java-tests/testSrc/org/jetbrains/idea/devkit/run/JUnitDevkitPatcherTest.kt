@@ -51,7 +51,10 @@ class JUnitDevkitPatcherTest : LightPlatform4TestCase() {
                         "--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED, " +
                         "--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED, " +
                         "--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED, " +
-                        "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED", parametersList.list.joinToString { it })
+                        "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED, " +
+                        "--add-opens=java.base/sun.security.ssl=ALL-UNNAMED, " +
+                        "--add-opens=java.base/sun.security.util=ALL-UNNAMED"
+                        , parametersList.list.joinToString { it })
     
   }
 
