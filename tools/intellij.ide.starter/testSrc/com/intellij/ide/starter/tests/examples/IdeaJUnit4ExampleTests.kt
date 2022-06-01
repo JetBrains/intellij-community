@@ -5,7 +5,6 @@ import com.intellij.ide.starter.tests.examples.data.TestCases
 import com.intellij.ide.starter.tests.examples.junit4.initStarterRule
 import com.intellij.ide.starter.tests.examples.junit4.toPrintableWithClass
 import com.jetbrains.performancePlugin.commands.chain.exitApp
-import com.jetbrains.performancePlugin.gradle.commands.importGradleProject
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
@@ -22,11 +21,11 @@ class IdeaJUnit4ExampleTests {
     val context = testContextFactory
       .initializeTestRunner(testName.toPrintableWithClass(this::class), TestCases.IJ.GradleJitPackSimple)
       .prepareProjectCleanImport()
-      .disableAutoImport()
+    //.disableAutoImport()
 
     context.runIDE(
       commands = CommandChain()
-        .importGradleProject()
+        //.importGradleProject()
         .exitApp()
     )
   }
