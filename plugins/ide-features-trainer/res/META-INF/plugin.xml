@@ -77,7 +77,8 @@
     <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
                              instance="training.ui.FeaturesTrainerSettingsPanel"/>
 
-    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"/>
+    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"
+        bundle="messages.LearnBundle" key="notification.group.feature.trainer"/>
   </extensions>
 
   <actions>
@@ -193,7 +194,8 @@
                  key="feature.suggester.force.show.suggestions"/>
     <registryKey defaultValue="true" description="Should suggesters be enabled in settings by default or not"
                  key="feature.suggester.enable.suggesters" restartRequired="true"/>
-    <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"/>
+    <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"
+        bundle="messages.FeatureSuggesterBundle" key="notification.group.feature.suggester"/>
   </extensions>
 
   <projectListeners>
