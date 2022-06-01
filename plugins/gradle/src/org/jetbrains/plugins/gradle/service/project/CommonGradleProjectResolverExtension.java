@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
@@ -201,8 +202,19 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       projectData.setGroup(mainModuleData.getGroup());
       projectData.setVersion(mainModuleData.getVersion());
     }
+    populateBuildScriptSource(gradleModule, mainModuleNode);
 
     return mainModuleNode;
+  }
+
+  private void populateBuildScriptSource(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> mainModuleNode) {
+    try {
+      File buildScriptSource = ideaModule.getGradleProject().getBuildScript().getSourceFile();
+      GradleProjectBuildScriptData buildProjectData = new GradleProjectBuildScriptData(buildScriptSource);
+      mainModuleNode.createChild(GradleProjectBuildScriptData.KEY, buildProjectData);
+    }
+    catch (UnsupportedMethodException ignore) {
+    }
   }
 
   private void populateProjectSdkModel(@NotNull IdeaProject ideaProject, @NotNull DataNode<? extends ProjectData> projectNode) {
@@ -641,14 +653,13 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       .orElse(null);
 
     if (firstExistingLang == null) {
-     return ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs());
+      return ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs());
     }
 
     return sourceDirectorySet.getGradleOutputDirs().stream()
       .filter(f -> f.getPath().contains(firstExistingLang))
       .findFirst()
       .orElse(ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs()));
-
   }
 
   private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
