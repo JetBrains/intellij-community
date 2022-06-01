@@ -13,7 +13,7 @@
 kotlin.build.isObsoleteJdkOverrideEnabled=true
 ```
 
-3. Clone IntelliJ Ultimate/IntelliJ Community (this repository) with branch `kt-222` into `kotlin` repository directory, so directory structure is the following:
+3. Clone IntelliJ Ultimate/IntelliJ Community (this repository) with branch `kt-master` into `kotlin` repository directory, so directory structure is the following:
 ```
 kotlin [branch = master]
 ├── intellij [branch = kt-master]
