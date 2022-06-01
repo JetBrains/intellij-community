@@ -24,13 +24,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 public class DevKitImplicitSubclassProvider extends ImplicitSubclassProvider {
-
   @Override
   public boolean isApplicableTo(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) return false;
 
-    return DevKitImplicitUsageProvider.isDomElementClass(psiClass) ||
-           InheritanceUtil.isInheritor(psiClass, "com.intellij.jam.JamElement");
+    return DevKitImplicitUsageProvider.isDomElementClass(psiClass);
   }
 
   @Override
@@ -38,10 +36,6 @@ public class DevKitImplicitSubclassProvider extends ImplicitSubclassProvider {
   public SubclassingInfo getSubclassingInfo(@NotNull PsiClass psiClass) {
     if (DevKitImplicitUsageProvider.isDomElementClass(psiClass)) {
       return new SubclassingInfo(DevKitBundle.message("implemented.at.runtime.dom"));
-    }
-
-    if (InheritanceUtil.isInheritor(psiClass, "com.intellij.jam.JamElement")) {
-      return new SubclassingInfo(DevKitBundle.message("implemented.at.runtime.jamElement"));
     }
 
     return null;
