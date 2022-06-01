@@ -19,6 +19,10 @@ open class CommandChain : MarshallableCommand, Iterable<MarshallableCommand> {
     _chain.add(initMarshallableCommand(command))
   }
 
+  fun addCommand(command: MarshallableCommand) {
+    _chain.add(command)
+  }
+
   /**
    * Pattern for adding a command: %YOUR_COMMAND_PREFIX COMMAND_PARAM_1 .. COMMAND_PARAM_N
    */
