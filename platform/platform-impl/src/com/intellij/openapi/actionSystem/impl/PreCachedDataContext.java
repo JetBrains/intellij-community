@@ -147,8 +147,11 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     ProviderData cachedData = new ProviderData();
     Component component = SoftReference.dereference(myComponentRef.ref);
     doPreGetAllData(dataProvider, cachedData, component, myDataManager, keys, myCachedData.getHead());
-    return new PreCachedDataContext(myComponentRef, myCachedData.prepend(cachedData),
-                                    new AtomicReference<>(KeyFMap.EMPTY_MAP), myMissedKeysIfFrozen, myDataManager, myDataKeysCount);
+    FList<ProviderData> newCachedData = myCachedData.prepend(cachedData);
+    AtomicReference<KeyFMap> userData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
+    return this instanceof InjectedDataContext
+           ? new InjectedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, myDataKeysCount)
+           : new PreCachedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, myDataKeysCount);
   }
 
   @Override

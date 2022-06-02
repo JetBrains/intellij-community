@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,11 @@ public class DataContextWrapper implements DataContext, UserDataHolder {
   public DataContextWrapper(@NotNull DataContext delegate) {
     myDelegate = delegate;
     myDataHolder = delegate instanceof UserDataHolder ? (UserDataHolder) delegate : new UserDataHolderBase();
+  }
+
+  @ApiStatus.Internal
+  public final @NotNull DataContext getDelegate() {
+    return myDelegate;
   }
 
   @Nullable

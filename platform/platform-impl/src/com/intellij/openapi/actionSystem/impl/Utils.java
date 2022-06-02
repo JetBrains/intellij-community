@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -80,6 +81,15 @@ public final class Utils {
       LOG.assertTrue(wrapped.getData(CommonDataKeys.PROJECT) == dataContext.getData(CommonDataKeys.PROJECT));
       LOG.warn(new Throwable("Use DataManager.getDataContext(component) instead of SimpleDataContext for wrapping."));
       return wrapped;
+    }
+    else if (dataContext instanceof CaretSpecificDataContext) {
+      CaretSpecificDataContext caretContext = (CaretSpecificDataContext)dataContext;
+      DataContext delegate = wrapToAsyncDataContext(caretContext.getDelegate());
+      if (!(delegate instanceof PreCachedDataContext)) {
+        LOG.warn(new Throwable("Unable to wrap CaretSpecificDataContext delegate '" + delegate.getClass().getName() + "'"));
+        return dataContext;
+      }
+      return ((PreCachedDataContext)delegate).prependProvider(caretContext::getCaretData);
     }
     return dataContext;
   }
