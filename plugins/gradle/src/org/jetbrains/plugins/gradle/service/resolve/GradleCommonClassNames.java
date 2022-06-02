@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve;
 
 import org.jetbrains.annotations.NonNls;
@@ -44,6 +44,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_FILE_CONFIGURABLE_FILE_TREE = "org.gradle.api.file.ConfigurableFileTree";
   @NonNls public static final String GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION = "org.gradle.api.file.ConfigurableFileCollection";
   @NonNls public static final String GRADLE_API_SCRIPT_HANDLER = "org.gradle.api.initialization.dsl.ScriptHandler";
+  @NonNls public static final String GRADLE_API_VERSION_CATALOG_BUILDER = "org.gradle.api.initialization.dsl.VersionCatalogBuilder";
   @NonNls public static final String GRADLE_API_TASK = "org.gradle.api.Task";
   @NonNls public static final String GRADLE_API_DEFAULT_TASK = "org.gradle.api.DefaultTask";
   @NonNls public static final String GRADLE_API_TASKS_ACTION = "org.gradle.api.tasks.TaskAction";
@@ -81,6 +82,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_EXTRA_PROPERTIES_EXTENSION = "org.gradle.api.plugins.ExtraPropertiesExtension";
   @NonNls public static final String GRADLE_PROCESS_EXEC_SPEC = "org.gradle.process.ExecSpec";
   @NonNls public static final String GRADLE_API_PROVIDER_PROPERTY = "org.gradle.api.provider.Property";
+  @NonNls public static final String GRADLE_API_PROVIDER_PROVIDER = "org.gradle.api.provider.Provider";
 
   private GradleCommonClassNames() {
   }
