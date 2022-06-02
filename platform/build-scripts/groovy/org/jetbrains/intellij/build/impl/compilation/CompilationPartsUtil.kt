@@ -337,6 +337,14 @@ private fun checkPreviouslyUnpackedDirectories(items: List<FetchAndUnpackItem>,
   ForkJoinTask.invokeAll(items.map { item ->
     ForkJoinTask.adapt {
       val out = item.output
+      if (!Files.exists(out)) {
+        span.addEvent("output directory doesn't exist", Attributes.of(
+          AttributeKey.stringKey("name"), item.name,
+          AttributeKey.stringKey("outDir"), out.toString(),
+        ))
+        return@adapt
+      }
+
       val hashFile = out.resolve(".hash")
       if (!Files.isRegularFile(hashFile)) {
         span.addEvent("no .hash file in output directory", Attributes.of(
