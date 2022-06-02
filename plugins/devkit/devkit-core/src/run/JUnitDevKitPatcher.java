@@ -17,7 +17,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.lang.JavaModuleOptions;
+import com.intellij.util.JavaModuleOptions;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

@@ -7,7 +7,7 @@ import com.intellij.diagnostic.telemetry.createTask
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.lang.JavaModuleOptions
+import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
