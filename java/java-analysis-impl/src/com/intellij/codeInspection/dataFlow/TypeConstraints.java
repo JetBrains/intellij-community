@@ -34,6 +34,7 @@ public final class TypeConstraints {
     @Override public TypeConstraint tryNegate() { return BOTTOM; }
     @Override public String toString() { return ""; }
     @Override public DfType getUnboxedType() { return DfType.TOP; }
+    @Override public @NotNull TypeConstraint arrayOf() { return new ExactArray(EXACTLY_OBJECT).instanceOf(); }
   };
   /**
    * Bottom constraint (no actual type satisfies this)
