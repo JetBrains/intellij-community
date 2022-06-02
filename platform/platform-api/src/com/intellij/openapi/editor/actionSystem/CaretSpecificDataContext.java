@@ -21,11 +21,11 @@ import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CaretSpecificDataContext extends DataContextWrapper {
+public final class CaretSpecificDataContext extends DataContextWrapper {
   private final Caret myCaret;
   private final DataContext myCaretContext;
 
@@ -37,12 +37,18 @@ public class CaretSpecificDataContext extends DataContextWrapper {
     myCaretContext = fm == null ? null : dataId -> fm.getData(dataId, myCaret.getEditor(), myCaret);
   }
 
-  @Nullable
-  @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  @ApiStatus.Internal
+  public @Nullable Object getCaretData(@NotNull String dataId) {
     Object data = myCaretContext == null ? null : myCaretContext.getData(dataId);
     if (data != null) return data;
     if (CommonDataKeys.CARET.is(dataId)) return myCaret;
+    return null;
+  }
+
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
+    Object data = getCaretData(dataId);
+    if (data != null) return data;
     return super.getData(dataId);
   }
 }
