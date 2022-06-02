@@ -581,6 +581,11 @@ public final class ToolsImpl implements Tools {
     myDefaultState.setEnabled(enabled);
   }
 
+  public void setDefaultState(@NotNull InspectionToolWrapper<?,?> toolWrapper, boolean enabled, @NotNull HighlightDisplayLevel level, @Nullable String attributesKey) {
+    setDefaultState(toolWrapper, enabled, level);
+    myDefaultState.setEditorAttributesKey(attributesKey);
+  }
+
   public void setLevel(@NotNull HighlightDisplayLevel level) {
     myDefaultState.setLevel(level);
   }

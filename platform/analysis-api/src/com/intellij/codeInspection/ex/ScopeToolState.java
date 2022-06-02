@@ -19,10 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class ScopeToolState {
   private static final Logger LOG = Logger.getInstance(ScopeToolState.class);
@@ -128,6 +125,7 @@ public final class ScopeToolState {
   public boolean equalTo(@NotNull ScopeToolState state2) {
     if (isEnabled() != state2.isEnabled()) return false;
     if (getLevel() != state2.getLevel()) return false;
+    if (!Objects.equals(getTextAttributesKeyExternalName(), state2.getTextAttributesKeyExternalName())) return false;
     InspectionToolWrapper<?, ?> toolWrapper = getTool();
     InspectionToolWrapper<?, ?> toolWrapper2 = state2.getTool();
     if (!toolWrapper.isInitialized() && !toolWrapper2.isInitialized()) return true;
