@@ -18,7 +18,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
+import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getSearchableOptionsDir
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
 import org.jetbrains.intellij.build.impl.PlatformModules.collectPlatformModules
@@ -452,19 +452,13 @@ class DistributionJARsBuilder {
     val antTargetFile = antDir?.resolve("lib/ant.jar")
     val moduleOutputPatcher = ModuleOutputPatcher()
     val buildPlatformTask = createTask(spanBuilder("build platform lib")) {
-      val tasks: MutableList<ForkJoinTask<*>> = ArrayList()
-      val task = StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context)
-      if (task != null) {
-        tasks.add(task)
-      }
       ForkJoinTask.invokeAll(listOfNotNull(
-        StatisticsRecorderBundledMetadataProvider.createTask(moduleOutputPatcher, context),
+        createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher, context),
         createTask(spanBuilder("write patched app info")) {
           val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
           val result = injectAppInfo(moduleOutDir.resolve(relativePath), context.applicationInfo.appInfoXml)
           moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
-        null
         }
       ))
       val result = buildLib(moduleOutputPatcher, state.platform, context)
