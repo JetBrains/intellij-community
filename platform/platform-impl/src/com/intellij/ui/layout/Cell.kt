@@ -3,6 +3,7 @@ package com.intellij.ui.layout
 
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UINumericRange
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -612,12 +613,7 @@ abstract class Cell : BaseBuilder {
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
         if (!label.isEnabled) return true
         JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, DefaultActionGroup(*actions), DataContext { dataId ->
-            when (dataId) {
-              PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> label
-              else -> null
-            }
-          }, true, null, 10)
+          .createActionGroupPopup(null, DefaultActionGroup(*actions), DataManager.getInstance().getDataContext(label), true, null, 10)
           .showUnderneathOf(label)
         return true
       }
