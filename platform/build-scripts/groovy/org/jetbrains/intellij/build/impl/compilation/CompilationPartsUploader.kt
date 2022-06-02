@@ -8,20 +8,13 @@ import okhttp3.RequestBody
 import okio.BufferedSink
 import okio.source
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import java.io.Closeable
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.nio.file.Files
 import java.nio.file.Path
 
-open class CompilationPartsUploader(serverUrl: String) : Closeable {
+open class CompilationPartsUploader(serverUrl: String) {
   protected val serverUrl = fixServerUrl(serverUrl)
-  protected val httpClient = createHttpClient("Parts Uploader")
-
-  override fun close() {
-    httpClient.dispatcher.executorService.shutdown()
-    httpClient.connectionPool.evictAll()
-  }
 
   fun upload(path: String, file: Path, sendHead: Boolean = false): Boolean {
     val url = serverUrl + path.trimStart('/')
@@ -60,17 +53,15 @@ open class CompilationPartsUploader(serverUrl: String) : Closeable {
 
   protected fun head(url: String): Int {
     return spanBuilder("head").setAttribute("url", url).use {
-      httpClient.newCall(Request.Builder().url(url).head().build()).execute().use {
-        it.code
-      }
+      httpClient.head(url).use { it.code }
     }
   }
 }
 
+@Suppress("HttpUrlsUsage")
 private fun fixServerUrl(serverUrl: String): String {
   var url = serverUrl
   if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    @Suppress("HttpUrlsUsage")
     url = "http://$url"
   }
   if (!url.endsWith("/")) {

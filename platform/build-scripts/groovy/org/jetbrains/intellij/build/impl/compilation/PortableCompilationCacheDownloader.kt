@@ -1,117 +1,89 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.util.text.Strings
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.io.Decompressor
-import groovy.transform.CompileStatic
-import org.apache.http.HttpStatus
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpHead
-import org.apache.http.entity.ContentType
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.LaxRedirectStrategy
-import org.apache.http.util.EntityUtils
-import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
-import org.jetbrains.intellij.build.impl.retry.Retry
-import org.jetbrains.intellij.build.impl.retry.StopTrying
-
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.concurrent.ForkJoinTask
-import java.util.concurrent.TimeUnit
 
-@CompileStatic
-final class PortableCompilationCacheDownloader {
-  private static final int COMMITS_COUNT = 1_000
+private const val COMMITS_COUNT = 1_000
 
-  private final GetClient getClient = new GetClient(context.messages)
-  private final Git git
+internal class PortableCompilationCacheDownloader(
+  private val  context: CompilationContext,
+  private val git: Git,
+  remoteCacheUrl: String,
+  private val gitUrl: String,
+  private val availableForHeadCommitForced: Boolean,
+  private val downloadCompilationOutputsOnly: Boolean,
+) {
+  private val remoteCacheUrl = remoteCacheUrl.trimEnd('/')
 
-  private final CompilationContext context
-  private final String remoteCacheUrl
-  private final String gitUrl
+  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.paths.buildOutputDir)
 
-  private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
-
-  private boolean availableForHeadCommitForced
-  private boolean downloadCompilationOutputsOnly
   /**
    * If true then latest commit in current repository will be used to download caches.
    */
-  @Lazy
-  boolean availableForHeadCommit = { availableCommitDepth == 0 }()
+  val availableForHeadCommit by lazy { availableCommitDepth == 0 }
 
-  @Lazy
-  private List<String> lastCommits = { git.log(COMMITS_COUNT) }()
+  private val lastCommits by lazy { git.log(COMMITS_COUNT) }
 
-  @Lazy
-  private int availableCommitDepth = {
-    availableForHeadCommitForced ? 0 : lastCommits.findIndexOf {
-      availableCachesKeys.contains(it)
+  private fun downloadString(url: String) = httpClient.get(url).useSuccessful { it.body.string() }
+
+  private fun downloadToFile(url: String, file: Path, spanName: String) {
+    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "path").useWithScope {
+      Files.createDirectories(file.parent)
+      httpClient.get(url).useSuccessful { response ->
+        Files.newOutputStream(file).use {
+          response.body.byteStream().transferTo(it)
+        }
+      }
     }
-  }()
-
-  @Lazy
-  private Collection<String> availableCachesKeys = {
-    def json = getClient.doGet("$remoteCacheUrl/$CommitsHistory.JSON_FILE")
-    new CommitsHistory(json).commitsForRemote(gitUrl)
-  }()
-
-  PortableCompilationCacheDownloader(CompilationContext context, Git git,
-                                     String remoteCacheUrl, String gitUrl,
-                                     boolean availableForHeadCommit, boolean downloadCompilationOutputsOnly) {
-    this.context = context
-    this.git = git
-    this.remoteCacheUrl = Strings.trimEnd(remoteCacheUrl, '/')
-    this.gitUrl = gitUrl
-    this.availableForHeadCommitForced = availableForHeadCommit
-    this.downloadCompilationOutputsOnly = downloadCompilationOutputsOnly
   }
 
-  @Lazy
-  boolean anyLocalChanges = {
-    def localChanges = git.status()
+  private val availableCommitDepth by lazy {
+    if (availableForHeadCommitForced) 0 else lastCommits.indexOfFirst {
+      availableCachesKeys.contains(it)
+    }
+  }
+
+  private val availableCachesKeys by lazy {
+    val json = downloadString("$remoteCacheUrl/${CommitsHistory.JSON_FILE}")
+    CommitsHistory(json).commitsForRemote(gitUrl)
+  }
+
+  val anyLocalChanges by lazy {
+    val localChanges = git.status()
     if (!localChanges.isEmpty()) {
-      context.messages.info('Local changes:')
-      localChanges.each { context.messages.info("\t$it") }
+      context.messages.info("Local changes:")
+      localChanges.forEach { context.messages.info("\t$it") }
     }
     !localChanges.isEmpty()
-  }()
+  }
 
-  void download() {
+  fun download() {
     if (availableCommitDepth != -1) {
-      String lastCachedCommit = lastCommits[availableCommitDepth]
+      val lastCachedCommit = lastCommits.get(availableCommitDepth)
       if (lastCachedCommit == null) {
         context.messages.error("Unable to find last cached commit for $availableCommitDepth in $lastCommits")
       }
       context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
-      ArrayList<ForkJoinTask<?>> tasks = new ArrayList<ForkJoinTask<?>>()
+      val tasks = mutableListOf<ForkJoinTask<*>>()
       if (!downloadCompilationOutputsOnly || anyLocalChanges) {
-        tasks.add(ForkJoinTask.adapt(new Runnable() {
-          @Override
-          void run() {
-            saveJpsCache(lastCachedCommit)
-          }
-        }))
+        tasks.add(ForkJoinTask.adapt { saveJpsCache(lastCachedCommit) })
       }
 
-      def sourcesState = getSourcesState(lastCachedCommit)
-      def outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
-      context.messages.info("Going to download ${outputs.size()} compilation output parts.")
-      outputs.forEach { CompilationOutput output ->
-        tasks.add(ForkJoinTask.adapt(new Runnable() {
-          @Override
-          void run() {
-            saveOutput(output)
-          }
-        }))
+      val sourcesState = getSourcesState(lastCachedCommit)
+      val outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
+      context.messages.info("Going to download ${outputs.size} compilation output parts.")
+      outputs.forEach { output ->
+        tasks.add(ForkJoinTask.adapt { saveOutput(output) })
       }
       ForkJoinTask.invokeAll(tasks)
     }
@@ -120,20 +92,20 @@ final class PortableCompilationCacheDownloader {
     }
   }
 
-  private Map<String, Map<String, BuildTargetState>> getSourcesState(String commitHash) {
-    sourcesStateProcessor.parseSourcesStateFile(getClient.doGet("$remoteCacheUrl/metadata/$commitHash"))
+  private fun getSourcesState(commitHash: String): Map<String, Map<String, BuildTargetState>> {
+    return sourcesStateProcessor.parseSourcesStateFile(downloadString("$remoteCacheUrl/metadata/$commitHash"))
   }
 
-  private void saveJpsCache(String commitHash) {
-    Path cacheArchive = null
+  private fun saveJpsCache(commitHash: String) {
+     var cacheArchive: Path? = null
     try {
       cacheArchive = downloadJpsCache(commitHash)
 
-      def cacheDestination = context.compilationData.dataStorageRoot
+      val cacheDestination = context.compilationData.dataStorageRoot
 
-      long start = System.currentTimeMillis()
-      new Decompressor.Zip(cacheArchive).overwrite(true).extract(cacheDestination)
-      context.messages.info("Jps Cache was uncompresed to $cacheDestination in ${System.currentTimeMillis() - start}ms.")
+      val start = System.currentTimeMillis()
+      Decompressor.Zip(cacheArchive).overwrite(true).extract(cacheDestination)
+      context.messages.info("Jps Cache was uncompressed to $cacheDestination in ${System.currentTimeMillis() - start}ms.")
     }
     finally {
       if (cacheArchive != null) {
@@ -142,26 +114,20 @@ final class PortableCompilationCacheDownloader {
     }
   }
 
-  private Path downloadJpsCache(String commitHash) {
-    Path cacheArchive = Files.createTempFile('cache', '.zip')
-
-    context.messages.info('Downloading Jps Cache...')
-    long start = System.currentTimeMillis()
-    getClient.doGet("$remoteCacheUrl/caches/$commitHash", cacheArchive)
-    context.messages.info("Jps Cache was downloaded in ${System.currentTimeMillis() - start}ms.")
-
+  private fun downloadJpsCache(commitHash: String): Path {
+    val cacheArchive = Files.createTempFile("cache", ".zip")
+    downloadToFile("$remoteCacheUrl/caches/$commitHash", cacheArchive, spanName = "download jps cache")
     return cacheArchive
   }
 
-  private void saveOutput(CompilationOutput compilationOutput) {
-    Path outputArchive = null
+  private fun saveOutput(compilationOutput: CompilationOutput) {
+    var outputArchive: Path? = null
     try {
       outputArchive = downloadOutput(compilationOutput)
-
-      new Decompressor.Zip(outputArchive).overwrite(true).extract(new File(compilationOutput.path))
+      Decompressor.Zip(outputArchive).overwrite(true).extract(Path.of(compilationOutput.path))
     }
-    catch (Exception e) {
-      throw new Exception("Unable to decompress $remoteCacheUrl/${compilationOutput.remotePath} to $compilationOutput.path", e)
+    catch (e: Exception) {
+      throw Exception("Unable to decompress $remoteCacheUrl/${compilationOutput.remotePath} to $compilationOutput.path", e)
     }
     finally {
       if (outputArchive != null) {
@@ -170,106 +136,9 @@ final class PortableCompilationCacheDownloader {
     }
   }
 
-  private Path downloadOutput(CompilationOutput compilationOutput) {
-    Path outputArchive = Path.of(compilationOutput.path, 'tmp-output.zip')
-    Files.createDirectories(outputArchive)
-
-    getClient.doGet("$remoteCacheUrl/${compilationOutput.remotePath}", outputArchive)
-
+  private fun downloadOutput(compilationOutput: CompilationOutput): Path {
+    val outputArchive = Path.of(compilationOutput.path, "tmp-output.zip")
+    downloadToFile("$remoteCacheUrl/${compilationOutput.remotePath}", outputArchive, spanName = "download output")
     return outputArchive
   }
 }
-
-@CompileStatic
-final class GetClient {
-  private int timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
-
-  private final RequestConfig config = RequestConfig.custom()
-    .setConnectionRequestTimeout(timeout)
-    .setConnectTimeout(timeout)
-    .setSocketTimeout(timeout)
-    .build()
-
-  private final CloseableHttpClient httpClient = HttpClientBuilder.create()
-    .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
-    .setDefaultRequestConfig(config)
-    .setMaxConnTotal(10)
-    .setMaxConnPerRoute(10)
-    .build()
-
-  private final BuildMessages buildMessages
-
-  GetClient(BuildMessages buildMessages) {
-    this.buildMessages = buildMessages
-  }
-
-  boolean exists(String url) {
-    HttpHead request = new HttpHead(url)
-
-    httpClient.execute(request).withCloseable { response ->
-      response.statusLine.statusCode == 200
-    }
-  }
-
-  String doGet(String url) {
-    getWithRetry(url, { HttpGet request ->
-      httpClient.execute(request).withCloseable { response ->
-        def responseString = EntityUtils.toString(response.entity, ContentType.APPLICATION_JSON.charset)
-        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-          DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, responseString)
-          throwDownloadException(response, downloadException)
-        }
-        responseString
-      }
-    })
-  }
-
-  void doGet(String url, Path file) {
-    getWithRetry(url, { HttpGet request ->
-      httpClient.execute(request).withCloseable { response ->
-        if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-          DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
-          throwDownloadException(response, downloadException)
-        }
-        response.entity.content.withCloseable {
-          Files.copy(it, file, StandardCopyOption.REPLACE_EXISTING)
-        }
-      }
-    })
-  }
-
-  private static void throwDownloadException(CloseableHttpResponse response, DownloadException downloadException) {
-    if (response.statusLine.statusCode == HttpStatus.SC_NOT_FOUND) {
-      throw new StopTrying(downloadException)
-    }
-    else {
-      throw downloadException
-    }
-  }
-
-  private <T> T getWithRetry(String url, Closure<T> operation) {
-    return new Retry(buildMessages).call {
-      try {
-        operation(new HttpGet(url))
-      }
-      catch (StopTrying | DownloadException ex) {
-        throw ex
-      }
-      catch (Exception ex) {
-        throw new DownloadException(url, ex)
-      }
-    }
-  }
-}
-
-@CompileStatic
-final class DownloadException extends RuntimeException {
-  DownloadException(String url, int status, String details) {
-    super("Error while executing GET '$url': $status, $details")
-  }
-
-  DownloadException(String url, Throwable cause) {
-    super("Error while executing GET '$url': $cause.message")
-  }
-}
-

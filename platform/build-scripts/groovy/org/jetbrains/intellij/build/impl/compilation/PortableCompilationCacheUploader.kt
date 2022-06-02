@@ -5,7 +5,6 @@ import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import okhttp3.Request
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
@@ -13,7 +12,6 @@ import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.jps.incremental.storage.ProjectStamps
-
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
@@ -31,7 +29,7 @@ internal class PortableCompilationCacheUploader(
 ) {
   private val uploadedOutputCount = AtomicInteger()
 
-  private val sourcesStateProcessor = SourcesStateProcessor(context)
+  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.paths.buildOutputDir)
   private val uploader = Uploader(remoteCacheUrl)
 
   private val commitHistory = CommitsHistory(mapOf(remoteGitUrl to setOf(commitHash)))
@@ -171,7 +169,8 @@ private class Uploader(serverUrl: String) : CompilationPartsUploader(serverUrl) 
   }
 
   fun getAsString(path: String): String {
-    httpClient.newCall(Request.Builder().url("$serverUrl${path.trimStart('/')}").build()).execute().use {
+    val url = "$serverUrl${path.trimStart('/')}"
+    httpClient.get(url).useSuccessful {
       return it.body.string()
     }
   }

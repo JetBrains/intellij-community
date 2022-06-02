@@ -5,7 +5,6 @@ import com.google.common.hash.Hashing
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
 
@@ -27,10 +26,12 @@ final class SourcesStateProcessor {
   private static final String TEST = "test"
 
   private final Gson gson = new Gson()
-  private final CompilationContext context
+  private final Path dataStorageRoot
+  private final Path buildOutputRoot
 
-  SourcesStateProcessor(CompilationContext context) {
-    this.context = context
+  SourcesStateProcessor(Path dataStorageRoot, Path buildOutputRoot) {
+    this.dataStorageRoot = dataStorageRoot
+    this.buildOutputRoot = buildOutputRoot
   }
 
   List<CompilationOutput> getAllCompilationOutputs(Map<String, Map<String, BuildTargetState>> sourceStateFile) {
@@ -42,7 +43,7 @@ final class SourcesStateProcessor {
   }
 
   Path getSourceStateFile() {
-    return context.compilationData.dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
+    return dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
   }
 
   private List<CompilationOutput> getProductionCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState) {
@@ -53,9 +54,11 @@ final class SourcesStateProcessor {
     return getCompilationOutputs(TEST, TEST_TYPES[0], TEST_TYPES[1], currentSourcesState)
   }
 
-  private List<CompilationOutput> getCompilationOutputs(String prefix, String firstUploadParam, String secondUploadParam,
-                                                       Map<String, Map<String, BuildTargetState>> currentSourcesState) {
-    def root = new File(context.paths.buildOutputRoot, 'classes')
+  private List<CompilationOutput> getCompilationOutputs(String prefix,
+                                                        String firstUploadParam,
+                                                        String secondUploadParam,
+                                                        Map<String, Map<String, BuildTargetState>> currentSourcesState) {
+    def root = buildOutputRoot.resolve("classes").toFile()
 
     def firstParamMap = currentSourcesState.get(firstUploadParam)
     def secondParamMap = currentSourcesState.get(secondUploadParam)

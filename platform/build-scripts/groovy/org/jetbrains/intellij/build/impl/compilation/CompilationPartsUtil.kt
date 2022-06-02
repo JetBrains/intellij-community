@@ -15,7 +15,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
@@ -145,8 +144,6 @@ private fun upload(zipsLocation: Path, messages: BuildMessages, items: List<Pack
   check(!branch.isNullOrBlank()) {
     "Unable to determine current git branch, assuming 'master'. \nPlease set '$artifactBranchPropertyName' system property"
   }
-
-  val httpClient = createHttpClient("Parts Uploader")
 
   // prepare metadata for writing into file
   val metadataJson = Json.encodeToString(CompilationPartsMetadata(
@@ -287,20 +284,14 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
         emptyList()
       }
       else {
-        val client = createHttpClient("Parts Downloader", followRedirects = false)
-        try {
-          createBufferPool().use { bufferPool ->
-            downloadCompilationCache(serverUrl = serverUrl,
-                                     prefix = prefix,
-                                     toDownload = toDownload,
-                                     client = client,
-                                     bufferPool = bufferPool,
-                                     saveHash = saveHash)
-          }
-        }
-        finally {
-          client.dispatcher.executorService.shutdown()
-          client.connectionPool.evictAll()
+        val httpClientWithoutFollowingRedirects = httpClient.newBuilder().followRedirects(false).build()
+        createBufferPool().use { bufferPool ->
+          downloadCompilationCache(serverUrl = serverUrl,
+                                   prefix = prefix,
+                                   toDownload = toDownload,
+                                   client = httpClientWithoutFollowingRedirects,
+                                   bufferPool = bufferPool,
+                                   saveHash = saveHash)
         }
       }
 
@@ -456,29 +447,6 @@ internal data class FetchAndUnpackItem(
   val output: Path,
   val file: Path
 )
-
-internal fun createHttpClient(userAgent: String, followRedirects: Boolean = true): OkHttpClient {
-  return OkHttpClient.Builder()
-    .addInterceptor { chain ->
-      chain.proceed(chain.request()
-                      .newBuilder()
-                      .header("User-Agent", userAgent)
-                      .build())
-    }
-    .addInterceptor { chain ->
-      val request = chain.request()
-      var response = chain.proceed(request)
-      var tryCount = 0
-      while (response.code >= 500 && tryCount < 3) {
-        response.close()
-        tryCount++
-        response = chain.proceed(request)
-      }
-      response
-    }
-    .followRedirects(followRedirects)
-    .build()
-}
 
 /**
  * Configuration on which compilation parts to download and from where.

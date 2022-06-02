@@ -21,7 +21,6 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
@@ -34,11 +33,8 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
-internal val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 private val MEDIA_TYPE_JSON = "application/json".toMediaType()
-
 internal val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)
-
 internal const val MAX_BUFFER_SIZE = 4_000_000
 
 internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -> Unit,
@@ -115,17 +111,11 @@ internal fun uploadArchives(reportStatisticValue: (key: String, value: String) -
 }
 
 private fun getFoundAndMissingFiles(metadataJson: String, serverUrl: String, client: OkHttpClient): CheckFilesResponse {
-  val request = Request.Builder()
-    .url("$serverUrl/check-files")
-    .post(metadataJson.toRequestBody(MEDIA_TYPE_JSON))
-    .build()
-
-  return client.newCall(request).execute().use { response ->
-    if (!response.isSuccessful) {
-      throw IOException("Failed to check for found and missing files: $response")
-    }
-
-    Json.decodeFromStream(response.body.byteStream())
+  client.newCall(Request.Builder()
+                   .url("$serverUrl/check-files")
+                   .post(metadataJson.toRequestBody(MEDIA_TYPE_JSON))
+                   .build()).execute().useSuccessful {
+    return Json.decodeFromStream(it.body.byteStream())
   }
 }
 

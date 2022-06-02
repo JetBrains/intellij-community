@@ -102,17 +102,11 @@ class PortableCompilationCache(private val context: CompilationContext) {
     }
   }
 
-  fun isCompilationRequired(): Boolean {
-    return forceRebuild || isLocalCacheUsed() || isRemoteCacheStale()
-  }
+  fun isCompilationRequired() = forceRebuild || isLocalCacheUsed() || isRemoteCacheStale()
 
-  private fun isLocalCacheUsed(): Boolean {
-    return !forceRebuild && !forceDownload && jpsCaches.maybeAvailableLocally
-  }
+  private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && jpsCaches.maybeAvailableLocally
 
-  private fun isRemoteCacheStale(): Boolean {
-    return !downloader.availableForHeadCommit || downloader.anyLocalChanges
-  }
+  private fun isRemoteCacheStale() = !downloader.availableForHeadCommit || downloader.anyLocalChanges
 
   /**
    * Upload local {@link PortableCompilationCache} to {@link RemoteCache}
