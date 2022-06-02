@@ -12,10 +12,10 @@ class SingleAlarm @JvmOverloads constructor(
   private val modalityState: ModalityState? = computeDefaultModality(threadToUse)
 ) : Alarm(threadToUse, parentDisposable) {
   constructor(task: Runnable, delay: Int, modalityState: ModalityState, parentDisposable: Disposable)
-    : this(task, delay = delay, parentDisposable = parentDisposable, threadToUse = ThreadToUse.SWING_THREAD, modalityState = modalityState)
+    : this(task, delay, parentDisposable, ThreadToUse.SWING_THREAD, modalityState)
 
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
-    : this(task, delay = delay, parentDisposable = parentDisposable, threadToUse = threadToUse, modalityState = computeDefaultModality(threadToUse))
+    : this(task, delay, parentDisposable, threadToUse, computeDefaultModality(threadToUse))
 
   constructor(task: Runnable, delay: Int) : this(task, delay, null)
 

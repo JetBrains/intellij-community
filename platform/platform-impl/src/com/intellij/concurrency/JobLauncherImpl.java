@@ -5,10 +5,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.WrappedProgressIndicator;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
@@ -45,7 +42,7 @@ public final class JobLauncherImpl extends JobLauncher {
     ProgressIndicator wrapper = progress == null ? new StandardProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
 
     Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
-    if (result != null) return result.booleanValue();
+    if (result != null) return result;
 
     ProgressManager pm = ProgressManager.getInstance();
     Processor<? super T> processor = ((CoreProgressManager)pm).isCurrentThreadPrioritized()
@@ -111,7 +108,7 @@ public final class JobLauncherImpl extends JobLauncher {
 
   private static boolean isAlreadyUnder(@NotNull ProgressIndicator progress) {
     progress = ProgressWrapper.unwrapAll(progress);
-    ProgressIndicator existing = ProgressManager.getGlobalProgressIndicator();
+    ProgressIndicator existing = ProgressIndicatorProvider.getGlobalProgressIndicator();
     while (existing != null) {
       if (existing == progress) return true;
       if (!(existing instanceof WrappedProgressIndicator)) return false;
@@ -128,7 +125,7 @@ public final class JobLauncherImpl extends JobLauncher {
                                                         @NotNull Processor<? super T> thingProcessor) {
     if (things.isEmpty()) return true;
 
-    if (things.size() <= 1 ||
+    if (things.size() == 1 ||
         JobSchedulerImpl.getJobPoolParallelism() <= CORES_FORK_THRESHOLD ||
         runInReadAction && ApplicationManager.getApplication().isWriteAccessAllowed()
       ) {
@@ -354,6 +351,7 @@ public final class JobLauncherImpl extends JobLauncher {
     }
     for (ForkJoinTask<Boolean> task : tasks) {
       try {
+        //noinspection NonShortCircuitBooleanExpression
         result &= task.join();
       }
       catch (Throwable e) {
