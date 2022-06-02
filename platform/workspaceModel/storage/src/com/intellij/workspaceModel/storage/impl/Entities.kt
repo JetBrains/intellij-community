@@ -156,8 +156,7 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-
-    other as WorkspaceEntityBase
+    if (other !is WorkspaceEntityBase) return false
 
     if (id != other.id) return false
     if ((this.snapshot as AbstractEntityStorage).entityDataById(id) !==
