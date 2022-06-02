@@ -155,6 +155,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     }
 
     // If we've got a stripe, we're within its bounds
+    // Note that this is a shortcut for getTargetStripeByDropLocation(devicePoint, preferredStripe) et al
+    // Make sure lastStripe is up-to-date before calling isDragOut!
     return lastStripe == null
   }
 
@@ -224,8 +226,6 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       dialog.size = originalDialogSize
     }
 
-    setDragOut(isDragOut(eventDevicePoint))
-
     val preferredStripe = getSourceStripe(toolWindow.anchor)
     val targetStripe = getTargetStripeByDropLocation(eventDevicePoint, preferredStripe)
                        ?: if (!isNewUi && isPointInVisibleDockedToolWindow(eventDevicePoint)) preferredStripe else null
@@ -235,6 +235,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         it.resetDrop()
       }
     }
+
+    // Make sure to set lastStripe before calling isDragOut
+    lastStripe = targetStripe
+    setDragOut(isDragOut(eventDevicePoint))
 
     if (targetStripe != null && initialButton != null) {
       addDropTargetHighlighter(toolWindow.toolWindowManager.getToolWindowPane(targetStripe.paneId))
@@ -297,7 +301,6 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         })
       }
     }
-    lastStripe = targetStripe
   }
 
   private fun setDragOut(dragOut: Boolean) {
