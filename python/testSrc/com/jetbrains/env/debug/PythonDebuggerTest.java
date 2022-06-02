@@ -1627,4 +1627,27 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testDictWithUnicodeOrBytesValuesOrNames() {
+    runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_dict_with_unicode_or_bytes_values_names.py") {
+      private final static String PYTHON2_TAG = "python2";
+
+      @Override
+      public void testing() throws Exception {
+        if (hasPython2Tag()) {
+          waitForOutput("{u\"u'Foo \\u201cFoo\\u201d Bar' (4706573888)\": u'\\u201cFoo\\u201d'}");
+          waitForOutput("{'\\xfc\\x00': '\\x00\\x10'}");
+        }
+        else {
+          waitForOutput("{\"u'Foo “Foo” Bar' (4706573888)\": '“Foo”'}");
+          waitForOutput("{b'\\xfc\\x00': b'\\x00\\x10'}");
+        }
+      }
+
+      private boolean hasPython2Tag() throws NullPointerException {
+        return hasTag(PYTHON2_TAG);
+      }
+    });
+  }
 }
