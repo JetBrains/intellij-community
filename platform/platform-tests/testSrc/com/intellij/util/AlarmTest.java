@@ -170,7 +170,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     assertEquals(2, sb.length());
   }
 
-  public void testExceptionDuringAlarmExecutionMustManifestItselfInTests() throws Exception {
+  public void testExceptionDuringAlarmExecutionMustManifestItselfInTests() {
     Alarm alarm = new Alarm(getTestRootDisposable());
     List<Throwable> errors = new ArrayList<>();
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor(){
@@ -199,5 +199,9 @@ import static org.assertj.core.api.Assertions.assertThat;
       Throwable t = assertOneElement(errors);
       assertEquals("wtf", t.getMessage());
     });
+  }
+
+  public void testSingleAlarmMustRefuseToInstantiateWithWrongModality() {
+    assertThrows(IllegalArgumentException.class, () -> new SingleAlarm(() -> {}, 1, null, Alarm.ThreadToUse.SWING_THREAD, null));
   }
 }
