@@ -124,6 +124,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         it.withModule("intellij.cidr.debugger.commandInterpreterLang", it.mainJarName)
         it.withModule("intellij.cidr.core", it.mainJarName)
         it.withModule("intellij.cidr.util", it.mainJarName)
+        it.withModule("intellij.cidr.util.execution", it.mainJarName)
         it.withModule("intellij.cidr.util.serializer", it.mainJarName)
         it.withModule("intellij.cidr.util.ui", it.mainJarName)
       },
@@ -145,6 +146,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         it.withModule("intellij.cidr.psi.base", it.mainJarName)
         it.withModule("intellij.cidr.resources", it.mainJarName)
         it.withModule("intellij.cidr.common", it.mainJarName)
+        it.withModule("intellij.cidr.runner", it.mainJarName)
         it.withModule("intellij.cmake.psi", it.mainJarName)
         // The cidr test framework is included in the IDE base in Clion. But we
         // include it here to support writing tests in plugins.
