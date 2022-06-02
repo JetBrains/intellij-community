@@ -230,7 +230,31 @@ final class CommunityRepositoryModules {
       withModule("intellij.markdown.core")
       withModule("intellij.markdown.fenceInjection")
       withModule("intellij.markdown.frontmatter")
-    }
+    },
+    simplePlugin("intellij.platform.images"),
+    simplePlugin("intellij.java.ide.customization"),
+    simplePlugin("intellij.copyright"),
+    simplePlugin("intellij.editorconfig"),
+    simplePlugin("intellij.settingsRepository"),
+    simplePlugin("intellij.settingsSync"),
+    simplePlugin("intellij.configurationScript"),
+    simplePlugin("intellij.yaml"),
+    simplePlugin("intellij.repository.search"),
+    simplePlugin("intellij.maven.model"),
+    simplePlugin("intellij.vcs.hg"),
+    simplePlugin("intellij.vcs.github"),
+    simplePlugin("intellij.java.i18n"),
+    simplePlugin("intellij.java.debugger.streams"),
+    simplePlugin("intellij.sh"),
+    simplePlugin("intellij.vcs.changeReminder"),
+    simplePlugin("intellij.vcs.refactoring.detector"),
+    simplePlugin("intellij.featuresTrainer"),
+    simplePlugin("intellij.vcs.git.featuresTrainer"),
+    simplePlugin("intellij.searchEverywhereMl"),
+    simplePlugin("intellij.keymap.eclipse"),
+    simplePlugin("intellij.keymap.visualStudio"),
+    simplePlugin("intellij.keymap.netbeans"),
+    simplePlugin("kotlin.resources-fir"),
   )
 
   public final static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = List.of(

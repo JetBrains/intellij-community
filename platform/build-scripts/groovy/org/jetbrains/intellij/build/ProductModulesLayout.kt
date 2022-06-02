@@ -66,13 +66,19 @@ class ProductModulesLayout {
   }
 
   /**
-   * Describes non-trivial layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
+   * Describes layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
    * with the product is specified by {@link #bundledPluginModules}, the actual list of plugins which need to be prepared for publishing
-   * is specified by {@link #setPluginModulesToPublish pluginModulesToPublish}. There is no need to specify layout for plugins where it's trivial,
-   * i.e. for plugins which include an output of a single module and its module libraries, it's enough to specify module names of such plugins
-   * in {@link #bundledPluginModules} and {@link #setPluginModulesToPublish pluginModulesToPublish}.
+   * is specified by {@link #setPluginModulesToPublish pluginModulesToPublish}.
+   *
+   * For trivial plugins, i.e. for plugins which include an output of a single module and its module libraries, it's enough to use
+   * [org.jetbrains.intellij.build.impl.PluginLayout.Companion.simplePlugin] as layout.
    */
   var allNonTrivialPlugins: List<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+
+  /**
+   * Fail when plugin should be build, but its definition is missing from [org.jetbrains.intellij.build.ProductModulesLayout.allNonTrivialPlugins]
+   */
+  var failOnUnspecifiedPluginLayout: Boolean = false
 
   /**
    * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
