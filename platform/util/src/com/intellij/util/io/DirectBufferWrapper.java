@@ -156,6 +156,19 @@ public final class DirectBufferWrapper {
     fileSizeMayChanged(buf.position());
   }
 
+  public void putFromBuffer(@NotNull ByteBuffer data, int page_offset) throws IOException, IllegalArgumentException {
+    StorageLockContext context = myFile.getStorageLockContext();
+    context.checkWriteAccess();
+
+    markDirty();
+    ByteBuffer buf = myBuffer.duplicate();
+    int dataLength = data.limit() - data.position();
+
+    buf.position(page_offset);
+    buf.put(data);
+    fileSizeMayChanged(dataLength);
+  }
+
 
   private ByteBuffer create() throws IOException {
     ByteBuffer buffer = ALLOCATOR.allocate(myFile.myPageSize);

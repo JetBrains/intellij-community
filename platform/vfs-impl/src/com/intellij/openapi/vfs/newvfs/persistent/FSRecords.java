@@ -107,16 +107,17 @@ public final class FSRecords {
   /**
    * @return nameId > 0
    */
-  static int writeAttributesToRecord(int fileId, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
+  static int writeAttributesToRecord(int fileId, int parentId, @NotNull FileAttributes attributes, @NotNull String name,
+                                     boolean overwriteMissed) {
+    int nameId = getNameId(name);
+    long timestamp = attributes.lastModified;
+    long length = attributes.isDirectory() ? -1L : attributes.length;
+    int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
     return writeAndHandleErrors(() -> {
-      int nameId = setName(fileId, name, 0);
+      setAttributes(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
+      InvertedNameIndex.updateFileName(fileId, nameId, 0);
 
-      // TODO replace with single op
-      setTimestamp(fileId, attributes.lastModified);
-      setLength(fileId, attributes.isDirectory() ? -1L : attributes.length);
-      setFlags(fileId, PersistentFSImpl.fileAttributesToFlags(attributes));
-      setParent(fileId, parentId);
-
+      ourNamesIndexModCount.incrementAndGet();
       return nameId;
     });
   }
@@ -467,6 +468,7 @@ public final class FSRecords {
     return ourConnection.getLocalModificationCount() + ourAttributeAccessor.getLocalModificationCount();
   }
 
+  @TestOnly
   static int getPersistentModCount() {
     return readAndHandleErrors(ourConnection::getPersistentModCount);
   }
@@ -589,7 +591,16 @@ public final class FSRecords {
   }
 
   public static int getNameId(@NotNull String name) {
-    return readAndHandleErrors(() -> ourConnection.getNames().enumerate(name));
+    try {
+      return ourConnection.getNames().enumerate(name);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   public static @NotNull String getName(int id) {
@@ -630,7 +641,7 @@ public final class FSRecords {
     return writeAndHandleErrors(() -> {
       ourNamesIndexModCount.incrementAndGet();
       incModCount(fileId);
-      int nameId = ourConnection.getNames().enumerate(name);
+      int nameId = getNameId(name);
       ourConnection.getRecords().setNameId(fileId, nameId);
       InvertedNameIndex.updateFileName(fileId, nameId, oldNameId);
       return nameId;
@@ -655,6 +666,11 @@ public final class FSRecords {
         incModCount(id);
       }
     });
+  }
+
+  static void setAttributes(int id, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed) throws IOException {
+    PersistentFSRecordsStorage records = ourConnection.getRecords();
+    records.setAttributesAndIncModCount(id, timestamp, length, flags, nameId, parentId, overwriteMissed);
   }
 
   static long getTimestamp(int id) {

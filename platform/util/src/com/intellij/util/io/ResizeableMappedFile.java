@@ -35,6 +35,7 @@ import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -240,6 +241,11 @@ public class ResizeableMappedFile implements Forceable, Closeable {
   public void put(long index, byte[] src, int offset, int length) throws IOException {
     ensureSize(index + length);
     myStorage.put(index, src, offset, length);
+  }
+
+  public void put(long index, @NotNull ByteBuffer buffer) throws IOException {
+    ensureSize(index + (buffer.limit() - buffer.position()));
+    myStorage.putBuffer(index, buffer);
   }
 
   public void close() throws IOException {

@@ -21,6 +21,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.concurrent.ScheduledFuture;
@@ -167,6 +168,7 @@ final class PersistentFSConnection {
     }  // No luck.
   }
 
+  @TestOnly
   int getPersistentModCount() throws IOException {
     return myRecords.getGlobalModCount();
   }

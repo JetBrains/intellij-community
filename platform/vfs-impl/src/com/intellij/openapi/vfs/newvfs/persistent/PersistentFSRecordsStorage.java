@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
@@ -52,23 +53,35 @@ public final class PersistentFSRecordsStorage {
 
   @NotNull
   private final ResizeableMappedFile myFile;
+  private final ByteBuffer myPooledWriteBuffer = ByteBuffer.allocateDirect(RECORD_SIZE);
+  @NotNull
+  private final AtomicInteger myGlobalModCount;
 
-  public PersistentFSRecordsStorage(@NotNull ResizeableMappedFile file) {
+  public PersistentFSRecordsStorage(@NotNull ResizeableMappedFile file) throws IOException {
     myFile = file;
+    if (myFile.isNativeBytesOrder()) myPooledWriteBuffer.order(ByteOrder.nativeOrder());
+    myGlobalModCount = new AtomicInteger(readGlobalModCount());
   }
 
-  int getGlobalModCount() throws IOException {
+  int getGlobalModCount() {
+    return myGlobalModCount.get();
+  }
+
+  private int readGlobalModCount() throws IOException {
     return read(() -> {
       return myFile.getInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET);
     });
   }
 
-  int incGlobalModCount() throws IOException {
-    return write(() -> {
-      final int count = getGlobalModCount() + 1;
-      myFile.putInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
-      return count;
+  private void saveGlobalModCount() throws IOException {
+    write(() -> {
+      myFile.putInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET, getGlobalModCount());
+      return null;
     });
+  }
+
+  int incGlobalModCount() {
+    return myGlobalModCount.incrementAndGet();
   }
 
   long getTimestamp() throws IOException {
@@ -239,6 +252,22 @@ public final class PersistentFSRecordsStorage {
     });
   }
 
+  public void setAttributesAndIncModCount(int id, long timestamp, long length, int flags, int nameId, int parentId,
+                                          boolean overwriteMissed) throws IOException {
+    write(() -> {
+      myPooledWriteBuffer.putLong(TIMESTAMP_OFFSET, timestamp);
+      myPooledWriteBuffer.putInt(ATTR_REF_OFFSET, overwriteMissed ? 0 : getAttributeRecordId(id));
+      myPooledWriteBuffer.putLong(LENGTH_OFFSET, length);
+      myPooledWriteBuffer.putInt(FLAGS_OFFSET, flags);
+      myPooledWriteBuffer.putInt(NAME_OFFSET, nameId);
+      myPooledWriteBuffer.putInt(PARENT_OFFSET, parentId);
+      myPooledWriteBuffer.putInt(MOD_COUNT_OFFSET, overwriteMissed ? 0 : getModCount(id) + 1);
+      myFile.put(((long)id) * RECORD_SIZE, myPooledWriteBuffer);
+      myPooledWriteBuffer.rewind();
+      return null;
+    });
+  }
+
   private static int getOffset(int id, int offset) {
     return id * RECORD_SIZE + offset;
   }
@@ -249,26 +278,18 @@ public final class PersistentFSRecordsStorage {
     });
   }
 
-  void close() {
+  void close() throws IOException {
     write(() -> {
-      try {
-        myFile.close();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      saveGlobalModCount();
+      myFile.close();
       return null;
     });
   }
 
-  void force() {
+  void force() throws IOException {
     write(() -> {
-      try {
-        myFile.force();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      saveGlobalModCount();
+      myFile.force();
       return null;
     });
   }

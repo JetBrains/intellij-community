@@ -314,6 +314,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     myStructureModificationCount.incrementAndGet();
   }
 
+  @TestOnly
   @Override
   public int getFilesystemModificationCount() {
     return FSRecords.getPersistentModCount();
@@ -325,7 +326,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                              int parentId,
                                              @NotNull CharSequence name,
                                              @NotNull NewVirtualFileSystem fs,
-                                             @NotNull FileAttributes attributes) {
+                                             @NotNull FileAttributes attributes,
+                                             boolean overwriteMissed) {
     assert id > 0 : id;
     assert parentId >= 0 : parentId; // 0 means there's no parent
     if (name.length() != 0) {
@@ -335,7 +337,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (areChildrenLoaded(id)) return -1; // TODO: hack
     }
 
-    return FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString());
+    return FSRecords.writeAttributesToRecord(id, parentId, attributes, name.toString(), overwriteMissed);
   }
 
   @Override
@@ -1402,7 +1404,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                    " path='" + path + "'; fs=" + fs + "; rootUrl='" + rootUrl + "'", e);
       }
       incStructuralModificationCount();
-      mark = writeAttributesToRecord(rootId, null, 0, rootName, fs, attributes) != -1;
+      mark = writeAttributesToRecord(rootId, null, 0, rootName, fs, attributes, false) != -1;
 
       myRoots.put(rootUrl, newRoot);
       myIdToDirCache.cacheDir(newRoot);
@@ -1593,9 +1595,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                            @NotNull Pair<@NotNull FileAttributes, String> childData,
                                            @NotNull NewVirtualFileSystem fs,
                                            @NotNull ChildInfo @Nullable [] children) {
-    int childId = FSRecords.createRecord();
     FileAttributes attributes = childData.first;
-    int nameId = writeAttributesToRecord(childId, parentFile, parentId, name, fs, attributes);
+
+    int childId = FSRecords.createRecord();
+    int nameId = writeAttributesToRecord(childId, parentFile, parentId, name, fs, attributes, true);
+
     assert childId > 0 : childId;
     if (attributes.isDirectory()) {
       FSRecords.loadDirectoryData(childId, childPath(parentFile, name), fs);

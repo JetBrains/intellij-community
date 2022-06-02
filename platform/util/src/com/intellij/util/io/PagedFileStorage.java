@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
@@ -229,6 +230,23 @@ public class PagedFileStorage implements Forceable {
     } else {
       get(addr, getThreadLocalTypedIOBuffer(), 0, 8, true);
       return Bits.getLong(getThreadLocalTypedIOBuffer(), 0);
+    }
+  }
+
+  public void putBuffer(long index, @NotNull ByteBuffer data) throws IOException {
+    if (!myValuesAreBufferAligned) {
+      //TODO
+      throw new RuntimeException("can't perform putBuffer() for unaligned storage");
+    }
+    long page = index / myPageSize;
+    int offset = (int)(index % myPageSize);
+
+    DirectBufferWrapper buffer = getBuffer(page);
+    try {
+      buffer.putFromBuffer(data, offset);
+    }
+    finally {
+      buffer.unlock();
     }
   }
 
