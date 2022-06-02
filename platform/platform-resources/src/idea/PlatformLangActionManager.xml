@@ -76,13 +76,13 @@
                 icon="AllIcons.ObjectBrowser.SortByType"
                 class="com.intellij.analysis.problemsView.toolWindow.GroupByToolId"/>
       </group>
-      <reference ref="ProblemsView.ShowPreview"/>
-      <reference ref="ExpandAll"/>
-      <reference ref="CollapseAll"/>
       <action id="ProblemsView.QuickFixes"
               icon="AllIcons.Actions.IntentionBulb"
               use-shortcut-of="ShowIntentionActions"
               class="com.intellij.analysis.problemsView.toolWindow.ShowQuickFixesAction"/>
+      <reference ref="ProblemsView.ShowPreview"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
 
     <group id="ProblemsView.ToolWindow.TreePopup">
