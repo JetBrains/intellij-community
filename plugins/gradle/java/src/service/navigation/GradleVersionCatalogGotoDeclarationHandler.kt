@@ -1,0 +1,94 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.service.navigation
+
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.parentOfType
+import com.intellij.util.castSafelyTo
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
+import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
+import java.nio.file.Path
+
+class GradleVersionCatalogGotoDeclarationHandler : GotoDeclarationHandler {
+  override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor?): Array<PsiElement>? {
+    if (sourceElement == null) {
+      return null
+    }
+    val resolved = sourceElement.parentOfType<GrReferenceExpression>()?.resolve() ?: return null
+    val settingsFile = getSettingsFile(sourceElement.project) ?: return null
+    val resolveVisitor = GroovySettingsFileResolveVisitor(resolved)
+    settingsFile.accept(resolveVisitor)
+    return resolveVisitor.resolveTarget?.let { arrayOf(it) }
+  }
+}
+
+private fun getSettingsFile(project: Project) : GroovyFileBase? {
+  val projectData = ProjectDataManager.getInstance().getExternalProjectsData(project,
+                                                                             GradleConstants.SYSTEM_ID).mapNotNull { it.externalProjectStructure }
+  for (projectDatum in projectData) {
+    val settings = Path.of(projectDatum.data.linkedExternalProjectPath).resolve(GradleConstants.SETTINGS_FILE_NAME).let {
+      VfsUtil.findFile(it, false)
+    }?.let { PsiManager.getInstance(project).findFile(it) }?.castSafelyTo<GroovyFileBase>()
+    return settings
+  }
+  return null
+}
+
+private class GroovySettingsFileResolveVisitor(val element : PsiElement) : GroovyRecursiveElementVisitor() {
+  var resolveTarget : PsiElement? = null
+  val accessorName = element.castSafelyTo<PsiMethod>()?.takeIf { it.returnType?.resolve()?.qualifiedName == GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER }?.let(::getCapitalizedAccessorName)
+
+  override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
+    val method = methodCallExpression.resolveMethod()
+    if (element is GradleExtensionProperty && element.name == method?.name && method.returnType?.equalsToText(GradleCommonClassNames.GRADLE_API_VERSION_CATALOG_BUILDER) == true) {
+      resolveTarget = methodCallExpression
+      return
+    }
+    if (accessorName != null && method?.containingClass?.qualifiedName == GradleCommonClassNames.GRADLE_API_VERSION_CATALOG_BUILDER) {
+      val definedName = methodCallExpression.argumentList.expressionArguments.firstOrNull()
+      val definedNameValue = GroovyConstantExpressionEvaluator.evaluate(definedName).castSafelyTo<String>() ?: return super.visitMethodCallExpression(methodCallExpression)
+      val longName = definedNameValue.split("_", ".", "-").joinToString("", transform = GroovyPropertyUtils::capitalize)
+      if (longName == accessorName) {
+        resolveTarget = methodCallExpression
+        return
+      }
+    }
+    super.visitMethodCallExpression(methodCallExpression)
+  }
+}
+
+internal fun getCapitalizedAccessorName(method: PsiMethod): String? {
+  val propertyName = GroovyPropertyUtils.getPropertyName(method) ?: return null
+  val methodFinalPart = GroovyPropertyUtils.capitalize(propertyName)
+  val methodParts = method.containingClass?.takeUnless { it.name?.startsWith(LIBRARIES_FOR_PREFIX) == true }?.name?.trimAccessorName()
+  return (methodParts ?: "") + methodFinalPart
+}
+
+
+private fun String.trimAccessorName(): String {
+  for (suffix in listOf(BUNDLE_ACCESSORS_SUFFIX, LIBRARY_ACCESSORS_SUFFIX, PLUGIN_ACCESSORS_SUFFIX, VERSION_ACCESSORS_SUFFIX)) {
+    if (endsWith(suffix)) return substringBeforeLast(suffix)
+  }
+  return this
+}
+
+internal const val BUNDLE_ACCESSORS_SUFFIX = "BundleAccessors"
+internal const val LIBRARY_ACCESSORS_SUFFIX = "LibraryAccessors"
+internal const val PLUGIN_ACCESSORS_SUFFIX = "PluginAccessors"
+internal const val VERSION_ACCESSORS_SUFFIX = "VersionAccessors"
+
+internal const val LIBRARIES_FOR_PREFIX = "LibrariesFor"
