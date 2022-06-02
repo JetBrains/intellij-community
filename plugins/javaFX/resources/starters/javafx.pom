@@ -37,7 +37,7 @@
       <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafxplugin</artifactId>
-        <version>0.0.10</version>
+        <version>0.0.13</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven.plugins</groupId>
@@ -47,7 +47,7 @@
       <dependency>
         <groupId>org.beryx</groupId>
         <artifactId>badass-jlink-plugin</artifactId>
-        <version>2.24.1</version>
+        <version>2.25.0</version>
       </dependency>
 
       <dependency>
@@ -112,9 +112,9 @@
         <version>${kotlin.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.codehaus.groovy</groupId>
+        <groupId>org.apache.groovy</groupId>
         <artifactId>groovy</artifactId>
-        <version>3.0.10</version>
+        <version>4.0.2</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.gmavenplus</groupId>

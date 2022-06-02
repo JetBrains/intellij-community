@@ -5,7 +5,7 @@ module ${context.rootPackage} {
     requires javafx.web;
     #end
     #if ($context.hasLanguage("groovy"))
-    requires org.codehaus.groovy;
+    requires org.apache.groovy;
     #end
     #if ($context.hasLanguage("kotlin"))
     requires kotlin.stdlib;
