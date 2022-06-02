@@ -107,5 +107,5 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     }
 
     private fun ExternalSystemTaskId.isGradleRelatedTask() = projectSystemId == GRADLE_SYSTEM_ID &&
-            (type == RESOLVE_PROJECT || type == EXECUTE_TASK)
+            (type == RESOLVE_PROJECT /*|| type == EXECUTE_TASK*/)
 }
