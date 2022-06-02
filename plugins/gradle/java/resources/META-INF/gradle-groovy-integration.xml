@@ -22,6 +22,7 @@
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
     <testLocationCustomizer implementation="org.jetbrains.plugins.gradle.execution.test.runner.spock.SpockGradleTestLocationCustomizer"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.VersionCatalogProjectResolver"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -34,6 +35,7 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.gradle.config.GradleImplicitUsageProvider"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
 
     <lang.documentationProvider language="Groovy"
                                 implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider" order="first"/>

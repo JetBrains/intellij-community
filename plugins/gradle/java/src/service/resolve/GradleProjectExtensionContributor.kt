@@ -3,8 +3,10 @@ package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.util.InheritanceUtil
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -51,7 +53,6 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
       val type = GradleExtensionType(delegateType)
       if (processProperties) {
         val extensionProperty = GradleExtensionProperty(extension.name, type, containingFile)
-        extensionProperty.navigationElement = delegateType.resolve() ?: extensionProperty
         if (!processor.execute(extensionProperty, state)) {
           return
         }
@@ -60,13 +61,20 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
         val extensionMethod = GrLightMethodBuilder(manager, extension.name).apply {
           returnType = type
           containingClass = aClass
-          addAndGetParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
-            .putUserData(DELEGATES_TO_KEY, DelegatesToInfo(type, Closure.DELEGATE_FIRST))
+          if (shouldAddConfiguration(extension, place)) {
+            addAndGetParameter("configuration", createType(GROOVY_LANG_CLOSURE, containingFile))
+              .putUserData(DELEGATES_TO_KEY, DelegatesToInfo(type, Closure.DELEGATE_FIRST))
+          }
         }
         if (!processor.execute(extensionMethod, state)) {
           return
         }
       }
     }
+  }
+
+  private fun shouldAddConfiguration(extension: GradleExtensionsSettings.GradleExtension, context: PsiElement): Boolean {
+    val clazz = JavaPsiFacade.getInstance(context.project).findClass(extension.rootTypeFqn, context.resolveScope) ?: return true
+    return !InheritanceUtil.isInheritor(clazz, "org.gradle.api.internal.catalog.AbstractExternalDependencyFactory")
   }
 }
