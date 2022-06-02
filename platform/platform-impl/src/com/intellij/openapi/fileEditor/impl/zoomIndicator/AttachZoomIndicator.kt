@@ -21,6 +21,8 @@ class AttachZoomIndicator : EditorFactoryListener {
     val editorEx = event.editor as? EditorImpl ?: return
     val project = editorEx.project ?: return
     if (editorEx.isDisposed || project.isDisposed) return
+    val suppressZI = editorEx.getUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR) == true
+    if (suppressZI) return
     editorEx.addPropertyChangeListener {
       if (editorEx.isDisposed || !ZoomIndicatorManager.isEnabled) return@addPropertyChangeListener
       if (it.propertyName != EditorEx.PROP_FONT_SIZE) return@addPropertyChangeListener
