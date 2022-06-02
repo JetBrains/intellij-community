@@ -312,7 +312,11 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            refMethod = (RefMethodImpl)refFrom;
                          }
                          else if (refFrom instanceof RefFunctionalExpression) {
-                           if (decl instanceof ULambdaExpression) {
+                           UElement target = node.getJumpTarget();
+                           if (target instanceof UMethod) {
+                             refMethod = ObjectUtils.tryCast(refManager.getReference(target.getSourcePsi()), RefMethodImpl.class);
+                           }
+                           else if (decl instanceof ULambdaExpression) {
                              PsiMethod lambdaMethod = LambdaUtil.getFunctionalInterfaceMethod(((ULambdaExpression)decl).getFunctionalInterfaceType());
                              refMethod = ObjectUtils.tryCast(refManager.getReference(lambdaMethod), RefMethodImpl.class);
                            }
