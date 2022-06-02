@@ -27,7 +27,7 @@ import java.io.File
 
 object KotlinArtifactsDownloader {
     fun getUnpackedKotlinDistPath(version: String): File =
-        if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) KotlinPluginLayout.instance.kotlinc
+        if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) KotlinPluginLayout.instance.kotlinc
         else KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
 
     fun getUnpackedKotlinDistPath(project: Project) =
@@ -38,7 +38,7 @@ object KotlinArtifactsDownloader {
      */
     fun isKotlinDistInitialized(version: String): Boolean {
         val parsedVersion = IdeKotlinVersion.get(version)
-        if (parsedVersion == KotlinPluginLayout.instance.standaloneCompilerVersion) {
+        if (parsedVersion.isStandaloneCompilerVersion) {
             return true
         }
 
@@ -82,7 +82,7 @@ object KotlinArtifactsDownloader {
     @Synchronized // Avoid manipulations with the same files from different threads
     fun lazyDownloadAndUnpackKotlincDist(project: Project, version: String, indicator: ProgressIndicator): File? {
         val parsedVersion = IdeKotlinVersion.get(version)
-        if (parsedVersion == KotlinPluginLayout.instance.standaloneCompilerVersion) {
+        if (parsedVersion.isStandaloneCompilerVersion) {
             return KotlinPluginLayout.instance.kotlinc
         }
 

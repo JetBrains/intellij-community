@@ -141,6 +141,8 @@ class IdeKotlinVersion private constructor(
         override fun toString(): String = javaClass.simpleName
     }
 
+    val isStandaloneCompilerVersion get() = this == KotlinPluginLayout.instance.standaloneCompilerVersion
+
     val baseVersion: String
         get() = kotlinVersion.toString()
 
