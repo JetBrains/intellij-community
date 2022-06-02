@@ -463,7 +463,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private @NotNull JBEmptyBorder getActionButtonBorder() {
-    return myOrientation == SwingConstants.VERTICAL ? JBUI.Borders.empty(2, 1) : JBUI.Borders.empty(1, 2);
+    return new JBEmptyBorder(0) {
+      @Override
+      public Insets getBorderInsets(Component c, Insets insets) {
+        Insets x = getBorderInsets();
+        insets.left = x.left;
+        insets.top = x.top;
+        insets.right = x.right;
+        insets.bottom = x.bottom;
+        return insets;
+      }
+
+      @Override
+      public Insets getBorderInsets() {
+        return myOrientation == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
+      }
+    };
   }
 
   protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
