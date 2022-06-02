@@ -123,16 +123,18 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
             val hints = hashMapOf<PsiElement, DfaHint>()
 
             override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
+                val dfType = state.getDfType(value)
                 var psi = when (anchor) {
                     is KotlinAnchor.KotlinExpressionAnchor -> {
-                        if (shouldTrackExpressionValue(anchor.expression)) anchor.expression
+                        if (shouldTrackExpressionValue(anchor.expression) &&
+                            !KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression)
+                        ) anchor.expression
                         else return
                     }
                     is KotlinAnchor.KotlinWhenConditionAnchor -> anchor.condition
                     else -> return
                 }
                 var hint = DfaHint.ANY_VALUE
-                val dfType = state.getDfType(value)
                 if (dfType === DfTypes.TRUE) {
                     hint = DfaHint.TRUE
                 } else if (dfType === DfTypes.FALSE) {
