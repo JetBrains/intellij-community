@@ -811,7 +811,6 @@ public class SingleInspectionProfilePanel extends JPanel {
               }
             }
             updateRecursively(toUpdate, true);
-            myTreeTable.updateUI();
           }
         };
         final var highlightsChooserComponent = highlightingChooser.createCustomComponent(
@@ -841,7 +840,6 @@ public class SingleInspectionProfilePanel extends JPanel {
                 }
               }
               updateRecursively(toUpdate, false);
-              myTreeTable.updateUI();
             }
           };
         severityLevelChooser.setChosen(severity);
