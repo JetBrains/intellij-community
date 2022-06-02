@@ -63,6 +63,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
   @SuppressWarnings("UnusedDeclaration")
   public static final HighlightDisplayLevel MIXED_FAKE_LEVEL = new HighlightDisplayLevel(MIXED_FAKE_SEVERITY, AllIcons.General.InspectionsMixed);
   public static final TextAttributesKey MIXED_FAKE_KEY = TextAttributesKey.createTextAttributesKey("Mixed");
+  public static final TextAttributesKey INFORMATION_FAKE_KEY = TextAttributesKey.createTextAttributesKey("");
 
   private static final int SCOPE_ENABLED_COLUMN = 0;
   private static final int SCOPE_NAME_COLUMN = 1;
@@ -246,7 +247,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
       TextAttributesKey key = scopeToolState.getEditorAttributesKey();
       if (key == null) {
         final var severity = scopeToolState.getLevel().getSeverity();
-        key = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+        key = severity.equals(HighlightSeverity.INFORMATION) ? INFORMATION_FAKE_KEY
+                                                             : registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
       }
       if (previousValue == null) {
         previousValue = key;
@@ -471,12 +473,13 @@ public class ScopesAndSeveritiesTable extends JBTable {
         }
         final String scopeName = rowIndex == lastRowIndex() ? null : getScopeName(rowIndex);
         myInspectionProfile.setErrorLevel(myKeys, level, scopeName, myProject);
+        myInspectionProfile.setEditorAttributesKey(myKeys, null, scopeName, myProject);
       }
       else if (columnIndex == HIGHLIGHTING_COLUMN) {
         if (value == EDIT_HIGHLIGHTING) return;
         final TextAttributesKey key = (TextAttributesKey)value;
         final String scopeName = rowIndex == lastRowIndex() ? null : getScopeName(rowIndex);
-        myInspectionProfile.setEditorAttributeKey(myKeys, key, scopeName, myProject);
+        myInspectionProfile.setEditorAttributesKey(myKeys, key, scopeName, myProject);
       }
       else if (columnIndex == SCOPE_ENABLED_COLUMN) {
         final NamedScope scope = getScope(rowIndex);

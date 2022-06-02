@@ -775,6 +775,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (scopesNames.isEmpty()) {
         final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
 
+        final HighlightSeverity severity = ScopesAndSeveritiesTable.getSeverity(
+          ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState())
+        );
+
         // Scope
         final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor()), myProfile, project, null) {
           @Override
@@ -792,58 +796,6 @@ public class SingleInspectionProfilePanel extends JPanel {
           scopesChooser.getTemplatePresentation(),
           ActionPlaces.UNKNOWN
         );
-        final var scopesChooserPanel = UI.PanelFactory.panel(scopesChooserComponent)
-          .withLabel(InspectionsBundle.message("inspection.scope"))
-          .moveLabelOnTop()
-          .createPanel();
-        severityPanel.add(scopesChooserPanel, constraint.insets(0, 0, 0, UIUtil.DEFAULT_HGAP).get());
-
-        // Severity
-        final LevelChooserAction severityLevelChooser =
-          new LevelChooserAction(myProfile.getProfileManager().getSeverityRegistrar(),
-                                 includeDoNotShow(nodes)) {
-            @Override
-            protected void onChosen(final @NotNull HighlightSeverity severity) {
-              final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-              final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
-              for (final InspectionConfigTreeNode.Tool node : nodes) {
-                final HighlightDisplayKey key = node.getDefaultDescriptor().getKey();
-                final NamedScope scope = node.getDefaultDescriptor().getScope();
-                final boolean doUpdate = myProfile.getErrorLevel(key, scope, project) != level;
-                if (doUpdate) {
-                  myProfile.setErrorLevel(key, level, null, project);
-                  toUpdate.add(node);
-                }
-              }
-              updateRecursively(toUpdate, false);
-              myTreeTable.updateUI();
-            }
-          };
-        final HighlightSeverity severity = ScopesAndSeveritiesTable.getSeverity(
-          ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState())
-        );
-        severityLevelChooser.setChosen(severity);
-
-        final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(
-          severityLevelChooser.getTemplatePresentation(),
-          ActionPlaces.UNKNOWN
-        );
-        severityLevelChooserComponent.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
-          KeyStroke.getKeyStroke(KeyEvent.VK_V, MnemonicHelper.getFocusAcceleratorKeyMask()),
-          "changeSeverity"
-        );
-        severityLevelChooserComponent.getActionMap().put("changeSeverity", new AbstractAction() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            final var button = (ComboBoxAction.ComboBoxButton)severityLevelChooserComponent;
-            button.showPopup();
-          }
-        });
-        final var severityLevelChooserPanel = UI.PanelFactory.panel(severityLevelChooserComponent)
-          .withLabel(InspectionsBundle.message("inspection.severity"))
-          .moveLabelOnTop()
-          .createPanel();
-        severityPanel.add(severityLevelChooserPanel, constraint.growXY().fillXY().get());
 
         // Highlighting
         final HighlightingChooser highlightingChooser = new HighlightingChooser() {
@@ -866,11 +818,61 @@ public class SingleInspectionProfilePanel extends JPanel {
           highlightingChooser.getTemplatePresentation(),
           ActionPlaces.UNKNOWN
         );
-        final TextAttributesKey key = ScopesAndSeveritiesTable.getEditorAttributesKey(
-          ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()),
-          project
+        updateHighlightingChooser(nodes, project, highlightingChooser);
+
+        // Severity
+        final LevelChooserAction severityLevelChooser =
+          new LevelChooserAction(myProfile.getProfileManager().getSeverityRegistrar(),
+                                 includeDoNotShow(nodes)) {
+            @Override
+            protected void onChosen(final @NotNull HighlightSeverity severity) {
+              final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+              final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
+              for (final InspectionConfigTreeNode.Tool node : nodes) {
+                final HighlightDisplayKey key = node.getDefaultDescriptor().getKey();
+                final NamedScope scope = node.getDefaultDescriptor().getScope();
+                final boolean doUpdate = myProfile.getErrorLevel(key, scope, project) != level
+                                         || myProfile.getEditorAttributesKey(key, scope, project) != null;
+                if (doUpdate) {
+                  myProfile.setErrorLevel(key, level, null, project);
+                  myProfile.setEditorAttributesKey(node.getKey().toString(), null, null, project);
+                  updateHighlightingChooser(nodes, project, highlightingChooser);
+                  toUpdate.add(node);
+                }
+              }
+              updateRecursively(toUpdate, false);
+              myTreeTable.updateUI();
+            }
+          };
+        severityLevelChooser.setChosen(severity);
+
+        final JComponent severityLevelChooserComponent = severityLevelChooser.createCustomComponent(
+          severityLevelChooser.getTemplatePresentation(),
+          ActionPlaces.UNKNOWN
         );
-        highlightingChooser.setChosen(severity.equals(HighlightSeverity.INFORMATION) ? null : key);
+        severityLevelChooserComponent.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
+          KeyStroke.getKeyStroke(KeyEvent.VK_V, MnemonicHelper.getFocusAcceleratorKeyMask()),
+          "changeSeverity"
+        );
+        severityLevelChooserComponent.getActionMap().put("changeSeverity", new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            final var button = (ComboBoxAction.ComboBoxButton)severityLevelChooserComponent;
+            button.showPopup();
+          }
+        });
+
+        final var scopesChooserPanel = UI.PanelFactory.panel(scopesChooserComponent)
+          .withLabel(InspectionsBundle.message("inspection.scope"))
+          .moveLabelOnTop()
+          .createPanel();
+        severityPanel.add(scopesChooserPanel, constraint.insets(0, 0, 0, UIUtil.DEFAULT_HGAP).get());
+
+        final var severityLevelChooserPanel = UI.PanelFactory.panel(severityLevelChooserComponent)
+          .withLabel(InspectionsBundle.message("inspection.severity"))
+          .moveLabelOnTop()
+          .createPanel();
+        severityPanel.add(severityLevelChooserPanel, constraint.growXY().fillXY().get());
 
         final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
           .withLabel(InspectionsBundle.message("inspection.highlighting"))
@@ -969,6 +971,16 @@ public class SingleInspectionProfilePanel extends JPanel {
       initOptionsAndDescriptionPanel();
     }
     myOptionsPanel.repaint();
+  }
+
+  private static void updateHighlightingChooser(Collection<InspectionConfigTreeNode.Tool> nodes,
+                                                Project project,
+                                                HighlightingChooser highlightingChooser) {
+    final TextAttributesKey key = ScopesAndSeveritiesTable.getEditorAttributesKey(
+      ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()),
+      project
+    );
+    highlightingChooser.setChosen(key);
   }
 
   private void updateRecursively(Collection<? extends InspectionConfigTreeNode> nodes, boolean updateOptionsAndDescriptionPanel) {

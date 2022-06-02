@@ -105,7 +105,7 @@ public final class ScopeToolState {
     return myEditorAttributesKey;
   }
 
-  public void setEditorAttributesKey(String textAttributesKey) {
+  public void setEditorAttributesKey(@Nullable String textAttributesKey) {
     myEditorAttributesKey = textAttributesKey;
   }
 
