@@ -695,8 +695,4 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
     return parentRef;
   }
-
-  public static void main(String[] args) {
-    System.out.println(1 << 16);
-  }
 }
