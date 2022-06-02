@@ -776,11 +776,9 @@ class DistributionJARsBuilder {
       }
 
       if (prepareCustomPluginRepositoryForPublishedPlugins) {
-        // not really required because PluginRepositoryXmlGenerator uses TreeMap under the hood,
-        // but for consistent reading of plugin files, let's sort
         val list = pluginsToIncludeInCustomRepository.sortedBy { it.pluginZip }
-        PluginRepositoryXmlGenerator.generate(list, nonBundledPluginsArtifacts, context)
-        PluginRepositoryXmlGenerator.generate(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
+        generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
+        generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
       }
 
       mappings

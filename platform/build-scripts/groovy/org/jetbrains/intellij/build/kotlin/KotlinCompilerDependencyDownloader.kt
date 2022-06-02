@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
+import com.intellij.util.xml.dom.XmlDomReader
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
@@ -31,7 +32,7 @@ final class KotlinCompilerDependencyDownloader {
 
   private static String getKotlinJpsPluginVersion(BuildDependenciesCommunityRoot communityRoot) {
     def kotlinCompilerSettingsFile = communityRoot.getCommunityRoot().resolve(".idea/kotlinc.xml")
-    def root = new XmlParser().parse(kotlinCompilerSettingsFile.toFile())
+    def root = XmlDomReader.readXmlAsModel(kotlinCompilerSettingsFile)
     Node kotlinJpsPluginSettingsTag = findNode(root, "component", "KotlinJpsPluginSettings")
     if (kotlinJpsPluginSettingsTag == null) {
       throw new IllegalStateException("KotlinJpsPluginSettings was not found in $kotlinCompilerSettingsFile")

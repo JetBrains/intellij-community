@@ -9,6 +9,8 @@ import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.Reader
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
@@ -33,17 +35,18 @@ object NoOpXmlInterner : XmlInterner {
   override fun value(name: String, value: String) = value
 }
 
-@ApiStatus.Experimental
 fun readXmlAsModel(inputReader: Reader): XmlElement {
   return readAndClose(createXmlStreamReader(inputReader))
 }
 
-@ApiStatus.Experimental
 fun readXmlAsModel(inputStream: InputStream): XmlElement {
   return readAndClose(createXmlStreamReader(inputStream))
 }
 
-@ApiStatus.Experimental
+fun readXmlAsModel(file: Path): XmlElement {
+  return readAndClose(createXmlStreamReader(Files.newInputStream(file)))
+}
+
 fun readXmlAsModel(inputData: ByteArray): XmlElement {
   return readAndClose(createXmlStreamReader(inputData))
 }

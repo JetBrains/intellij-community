@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.*;
 
@@ -16,7 +17,7 @@ public final class XmlStringUtil {
     int cur = 0;
     int len = str.length();
     while (cur < len) {
-      int next = StringUtil.indexOf(str, CDATA_END, cur);
+      int next = Strings.indexOf(str, CDATA_END, cur);
       sb.append(CDATA_START).append(str.subSequence(cur, next = next < 0 ? len : next + 1)).append(CDATA_END);
       cur = next;
     }
@@ -136,16 +137,16 @@ public final class XmlStringUtil {
   }
 
   public static boolean isWrappedInHtml(@NotNull String tooltip) {
-    return StringUtil.startsWithIgnoreCase(tooltip, HTML_START) &&
-           StringUtil.endsWithIgnoreCase(tooltip, HTML_END);
+    return StringUtilRt.startsWithIgnoreCase(tooltip, HTML_START) &&
+           Strings.endsWithIgnoreCase(tooltip, HTML_END);
   }
 
   @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String toolTip) {
-    toolTip = StringUtil.trimStart(toolTip, HTML_START);
-    toolTip = StringUtil.trimStart(toolTip, BODY_START);
-    toolTip = StringUtil.trimEnd(toolTip, HTML_END);
-    toolTip = StringUtil.trimEnd(toolTip, BODY_END);
+    toolTip = Strings.trimStart(toolTip, HTML_START);
+    toolTip = Strings.trimStart(toolTip, BODY_START);
+    toolTip = Strings.trimEnd(toolTip, HTML_END);
+    toolTip = Strings.trimEnd(toolTip, BODY_END);
     return toolTip;
   }
 

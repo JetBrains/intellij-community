@@ -1,123 +1,115 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.util.xml.dom.XmlDomReader
-import com.intellij.util.xml.dom.XmlElement
-import groovy.transform.CompileStatic
-import groovy.transform.Immutable
-import groovy.xml.XmlUtil
+import com.intellij.util.xml.dom.readXmlAsModel
+import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.intellij.build.BuildContext
-
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
-@CompileStatic
-final class PluginRepositoryXmlGenerator {
-  private PluginRepositoryXmlGenerator() {
+internal fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, context: BuildContext): Path {
+  val categories = TreeMap<String, MutableList<Plugin>>()
+  for (spec in pluginSpecs) {
+    val p = readPlugin(spec.pluginZip, spec.pluginXml, context.buildNumber, targetDir)
+    categories.computeIfAbsent(p.category) { mutableListOf() }.add(p)
   }
+  val result = targetDir.resolve("plugins.xml")
+  writePluginsXml(result, categories)
+  return result
+}
 
-  static Path generate(List<PluginRepositorySpec> pluginSpecs, Path targetDir, BuildContext context) {
-    TreeMap<String, List<Plugin>> categories = new TreeMap<String, List<Plugin>>()
-    for (PluginRepositorySpec spec in pluginSpecs) {
-      Plugin p = readPlugin(spec.pluginZip, spec.pluginXml, context.buildNumber, targetDir)
-      categories.computeIfAbsent(p.category, { new ArrayList<>() }).add(p)
-    }
-    Path result = targetDir.resolve("plugins.xml")
-    writePluginsXml(result, categories)
-    return result
-  }
-
-  private static writePluginsXml(Path target, Map<String, List<Plugin>> categories) {
-    Files.newBufferedWriter(target).withCloseable { out ->
-      out.write("""<?xml version="1.0" encoding="UTF-8"?>\n""")
-      out.write("""<plugin-repository>\n""")
-      for (String it in categories.keySet()) {
-        out.write("""  <category name="$it">\n""")
-        for (Plugin p in categories.get(it).toSorted { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.id, o2.id) }) {
-          out.write("""\
-    <idea-plugin size="$p.size">
-      <name>${XmlUtil.escapeXml(p.name)}</name>
-      <id>${XmlUtil.escapeXml(p.id ?: p.name)}</id>
-      <version>$p.version</version>
-      <idea-version since-build="$p.sinceBuild" until-build="$p.untilBuild"/>
-      <vendor>${XmlUtil.escapeXml(p.vendor)}</vendor>
-      <download-url>${XmlUtil.escapeXml(p.relativeFilePath)}</download-url>
-      <description><![CDATA[$p.description]]></description>$p.depends
-    </idea-plugin>\n""")
-        }
-        out.write("""  </category>\n""")
+private fun writePluginsXml(target: Path, categories: Map<String, List<Plugin>>) {
+  Files.newBufferedWriter(target).use { out ->
+    out.write("""<?xml version="1.0" encoding="UTF-8"?>\n""")
+    out.write("""<plugin-repository>\n""")
+    for (it in categories.keys) {
+      out.write("""  <category name="$it">\n""")
+      for (p in categories.get(it)!!.sortedWith { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.id, o2.id) }) {
+        out.write("""
+          <idea-plugin size="${p.size}">
+            <name>${XmlStringUtil.escapeString(p.name)}</name>
+            <id>${XmlStringUtil.escapeString(p.id ?: p.name)}</id>
+            <version>${p.version}</version>
+            <idea-version since-build="${p.sinceBuild}" until-build="${p.untilBuild}"/>
+            <vendor>${XmlStringUtil.escapeString(p.vendor)}</vendor>
+            <download-url>${XmlStringUtil.escapeString(p.relativeFilePath)}</download-url>
+            ${p.description?.let { "<description>${XmlStringUtil.wrapInCDATA(p.description)}</description>" }}
+            ${p.depends}
+          </idea-plugin>
+        """.trimIndent())
       }
-      out.write("""</plugin-repository>\n""")
+      out.write("  </category>\n")
     }
-  }
-
-  private static Plugin readPlugin(Path pluginZip, byte[] pluginXml, String buildNumber, Path targetDirectory) {
-    Plugin plugin
-    try {
-      XmlElement xml = XmlDomReader.readXmlAsModel(pluginXml)
-      XmlElement versionNode = xml.getChild("idea-version")
-      StringBuilder depends = new StringBuilder()
-      xml.getChild("depends")?.children?.each {
-        if (!it.attributes.containsKey("optional")) {
-          depends.append("<depends>").append(it.content).append("</depends>")
-        }
-      }
-      xml.getChild("dependencies")?.children("plugin")?.iterator()?.each {
-        depends.append("<depends>").append(it.getAttributeValue("id")).append("</depends>")
-      }
-
-
-      String name = xml.getChild("name")?.content
-      plugin = new Plugin(
-        id: xml.getChild("id")?.content ?: name,
-        name: name,
-        category: xml.getChild("category")?.content ?: "Misc",
-        vendor: xml.getChild("vendor")?.content,
-        sinceBuild: versionNode?.attributes?.get("since-build") ?: buildNumber,
-        untilBuild: versionNode?.attributes?.get("until-build") ?: buildNumber,
-        version: xml.getChild("version")?.content,
-        description: xml.getChild("description")?.content,
-        relativeFilePath: FileUtil.toSystemIndependentName(targetDirectory.relativize(pluginZip).toString()),
-        size: Files.size(pluginZip),
-        depends: depends.toString()
-      )
-    }
-    catch (Throwable t) {
-      throw new IllegalStateException("Unable to read: " + new String(pluginXml, StandardCharsets.UTF_8), t)
-    }
-
-    // todo this check never worked correctly because `new XmlParser().parse(pluginXml).description.text()` returns empty string if no value
-    // the issue - xi:include is not handled
-    // so, we exclude `"description"` for now
-    for (String propertyName in ["id", "name", "vendor"]) {
-      if (plugin.getProperty(propertyName) == null) {
-        if (propertyName == "name" && (plugin.id.startsWith("com.intellij.appcode.") || plugin.id == "com.intellij.mobile.AppleGradlePluginGenerator")) {
-          continue
-        }
-        throw new RuntimeException("Cannot generate plugin repository file: '$propertyName' " +
-                                   "isn't specified in ${new String(pluginXml, StandardCharsets.UTF_8)}")
-      }
-    }
-
-    return plugin
-  }
-
-  @Immutable
-  private static final class Plugin {
-    String id
-    String name
-    String vendor
-    String version
-    String sinceBuild
-    String untilBuild
-    String category
-    String description
-    long size
-    String relativeFilePath
-    String depends
+    out.write("</plugin-repository>\n")
   }
 }
+
+private fun readPlugin(pluginZip: Path, pluginXml: ByteArray, buildNumber: String, targetDirectory: Path): Plugin {
+  val plugin = try {
+    val xml = readXmlAsModel(pluginXml)
+    val versionNode = xml.getChild("idea-version")
+    val depends = StringBuilder()
+    xml.getChild("depends")?.children?.forEach {
+      if (!it.attributes.containsKey("optional")) {
+        depends.append("<depends>").append(it.content).append("</depends>")
+      }
+    }
+    xml.getChild("dependencies")?.children("plugin")?.iterator()?.forEach {
+      depends.append("<depends>").append(it.getAttributeValue("id")).append("</depends>")
+    }
+
+    val name = xml.getChild("name")?.content
+    Plugin(
+      id = xml.getChild("id")?.content ?: name,
+      name = name,
+      category = xml.getChild("category")?.content ?: "Misc",
+      vendor = xml.getChild("vendor")?.content,
+      sinceBuild = versionNode?.attributes?.get("since-build") ?: buildNumber,
+      untilBuild = versionNode?.attributes?.get("until-build") ?: buildNumber,
+      version = xml.getChild("version")?.content,
+      description = xml.getChild("description")?.content,
+      relativeFilePath = FileUtilRt.toSystemIndependentName(targetDirectory.relativize(pluginZip).toString()),
+      size = Files.size(pluginZip),
+      depends = depends.toString()
+    )
+  }
+  catch (t: Throwable) {
+    throw IllegalStateException("Unable to read: ${pluginXml.decodeToString()}", t)
+  }
+
+  // todo this check never worked correctly because `new XmlParser().parse(pluginXml).description.text()` returns empty string if no value
+  // the issue - xi:include is not handled
+  // so, we exclude `"description"` for now
+  sequenceOf("id" to plugin.id, "name" to plugin.name, "vendor" to plugin.vendor)
+    .filter { it.second == null }
+    .map { it.first }
+    .forEach { propertyName ->
+      if (propertyName == "name" &&
+          (plugin.id!!.startsWith("com.intellij.appcode.") || plugin.id == "com.intellij.mobile.AppleGradlePluginGenerator")) {
+        return@forEach
+      }
+      throw RuntimeException("Cannot generate plugin repository file: '$propertyName' isn't specified in ${pluginXml.decodeToString()}")
+    }
+
+  return plugin
+}
+
+private data class Plugin(
+  @JvmField val id: String?,
+  @JvmField val name: String?,
+  @JvmField val vendor: String?,
+  @JvmField val version: String?,
+  @JvmField val sinceBuild: String,
+  @JvmField val untilBuild: String,
+  @JvmField val category: String,
+  @JvmField val description: String?,
+  @JvmField val size: Long,
+  @JvmField val relativeFilePath: String?,
+  @JvmField val depends: String?,
+)
 
