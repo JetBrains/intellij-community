@@ -65,6 +65,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
   // should be used only for test debugging purpose
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
+  private static final boolean useConservativeThreadCountPolicy = SystemProperties.getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", true);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
   public enum TestMode {
@@ -649,9 +650,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   public static int getNumberOfIndexingThreads() {
     int threadCount = Registry.intValue("caches.indexerThreadsCount");
     if (threadCount <= 0) {
-      int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
       threadCount =
-        Math.max(1, Math.min(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, DEFAULT_MAX_INDEXER_THREADS));
+        Math.max(1, Math.min(useConservativeThreadCountPolicy
+                             ? DEFAULT_MAX_INDEXER_THREADS : getMaxBackgroundThreadCount(), getMaxBackgroundThreadCount()));
     }
     return threadCount;
   }
@@ -662,7 +663,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
     int threadCount = Registry.intValue("caches.indexerThreadsCount");
-    return threadCount <= 0 ? DEFAULT_MAX_INDEXER_THREADS : threadCount;
+    return threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount;
   }
 
   /**
@@ -671,9 +672,14 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   public static int getNumberOfScanningThreads() {
     int scanningThreadCount = Registry.intValue("caches.scanningThreadsCount");
     if (scanningThreadCount > 0) return scanningThreadCount;
+    int maxBackgroundThreadCount = getMaxBackgroundThreadCount();
+    return Math.max(maxBackgroundThreadCount, getNumberOfIndexingThreads());
+  }
+
+  private static int getMaxBackgroundThreadCount() {
     int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
                                        ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
-    return Math.max(Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity, getNumberOfIndexingThreads());
+    return Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity;
   }
 
   private static boolean skipInitialRefresh() {
