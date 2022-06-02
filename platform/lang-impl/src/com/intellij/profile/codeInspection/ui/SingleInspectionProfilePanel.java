@@ -870,7 +870,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           ContainerUtil.map(nodes, node -> node.getDefaultDescriptor().getState()),
           project
         );
-        highlightingChooser.setChosen(key);
+        highlightingChooser.setChosen(severity.equals(HighlightSeverity.INFORMATION) ? null : key);
 
         final var highlightChooserPanel = UI.PanelFactory.panel(highlightsChooserComponent)
           .withLabel(InspectionsBundle.message("inspection.highlighting"))
