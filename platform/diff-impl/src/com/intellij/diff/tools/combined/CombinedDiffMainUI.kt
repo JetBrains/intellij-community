@@ -242,8 +242,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     DiffUtil.addActionBlock(leftToolbarGroup, navigationActions)
 
     DiffUtil.addActionBlock(rightToolbarGroup, viewerActions, false)
-    val requestContextActions = context.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
-    DiffUtil.addActionBlock(leftToolbarGroup, requestContextActions)
     val contextActions = context.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
     DiffUtil.addActionBlock(leftToolbarGroup, contextActions)
 
