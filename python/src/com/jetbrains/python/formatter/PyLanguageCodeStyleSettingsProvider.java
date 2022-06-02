@@ -233,7 +233,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                       "try: pass\n" +
                                                       "finally: pass\n";
   private static final String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
-                                                        "    print 'bar'\n\n" +
+                                                        "    print('bar')\n\n" +
                                                         "def long_function_name(\n" +
                                                         "        var_one, var_two, var_three,\n" +
                                                         "        var_four):\n" +
