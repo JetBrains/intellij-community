@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.objectTree.ThrowableInterner
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.project.stateStore
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ResourceUtil
@@ -339,7 +340,7 @@ private fun createSupplierForUrlSource(root: URL, path: String): Supplier<String
 private fun loadTemplate(root: URL, path: String): String {
   // root url should be used as context to use provided handler to load data to avoid using a generic one
   return try {
-    ResourceUtil.loadText(URL(root, "${FileTemplatesLoader.TEMPLATES_DIR}/${path.trimEnd('/')}").openStream())
+    StringUtil.convertLineSeparators(ResourceUtil.loadText(URL(root, "${FileTemplatesLoader.TEMPLATES_DIR}/${path.trimEnd('/')}").openStream()))
   }
   catch (e: IOException) {
     logger<FileTemplatesLoader>().error(e)
