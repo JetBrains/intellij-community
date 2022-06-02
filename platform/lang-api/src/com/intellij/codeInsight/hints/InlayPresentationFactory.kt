@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import java.awt.Color
 import java.awt.Point
@@ -10,7 +9,6 @@ import java.awt.event.MouseEvent
 import javax.swing.Icon
 
 
-@ApiStatus.Experimental
 interface InlayPresentationFactory {
   /**
    * Text that can be used for elements that ARE valid syntax if they are pasted into file.
