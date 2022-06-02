@@ -67,7 +67,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private volatile boolean myDirtyStatusUpdateInProgress;
 
   private boolean myClosed;
-  private boolean myDirty;
+  private volatile boolean myDirty;
   private volatile boolean myCorrupted;
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private @Nullable Flushable myMarkCleanCallback;
@@ -511,13 +511,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public boolean isDirty() {
-    lockStorageRead();
-    try {
-      return myDirty;
-    }
-    finally {
-      unlockStorageRead();
-    }
+    return myDirty;
   }
 
   public boolean isCorrupted() {
@@ -531,13 +525,18 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public void force() {
+    if (!isDirty()) return;
     getWriteLock().lock();
     try {
       lockStorageWrite();
       try {
-        myKeyStorage.force();
-        if (myStorage.isDirty() || isDirty()) {
-          doFlush();
+        if (isDirty()) {
+          if (myKeyStorage.isDirty()) {
+            myKeyStorage.force();
+          }
+          if (myStorage.isDirty()) {
+            doFlush();
+          }
         }
       }
       catch (IOException e) {
