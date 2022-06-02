@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
-import org.jetbrains.kotlin.j2k.ast.Nullability
+import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.*
@@ -211,7 +211,7 @@ class JavaToJKTreeBuilder constructor(
         }
 
         fun PsiClassObjectAccessExpressionImpl.toJK(): JKClassLiteralExpression {
-            val type = operand.type.toJK().updateNullabilityRecursively(Nullability.NotNull)
+            val type = operand.type.toJK().updateNullabilityRecursively(NotNull)
             return JKClassLiteralExpression(
                 JKTypeElement(type),
                 when (type) {
@@ -665,13 +665,19 @@ class JavaToJKTreeBuilder constructor(
 
 
         fun PsiClass.inheritanceInfo(): JKInheritanceInfo {
-            val implTypes = implementsList?.referencedTypes?.map { type ->
-                JKTypeElement(type.toJK(), JKAnnotationList(type.annotations.map { it.toJK() }))
+            val implementsTypes = implementsList?.referencedTypes?.map { type ->
+                JKTypeElement(
+                    type.toJK().updateNullability(NotNull),
+                    JKAnnotationList(type.annotations.map { it.toJK() })
+                )
             }.orEmpty()
-            val extensionType = extendsList?.referencedTypes?.map { type ->
-                JKTypeElement(type.toJK(), JKAnnotationList(type.annotations.map { it.toJK() }))
+            val extendsTypes = extendsList?.referencedTypes?.map { type ->
+                JKTypeElement(
+                    type.toJK().updateNullability(NotNull),
+                    JKAnnotationList(type.annotations.map { it.toJK() })
+                )
             }.orEmpty()
-            return JKInheritanceInfo(extensionType, implTypes)
+            return JKInheritanceInfo(extendsTypes, implementsTypes)
                 .also {
                     if (implementsList != null) {
                         it.withFormattingFrom(implementsList!!)
@@ -1063,7 +1069,7 @@ class JavaToJKTreeBuilder constructor(
                 if (psi.parent is PsiReferenceList) {
                     val factory = JavaPsiFacade.getInstance(psi.project).elementFactory
                     val type = factory.createType(psi)
-                    JKTypeElement(type.toJK().updateNullabilityRecursively(Nullability.NotNull))
+                    JKTypeElement(type.toJK().updateNullabilityRecursively(NotNull))
                 } else null
             else -> null
         }?.let { JKTreeRoot(it) }
