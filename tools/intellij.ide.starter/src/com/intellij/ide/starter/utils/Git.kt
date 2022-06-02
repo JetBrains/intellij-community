@@ -37,15 +37,21 @@ object Git {
     }.getOrElse { master }
   }
 
-  fun getRepoRoot(path: Path = Paths.get("").toAbsolutePath()): Path {
+  fun getRepoRoot(): Path {
     val stdout = ExecOutputRedirect.ToString()
 
-    exec(
-      "git-repo-root-get",
-      workDir = null, timeout = Duration.minutes(1),
-      args = listOf("git", "rev-parse", "--show-toplevel", "HEAD"),
-      stdoutRedirect = stdout
-    )
+    try {
+      exec(
+        "git-repo-root-get",
+        workDir = null, timeout = Duration.minutes(1),
+        args = listOf("git", "rev-parse", "--show-toplevel", "HEAD"),
+        stdoutRedirect = stdout
+      )
+    }
+    catch (e: Exception) {
+      logError("There is a problem in detecting git repo root. Trying to acquire working dir path")
+      return Paths.get("").toAbsolutePath()
+    }
 
     // Takes first line from output like this:
     // /opt/REPO/intellij
