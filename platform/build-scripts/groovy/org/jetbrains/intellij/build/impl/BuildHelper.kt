@@ -98,13 +98,13 @@ fun runJava(context: CompilationContext,
 /**
  * Forks all tasks in the specified collection, returning when
  * `isDone` holds for each task or an (unchecked) exception is encountered, in which case the exception is rethrown.
- * If more than one task encounters an exception, then this method throws compound exception.
+ * If more than one task encounters an exception, then this method throws a compound exception.
  * If any task encounters an exception, others will be not cancelled.
  *
  * It is typically used when you have multiple asynchronous tasks that are not dependent on one another to complete successfully,
  * or you'd always like to know the result of each promise.
  *
- * This way we can get valid artifacts for one OS if builds artifacts for another OS failed.
+ * This way, we can get valid artifacts for one OS if building artifacts for another OS failed.
  */
 internal fun invokeAllSettled(tasks: List<ForkJoinTask<*>>) {
   for (task in tasks) {

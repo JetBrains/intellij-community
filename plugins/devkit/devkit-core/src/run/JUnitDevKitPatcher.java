@@ -126,7 +126,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
   }
 
-  public static void appendAddOpensWhenNeeded(Sdk jdk, ParametersList vm) {
+  static void appendAddOpensWhenNeeded(@NotNull Sdk jdk, @NotNull ParametersList vm) {
     JavaSdkVersion sdkVersion = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
       URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");

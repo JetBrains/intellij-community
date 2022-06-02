@@ -28,7 +28,7 @@ interface BuildContext: CompilationContext {
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
-   * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
+   * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
   val systemSelector: String
 
@@ -43,7 +43,7 @@ interface BuildContext: CompilationContext {
   var bootClassPathJarNames: PersistentList<String>
 
   /**
-   * Allows to customize classpath for buildSearchableOptions and builtinModules
+   * Allows customizing classpath for buildSearchableOptions and builtinModules
    */
   var classpathCustomizer: (MutableSet<String>) -> Unit
 
@@ -78,7 +78,7 @@ interface BuildContext: CompilationContext {
   fun signFiles(files: List<Path>, options: Map<String, String> = emptyMap())
 
   /**
-   * Execute a build step or skip it if {@code stepId} is included into {@link BuildOptions#buildStepsToSkip}
+   * Execute a build step or skip it if {@code stepId} is included in {@link BuildOptions#buildStepsToSkip}
    * @return {@code true} if the step was executed
    */
   fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean
@@ -93,10 +93,11 @@ interface BuildContext: CompilationContext {
 inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, step: () -> Unit) {
   if (options.buildStepsToSkip.contains(stepId)) {
     spanBuilder.startSpan().addEvent("skip").end()
-    return
   }
-  // we cannot flush tracing after "throw e" as we have to end the current span before that
-  spanBuilder.useWithScope { step() }
+  else {
+    // we cannot flush tracing after "throw e" as we have to end the current span before that
+    spanBuilder.useWithScope { step() }
+  }
 }
 
 data class BuiltinModulesFileData(

@@ -14,6 +14,7 @@ class JUnitDevkitPatcherTest : BareTestFixtureTestCase() {
     val jdk = IdeaTestUtil.getMockJdk(JavaVersion.parse("17.0.1"))
     val parametersList = ParametersList()
     JUnitDevKitPatcher.appendAddOpensWhenNeeded(jdk, parametersList)
+    @Suppress("SpellCheckingInspection")
     assertThat(parametersList.list)
       .contains("--add-opens=java.base/java.io=ALL-UNNAMED",
                 "--add-opens=java.base/java.lang=ALL-UNNAMED",
