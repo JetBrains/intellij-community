@@ -875,8 +875,8 @@ fun getPluginsByModules(modules: Collection<String>, context: BuildContext): Set
     return emptySet()
   }
 
-  val allNonTrivialPlugins = context.productProperties.productLayout.allNonTrivialPlugins
-  val nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
+  val pluginLayouts = context.productProperties.productLayout.pluginLayouts
+  val pluginLayoutsByMainModule = pluginLayouts.groupBy { it.mainModule }
   val result = ObjectLinkedOpenCustomHashSet<PluginLayout>(modules.size, object : Hash.Strategy<PluginLayout?> {
     override fun hashCode(layout: PluginLayout?): Int {
       if (layout == null) {
@@ -900,11 +900,11 @@ fun getPluginsByModules(modules: Collection<String>, context: BuildContext): Set
   })
 
   for (moduleName in modules) {
-    var customLayouts = nonTrivialPlugins.get(moduleName)
+    var customLayouts = pluginLayoutsByMainModule.get(moduleName)
     if (customLayouts == null) {
       val alternativeModuleName = context.findModule(moduleName)?.name
       if (alternativeModuleName != moduleName) {
-        customLayouts = nonTrivialPlugins.get(alternativeModuleName)
+        customLayouts = pluginLayoutsByMainModule.get(alternativeModuleName)
       }
     }
 

@@ -23,7 +23,7 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
     productLayout.bundledPluginModules.addAll(BUNDLED_PLUGIN_MODULES)
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
-    productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + listOf(
+    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin(emptyMap()),
       CommunityRepositoryModules.groovyPlugin(emptyList())

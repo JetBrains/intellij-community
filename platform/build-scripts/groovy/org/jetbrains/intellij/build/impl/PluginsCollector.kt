@@ -75,7 +75,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
                              context: BuildContext): MutableMap<String, PluginDescriptor> {
   val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
   val productLayout = context.productProperties.productLayout
-  val nonTrivialPlugins = productLayout.allNonTrivialPlugins.groupBy { it.mainModule }
+  val nonTrivialPlugins = productLayout.pluginLayouts.groupBy { it.mainModule }
   val allBundledPlugins = HashSet(productLayout.bundledPluginModules)
   for (jpsModule in context.project.modules) {
     val moduleName = jpsModule.name

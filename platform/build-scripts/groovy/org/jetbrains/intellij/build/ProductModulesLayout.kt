@@ -39,7 +39,7 @@ class ProductModulesLayout {
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
-   * bundled plugins are specified in {@link #allNonTrivialPlugins} list.
+   * bundled plugins are specified in {@link #pluginLayouts} list.
    */
   var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
 
@@ -52,7 +52,7 @@ class ProductModulesLayout {
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under "&lt;product-code&gt;-plugins" directory in the build artifacts.
-   * Layouts of the plugins are specified in {@link #allNonTrivialPlugins} list.
+   * Layouts of the plugins are specified in {@link #pluginLayouts} list.
    */
   fun setPluginModulesToPublish(plugins: List<String>) {
     pluginsToPublish = LinkedHashSet(plugins)
@@ -73,10 +73,10 @@ class ProductModulesLayout {
    * For trivial plugins, i.e. for plugins which include an output of a single module and its module libraries, it's enough to use
    * [org.jetbrains.intellij.build.impl.PluginLayout.Companion.simplePlugin] as layout.
    */
-  var allNonTrivialPlugins: List<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+  var pluginLayouts: List<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
 
   /**
-   * Fail when plugin should be build, but its definition is missing from [org.jetbrains.intellij.build.ProductModulesLayout.allNonTrivialPlugins]
+   * Fail when plugin should be build, but its definition is missing from [org.jetbrains.intellij.build.ProductModulesLayout.pluginLayouts]
    */
   var failOnUnspecifiedPluginLayout: Boolean = false
 
@@ -148,7 +148,7 @@ class ProductModulesLayout {
   fun getIncludedPluginModules(enabledPluginModules: Collection<String>): Collection<String> {
     val result = LinkedHashSet<String>()
     result.addAll(enabledPluginModules)
-    allNonTrivialPlugins.asSequence()
+    pluginLayouts.asSequence()
       .filter { enabledPluginModules.contains(it.mainModule) }
       .flatMapTo(result) { it.getIncludedModuleNames() }
     return result

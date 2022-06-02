@@ -31,7 +31,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     productLayout.bundledPluginModules.add("intellij.pycharm.community.customization")
     productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt")))
 
-    productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       plugin("intellij.pycharm.community.customization") {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"

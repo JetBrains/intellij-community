@@ -91,7 +91,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
 
   override fun buildNonBundledPlugins(mainPluginModules: List<String>) {
     checkProductProperties(context)
-    checkPluginModules(mainPluginModules, "mainPluginModules", context.productProperties.productLayout.allNonTrivialPlugins, context)
+    checkPluginModules(mainPluginModules, "mainPluginModules", context.productProperties.productLayout.pluginLayouts, context)
     copyDependenciesFile(context)
     val pluginsToPublish = getPluginsByModules(mainPluginModules, context)
     val distributionJARsBuilder = DistributionJARsBuilder(compilePlatformAndPluginModules(pluginsToPublish, context))
@@ -787,7 +787,7 @@ private fun checkProductLayout(context: BuildContext) {
     messages.error("productProperties.productLayout.mainJarName is not specified")
   }
 
-  val nonTrivialPlugins = layout.allNonTrivialPlugins
+  val nonTrivialPlugins = layout.pluginLayouts
   checkPluginDuplicates(nonTrivialPlugins, messages)
   checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", nonTrivialPlugins, context)
   checkPluginModules(layout.getPluginModulesToPublish(), "productProperties.productLayout.pluginModulesToPublish", nonTrivialPlugins, context)
@@ -859,7 +859,7 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>, message
   val pluginsGroupedByMainModule = nonTrivialPlugins.groupBy { it.mainModule }.values
   for (duplicatedPlugins in pluginsGroupedByMainModule) {
     if (duplicatedPlugins.size > 1) {
-      messages.warning("Duplicated plugin description in productLayout.allNonTrivialPlugins: ${duplicatedPlugins.first().mainModule}")
+      messages.warning("Duplicated plugin description in productLayout.pluginLayouts: ${duplicatedPlugins.first().mainModule}")
     }
   }
 }
@@ -895,12 +895,12 @@ private fun checkPluginModules(pluginModules: List<String>?,
   }
   if (!unspecifiedLayoutPluginModules.isEmpty()) {
     if (context.productProperties.productLayout.failOnUnspecifiedPluginLayout) {
-      context.messages.error("No plugin layout specified in productProperties.productLayout.allNonTrivialPlugins for " +
+      context.messages.error("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
                              "following plugin main modules: ${unspecifiedLayoutPluginModules.joinToString()}")
 
     }
     else {
-      context.messages.info("No plugin layout specified in productProperties.productLayout.allNonTrivialPlugins for " +
+      context.messages.info("No plugin layout specified in productProperties.productLayout.pluginLayouts for " +
                             "following plugin main modules. Assuming simple layout. " +
                             "Modules list: ${unspecifiedLayoutPluginModules.joinToString()}")
     }
@@ -909,7 +909,7 @@ private fun checkPluginModules(pluginModules: List<String>?,
   val unknownBundledPluginModules = pluginModules.filter { context.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
   if (!unknownBundledPluginModules.isEmpty()) {
     context.messages.error("The following modules from $fieldName don\'t contain META-INF/plugin.xml file and" +
-                           " aren\'t specified as optional plugin modules in productProperties.productLayout.allNonTrivialPlugins: " +
+                           " aren\'t specified as optional plugin modules in productProperties.productLayout.pluginLayouts: " +
                            "${unknownBundledPluginModules.joinToString()}}. ")
   }
 }

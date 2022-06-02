@@ -55,7 +55,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     .loadClass(productConfiguration.className)
     .getConstructor(Path::class.java).newInstance(homePath) as ProductProperties
 
-  val allNonTrivialPlugins = productProperties.productLayout.allNonTrivialPlugins
+  val pluginLayoutsFromProductProperties = productProperties.productLayout.pluginLayouts
   val bundledMainModuleNames = getBundledMainModuleNames(productProperties)
 
   val platformPrefix = productProperties.platformPrefix ?: "idea"
@@ -70,7 +70,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val pluginsDir = runDir.resolve("plugins")
 
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
-  for (plugin in allNonTrivialPlugins) {
+  for (plugin in pluginLayoutsFromProductProperties) {
     if (bundledMainModuleNames.contains(plugin.mainModule)) {
       val item = BuildItem(pluginsDir.resolve(getActualPluginDirectoryName(plugin, buildContext)), plugin)
       mainModuleToNonTrivialPlugin.put(plugin.mainModule, item)
