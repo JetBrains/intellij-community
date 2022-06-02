@@ -1,4 +1,5 @@
 <idea-plugin>
+  <depends optional="true" config-file="gradle-groovy-toml-integration.xml">org.toml.lang</depends>
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"
                     dynamic="true"/>
