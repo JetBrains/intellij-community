@@ -119,7 +119,7 @@ private fun shortenPath(file: Path, buildPaths: BuildPaths, extraRoot: Path?): S
   if (file.startsWith(MAVEN_REPO)) {
     return "\$MAVEN_REPOSITORY$/" + MAVEN_REPO.relativize(file).toString().replace(File.separatorChar, '/')
   }
-  val projectHome = buildPaths.projectHomeDir
+  val projectHome = buildPaths.projectHome
   if (file.startsWith(projectHome)) {
     return "\$PROJECT_DIR$/" + projectHome.relativize(file).toString()
   }

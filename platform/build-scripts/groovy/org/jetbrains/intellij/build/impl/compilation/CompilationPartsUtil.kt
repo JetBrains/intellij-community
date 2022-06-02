@@ -457,7 +457,7 @@ internal data class FetchAndUnpackItem(
   val file: Path
 )
 
-private fun createHttpClient(userAgent: String, followRedirects: Boolean = true): OkHttpClient {
+internal fun createHttpClient(userAgent: String, followRedirects: Boolean = true): OkHttpClient {
   return OkHttpClient.Builder()
     .addInterceptor { chain ->
       chain.proceed(chain.request()

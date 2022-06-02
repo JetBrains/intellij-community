@@ -10,7 +10,7 @@ import java.nio.file.Path
 object PyCharmBuildUtils {
   @JvmStatic
   fun copySkeletons(context: CompilationContext, targetDirectory: String, mask: String) {
-    val skeletonsDir = context.paths.projectHomeDir.resolve("skeletons")
+    val skeletonsDir = context.paths.projectHome.resolve("skeletons")
     if (!TeamCityHelper.isUnderTeamCity && !Files.isDirectory(skeletonsDir)) {
       context.messages.warning("Skipping non-existent directory $skeletonsDir")
       return

@@ -15,19 +15,16 @@ abstract class BuildPaths(
    * All log and debug files should be written to this directory. It will be automatically published to TeamCity artifacts
    */
   val logDir: Path,
+  /**
+   * Path to a base directory of the project which will be compiled
+   */
+  val projectHome: Path
 ) {
-
   /**
    * Path to a directory where idea/community Git repository is checked out
    */
   val communityHome: String = FileUtilRt.toSystemIndependentName(communityHomeDir.toString())
   val buildDependenciesCommunityRoot: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(communityHomeDir)
-
-  /**
-   * Path to a base directory of the project which will be compiled
-   */
-  lateinit var projectHome: String
-  lateinit var projectHomeDir: Path
 
   /**
    * Path to a directory where build script will store temporary and resulting files

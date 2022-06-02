@@ -39,45 +39,31 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-fun createCompilationContext(communityHome: Path, projectHome: Path, defaultOutputRoot: Path): CompilationContextImpl {
+@JvmOverloads
+fun createCompilationContext(communityHome: Path,
+                             projectHome: Path,
+                             defaultOutputRoot: Path,
+                             options: BuildOptions = BuildOptions()): CompilationContextImpl {
   return CompilationContextImpl.create(communityHome = communityHome,
                                        projectHome = projectHome,
                                        buildOutputRootEvaluator = { defaultOutputRoot },
-                                       options = BuildOptions())
+                                       options = options)
 }
 
-class CompilationContextImpl : CompilationContext {
-  private constructor(model: JpsModel,
-                      communityHome: Path,
-                      projectHome: Path,
-                      messages: BuildMessages,
-                      oldToNewModuleName: Map<String, String>,
-                      buildOutputRootEvaluator: (JpsProject) -> Path,
-                      options: BuildOptions) {
-    projectModel = model
-    project = model.project
-    global = model.global
-    this.options = options
-    this.messages = messages
-    this.oldToNewModuleName = oldToNewModuleName
-    newToOldModuleName = oldToNewModuleName.entries.associate { it.value to it.key }
-    val modules = model.project.modules
-    this.nameToModule = modules.associateBy { it.name }
-    val buildOut = options.outputRootPath?.let { Path.of(it) } ?: buildOutputRootEvaluator(project)
-    val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
-    paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
-    dependenciesProperties = DependenciesProperties(this)
-    bundledRuntime = BundledRuntimeImpl(this)
-    stableJdkHome = Jdk11Downloader.getJdkHome(paths.buildDependenciesCommunityRoot)
-    stableJavaExecutable = Jdk11Downloader.getJavaExecutable(stableJdkHome)
-  }
+class CompilationContextImpl private constructor(model: JpsModel,
+                                                 communityHome: Path,
+                                                 projectHome: Path,
+                                                 override val messages: BuildMessages,
+                                                 private val oldToNewModuleName: Map<String, String>,
+                                                 buildOutputRootEvaluator: (JpsProject) -> Path,
+                                                 override val options: BuildOptions) : CompilationContext {
 
   fun createCopy(messages: BuildMessages,
                  options: BuildOptions,
                  buildOutputRootEvaluator: (JpsProject) -> Path): CompilationContextImpl {
     val copy = CompilationContextImpl(model = projectModel,
                                       communityHome = paths.communityHomeDir,
-                                      projectHome = paths.projectHomeDir,
+                                      projectHome = paths.projectHome,
                                       messages = messages,
                                       oldToNewModuleName = oldToNewModuleName,
                                       buildOutputRootEvaluator = buildOutputRootEvaluator,
@@ -85,25 +71,6 @@ class CompilationContextImpl : CompilationContext {
     copy.compilationData = compilationData
     return copy
   }
-
-  private constructor(messages: BuildMessages, context: CompilationContextImpl) {
-    projectModel = context.projectModel
-    project = context.project
-    global = context.global
-    options = context.options
-    this.messages = messages
-    oldToNewModuleName = context.oldToNewModuleName
-    newToOldModuleName = context.newToOldModuleName
-    nameToModule = context.nameToModule
-    paths = context.paths
-    compilationData = context.compilationData
-    dependenciesProperties = context.dependenciesProperties
-    bundledRuntime = context.bundledRuntime
-    stableJavaExecutable = context.stableJavaExecutable
-    stableJdkHome = context.stableJdkHome
-  }
-
-  fun cloneForContext(messages: BuildMessages) = CompilationContextImpl(messages, this)
 
   fun prepareForBuild() {
     checkCompilationOptions()
@@ -259,14 +226,10 @@ class CompilationContextImpl : CompilationContext {
     messages.artifactBuilt(pathToReport)
   }
 
-  override val options: BuildOptions
-  @Suppress("SSBasedInspection")
-  override val messages: BuildMessages
   override val paths: BuildPaths
   override val project: JpsProject
   val global: JpsGlobal
-  override val projectModel: JpsModel
-  private val oldToNewModuleName: Map<String, String>
+  override val projectModel: JpsModel = model
   private val newToOldModuleName: Map<String, String>
   private val nameToModule: Map<String?, JpsModule>
   override val dependenciesProperties: DependenciesProperties
@@ -291,21 +254,20 @@ class CompilationContextImpl : CompilationContext {
       }
     }
 
-    @JvmStatic
-    fun create(communityHome: Path,
-               projectHome: Path,
-               buildOutputRootEvaluator: (JpsProject) -> Path,
-               options: BuildOptions): CompilationContextImpl {
+    internal fun create(communityHome: Path,
+                        projectHome: Path,
+                        buildOutputRootEvaluator: (JpsProject) -> Path,
+                        options: BuildOptions = BuildOptions()): CompilationContextImpl {
       // This is not a proper place to initialize tracker for downloader
       // but this is the only place which is called in most build scripts
       BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
       val messages = BuildMessagesImpl.create()
-      if (listOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.resolve(it))}) {
+      if (listOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.resolve(it)) }) {
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
       printEnvironmentDebugInfo()
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
-      val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
+      val kotlinBinaries = KotlinBinaries(communityHome, options)
       val model = loadProject(projectHome, kotlinBinaries)
       val oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
       val context = CompilationContextImpl(model = model,
@@ -328,6 +290,21 @@ class CompilationContextImpl : CompilationContext {
       BuildMessagesHandler.initLogging(messages)
       return context
     }
+  }
+
+  init {
+    project = model.project
+    global = model.global
+    newToOldModuleName = oldToNewModuleName.entries.associate { it.value to it.key }
+    val modules = model.project.modules
+    this.nameToModule = modules.associateBy { it.name }
+    val buildOut = options.outputRootPath?.let { Path.of(it) } ?: buildOutputRootEvaluator(project)
+    val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
+    paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
+    dependenciesProperties = DependenciesProperties(this)
+    bundledRuntime = BundledRuntimeImpl(this)
+    stableJdkHome = Jdk11Downloader.getJdkHome(paths.buildDependenciesCommunityRoot)
+    stableJavaExecutable = Jdk11Downloader.getJavaExecutable(stableJdkHome)
   }
 }
 
@@ -373,11 +350,12 @@ private fun setProjectOutputDirectory0(propOwner: CompilationContextImpl, output
   return outputDirectory
 }
 
-class BuildPathsImpl(communityHome: Path, projectHome: Path, buildOut: Path, logDir: Path)
-  : BuildPaths(communityHomeDir = communityHome, buildOutputDir = buildOut, logDir = logDir) {
+private class BuildPathsImpl(communityHome: Path, projectHome: Path, buildOut: Path, logDir: Path)
+  : BuildPaths(communityHomeDir = communityHome,
+               buildOutputDir = buildOut,
+               logDir = logDir,
+               projectHome = projectHome) {
   init {
-    this.projectHome = FileUtilRt.toSystemIndependentName(projectHome.toString())
-    projectHomeDir = projectHome
     artifactDir = buildOutputDir.resolve("artifacts")
     artifacts = FileUtilRt.toSystemIndependentName(artifactDir.toString())
   }
@@ -396,9 +374,9 @@ private fun defineJavaSdk(context: CompilationContext) {
     .forEach { sdkName ->
       val vendorPrefixEnd = sdkName.indexOf('-')
       val sdkNameWithoutVendor = if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)
-      if (sdkNameWithoutVendor != "11") {
-        throw IllegalStateException(
-          "Project model at $context.paths.projectHomeDir requested SDK $sdkNameWithoutVendor, but only '11' is supported as SDK in intellij project")
+      check(sdkNameWithoutVendor == "11") {
+        "Project model at ${context.paths.projectHome} requested SDK $sdkNameWithoutVendor, " +
+        "but only '11' is supported as SDK in intellij project"
       }
 
       if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {

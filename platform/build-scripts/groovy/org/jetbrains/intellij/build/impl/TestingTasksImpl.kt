@@ -38,7 +38,7 @@ import kotlin.streams.toList
 
 internal class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
-    val projectHome = context.paths.projectHomeDir
+    val projectHome = context.paths.projectHome
     val file = RunConfigurationProperties.findRunConfiguration(projectHome, name)
     val configuration = RunConfigurationProperties.getConfiguration(file)
     return when (val type = RunConfigurationProperties.getConfigurationType(configuration)) {
@@ -216,7 +216,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       .mapTo(LinkedHashSet()) { FileUtilRt.toSystemDependentName(it.properties.homePath) }
 
     excludeRoots.add(context.paths.buildOutputDir.toString())
-    excludeRoots.add(context.paths.projectHomeDir.resolve("out").toString())
+    excludeRoots.add(context.paths.projectHome.resolve("out").toString())
 
     additionalSystemProperties.put("test.discovery.listener", "com.intellij.TestDiscoveryBasicListener")
     additionalSystemProperties.put("test.discovery.data.listener",
@@ -231,7 +231,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
   }
 
   private val testDiscoveryTraceFilePath: String
-    get() = options.testDiscoveryTraceFilePath ?: context.paths.projectHomeDir.resolve("intellij-tracing/td.tr").toString()
+    get() = options.testDiscoveryTraceFilePath ?: context.paths.projectHome.resolve("intellij-tracing/td.tr").toString()
 
   private fun debugTests(remoteDebugJvmOptions: String,
                          additionalJvmOptions: List<String>,
@@ -375,7 +375,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
   }
 
   override fun createSnapshotsDirectory(): Path {
-    val snapshotsDir = context.paths.projectHomeDir.resolve("out/snapshots")
+    val snapshotsDir = context.paths.projectHome.resolve("out/snapshots")
     NioFiles.deleteRecursively(snapshotsDir)
     Files.createDirectories(snapshotsDir)
     return snapshotsDir
@@ -401,9 +401,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     jvmArgs.addAll(0, VmOptionsGenerator.computeVmOptions(true, null))
     jvmArgs.addAll(options.jvmMemoryOptions?.split(whitespaceRegex) ?: listOf("-Xms750m", "-Xmx750m", "-Dsun.io.useCanonCaches=false"))
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
-    val defaultSystemProperties = mapOf(
+    mapOf(
       "idea.platform.prefix" to options.platformPrefix,
-      "idea.home.path" to context.paths.projectHome,
+      "idea.home.path" to context.paths.projectHome.toString(),
       "idea.config.path" to "$tempDir/config",
       "idea.system.path" to "$tempDir/system",
       "intellij.build.compiled.classes.archives.metadata" to System.getProperty("intellij.build.compiled.classes.archives.metadata"),
@@ -418,8 +418,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       "jna.nosys" to "true",
       "file.encoding" to "UTF-8",
       "io.netty.leakDetectionLevel" to "PARANOID",
-    )
-    defaultSystemProperties.forEach(BiConsumer { k, v ->
+    ).forEach(BiConsumer { k, v ->
       if (v != null) {
         systemProperties.putIfAbsent(k, v)
       }
@@ -446,7 +445,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
     }
     else if (options.isDebugEnabled) {
-      jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspendDebugProcess) "y" else "n"},address=${options.debugHost}:${options.debugPort}")
+      jvmArgs.add(
+        "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${if (suspendDebugProcess) "y" else "n"},address=${options.debugHost}:${options.debugPort}")
     }
 
     if (options.isEnableCausalProfiling) {

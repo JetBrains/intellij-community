@@ -16,7 +16,7 @@ private const val MODULE_NAME = "intellij.platform.builtInHelp"
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
   val productName = context.applicationInfo.productName
-  val resourceRoot = context.paths.projectHomeDir.resolve("help/plugin-resources")
+  val resourceRoot = context.paths.projectHome.resolve("help/plugin-resources")
   if (Files.notExists(resourceRoot.resolve("topics/app.js"))) {
     Span.current().addEvent("skip $productName Help plugin because $resourceRoot/topics/app.js not present")
     return null

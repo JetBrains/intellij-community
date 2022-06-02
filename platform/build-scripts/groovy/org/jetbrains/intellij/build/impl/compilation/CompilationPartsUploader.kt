@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
+import okhttp3.OkHttpClient
 import org.apache.http.Consts
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.RequestConfig
@@ -12,9 +13,6 @@ import org.apache.http.client.methods.HttpPut
 import org.apache.http.client.methods.HttpUriRequest
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.FileEntity
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.LaxRedirectStrategy
 import org.apache.http.util.EntityUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
@@ -28,7 +26,7 @@ import java.util.concurrent.TimeUnit
 class CompilationPartsUploader implements Closeable {
   private final BuildMessages myMessages
   protected final String myServerUrl
-  protected final CloseableHttpClient myHttpClient
+  protected final OkHttpClient httpClient
 
   CompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
     myServerUrl = fixServerUrl(serverUrl)
@@ -38,18 +36,13 @@ class CompilationPartsUploader implements Closeable {
       .setConnectTimeout(timeout)
       .setConnectionRequestTimeout(timeout)
       .setSocketTimeout(timeout).build()
-    myHttpClient = HttpClientBuilder.create()
-      .setUserAgent('Parts Uploader')
-      .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
-      .setMaxConnTotal(20)
-      .setMaxConnPerRoute(10)
-      .setDefaultRequestConfig(config)
-      .build()
+    httpClient = CompilationPartsUtilKt.createHttpClient("Parts Uploader", true)
   }
 
   @Override
   void close() throws IOException {
-    CloseStreamUtil.closeStream(myHttpClient)
+    httpClient.dispatcher().executorService().shutdown()
+    httpClient.connectionPool().evictAll()
   }
 
   @SuppressWarnings("unused")
@@ -143,7 +136,7 @@ class CompilationPartsUploader implements Closeable {
 
   CloseableHttpResponse executeWithRetry(HttpUriRequest request) {
     return new Retry(myMessages).call {
-      def response = myHttpClient.execute(request)
+      def response = httpClient.execute(request)
       if (response.statusLine.statusCode >= HttpStatus.SC_INTERNAL_SERVER_ERROR) {
         // server error, will retry
         throw new RuntimeException("$request: response is $response.statusLine.statusCode, $response.entity.content.text")

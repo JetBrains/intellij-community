@@ -42,6 +42,6 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   }
   
   String getKeymapReferenceDirectory(BuildContext context) {
-    return "$context.paths.projectHome/python/help"
+    return "${context.paths.projectHome}/python/help"
   }
 }

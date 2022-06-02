@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.createTask
 import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.lang.JavaModuleOptions
 import com.intellij.util.system.OS
@@ -147,9 +146,9 @@ fun runApplicationStarter(context: BuildContext,
   Files.createDirectories(tempDir)
   val jvmArgs = ArrayList<String>()
   val systemDir = tempDir.resolve("system")
-  BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome)
-  BuildUtils.addVmProperty(jvmArgs, "idea.system.path", FileUtilRt.toSystemIndependentName(systemDir.toString()))
-  BuildUtils.addVmProperty(jvmArgs, "idea.config.path", FileUtilRt.toSystemIndependentName(tempDir.toString()) + "/config")
+  BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome.toString())
+  BuildUtils.addVmProperty(jvmArgs, "idea.system.path", systemDir.toString())
+  BuildUtils.addVmProperty(jvmArgs, "idea.config.path", "$tempDir/config")
   // reproducible build - avoid touching module outputs, do no write classpath.index
   BuildUtils.addVmProperty(jvmArgs, "idea.classpath.index.enabled", "false")
   BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")

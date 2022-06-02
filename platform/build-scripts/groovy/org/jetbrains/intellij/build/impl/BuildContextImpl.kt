@@ -228,7 +228,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     val compilationContextCopy = compilationContext.createCopy(
       messages = messages,
       options = options,
-      buildOutputRootEvaluator = createBuildOutputRootEvaluator(paths.projectHomeDir, productProperties, options)
+      buildOutputRootEvaluator = createBuildOutputRootEvaluator(paths.projectHome, productProperties, options)
     )
     val copy = BuildContextImpl(
       compilationContext = compilationContextCopy,
