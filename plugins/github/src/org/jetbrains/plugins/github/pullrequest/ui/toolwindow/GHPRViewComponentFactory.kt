@@ -42,7 +42,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys.PULL_REQUEST_FILES
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
@@ -107,7 +107,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
-  private val diffRequestProducer: DiffRequestChainProducer =
+  private val diffRequestProducer: GHPRDiffRequestChainProducer =
     object : GHPRDiffRequestChainProducer(project,
                                           dataProvider, dataContext.avatarIconsProvider,
                                           dataContext.repositoryDataService,
@@ -386,7 +386,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   ): JComponent {
     val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreview = GHPRCombinedDiffPreviewBase.createAndSetupDiffPreview(tree, dataProvider.id, dataContext.filesManager)
+    val diffPreview = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider, dataContext.filesManager)
 
     reloadChangesAction.registerCustomShortcutSet(tree, null)
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)

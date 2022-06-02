@@ -39,6 +39,8 @@ interface CombinedDiffModel {
   fun add(requestData: NewRequestData, producer: DiffRequestProducer, onAdded: (CombinedBlockId) -> Unit = {})
   fun getCurrentRequest(): DiffRequest?
 
+  fun getLoadedRequests(): List<DiffRequest>
+
   @RequiresBackgroundThread
   fun preloadRequests(indicator: ProgressIndicator, requests: List<RequestData>)
   fun loadRequestContents(blockIds: Collection<CombinedBlockId>, blockToSelect: CombinedBlockId?)
@@ -133,6 +135,8 @@ open class CombinedDiffModelImpl(protected val project: Project,
   override fun getCurrentRequest(): DiffRequest? {
     return context.getUserData(COMBINED_DIFF_VIEWER_KEY)?.getCurrentBlockId()?.let(loadedRequests::get)
   }
+
+  override fun getLoadedRequests(): List<DiffRequest> = loadedRequests.values.toList()
 
   @RequiresBackgroundThread
   override fun preloadRequests(indicator: ProgressIndicator, requests: List<RequestData>) {

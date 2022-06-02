@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.ui.IdeBorderFactory
@@ -39,7 +40,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -49,6 +50,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
+import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
@@ -242,7 +244,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                 emptyTextText: String): JComponent {
     val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText)
 
-    val diffPreview = GHPRCombinedDiffPreviewBase.createAndSetupDiffPreview(tree, null, dataContext.filesManager)
+    val diffPreview = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, null, dataContext.filesManager)
 
     DataManager.registerDataProvider(parentPanel) { dataId ->
       when {
@@ -343,25 +345,28 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   }
 
   private inner class NewPRDiffRequestChainProducer : DiffRequestChainProducer {
-    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
-      val producers = changes.map {
-        val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
-        if (diffController.activeTree == GHPRDiffController.ActiveTree.FILES) {
-          val baseBranchName = directionModel.baseBranch?.name ?: "Base"
-          requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
-            VcsDiffUtil.getRevisionTitle(baseBranchName, it.beforeRevision?.file, it.afterRevision?.file)
+    val changeProducerFactory = ChangeDiffRequestProducerFactory { project, change ->
+      val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
-          val headBranchName = directionModel.headBranch?.name ?: "Head"
-          requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
-            VcsDiffUtil.getRevisionTitle(headBranchName, it.afterRevision?.file, null)
-        }
-        else {
-          VcsDiffUtil.putFilePathsIntoChangeContext(it, requestDataKeys)
-        }
+      if (diffController.activeTree == GHPRDiffController.ActiveTree.FILES) {
+        val baseBranchName = directionModel.baseBranch?.name ?: "Base"
+        requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
+          VcsDiffUtil.getRevisionTitle(baseBranchName, change.beforeRevision?.file, change.afterRevision?.file)
 
-        ChangeDiffRequestProducer.create(project, it, requestDataKeys)
+        val headBranchName = directionModel.headBranch?.name ?: "Head"
+        requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
+          VcsDiffUtil.getRevisionTitle(headBranchName, change.afterRevision?.file, null)
       }
+      else {
+        VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
+      }
+
+      ChangeDiffRequestProducer.create(project, change, requestDataKeys)
+    }
+
+    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
+      val producers = changes.map { change -> changeProducerFactory.create(project, change) as? Producer }
       return ChangeDiffRequestChain(producers)
     }
   }
