@@ -145,8 +145,8 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return createSeparatorRow(title)
   }
 
-  override fun separator(): Row {
-    return createSeparatorRow(null as JBLabel?)
+  override fun separator(background: Color?): Row {
+    return createSeparatorRow(null, background)
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
@@ -463,10 +463,10 @@ private fun Panel.createSeparatorRow(@NlsContexts.Separator title: String?): Row
   return createSeparatorRow(toSeparatorLabel(title))
 }
 
-private fun Panel.createSeparatorRow(title: JBLabel?): Row {
+private fun Panel.createSeparatorRow(title: JBLabel?, background: Color? = null): Row {
   val separator: JComponent
   if (title == null) {
-    separator = SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
+    separator = SeparatorComponent(0, background ?: OnePixelDivider.BACKGROUND, null)
   }
   else {
     separator = object : TitledSeparator(title.text) {

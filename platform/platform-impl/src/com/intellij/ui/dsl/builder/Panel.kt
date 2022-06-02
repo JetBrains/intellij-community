@@ -74,7 +74,7 @@ interface Panel : CellBase<Panel> {
   /**
    * Adds horizontal line separator. Use [group] or [groupRowsRange] if you need a separator with title
    */
-  fun separator(): Row
+  fun separator(background: Color? = null): Row
 
   /**
    * Creates sub-panel that occupies the whole width and uses its own grid inside
