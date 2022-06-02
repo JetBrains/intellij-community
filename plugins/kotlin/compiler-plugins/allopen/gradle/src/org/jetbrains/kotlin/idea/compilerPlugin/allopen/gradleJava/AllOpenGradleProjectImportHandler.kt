@@ -2,21 +2,23 @@
 
 package org.jetbrains.kotlin.idea.compilerPlugin.allopen.gradleJava
 
-import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
-import org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModel
+import org.jetbrains.kotlin.allopen.AllOpenPluginNames.ANNOTATION_OPTION_NAME
+import org.jetbrains.kotlin.allopen.AllOpenPluginNames.PLUGIN_ID
+import org.jetbrains.kotlin.allopen.AllOpenPluginNames.SUPPORTED_PRESETS
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
+import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
+import org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModel
 
 class AllOpenGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGradleImportHandler<AllOpenModel>() {
-    override val compilerPluginId = AllOpenCommandLineProcessor.PLUGIN_ID
+    override val compilerPluginId = PLUGIN_ID
     override val pluginName = "allopen"
-    override val annotationOptionName = AllOpenCommandLineProcessor.ANNOTATION_OPTION.optionName
+    override val annotationOptionName = ANNOTATION_OPTION_NAME
     override val pluginJarFileFromIdea = KotlinArtifacts.instance.allopenCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
     override val modelKey = AllOpenProjectResolverExtension.KEY
 
     override fun getAnnotationsForPreset(presetName: String): List<String> {
-        for ((name, annotations) in AllOpenCommandLineProcessor.SUPPORTED_PRESETS.entries) {
+        for ((name, annotations) in SUPPORTED_PRESETS.entries) {
             if (presetName == name) {
                 return annotations
             }
