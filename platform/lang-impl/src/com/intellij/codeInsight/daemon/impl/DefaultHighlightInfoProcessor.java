@@ -71,8 +71,8 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     MarkupModel markup = editor.getMarkupModel();
     if (markup instanceof EditorMarkupModelImpl) {
       ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
+      ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
     }
-    ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
   }
 
   @Override
