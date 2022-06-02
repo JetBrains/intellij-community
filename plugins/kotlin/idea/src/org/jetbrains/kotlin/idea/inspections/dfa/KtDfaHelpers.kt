@@ -17,20 +17,16 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
-import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.project.builtIns
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
@@ -127,14 +123,7 @@ private fun ClassDescriptor.getTypeConstraint(context: KtElement): TypeConstrain
         "kotlin.FloatArray" -> TypeConstraints.exact(PsiType.FLOAT.createArrayType())
         "kotlin.DoubleArray" -> TypeConstraints.exact(PsiType.DOUBLE.createArrayType())
         else -> {
-            val fqName = fqNameSafe
-            val kotlinFqName = JavaToKotlinClassMap.mapJavaToKotlin(fqName)?.asSingleFqName()
-            val descriptor = if (kotlinFqName == fqName) {
-                this
-            } else {
-                context.findModuleDescriptor().resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE) ?: this
-            }
-            val classDef = KtClassDef(descriptor, context)
+            val classDef = KtClassDef(this, context)
             if (kind == ClassKind.OBJECT && classDef.isFinal) {
                 TypeConstraints.singleton(classDef)
             } else {
