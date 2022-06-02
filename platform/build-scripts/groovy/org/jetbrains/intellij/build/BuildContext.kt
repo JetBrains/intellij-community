@@ -85,7 +85,7 @@ interface BuildContext: CompilationContext {
 
   fun shouldBuildDistributions(): Boolean
 
-  fun shouldBuildDistributionForOS(os: String): Boolean
+  fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
 }

@@ -213,8 +213,10 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     return options.targetOs.lowercase() != BuildOptions.OS_NONE
   }
 
-  override fun shouldBuildDistributionForOS(os: String): Boolean {
-    return shouldBuildDistributions() && listOf(BuildOptions.OS_ALL, os).contains(options.targetOs.lowercase())
+  override fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean {
+    return shouldBuildDistributions()
+           && listOf(BuildOptions.OS_ALL, os.osId).contains(options.targetOs.lowercase())
+           && (options.targetArch == null || options.targetArch == arch)
   }
 
   override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {

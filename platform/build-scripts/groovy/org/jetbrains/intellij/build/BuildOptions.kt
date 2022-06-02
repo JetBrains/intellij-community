@@ -168,6 +168,11 @@ class BuildOptions {
   var targetOs: String
 
   /**
+   * Specifies for which arch distributions should be built. null means all
+   */
+  var targetArch: JvmArchitecture? = null
+
+  /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
    */
   var buildStepsToSkip: MutableSet<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")

@@ -663,7 +663,7 @@ class DistributionJARsBuilder {
       }
 
        ForkJoinTask.invokeAll(platforms.mapNotNull { (osFamily, arch) ->
-          if (!context.shouldBuildDistributionForOS(osFamily.osId)) {
+          if (!context.shouldBuildDistributionForOS(osFamily, arch)) {
             return@mapNotNull null
           }
 

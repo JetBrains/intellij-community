@@ -369,7 +369,7 @@ private fun buildOsSpecificDistributions(context: BuildContext): List<Distributi
   val propertiesFile = patchIdeaPropertiesFile(context)
 
   fun createDistributionForOsTask(os: OsFamily, arch: JvmArchitecture): BuildTaskRunnable? {
-    if (!context.shouldBuildDistributionForOS(os.osId)) {
+    if (!context.shouldBuildDistributionForOS(os, arch)) {
       return null
     }
 
