@@ -245,21 +245,23 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
     myNavBarPanel.setOpaque(!ExperimentalUI.isNewUI());
     myNavBarPanel.updateUI();
 
-    HoverListener hoverListener = new HoverListener() {
-      @Override
-      public void mouseEntered(@NotNull Component component, int x, int y) {
-        toggleScrollBar(true);
-      }
+    if (ExperimentalUI.isNewNavbar()) {
+      HoverListener hoverListener = new HoverListener() {
+        @Override
+        public void mouseEntered(@NotNull Component component, int x, int y) {
+          toggleScrollBar(true);
+        }
 
-      @Override
-      public void mouseMoved(@NotNull Component component, int x, int y) {}
+        @Override
+        public void mouseMoved(@NotNull Component component, int x, int y) { }
 
-      @Override
-      public void mouseExited(@NotNull Component component) {
-        toggleScrollBar(false);
-      }
-    };
-    hoverListener.addTo(myNavBarPanel);
+        @Override
+        public void mouseExited(@NotNull Component component) {
+          toggleScrollBar(false);
+        }
+      };
+      hoverListener.addTo(myNavBarPanel);
+    }
 
     return myNavBarPanel;
   }
