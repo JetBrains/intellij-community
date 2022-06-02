@@ -835,8 +835,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         severityLevelChooserComponent.getActionMap().put("changeSeverity", new AbstractAction() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            final var panel = (JPanel)severityLevelChooserComponent;
-            final var button = (ComboBoxAction.ComboBoxButton)panel.getComponent(0);
+            final var button = (ComboBoxAction.ComboBoxButton)severityLevelChooserComponent;
             button.showPopup();
           }
         });
