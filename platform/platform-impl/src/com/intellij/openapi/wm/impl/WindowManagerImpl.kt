@@ -355,7 +355,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun releaseFrame(frameHelper: ProjectFrameHelper) {
-    val project = frameHelper.project!!
+    val project = frameHelper.project ?: return
     frameHelper.frameReleased()
     projectToFrame.remove(project)
     if (frameReuseEnabled && !projectToFrame.containsKey(null) && project !is LightEditCompatible) {

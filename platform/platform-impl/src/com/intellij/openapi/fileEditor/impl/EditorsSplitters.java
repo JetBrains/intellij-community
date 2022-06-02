@@ -1101,9 +1101,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return getSplittersForProject(activeWindow, frame.getProject());
     }
 
-    if (project != null && !project.isDisposed()) {
+    // getSplitters is not implemented in unit test mode
+    if (project != null && !project.isDisposed() && !ApplicationManager.getApplication().isUnitTestMode()) {
       FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(project);
-      if (manager != null) { // null for default project
+      // null for default project
+      if (manager != null) {
         return manager.getSplitters();
       }
     }

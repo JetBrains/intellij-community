@@ -13,8 +13,12 @@ import javax.swing.Icon
 
 fun testStripeButton(id: String, manager: ToolWindowManagerImpl, shouldBeVisible: Boolean) {
   val button = manager.getEntry(id)?.stripeButton
-   assertThat(button).isNotNull()
-   assertThat(button!!.getComponent().isVisible).isEqualTo(shouldBeVisible)
+  if (!shouldBeVisible && button == null) {
+    return
+  }
+
+  assertThat(button).isNotNull()
+  assertThat(button!!.getComponent().isVisible).isEqualTo(shouldBeVisible)
 }
 
 private fun init(project: Project,
@@ -118,7 +122,7 @@ fun testButtonLayout(isNewUi: Boolean, anchor: ToolWindowAnchor) {
       .map { it.id }
       .toList()
   ).isEqualTo(listOf("Version Control", "Problems View", "Terminal")
-                  .let { if (isNewUi && anchor == ToolWindowAnchor.BOTTOM) it.asReversed() else it })
+                .let { if (isNewUi && anchor == ToolWindowAnchor.BOTTOM) it.asReversed() else it })
 }
 
 private class TestStripeButtonManager(override val id: String, override val windowDescriptor: WindowInfo) : StripeButtonManager {

@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.usageView.impl.UsageViewContentManagerImpl;
 
-import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Vassiliy Kudryashov
@@ -33,7 +33,7 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
       "</layout>"), false, false);
 
     for (ToolWindowEP extension : ToolWindowEP.EP_NAME.getExtensionList()) {
-      if (Arrays.asList(ToolWindowId.TODO_VIEW, ToolWindowId.FIND, ToolWindowId.PROJECT_VIEW).contains(extension.id)) {
+      if (List.of(ToolWindowId.TODO_VIEW, ToolWindowId.FIND, ToolWindowId.PROJECT_VIEW).contains(extension.id)) {
         manager.initToolWindow(extension);
       }
     }

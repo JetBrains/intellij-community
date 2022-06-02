@@ -750,7 +750,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     val info = getRegisteredMutableInfoOrLogError(id)
     if (showToolWindowImpl(entry, info, dirtyMode = false)) {
-      checkInvariants("id: $id")
+      checkInvariants(id)
       fireStateChanged(ToolWindowManagerEventType.ShowToolWindow)
     }
   }
@@ -1224,7 +1224,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     fireStateChanged(ToolWindowManagerEventType.SetLayout)
 
-    checkInvariants("")
+    checkInvariants(null)
   }
 
   override fun invokeLater(runnable: Runnable) {
@@ -1724,7 +1724,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   private fun addWindowedDecorator(entry: ToolWindowEntry, info: WindowInfo) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+    val app = ApplicationManager.getApplication()
+    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
       return
     }
 
@@ -1956,7 +1957,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     fireStateChanged(ToolWindowManagerEventType.SetShowStripeButton)
   }
 
-  private fun checkInvariants(additionalMessage: String) {
+  private fun checkInvariants(id: String?) {
     val app = ApplicationManager.getApplication()
     if (!app.isEAP && !app.isInternal) {
       return
@@ -1969,20 +1970,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
         continue
       }
 
-      if (info.type == ToolWindowType.FLOATING) {
-        if (entry.floatingDecorator == null) {
-          violations.add("Floating window has no decorator: ${entry.id}")
+      if (!app.isHeadlessEnvironment && !app.isUnitTestMode) {
+        if (info.type == ToolWindowType.FLOATING) {
+          if (entry.floatingDecorator == null) {
+            violations.add("Floating window has no decorator: ${entry.id}")
+          }
         }
-      }
-      else if (info.type == ToolWindowType.WINDOWED) {
-        if (entry.windowedDecorator == null) {
+        else if (info.type == ToolWindowType.WINDOWED && entry.windowedDecorator == null) {
           violations.add("Windowed window has no decorator: ${entry.id}")
         }
       }
     }
 
     if (violations.isNotEmpty()) {
-      LOG.error("Invariants failed: \n${violations.joinToString("\n")}\nContext: $additionalMessage")
+      LOG.error("Invariants failed: \n${violations.joinToString("\n")}\n${if (id == null) "" else "id: $id"}")
     }
   }
 }
