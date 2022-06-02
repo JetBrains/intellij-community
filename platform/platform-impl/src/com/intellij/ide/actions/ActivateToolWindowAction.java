@@ -65,6 +65,11 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     Presentation presentation = e.getPresentation();
