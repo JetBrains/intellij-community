@@ -37,12 +37,13 @@ import java.util.Objects;
 public final class VcsShelveUtils {
   private static final Logger LOG = Logger.getInstance(VcsShelveUtils.class.getName());
 
-  public static boolean doSystemUnshelve(final Project project,
-                                         final ShelvedChangeList shelvedChangeList,
-                                         @Nullable final LocalChangeList targetChangeList,
-                                         final ShelveChangesManager shelveManager,
-                                         @NlsContexts.Label @Nullable final String leftConflictTitle,
-                                         @NlsContexts.Label @Nullable final String rightConflictTitle) {
+  @NotNull
+  public static ApplyPatchStatus doSystemUnshelve(final Project project,
+                                                  final ShelvedChangeList shelvedChangeList,
+                                                  @Nullable final LocalChangeList targetChangeList,
+                                                  final ShelveChangesManager shelveManager,
+                                                  @NlsContexts.Label @Nullable final String leftConflictTitle,
+                                                  @NlsContexts.Label @Nullable final String rightConflictTitle) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
@@ -61,7 +62,7 @@ public final class VcsShelveUtils {
     ApplyPatchStatus status = shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
                                                                true, leftConflictTitle, rightConflictTitle, true);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
-    return status != ApplyPatchStatus.ABORT;
+    return status;
   }
 
   @RequiresEdt

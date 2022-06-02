@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -77,12 +78,12 @@ public class VcsShelveChangesSaver {
     String oldProgressTitle = myProgressIndicator.getText();
     myProgressIndicator.setText(VcsBundle.message("vcs.unshelving.changes"));
     for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
-      boolean success = VcsShelveUtils.doSystemUnshelve(project, listEntry.getValue(),
-                                                        ChangeListManager.getInstance(project).getChangeList(listEntry.getKey()),
-                                                        ShelveChangesManager.getInstance(project),
-                                                        VcsBundle.message("vcs.unshelving.conflict.left"),
-                                                        VcsBundle.message("vcs.unshelving.conflict.right"));
-      if (!success) {
+      ApplyPatchStatus status = VcsShelveUtils.doSystemUnshelve(project, listEntry.getValue(),
+                                                                ChangeListManager.getInstance(project).getChangeList(listEntry.getKey()),
+                                                                ShelveChangesManager.getInstance(project),
+                                                                VcsBundle.message("vcs.unshelving.conflict.left"),
+                                                                VcsBundle.message("vcs.unshelving.conflict.right"));
+      if (status == ApplyPatchStatus.ABORT) {
         break;
       }
     }
