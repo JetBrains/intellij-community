@@ -7,15 +7,18 @@ import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
-import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
+import org.jetbrains.kotlin.noarg.NoArgPluginNames.ANNOTATION_OPTION_NAME
+import org.jetbrains.kotlin.noarg.NoArgPluginNames.INVOKE_INITIALIZERS_OPTION_NAME
+import org.jetbrains.kotlin.noarg.NoArgPluginNames.PLUGIN_ID
+import org.jetbrains.kotlin.noarg.NoArgPluginNames.SUPPORTED_PRESETS
 
 class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
     private companion object {
-        val ANNOTATATION_PARAMETER_PREFIX = "no-arg:${NoArgCommandLineProcessor.ANNOTATION_OPTION.optionName}="
-        val INVOKEINITIALIZERS_PARAMETER_PREFIX = "no-arg:${NoArgCommandLineProcessor.INVOKE_INITIALIZERS_OPTION.optionName}="
+        val ANNOTATATION_PARAMETER_PREFIX = "no-arg:$ANNOTATION_OPTION_NAME="
+        val INVOKEINITIALIZERS_PARAMETER_PREFIX = "no-arg:$INVOKE_INITIALIZERS_OPTION_NAME="
     }
 
-    override val compilerPluginId = NoArgCommandLineProcessor.PLUGIN_ID
+    override val compilerPluginId = PLUGIN_ID
     override val pluginName = "noarg"
     override val mavenPluginArtifactName = "kotlin-maven-noarg"
     override val pluginJarFileFromIdea = KotlinArtifacts.instance.noargCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
@@ -30,7 +33,7 @@ class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
         }
 
         val annotations = mutableListOf<String>()
-        for ((presetName, presetAnnotations) in NoArgCommandLineProcessor.SUPPORTED_PRESETS) {
+        for ((presetName, presetAnnotations) in SUPPORTED_PRESETS) {
             if (presetName in enabledCompilerPlugins) {
                 annotations.addAll(presetAnnotations)
             }
@@ -41,14 +44,14 @@ class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
             text.substring(ANNOTATATION_PARAMETER_PREFIX.length)
         })
 
-        val options = annotations.mapTo(mutableListOf()) { PluginOption(NoArgCommandLineProcessor.ANNOTATION_OPTION.optionName, it) }
+        val options = annotations.mapTo(mutableListOf()) { PluginOption(ANNOTATION_OPTION_NAME, it) }
 
         val invokeInitializerOptionValue = compilerPluginOptions
                 .firstOrNull { it.startsWith(INVOKEINITIALIZERS_PARAMETER_PREFIX) }
                 ?.drop(INVOKEINITIALIZERS_PARAMETER_PREFIX.length) == "true"
 
         if (invokeInitializerOptionValue) {
-            options.add(PluginOption(NoArgCommandLineProcessor.INVOKE_INITIALIZERS_OPTION.optionName, "true"))
+            options.add(PluginOption(INVOKE_INITIALIZERS_OPTION_NAME, "true"))
         }
 
         return options
