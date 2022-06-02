@@ -5,6 +5,10 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.containers.MultiMap
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import java.util.function.BiConsumer
@@ -12,7 +16,7 @@ import java.util.function.BiConsumer
 class ProductModulesLayout {
   companion object {
     @JvmField
-    val DEFAULT_BUNDLED_PLUGINS: List<String> = java.util.List.of(
+    val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
       "intellij.platform.images",
       "intellij.dev",
     )
@@ -37,7 +41,7 @@ class ProductModulesLayout {
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
    * bundled plugins are specified in {@link #allNonTrivialPlugins} list.
    */
-  val bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
+  var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
 
   private var pluginsToPublish: LinkedHashSet<String> = LinkedHashSet()
 
@@ -73,7 +77,7 @@ class ProductModulesLayout {
   /**
    * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
    */
-  var projectLibrariesToUnpackIntoMainJar: List<String> = emptyList()
+  var projectLibrariesToUnpackIntoMainJar: PersistentList<String> = persistentListOf()
 
   /**
    * Maps names of JARs to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
@@ -90,10 +94,10 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
    */
-  internal val platformLayoutCustomizers = mutableListOf<BiConsumer<PlatformLayout, BuildContext>>()
+  internal var platformLayoutCustomizers = persistentListOf<BiConsumer<PlatformLayout, BuildContext>>()
 
   fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
-    platformLayoutCustomizers.add(customizer)
+    platformLayoutCustomizers = platformLayoutCustomizers.add(customizer)
   }
 
   /**
@@ -130,7 +134,7 @@ class ProductModulesLayout {
    * Allows to filter out default platform modules (both api and implementation) as well as product modules.
    * This API is experimental, use with care
    */
-  var excludedModuleNames: MutableSet<String> = mutableSetOf()
+  var excludedModuleNames: PersistentSet<String> = persistentSetOf()
 
   /**
    * @return list of all modules which output is included into the plugin's JARs

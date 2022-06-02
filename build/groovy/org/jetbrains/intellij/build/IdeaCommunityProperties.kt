@@ -77,9 +77,9 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
         fileAssociations = listOf("java", "groovy", "kt", "kts")
       }
 
-      override fun getFullNameIncludingEdition(applicationInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
+      override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
 
-      override fun getFullNameIncludingEditionAndVendor(applicationInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
+      override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties) = "IntelliJ IDEA Community Edition"
 
       override fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String {
         return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
@@ -105,7 +105,7 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
         )
       }
 
-      override fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String) = "idea-IC-$buildNumber"
+      override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String) = "idea-IC-$buildNumber"
     }
   }
 

@@ -60,15 +60,13 @@ abstract class WindowsDistributionCustomizer {
    * Name of the root directory in Windows .zip archive
    */
   // method is used by AndroidStudioProperties.groovy (https://bit.ly/3heXKlQ)
-  open fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
-    return ""
-  }
+  open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = ""
 
   /**
    * Name of the root product windows installation directory and Desktop ShortCut
    */
-  open fun getNameForInstallDirAndDesktopShortcut(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${getFullNameIncludingEdition(applicationInfo)} ${if (applicationInfo.isEAP) buildNumber else applicationInfo.fullVersion}"
+  open fun getNameForInstallDirAndDesktopShortcut(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+    "${getFullNameIncludingEdition(appInfo)} ${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
 
   /**
    * Override this method to copy additional files to Windows distribution of the product.
@@ -82,13 +80,13 @@ abstract class WindowsDistributionCustomizer {
   /**
    * The returned name will be shown in Windows Installer and used in Registry keys
    */
-  open fun getFullNameIncludingEdition(applicationInfo: ApplicationInfoProperties): String = applicationInfo.productName
+  open fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = appInfo.productName
 
   /**
    * The returned name will be used to create links on Desktop
    */
-  open fun getFullNameIncludingEditionAndVendor(applicationInfo: ApplicationInfoProperties): String =
-    applicationInfo.shortCompanyName + " " + getFullNameIncludingEdition(applicationInfo)
+  open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String =
+    appInfo.shortCompanyName + " " + getFullNameIncludingEdition(appInfo)
 
   open fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String? {
     return null

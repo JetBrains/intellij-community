@@ -42,8 +42,8 @@ abstract class LinuxDistributionCustomizer {
   /**
    * Name of the root directory inside linux .tar.gz archive
    */
-  open fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${applicationInfo.productName}-${if (applicationInfo.isEAP) buildNumber else applicationInfo.fullVersion}"
+  open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+    "${appInfo.productName}-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
 
   /**
    * Override this method to copy additional files to Linux distribution of the product.

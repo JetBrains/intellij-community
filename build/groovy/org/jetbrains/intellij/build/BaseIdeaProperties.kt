@@ -3,8 +3,10 @@
 
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -60,7 +62,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
   companion object {
     @Suppress("SpellCheckingInspection")
     @JvmStatic
-    val BUNDLED_PLUGIN_MODULES: List<String> = java.util.List.of(
+    val BUNDLED_PLUGIN_MODULES: PersistentList<String> = persistentListOf(
       "intellij.java.plugin",
       "intellij.java.ide.customization",
       "intellij.copyright",
