@@ -1038,10 +1038,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       float fontSize = uiSettings.getFontSize2D();
       StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, fontSize));
       JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(fontSize));
-    } if (useInterFont()) {
+    }
+    else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
       float userScaleFactor = JBUIScale.getFontScale(JBFont.label().getSize());
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback("Inter", Font.PLAIN, (int) (13 * userScaleFactor)));
+      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback("Inter", Font.PLAIN, (int)(13 * userScaleFactor)));
       JBUIScale.setUserScaleFactor(userScaleFactor);
     }
     else {
