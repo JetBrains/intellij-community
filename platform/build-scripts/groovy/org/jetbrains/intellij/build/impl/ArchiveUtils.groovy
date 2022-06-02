@@ -97,13 +97,12 @@ final class ArchiveUtils {
   private static class GnuTarArchive {
     final List<String> args
     final List<Path> workDirs
-    final Map<String, String> env
 
     GnuTarArchive(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
       // gzip stores a timestamp by default in its header, see https://wiki.debian.org/ReproducibleBuilds/TimestampsInGzipHeaders
-      this.env = ["GZIP": "--no-name"]
       def args = [
-        "tar", "--create", "--gzip",
+        "tar", "--create",
+        "--use-compress-program=gzip --no-name",
         "--file=$archive".toString(),
         "--transform=s,^\\.,$rootDir,".toString(),
         "--mtime=@$buildDateInSeconds".toString(),
@@ -138,7 +137,7 @@ final class ArchiveUtils {
     }
 
     void create() {
-      callProcess(args, workDirs[0], env)
+      callProcess(args, workDirs[0])
     }
   }
 
