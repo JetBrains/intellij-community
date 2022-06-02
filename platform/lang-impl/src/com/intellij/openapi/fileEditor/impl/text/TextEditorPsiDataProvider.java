@@ -32,7 +32,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -62,37 +65,40 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (CARET.is(dataId)) {
       return caret;
     }
-    if (PSI_FILE.is(dataId)) {
-      return getPsiFile(e, file);
-    }
     if (IDE_VIEW.is(dataId)) {
-      Project project = e.getProject();
-      PsiFile psiFile = project == null ? null : PsiManager.getInstance(project).findFile(file);
-      PsiDirectory psiDirectory = psiFile == null ? null : psiFile.getParent();
-      if (psiDirectory != null && (psiDirectory.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
-        return new IdeView() {
-
-          @Override
-          public void selectElement(final PsiElement element) {
-            NavigationUtil.activateFileWithPsiElement(element);
-          }
-
-          @Override
-          public PsiDirectory @NotNull [] getDirectories() {
-            return new PsiDirectory[]{psiDirectory};
-          }
-
-          @Override
-          public PsiDirectory getOrChooseDirectory() {
-            return psiDirectory;
-          }
-        };
-      }
+      return getIdeView(e, file);
     }
     if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
       return Collections.<DataProvider>singletonList(o -> getSlowData(o, e, caret));
     }
     return null;
+  }
+
+  private static @Nullable IdeView getIdeView(@NotNull Editor e, @NotNull VirtualFile file) {
+    Project project = e.getProject();
+    if (project == null) return null;
+    VirtualFileSystem fs = file.getFileSystem();
+    boolean nonPhysical = fs instanceof NonPhysicalFileSystem || fs instanceof TempFileSystemMarker;
+    if (nonPhysical && !ApplicationManager.getApplication().isUnitTestMode()) return null;
+    return new IdeView() {
+
+      @Override
+      public void selectElement(PsiElement element) {
+        NavigationUtil.activateFileWithPsiElement(element);
+      }
+
+      @Override
+      public PsiDirectory @NotNull [] getDirectories() {
+        PsiDirectory psiDirectory = getOrChooseDirectory();
+        return psiDirectory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{psiDirectory};
+      }
+
+      @Override
+      public PsiDirectory getOrChooseDirectory() {
+        VirtualFile parent = !file.isValid() ? null : file.getParent();
+        return parent == null ? null : PsiManager.getInstance(project).findDirectory(parent);
+      }
+    };
   }
 
   @Nullable
