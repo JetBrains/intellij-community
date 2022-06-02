@@ -372,7 +372,7 @@ public abstract class JBPopupFactory {
   @NotNull
   public abstract ListPopup createListPopup(@NotNull Project project,
                                             @NotNull ListPopupStep step,
-                                            @NotNull Function<ListCellRenderer, ListCellRenderer> cellRendererProducer);
+                                            @NotNull Function<? super ListCellRenderer, ? extends ListCellRenderer> cellRendererProducer);
 
   @NotNull
   public abstract TreePopup createTree(JBPopup parent, @NotNull TreePopupStep step, Object parentValue);

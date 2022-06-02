@@ -132,7 +132,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                Runnable onYes,
                                                Runnable onNo,
                                                int defaultOptionIndex) {
-    final BaseListPopupStep<String> step = new BaseListPopupStep<>(title, yesText, noText) {
+    BaseListPopupStep<String> step = new BaseListPopupStep<>(title, yesText, noText) {
       boolean myRunYes;
       @Override
       public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
@@ -212,7 +212,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
-                               @NotNull ListPopupStep step,
+                               @NotNull ListPopupStep<?> step,
                                @Nullable Runnable disposeCallback,
                                @NotNull DataContext dataContext,
                                int maxRowCount) {
@@ -236,6 +236,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       });
     }
 
+    @NotNull
     protected static ListPopupStep<ActionItem> createStep(@PopupTitle @Nullable String title,
                                                           @NotNull ActionGroup actionGroup,
                                                           @NotNull DataContext dataContext,
@@ -384,7 +385,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   public @NotNull ListPopup createListPopup(@NotNull Project project,
                                             @NotNull ListPopupStep step,
-                                            @NotNull Function<ListCellRenderer, ListCellRenderer> cellRendererProducer) {
+                                            @NotNull Function<? super ListCellRenderer, ? extends ListCellRenderer> cellRendererProducer) {
     return new ListPopupImpl(project, step) {
       @Override
       protected ListCellRenderer<?> getListElementRenderer() {
@@ -440,7 +441,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     Point popupMenuPoint = null;
     final Rectangle visibleRect = component.getVisibleRect();
     if (component instanceof JList) { // JList
-      JList list = (JList)component;
+      JList<?> list = (JList<?>)component;
       int firstVisibleIndex = list.getFirstVisibleIndex();
       int lastVisibleIndex = list.getLastVisibleIndex();
       int[] selectedIndices = list.getSelectedIndices();
@@ -676,7 +677,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       mySeparatorText = null;
     }
 
-    public void updateFromPresentation(@NotNull Presentation presentation, @NotNull String actionPlace) {
+    void updateFromPresentation(@NotNull Presentation presentation, @NotNull String actionPlace) {
       String text = presentation.getText();
       if (text != null && !myMnemonicsEnabled && myHonorActionMnemonics) {
         text = TextWithMnemonic.fromPlainText(text, (char)myAction.getTemplatePresentation().getMnemonic()).toString();
@@ -743,9 +744,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public boolean isPerformGroup() { return myIsPerformGroup; }
 
-    public boolean isSubstepSuppressed() { return myIsSubstepSuppressed; }
+    boolean isSubstepSuppressed() { return myIsSubstepSuppressed; }
 
-    public boolean isKeepPopupOpen() { return myIsKeepPopupOpen; }
+    boolean isKeepPopupOpen() { return myIsKeepPopupOpen; }
 
     public @NlsContexts.DetailedDescription String getDescription() {
       return myDescription == null ? myTooltip : myDescription;
