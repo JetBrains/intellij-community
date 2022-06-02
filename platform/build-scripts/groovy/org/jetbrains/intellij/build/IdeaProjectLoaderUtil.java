@@ -9,7 +9,7 @@ import java.nio.file.Path;
 
 public final class IdeaProjectLoaderUtil {
   private static final String JPS_BOOTSTRAP_COMMUNITY_HOME_ENV_NAME = "JPS_BOOTSTRAP_COMMUNITY_HOME";
-  private static final String ULTIMATE_REPO_MARKER_FILE = "intellij.idea.ultimate.tests.main.iml";
+  private static final String ULTIMATE_REPO_MARKER_FILE = ".ultimate.root.marker";
   private static final String COMMUNITY_REPO_MARKER_FILE = "intellij.idea.community.main.iml";
 
   public static Path guessUltimateHome(Class<?> klass) {
