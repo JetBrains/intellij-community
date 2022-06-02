@@ -41,7 +41,11 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
 
   abstract void onKeyChosen(@NotNull TextAttributesKey key);
 
-  public void setChosen(@NotNull TextAttributesKey key) {
+  public void setChosen(@Nullable TextAttributesKey key) {
+    if (key == null) {
+      getTemplatePresentation().setText("");
+      return;
+    }
     final var attributes = ColorSettingsUtil.getErrorTextAttributes();
     String displayName = key.getExternalName();
     for (Pair<TextAttributesKey, @Nls String> pair: attributes) {
