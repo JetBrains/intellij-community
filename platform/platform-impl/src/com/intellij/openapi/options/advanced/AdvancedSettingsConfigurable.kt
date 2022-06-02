@@ -231,7 +231,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
     for (settingsGroup in settingsGroups) {
       var groupVisible = false
-      if (!onlyShowModified && isMatch(filterWords, settingsGroup.text)) {
+      val groupNameMatched = !onlyShowModified && isMatch(filterWords, settingsGroup.text)
+      if (groupNameMatched) {
         updateMatchText(settingsGroup.title, settingsGroup.text, searchText)
         matchCount++
         groupVisible = true
@@ -242,7 +243,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
         val textMatches = searchText == null || isMatch(filterWords, settingsRow.text)
         val idMatches = searchText == null || (filterWordsUnstemmed.isNotEmpty() && idWords.containsAll(filterWordsUnstemmed))
         val modifiedMatches = if (onlyShowModified) !settingsRow.isDefaultPredicate() else true
-        val matches = (textMatches || idMatches) && modifiedMatches
+        val matches = groupNameMatched || ((textMatches || idMatches) && modifiedMatches)
         settingsRow.setVisible(matches)
         if (matches) {
           matchCount++
