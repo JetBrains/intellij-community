@@ -57,7 +57,7 @@ open class KotlinIdeDescriptorOptions : DescriptorRendererOptions {
     var doNotExpandStandardJavaTypeAliases by property(true)
     var highlightingManager by property(KotlinIdeDescriptorRendererHighlightingManager.NO_HIGHLIGHTING)
 
-    override var classifierNamePolicy: ClassifierNamePolicy by property(ClassifierNamePolicy.SOURCE_CODE_QUALIFIED)
+    override var classifierNamePolicy: ClassifierNamePolicy by property(SourceCodeQualified)
     override var withDefinedIn by property(true)
     override var withSourceFileForTopLevel by property(true)
     override var modifiers: Set<DescriptorRendererModifier> by property(DescriptorRendererModifier.ALL_EXCEPT_ANNOTATIONS)

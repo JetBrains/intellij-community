@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.ClassifierNamePolicyEx
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
@@ -164,8 +165,10 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
             list.append("?")
         }
 
-        if (this.isDefinitelyNotNullType) {
-            list.append(" & Any")
+        if (classifierNamePolicy !is ClassifierNamePolicyEx) {
+            if (this.isDefinitelyNotNullType) {
+                list.append(" & Any")
+            }
         }
     }
 
@@ -175,7 +178,7 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
     ) {
         val possiblyInnerType = this.buildPossiblyInnerType()
         if (possiblyInnerType == null) {
-            typeConstructor.renderTypeConstructorTo(list)
+            typeConstructor.renderTypeConstructorOfTypeTo(list, this)
             this.arguments.renderTypeArgumentsTo(list)
             return
         }
@@ -191,6 +194,15 @@ class HintsTypeRenderer private constructor(override val options: HintsDescripto
         } ?: this.classifierDescriptor.typeConstructor.renderTypeConstructorTo(list)
 
         this.arguments.renderTypeArgumentsTo(list)
+    }
+
+    fun TypeConstructor.renderTypeConstructorOfTypeTo(list: MutableList<InlayInfoDetail>, type: KotlinType){
+        val text = when (val cd = this.declarationDescriptor) {
+            is TypeParameterDescriptor, is ClassDescriptor, is TypeAliasDescriptor -> renderClassifierNameWithType(cd, type)
+            null -> this.toString()
+            else -> error("Unexpected classifier: " + cd::class.java)
+        }
+        list.append(text, this.declarationDescriptor)
     }
 
     fun TypeConstructor.renderTypeConstructorTo(list: MutableList<InlayInfoDetail>){
