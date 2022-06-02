@@ -194,7 +194,7 @@ class MacDistributionBuilder(private val context: BuildContext,
     val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/$it" }
 
     val fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties).toMutableList()
-    val additionalJvmArgs = context.getAdditionalJvmArguments().toMutableList()
+    val additionalJvmArgs = context.getAdditionalJvmArguments(OsFamily.MACOS).toMutableList()
     if (!bootClassPath.isEmpty()) {
       //noinspection SpellCheckingInspection
       additionalJvmArgs.add("-Xbootclasspath/a:$bootClassPath")
