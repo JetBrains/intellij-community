@@ -692,8 +692,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return getTools(shortName, element != null ? element.getProject() : null).getAttributesKey(element);
   }
 
-  public void setEditorAttributesKey(@NotNull String shortName, @NotNull String externalName, String scopeName, @Nullable Project project) {
-    getTools(shortName, project).setEditorAttributesKey(externalName, scopeName);
+  public void setEditorAttributesKey(@NotNull String shortName, @Nullable String keyName, String scopeName, @Nullable Project project) {
+    getTools(shortName, project).setEditorAttributesKey(keyName, scopeName);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
   
@@ -884,9 +884,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
   }
 
-  public void setEditorAttributeKey(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull TextAttributesKey attributesKey, String scopeName, Project project) {
+  public void setEditorAttributesKey(@NotNull List<? extends HighlightDisplayKey> keys, @Nullable TextAttributesKey attributesKey, String scopeName, Project project) {
     for (HighlightDisplayKey key : keys) {
-      setEditorAttributesKey(key.toString(), attributesKey.toString(), scopeName, project);
+      setEditorAttributesKey(key.toString(), attributesKey == null ? null : attributesKey.toString(), scopeName, project);
     }
   }
 

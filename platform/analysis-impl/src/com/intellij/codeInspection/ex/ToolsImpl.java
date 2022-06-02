@@ -527,7 +527,7 @@ public final class ToolsImpl implements Tools {
   }
 
 
-  public void setEditorAttributesKey(@NotNull String externalName, @Nullable String scopeName) {
+  public void setEditorAttributesKey(@Nullable String externalName, @Nullable String scopeName) {
     if (scopeName == null) {
       myDefaultState.setEditorAttributesKey(externalName);
     }
