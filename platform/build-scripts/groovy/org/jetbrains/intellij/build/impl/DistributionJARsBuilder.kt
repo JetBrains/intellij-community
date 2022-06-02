@@ -469,7 +469,9 @@ class DistributionJARsBuilder {
         scramble(context)
       }
 
-      context.bootClassPathJarNames = generateClasspath(context.paths.distAllDir, context.productProperties.productLayout.mainJarName, antTargetFile)
+      context.bootClassPathJarNames = generateClasspath(homeDir = context.paths.distAllDir,
+                                                        mainJarName = context.productProperties.productLayout.mainJarName,
+                                                        antTargetFile = antTargetFile)
       result
     }
     val entries = ForkJoinTask.invokeAll(listOfNotNull(

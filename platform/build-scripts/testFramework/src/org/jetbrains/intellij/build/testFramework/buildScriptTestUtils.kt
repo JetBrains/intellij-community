@@ -58,7 +58,11 @@ fun createBuildContext(
   val options = BuildOptions()
   customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(communityHomePath, homePath, productProperties, buildTools, options)
+  return BuildContextImpl.createContext(communityHome = communityHomePath,
+                                        projectHome = homePath,
+                                        productProperties = productProperties,
+                                        proprietaryBuildTools = buildTools,
+                                        options = options)
 }
 
 fun runTestBuild(

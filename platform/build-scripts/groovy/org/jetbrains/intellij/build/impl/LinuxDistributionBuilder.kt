@@ -184,7 +184,7 @@ class LinuxDistributionBuilder(private val context: BuildContext,
           }
           ArchiveUtils.tar(tarPath, tarRoot, paths.map(Path::toString), context.options.buildDateInSeconds)
         }
-        checkInArchive(context, tarPath, tarRoot)
+        checkInArchive(tarPath, tarRoot, context)
         context.notifyArtifactBuilt(tarPath)
       }
     return tarPath
@@ -297,7 +297,7 @@ private fun generateProductJson(targetDir: Path, javaExecutablePath: String?, co
   Files.createDirectories(targetDir)
   val json = generateMultiPlatformProductJson(
     relativePathToBin = "bin",
-    builtinModules = context.getBuiltinModule(),
+    builtinModules = context.builtinModule,
     launch = listOf(ProductInfoLaunchData(os = OsFamily.LINUX.osName,
                                           launcherPath = "bin/$scriptName.sh",
                                           javaExecutablePath = javaExecutablePath,
@@ -349,7 +349,7 @@ internal fun generateUnixScripts(context: BuildContext,
                                  extraJarNames: List<String>,
                                  distBinDir: Path,
                                  osFamily: OsFamily) {
-  val classPathJars = context.bootClassPathJarNames + extraJarNames
+  val classPathJars = context.bootClassPathJarNames.addAll(extraJarNames)
   var classPath = "CLASS_PATH=\"\$IDE_HOME/lib/${classPathJars.get(0)}\""
   for (i in 1 until classPathJars.size) {
     classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars.get(i)}\""

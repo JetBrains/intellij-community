@@ -8,6 +8,8 @@ import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -40,7 +42,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
 
-  override var bootClassPathJarNames: List<String> = java.util.List.of("util.jar", "util_rt.jar")
+  override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
 
   override var classpathCustomizer: (MutableSet<String>) -> Unit = {}
 
@@ -57,7 +59,7 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     if (!options.buildStepsToSkip.isEmpty()) {
       Span.current().addEvent("build steps to be skipped", Attributes.of(
-        AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip),
+        AttributeKey.stringArrayKey("stepsToSkip"), options.buildStepsToSkip.toImmutableList()
       ))
     }
     configureProjectorPlugin(productProperties)
@@ -65,45 +67,12 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
 
   companion object {
     @JvmStatic
+    @JvmOverloads
     fun createContext(communityHome: Path,
                       projectHome: Path,
                       productProperties: ProductProperties,
-                      proprietaryBuildTools: ProprietaryBuildTools?,
-                      options: BuildOptions): BuildContext {
-      return create(communityHome = communityHome,
-                    projectHome = projectHome,
-                    productProperties = productProperties,
-                    proprietaryBuildTools = proprietaryBuildTools,
-                    options = options)
-    }
-
-    @JvmStatic
-    fun createContext(communityHome: Path,
-                      projectHome: Path,
-                      productProperties: ProductProperties,
-                      proprietaryBuildTools: ProprietaryBuildTools?): BuildContext {
-      return createContext(communityHome = communityHome,
-                           projectHome = projectHome,
-                           productProperties = productProperties,
-                           proprietaryBuildTools = proprietaryBuildTools,
-                           options = BuildOptions())
-    }
-
-    @JvmStatic
-    fun createContext(communityHome: Path, projectHome: Path, productProperties: ProductProperties): BuildContext {
-      return createContext(communityHome = communityHome,
-                           projectHome = projectHome,
-                           productProperties = productProperties,
-                           proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                           options = BuildOptions())
-    }
-
-    @JvmStatic
-    fun create(communityHome: Path,
-               projectHome: Path,
-               productProperties: ProductProperties,
-               proprietaryBuildTools: ProprietaryBuildTools?,
-               options: BuildOptions): BuildContextImpl {
+                      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                      options: BuildOptions = BuildOptions()): BuildContextImpl {
       val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
       val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
       val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
@@ -119,10 +88,23 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
                               windowsDistributionCustomizer = windowsDistributionCustomizer,
                               linuxDistributionCustomizer = linuxDistributionCustomizer,
                               macDistributionCustomizer = macDistributionCustomizer,
-                              proprietaryBuildTools = proprietaryBuildTools ?: ProprietaryBuildTools.DUMMY,
+                              proprietaryBuildTools = proprietaryBuildTools,
                               distFiles = ConcurrentLinkedQueue())
     }
   }
+
+  override var builtinModule: BuiltinModulesFileData?
+    get() {
+      if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+        return null
+      }
+      return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. " +
+                                                               "Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
+    }
+    set(value) {
+      check(builtinModulesData == null) { "builtinModulesData was already set" }
+      builtinModulesData = value
+    }
 
   override fun addDistFile(file: Map.Entry<Path, String>) {
     messages.debug("$file requested to be added to app resources")
@@ -297,19 +279,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     }
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this))
     return jvmArgs
-  }
-
-  override fun getBuiltinModule(): BuiltinModulesFileData? {
-    if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-      return null
-    }
-    return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. " +
-                                                             "Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
-  }
-
-  fun setBuiltinModules(data: BuiltinModulesFileData?) {
-    check(builtinModulesData == null) { "builtinModulesData was already set" }
-    builtinModulesData = data
   }
 }
 

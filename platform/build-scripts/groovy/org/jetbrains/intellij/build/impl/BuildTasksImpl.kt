@@ -213,7 +213,7 @@ private fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilder
       context.messages.error("Failed to build provided modules list: $targetFile doesn\'t exist")
     }
     context.productProperties.customizeBuiltinModules(context, targetFile)
-    (context as BuildContextImpl).setBuiltinModules(BuiltinModulesFileUtils.readBuiltinModulesFile(targetFile))
+    context.builtinModule = BuiltinModulesFileUtils.readBuiltinModulesFile(targetFile)
     context.notifyArtifactWasBuilt(targetFile)
   }
 }
@@ -965,7 +965,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
 
   val productJson = generateMultiPlatformProductJson(
     "bin",
-    context.getBuiltinModule(),
+    context.builtinModule,
     listOf(
       ProductInfoLaunchData(os = OsFamily.WINDOWS.osName,
                             launcherPath = "bin/${executableName}.bat",
@@ -1000,7 +1000,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
     distAllDir = context.paths.distAllDir,
   )
 
-  checkInArchive(context, targetFile, "")
+  checkInArchive(targetFile, "", context)
   context.notifyArtifactBuilt(targetFile)
 
   checkClassVersion(targetFile, context)

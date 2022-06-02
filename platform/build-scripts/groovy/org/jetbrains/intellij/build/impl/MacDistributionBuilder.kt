@@ -108,49 +108,43 @@ class MacDistributionBuilder(private val context: BuildContext,
   }
 
   override fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
-    doCopyExtraFiles(osAndArchSpecificDistPath, arch, false)
+    doCopyExtraFiles(macDistDir = osAndArchSpecificDistPath, arch = arch, copyDistFiles = false)
     context.executeStep(spanBuilder("build macOS artifacts").setAttribute("arch", arch.name), BuildOptions.MAC_ARTIFACTS_STEP) {
-      doBuildArtifacts(osAndArchSpecificDistPath, arch)
-    }
-  }
-
-  private fun doBuildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
-    val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-    val publishArchive = context.proprietaryBuildTools.macHostProperties?.host == null && !SystemInfoRt.isMac
-
-    val binariesToSign = customizer.getBinariesToSign(context, arch)
-    if (!binariesToSign.isEmpty()) {
-      context.executeStep(spanBuilder("sign binaries for macOS distribution")
-                            .setAttribute("arch", arch.name), BuildOptions.MAC_SIGN_STEP) {
-        context.signFiles(binariesToSign.map { osAndArchSpecificDistPath.resolve(it) }, mapOf(
-          "mac_codesign_options" to "runtime",
-          "mac_codesign_force" to "true",
-          "mac_codesign_deep" to "true",
-        ))
+      val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+      val publishArchive = !SystemInfoRt.isMac && context.proprietaryBuildTools.macHostProperties?.host == null
+      val binariesToSign = customizer.getBinariesToSign(context, arch)
+      if (!binariesToSign.isEmpty()) {
+        context.executeStep(spanBuilder("sign binaries for macOS distribution")
+                              .setAttribute("arch", arch.name), BuildOptions.MAC_SIGN_STEP) {
+          context.signFiles(binariesToSign.map(osAndArchSpecificDistPath::resolve), mapOf(
+            "mac_codesign_options" to "runtime",
+            "mac_codesign_force" to "true",
+            "mac_codesign_deep" to "true",
+          ))
+        }
       }
-    }
-
-    val macZip = (if (publishArchive || customizer.publishArchive) context.paths.artifactDir else context.paths.tempDir)
-      .resolve("$baseName.mac.${arch.name}.zip")
-    val zipRoot = getMacZipRoot(context, customizer)
-    buildMacZip(
-      targetFile = macZip,
-      zipRoot = zipRoot,
-      productJson = generateMacProductJson(builtinModule = context.getBuiltinModule(), context = context, javaExecutablePath = null),
-      allDist = context.paths.distAllDir,
-      macDist = osAndArchSpecificDistPath,
-      extraFiles = context.getDistFiles(),
-      executableFilePatterns = getExecutableFilePatterns(customizer),
-      compressionLevel = if (publishArchive) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED,
-      errorsConsumer = { context.messages.warning(it) })
-    checkInArchive(context, macZip, "$zipRoot/Resources")
-
-    if (publishArchive) {
-      Span.current().addEvent("skip DMG artifact producing because a macOS build agent isn't configured")
-      context.notifyArtifactBuilt(macZip)
-    }
-    else {
-      buildAndSignDmgFromZip(macZip, arch, context.getBuiltinModule()).invoke()
+      val macZip = (if (publishArchive || customizer.publishArchive) context.paths.artifactDir else context.paths.tempDir)
+        .resolve("$baseName.mac.${arch.name}.zip")
+      val zipRoot = getMacZipRoot(customizer, context)
+      buildMacZip(
+        targetFile = macZip,
+        zipRoot = zipRoot,
+        productJson = generateMacProductJson(builtinModule = context.builtinModule, context = context, javaExecutablePath = null),
+        allDist = context.paths.distAllDir,
+        macDist = osAndArchSpecificDistPath,
+        extraFiles = context.getDistFiles(),
+        executableFilePatterns = getExecutableFilePatterns(customizer),
+        compressionLevel = if (publishArchive) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED,
+        errorsConsumer = context.messages::warning
+      )
+      checkInArchive(archiveFile = macZip, pathInArchive = "$zipRoot/Resources", context = context)
+      if (publishArchive) {
+        Span.current().addEvent("skip DMG artifact producing because a macOS build agent isn't configured")
+        context.notifyArtifactBuilt(macZip)
+      }
+      else {
+        buildAndSignDmgFromZip(macZip, arch, context.builtinModule).invoke()
+      }
     }
   }
 
@@ -387,8 +381,8 @@ private fun getExecutableFilePatterns(customizer: MacDistributionCustomizer): Li
   ) + customizer.extraExecutables
 }
 
-internal fun getMacZipRoot(buildContext: BuildContext, customizer: MacDistributionCustomizer): String {
-  return "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
+internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
+  return "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
 }
 
 internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?, context: BuildContext, javaExecutablePath: String?): String {

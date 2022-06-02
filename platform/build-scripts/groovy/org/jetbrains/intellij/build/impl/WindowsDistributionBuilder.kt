@@ -355,7 +355,7 @@ private fun createBuildWinZipTask(jreDirectoryPaths: List<Path>,
                     targetFile = targetFile,
                     map = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix },
                     compress = true)
-    checkInArchive(context = context, archiveFile = targetFile, pathInArchive = zipPrefix)
+    checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
     context.notifyArtifactWasBuilt(targetFile)
     targetFile
   }
@@ -371,7 +371,7 @@ private fun generateProductJson(targetDir: Path, isJreIncluded: Boolean, context
 
   val json = generateMultiPlatformProductJson(
     "bin",
-    context.getBuiltinModule(),
+    context.builtinModule,
     listOf(
       ProductInfoLaunchData(
         os = OsFamily.WINDOWS.osName,

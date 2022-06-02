@@ -8,6 +8,8 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tracer
 import java.io.InputStream
@@ -53,7 +55,7 @@ internal fun reorderJar(relativePath: String, file: Path, traceContext: Context)
     }
 }
 
-fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?): List<String> {
+fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?): PersistentList<String> {
   val libDir = homeDir.resolve("lib")
   val appFile = libDir.resolve("app.jar")
 
@@ -113,7 +115,7 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?):
       }
       val result = files.map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
-      return result
+      return result.toPersistentList()
     }
 }
 

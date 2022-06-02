@@ -6,7 +6,6 @@ import com.intellij.util.PathUtilRt
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
@@ -62,8 +61,12 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val platformPrefix = productProperties.platformPrefix ?: "idea"
   val runDir = createRunDirForProduct(homePath, platformPrefix)
 
-  val buildContext = BuildContextImpl.createContext(getCommunityHomePath(homePath), homePath, productProperties,
-                                                    ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
+  val buildContext = BuildContextImpl.createContext(
+    communityHome = getCommunityHomePath(homePath),
+    projectHome = homePath,
+    productProperties = productProperties,
+    options = createBuildOptions(runDir),
+  )
   val pluginsDir = runDir.resolve("plugins")
 
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)

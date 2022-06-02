@@ -19,7 +19,7 @@ import java.nio.file.Path
 /**
  * Checks that product-info.json file located in `archivePath` archive in `pathInArchive` subdirectory is correct
  */
-internal fun checkInArchive(context: BuildContext, archiveFile: Path, pathInArchive: String) {
+internal fun checkInArchive(archiveFile: Path, pathInArchive: String, context: BuildContext) {
   val productJsonPath = joinPaths(pathInArchive, PRODUCT_INFO_FILE_NAME)
   val entryData = loadEntry(archiveFile, productJsonPath)
                   ?: throw RuntimeException("Failed to validate product-info.json: cannot find \'$productJsonPath\' in $archiveFile")

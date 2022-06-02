@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import io.opentelemetry.api.trace.SpanBuilder
-import org.jetbrains.intellij.build.impl.BuiltinModulesFileData
+import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
@@ -40,12 +40,17 @@ interface BuildContext: CompilationContext {
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
    */
-  var bootClassPathJarNames: List<String>
+  var bootClassPathJarNames: PersistentList<String>
 
   /**
    * Allows to customize classpath for buildSearchableOptions and builtinModules
    */
   var classpathCustomizer: (MutableSet<String>) -> Unit
+
+  /**
+   * see BuildTasksImpl.buildProvidedModuleList
+   */
+  var builtinModule: BuiltinModulesFileData?
 
   /**
    * Add file to be copied into application.
@@ -83,11 +88,6 @@ interface BuildContext: CompilationContext {
   fun shouldBuildDistributionForOS(os: String): Boolean
 
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
-
-  /**
-   * see BuildTasksImpl.buildProvidedModuleList
-   */
-  fun getBuiltinModule(): BuiltinModulesFileData?
 }
 
 inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, step: () -> Unit) {
@@ -98,3 +98,9 @@ inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, st
   // we cannot flush tracing after "throw e" as we have to end the current span before that
   spanBuilder.useWithScope { step() }
 }
+
+data class BuiltinModulesFileData(
+  val bundledPlugins: List<String>,
+  val modules: List<String>,
+  val fileExtensions: List<String>,
+)

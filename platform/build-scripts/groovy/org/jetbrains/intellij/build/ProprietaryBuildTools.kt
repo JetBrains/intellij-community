@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
@@ -42,6 +42,11 @@ class ProprietaryBuildTools(
 ) {
   companion object {
     @JvmStatic
-    val DUMMY = ProprietaryBuildTools(null, null, null, null, null, null)
+    val DUMMY = ProprietaryBuildTools(signTool = null,
+                                      scrambleTool = null,
+                                      macHostProperties = null,
+                                      artifactsServer = null,
+                                      featureUsageStatisticsProperties = null,
+                                      licenseServerHost = null)
   }
 }
