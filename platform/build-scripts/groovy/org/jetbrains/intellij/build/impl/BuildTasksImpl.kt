@@ -619,7 +619,7 @@ private fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, c
     }
     else {
       return compilePlatformAndPluginModules(
-        pluginsToPublish = pluginsToPublish + PluginsCollector.collectCompatiblePluginsToPublish(providedModulesFile, context),
+        pluginsToPublish = pluginsToPublish + collectCompatiblePluginsToPublish(providedModulesFile, context),
         context = context
       )
     }
