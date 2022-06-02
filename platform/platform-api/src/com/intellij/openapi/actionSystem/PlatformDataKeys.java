@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.*;
@@ -31,6 +31,7 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<StatusBar> STATUS_BAR = DataKey.create("STATUS_BAR");
 
   public static final DataKey<TreeExpander> TREE_EXPANDER = DataKey.create("treeExpander");
+  public static final DataKey<Boolean> TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER = DataKey.create("treeExpanderHideActions");
 
   /**
    * @see com.intellij.ide.actions.ExportToTextFileAction
