@@ -59,11 +59,8 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
                     }
                 is KtPackageSymbol -> //TODO FIR Implement package symbol type
                     if (targetElement is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
-                is KtVariableSymbol -> getVariableUsageType(refExpr)
+                is KtVariableLikeSymbol -> getVariableUsageType(refExpr)
                 is KtFunctionLikeSymbol -> getFunctionUsageType(targetElement)
-                is KtValueParameterSymbol -> getVariableUsageType(refExpr)
-                is KtBackingFieldSymbol -> getVariableUsageType(refExpr)
-                is KtJavaFieldSymbol -> getVariableUsageType(refExpr)
                 else -> null
             }
         }
