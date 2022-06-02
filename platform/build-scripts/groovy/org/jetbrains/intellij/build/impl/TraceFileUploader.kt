@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
+import org.jetbrains.intellij.build.toUrlWithTrailingSlash
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -13,7 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 open class TraceFileUploader(serverUrl: String, token: String?) {
-  private val serverUrl = fixServerUrl(serverUrl)
+  private val serverUrl = toUrlWithTrailingSlash(serverUrl)
   private val serverAuthToken = token
 
   protected open fun log(message: String) {}
@@ -122,15 +123,4 @@ private fun readPlainMetadata(connection: HttpURLConnection): String {
   catch (ignored: NumberFormatException) {
   }
   throw IOException("Server returned neither import json nor id: $body")
-}
-
-private fun fixServerUrl(serverUrl: String): String {
-  var url = serverUrl
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = "http://$url"
-  }
-  if (!url.endsWith("/")) {
-    url += '/'
-  }
-  return url
 }

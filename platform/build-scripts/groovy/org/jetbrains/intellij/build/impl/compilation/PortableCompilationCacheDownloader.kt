@@ -5,8 +5,9 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.io.Decompressor
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.TraceManager
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.get
+import org.jetbrains.intellij.build.httpClient
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import java.nio.file.Files

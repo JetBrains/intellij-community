@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl.compilation
+package org.jetbrains.intellij.build
 
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -49,4 +49,16 @@ internal val httpClient by lazy {
     }
     .followRedirects(true)
     .build()
+}
+
+@Suppress("HttpUrlsUsage")
+internal fun toUrlWithTrailingSlash(serverUrl: String): String {
+  var result = serverUrl
+  if (!result.startsWith("http://") && !result.startsWith("https://")) {
+    result = "http://$result"
+  }
+  if (!result.endsWith('/')) {
+    result += '/'
+  }
+  return result
 }

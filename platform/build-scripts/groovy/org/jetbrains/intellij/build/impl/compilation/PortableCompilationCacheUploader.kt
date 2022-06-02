@@ -1,12 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.intellij.diagnostic.telemetry.use
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.CompilationContext
+import okhttp3.Request
+import okhttp3.RequestBody
+import okio.BufferedSink
+import okio.source
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.moveFile
@@ -153,25 +159,47 @@ internal class PortableCompilationCacheUploader(
   }
 }
 
-private class Uploader(serverUrl: String) : CompilationPartsUploader(serverUrl) {
-  fun isExist(path: String, logIfExists: Boolean = false): Boolean {
-    val code = head(path)
-    if (code == 200) {
-      if (logIfExists) {
-        Span.current().addEvent("File '$path' already exists on server, nothing to upload")
+private class Uploader(serverUrl: String) {
+  private val serverUrl = toUrlWithTrailingSlash(serverUrl)
+
+  fun upload(path: String, file: Path): Boolean {
+    val url = pathToUrl(path)
+    spanBuilder("upload").setAttribute("url", url).setAttribute("path", path).useWithScope {
+      check(Files.exists(file)) {
+        "The file $file does not exist"
       }
-      return true
+
+      httpClient.newCall(Request.Builder().url(url).post(object : RequestBody() {
+        override fun contentType() = MEDIA_TYPE_BINARY
+
+        override fun contentLength() = Files.size(file)
+
+        override fun writeTo(sink: BufferedSink) {
+          file.source().use(sink::writeAll)
+        }
+      }).build()).execute().useSuccessful {}
     }
-    check(code == 404) {
-      "HEAD $path responded with unexpected $code"
+    return true
+  }
+
+  fun isExist(path: String, logIfExists: Boolean = false): Boolean {
+    val url = pathToUrl(path)
+    spanBuilder("head").setAttribute("url", url).use { span ->
+      val code = httpClient.head(url).use { it.code }
+      if (code == 200) {
+        if (logIfExists) {
+          span.addEvent("File '$path' already exists on server, nothing to upload")
+        }
+        return true
+      }
+      check(code == 404) {
+        "HEAD $url responded with unexpected $code"
+      }
     }
     return false
   }
 
-  fun getAsString(path: String): String {
-    val url = "$serverUrl${path.trimStart('/')}"
-    httpClient.get(url).useSuccessful {
-      return it.body.string()
-    }
-  }
+  fun getAsString(path: String) = httpClient.get(pathToUrl(path)).useSuccessful { it.body.string() }
+
+  private fun pathToUrl(path: String) = "$serverUrl${path.trimStart('/')}"
 }
