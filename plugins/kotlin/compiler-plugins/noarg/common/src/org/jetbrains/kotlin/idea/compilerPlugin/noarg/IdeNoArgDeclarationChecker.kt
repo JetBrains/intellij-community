@@ -5,12 +5,13 @@ package org.jetbrains.kotlin.idea.compilerPlugin.noarg
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
-import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
+import org.jetbrains.kotlin.noarg.NoArgPluginNames.PLUGIN_ID
+import org.jetbrains.kotlin.noarg.NoArgPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.noarg.diagnostic.AbstractNoArgDeclarationChecker
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
 val NO_ARG_ANNOTATION_OPTION_PREFIX =
-    "plugin:${NoArgCommandLineProcessor.PLUGIN_ID}:${NoArgCommandLineProcessor.ANNOTATION_OPTION.optionName}="
+    "plugin:$PLUGIN_ID:$ANNOTATION_OPTION_NAME="
 
 class IdeNoArgDeclarationChecker(project: Project) : AbstractNoArgDeclarationChecker(false) {
 
