@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
 import org.apache.http.HttpStatus
@@ -17,18 +16,19 @@ import org.apache.http.impl.client.LaxRedirectStrategy
 import org.apache.http.util.EntityUtils
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.intellij.build.impl.retry.StopTrying
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
-final class PortableCompilationCacheDownloader implements AutoCloseable {
+final class PortableCompilationCacheDownloader {
   private static final int COMMITS_COUNT = 1_000
 
   private final GetClient getClient = new GetClient(context.messages)
@@ -37,8 +37,6 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
   private final CompilationContext context
   private final String remoteCacheUrl
   private final String gitUrl
-
-  private final NamedThreadPoolExecutor executor
 
   private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
 
@@ -71,13 +69,10 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
                                      boolean availableForHeadCommit, boolean downloadCompilationOutputsOnly) {
     this.context = context
     this.git = git
-    this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
+    this.remoteCacheUrl = Strings.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
     this.availableForHeadCommitForced = availableForHeadCommit
     this.downloadCompilationOutputsOnly = downloadCompilationOutputsOnly
-
-    int executorThreadsCount = Runtime.getRuntime().availableProcessors()
-    executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
   }
 
   @Lazy
@@ -90,12 +85,6 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
     !localChanges.isEmpty()
   }()
 
-  @Override
-  void close() {
-    executor.close()
-    executor.reportErrors(context.messages)
-  }
-
   void download() {
     if (availableCommitDepth != -1) {
       String lastCachedCommit = lastCommits[availableCommitDepth]
@@ -103,22 +92,28 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
         context.messages.error("Unable to find last cached commit for $availableCommitDepth in $lastCommits")
       }
       context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
-      context.messages.info("Using ${executor.corePoolSize} threads to download caches.")
+      ArrayList<ForkJoinTask<?>> tasks = new ArrayList<ForkJoinTask<?>>()
       if (!downloadCompilationOutputsOnly || anyLocalChanges) {
-        executor.submit {
-          saveJpsCache(lastCachedCommit)
-        }
+        tasks.add(ForkJoinTask.adapt(new Runnable() {
+          @Override
+          void run() {
+            saveJpsCache(lastCachedCommit)
+          }
+        }))
       }
 
       def sourcesState = getSourcesState(lastCachedCommit)
       def outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
       context.messages.info("Going to download ${outputs.size()} compilation output parts.")
       outputs.forEach { CompilationOutput output ->
-        executor.submit {
-          saveOutput(output)
-        }
+        tasks.add(ForkJoinTask.adapt(new Runnable() {
+          @Override
+          void run() {
+            saveOutput(output)
+          }
+        }))
       }
-      executor.waitForAllComplete(context.messages)
+      ForkJoinTask.invokeAll(tasks)
     }
     else {
       context.messages.warning("Unable to find cache for any of last $COMMITS_COUNT commits.")
@@ -130,7 +125,7 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
   }
 
   private void saveJpsCache(String commitHash) {
-    File cacheArchive = null
+    Path cacheArchive = null
     try {
       cacheArchive = downloadJpsCache(commitHash)
 
@@ -141,12 +136,14 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
       context.messages.info("Jps Cache was uncompresed to $cacheDestination in ${System.currentTimeMillis() - start}ms.")
     }
     finally {
-      cacheArchive?.delete()
+      if (cacheArchive != null) {
+        Files.deleteIfExists(cacheArchive)
+      }
     }
   }
 
-  private File downloadJpsCache(String commitHash) {
-    File cacheArchive = File.createTempFile('cache', '.zip')
+  private Path downloadJpsCache(String commitHash) {
+    Path cacheArchive = Files.createTempFile('cache', '.zip')
 
     context.messages.info('Downloading Jps Cache...')
     long start = System.currentTimeMillis()
@@ -157,7 +154,7 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
   }
 
   private void saveOutput(CompilationOutput compilationOutput) {
-    File outputArchive = null
+    Path outputArchive = null
     try {
       outputArchive = downloadOutput(compilationOutput)
 
@@ -167,13 +164,15 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
       throw new Exception("Unable to decompress $remoteCacheUrl/${compilationOutput.remotePath} to $compilationOutput.path", e)
     }
     finally {
-      outputArchive?.delete()
+      if (outputArchive != null) {
+        Files.deleteIfExists(outputArchive)
+      }
     }
   }
 
-  private File downloadOutput(CompilationOutput compilationOutput) {
-    def outputArchive = new File(compilationOutput.path, 'tmp-output.zip')
-    FileUtil.createParentDirs(outputArchive)
+  private Path downloadOutput(CompilationOutput compilationOutput) {
+    Path outputArchive = Path.of(compilationOutput.path, 'tmp-output.zip')
+    Files.createDirectories(outputArchive)
 
     getClient.doGet("$remoteCacheUrl/${compilationOutput.remotePath}", outputArchive)
 
@@ -225,7 +224,7 @@ final class GetClient {
     })
   }
 
-  void doGet(String url, File file) {
+  void doGet(String url, Path file) {
     getWithRetry(url, { HttpGet request ->
       httpClient.execute(request).withCloseable { response ->
         if (response.statusLine.statusCode != HttpStatus.SC_OK) {
@@ -233,7 +232,7 @@ final class GetClient {
           throwDownloadException(response, downloadException)
         }
         response.entity.content.withCloseable {
-          Files.copy(it, file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+          Files.copy(it, file, StandardCopyOption.REPLACE_EXISTING)
         }
       }
     })
@@ -261,15 +260,16 @@ final class GetClient {
       }
     }
   }
+}
 
-  @CompileStatic
-  static class DownloadException extends RuntimeException {
-    DownloadException(String url, int status, String details) {
-      super("Error while executing GET '$url': $status, $details")
-    }
+@CompileStatic
+final class DownloadException extends RuntimeException {
+  DownloadException(String url, int status, String details) {
+    super("Error while executing GET '$url': $status, $details")
+  }
 
-    DownloadException(String url, Throwable cause) {
-      super("Error while executing GET '$url': $cause.message")
-    }
+  DownloadException(String url, Throwable cause) {
+    super("Error while executing GET '$url': $cause.message")
   }
 }
+
