@@ -7,7 +7,7 @@ import org.jetbrains.nativecerts.NativeTrustedCertificates;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 
-public class OsCertificatesServiceImpl implements OsCertificatesService {
+final class OsCertificatesServiceImpl implements OsCertificatesService {
   @Override
   public @NotNull Collection<X509Certificate> getCustomOsSpecificTrustedCertificates() {
     // see https://github.com/JetBrains/jvm-native-trusted-roots
