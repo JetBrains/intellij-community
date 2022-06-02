@@ -115,7 +115,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     inheritedPluginLayouts.removeAll {
       it.mainModule in EXCLUDED_PLUGINS || it.mainModule == "intellij.python.community.plugin"
     }
-    productLayout.allNonTrivialPlugins = inheritedPluginLayouts + [
+    productLayout.pluginLayouts = inheritedPluginLayouts + [
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin([]),
       plugin("intellij.cidr.debugger.plugin") {
