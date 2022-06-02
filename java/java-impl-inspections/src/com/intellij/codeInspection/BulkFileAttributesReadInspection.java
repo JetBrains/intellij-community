@@ -64,6 +64,17 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     return !ExceptionUtil.isHandled(ioExceptionType, anchor);
   }
 
+  @Nullable
+  private static PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
+    PsiElement qualifier = call.getMethodExpression().getQualifier();
+    if (qualifier instanceof PsiParenthesizedExpression) {
+      qualifier = PsiUtil.skipParenthesizedExprDown((PsiExpression)qualifier);
+    }
+    PsiReferenceExpression ref = ObjectUtils.tryCast(qualifier, PsiReferenceExpression.class);
+    if (ref == null) return null;
+    return ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+  }
+
   private static class CallReporter implements Consumer<Map<PsiVariable, List<PsiMethodCallExpression>>> {
 
     private final PsiElement myScope;
@@ -142,9 +153,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       if (!FILE_ATTR_CALL_MATCHER.test(call)) return;
-      PsiReference ref = ObjectUtils.tryCast(call.getMethodExpression().getQualifier(), PsiReference.class);
-      if (ref == null) return;
-      PsiVariable variable = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+      PsiVariable variable = getFileVariable(call);
       if (variable == null) return;
       if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, myScope, null)) return;
       List<PsiMethodCallExpression> varCalls = myCalls.computeIfAbsent(variable, __ -> new SmartList<>());
@@ -310,13 +319,6 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
         List<PsiMethodCallExpression> attributeCalls = findAttributeCalls(psiVariable, scope);
         if (distinctCalls(attributeCalls) < 2) return null;
         return new FileVariableModel(attributeCalls, psiVariable, scope);
-      }
-
-      @Nullable
-      private static PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
-        PsiReferenceExpression qualifier = ObjectUtils.tryCast(call.getMethodExpression().getQualifier(), PsiReferenceExpression.class);
-        if (qualifier == null) return null;
-        return ObjectUtils.tryCast(qualifier.resolve(), PsiVariable.class);
       }
 
       @Nullable
