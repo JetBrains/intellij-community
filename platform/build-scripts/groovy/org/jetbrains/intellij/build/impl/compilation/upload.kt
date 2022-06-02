@@ -34,7 +34,7 @@ import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
-private val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
+internal val MEDIA_TYPE_BINARY = "application/octet-stream".toMediaType()
 private val MEDIA_TYPE_JSON = "application/json".toMediaType()
 
 internal val READ_OPERATION = EnumSet.of(StandardOpenOption.READ)

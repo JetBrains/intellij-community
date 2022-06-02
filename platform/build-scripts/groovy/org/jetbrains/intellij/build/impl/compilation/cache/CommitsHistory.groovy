@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
 import com.google.gson.Gson
@@ -9,7 +9,7 @@ import java.lang.reflect.Type
 
 @CompileStatic
 final class CommitsHistory {
-  static final String JSON_FILE = 'commit_history.json'
+  public static final String JSON_FILE = 'commit_history.json'
   private static final Type JSON_TYPE = new TypeToken<Map<String, Set<String>>>() {}.getType()
   private final Map<String, Set<String>> commitsPerRemote
 

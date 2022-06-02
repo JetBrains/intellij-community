@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.compilation.CompilationOutput
 
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets

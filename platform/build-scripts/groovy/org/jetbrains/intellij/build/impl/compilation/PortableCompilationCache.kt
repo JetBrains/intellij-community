@@ -24,7 +24,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   /**
    * JPS data structures allowing incremental compilation for {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}
    */
-  class JpsCaches(context: CompilationContext) {
+  internal class JpsCaches(context: CompilationContext) {
     val skipDownload = bool(SKIP_DOWNLOAD_PROPERTY)
     val skipUpload = bool(SKIP_UPLOAD_PROPERTY)
     val dir: Path by lazy { context.compilationData.dataStorageRoot }
@@ -122,7 +122,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
       context.messages.info("Nothing new to upload")
     }
     else {
-      uploader.upload()
+      uploader.upload(context.messages)
     }
   }
 
@@ -194,7 +194,6 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 }
 
-
 /**
  * {@link JpsCaches} archive upload may be skipped if only {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s are required
  * without any incremental compilation (for tests execution as an example)
@@ -265,4 +264,16 @@ private fun require(systemProperty: String, description: String, context: Compil
 
 private fun bool(systemProperty: String): Boolean {
   return System.getProperty(systemProperty).toBoolean()
+}
+
+/**
+ * Compiled bytecode of project module, cannot be used for incremental compilation without {@link org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache.JpsCaches}
+ */
+internal class CompilationOutput(
+  name: String,
+  type: String,
+  @JvmField val hash: String,
+  @JvmField val path: String,
+) {
+  val remotePath = "$type/$name/$hash"
 }
