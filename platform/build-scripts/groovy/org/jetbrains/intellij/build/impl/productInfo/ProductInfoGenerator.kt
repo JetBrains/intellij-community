@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.impl.BuiltinModulesFileData
+import org.jetbrains.intellij.build.BuiltinModulesFileData
 
 internal const val PRODUCT_INFO_FILE_NAME = "product-info.json"
 

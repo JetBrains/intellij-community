@@ -82,7 +82,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
   override fun buildDmg(macZipDir: Path) {
     fun createTask(arch: JvmArchitecture, context: BuildContext): ForkJoinTask<*> {
       val macZip = find(macZipDir, "${arch}.zip", context)
-      val builtModule = BuiltinModulesFileUtils.readBuiltinModulesFile(find(macZipDir, "builtinModules.json", context))
+      val builtModule = readBuiltinModulesFile(find(directory = macZipDir, suffix = "builtinModules.json", context = context))
       return MacDistributionBuilder(context = context, customizer = context.macDistributionCustomizer!!, ideaProperties = null)
         .buildAndSignDmgFromZip(macZip, arch, builtModule)
     }
@@ -213,7 +213,7 @@ private fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilder
       context.messages.error("Failed to build provided modules list: $targetFile doesn\'t exist")
     }
     context.productProperties.customizeBuiltinModules(context, targetFile)
-    context.builtinModule = BuiltinModulesFileUtils.readBuiltinModulesFile(targetFile)
+    context.builtinModule = readBuiltinModulesFile(targetFile)
     context.notifyArtifactWasBuilt(targetFile)
   }
 }
