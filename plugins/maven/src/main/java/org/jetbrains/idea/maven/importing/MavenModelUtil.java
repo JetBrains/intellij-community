@@ -181,15 +181,15 @@ public final class MavenModelUtil {
   }
 
   public static boolean isMainOrTestSubmodule(@NotNull String moduleName) {
-    return moduleName.length() > 5 && moduleName.endsWith(".main") || moduleName.endsWith(".test");
+    return isMainModule(moduleName) || isTestModule(moduleName);
   }
 
   public static boolean isMainModule(@NotNull String moduleName) {
-    return moduleName.contains(MAIN_SUFFIX);
+    return moduleName.length() > 5 && moduleName.endsWith(MAIN_SUFFIX);
   }
 
   public static boolean isTestModule(@NotNull String moduleName) {
-    return moduleName.contains(TEST_SUFFIX);
+    return moduleName.length() > 5 && moduleName.endsWith(TEST_SUFFIX);
   }
 
   @NotNull
