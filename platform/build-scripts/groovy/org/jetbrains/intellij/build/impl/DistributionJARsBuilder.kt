@@ -91,10 +91,13 @@ class DistributionJARsBuilder {
     }
 
     private fun scramble(context: BuildContext) {
-      pack(actualModuleJars = mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities")),
+      val tool = context.proprietaryBuildTools.scrambleTool
+
+      val actualModuleJars: Map<String, List<String>> = if (tool == null) emptyMap() else
+        mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities"))
+      pack(actualModuleJars = actualModuleJars,
            outputDir = context.paths.buildOutputDir.resolve("internal"),
            context = context)
-      val tool = context.proprietaryBuildTools.scrambleTool
       tool?.scramble(context.productProperties.productLayout.mainJarName, context)
       ?: Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
 
