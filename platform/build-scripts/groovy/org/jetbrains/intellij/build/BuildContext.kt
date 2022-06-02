@@ -62,7 +62,7 @@ interface BuildContext: CompilationContext {
    * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
-  fun getAdditionalJvmArguments(): List<String>
+  fun getAdditionalJvmArguments(os: OsFamily): List<String>
 
   fun notifyArtifactBuilt(artifactPath: Path)
 

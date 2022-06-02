@@ -288,7 +288,7 @@ final class MacDistributionBuilder implements OsSpecificDistributionBuilder {
     String classPath = String.join(":", context.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/$it" })
 
     List<String> fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP(), context.productProperties)
-    List<String> additionalJvmArgs = context.additionalJvmArguments
+    List<String> additionalJvmArgs = context.getAdditionalJvmArguments(OsFamily.MACOS)
     if (!bootClassPath.isEmpty()) {
       additionalJvmArgs = new ArrayList<>(additionalJvmArgs)
       //noinspection SpellCheckingInspection

@@ -7,6 +7,8 @@ import com.intellij.diagnostic.telemetry.createTask
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.lang.JavaModuleOptions
+import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
@@ -14,6 +16,7 @@ import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.runJava
@@ -232,8 +235,15 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext,
 }
 
 /**
- * @return List of JVM args for opened packages (JBR17+) in a format `--add-opens=PACKAGE=ALL-UNNAMED`
+ * @return a list of JVM args for opened packages (JBR17+) in a format `--add-opens=PACKAGE=ALL-UNNAMED` for a specified or current OS
  */
-fun getCommandLineArgumentsForOpenPackages(context: CompilationContext): List<String> {
-  return Files.readAllLines(context.paths.communityHomeDir.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt"))
+fun getCommandLineArgumentsForOpenPackages(context: CompilationContext, target: OsFamily? = null): List<String> {
+  val file = context.paths.communityHomeDir.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+  val os = when (target) {
+    OsFamily.WINDOWS -> OS.Windows
+    OsFamily.MACOS -> OS.macOS
+    OsFamily.LINUX -> OS.Linux
+    null -> OS.CURRENT
+  }
+  return JavaModuleOptions.readOptions(file, os)
 }

@@ -309,7 +309,7 @@ class BuildContextImpl : BuildContext {
     Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
-  override fun getAdditionalJvmArguments(): List<String> {
+  override fun getAdditionalJvmArguments(os: OsFamily): List<String> {
     val jvmArgs: MutableList<String> = ArrayList()
     val classLoader = productProperties.classLoader
     if (classLoader != null) {
@@ -331,7 +331,7 @@ class BuildContextImpl : BuildContext {
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsplash=true")
     }
-    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this))
+    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
     return jvmArgs
   }
 

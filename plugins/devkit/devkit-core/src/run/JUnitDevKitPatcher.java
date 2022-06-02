@@ -15,9 +15,10 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.lang.JavaModuleOptions;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,12 +28,9 @@ import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -133,8 +131,8 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
       URL resource = JUnitDevKitPatcher.class.getResource("OpenedPackages.txt");
       if (resource != null) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
-          FileUtil.loadLines(reader).forEach(vm::add);
+        try {
+          JavaModuleOptions.readOptions(resource.openStream(), OS.CURRENT).forEach(vm::add);
         }
         catch (ProcessCanceledException e) {
           throw e; //unreachable
