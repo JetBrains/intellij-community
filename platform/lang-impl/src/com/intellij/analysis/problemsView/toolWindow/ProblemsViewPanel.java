@@ -258,6 +258,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
+    if (PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER.is(dataId)) return shouldHideExpandCollapseActionsIfThereIsNoTreeExpander();
     if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       // this code allows performing Editor's Undo action from the Problems View
       Editor editor = getPreview();
@@ -328,6 +329,10 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   @Nullable TreeExpander getTreeExpander() {
     return myTreeExpander;
+  }
+
+  Boolean shouldHideExpandCollapseActionsIfThereIsNoTreeExpander() {
+    return true;
   }
 
   void orientationChangedTo(boolean vertical) {
