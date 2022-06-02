@@ -3,15 +3,15 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.lombok.maven
 
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor
-import org.jetbrains.kotlin.lombok.LombokCommandLineProcessor.Companion.CONFIG_FILE_OPTION
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.lombok.LombokPluginNames.CONFIG_OPTION_NAME
+import org.jetbrains.kotlin.lombok.LombokPluginNames.PLUGIN_ID
 import java.io.File
 
 class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
-    override val compilerPluginId: String = LombokCommandLineProcessor.PLUGIN_ID
+    override val compilerPluginId: String = PLUGIN_ID
     override val pluginName: String = MAVEN_SUBPLUGIN_NAME
     override val mavenPluginArtifactName: String = "kotlin-maven-lombok"
     override val pluginJarFileFromIdea: File = KotlinArtifacts.instance.lombokCompilerPlugin
@@ -29,7 +29,7 @@ class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
                 val correctedLocation =
                     if (!location.isAbsolute) File(mavenProject.directory, location.path)
                     else location
-                PluginOption(CONFIG_FILE_OPTION.optionName, correctedLocation.absolutePath)
+                PluginOption(CONFIG_OPTION_NAME, correctedLocation.absolutePath)
             } else {
                 null
             }
@@ -38,6 +38,6 @@ class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
 
     companion object {
         private const val MAVEN_SUBPLUGIN_NAME = "lombok"
-        private val CONFIG_FILE_PREFIX = "$MAVEN_SUBPLUGIN_NAME:${CONFIG_FILE_OPTION.optionName}="
+        private val CONFIG_FILE_PREFIX = "$MAVEN_SUBPLUGIN_NAME:$CONFIG_OPTION_NAME="
     }
 }
