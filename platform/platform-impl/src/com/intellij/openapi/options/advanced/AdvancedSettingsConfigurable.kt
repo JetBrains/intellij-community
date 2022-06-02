@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
@@ -33,7 +34,8 @@ import javax.swing.event.DocumentEvent
 class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable, Configurable.NoScroll {
 
   private class SettingsGroup(val groupRow: Row,
-                              val title: String,
+                              val title: JBLabel,
+                              val text: String,
                               val settingsRows: Collection<SettingsRow>)
 
   private class SettingsRow(val row: Row,
@@ -106,7 +108,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     return panel {
       for ((group, extensions) in groupedExtensions) {
         val settingsRows = mutableListOf<SettingsRow>()
-        val groupRow = group(title = group) {
+        val title = JBLabel(group)
+        val groupRow = group(title = title) {
           for (extension in extensions) {
             val label = if (extension.type() == AdvancedSettingType.Bool)
               null
@@ -149,7 +152,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
           }
         }
 
-        settingsGroups.add(SettingsGroup(groupRow, group, settingsRows))
+        settingsGroups.add(SettingsGroup(groupRow, title, group, settingsRows))
       }
     }
   }
@@ -227,9 +230,9 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     var matchCount = 0
 
     for (settingsGroup in settingsGroups) {
-      settingsGroup.groupRow.visible(true)
       var groupVisible = false
-      if (!onlyShowModified && isMatch(filterWords, settingsGroup.title)) {
+      if (!onlyShowModified && isMatch(filterWords, settingsGroup.text)) {
+        updateMatchText(settingsGroup.title, settingsGroup.text, searchText)
         matchCount++
         groupVisible = true
       }
@@ -253,9 +256,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
         }
       }
 
-      if (!groupVisible) {
-        settingsGroup.groupRow.visible(false)
-      }
+      settingsGroup.groupRow.visible(groupVisible)
     }
 
     nothingFoundRow.visible(matchCount == 0)

@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
@@ -139,12 +140,13 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }.layout(RowLayout.PARENT_GRID)
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun separator(@NlsContexts.Separator title: String?, background: Color?): Row {
-    val separator = createSeparator(title, background)
-    return row {
-      cell(separator)
-        .horizontalAlign(HorizontalAlign.FILL)
-    }
+    return createSeparatorRow(title)
+  }
+
+  override fun separator(): Row {
+    return createSeparatorRow(null as JBLabel?)
   }
 
   override fun panel(init: Panel.() -> Unit): PanelImpl {
@@ -163,9 +165,17 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun group(title: String?, indent: Boolean, init: Panel.() -> Unit): RowImpl {
+    return groupImpl(toSeparatorLabel(title), indent, init)
+  }
+
+  override fun group(title: JBLabel, indent: Boolean, init: Panel.() -> Unit): RowImpl {
+    return groupImpl(title, indent, init)
+  }
+
+  private fun groupImpl(title: JBLabel?, indent: Boolean, init: Panel.() -> Unit): RowImpl {
     val result = row {
       panel {
-        separator(title)
+        createSeparatorRow(title)
         if (indent) {
           indent(init)
         }
@@ -180,15 +190,12 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun group(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
     lateinit var result: Panel
-    val separator = createSeparator(title)
     val row = row {
       result = panel {
-        row {
-          cell(separator)
-            .horizontalAlign(HorizontalAlign.FILL)
-        }
+        createSeparatorRow(title)
       }
     }
 
@@ -208,11 +215,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
                               init: Panel.() -> Unit): RowsRangeImpl {
     val result = RowsRangeImpl(this, _rows.size)
-    val separator = createSeparator(title)
-    row {
-      cell(separator)
-        .horizontalAlign(HorizontalAlign.FILL)
-    }
+    createSeparatorRow(title)
     if (indent) {
       indent(init)
     }
@@ -245,6 +248,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
+  @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
   override fun collapsibleGroup(title: String,
                                 indent: Boolean,
                                 topGroupGap: Boolean?,
@@ -288,6 +292,7 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     try {
       if (title != null) {
         val row = row {
+          @Suppress("DialogTitleCapitalization")
           label(title)
             .applyToComponent { putClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP, true) }
         }
@@ -416,16 +421,6 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  private fun createSeparator(@NlsContexts.BorderTitle title: String?, background: Color? = null): JComponent {
-    if (title == null) {
-      return SeparatorComponent(0, background ?: OnePixelDivider.BACKGROUND, null)
-    }
-
-    val result = TitledSeparator(title)
-    result.border = null
-    return result
-  }
-
   private fun doEnabled(isEnabled: Boolean, range: IntRange) {
     for (i in range) {
       _rows[i].enabledFromParent(isEnabled)
@@ -463,3 +458,32 @@ internal data class PanelContext(
    */
   val indentCount: Int = 0
 )
+
+private fun Panel.createSeparatorRow(@NlsContexts.Separator title: String?): Row {
+  return createSeparatorRow(toSeparatorLabel(title))
+}
+
+private fun Panel.createSeparatorRow(title: JBLabel?): Row {
+  val separator: JComponent
+  if (title == null) {
+    separator = SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
+  }
+  else {
+    separator = object : TitledSeparator(title.text) {
+      override fun createLabel(): JBLabel {
+        return title
+      }
+    }
+    separator.border = null
+  }
+
+  return row {
+    cell(separator)
+      .horizontalAlign(HorizontalAlign.FILL)
+  }
+}
+
+private fun toSeparatorLabel(@NlsContexts.Separator title: String?): JBLabel? {
+  @Suppress("DialogTitleCapitalization")
+  return if (title == null) null else JBLabel(title)
+}
