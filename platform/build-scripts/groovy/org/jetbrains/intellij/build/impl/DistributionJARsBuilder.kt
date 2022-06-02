@@ -909,7 +909,7 @@ fun getPluginsByModules(modules: Collection<String>, context: BuildContext): Set
     }
 
     if (customLayouts == null) {
-      if (moduleName != "kotlin-ultimate.kmm-plugin" && !result.add(PluginLayout.simplePlugin(moduleName))) {
+      if (!(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.simplePlugin(moduleName)))) {
         throw IllegalStateException("Plugin layout for module $moduleName is already added (duplicated module name?)")
       }
     }
