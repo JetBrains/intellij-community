@@ -286,7 +286,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
     @Override
     public boolean isEmpty() {
-      return !iterator().hasNext();
+      for (Entry<KeyReference<K>, V> ent : hashEntrySet) {
+        KeyReference<K> wk = ent.getKey();
+        if (wk != null && wk.get() == null) {
+          continue;
+        }
+        return false;
+      }
+      return true;
     }
 
     @Override
