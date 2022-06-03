@@ -109,6 +109,9 @@ public final class IconLoader {
     }
 
     Icon cachedIcon = icon;
+    if (!(cachedIcon instanceof CachedImageIcon) && cachedIcon instanceof RetrievableIcon) {
+      cachedIcon = ((RetrievableIcon)cachedIcon).retrieveIcon();
+    }
     if (cachedIcon instanceof CachedImageIcon) {
       Icon version = loadCustomVersion((CachedImageIcon)cachedIcon, (int)size, (int)size);
       if (version != null) return version;
