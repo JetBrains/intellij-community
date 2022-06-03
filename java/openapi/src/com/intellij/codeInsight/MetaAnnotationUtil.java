@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -131,7 +132,8 @@ public abstract class MetaAnnotationUtil {
 
       return Result.create(map,
                            ProjectRootManager.getInstance(module.getProject()),
-                           ForcefulReparseModificationTracker.getInstance()); // PsiClass from libraries may become invalid on reparse
+                           ForcefulReparseModificationTracker.getInstance(), // PsiClass from libraries may become invalid on reparse
+                           DumbService.getInstance(module.getProject()));
     });
   }
 
