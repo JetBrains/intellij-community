@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -10,7 +11,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.plugins.groovy.GroovyBundle
 
-class ReplaceDotFix(val oldDot: IElementType, private val newDot: IElementType) : LocalQuickFix {
+class ReplaceDotFix(@SafeFieldForPreview val oldDot: IElementType, @SafeFieldForPreview private val newDot: IElementType) : LocalQuickFix {
 
   private val myName: @IntentionFamilyName String
     get() {

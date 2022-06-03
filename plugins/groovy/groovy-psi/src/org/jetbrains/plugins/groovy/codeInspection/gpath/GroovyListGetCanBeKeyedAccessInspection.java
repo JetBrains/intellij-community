@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -100,7 +100,7 @@ public class GroovyListGetCanBeKeyedAccessInspection extends BaseInspection {
       if (qualifier == null || PsiUtil.isThisOrSuperRef(qualifier)) {
         return;
       }
-      if (referenceExpression.getDotTokenType() == GroovyTokenTypes.mOPTIONAL_DOT) return;
+      if (GroovyTokenSets.SAFE_DOTS.contains(referenceExpression.getDotTokenType())) return;
       final PsiType type = qualifier.getType();
       if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_LIST)) {
         return;
