@@ -2,8 +2,9 @@
 
 import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.IdeaCommunityBuilder
+import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.createCommunityBuildContext
 import java.nio.file.Path
 
 /**
@@ -27,7 +28,8 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
 
     //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
     val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: communityHome
-    IdeaCommunityBuilder(communityHome, options, projectHome)
-      .buildUnpackedDistribution(Path.of("${options.outputRootPath}/$distOutputRelativePath").normalize())
+    BuildTasks.create(createCommunityBuildContext(home = communityHome, options = options, projectHome = projectHome))
+      .buildUnpackedDistribution(targetDirectory = Path.of("${options.outputRootPath}/$distOutputRelativePath"),
+                                 includeBinAndRuntime = false)
   }
 }

@@ -21,7 +21,6 @@ import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.TraceManager.finish
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getLibraryName
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
@@ -66,17 +65,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
   }
 
   override fun buildDistributions() {
-    try {
-      buildDistributions(context)
-    }
-    catch (e: Throwable) {
-      try {
-        finish()
-      }
-      catch (ignore: Throwable) {
-      }
-      throw e
-    }
+    buildDistributions(context)
   }
 
   override fun buildDmg(macZipDir: Path) {
@@ -121,11 +110,13 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     CompilationTasks.create(context).compileModules(moduleNames)
   }
 
-  override fun buildFullUpdaterJar() =
+  override fun buildFullUpdaterJar() {
     doBuildUpdaterJar(context, "updater-full.jar")
+  }
 
-  fun buildUpdaterJar() =
+  fun buildUpdaterJar() {
     doBuildUpdaterJar(context, "updater.jar")
+  }
 
   override fun runTestBuild() {
     checkProductProperties(context)
@@ -638,71 +629,81 @@ private fun compileModulesForDistribution(context: BuildContext): DistributionBu
 }
 
 fun buildDistributions(context: BuildContext) {
-  spanBuilder("build distributions").useWithScope {
-    checkProductProperties(context)
-    copyDependenciesFile(context)
-    logFreeDiskSpace("before compilation", context)
-    val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.getPluginModulesToPublish(), context)
-    val distributionState = compileModulesForDistribution(context)
-    logFreeDiskSpace("after compilation", context)
+  try {
+    spanBuilder("build distributions").useWithScope {
+      checkProductProperties(context)
+      copyDependenciesFile(context)
+      logFreeDiskSpace("before compilation", context)
+      val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.getPluginModulesToPublish(), context)
+      val distributionState = compileModulesForDistribution(context)
+      logFreeDiskSpace("after compilation", context)
 
-    val mavenTask = createMavenArtifactTask(context, distributionState)?.fork()
+      val mavenTask = createMavenArtifactTask(context, distributionState)?.fork()
 
-    spanBuilder("build platform and plugin JARs").useWithScope {
-      val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
+      spanBuilder("build platform and plugin JARs").useWithScope {
+        val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
+        if (context.shouldBuildDistributions()) {
+          val projectStructureMapping = distributionJARsBuilder.buildJARs(context)
+          buildAdditionalArtifacts(projectStructureMapping, context)
+        }
+        else {
+          Span.current().addEvent("skip building product distributions because " +
+                                  "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
+          distributionJARsBuilder.buildSearchableOptions(context, context.classpathCustomizer)
+          distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)!!.fork().join()
+        }
+      }
+
       if (context.shouldBuildDistributions()) {
-        val projectStructureMapping = distributionJARsBuilder.buildJARs(context)
-        buildAdditionalArtifacts(projectStructureMapping, context)
-      }
-      else {
-        Span.current().addEvent("skip building product distributions because " +
-                                "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
-        distributionJARsBuilder.buildSearchableOptions(context, context.classpathCustomizer)
-        distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)!!.fork().join()
-      }
-    }
-
-    if (context.shouldBuildDistributions()) {
-      layoutShared(context)
-      val distDirs = buildOsSpecificDistributions(context)
-      if (java.lang.Boolean.getBoolean("intellij.build.toolbox.litegen")) {
-        @Suppress("SENSELESS_COMPARISON")
-        if (context.buildNumber == null) {
-          Span.current().addEvent("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
-        }
-        else if (context.options.targetOs != BuildOptions.OS_ALL) {
-          Span.current().addEvent("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
-        }
-        else {
-          context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
-            val toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
-            if (toolboxLiteGenVersion == null) {
-              context.messages.error("Toolbox Lite-Gen version is not specified!")
-            }
-            else {
-              ToolboxLiteGen.runToolboxLiteGen(context.paths.buildDependenciesCommunityRoot, context.messages,
-                                               toolboxLiteGenVersion, "/artifacts-dir=" + context.paths.artifacts,
-                                               "/product-code=" + context.applicationInfo.productCode,
-                                               "/isEAP=" + context.applicationInfo.isEAP.toString(),
-                                               "/output-dir=" + context.paths.buildOutputRoot + "/toolbox-lite-gen")
+        layoutShared(context)
+        val distDirs = buildOsSpecificDistributions(context)
+        if (java.lang.Boolean.getBoolean("intellij.build.toolbox.litegen")) {
+          @Suppress("SENSELESS_COMPARISON")
+          if (context.buildNumber == null) {
+            Span.current().addEvent("Toolbox LiteGen is not executed - it does not support SNAPSHOT build numbers")
+          }
+          else if (context.options.targetOs != BuildOptions.OS_ALL) {
+            Span.current().addEvent("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
+          }
+          else {
+            context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
+              val toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
+              if (toolboxLiteGenVersion == null) {
+                context.messages.error("Toolbox Lite-Gen version is not specified!")
+              }
+              else {
+                ToolboxLiteGen.runToolboxLiteGen(context.paths.buildDependenciesCommunityRoot, context.messages,
+                                                 toolboxLiteGenVersion, "/artifacts-dir=" + context.paths.artifacts,
+                                                 "/product-code=" + context.applicationInfo.productCode,
+                                                 "/isEAP=" + context.applicationInfo.isEAP.toString(),
+                                                 "/output-dir=" + context.paths.buildOutputRoot + "/toolbox-lite-gen")
+              }
             }
           }
         }
-      }
-      if (context.productProperties.buildCrossPlatformDistribution) {
-        if (distDirs.size == SUPPORTED_DISTRIBUTIONS.size) {
-          context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
-            buildCrossPlatformZip(distDirs, context)
+        if (context.productProperties.buildCrossPlatformDistribution) {
+          if (distDirs.size == SUPPORTED_DISTRIBUTIONS.size) {
+            context.executeStep("build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
+              buildCrossPlatformZip(distDirs, context)
+            }
+          }
+          else {
+            Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
           }
         }
-        else {
-          Span.current().addEvent("skip building cross-platform distribution because some OS/arch-specific distributions were skipped")
-        }
       }
-    }
 
-    mavenTask?.join()
-    logFreeDiskSpace("after building distributions", context)
+      mavenTask?.join()
+      logFreeDiskSpace("after building distributions", context)
+    }
+  }
+  catch (e: Throwable) {
+    try {
+      TraceManager.finish()
+    }
+    catch (ignore: Throwable) {
+    }
+    throw e
   }
 }
 
@@ -790,8 +791,10 @@ private fun checkProductLayout(context: BuildContext) {
   val nonTrivialPlugins = layout.pluginLayouts
   checkPluginDuplicates(nonTrivialPlugins, messages)
   checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", nonTrivialPlugins, context)
-  checkPluginModules(layout.getPluginModulesToPublish(), "productProperties.productLayout.pluginModulesToPublish", nonTrivialPlugins, context)
-  checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", nonTrivialPlugins, context)
+  checkPluginModules(layout.getPluginModulesToPublish(), "productProperties.productLayout.pluginModulesToPublish", nonTrivialPlugins,
+                     context)
+  checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", nonTrivialPlugins,
+                     context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
     messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
                      "layout.compatiblePluginsToIgnore property will be ignored (" + layout.compatiblePluginsToIgnore.toString() +
@@ -987,7 +990,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
                             launcherPath = "MacOS/$executableName",
                             javaExecutablePath = null,
                             vmOptionsFilePath = "bin/mac/${executableName}.vmoptions")
-  ), context)
+    ), context)
 
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
@@ -1014,7 +1017,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
   return targetFile
 }
 
-private fun checkClassVersion( targetFile: Path, context: BuildContext) {
+private fun checkClassVersion(targetFile: Path, context: BuildContext) {
   val checkerConfig = context.productProperties.versionCheckerConfig
   if (checkerConfig.isNotEmpty() && !context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
     checkClassVersions(checkerConfig, targetFile)
@@ -1048,17 +1051,17 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
 }
 
 private fun crossPlatformZip(macX64DistDir: Path,
-                     macAarch64DistDir: Path,
-                     linuxX64DistDir: Path,
-                     winX64DistDir: Path,
-                     targetFile: Path,
-                     executableName: String,
-                     productJson: ByteArray,
-                     macExtraExecutables: List<String>,
-                     linuxExtraExecutables: List<String>,
-                     distFiles: Collection<Map.Entry<Path, String>>,
-                     extraFiles: Map<String, Path>,
-                     distAllDir: Path) {
+                             macAarch64DistDir: Path,
+                             linuxX64DistDir: Path,
+                             winX64DistDir: Path,
+                             targetFile: Path,
+                             executableName: String,
+                             productJson: ByteArray,
+                             macExtraExecutables: List<String>,
+                             linuxExtraExecutables: List<String>,
+                             distFiles: Collection<Map.Entry<Path, String>>,
+                             extraFiles: Map<String, Path>,
+                             distAllDir: Path) {
   writeNewFile(targetFile) { outFileChannel ->
     NoDuplicateZipArchiveOutputStream(outFileChannel).use { out ->
       out.setUseZip64(Zip64Mode.Never)

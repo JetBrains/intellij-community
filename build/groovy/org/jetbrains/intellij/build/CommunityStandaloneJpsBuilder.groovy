@@ -21,7 +21,7 @@ final class CommunityStandaloneJpsBuilder {
 
   @CompileStatic(TypeCheckingMode.SKIP)
   void processJpsLayout(Path targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
-                        boolean copyFiles, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
+                        boolean copyFiles) {
     BuildContext context = buildContext
     new LayoutBuilder(buildContext).process(targetDir.toString(), projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
@@ -103,7 +103,6 @@ final class CommunityStandaloneJpsBuilder {
         }
 
         jar("ant-jps.jar") { module("intellij.ant.jps") }
-        include(additionalJars)
       }
       jar("jps-build-test-${buildNumber}.jar") {
         moduleTests("intellij.platform.jps.build")

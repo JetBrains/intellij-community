@@ -3,8 +3,16 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.BaseLayout
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 
 import java.nio.file.Path
+
+internal fun createCommunityBuildContext(home: Path, options: BuildOptions = BuildOptions(), projectHome: Path = home): BuildContextImpl {
+  return BuildContextImpl.createContext(communityHome = home,
+                                        projectHome = projectHome,
+                                        productProperties = IdeaCommunityProperties(home),
+                                        options = options)
+}
 
 open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaProperties() {
   init {

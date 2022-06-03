@@ -25,5 +25,8 @@
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
   </component>
 </module>
