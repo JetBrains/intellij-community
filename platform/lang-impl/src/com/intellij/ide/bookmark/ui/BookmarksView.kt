@@ -29,6 +29,7 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
+import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
 import com.intellij.util.OpenSourceUtil
@@ -47,7 +48,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val state = BookmarksViewState.getInstance(project)
   private val preview = DescriptorPreview(this, false, null)
 
-  private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, stateForComponent(this), this)
+  private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
 
   private val structure = BookmarksTreeStructure(this)
   val model = StructureTreeModel(structure, FolderNodeComparator(project), this)

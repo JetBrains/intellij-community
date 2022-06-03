@@ -32,6 +32,7 @@ import com.intellij.ui.preview.DescriptorPreview;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
@@ -80,7 +81,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     if (node != null) ProblemsViewStatsCollector.problemSelected(this, node.getProblem());
     updateAutoscroll();
     updatePreview();
-  }, 50, stateForComponent(this), this);
+  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, stateForComponent(this));
 
   private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
     ToolWindow window = getCurrentToolWindow();
@@ -92,7 +93,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     int count = root == null ? 0 : root.getProblemCount();
     content.setDisplayName(getName(count));
     ProblemsViewIconUpdater.update(getProject());
-  }, 50, stateForComponent(this), this);
+  }, 50, this, Alarm.ThreadToUse.SWING_THREAD, stateForComponent(this));
 
   private final Option myAutoscrollToSource = new Option() {
     @Override

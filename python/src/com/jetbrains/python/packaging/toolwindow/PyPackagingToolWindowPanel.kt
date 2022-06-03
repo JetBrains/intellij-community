@@ -22,6 +22,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.ui.layout.*
 import com.intellij.util.Alarm
+import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -180,9 +181,9 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
       }
     }
 
-    searchAlarm = SingleAlarm(Runnable {
+    searchAlarm = SingleAlarm({
       service.handleSearch(searchTextField.text.trim())
-    }, 500, ModalityState.NON_MODAL, service)
+    }, 500, service, ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL)
 
     searchTextField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
