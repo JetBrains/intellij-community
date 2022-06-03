@@ -75,21 +75,21 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         /**
          * @param jpsVersion version to parse
-         * @param source where did [jpsVersion] come from (e.g. from kotlin.xml)
+         * @param fromFile true if [jpsVersion] come from kotlin.xml
          * @return error message if [jpsVersion] is not valid
          */
         @Nls
-        fun checkJpsVersion(jpsVersion: String, source: String? = null): String? {
+        fun checkJpsVersion(jpsVersion: String, fromFile: Boolean = false): String? {
             val parsedKotlinVersion = IdeKotlinVersion.opt(jpsVersion)?.kotlinVersion
             if (parsedKotlinVersion == null) {
-                return if (source == null) {
-                    KotlinBasePluginBundle.message("failed.to.parse.kotlin.version.0", jpsVersion)
-                } else {
+                return if (fromFile) {
                     KotlinBasePluginBundle.message(
                         "failed.to.parse.kotlin.version.0.from.1",
                         jpsVersion,
                         SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE,
                     )
+                } else {
+                    KotlinBasePluginBundle.message("failed.to.parse.kotlin.version.0", jpsVersion)
                 }
             }
 
@@ -115,7 +115,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         fun supportedJpsVersion(project: Project, onUnsupportedVersion: (String) -> Unit): String? {
             val version = jpsVersion(project) ?: return null
-            val error = checkJpsVersion(version, SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE)
+            val error = checkJpsVersion(version, fromFile = true)
             if (error != null) {
                 onUnsupportedVersion(error)
                 return null
