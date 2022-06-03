@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.core.script.configuration
 
-import com.intellij.ProjectTopics
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -10,8 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.ProjectJdkTable.JDK_TABLE_TOPIC
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -35,8 +32,8 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  * The [ScriptClassRootsCache] is always available and never blacked by the writer, as all writes occurs
  * using the copy-on-write strategy.
  *
- * This cache are loaded on start and will be updating asynchronously using the [updater].
- * Sync updates still my be occurred from the [DefaultScriptingSupport].
+ * This cache is loaded on start and will be updating asynchronously using the [updater].
+ * Sync updates still may be occurred from the [DefaultScriptingSupport].
  *
  * We are also watching all script documents:
  * [notifier] will call first applicable [ScriptChangesNotifier.listeners] when editor is activated or document changed.
@@ -122,13 +119,6 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
 
     init {
         val connection = project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
-
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-            override fun rootsChanged(event: ModuleRootEvent) {
-                if (event.isCausedByFileTypesChange) return
-                updater.checkInvalidSdks()
-            }
-        })
 
         connection.subscribe(JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
             override fun jdkAdded(jdk: Sdk) = updater.checkInvalidSdks()
