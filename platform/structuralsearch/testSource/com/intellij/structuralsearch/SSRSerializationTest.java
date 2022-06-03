@@ -87,7 +87,7 @@ public class SSRSerializationTest extends LightPlatformTestCase {
 
   public void testModifiedToolShouldBeWritten() {
     final Configuration configuration = myInspection.getConfigurations().get(0);
-    myProfile.setToolEnabled(configuration.getUuid().toString(), false);
+    myProfile.setToolEnabled(configuration.getUuidString(), false);
 
     final String expected =
       "<profile version=\"1.0\" is_locked=\"true\">\n" +

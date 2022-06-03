@@ -163,7 +163,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
     final List<Configuration> configurations = new SmartList<>();
     for (Configuration configuration : myConfigurations) {
-      final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuid().toString(), project);
+      final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuidString(), project);
       if (tools != null && tools.isEnabled()) {
         configurations.add(configuration);
         register(configuration);
@@ -183,7 +183,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
     // modify from single (AWT) thread, to prevent race conditions.
     ApplicationManager.getApplication().invokeLater(() -> {
-      final String shortName = configuration.getUuid().toString();
+      final String shortName = configuration.getUuidString();
       final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key != null) {
         if (!isMetaDataChanged(configuration, key)) return;
@@ -333,7 +333,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       final InspectionManager manager = holder.getManager();
       final ProblemDescriptor descriptor =
         manager.createProblemDescriptor(element, name, fix, GENERIC_ERROR_OR_WARNING, holder.isOnTheFly());
-      final String toolName = configuration.getUuid().toString();
+      final String toolName = configuration.getUuidString();
       holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, toolName));
     }
 
@@ -435,7 +435,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
 
     private void processElement(PsiElement element, Configuration configuration, Matcher matcher) {
-      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element)) {
+      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuidString()), element)) {
         return;
       }
       final NodeIterator matchedNodes = SsrFilteringNodeIterator.create(element);

@@ -43,6 +43,7 @@ public abstract class Configuration implements JDOMExternalizable {
   private boolean predefined;
   private long created;
   private UUID uuid;
+  private String uuidString;
   private String description;
   private String suppressId;
   private String problemDescriptor;
@@ -128,6 +129,15 @@ public abstract class Configuration implements JDOMExternalizable {
   @NotNull
   public UUID getUuid() {
     return uuid == null ? (uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8))) : uuid;
+  }
+
+  /**
+   * @return string representation of UUID. It's preferred to use this method rather than {@code getUuid().toString()},
+   * as the result is cached.
+   */
+  @NotNull
+  public String getUuidString() {
+    return uuidString == null ? (uuidString = getUuid().toString()) : uuidString;
   }
 
   public void setUuid(@Nullable UUID uuid) {
