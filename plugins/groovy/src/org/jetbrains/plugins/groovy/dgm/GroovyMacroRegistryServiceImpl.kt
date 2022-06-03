@@ -8,9 +8,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtilBase
@@ -39,13 +37,13 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
   override fun resolveAsMacro(call: GrMethodCall): PsiMethod? {
     val module = ModuleUtilCore.findModuleForPsiElement(call) ?: return null
     val invokedName = call.invokedExpression.castSafelyTo<GrReferenceExpression>()?.referenceName ?: return null
-    val candidates = availableModules.value[module]?.filter { it.name == invokedName } ?: return null
-    return candidates.find { it.canBeAppliedTo(call) }
+    val candidates = availableModules.value[module]?.filter { it.element?.name == invokedName } ?: return null
+    return candidates.find { it.element?.canBeAppliedTo(call) == true }?.element
   }
 
   override fun getAllMacros(context: PsiElement): List<PsiMethod> {
     val module = ModuleUtilCore.findModuleForPsiElement(context) ?: return emptyList()
-    return availableModules.value[module]?.toList() ?: emptyList()
+    return availableModules.value[module]?.mapNotNull { it.element } ?: emptyList()
   }
 
   override fun refreshModule(module: Module) {
@@ -86,7 +84,7 @@ private fun computeModuleRegistry(module : Module) : MacroRegistry {
     }
     macroRegistry.addAll(macroMethods)
   }
-  return macroRegistry
+  return macroRegistry.mapTo(mutableSetOf(), SmartPointerManager::createPointer)
 }
 
 private fun PsiMethod.canBeAppliedTo(call: GrMethodCall): Boolean {
@@ -105,4 +103,4 @@ private fun PsiMethod.canBeAppliedTo(call: GrMethodCall): Boolean {
 }
 
 
-private typealias MacroRegistry = Set<PsiMethod>
+private typealias MacroRegistry = Set<SmartPsiElementPointer<PsiMethod>>
