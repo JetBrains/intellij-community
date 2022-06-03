@@ -2182,8 +2182,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
             // The highest of available versions should be picked
             // TODO: should be reverted after KTI-724
-            Assert.assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
-            Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
     }
 
@@ -2213,7 +2213,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             }
 
             assertEquals(
-                "The bundled version (1.7.0-RC-246) of the Kotlin JPS plugin will be used<br>" +
+                "The bundled version (${KotlinJpsPluginSettings.rawBundledVersion}) of the Kotlin JPS plugin will be used<br>" +
                         "The reason: Kotlin JPS compiler maximum supported version is '$maxVersion' but '$versionToImport' is specified",
                 text
             )
@@ -2254,8 +2254,8 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
 
             // Fallback to bundled to unsupported version
-            Assert.assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(myProject))
-            Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
 
         @Test
