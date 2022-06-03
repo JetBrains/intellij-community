@@ -414,12 +414,12 @@
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle" key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle" key="python.sdk.updater.notifications.group.title"/>
     <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>
-    <notificationGroup id="CythonWarning" displayType="BALLOON"/>
-    <notificationGroup id="Skeletons" displayType="BALLOON"/>
+    <notificationGroup id="CythonWarning" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.cython"/>
     <notificationGroup id="Python Compatibility Inspection Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.PyBundle" key="python.compatibility.inspection.advertiser.notifications.group.title"/>
-    <notificationGroup id="Package requirements" displayType="BALLOON" isLogByDefault="false"/>
-    <notificationGroup id="Pipfile Watcher" displayType="STICKY_BALLOON" isLogByDefault="false"/>
+    <notificationGroup id="Package requirements" displayType="BALLOON" isLogByDefault="false" bundle="messages.PyBundle" key="notification.group.package.requirements"/>
+    <notificationGroup id="Pipfile Watcher" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.PyBundle" key="python.sdk.pipenv.pip.file.watcher"/>
     <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle" key="sdk.has.been.configured.notification.name"/>
+    <notificationGroup id="Packaging" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.packaging"/>
 
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="PythonIcons.Python.PythonPackages"

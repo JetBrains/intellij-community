@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableList;
@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -67,9 +68,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
   private static final Map<Sdk, PyUpdateSdkRequestData> ourToBeRefreshed = new HashMap<>();
   private static volatile boolean ourEnabledInTests = false;
 
-  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup(
-    "Python SDK Updater",
-    PyBundle.message("python.sdk.updater.notifications.group.title"));
+  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Python SDK Updater");
 
   @ApiStatus.Internal
   @TestOnly

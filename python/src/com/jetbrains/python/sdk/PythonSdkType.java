@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
@@ -438,7 +438,7 @@ public final class PythonSdkType extends SdkType {
     }
 
     Notification notification =
-      new Notification(SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage,
+      new Notification("Python SDK Updater", PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage,
                        NotificationType.WARNING);
     if (notificationListener != null) notification.setListener(notificationListener);
     notification.notify(null);
