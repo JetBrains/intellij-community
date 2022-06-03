@@ -1,4 +1,4 @@
-# FIR IDE Development Environment Setup
+# Cooperative Development Environment Setup
 
 ## Repositories
 
