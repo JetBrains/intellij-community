@@ -281,21 +281,40 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               envVariables: Map<String, String> = emptyMap(),
                               remoteDebugging: Boolean,
                               context: CompilationContext) {
-    val testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
+    val testClasspath = JpsJavaExtensionService.dependencies(context.findRequiredModule(mainModule)).recursively()
+      // if project requires different SDKs they all shouldn't be added to test classpath
+      .withoutSdk()
+      .includedIn(JpsJavaClasspathKind.runtime(true))
+      .classes()
+      .roots
+      .mapNotNull {
+        val file = it.toPath()
+        if (Files.exists(file)) {
+          val path = file.toString()
+          if (path.replace(File.separatorChar, '/').contains("com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.")) {
+            // don't conflict with docker ancient okhttp
+            null
+          }
+          else {
+            path
+          }
+        }
+        else {
+          null
+        }
+      }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     val classPathString = StringBuilder()
-    for (s in testsClasspath) {
-      if (Files.exists(Path.of(s))) {
-        classPathString.append(s).append('\n')
-      }
+    for (s in testClasspath) {
+      classPathString.append(s).append('\n')
     }
     if (classPathString.isNotEmpty()) {
       classPathString.setLength(classPathString.length - 1)
     }
     Files.writeString(classpathFile, classPathString)
-    val allSystemProperties: MutableMap<String, String> = HashMap(systemProperties)
+    val allSystemProperties = HashMap<String, String>(systemProperties)
     allSystemProperties.putIfAbsent("classpath.file", classpathFile.toString())
     testPatterns?.let { allSystemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { allSystemProperties.putIfAbsent("intellij.build.test.groups", it) }
@@ -321,7 +340,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     context.messages.info("Runtime options: $allJvmArgs")
     context.messages.info("System properties: $allSystemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
-    context.messages.info("Tests classpath: $testsClasspath")
+    context.messages.info("Tests classpath: $testClasspath")
     if (!envVariables.isEmpty()) {
       context.messages.info("Environment variables: $envVariables")
     }
@@ -330,7 +349,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                     jvmArgs = allJvmArgs,
                     envVariables = envVariables,
                     bootstrapClasspath = bootstrapClasspath,
-                    testClasspath = testsClasspath)
+                    testClasspath = testClasspath)
     notifySnapshotBuilt(allJvmArgs)
   }
 
