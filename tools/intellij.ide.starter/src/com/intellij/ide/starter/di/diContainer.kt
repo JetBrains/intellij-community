@@ -10,6 +10,9 @@ import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.InstallerGlobalPaths
 import com.intellij.ide.starter.plugins.PluginConfigurator
+import com.intellij.ide.starter.report.publisher.ReportPublisher
+import com.intellij.ide.starter.report.publisher.impl.ConsoleTestResultPublisher
+import com.intellij.ide.starter.report.publisher.impl.QodanaTestResultPublisher
 import com.intellij.ide.starter.runner.CodeBuilderHost
 import org.kodein.di.DI
 import org.kodein.di.bindFactory
@@ -42,4 +45,5 @@ var di = DI {
     }
   }
   bindFactory<IDETestContext, BuildToolProvider> { testContext: IDETestContext -> BuildToolDefaultProvider(testContext) }
+  bindSingleton<List<ReportPublisher>> { listOf(ConsoleTestResultPublisher, QodanaTestResultPublisher) }
 }

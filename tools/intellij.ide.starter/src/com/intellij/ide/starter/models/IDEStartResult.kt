@@ -9,7 +9,8 @@ data class IDEStartResult(
   val runContext: IDERunContext,
   val logsDir: Path,
   val executionTime: Duration,
-  val vmOptionsDiff: VMOptionsDiff? = null
+  val vmOptionsDiff: VMOptionsDiff? = null,
+  val failureError: Throwable? = null
 ) {
   val context: IDETestContext get() = runContext.testContext
 

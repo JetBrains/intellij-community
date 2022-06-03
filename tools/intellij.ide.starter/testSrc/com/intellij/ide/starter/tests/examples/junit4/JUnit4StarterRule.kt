@@ -3,6 +3,7 @@ package com.intellij.ide.starter.tests.examples.junit4
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.IDETestContext
+import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.process.killOutdatedProcessesOnUnix
 import com.intellij.ide.starter.runner.TestContainer

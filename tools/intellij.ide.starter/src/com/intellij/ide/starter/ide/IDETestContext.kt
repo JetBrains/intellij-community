@@ -3,16 +3,20 @@ package com.intellij.ide.starter.ide
 import com.intellij.ide.starter.build.tool.BuildToolProvider
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
+import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.ide.command.MarshallableCommand
 import com.intellij.ide.starter.models.*
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.profiler.ProfilerType
+import com.intellij.ide.starter.report.publisher.ReportPublisher
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.logOutput
+import org.kodein.di.direct
 import org.kodein.di.factory
+import org.kodein.di.instance
 import org.kodein.di.newInstance
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
@@ -33,7 +37,9 @@ data class IDETestContext(
   private val _resolvedProjectHome: Path?,
   var patchVMOptions: VMOptions.() -> VMOptions,
   val ciServer: CIServer,
-  var profilerType: ProfilerType = ProfilerType.NONE
+  var profilerType: ProfilerType = ProfilerType.NONE,
+  val publishers: List<ReportPublisher> = di.direct.instance(),
+  var isReportPublishingEnabled: Boolean = false
 ) {
   companion object {
     const val TEST_RESULT_FILE_PATH_PROPERTY = "test.result.file.path"
@@ -212,8 +218,29 @@ data class IDETestContext(
     path.toFile().deleteRecursively()
   }
 
-  fun runContext(): IDERunContext {
+  fun runContext(
+    patchVMOptions: VMOptions.() -> VMOptions = { this },
+    commandLine: IDECommandLine? = null,
+    commands: Iterable<MarshallableCommand> = CommandChain(),
+    codeBuilder: (CodeInjector.() -> Unit)? = null,
+    runTimeout: Duration = Duration.minutes(10),
+    useStartupScript: Boolean = true,
+    launchName: String = "",
+    expectedKill: Boolean = false,
+    collectNativeThreads: Boolean = false
+  ): IDERunContext {
     return IDERunContext(testContext = this)
+    .copy(
+      commandLine = commandLine,
+      commands = commands,
+      codeBuilder = codeBuilder,
+      runTimeout = runTimeout,
+      useStartupScript = useStartupScript,
+      launchName = launchName,
+      expectedKill = expectedKill,
+      collectNativeThreads = collectNativeThreads
+    )
+      .addVMOptionsPatch(patchVMOptions)
   }
 
   /**
@@ -279,19 +306,23 @@ data class IDETestContext(
     expectedKill: Boolean = false,
     collectNativeThreads: Boolean = false
   ): IDEStartResult {
-    return runContext()
-      .copy(
-        commandLine = commandLine,
-        commands = commands,
-        codeBuilder = codeBuilder,
-        runTimeout = runTimeout,
-        useStartupScript = useStartupScript,
-        launchName = launchName,
-        expectedKill = expectedKill,
-        collectNativeThreads = collectNativeThreads
-      )
-      .addVMOptionsPatch(patchVMOptions)
-      .runIDE()
+
+    val ideRunResult = runContext(
+      commandLine = commandLine,
+      commands = commands,
+      codeBuilder = codeBuilder,
+      runTimeout = runTimeout,
+      useStartupScript = useStartupScript,
+      launchName = launchName,
+      expectedKill = expectedKill,
+      collectNativeThreads = collectNativeThreads
+    ).runIDE()
+
+    if (isReportPublishingEnabled) publishers.forEach {
+      it.publish(ideRunResult)
+    }
+    if (ideRunResult.failureError != null) throw ideRunResult.failureError
+    return ideRunResult
   }
 
   fun warmUp(
@@ -454,4 +485,9 @@ data class IDETestContext(
   fun publishArtifact(source: Path,
                       artifactPath: String = testName,
                       artifactName: String = source.fileName.toString()) = ciServer.publishArtifact(source, artifactPath, artifactName)
+
+  fun withReportPublishing(isEnabled: Boolean): IDETestContext {
+    isReportPublishingEnabled = isEnabled;
+    return this;
+  }
 }
