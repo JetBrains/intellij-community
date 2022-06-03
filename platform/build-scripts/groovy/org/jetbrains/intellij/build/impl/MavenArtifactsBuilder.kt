@@ -346,11 +346,7 @@ private fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData, List<J
   val publishSourceFilter = context.productProperties.mavenArtifacts.publishSourcesFilter
 
   modulesToPublish.entries.parallelStream().forEach { (artifactData, modules) ->
-    val modulesWithSources = modules.filter {
-      it.getSourceRoots(JavaSourceRootType.SOURCE).any() || it.getSourceRoots(JavaResourceRootType.RESOURCE).any()
-    }
-
-    if (modulesWithSources.isEmpty()) {
+    if (modules.isEmpty()) {
       return@forEach
     }
 
@@ -363,12 +359,12 @@ private fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData, List<J
 
     buildJar(
       targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("", "jar")),
-      sources = modulesWithSources.map {
+      sources = modules.map {
         DirSource(dir = context.getModuleOutputDir(it), excludes = commonModuleExcludes)
       }
     )
 
-    val publishSourcesForModules = modulesWithSources.filter { publishSourceFilter(it, context) }
+    val publishSourcesForModules = modules.filter { publishSourceFilter(it, context) }
     if (!publishSourcesForModules.isEmpty()) {
       buildJar(
         targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("sources", "jar")),
