@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -22,7 +22,7 @@ object IndexableEntityProviderMethods {
                       roots: List<VirtualFile>,
                       storage: EntityStorage): Collection<IndexableFilesIterator> {
     if (roots.isEmpty()) return emptyList()
-    val module = entity.findModuleBridge(storage) ?: return emptyList()
+    val module = entity.findModule(storage) ?: return emptyList()
     return createIterators(module, roots)
   }
 
@@ -43,7 +43,7 @@ object IndexableEntityProviderMethods {
       return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
     }
     else {
-      val module = entity.findModuleBridge(entityStorage)
+      val module = entity.findModule(entityStorage)
       if (module == null) {
         return emptyList()
       }

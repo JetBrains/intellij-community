@@ -345,7 +345,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
             EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-            Module module = ModuleEntityUtils.findModuleBridge(moduleEntity, storage);
+            Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
             if (module == null) {
               return Stream.empty();
             }

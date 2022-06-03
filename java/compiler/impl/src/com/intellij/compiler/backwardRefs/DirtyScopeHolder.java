@@ -170,7 +170,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       }
 
       private @Nullable Module extractModule(@NotNull ModuleEntity entity, @NotNull EntityStorage storage) {
-        return ModuleEntityUtils.findModuleBridge(entity, storage);
+        return ModuleEntityUtils.findModule(entity, storage);
       }
 
       private @Nullable Module extractModule(@NotNull ContentRootEntity entity, @NotNull EntityStorage storage) {
