@@ -248,8 +248,13 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.sh"),
     simplePlugin("intellij.vcs.changeReminder"),
     simplePlugin("intellij.vcs.refactoring.detector"),
-    simplePlugin("intellij.featuresTrainer"),
-    simplePlugin("intellij.vcs.git.featuresTrainer"),
+    plugin("intellij.featuresTrainer") {
+      withProjectLibrary("assertJ")
+      withProjectLibrary("assertj-swing")
+    },
+    plugin("intellij.vcs.git.featuresTrainer") {
+      withProjectLibrary("git-learning-project")
+    },
     simplePlugin("intellij.searchEverywhereMl"),
     simplePlugin("intellij.keymap.eclipse"),
     simplePlugin("intellij.keymap.visualStudio"),
