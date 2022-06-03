@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.dgm
 
 import com.intellij.ProjectTopics
 import com.intellij.lang.properties.psi.PropertiesFile
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -51,6 +52,7 @@ class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistry
   }
 
   private fun collectModuleRegistry(): Map<Module, MacroRegistry> {
+    thisLogger().assertTrue(!DumbService.isDumb(project))
     val modules = mutableMapOf<Module, MacroRegistry>()
     DumbService.getInstance(project).runWithAlternativeResolveEnabled<Throwable> {
       for (module in ModuleManager.getInstance(project).modules) {
