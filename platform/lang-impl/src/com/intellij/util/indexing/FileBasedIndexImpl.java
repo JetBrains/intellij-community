@@ -966,35 +966,32 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return; // no need to index unsaved docs        // todo: check scope ?
     }
 
+    Document[] unsavedDocuments = myFileDocumentManager.getUnsavedDocuments();
+    Set<Document> transactedDocuments = getTransactedDocuments();
+    Document[] uncommittedDocuments = project == null ? Document.EMPTY_ARRAY :
+                                      PsiDocumentManager.getInstance(project).getUncommittedDocuments();
+
+    if (unsavedDocuments.length == 0 && uncommittedDocuments.length == 0 && transactedDocuments.isEmpty()) return;
+
     final Set<Document> documents = new HashSet<>();
+    Collections.addAll(documents, unsavedDocuments);
+    documents.addAll(transactedDocuments);
+    Collections.addAll(documents, uncommittedDocuments);
 
-    myFileDocumentManager.processUnsavedDocuments(document -> {
-      documents.add(document);
-      return true;
-    });
+    Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents,
+                                                                             document -> belongsToScope(
+                                                                               myFileDocumentManager.getFile(document), restrictedFile,
+                                                                               filter));
 
-    documents.addAll(getTransactedDocuments());
+    if (!documentsToProcessForProject.isEmpty()) {
+      UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
+      assert task != null : "Task for unsaved data indexing was not initialized for index " + indexId;
 
-    if (project != null) {
-      Collections.addAll(documents, PsiDocumentManager.getInstance(project).getUncommittedDocuments());
-    }
-
-    if (!documents.isEmpty()) {
-      Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents,
-                                                                               document -> belongsToScope(
-                                                                                 myFileDocumentManager.getFile(document), restrictedFile,
-                                                                                 filter));
-
-      if (!documentsToProcessForProject.isEmpty()) {
-        UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
-        assert task != null : "Task for unsaved data indexing was not initialized for index " + indexId;
-
-        if (myStorageBufferingHandler.runUpdate(true, () -> task.processAll(documentsToProcessForProject, project)) &&
-            documentsToProcessForProject.size() == documents.size() &&
-            !hasActiveTransactions()
-        ) {
-          myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
-        }
+      if (myStorageBufferingHandler.runUpdate(true, () -> task.processAll(documentsToProcessForProject, project)) &&
+          documentsToProcessForProject.size() == documents.size() &&
+          !hasActiveTransactions()
+      ) {
+        myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
       }
     }
   }
