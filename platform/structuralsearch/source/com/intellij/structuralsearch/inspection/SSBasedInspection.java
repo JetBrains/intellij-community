@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -163,7 +163,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
     final List<Configuration> configurations = new SmartList<>();
     for (Configuration configuration : myConfigurations) {
-      final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuidString(), project);
+      final ToolsImpl tools = profile.getToolsOrNull(configuration.getShortName(), project);
       if (tools != null && tools.isEnabled()) {
         configurations.add(configuration);
         register(configuration);
@@ -183,7 +183,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
     // modify from single (AWT) thread, to prevent race conditions.
     ApplicationManager.getApplication().invokeLater(() -> {
-      final String shortName = configuration.getUuidString();
+      final String shortName = configuration.getShortName();
       final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key != null) {
         if (!isMetaDataChanged(configuration, key)) return;
@@ -333,7 +333,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       final InspectionManager manager = holder.getManager();
       final ProblemDescriptor descriptor =
         manager.createProblemDescriptor(element, name, fix, GENERIC_ERROR_OR_WARNING, holder.isOnTheFly());
-      final String toolName = configuration.getUuidString();
+      final String toolName = configuration.getShortName();
       holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, toolName));
     }
 
@@ -435,7 +435,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
 
     private void processElement(PsiElement element, Configuration configuration, Matcher matcher) {
-      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuidString()), element)) {
+      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getShortName()), element)) {
         return;
       }
       final NodeIterator matchedNodes = SsrFilteringNodeIterator.create(element);

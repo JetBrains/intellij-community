@@ -125,7 +125,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Configuration configuration = dialog.getConfiguration();
       if (!createNewInspection(configuration, context.getProject(), profile)) return;
 
-      myPanel.selectInspectionTool(configuration.getUuidString());
+      myPanel.selectInspectionTool(configuration.getShortName());
     }
   }
 
@@ -159,7 +159,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   private static void addInspectionToProfile(@NotNull Project project,
                                              @NotNull InspectionProfileImpl profile,
                                              @NotNull Configuration configuration) {
-    final String shortName = configuration.getUuidString();
+    final String shortName = configuration.getShortName();
     final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
     if (toolWrapper != null) {
       // already added
@@ -240,7 +240,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
         }
         else {
           final HighlightDisplayKey key = HighlightDisplayKey.findById(suppressId);
-          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuidString())) {
+          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getShortName())) {
             warnings.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId), mySuppressIdTextField));
           }
           else {
