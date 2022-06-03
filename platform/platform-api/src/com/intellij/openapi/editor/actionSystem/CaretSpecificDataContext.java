@@ -18,37 +18,37 @@ package com.intellij.openapi.editor.actionSystem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataContextWrapper;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class CaretSpecificDataContext extends DataContextWrapper {
   private final Caret myCaret;
-  private final DataContext myCaretContext;
+  private final DataProvider myProvider;
 
+  public static @NotNull CaretSpecificDataContext create(@NotNull DataContext delegate, @NotNull Caret caret) {
+    if (delegate instanceof CaretSpecificDataContext && CommonDataKeys.CARET.getData(delegate) == caret) {
+      return (CaretSpecificDataContext)delegate;
+    }
+    return new CaretSpecificDataContext(delegate, caret);
+  }
+
+  /** @deprecated Use {@link #create(DataContext, Caret)} instead */
+  @Deprecated
   public CaretSpecificDataContext(@NotNull DataContext delegate, @NotNull Caret caret) {
     super(delegate);
     myCaret = caret;
     Project project = super.getData(CommonDataKeys.PROJECT);
     FileEditorManager fm = project == null ? null : FileEditorManager.getInstance(project);
-    myCaretContext = fm == null ? null : dataId -> fm.getData(dataId, myCaret.getEditor(), myCaret);
-  }
-
-  @ApiStatus.Internal
-  public @Nullable Object getCaretData(@NotNull String dataId) {
-    Object data = myCaretContext == null ? null : myCaretContext.getData(dataId);
-    if (data != null) return data;
-    if (CommonDataKeys.CARET.is(dataId)) return myCaret;
-    return null;
+    myProvider = fm == null ? null : dataId -> fm.getData(dataId, myCaret.getEditor(), myCaret);
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    Object data = getCaretData(dataId);
-    if (data != null) return data;
-    return super.getData(dataId);
+  public @Nullable Object getRawCustomData(@NotNull String dataId) {
+    if (CommonDataKeys.CARET.is(dataId)) return myCaret;
+    return myProvider == null ? null : myProvider.getData(dataId);
   }
 }

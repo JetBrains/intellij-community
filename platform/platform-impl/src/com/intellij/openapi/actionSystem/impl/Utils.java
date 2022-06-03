@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -72,24 +71,25 @@ public final class Utils {
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
-    Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    if (dataContext instanceof EdtDataContext) {
+    if (isAsyncDataContext(dataContext)) {
+      return dataContext;
+    }
+    else if (dataContext instanceof EdtDataContext) {
+      Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       return newPreCachedDataContext(component);
     }
-    else if (dataContext instanceof SimpleDataContext && component != null) {
-      DataContext wrapped = newPreCachedDataContext(component);
-      LOG.assertTrue(wrapped.getData(CommonDataKeys.PROJECT) == dataContext.getData(CommonDataKeys.PROJECT));
-      LOG.warn(new Throwable("Use DataManager.getDataContext(component) instead of SimpleDataContext for wrapping."));
-      return wrapped;
-    }
-    else if (dataContext instanceof CaretSpecificDataContext) {
-      CaretSpecificDataContext caretContext = (CaretSpecificDataContext)dataContext;
-      DataContext delegate = wrapToAsyncDataContext(caretContext.getDelegate());
-      if (!(delegate instanceof PreCachedDataContext)) {
-        LOG.warn(new Throwable("Unable to wrap CaretSpecificDataContext delegate '" + delegate.getClass().getName() + "'"));
-        return dataContext;
+    else if (dataContext instanceof CustomizedDataContext) {
+      CustomizedDataContext context = (CustomizedDataContext)dataContext;
+      DataContext delegate = wrapToAsyncDataContext(context.getParent());
+      if (delegate == DataContext.EMPTY_CONTEXT) {
+        return new PreCachedDataContext(null).prependProvider(context::getRawCustomData);
       }
-      return ((PreCachedDataContext)delegate).prependProvider(caretContext::getCaretData);
+      else if (delegate instanceof PreCachedDataContext) {
+        return ((PreCachedDataContext)delegate).prependProvider(context::getRawCustomData);
+      }
+    }
+    else if (!ApplicationManager.getApplication().isUnitTestMode()) { // see `HeadlessContext`
+      LOG.warn(new Throwable("Unable to wrap '" + dataContext.getClass().getName() + "'. Use CustomizedDataContext or EdtDataContext"));
     }
     return dataContext;
   }
@@ -110,7 +110,7 @@ public final class Utils {
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
-    return dataContext instanceof AsyncDataContext;
+    return dataContext == DataContext.EMPTY_CONTEXT || dataContext instanceof AsyncDataContext;
   }
 
   @ApiStatus.Internal

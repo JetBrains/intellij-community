@@ -284,10 +284,9 @@ public class AnActionEvent implements PlaceProvider {
     InjectedDataContext(@NotNull DataContext context) { super(context); }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getRawCustomData(@NotNull String dataId) {
       String injectedId = InjectedDataKeys.injectedId(dataId);
-      Object injected = injectedId != null ? super.getData(injectedId) : null;
-      return injected != null ? injected : super.getData(dataId);
+      return injectedId != null ? getParent().getData(injectedId) : null;
     }
   }
 }
