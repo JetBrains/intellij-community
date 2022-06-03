@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,23 +6,22 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager;
-
 
 /**
  * @author Mikhail Golubev
@@ -58,7 +43,7 @@ public class CertificateTest extends LightPlatformTestCase {
 
   //private static final Logger LOG = Logger.getInstance(CertificateTest.class);
 
-  private CloseableHttpClient myClient;
+  private OkHttpClient myClient;
   private MutableTrustManager myTrustManager;
   private CertificateManager myCertificateManager;
   private X509Certificate myAuthorityCertificate;
@@ -84,7 +69,7 @@ public class CertificateTest extends LightPlatformTestCase {
   }
 
   /**
-   * Hostname validity check (see {@link org.apache.http.conn.ssl.X509HostnameVerifier}) is disabled for now, so
+   * Hostname validity check is disabled for now, so
    * it merely tests that even certificate with illegal CN field (i.e. it doesn't match requested URL).
    * is trusted, because issued by our test CA.
    */
@@ -146,8 +131,8 @@ public class CertificateTest extends LightPlatformTestCase {
   }
 
   private void doTestHttpCall(@NotNull String url) throws Exception {
-    try (CloseableHttpResponse response = myClient.execute(new HttpGet(url))) {
-      assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
+    try (Response response = myClient.newCall(new Request.Builder().url(url).build()).execute()) {
+      assertEquals(response.code(), HttpsURLConnection.HTTP_OK);
     }
   }
 
@@ -200,11 +185,16 @@ public class CertificateTest extends LightPlatformTestCase {
     myTrustManager = myCertificateManager.getCustomTrustManager();
     myAuthorityCertificate = CertificateUtil.loadX509Certificate(getTestDataPath() + "certificates/ca.crt");
 
-    myClient = HttpClientBuilder.create()
-      .setSslcontext(myCertificateManager.getSslContext())
-      .setHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
+    myClient = new OkHttpClient.Builder()
+      .hostnameVerifier(new HostnameVerifier() {
+        @Override
+        public boolean verify(String hostname, SSLSession session) {
+          // Allow everything
+          return true;
+        }
+      })
+      .sslSocketFactory(myCertificateManager.getSslContext().getSocketFactory(), myCertificateManager.getTrustManager())
       .build();
-
     myTrustManager.addCertificate(myAuthorityCertificate);
   }
 
@@ -216,7 +206,8 @@ public class CertificateTest extends LightPlatformTestCase {
     }
     finally {
       try {
-        myClient.close();
+        myClient.dispatcher().executorService().shutdown();
+        myClient.connectionPool().evictAll();
       }
       catch (Throwable e) {
         addSuppressedException(e);

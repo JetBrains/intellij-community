@@ -8,11 +8,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 public class PlainTextEditingTest extends EditingTestBase {
-
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -98,7 +98,7 @@ public class PlainTextEditingTest extends EditingTestBase {
     SelectionModel selectionModel = getEditor().getSelectionModel();
 
 
-    TIntArrayList expectedBoundaries = new TIntArrayList();
+    IntList expectedBoundaries = new IntArrayList();
     expectedBoundaries.add(text.indexOf("my"));
     expectedBoundaries.add(text.indexOf("Field"));
     expectedBoundaries.add(text.indexOf("With"));
@@ -115,7 +115,7 @@ public class PlainTextEditingTest extends EditingTestBase {
 
       // Check backward selection.
       for (int i = expectedBoundaries.size() - 1; i >= 0; i--) {
-        selectionStart = expectedBoundaries.get(i);
+        selectionStart = expectedBoundaries.getInt(i);
         moveCaretToPreviousWordWithSelection();
         assertEquals(selectionStart, caretModel.getOffset());
         assertEquals(selectionStart, selectionModel.getSelectionStart());
@@ -127,7 +127,7 @@ public class PlainTextEditingTest extends EditingTestBase {
       selectionModel.removeSelection();
       caretModel.moveToOffset(selectionStart);
       for (int i = 1; i < expectedBoundaries.size(); i++) {
-        selectionEnd = expectedBoundaries.get(i);
+        selectionEnd = expectedBoundaries.getInt(i);
         moveCaretToNextWordWithSelection();
         assertEquals(selectionEnd, caretModel.getOffset());
         assertEquals(selectionStart, selectionModel.getSelectionStart());
