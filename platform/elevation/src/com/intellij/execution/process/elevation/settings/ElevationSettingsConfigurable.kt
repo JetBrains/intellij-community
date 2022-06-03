@@ -38,6 +38,7 @@ class ElevationSettingsConfigurable : BoundConfigurable(ElevationBundle.message(
         keepAuth = checkBox(if (SystemInfo.isUnix) ElevationBundle.message("checkbox.keep.sudo.authorization.for")
                             else ElevationBundle.message("checkbox.keep.uac.authorization.for"))
           .bindSelected(settings::isKeepAuth)
+          .gap(RightGap.SMALL)
 
         comboBox(CollectionComboBoxModel(getTimeLimitItems(settings.quotaTimeLimitMs)), DurationListCellRenderer())
           .bindItem(settings::quotaTimeLimitMs.toNullableProperty())
