@@ -7,105 +7,67 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
-import java.util.*
 
 object ContentRootCollector {
-
   @JvmStatic
   fun collect(baseContentRoot: String,
-              folderItemMap: Map<String, JpsModuleSourceRootType<*>>,
-              excludedFolders: List<String>,
-              generatedFoldersHolder: GeneratedFoldersHolder?) =
-    collect(baseContentRoot, folderItemMap, excludedFolders, generatedFoldersHolder, false)
+              sourceFolders: Map<String, JpsModuleSourceRootType<*>>,
+              excludeFolders: List<String>,
+              doNotRegisterSourcesUnder: List<String>,
+              generatedFoldersHolder: GeneratedFoldersHolder?): Collection<ContentRootDataHolder> {
 
-  @JvmStatic
-  fun collect(baseContentRoot: String,
-              folderItemMap: Map<String, JpsModuleSourceRootType<*>>,
-              excludedFolders: List<String>,
-              generatedFoldersHolder: GeneratedFoldersHolder?,
-              createContentRootForTarget: Boolean): Collection<ContentRootDataHolder> {
-    val sortedPotentialContentRootSet = TreeSet { path1: String, path2: String -> FileUtil.comparePaths(path1, path2) }
+    data class FolderInfo(val path: String,
+                          val type: JpsModuleSourceRootType<*>?,
+                          val container: ((ContentRootDataHolder) -> MutableList<SourceFolderData>)?)
 
-    sortedPotentialContentRootSet.add(baseContentRoot)
-    folderItemMap.forEach { sortedPotentialContentRootSet.add(it.key) }
+    val foldersData = sortedSetOf<FolderInfo>(Comparator { a, b -> FileUtil.comparePaths(a.path, b.path) })
+    val alreadyAddedSourcesFolders = mutableSetOf<String>()
 
-    val contentRootDataHolderByPath = mutableMapOf<String, ContentRootDataHolder>()
-    contentRootDataHolderByPath[baseContentRoot] = ContentRootDataHolder(baseContentRoot)
+    fun addToSortedFoldersData(path: String,
+                               type: JpsModuleSourceRootType<*>?,
+                               container: ((ContentRootDataHolder) -> MutableList<SourceFolderData>)?) {
+      if (alreadyAddedSourcesFolders.add(path)) {
+        if (doNotRegisterSourcesUnder.none { FileUtil.isAncestor(it, path, false) }) {
+          foldersData.add(FolderInfo(path, type, container))
+        }
+      }
+    }
 
-    for (entry in folderItemMap) {
-      for (contentRootPath in sortedPotentialContentRootSet) {
-        if (FileUtil.isAncestor(contentRootPath, entry.key, false)) {
-          val contentRootDataHolder = contentRootDataHolderByPath.getOrPut(contentRootPath) { ContentRootDataHolder(contentRootPath) }
-          contentRootDataHolder.sourceFolders.add(SourceFolderData(entry.key, entry.value))
+    sourceFolders.forEach { (path, type) -> addToSortedFoldersData(path, type) { root -> root.sourceFolders } }
+    generatedFoldersHolder?.apply {
+      annotationProcessorDirectory?.let {
+        addToSortedFoldersData(it, JavaSourceRootType.SOURCE) { root -> root.annotationProcessorFolders }
+      }
+      annotationProcessorTestDirectory?.let {
+        addToSortedFoldersData(it, JavaSourceRootType.TEST_SOURCE) { root -> root.annotationProcessorFolders }
+      }
+
+      generatedSourceFolder?.let { addToSortedFoldersData(it, JavaSourceRootType.SOURCE) { root -> root.generatedFolders } }
+      generatedTestSourceFolder?.let { addToSortedFoldersData(it, JavaSourceRootType.TEST_SOURCE) { root -> root.generatedFolders } }
+    }
+    addToSortedFoldersData(baseContentRoot, null, null)
+
+    val contentRoots = mutableListOf<ContentRootDataHolder>()
+
+    foldersData.forEach { (path, type, container) ->
+      var addToRoot = contentRoots.lastOrNull()
+      if (addToRoot == null || !FileUtil.isAncestor(addToRoot.contentRoot, path, false)) {
+        addToRoot = ContentRootDataHolder(path)
+        contentRoots.add(addToRoot)
+      }
+      container?.invoke(addToRoot)?.add(SourceFolderData(path, type!!))
+    }
+
+    for (exclude in excludeFolders.asSequence() + doNotRegisterSourcesUnder.asSequence()) {
+      for (eachRoot in contentRoots) {
+        if (FileUtil.isAncestor(eachRoot.contentRoot, exclude, true)) {
+          eachRoot.excludedPaths.add(exclude)
           break
         }
       }
     }
 
-    for (folder in excludedFolders) {
-      for (contentRootPath in sortedPotentialContentRootSet) {
-        if (FileUtil.isAncestor(contentRootPath, folder, true)) {
-          if (createContentRootForTarget) {
-            val contentRootDataHolder = contentRootDataHolderByPath.getOrPut(contentRootPath) { ContentRootDataHolder(contentRootPath) }
-            contentRootDataHolder.excludedPaths.add(folder)
-          }
-          else {
-            contentRootDataHolderByPath.get(contentRootPath)?.excludedPaths?.add(folder)
-          }
-          break
-        }
-      }
-    }
-
-    addGeneratedContentRoots(generatedFoldersHolder, sortedPotentialContentRootSet, contentRootDataHolderByPath)
-
-    return contentRootDataHolderByPath.values
-  }
-
-  private fun addGeneratedContentRoots(generatedFoldersHolder: GeneratedFoldersHolder?,
-                                       sortedPotentialContentRootSet: TreeSet<String>,
-                                       contentRootDataHolderByPath: MutableMap<String, ContentRootDataHolder>) {
-    if (generatedFoldersHolder == null) return
-
-    if (generatedFoldersHolder.annotationProcessorDirectory != null) {
-      val folder = generatedFoldersHolder.annotationProcessorDirectory
-      val contentRootHolder = getGeneratedContentRootDataHolder(sortedPotentialContentRootSet, folder, contentRootDataHolderByPath)
-      contentRootHolder.annotationProcessorFolders.add(SourceFolderData(folder, JavaSourceRootType.SOURCE))
-    }
-    if (generatedFoldersHolder.annotationProcessorTestDirectory != null) {
-      val folder = generatedFoldersHolder.annotationProcessorTestDirectory
-      val contentRootHolder = getGeneratedContentRootDataHolder(sortedPotentialContentRootSet, folder, contentRootDataHolderByPath)
-      contentRootHolder.annotationProcessorFolders.add(SourceFolderData(folder, JavaSourceRootType.TEST_SOURCE))
-    }
-    if (generatedFoldersHolder.generatedSourceFolder != null) {
-      val folder = generatedFoldersHolder.generatedSourceFolder
-      val contentRootHolder = getGeneratedContentRootDataHolder(sortedPotentialContentRootSet, folder, contentRootDataHolderByPath)
-      contentRootHolder.generatedFolders.add(SourceFolderData(folder, JavaSourceRootType.SOURCE))
-    }
-    if (generatedFoldersHolder.generatedTestSourceFolder != null) {
-      val folder = generatedFoldersHolder.generatedTestSourceFolder
-      val contentRootHolder = getGeneratedContentRootDataHolder(sortedPotentialContentRootSet, folder, contentRootDataHolderByPath)
-      contentRootHolder.generatedFolders.add(SourceFolderData(folder, JavaSourceRootType.TEST_SOURCE))
-    }
-  }
-
-  private fun getGeneratedContentRootDataHolder(
-    sortedPotentialContentRootSet: TreeSet<String>,
-    folder: String,
-    contentRootDataHolderByPath: MutableMap<String, ContentRootDataHolder>): ContentRootDataHolder {
-
-    var contentRootHolder: ContentRootDataHolder? = null
-    for (contentRootPath in sortedPotentialContentRootSet) {
-      if (FileUtil.isAncestor(contentRootPath, folder, false)) {
-        contentRootHolder = contentRootDataHolderByPath.get(contentRootPath)
-        break
-      }
-    }
-    if (contentRootHolder == null) {
-      contentRootHolder = ContentRootDataHolder(folder)
-      contentRootDataHolderByPath.put(folder, contentRootHolder)
-    }
-    return contentRootHolder
+    return contentRoots
   }
 }
 

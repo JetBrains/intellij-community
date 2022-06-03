@@ -200,7 +200,9 @@ class WorkspaceModuleImporter(
     importJavaSettings(moduleEntity, importData, importFolderHolder)
 
     folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, importFolderHolder.generatedFoldersHolder)
+      .createContentRoots(moduleEntity, importData,
+                          importFolderHolder.excludedFoldersOfNoSourceSubFolder, importFolderHolder.doNotRegisterSourcesUnder,
+                          importFolderHolder.generatedFoldersHolder)
   }
 
   private fun configAggregator(moduleEntity: ModuleEntity,
@@ -210,7 +212,9 @@ class WorkspaceModuleImporter(
     importJavaSettingsAggregator(moduleEntity, importData)
 
     folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, importFolderHolder.generatedFoldersHolder, true)
+      .createContentRoots(moduleEntity, importData,
+                          importFolderHolder.excludedFoldersOfNoSourceSubFolder, importFolderHolder.doNotRegisterSourcesUnder,
+                          importFolderHolder.generatedFoldersHolder)
   }
 
   private fun configMainAndTestAggregator(moduleEntity: ModuleEntity,
@@ -220,7 +224,9 @@ class WorkspaceModuleImporter(
     importJavaSettingsMainAndTestAggregator(moduleEntity, importData)
 
     folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, null, true)
+      .createContentRoots(moduleEntity, importData,
+                          importFolderHolder.excludedFoldersOfNoSourceSubFolder, importFolderHolder.doNotRegisterSourcesUnder,
+                          null)
   }
 
   private fun configMain(moduleEntity: ModuleEntity,
@@ -230,7 +236,9 @@ class WorkspaceModuleImporter(
     importJavaSettingsMain(moduleEntity, importData, importFolderHolder)
 
     folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, importFolderHolder.generatedFoldersHolder.toMain())
+      .createContentRoots(moduleEntity, importData,
+                          importFolderHolder.excludedFoldersOfNoSourceSubFolder, importFolderHolder.doNotRegisterSourcesUnder,
+                          importFolderHolder.generatedFoldersHolder.toMain())
   }
 
   private fun configTest(moduleEntity: ModuleEntity,
@@ -240,7 +248,9 @@ class WorkspaceModuleImporter(
     importJavaSettingsTest(moduleEntity, importData, importFolderHolder)
 
     folderImporter
-      .createContentRoots(moduleEntity, importData, importFolderHolder.excludedFolders, importFolderHolder.generatedFoldersHolder.toTest())
+      .createContentRoots(moduleEntity, importData,
+                          importFolderHolder.excludedFoldersOfNoSourceSubFolder, importFolderHolder.doNotRegisterSourcesUnder,
+                          importFolderHolder.generatedFoldersHolder.toTest())
   }
 
   private fun importJavaSettings(moduleEntity: ModuleEntity,
@@ -316,15 +326,20 @@ class WorkspaceModuleImporter(
     val testOutputPath = toAbsolutePath(mavenProject, mavenProject.testOutputDirectory)
     val targetDirPath = toAbsolutePath(mavenProject, mavenProject.buildDirectory)
 
-    val excludedFolders = mutableListOf<String>()
+    val excludedFoldersOfNoSourceSubFolder = mutableListOf<String>()
     if (importingSettings.isExcludeTargetFolder) {
-      excludedFolders.add(targetDirPath)
+      excludedFoldersOfNoSourceSubFolder.add(targetDirPath)
     }
     if (!FileUtil.isAncestor(targetDirPath, outputPath, false)) {
-      excludedFolders.add(outputPath)
+      excludedFoldersOfNoSourceSubFolder.add(outputPath)
     }
     if (!FileUtil.isAncestor(targetDirPath, testOutputPath, false)) {
-      excludedFolders.add(testOutputPath)
+      excludedFoldersOfNoSourceSubFolder.add(testOutputPath)
+    }
+
+    val doNotRegisterSourcesUnder = mutableListOf<String>()
+    for (each in importData.mavenProject.suitableImporters) {
+      each.collectExcludedFolders(importData.mavenProject, doNotRegisterSourcesUnder)
     }
 
     var annotationProcessorDirectory: String? = null
@@ -355,7 +370,8 @@ class WorkspaceModuleImporter(
     val generatedFoldersHolder = GeneratedFoldersHolder(annotationProcessorDirectory, annotationProcessorTestDirectory,
                                                         generatedSourceFolder, generatedTestSourceFolder)
 
-    return MavenImportFolderHolder(outputPath, testOutputPath, targetDirPath, excludedFolders, generatedFoldersHolder)
+    return MavenImportFolderHolder(outputPath, testOutputPath, targetDirPath, excludedFoldersOfNoSourceSubFolder, doNotRegisterSourcesUnder,
+                                   generatedFoldersHolder)
   }
 
   private fun toAbsolutePath(mavenProject: MavenProject, path: String) = MavenUtil.toPath(mavenProject, path).path
@@ -364,7 +380,8 @@ class WorkspaceModuleImporter(
     val outputPath: String,
     val testOutputPath: String,
     val targetDirPath: String,
-    val excludedFolders: List<String>,
+    val excludedFoldersOfNoSourceSubFolder: List<String>,
+    val doNotRegisterSourcesUnder: List<String>,
     val generatedFoldersHolder: GeneratedFoldersHolder
   )
 

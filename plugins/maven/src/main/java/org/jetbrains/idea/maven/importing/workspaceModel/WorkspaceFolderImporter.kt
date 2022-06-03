@@ -6,7 +6,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
@@ -24,16 +25,16 @@ class WorkspaceFolderImporter(
 
   fun createContentRoots(module: ModuleEntity,
                          importData: MavenModuleImportData,
-                         excludedFolders: List<String>,
-                         generatedFolders: GeneratedFoldersHolder?) =
-    createContentRoots(module, importData, excludedFolders, generatedFolders, false)
-
-  fun createContentRoots(module: ModuleEntity,
-                         importData: MavenModuleImportData,
-                         excludedFolders: List<String>,
-                         generatedFolders: GeneratedFoldersHolder?,
-                         createContentRootForTarget: Boolean) {
-    val contentRootDataHolders = getContentRootsData(importData, excludedFolders, generatedFolders, createContentRootForTarget)
+                         excludeIfNoSourceSubFolders: List<String>,
+                         doNotRegisterSourcesUnder: List<String>,
+                         generatedFolders: GeneratedFoldersHolder?) {
+    val baseContentRoot = getBaseContentRoot(importData)
+    val folderItemMap = getFolderItemMap(importData)
+    val contentRootDataHolders = ContentRootCollector.collect(baseContentRoot,
+                                                              folderItemMap,
+                                                              excludeIfNoSourceSubFolders,
+                                                              doNotRegisterSourcesUnder,
+                                                              generatedFolders)
 
     for (dataHolder in contentRootDataHolders) {
       val contentRootEntity = builder
@@ -72,15 +73,6 @@ class WorkspaceFolderImporter(
     else {
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "")
     }
-  }
-
-  private fun getContentRootsData(importData: MavenModuleImportData,
-                                  excludedFolders: List<String>,
-                                  generatedFoldersHolder: GeneratedFoldersHolder?,
-                                  createContentRootForTarget: Boolean): Collection<ContentRootDataHolder> {
-    val baseContentRoot = getBaseContentRoot(importData)
-    val folderItemMap = getFolderItemMap(importData)
-    return ContentRootCollector.collect(baseContentRoot, folderItemMap, excludedFolders, generatedFoldersHolder, createContentRootForTarget)
   }
 
   private fun getBaseContentRoot(importData: MavenModuleImportData): String {

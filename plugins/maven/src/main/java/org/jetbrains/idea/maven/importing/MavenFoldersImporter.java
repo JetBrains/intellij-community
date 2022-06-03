@@ -479,7 +479,7 @@ public class MavenFoldersImporter {
           if (myImportingSettings.isExcludeTargetFolder()) {
             if (myModel.hasRegisteredSourceSubfolder(f)) continue;
             if (myModel.isAlreadyExcluded(f)) continue;
-            myModel.addExcludedFolder(f.getPath());
+            myModel.addExcludedFolder(f.getPath()); // is supported in workspace import?
           }
         }
       }

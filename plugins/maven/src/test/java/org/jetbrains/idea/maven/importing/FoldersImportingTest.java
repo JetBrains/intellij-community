@@ -766,6 +766,60 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
+  public void testAddingExistingGeneratedSourcesForTreeImport() throws Exception {
+    if (!MavenProjectImporter.isImportToWorkspaceModelEnabled()) return;
+
+    createStdProjectFolders();
+
+    createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}");
+    createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}");
+    createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}");
+    createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.source>8</maven.compiler.source>" +
+                  "  <maven.compiler.target>8</maven.compiler.target>" +
+                  "  <maven.compiler.testSource>11</maven.compiler.testSource>" +
+                  "  <maven.compiler.testTarget>11</maven.compiler.testTarget>" +
+                  "</properties>");
+
+    assertModules("project", "project.main", "project.test");
+
+    assertContentRoots("project", getProjectPath());
+    assertContentRoots("project.main",
+                       getProjectPath() + "/src/main",
+                       getProjectPath() + "/target/generated-sources");
+    assertContentRoots("project.test",
+                       getProjectPath() + "/src/test",
+                       getProjectPath() + "/target/generated-test-sources");
+
+    assertExcludes("project", "target");
+    assertContentRootExcludes("project.main", getProjectPath() + "/src/main");
+    assertContentRootExcludes("project.main", getProjectPath() + "/target/generated-sources");
+    assertContentRootExcludes("project.test", getProjectPath() + "/src/test");
+    assertContentRootExcludes("project.test", getProjectPath() + "/target/generated-test-sources");
+
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+
+    assertContentRootSources("project.main", getProjectPath() + "/src/main", "java");
+    assertContentRootSources("project.main", getProjectPath() + "/target/generated-sources", "src1", "src2");
+    assertContentRootTestSources("project.main", getProjectPath() + "/src/main");
+    assertContentRootTestSources("project.main", getProjectPath() + "/target/generated-sources");
+
+    assertContentRootSources("project.test", getProjectPath() + "/src/test");
+    assertContentRootSources("project.test", getProjectPath() + "/target/generated-test-sources");
+    assertContentRootTestSources("project.test", getProjectPath() + "/src/test", "java");
+    assertContentRootTestSources("project.test", getProjectPath() + "/target/generated-test-sources", "test1", "test2");
+  }
+
+  @Test
   public void testAddingExistingGeneratedSources2() throws Exception {
     createStdProjectFolders();
 

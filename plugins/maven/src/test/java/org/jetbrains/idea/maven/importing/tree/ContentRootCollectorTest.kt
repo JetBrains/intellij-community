@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.maven.testFramework.MavenTestCase
+import junit.framework.TestCase
 import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootCollector
 import org.jetbrains.idea.maven.importing.workspaceModel.ContentRootDataHolder
 import org.jetbrains.idea.maven.importing.workspaceModel.GeneratedFoldersHolder
@@ -26,30 +27,27 @@ class ContentRootCollectorTest : MavenTestCase() {
 
     val contentRoots = ContentRootCollector.collect(
       baseContentRoot,
-      mapOf(
+      sourceFolders = mapOf(
         sourceMain to JavaSourceRootType.SOURCE,
         resourceMain to JavaResourceRootType.RESOURCE,
         sourceTest to JavaSourceRootType.TEST_SOURCE,
       ),
-      listOf(target),
-      GeneratedFoldersHolder(annotationProcessorDirectory, annotationProcessorTestDirectory,
-                             generatedSourceFolder, generatedTestSourceFolder)
-    )
+      excludeFolders = listOf(target),
+      doNotRegisterSourcesUnder = emptyList(),
+      generatedFoldersHolder = GeneratedFoldersHolder(annotationProcessorDirectory, annotationProcessorTestDirectory,
+                                                      generatedSourceFolder, generatedTestSourceFolder))
 
     Assert.assertEquals(1, contentRoots.size)
-    val map = contentRootsHolder2Map(contentRoots)
-    assertContentRoot(map, sourceMain, baseContentRoot)
-    assertContentRoot(map, resourceMain, baseContentRoot)
-    assertContentRoot(map, sourceTest, baseContentRoot)
-    assertContentRoot(map, target, baseContentRoot)
-    assertContentRoot(map, generatedSourceFolder, baseContentRoot)
-    assertContentRoot(map, generatedTestSourceFolder, baseContentRoot)
-    assertContentRoot(map, annotationProcessorDirectory, baseContentRoot)
-    assertContentRoot(map, annotationProcessorTestDirectory, baseContentRoot)
+    assertContentRoot(contentRoots,
+                      expectedPath = baseContentRoot,
+                      expectedSourceFolders = listOf(sourceMain, resourceMain, sourceTest),
+                      expectedAnnotationFolders = listOf(annotationProcessorDirectory, annotationProcessorTestDirectory),
+                      expectedGeneratedFolders = listOf(generatedSourceFolder, generatedTestSourceFolder),
+                      expectedExcludes = listOf(target))
   }
 
   @Test
-  fun `test multiply content roots and empty exclude root and generated sources`() {
+  fun `test multiple content roots and empty exclude root and generated sources`() {
     val baseContentRoot = "/home/a/b/c/maven/src/main"
     val sourceMain = "/home/a/b/c/maven/src/main/java"
     val sourceMain2 = "/home/a/b/c/maven/java2"
@@ -59,21 +57,90 @@ class ContentRootCollectorTest : MavenTestCase() {
 
     val contentRoots = ContentRootCollector.collect(
       baseContentRoot,
-      mapOf(
+      sourceFolders = mapOf(
         sourceMain to JavaSourceRootType.SOURCE,
         sourceMain2 to JavaSourceRootType.SOURCE
       ),
-      listOf(target),
-      GeneratedFoldersHolder(null, null, generatedSourceFolder, generatedTestSourceFolder)
-    )
+      excludeFolders = listOf(target),
+      doNotRegisterSourcesUnder = emptyList(),
+      generatedFoldersHolder = GeneratedFoldersHolder(null, null, generatedSourceFolder, generatedTestSourceFolder))
 
+    assertContentRoot(contentRoots, expectedPath = baseContentRoot, expectedSourceFolders = listOf(sourceMain))
+    assertContentRoot(contentRoots, expectedPath = sourceMain2, expectedSourceFolders = listOf(sourceMain2))
+    assertContentRoot(contentRoots, expectedPath = generatedSourceFolder, expectedGeneratedFolders = listOf(generatedSourceFolder))
+    assertContentRoot(contentRoots, expectedPath = generatedTestSourceFolder, expectedGeneratedFolders = listOf(generatedTestSourceFolder))
     Assert.assertEquals(4, contentRoots.size)
-    val map = contentRootsHolder2Map(contentRoots)
-    assertContentRoot(map, sourceMain, baseContentRoot)
-    assertContentRoot(map, sourceMain2, sourceMain2)
-    assertContentRoot(map, target, null)
-    assertContentRoot(map, generatedSourceFolder, generatedSourceFolder)
-    assertContentRoot(map, generatedTestSourceFolder, generatedTestSourceFolder)
+  }
+
+  @Test
+  fun `test do not register sources under`() {
+    val contentRoots = ContentRootCollector.collect(
+      "/home",
+      sourceFolders = mapOf("/home/src" to JavaSourceRootType.SOURCE,
+                            "/home/exclude1/src" to JavaSourceRootType.SOURCE),
+      excludeFolders = emptyList(),
+      doNotRegisterSourcesUnder = listOf("/home/exclude1",
+                                         "/home/exclude2",
+                                         "/home/exclude3",
+                                         "/home/exclude4",
+                                         "/home/exclude5",
+                                         "/home/exclude6"),
+      generatedFoldersHolder = GeneratedFoldersHolder("/home/exclude2/annotations",
+                                                      "/home/exclude3/annotations-test",
+                                                      "/home/exclude4/generated",
+                                                      "/home/exclude5/generated-test"
+      ))
+
+    Assert.assertEquals(1, contentRoots.size)
+    assertContentRoot(contentRoots,
+                      expectedPath = "/home",
+                      expectedSourceFolders = listOf("/home/src"),
+                      expectedAnnotationFolders = listOf(),
+                      expectedGeneratedFolders = listOf(),
+                      expectedExcludes = listOf("/home/exclude1",
+                                                "/home/exclude2",
+                                                "/home/exclude3",
+                                                "/home/exclude4",
+                                                "/home/exclude5",
+                                                "/home/exclude6"))
+  }
+
+  @Test
+  fun `test exclude folders`() {
+    val contentRoots = ContentRootCollector.collect(
+      "/home",
+      sourceFolders = mapOf("/home/src" to JavaSourceRootType.SOURCE,
+                            "/home/exclude1/src" to JavaSourceRootType.SOURCE,
+                            "/home/exclude6" to JavaSourceRootType.SOURCE),
+
+      excludeFolders = listOf("/home/exclude1",
+                              "/home/exclude2",
+                              "/home/exclude3",
+                              "/home/exclude4",
+                              "/home/exclude5",
+                              "/home/exclude6",
+                              "/home/exclude7"),
+
+      doNotRegisterSourcesUnder = emptyList(),
+      generatedFoldersHolder = GeneratedFoldersHolder("/home/exclude2/annotations",
+                                                      "/home/exclude3/annotations-test",
+                                                      "/home/exclude4/generated",
+                                                      "/home/exclude5/generated-test"
+      ))
+
+    Assert.assertEquals(1, contentRoots.size)
+    assertContentRoot(contentRoots,
+                      expectedPath = "/home",
+                      expectedSourceFolders = listOf("/home/exclude1/src", "/home/exclude6", "/home/src"),
+                      expectedAnnotationFolders = listOf("/home/exclude2/annotations", "/home/exclude3/annotations-test"),
+                      expectedGeneratedFolders = listOf("/home/exclude4/generated", "/home/exclude5/generated-test"),
+                      expectedExcludes = listOf("/home/exclude1",
+                                                "/home/exclude2",
+                                                "/home/exclude3",
+                                                "/home/exclude4",
+                                                "/home/exclude5",
+                                                "/home/exclude6",
+                                                "/home/exclude7"))
   }
 
   @Test
@@ -85,17 +152,18 @@ class ContentRootCollectorTest : MavenTestCase() {
       baseContentRoot,
       emptyMap(),
       listOf(target),
-      GeneratedFoldersHolder(null, null, null, null),
-      true
+      emptyList(),
+      GeneratedFoldersHolder(null, null, null, null)
     )
 
     Assert.assertEquals(1, contentRoots.size)
-    val map = contentRootsHolder2Map(contentRoots)
-    assertContentRoot(map, target, baseContentRoot)
+    assertContentRoot(contentRoots,
+                      expectedPath = baseContentRoot,
+                      expectedExcludes = listOf(target))
   }
 
   @Test
-  fun `test multiply source and resources content roots and annotation processor sources`() {
+  fun `test multiple source and resources content roots and annotation processor sources`() {
     val baseContentRoot = "/home/a/b/c/maven/src/main"
     val sourceMain = "/home/a/b/c/maven/src/main/java"
     val sourceMain2 = "/home/a/b/c/maven/java2"
@@ -122,47 +190,43 @@ class ContentRootCollectorTest : MavenTestCase() {
         resourceMain2 to JavaResourceRootType.RESOURCE,
         resourceMain to JavaResourceRootType.RESOURCE,
 
-      ),
+        ),
       emptyList(),
-      GeneratedFoldersHolder(annotationProcessorDirectory, annotationProcessorTestDirectory, null, null)
-    )
+      emptyList(),
+      GeneratedFoldersHolder(annotationProcessorDirectory, annotationProcessorTestDirectory, null, null))
+
+    assertContentRoot(contentRoots, expectedPath = baseContentRoot, expectedSourceFolders = listOf(sourceMain, resourceMain))
+    assertContentRoot(contentRoots, expectedPath = sourceMain2, expectedSourceFolders = listOf(sourceMain2))
+    assertContentRoot(contentRoots, expectedPath = sourceMain3, expectedSourceFolders = listOf(sourceMain3))
+    assertContentRoot(contentRoots, expectedPath = sourceMain4, expectedSourceFolders = listOf(sourceMain4))
+
+    assertContentRoot(contentRoots, expectedPath = resourceMain2, expectedSourceFolders = listOf(resourceMain2))
+    assertContentRoot(contentRoots, expectedPath = resourceMain3, expectedSourceFolders = listOf(resourceMain3))
+    assertContentRoot(contentRoots, expectedPath = resourceMain3, expectedSourceFolders = listOf(resourceMain3))
+
+    assertContentRoot(contentRoots, expectedPath = annotationProcessorDirectory,
+                      expectedAnnotationFolders = listOf(annotationProcessorDirectory))
+    assertContentRoot(contentRoots, expectedPath = annotationProcessorTestDirectory,
+                      expectedAnnotationFolders = listOf(annotationProcessorTestDirectory))
 
     Assert.assertEquals(9, contentRoots.size)
-    val map = contentRootsHolder2Map(contentRoots)
-    assertContentRoot(map, sourceMain, baseContentRoot)
-    assertContentRoot(map, sourceMain2, sourceMain2)
-    assertContentRoot(map, sourceMain3, sourceMain3)
-    assertContentRoot(map, sourceMain4, sourceMain4)
-
-    assertContentRoot(map, resourceMain, baseContentRoot)
-    assertContentRoot(map, resourceMain2, resourceMain2)
-    assertContentRoot(map, resourceMain3, resourceMain3)
-    assertContentRoot(map, resourceMain4, resourceMain4)
-
-    assertContentRoot(map, annotationProcessorDirectory, annotationProcessorDirectory)
-    assertContentRoot(map, annotationProcessorTestDirectory, annotationProcessorTestDirectory)
   }
 
-  private fun assertContentRoot(rootMap: Map<String, String>, path: String, root: String?) {
-    Assert.assertEquals(root, rootMap.get(path))
-  }
+  private fun assertContentRoot(roots: Collection<ContentRootDataHolder>,
+                                expectedPath: String,
+                                expectedSourceFolders: List<String> = emptyList(),
+                                expectedAnnotationFolders: List<String> = emptyList(),
+                                expectedGeneratedFolders: List<String> = emptyList(),
+                                expectedExcludes: List<String> = emptyList()) {
+    val actual = roots.find { it.contentRoot == expectedPath }
 
-  private fun contentRootsHolder2Map(dataHolders: Collection<ContentRootDataHolder>): Map<String, String> {
-    val contentRootByPath = mutableMapOf<String, String>()
-    for (each in dataHolders) {
-      for (sourceFolder in each.sourceFolders) {
-        contentRootByPath.put(sourceFolder.path, each.contentRoot)
-      }
-      for (sourceFolder in each.generatedFolders) {
-        contentRootByPath.put(sourceFolder.path, each.contentRoot)
-      }
-      for (sourceFolder in each.annotationProcessorFolders) {
-        contentRootByPath.put(sourceFolder.path, each.contentRoot)
-      }
-      for (path in each.excludedPaths) {
-        contentRootByPath.put(path, each.contentRoot)
-      }
+    if (actual == null) {
+      throw AssertionError("Root $expectedPath not found among:\n\t" + (roots.map { it.contentRoot }).joinToString("\n\t"))
     }
-    return contentRootByPath
+
+    TestCase.assertEquals(expectedSourceFolders, actual.sourceFolders.map { it.path })
+    TestCase.assertEquals(expectedAnnotationFolders, actual.annotationProcessorFolders.map { it.path })
+    TestCase.assertEquals(expectedGeneratedFolders, actual.generatedFolders.map { it.path })
+    TestCase.assertEquals(expectedExcludes, actual.excludedPaths)
   }
 }

@@ -199,10 +199,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertUnorderedPathsAreEqual(actual, Arrays.asList(expectedRoots));
   }
 
-  protected void assertSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
-  }
-
   protected void assertGeneratedSources(String moduleName, String... expectedSources) {
     ContentEntry contentRoot = getContentRoot(moduleName);
     List<ContentFolder> folders = new ArrayList<>();
@@ -216,16 +212,40 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doAssertContentFolders(contentRoot, folders, expectedSources);
   }
 
+  protected void assertSources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
+  }
+
+  protected void assertContentRootSources(String moduleName, String contentRoot, String... expectedSources) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.SOURCE), expectedSources);
+  }
+
   protected void assertResources(String moduleName, String... expectedSources) {
     doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
+  }
+
+  protected void assertContentRootResources(String moduleName, String contentRoot, String... expectedSources) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.RESOURCE), expectedSources);
   }
 
   protected void assertTestSources(String moduleName, String... expectedSources) {
     doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
   }
 
+  protected void assertContentRootTestSources(String moduleName, String contentRoot, String... expectedSources) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.TEST_SOURCE), expectedSources);
+  }
+
   protected void assertTestResources(String moduleName, String... expectedSources) {
     doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, expectedSources);
+  }
+
+  protected void assertContentRootTestResources(String moduleName, String contentRoot, String... expectedSources) {
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.TEST_RESOURCE), expectedSources);
   }
 
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
