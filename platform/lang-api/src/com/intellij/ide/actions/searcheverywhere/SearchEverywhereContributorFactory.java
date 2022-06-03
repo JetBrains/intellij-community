@@ -32,14 +32,4 @@ public interface SearchEverywhereContributorFactory<Item> {
   default boolean isAvailable(Project project) {
     return isAvailable();
   }
-
-  /**
-   * Not used and going to be deleted next releases.
-   * @deprecated to be removed in IDEA 2022.2
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  default SearchEverywhereTabDescriptor getTab() {
-    return SearchEverywhereTabDescriptor.PROJECT;
-  }
 }

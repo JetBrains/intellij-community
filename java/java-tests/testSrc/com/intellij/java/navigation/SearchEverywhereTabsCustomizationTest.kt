@@ -15,12 +15,12 @@ import javax.swing.ListCellRenderer
 
 class SearchEverywhereTabsCustomizationTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private val contributors : Map<SearchEverywhereContributor<*>, SearchEverywhereTabDescriptor?> = mapOf(
-    dumb("c1", true) to null,
-    dumb("c2", true) to null,
-    dumb("c3", true) to null,
-    dumb("c4", false) to null,
-    dumb("c5", false) to null
+  private val contributors : List<SearchEverywhereContributor<*>> = listOf(
+    dumb("c1", true),
+    dumb("c2", true),
+    dumb("c3", true),
+    dumb("c4", false),
+    dumb("c5", false)
   )
 
   private lateinit var ui : SearchEverywhereUI

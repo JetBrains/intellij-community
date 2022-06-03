@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.google.common.collect.Lists;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -15,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IdeUICustomization;
@@ -40,6 +38,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.ContributorFilterCollector;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
@@ -60,9 +59,11 @@ public class SearchEverywhereHeader {
   private boolean myEverywhereAutoSet = true;
 
   public SearchEverywhereHeader(@Nullable Project project,
-                                Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
-                                @NotNull Runnable scopeChangedCallback, Function<? super String, String> shortcutSupplier,
-                                @Nullable AnAction showInFindToolWindowAction, SearchEverywhereUI ui) {
+                                List<SearchEverywhereContributor<?>> contributors,
+                                @NotNull Runnable scopeChangedCallback,
+                                Function<? super String, String> shortcutSupplier,
+                                @Nullable AnAction showInFindToolWindowAction,
+                                SearchEverywhereUI ui) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
     myShortcutSupplier = shortcutSupplier;
@@ -170,69 +171,12 @@ public class SearchEverywhereHeader {
     return newUIHeaderView.panel;
   }
 
-  private List<SETab> createTabs(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
-    if (Registry.is("search.everywhere.group.contributors.by.type")) {
-      return createGroupedTabs(contributors);
-    } else {
-      ArrayList<SearchEverywhereContributor<?>> contributorsList = new ArrayList<>(contributors.keySet());
-      contributorsList.sort(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
-      return createSeparateTabs(contributorsList);
-    }
-  }
-
-  private List<SETab> createGroupedTabs(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
-    List<SearchEverywhereContributor<?>> projectContributors = new ArrayList<>();
-    List<SearchEverywhereContributor<?>> ideContributors = new ArrayList<>();
-    contributors.forEach((contributor, tab) -> {
-      if (tab == SearchEverywhereTabDescriptor.PROJECT) projectContributors.add(contributor);
-      else if (tab == SearchEverywhereTabDescriptor.IDE) ideContributors.add(contributor);
-      else throw new IllegalArgumentException("Unsupported tab - " + tab.getId());
-    });
+  private List<SETab> createTabs(List<? extends SearchEverywhereContributor<?>> contributors) {
     List<SETab> res = new ArrayList<>();
 
-    ElementsChooser.StatisticsCollector<String> filterStatisticsCollector = new ContributorFilterCollector();
-    if (myProject != null && !projectContributors.isEmpty()) {
-      PersistentSearchEverywhereContributorFilter<String> projectContributorsFilter = createContributorsFilter(projectContributors);
-      List<AnAction> projectActions = Arrays.asList(
-        new MyScopeChooserAction(myProject, projectContributors, myScopeChangedCallback),
-        new SearchEverywhereFiltersAction<>(projectContributorsFilter, myScopeChangedCallback, filterStatisticsCollector)
-      );
-      res.add(new SETab(SearchEverywhereTabDescriptor.PROJECT.getId(), IdeBundle.message("searcheverywhere.project.search.tab.name"),
-                        projectContributors, projectActions, projectContributorsFilter));
-    }
-
-    if (!ideContributors.isEmpty()) {
-      PersistentSearchEverywhereContributorFilter<String> ideContributorsFilter = createContributorsFilter(ideContributors);
-      List<AnAction> ideActions = Arrays.asList(
-        new CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")) {
-          private boolean everywhere;
-
-          @Override
-          public boolean isEverywhere() {
-            return everywhere;
-          }
-
-          @Override
-          public void setEverywhere(boolean val) {
-            everywhere = val;
-            ideContributors.stream()
-              .flatMap(contributor -> contributor.getActions(myScopeChangedCallback).stream())
-              .filter(action -> action instanceof SearchEverywhereToggleAction)
-              .forEach(action -> ((SearchEverywhereToggleAction)action).setEverywhere(val));
-            myScopeChangedCallback.run();
-          }
-        },
-        new SearchEverywhereFiltersAction<>(ideContributorsFilter, myScopeChangedCallback, filterStatisticsCollector)
-      );
-      res.add(new SETab(SearchEverywhereTabDescriptor.IDE.getId(), IdeBundle.message("searcheverywhere.ide.search.tab.name"),
-                        ideContributors, ideActions, ideContributorsFilter));
-    }
-
-    return res;
-  }
-
-  private List<SETab> createSeparateTabs(List<? extends SearchEverywhereContributor<?>> contributors) {
-    List<SETab> res = new ArrayList<>();
+    contributors = contributors.stream()
+      .sorted(Comparator.comparingInt(SearchEverywhereContributor::getSortWeight))
+      .collect(Collectors.toList());
 
     if (contributors.size() > 1) {
       Runnable onChanged = () -> {
@@ -436,7 +380,7 @@ public class SearchEverywhereHeader {
     }
 
     private static <T> boolean canClearFilter(@NotNull PersistentSearchEverywhereContributorFilter<T> filter) {
-      return filter.getAllElements().stream().anyMatch(o -> !filter.isSelected(o));
+      return ContainerUtil.exists(filter.getAllElements(), o -> !filter.isSelected(o));
     }
 
     public void clearFilter() {

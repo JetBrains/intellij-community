@@ -73,11 +73,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     return model;
   }
 
-  @Override
-  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
-    return new SearchEverywhereCommandInfo("f", IdeBundle.message("search.everywhere.filter.files.description"), this);
-  }
-
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
