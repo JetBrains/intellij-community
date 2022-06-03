@@ -5,14 +5,12 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class IdeKotlinVersionTest {
     @Test
     fun testReleaseVersion() {
-        fun test(version: String, stableRelease: Boolean = false) = with (IdeKotlinVersion.get(version)) {
+        fun test(version: String, withBuildNumber: Boolean) = with (IdeKotlinVersion.get(version)) {
             assertEquals(version, rawVersion)
             assertEquals(KotlinVersion(1, 5, 10), kotlinVersion)
             assertEquals(IdeKotlinVersion.Kind.Release, kind)
@@ -24,19 +22,19 @@ class IdeKotlinVersionTest {
             assertFalse(isPreRelease)
             assertFalse(isDev)
             assertFalse(isSnapshot)
-            assertTrue(if (stableRelease) isStableRelease else !isStableRelease)
+            if (withBuildNumber) assertNotNull(buildNumber) else assertNull(buildNumber)
         }
 
-        test("1.5.10", stableRelease = true)
-        test("1.5.10-235")
-        test("1.5.10-release")
-        test("1.5.10-release-123")
-        test("1.5.10-Release-1")
+        test("1.5.10", withBuildNumber = false)
+        test("1.5.10-235", withBuildNumber = true)
+        test("1.5.10-release", withBuildNumber = false)
+        test("1.5.10-release-123", withBuildNumber = true)
+        test("1.5.10-Release-1", withBuildNumber = true)
     }
 
     @Test
     fun testReleaseCandidateVersion() {
-        fun test(version: String) = with (IdeKotlinVersion.get(version)) {
+        fun test(version: String, withBuildNumber: Boolean = false) = with (IdeKotlinVersion.get(version)) {
             assertEquals(version, rawVersion)
             assertEquals(KotlinVersion(1, 6, 0), kotlinVersion)
             assertEquals(IdeKotlinVersion.Kind.ReleaseCandidate(1), kind)
@@ -48,12 +46,12 @@ class IdeKotlinVersionTest {
             assertTrue(isPreRelease)
             assertFalse(isDev)
             assertFalse(isSnapshot)
-            assertFalse(isStableRelease)
+            if (withBuildNumber) assertNotNull(buildNumber) else assertNull(buildNumber)
         }
 
         test("1.6.0-RC")
         test("1.6.0-RC-release")
-        test("1.6.0-RC-release-123")
+        test("1.6.0-RC-release-123", withBuildNumber = true)
     }
 
     @Test
@@ -70,7 +68,6 @@ class IdeKotlinVersionTest {
             assertTrue(isPreRelease)
             assertFalse(isDev)
             assertFalse(isSnapshot)
-            assertFalse(isStableRelease)
         }
 
         test("1.6.20-RC2")
@@ -92,7 +89,6 @@ class IdeKotlinVersionTest {
             assertTrue(isPreRelease)
             assertFalse(isDev)
             assertFalse(isSnapshot)
-            assertFalse(isStableRelease)
         }
 
         test("1.5.30-M1", milestone = 1)
@@ -115,7 +111,6 @@ class IdeKotlinVersionTest {
             assertTrue(isPreRelease)
             assertFalse(isDev)
             assertFalse(isSnapshot)
-            assertFalse(isStableRelease)
         }
 
         test("1.5.30-eap", eapNumber = 1)
@@ -138,7 +133,6 @@ class IdeKotlinVersionTest {
             assertTrue(isPreRelease)
             assertFalse(isDev)
             assertFalse(isSnapshot)
-            assertFalse(isStableRelease)
         }
 
         test("1.5.0-Beta1", beta = 1)
@@ -161,7 +155,6 @@ class IdeKotlinVersionTest {
             assertTrue(isPreRelease)
             assertTrue(isDev)
             assertFalse(isSnapshot)
-            assertFalse(isStableRelease)
         }
 
         test("1.6.10-dev", artifactBuildSuffix = "")
@@ -182,7 +175,6 @@ class IdeKotlinVersionTest {
             assertTrue(isPreRelease)
             assertFalse(isDev)
             assertTrue(isSnapshot)
-            assertFalse(isStableRelease)
         }
 
         test("1.0.0-snapshot", artifactBuildSuffix = "")
