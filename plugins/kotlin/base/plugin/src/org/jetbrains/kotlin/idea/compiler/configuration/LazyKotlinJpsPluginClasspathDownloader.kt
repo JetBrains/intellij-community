@@ -28,10 +28,7 @@ class LazyKotlinJpsPluginClasspathDownloader(private val version: String) :
         else newDownloader.isUpToDate() || oldDownloader?.isUpToDate() == true
 
     override fun lazyProduceOutput(input: Unit, computationContext: Context): List<File> {
-        if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) {
-            return KotlinPluginLayout.instance.jpsPluginClasspath
-        }
-        oldDownloader?.getDownloadedIfUpToDateOrEmpty()?.takeIf { it.isNotEmpty() }?.let { return it }
+        getDownloadedIfUpToDateOrEmpty().takeIf { it.isNotEmpty() }?.let { return it }
 
         val downloadContext = DownloadContext(
             computationContext.project,
