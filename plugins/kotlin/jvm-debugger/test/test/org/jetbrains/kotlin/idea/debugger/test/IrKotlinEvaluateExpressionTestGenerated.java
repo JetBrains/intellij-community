@@ -1212,6 +1212,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/kt7046localVarInInline.kt");
             }
 
+            @TestMetadata("ktij21907.kt")
+            public void testKtij21907() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/ktij21907.kt");
+            }
+
             @TestMetadata("lambdaToString.kt")
             public void testLambdaToString() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
