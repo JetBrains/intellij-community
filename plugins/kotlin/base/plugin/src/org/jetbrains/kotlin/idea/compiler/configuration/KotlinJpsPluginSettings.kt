@@ -55,7 +55,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 return
             }
 
-            if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.isStableRelease) {
+            if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.buildNumber == null) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
                 // it's important to trigger `.idea/kotlinc.xml` file creation
                 jpsPluginSettings.setVersion(rawBundledVersion)

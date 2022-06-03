@@ -167,9 +167,6 @@ class IdeKotlinVersion private constructor(
     val isSnapshot: Boolean
         get() = kind == Kind.Snapshot
 
-    val isStableRelease: Boolean
-        get() = isRelease && buildNumber == null && kotlinVersion.toString() == rawVersion
-
     val languageVersionSettings: LanguageVersionSettings
         get() = LanguageVersionSettingsImpl(languageVersion, apiVersion)
 
