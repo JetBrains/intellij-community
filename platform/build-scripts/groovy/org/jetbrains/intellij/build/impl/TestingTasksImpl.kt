@@ -201,9 +201,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     val testDiscovery = "intellij-test-discovery"
     val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
-    if (library == null) {
-      throw RuntimeException("Can\'t find the $testDiscovery library, but test discovery capturing enabled.")
-    }
+                  ?: throw RuntimeException("Can\'t find the $testDiscovery library, but test discovery capturing enabled.")
 
     val agentJar = library.getPaths(JpsOrderRootType.COMPILED)
       .firstOrNull {
@@ -306,15 +304,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
-    val classPathString = StringBuilder()
-    for (s in testClasspath) {
-      classPathString.append(s).append('\n')
-    }
-    if (classPathString.isNotEmpty()) {
-      classPathString.setLength(classPathString.length - 1)
-    }
-    Files.writeString(classpathFile, classPathString)
-    val allSystemProperties = HashMap<String, String>(systemProperties)
+    Files.writeString(classpathFile, testClasspath.joinToString(separator = "\n"))
+    val allSystemProperties = LinkedHashMap<String, String>(systemProperties)
     allSystemProperties.putIfAbsent("classpath.file", classpathFile.toString())
     testPatterns?.let { allSystemProperties.putIfAbsent("intellij.build.test.patterns", it) }
     testGroups?.let { allSystemProperties.putIfAbsent("intellij.build.test.groups", it) }
@@ -323,26 +314,26 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     allSystemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
     prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath.toMutableList(), remoteDebugging)
+    val messages = context.messages
     if (isRunningInBatchMode) {
-      context.messages.info("Running tests from $mainModule matched by \'${options.batchTestIncludes}\' pattern.")
+      messages.info("Running tests from $mainModule matched by \'${options.batchTestIncludes}\' pattern.")
     }
     else {
-      context.messages.info("Starting tests from groups \'$testGroups\' from classpath of module \'$mainModule\'")
+      messages.info("Starting tests from groups \'$testGroups\' from classpath of module \'$mainModule\'")
     }
     val numberOfBuckets = allSystemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]
     if (numberOfBuckets != null) {
-      context.messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]}" +
-                            " of $numberOfBuckets will be executed")
+      messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of $numberOfBuckets will be executed")
     }
     val runtime = runtimeExecutablePath().toString()
-    context.messages.info("Runtime: $runtime")
-    runProcess(listOf(runtime, "-version"), null, context.messages)
-    context.messages.info("Runtime options: $allJvmArgs")
-    context.messages.info("System properties: $allSystemProperties")
-    context.messages.info("Bootstrap classpath: $bootstrapClasspath")
-    context.messages.info("Tests classpath: $testClasspath")
+    messages.info("Runtime: $runtime")
+    runProcess(listOf(runtime, "-version"), null, messages)
+    messages.info("Runtime options: $allJvmArgs")
+    messages.info("System properties: $allSystemProperties")
+    messages.info("Bootstrap classpath: $bootstrapClasspath")
+    messages.info("Tests classpath: $testClasspath")
     if (!envVariables.isEmpty()) {
-      context.messages.info("Environment variables: $envVariables")
+      messages.info("Environment variables: $envVariables")
     }
     runJUnit5Engine(mainModule = mainModule,
                     systemProperties = allSystemProperties,
@@ -360,9 +351,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val runtimeDir: Path
     if (options.customRuntimePath != null) {
       runtimeDir = Path.of(options.customRuntimePath)
-      check(
-        Files.isDirectory(
-          runtimeDir)) { "Custom Jre path from system property '" + TestingOptions.TEST_JRE_PROPERTY + "' is missing: " + runtimeDir }
+      check(Files.isDirectory(runtimeDir)) {
+        "Custom Jre path from system property '${TestingOptions.TEST_JRE_PROPERTY}' is missing: $runtimeDir"
+      }
     }
     else {
       runtimeDir = context.bundledRuntime.getHomeForCurrentOsAndArch()
@@ -381,7 +372,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
       throw IllegalStateException("java executable is missing under $runtimeDir")
     }
-    check(Files.exists(runtimeDir.resolve(binJava))) { "java executable is missing: " + runtimeDir.resolve(binJava) }
+    check(Files.exists(runtimeDir.resolve(binJava))) { "java executable is missing: ${runtimeDir.resolve(binJava)}" }
     return runtimeDir.resolve(binJava)
   }
 
@@ -534,8 +525,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes!!))
     val root = Path.of(mainModuleTestsOutput)
     val testClasses = Files.walk(root).use { stream ->
-         stream.filter { pattern.matcher(root.relativize(it).toString()).matches() }.toList()
-      }
+      stream.filter { pattern.matcher(root.relativize(it).toString()).matches() }.toList()
+    }
 
     if (testClasses.isEmpty()) {
       throw RuntimeException("No tests were found in $root with $pattern")
@@ -544,7 +535,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     var noTestsInAllClasses = true
     for (path in testClasses) {
       val qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replace('/', '.')
-      val files = testClasspath.map { Path.of(it)  }
+      val files = testClasspath.map { Path.of(it) }
       try {
         var noTests = true
         val loader = UrlClassLoader.build().files(files).get()
@@ -619,7 +610,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               methodName: String?): Int {
     val args = ArrayList<String>()
     args.add("-classpath")
-    val classpath: MutableList<String> = ArrayList(bootstrapClasspath)
+    val classpath = ArrayList<String>(bootstrapClasspath)
     for (libName in listOf("JUnit5", "JUnit5Launcher", "JUnit5Vintage", "JUnit5Jupiter")) {
       for (library in context.projectModel.project.libraryCollection.findLibrary(libName)!!.getFiles(JpsOrderRootType.COMPILED)) {
         classpath.add(library.absolutePath)
