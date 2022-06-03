@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 abstract class ProtectedTest {
     fun foo() {
         "".<caret>
