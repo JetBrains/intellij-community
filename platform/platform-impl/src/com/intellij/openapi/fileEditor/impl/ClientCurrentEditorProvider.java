@@ -13,7 +13,7 @@ final class ClientCurrentEditorProvider implements CurrentEditorProvider {
   @Override
   public FileEditor getCurrentEditor() {
     Optional<Editor> focusedEditor = ClientEditorManager.getCurrentInstance().editors()
-      .filter(e -> UIUtil.hasFocus(e.getComponent()))
+      .filter(e -> UIUtil.hasFocus(e.getContentComponent()))
       .findFirst();
     if (focusedEditor.isEmpty()) {
       return null;
