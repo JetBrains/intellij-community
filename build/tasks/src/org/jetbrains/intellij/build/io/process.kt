@@ -194,6 +194,7 @@ fun runProcess(args: List<String>,
         .also { builder -> additionalEnvVariables.entries.forEach { (k, v) -> builder.environment()[k] = v } }
         .let { if (logger == null) it.inheritIO() else it }
         .start()
+      val pid = process.pid()
       val errorReader = logger?.let { readErrorOutput(process, timeout, it) }
       try {
         if (logger != null) {
@@ -202,12 +203,12 @@ fun runProcess(args: List<String>,
 
         if (!process.waitFor(timeout.remainingTime, TimeUnit.MILLISECONDS)) {
           process.destroyForcibly().waitFor()
-          throw ProcessRunTimedOut("Cannot execute $args: $timeout timeout")
+          throw ProcessRunTimedOut("Cannot execute [$pid] $args: $timeout timeout")
         }
 
         val exitCode = process.exitValue()
         if (exitCode != 0) {
-          throw RuntimeException("Cannot execute $args (exitCode=$exitCode)")
+          throw RuntimeException("Cannot execute [$pid] $args (exitCode=$exitCode)")
         }
       }
       finally {
@@ -272,7 +273,7 @@ private fun readOutputAndBlock(process: Process,
           }
         }
       } else {
-        logger.info(it)
+        logger.info("[${process.pid()}] $it")
       }
     }
   }.join()
@@ -280,7 +281,7 @@ private fun readOutputAndBlock(process: Process,
 
 private fun readErrorOutput(process: Process, timeout: Timeout, logger: Logger): CompletableFuture<Void> {
   return runAsync {
-    consume(process.errorStream, process, timeout, logger::warn)
+    consume(process.errorStream, process, timeout)  { logger.warn("[${process.pid()}] $it") }
   }
 }
 
