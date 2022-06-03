@@ -15,8 +15,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.PathUtil
@@ -36,7 +39,7 @@ import kotlin.io.path.div
 
 private const val STATE_FILE = ".state.json"
 
-class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, project: Project) {
+class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest =
     checkNotNull(PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project))
 
@@ -72,6 +75,21 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, project: Project) {
       stateFilePrevTimestamp = FileTime.from(Instant.MIN)
     }
     execution.addParameter(downloadVolume.getTargetDownloadPath())
+
+    val targetWithVfs = sdk.targetEnvConfiguration?.let { PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(it) }
+    if (targetWithVfs != null) {
+      // If sdk is target that supports local VFS, there is no reason to copy editable packages to remote_sources
+      // since their paths should be available locally (to be edited)
+      // Such packages are in user content roots, so we report them to remote_sync script
+      val moduleRoots = project.modules.flatMap { it.rootManager.contentRoots.asList() }.mapNotNull { targetWithVfs.getTargetPathFromVfs(it) }
+      if (moduleRoots.isNotEmpty()) {
+        execution.addParameter("--project-roots")
+        for (root in moduleRoots) {
+          execution.addParameter(root)
+        }
+      }
+    }
+
 
     val targetIndicator = TargetProgressIndicatorAdapter(indicator)
     val environment = targetEnvRequest.prepareEnvironment(targetIndicator)
@@ -116,17 +134,35 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, project: Project) {
       }
       rootZip.deleteExisting()
     }
+
+    if (targetWithVfs != null) {
+      // If target has local VFS, we map locally available roots to VFS instead of copying them to remote_sources
+      // See how ``updateSdkPaths`` is used
+      for (remoteRoot in stateFile.skippedRoots) {
+        val localPath = targetWithVfs.getVfsFromTargetPath(remoteRoot)?.path ?: continue
+        pathMappings.add(PathMappingSettings.PathMapping(localPath, remoteRoot))
+      }
+    }
     (sdk.sdkAdditionalData as? RemoteSdkProperties)?.setPathMappings(pathMappings)
+    val fs = LocalFileSystem.getInstance()
+    // "remote_sources" folder may now contain new packages
+    // since we copied them there not via VFS, we must refresh it, so Intellij knows about them
+    pathMappings.pathMappings.mapNotNull { fs.findFileByPath(it.localRoot) }.forEach { it.refresh(false, true) }
   }
 
   private class StateFile {
     var roots: List<RootInfo> = emptyList()
+
+    @SerializedName("skipped_roots")
+    var skippedRoots: List<String> = emptyList()
   }
 
   private class RootInfo {
     var path: String = ""
+
     @SerializedName("zip_name")
     var zipName: String = ""
+
     @SerializedName("invalid_entries")
     var invalidEntries: List<String> = emptyList()
   }

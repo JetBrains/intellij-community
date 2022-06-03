@@ -394,9 +394,14 @@ private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
 fun Sdk?.isTargetBased(): Boolean = this != null && targetEnvConfiguration != null
 
 /**
+ *  Additional data if sdk is target-based
+ */
+val Sdk.targetAdditionalData get():PyTargetAwareAdditionalData? = sdkAdditionalData as? PyTargetAwareAdditionalData
+
+/**
  * Returns target environment if configuration is target api based
  */
-val Sdk.targetEnvConfiguration get():TargetEnvironmentConfiguration? = (sdkAdditionalData as? PyTargetAwareAdditionalData)?.targetEnvironmentConfiguration
+val Sdk.targetEnvConfiguration get():TargetEnvironmentConfiguration? = targetAdditionalData?.targetEnvironmentConfiguration
 
 /**
  * Where "remote_sources" folder for certain SDK is stored

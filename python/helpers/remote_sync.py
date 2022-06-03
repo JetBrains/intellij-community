@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 import argparse
-import contextlib
 import json
 import os
 import sys
@@ -114,8 +113,8 @@ def open_zip(zip_path, mode):
 
 
 class RemoteSync(object):
-    def __init__(self, roots, output_dir, state_json=None):
-        self.roots = self.sanitize_roots(roots)
+    def __init__(self, roots, output_dir, state_json=None, project_roots=()):
+        self.roots, self.skipped_roots = self.sanitize_roots(roots, project_roots)
         self.output_dir = self.sanitize_output_dir(output_dir)
         self.in_state_json = state_json
         self._name_counts = defaultdict(int)
@@ -129,6 +128,8 @@ class RemoteSync(object):
             new_state = self.collect_sources_in_root(root, zip_path, old_state)
             out_state_json['roots'].append(new_state)
 
+        if self.skipped_roots:
+            out_state_json['skipped_roots'] = self.skipped_roots
         dump_json(out_state_json, os.path.join(self.output_dir, '.state.json'))
 
     def collect_sources_in_root(self, root, zip_path, old_state):
@@ -181,8 +182,9 @@ class RemoteSync(object):
     def sanitize_path(path):
         return os.path.normpath(_decode_path(path))
 
-    def sanitize_roots(self, roots):
+    def sanitize_roots(self, roots, project_roots):
         result = []
+        skipped_roots = []
         for root in roots:
             normalized = self.sanitize_path(root)
             if (not os.path.isdir(normalized) or
@@ -190,8 +192,15 @@ class RemoteSync(object):
                     not path_is_under(normalized, sys.prefix) and
                     not path_is_under(normalized, _helpers_test_root)):
                 continue
+            if any(path_is_under(normalized, p) for p in project_roots) \
+                    and not path_is_under(normalized, sys.prefix):
+                # Root is available locally and not under sys.prefix (hence not .venv)
+                # Must be editable package on the target (for example, WSL or SSH)
+                # Do not copy it, report instead
+                skipped_roots.append(normalized)
+                continue
             result.append(normalized)
-        return result
+        return result, skipped_roots
 
     def sanitize_output_dir(self, output_dir):
         normalized = self.sanitize_path(output_dir)
@@ -279,6 +288,9 @@ def main():
                         help='Directory to collect ZIP archives with sources into.')
     parser.add_argument('--state-file', type=argparse.FileType('rb'),
                         help='State of the last synchronization in JSON.')
+    parser.add_argument('--project-roots', type=ArgparseTypes.path,
+                        nargs='+', default=(),
+                        help='Exclude roots from copying, report them to stdout instead')
     decoded_sys_path = [_decode_path(p) for p in sys.path]
     parser.add_argument('--roots', metavar='PATH_LIST', dest='roots',
                         type=ArgparseTypes.path_list, default=decoded_sys_path,
@@ -299,7 +311,8 @@ def main():
 
     RemoteSync(roots=args.roots,
                output_dir=args.output_dir,
-               state_json=state_json).run()
+               state_json=state_json,
+               project_roots=set(args.project_roots)).run()
 
 
 if __name__ == '__main__':
