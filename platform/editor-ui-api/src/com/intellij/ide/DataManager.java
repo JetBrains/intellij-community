@@ -29,7 +29,7 @@ public abstract class DataManager {
     return ApplicationManager.getApplication().getServiceIfCreated(DataManager.class);
   }
 
-  public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
+  private static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
 
   /**
    * @return {@link DataContext} constructed by the currently focused component
