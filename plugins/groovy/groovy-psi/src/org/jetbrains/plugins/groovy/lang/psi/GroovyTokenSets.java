@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.tree.TokenSet;
@@ -70,7 +70,8 @@ public interface GroovyTokenSets {
     OPERATOR_ASSIGNMENTS
   );
 
-  TokenSet REFERENCE_DOTS = create(T_DOT, T_SAFE_DOT, T_SPREAD_DOT);
+  TokenSet REFERENCE_DOTS = create(T_DOT, T_SAFE_DOT, T_SAFE_CHAIN_DOT, T_SPREAD_DOT);
   TokenSet METHOD_REFERENCE_DOTS = create(T_METHOD_CLOSURE, T_METHOD_REFERENCE);
+  TokenSet SAFE_DOTS = create(T_SAFE_DOT, T_SAFE_CHAIN_DOT);
   TokenSet DOTS = orSet(REFERENCE_DOTS, METHOD_REFERENCE_DOTS);
 }

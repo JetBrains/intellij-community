@@ -6339,12 +6339,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '.' | '?.' | '*.'
+  // '.' | '?.' | '??.' | '*.'
   static boolean reference_dot(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "reference_dot")) return false;
     boolean r;
     r = consumeTokenFast(b, T_DOT);
     if (!r) r = consumeTokenFast(b, T_SAFE_DOT);
+    if (!r) r = consumeTokenFast(b, T_SAFE_CHAIN_DOT);
     if (!r) r = consumeTokenFast(b, T_SPREAD_DOT);
     return r;
   }

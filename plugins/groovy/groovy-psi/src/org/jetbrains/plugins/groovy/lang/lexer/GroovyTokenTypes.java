@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
@@ -127,6 +127,7 @@ public interface GroovyTokenTypes {
   IElementType mTRIPLE_DOT = T_ELLIPSIS;
   IElementType mSPREAD_DOT = T_SPREAD_DOT;
   IElementType mOPTIONAL_DOT = T_SAFE_DOT;
+  IElementType mOPTIONAL_CHAIN_DOT = T_SAFE_CHAIN_DOT;
   IElementType mMEMBER_POINTER = T_METHOD_CLOSURE;
   IElementType mREGEX_FIND = T_REGEX_FIND;
   IElementType mREGEX_MATCH = T_REGEX_MATCH;
