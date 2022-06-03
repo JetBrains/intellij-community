@@ -27,6 +27,7 @@ import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -356,23 +357,27 @@ public abstract class StubIndexEx extends StubIndex {
     UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
 
     try {
-      IntSet result = new IntLinkedOpenHashSet(); // workaround duplicates keys
+      // workaround duplicates keys
+      var action = new ValueContainer.ContainerAction<Void>() {
+        IntSet result = null;
+
+        @Override
+        public boolean perform(int id, Void value) {
+          if (finalIdFilter == null || finalIdFilter.containsFileId(id)) {
+            if (result == null) {
+              result = new IntLinkedOpenHashSet();
+            }
+            result.add(id);
+          }
+          return true;
+        }
+      };
       myAccessValidator.validate(stubUpdatingIndexId, ()-> {
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-        //noinspection Convert2Lambda (workaround for JBR crash, JBR-2349),Convert2Diamond
-        return FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(stubUpdatingIndex.getLock().readLock(), () ->
-          index.getData(dataKey).forEach(new ValueContainer.ContainerAction<>() {
-            @Override
-            public boolean perform(int id, Void value) {
-              if (finalIdFilter == null || finalIdFilter.containsFileId(id)) {
-                result.add(id);
-              }
-              return true;
-            }
-          })
-        ));
+        return FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(
+          stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
       });
-      return result;
+      return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {
       forceRebuild(e);
