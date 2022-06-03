@@ -124,12 +124,22 @@ public final class PropertyAccessor implements MutableAccessor {
   }
 
   @Override
+  public void setChar(@NotNull Object host, char value) {
+    set(host, value);
+  }
+
+  @Override
   public void setBoolean(@NotNull Object host, boolean value) {
     set(host, value);
   }
 
   @Override
   public void setInt(@NotNull Object host, int value) {
+    set(host, value);
+  }
+
+  @Override
+  public void setByte(@NotNull Object host, byte value) {
     set(host, value);
   }
 

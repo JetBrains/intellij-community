@@ -34,6 +34,11 @@ class ObjectSerializerTest {
   }
 
   @Test
+  fun primitives(){
+    test(TestPrimitivesBean())
+  }
+
+  @Test
   fun `int and null string`() {
     test(TestBean())
   }
@@ -266,4 +271,23 @@ private class TestFloatBean {
 private class TestGenericBean<T> {
   @JvmField
   var data: TestGenericBean<T>? = null
+}
+
+private class TestPrimitivesBean {
+  @JvmField
+  val byte: Byte = 1
+  @JvmField
+  val short: Short = 1
+  @JvmField
+  val int: Int = 1
+  @JvmField
+  val long: Long = 1L
+  @JvmField
+  val float: Float = 1.0f
+  @JvmField
+  val double: Double = 1.0
+  @JvmField
+  val boolean: Boolean = true
+  @JvmField
+  val char: Char = 'ǵ'
 }

@@ -10,10 +10,14 @@ import org.jetbrains.annotations.Nullable;
 public interface MutableAccessor extends Accessor {
   void set(@NotNull Object host, @Nullable Object value);
 
+  void setChar(@NotNull Object host, char value);
+
   void setBoolean(@NotNull Object host, boolean value);
 
   void setInt(@NotNull Object host, int value);
 
+  void setByte(@NotNull Object host, byte value);
+  
   void setShort(@NotNull Object host, short value);
 
   void setLong(@NotNull Object host, long value);
