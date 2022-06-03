@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.project
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -13,15 +14,29 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.orDefault
 
-class ModulePlatformCache: Disposable {
+class ModulePlatformCache(private val project: Project): Disposable {
     private val cache: MutableMap<Module, TargetPlatform> = hashMapOf()
 
+    @Volatile
+    private var allModulesSupportJvm: Boolean? = null
+
     override fun dispose() {
+        allModulesSupportJvm = null
         synchronized(cache) {
             cache.clear()
         }
+    }
+
+    fun allModulesSupportJvm(): Boolean = allModulesSupportJvm ?: run {
+        val value = ModuleManager.getInstance(project).modules.all { module ->
+            ProgressManager.checkCanceled()
+            TargetPlatformDetector.getPlatform(module).isJvm()
+        }
+        allModulesSupportJvm = value
+        value
     }
 
     fun getPlatformForModule(module: Module) : TargetPlatform {
@@ -55,12 +70,19 @@ class ModulePlatformCache: Disposable {
         }
     }
 
+    private fun resetAllModulesSupportJvm() {
+        allModulesSupportJvm = null
+    }
+
     internal class ModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
             val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
 
             val platformCache = getInstance(project)
+            // any change of modules could change `allModulesSupportJvm`
+            platformCache.resetAllModulesSupportJvm()
+
             val outdatedModules: List<Module> = changes.asSequence()
                 .mapNotNull {
                     when (it) {

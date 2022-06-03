@@ -9,7 +9,9 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.kotlin.idea.project.ModulePlatformCache
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
+import org.jetbrains.kotlin.idea.project.TargetPlatformDetector.fineGrainedCacheInvalidation
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
@@ -27,13 +29,17 @@ val PsiElement.isJvmElement: Boolean
     }
 
 private fun allModulesSupportJvm(project: Project): Boolean =
-    CachedValuesManager.getManager(project)
-        .getCachedValue(project) {
-            CachedValueProvider.Result.create(
-                ModuleManager.getInstance(project).modules.all { module ->
-                    ProgressManager.checkCanceled()
-                    TargetPlatformDetector.getPlatform(module).isJvm()
-                },
-                ProjectRootModificationTracker.getInstance(project)
-            )
-        }
+    if (fineGrainedCacheInvalidation) {
+        ModulePlatformCache.getInstance(project).allModulesSupportJvm()
+    } else {
+        CachedValuesManager.getManager(project)
+            .getCachedValue(project) {
+                CachedValueProvider.Result.create(
+                    ModuleManager.getInstance(project).modules.all { module ->
+                        ProgressManager.checkCanceled()
+                        TargetPlatformDetector.getPlatform(module).isJvm()
+                    },
+                    ProjectRootModificationTracker.getInstance(project)
+                )
+            }
+    }
