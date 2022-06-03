@@ -2,85 +2,79 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.text.StringUtil
-import groovy.transform.CompileStatic
-import groovy.transform.Immutable
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
+import kotlin.streams.toList
 
-import java.nio.charset.StandardCharsets
-import java.util.stream.Collectors
+class Git(dir: Path) {
+  private val dir: Path
 
-@CompileStatic
-final class Git {
-  private static final long PROCESS_TIMEOUT = 10_000
-
-  private final File dir
-
-  Git(String dir) {
-    this.dir = new File(dir)
+  init {
+    this.dir = dir
   }
 
-  List<String> log(int commitsCount) {
+  fun log(commitsCount: Int): List<String> {
     return execute("git", "log", "-$commitsCount", "--pretty=tformat:%H")
   }
 
-  String formatLatestCommit(String format) {
-    List<String> lines = execute("git", "log", "--pretty=format:" + format, "-n", "1")
+  fun formatLatestCommit(format: String): String {
+    val lines = execute("git", "log", "--pretty=format:" + format, "-n", "1")
     return StringUtil.join(lines, "\n")
   }
 
-  List<String> status() {
-    return execute('git', "status", "--short", "--untracked-files=no", "--ignored=no")
+  fun status(): List<String> {
+    return execute("git", "status", "--short", "--untracked-files=no", "--ignored=no")
   }
 
-  List<String> listFilesUnderVersionControl() {
+  fun listFilesUnderVersionControl(): List<String> {
     return execute("git", "ls-tree", "-r", "HEAD", "--name-only")
   }
 
-  String currentCommitShortHash() {
-    List<String> lines = execute("git", "rev-parse", "--short", "HEAD")
-    if (lines.size() != 1) {
-      throw new IllegalStateException("Single line output is expected but got '$lines'")
+  fun currentCommitShortHash(): String {
+    val lines = execute("git", "rev-parse", "--short", "HEAD")
+    if (lines.size != 1) {
+      throw IllegalStateException("Single line output is expected but got '$lines'")
     }
-    String hash = lines[0].trim()
-    if (hash.length() != 13) {
-      throw new IllegalStateException("Short hash must be exacly 13 chars, but got '$hash'")
+    val hash = lines.first().trim()
+    if (hash.length != 13) {
+      throw IllegalStateException("Short hash must be exactly 13 chars, but got '$hash'")
     }
     return hash
   }
 
-  String lineBreaksConfig() {
-    def lines = maybeExecute("git", "config", "core.autocrlf").output.findAll { !it.isBlank() }
+  fun lineBreaksConfig(): String {
+    val lines = maybeExecute("git", "config", "core.autocrlf").output.filter { !it.isBlank() }
     if (lines.isEmpty()) {
       return ""
     }
-    if (lines.size() != 1) {
-      throw new IllegalStateException("Single line output is expected but got '$lines'")
+    if (lines.size != 1) {
+      throw IllegalStateException("Single line output is expected but got '$lines'")
     }
-    return lines[0]
+    return lines.first()
   }
 
-  private ExecutionResult maybeExecute(String... command) {
-    Process process = new ProcessBuilder(command).directory(dir).start()
-    List<String> output = new BufferedReader(new InputStreamReader(process.inputStream, StandardCharsets.UTF_8)).withCloseable {
-      it.lines().map { it.trim() }.collect(Collectors.toList())
+  private fun maybeExecute(vararg command: String): ExecutionResult {
+    val process = ProcessBuilder(*command).directory(dir.toFile()).start()
+    var output = process.inputStream.bufferedReader().use {
+      it.lines().map { line -> line.trim() }.toList()
     }
-    process.waitForOrKill(PROCESS_TIMEOUT)
+    if (!process.waitFor(1, TimeUnit.MINUTES)) {
+      process.destroyForcibly().waitFor()
+      throw IllegalStateException("Cannot execute $command: 1 minute timeout")
+    }
     if (process.exitValue() != 0) {
-      output = [process.errorStream.text] + output
+      output = listOf(process.errorStream.bufferedReader().use { it.readText() }) + output
     }
-    return new ExecutionResult(exitCode: process.exitValue(), output: output)
+    return ExecutionResult(process.exitValue(), output)
   }
 
-  private List<String> execute(String... command) {
-    ExecutionResult result = maybeExecute(command)
+  private fun execute(vararg command: String): List<String> {
+    val result = maybeExecute(*command)
     if (result.exitCode != 0) {
-      throw new IllegalStateException("git process failed with $result.exitCode:\n${result.output.join('\n')}")
+      throw IllegalStateException("git process failed with $result.exitCode:\n${result.output.joinToString("\n")}")
     }
     return result.output
   }
 
-  @Immutable
-  private class ExecutionResult {
-    int exitCode
-    List<String> output
-  }
+  private data class ExecutionResult(val exitCode: Int, val output: List<String>)
 }

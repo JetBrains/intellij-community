@@ -19,7 +19,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
     private var isAlreadyUpdated = false
   }
 
-  private val git = Git(context.paths.projectHome.toString().trim())
+  private val git = Git(context.paths.projectHome)
 
   /**
    * JPS data structures allowing incremental compilation for {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}
