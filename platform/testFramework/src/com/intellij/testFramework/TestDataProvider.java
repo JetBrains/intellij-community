@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -84,7 +83,7 @@ public class TestDataProvider implements DataProvider, DataContext {
       }
 
       if (myWithRules) {
-        return ((DataManagerImpl)DataManager.getInstance()).getDataSimple(dataId, myDelegateWithoutRules);
+        return DataManager.getInstance().getCustomizedData(dataId, EMPTY_CONTEXT, myDelegateWithoutRules);
       }
       return null;
     }

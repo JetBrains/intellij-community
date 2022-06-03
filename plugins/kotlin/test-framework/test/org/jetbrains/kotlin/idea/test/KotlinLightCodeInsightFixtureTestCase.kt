@@ -12,9 +12,10 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -66,6 +67,7 @@ import org.jetbrains.kotlin.utils.rethrow
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.test.assertEquals
 
 abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCaseBase() {
 
@@ -521,11 +523,10 @@ fun createTextEditorBasedDataContext(
     caret: Caret,
     additionalSteps: SimpleDataContext.Builder.() -> SimpleDataContext.Builder = { this },
 ): DataContext {
-    val textEditorPsiDataProvider = TextEditorPsiDataProvider()
-    val parentContext = DataContext { dataId -> textEditorPsiDataProvider.getData(dataId, editor, caret) }
+    val parentContext = CaretSpecificDataContext.create(EditorUtil.getEditorDataContext(editor), caret)
+    assertEquals(project, parentContext.getData(CommonDataKeys.PROJECT));
+    assertEquals(editor, parentContext.getData(CommonDataKeys.EDITOR));
     return SimpleDataContext.builder()
-        .add(CommonDataKeys.PROJECT, project)
-        .add(CommonDataKeys.EDITOR, editor)
         .additionalSteps()
         .setParent(parentContext)
         .build()

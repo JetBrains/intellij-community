@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.*;
@@ -45,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
+import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
 
 /**
  * @author gregsh
@@ -58,7 +58,6 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static final Collection<PreCachedDataContext> ourInstances = new UnsafeWeakList<>();
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
-  private static final Object ourExplicitNull = ObjectUtils.sentinel("explicit.null");
   private static final Interner<String> ourEDTWarnsInterner = Interner.createStringInterner();
 
   private final ComponentRef myComponentRef;
@@ -168,7 +167,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1))) {
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
         Object o = getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
-        return o == ourExplicitNull ? null : o;
+        return o == EXPLICIT_NULL ? null : o;
       });
       if (answer != null) {
         map.nullsByRules.clear(keyIndex);
@@ -193,19 +192,19 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         }
       });
     }
-    return answer == ourExplicitNull ? null : answer;
+    return answer == EXPLICIT_NULL ? null : answer;
   }
 
   private @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
     int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
-    if (keyIndex == -1) return ourExplicitNull; // newly created data key => no data provider => no value
+    if (keyIndex == -1) return EXPLICIT_NULL; // newly created data key => no data provider => no value
     boolean rulesAllowed = rulesAllowedBase && keyIndex < myDataKeysCount;
 
     Object answer = null;
     for (ProviderData map : myCachedData) {
       ProgressManager.checkCanceled();
       answer = map.get(dataId);
-      if (answer == ourExplicitNull) break;
+      if (answer == EXPLICIT_NULL) break;
       if (answer != null) {
         if (map.valueByRules.get(keyIndex)) {
           if (!ruleValuesAllowed) return null;
@@ -221,7 +220,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, id -> {
         Object o = Objects.equals(id, dataId) ? null : map.get(id);
-        return o == ourExplicitNull ? null : o;
+        return o == EXPLICIT_NULL ? null : o;
       });
 
       if (answer == null) {
@@ -256,7 +255,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     for (ProviderData map : myCachedData) {
       Object answer = map.get(dataId);
       if (answer != null) {
-        return answer == ourExplicitNull ? null : answer;
+        return answer == EXPLICIT_NULL ? null : answer;
       }
     }
     return null;
@@ -322,7 +321,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         continue;
       }
       Object data = hideEditor && (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR || key == InjectedDataKeys.EDITOR) ?
-                    ourExplicitNull : dataManager.getDataFromProviderAndRules(key.getName(), GetDataRuleType.FAST, dataProvider);
+                    EXPLICIT_NULL : dataManager.getDataFromProviderAndRules(key.getName(), GetDataRuleType.FAST, dataProvider);
       if (data == null) continue;
       cachedData.put(key.getName(), data);
     }
