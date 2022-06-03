@@ -115,7 +115,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     inheritedPluginLayouts.removeAll {
       it.mainModule in EXCLUDED_PLUGINS || it.mainModule == "intellij.python.community.plugin"
     }
-    productLayout.pluginLayouts = inheritedPluginLayouts + [
+    productLayout.pluginLayouts = ExtensionsKt.toPersistentList(inheritedPluginLayouts + [
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin([]),
       plugin("intellij.cidr.debugger.plugin") {
@@ -159,7 +159,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         it.withModule("intellij.c.testing", it.mainJarName)
         it.withModule("intellij.cidr.modulemap.language", it.mainJarName)
       },
-    ]
+    ])
   }
 
   @Override
