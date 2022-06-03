@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -62,6 +63,9 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   public List<PsiClass> getClassesByFQName(String name, GlobalSearchScope scope, boolean inSource) {
     List<PsiClass> result = new ArrayList<>();
     GlobalSearchScope actualScope = inSource ? new GrSourceFilterScope(scope) : scope;
+    if (DumbService.getInstance(myProject).isAlternativeResolveEnabled()) {
+      return List.of();
+    }
     result.addAll(StubIndex.getElements(GrFullClassNameIndex.KEY, name, myProject, actualScope, PsiClass.class));
     result.addAll(getScriptClassesByFQName(name, scope, inSource));
     return result;
