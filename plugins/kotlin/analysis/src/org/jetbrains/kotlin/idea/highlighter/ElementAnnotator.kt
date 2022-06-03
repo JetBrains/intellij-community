@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.MultiRangeReference
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
@@ -94,6 +95,8 @@ internal class ElementAnnotator(
         if (isUnstableAbiClassDiagnosticForModulesWithEnabledUnstableAbi(diagnostic)) return null
 
         val factory = diagnostic.factory
+
+        if (suppressDeprecatedAnnotation && factory == Errors.DEPRECATION) return null
 
         assert(diagnostics.all { it.psiElement == element && it.factory == factory })
 
@@ -208,5 +211,7 @@ internal class ElementAnnotator(
 
     companion object {
         val LOG = Logger.getInstance(ElementAnnotator::class.java)
+
+        val suppressDeprecatedAnnotation = Registry.`is`("kotlin.highlighting.suppress.deprecated")
     }
 }
