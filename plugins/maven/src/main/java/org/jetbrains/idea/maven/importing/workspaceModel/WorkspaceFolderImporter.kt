@@ -14,6 +14,8 @@ import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.io.File
 import java.nio.file.Path
@@ -21,19 +23,26 @@ import java.nio.file.Path
 class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
   private val virtualFileUrlManager: VirtualFileUrlManager,
-  private val importingSettings: MavenImportingSettings) {
+  private val importingSettings: MavenImportingSettings,
+  private val importFoldersByMavenIdCache: MutableMap<String, MavenImportFolderHolder>) {
 
-  fun createContentRoots(module: ModuleEntity,
-                         importData: MavenModuleImportData,
-                         excludeIfNoSourceSubFolders: List<String>,
-                         doNotRegisterSourcesUnder: List<String>,
-                         generatedFolders: GeneratedFoldersHolder?) {
+  fun createContentRoots(module: ModuleEntity, importData: MavenModuleImportData): MavenImportFolderHolder {
+    val importFolderHolder = importFoldersByMavenIdCache.getOrPut(importData.mavenProject.mavenId.key) { collectMavenFolders(importData) }
+
     val baseContentRoot = getBaseContentRoot(importData)
     val folderItemMap = getFolderItemMap(importData)
+
+    val generatedFolders = when (importData.moduleData.type) {
+      MavenModuleType.MAIN -> importFolderHolder.generatedFoldersHolder.toMain()
+      MavenModuleType.TEST -> importFolderHolder.generatedFoldersHolder.toTest()
+      MavenModuleType.AGGREGATOR_MAIN_TEST -> null
+      else -> importFolderHolder.generatedFoldersHolder
+    }
+
     val contentRootDataHolders = ContentRootCollector.collect(baseContentRoot,
                                                               folderItemMap,
-                                                              excludeIfNoSourceSubFolders,
-                                                              doNotRegisterSourcesUnder,
+                                                              importFolderHolder.excludedFoldersOfNoSourceSubFolder,
+                                                              importFolderHolder.doNotRegisterSourcesUnder,
                                                               generatedFolders)
 
     for (dataHolder in contentRootDataHolders) {
@@ -53,9 +62,75 @@ class WorkspaceFolderImporter(
       for (folder in dataHolder.annotationProcessorFolders) {
         addGeneratedJavaSourceFolderIfNoRegisteredSourceOnThisPath(folder.path, folder.rootType, contentRootEntity)
       }
-
     }
+
+    return importFolderHolder
   }
+
+  private fun collectMavenFolders(importData: MavenModuleImportData): MavenImportFolderHolder { // extract
+    val mavenProject = importData.mavenProject
+    val outputPath = toAbsolutePath(mavenProject, mavenProject.outputDirectory)
+    val testOutputPath = toAbsolutePath(mavenProject, mavenProject.testOutputDirectory)
+    val targetDirPath = toAbsolutePath(mavenProject, mavenProject.buildDirectory)
+
+    val excludedFoldersOfNoSourceSubFolder = mutableListOf<String>()
+    if (importingSettings.isExcludeTargetFolder) {
+      excludedFoldersOfNoSourceSubFolder.add(targetDirPath)
+    }
+    if (!FileUtil.isAncestor(targetDirPath, outputPath, false)) {
+      excludedFoldersOfNoSourceSubFolder.add(outputPath)
+    }
+    if (!FileUtil.isAncestor(targetDirPath, testOutputPath, false)) {
+      excludedFoldersOfNoSourceSubFolder.add(testOutputPath)
+    }
+
+    val doNotRegisterSourcesUnder = mutableListOf<String>()
+    for (each in importData.mavenProject.suitableImporters) {
+      each.collectExcludedFolders(importData.mavenProject, doNotRegisterSourcesUnder)
+    }
+
+    var annotationProcessorDirectory: String? = null
+    var annotationProcessorTestDirectory: String? = null
+    var generatedSourceFolder: String? = null
+    var generatedTestSourceFolder: String? = null
+    if (importingSettings.generatedSourcesFolder != MavenImportingSettings.GeneratedSourcesFolder.IGNORE) {
+      annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(false)
+      annotationProcessorTestDirectory = mavenProject.getAnnotationProcessorDirectory(true)
+      if (File(annotationProcessorDirectory).list().isNullOrEmpty()) annotationProcessorDirectory = null
+      if (File(annotationProcessorTestDirectory).list().isNullOrEmpty()) annotationProcessorTestDirectory = null
+    }
+
+    val generatedDir = mavenProject.getGeneratedSourcesDirectory(false)
+    val generatedDirTest = mavenProject.getGeneratedSourcesDirectory(true)
+    val targetChildren = File(targetDirPath).listFiles()
+    if (targetChildren != null) {
+      for (f in targetChildren) {
+        if (!f.isDirectory) continue
+        if (FileUtil.pathsEqual(generatedDir, f.path)) {
+          generatedSourceFolder = toAbsolutePath(mavenProject, generatedDir)
+        }
+        else if (FileUtil.pathsEqual(generatedDirTest, f.path)) {
+          generatedTestSourceFolder = toAbsolutePath(mavenProject, generatedDirTest)
+        }
+      }
+    }
+    val generatedFoldersHolder = GeneratedFoldersHolder(annotationProcessorDirectory, annotationProcessorTestDirectory,
+                                                        generatedSourceFolder, generatedTestSourceFolder)
+
+    return MavenImportFolderHolder(outputPath, testOutputPath, targetDirPath, excludedFoldersOfNoSourceSubFolder, doNotRegisterSourcesUnder,
+                                   generatedFoldersHolder)
+  }
+
+  private fun toAbsolutePath(mavenProject: MavenProject, path: String) = MavenUtil.toPath(mavenProject, path).path
+
+  class MavenImportFolderHolder(
+    val outputPath: String,
+    val testOutputPath: String,
+    val targetDirPath: String,
+    val excludedFoldersOfNoSourceSubFolder: List<String>,
+    val doNotRegisterSourcesUnder: List<String>,
+    val generatedFoldersHolder: GeneratedFoldersHolder
+  )
 
   private fun addSourceRootFolder(contentRootEntity: ContentRootEntity,
                                   sourceFolder: SourceFolderData) {

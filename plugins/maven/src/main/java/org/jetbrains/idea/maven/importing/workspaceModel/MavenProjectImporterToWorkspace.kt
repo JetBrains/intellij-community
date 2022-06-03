@@ -94,7 +94,7 @@ class MavenProjectImporterToWorkspace(
                                                     mavenProjectToModuleName).getContext(projectsToImport.keys)
 
     val createdModules = mutableListOf<ImportedModuleData>()
-    val mavenFolderHolderByMavenId = TreeMap<String, WorkspaceModuleImporter.MavenImportFolderHolder>()
+    val mavenFolderHolderByMavenId = TreeMap<String, WorkspaceFolderImporter.MavenImportFolderHolder>()
 
     for (importData in context.allModules) {
       val moduleEntity = WorkspaceModuleImporter(
