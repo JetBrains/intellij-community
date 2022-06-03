@@ -67,6 +67,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.CoroutineContext",
       "kotlin.coroutines.CoroutineContext$Element",
       "kotlin.coroutines.CoroutineContext$Key",
+      "kotlin.Result",
+      "kotlin.Result$Failure",
       // Even though it's internal class, it can leak (and it does) into API surface because it's exposed by public
       // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
       "kotlin.coroutines.intrinsics.CoroutineSingletons",
