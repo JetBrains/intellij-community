@@ -168,7 +168,7 @@ public final class TypeInferenceHelper {
 
   @Nullable
   static List<DefinitionMap> getDefUseMaps(@NotNull GroovyControlFlow flow) {
-    final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow.getFlow());
+    final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance();
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow.getFlow(), dfaInstance, lattice);
     List<@Nullable DefinitionMap> maps = engine.performDFAWithTimeout();
