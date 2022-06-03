@@ -23,14 +23,6 @@ class PlatformLayout: BaseLayout() {
   @JvmField
   val excludedProjectLibraries: MutableSet<String> = HashSet()
 
-  fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName, LibraryPackMode.MERGED))
-  }
-
-  fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName, packMode))
-  }
-
   fun withProjectLibrary(data: ProjectLibraryData) {
     includedProjectLibraries.add(data)
   }

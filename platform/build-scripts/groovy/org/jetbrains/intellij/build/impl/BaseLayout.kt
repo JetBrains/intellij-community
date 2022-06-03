@@ -76,6 +76,27 @@ open class BaseLayout {
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
     moduleExcludes.putValue(moduleName, excludedPattern)
   }
+
+  fun withProjectLibrary(libraryName: String) {
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED))
+  }
+
+  fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode))
+  }
+
+  /**
+   * Include the module library to the plugin distribution. Please note that it makes sense to call this method only
+   * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules
+   * their module libraries are included into the layout automatically.
+   * @param relativeOutputPath target path relative to 'lib' directory
+   */
+  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String) {
+    includedModuleLibraries.add(ModuleLibraryData(
+      moduleName = moduleName,
+      libraryName = libraryName,
+      relativeOutputPath = relativeOutputPath))
+  }
 }
 
 internal fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')

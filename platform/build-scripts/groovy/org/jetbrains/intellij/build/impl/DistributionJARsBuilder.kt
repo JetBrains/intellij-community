@@ -91,8 +91,7 @@ class DistributionJARsBuilder {
     private fun scramble(context: BuildContext) {
       val tool = context.proprietaryBuildTools.scrambleTool
 
-      val actualModuleJars: Map<String, List<String>> = if (tool == null) emptyMap() else
-        mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities"))
+      val actualModuleJars = if (tool == null) emptyMap() else mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities"))
       pack(actualModuleJars = actualModuleJars,
            outputDir = context.paths.buildOutputDir.resolve("internal"),
            context = context)

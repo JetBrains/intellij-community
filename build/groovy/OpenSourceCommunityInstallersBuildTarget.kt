@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 import com.intellij.diagnostic.telemetry.useWithScope
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.buildDistributions
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
 object OpenSourceCommunityInstallersBuildTarget {
   @JvmStatic
@@ -21,7 +19,7 @@ object OpenSourceCommunityInstallersBuildTarget {
     buildDistributions(context)
     spanBuilder("Build standalone JPS").useWithScope {
       val jpsArtifactDir = context.paths.artifactDir.resolve("jps")
-      CommunityStandaloneJpsBuilder(context).processJpsLayout(jpsArtifactDir, context.fullBuildNumber, ProjectStructureMapping(), true)
+      buildCommunityStandaloneJpsBuilder(jpsArtifactDir, context)
     }
   }
 }

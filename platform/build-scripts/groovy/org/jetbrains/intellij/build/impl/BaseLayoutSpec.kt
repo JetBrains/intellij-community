@@ -29,7 +29,7 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
    * @relativeOutputPath path relative to 'lib' plugin directory
    */
   fun withProjectLibrary(libraryName: String) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED))
+    layout.withProjectLibrary(libraryName)
   }
 
   fun withProjectLibrary(libraryName: String, outPath: String) {
@@ -51,10 +51,7 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String) {
-    layout.includedModuleLibraries.add(ModuleLibraryData(
-      moduleName = moduleName,
-      libraryName = libraryName,
-      relativeOutputPath = relativeOutputPath))
+    layout.withModuleLibrary(libraryName = libraryName, moduleName = moduleName, relativeOutputPath = relativeOutputPath)
   }
 
   /**

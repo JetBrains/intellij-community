@@ -95,20 +95,11 @@ class JarPackager private constructor(private val context: BuildContext) {
       return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
     }
 
-    fun pack(actualModuleJars: Map<String, List<String>>, outputDir: Path, context: BuildContext) {
-      pack(actualModuleJars = actualModuleJars,
-           outputDir = outputDir,
-           layout = BaseLayout(),
-           moduleOutputPatcher = ModuleOutputPatcher(),
-           dryRun = false,
-           context = context)
-    }
-
     fun pack(actualModuleJars: Map<String, List<String>>,
              outputDir: Path,
-             layout: BaseLayout,
-             moduleOutputPatcher: ModuleOutputPatcher,
-             dryRun: Boolean,
+             layout: BaseLayout = BaseLayout(),
+             moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
+             dryRun: Boolean = false,
              context: BuildContext): Collection<DistributionFileEntry> {
       val copiedFiles = HashMap<Path, JpsLibrary>()
       val packager = JarPackager(context)
@@ -259,9 +250,14 @@ class JarPackager private constructor(private val context: BuildContext) {
     val searchableOptionsDir = getSearchableOptionsDir(context)
     Span.current().addEvent("include module outputs", Attributes.of(AttributeKey.stringArrayKey("modules"), java.util.List.copyOf(modules)))
     for (moduleName in modules) {
-      addModuleSources(moduleName, moduleNameToSize, context.getModuleOutputDir(context.findRequiredModule(moduleName)),
-                       moduleOutputPatcher.getPatchedDir(moduleName), moduleOutputPatcher.getPatchedContent(moduleName),
-                       searchableOptionsDir, layout.moduleExcludes.get(moduleName), sourceList)
+      addModuleSources(moduleName = moduleName,
+                       moduleNameToSize = moduleNameToSize,
+                       moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(moduleName)),
+                       modulePatches = moduleOutputPatcher.getPatchedDir(moduleName),
+                       modulePatchContents = moduleOutputPatcher.getPatchedContent(moduleName),
+                       searchableOptionsRootDir = searchableOptionsDir,
+                       extraExcludes = layout.moduleExcludes.get(moduleName),
+                       sourceList = sourceList)
     }
     for (libraryName in layout.projectLibrariesToUnpack.get(jarPath)) {
       val library = context.project.libraryCollection.findLibrary(libraryName)
