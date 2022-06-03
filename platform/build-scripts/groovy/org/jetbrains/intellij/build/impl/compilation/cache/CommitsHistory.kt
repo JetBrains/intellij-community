@@ -3,59 +3,47 @@ package org.jetbrains.intellij.build.impl.compilation.cache
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import groovy.transform.CompileStatic
 
-import java.lang.reflect.Type
-
-@CompileStatic
-final class CommitsHistory {
-  public static final String JSON_FILE = 'commit_history.json'
-  private static final Type JSON_TYPE = new TypeToken<Map<String, Set<String>>>() {}.getType()
-  private final Map<String, Set<String>> commitsPerRemote
-
-  CommitsHistory(Map<String, Set<String>> commitsPerRemote) {
-    this.commitsPerRemote = commitsPerRemote
+class CommitsHistory(private val commitsPerRemote: Map<String, Set<String>>) {
+  companion object {
+    const val JSON_FILE = "commit_history.json"
+    private val JSON_TYPE = object : TypeToken<Map<String, Set<String>>>() {}.type
   }
 
-  CommitsHistory(String json) {
-    this(new Gson().fromJson(json, JSON_TYPE) as Map<String, Set<String>>)
+  constructor(json: String) : this(Gson().fromJson(json, JSON_TYPE) as Map<String, Set<String>>)
+
+  fun toJson(): String {
+    return Gson().toJson(commitsPerRemote)
   }
 
-  String toJson() {
-    new Gson().toJson(commitsPerRemote)
+  fun commitsForRemote(remote: String): Collection<String> {
+    return commitsPerRemote[remote] ?: emptyList()
   }
 
-  Collection<String> commitsForRemote(String remote) {
-    commitsPerRemote[remote] ?: []
+  fun plus(other: CommitsHistory): CommitsHistory {
+    return CommitsHistory(union(other.commitsPerRemote))
   }
 
-  CommitsHistory plus(CommitsHistory other) {
-    new CommitsHistory(union(other.commitsPerRemote))
+  fun minus(other: CommitsHistory): CommitsHistory {
+    return CommitsHistory(subtract(other.commitsPerRemote))
   }
 
-  CommitsHistory minus(CommitsHistory other) {
-    new CommitsHistory(subtract(other.commitsPerRemote))
-  }
-
-  private Map<String, Set<String>> union(Map<String, Set<String>> map) {
+  private fun union(map: Map<String, Set<String>>): Map<String, Set<String>> {
     if (map.isEmpty()) return commitsPerRemote
     if (commitsPerRemote.isEmpty()) return map
-    Map<String, Set<String>> union = [:]
-    [commitsPerRemote, map].each {
-      it.forEach { String remote, Set<String> commits ->
-        def commitSet = (union[remote] ?: []) as Set<String>
-        commitSet += commits
-        union[remote] = commitSet
-      }
+    val union = HashMap<String, Set<String>>(commitsPerRemote)
+    map.forEach { (remote, commits) ->
+      union.compute(remote) { _, old -> if (old != null) old + commits else commits }
     }
     return union
   }
 
-  private Map<String, Set<String>> subtract(Map<String, Set<String>> map) {
+  private fun subtract(map: Map<String, Set<String>>): Map<String, Set<String>> {
     if (map.isEmpty()) return commitsPerRemote
     if (commitsPerRemote.isEmpty()) return commitsPerRemote
-    return commitsPerRemote.collectEntries { String remote, Set<String> commits ->
-      [remote, (commits - map[remote] ?: []) as Set<String>]
-    } as Map<String, Set<String>>
+    return commitsPerRemote.mapValues { (remote, commits) ->
+      val remove = map[remote]
+      if (remove != null) (commits - remove) else commits
+    }
   }
 }
