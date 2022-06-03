@@ -535,7 +535,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       .collect(Collectors.toList());
     if (!allowedIteratorPatterns.isEmpty()) {
       providers = ContainerUtil.filter(providers, p -> {
-        return allowedIteratorPatterns.stream().anyMatch(pattern -> p.getDebugName().contains(pattern));
+        return ContainerUtil.exists(allowedIteratorPatterns, pattern -> p.getDebugName().contains(pattern));
       });
     }
     return providers;
@@ -702,7 +702,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Nullable
   public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // avoid rebuilding index in tests since we do it synchronously in requestRebuild and we can have readAction at hand
+      // avoid rebuilding index in tests since we do it synchronously in requestRebuild, and we can have readAction at hand
       return null;
     }
     if (e instanceof ProcessCanceledException) {
@@ -814,14 +814,25 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   public static @NotNull Iterable<VirtualFile> toFileIterable(int @NotNull [] fileIds) {
-    Iterator<VirtualFile> iterator =
-      Arrays.stream(fileIds).mapToObj(id -> VirtualFileManager.getInstance().findFileById(id)).filter(Objects::nonNull).iterator();
+    if (fileIds.length == 0) return Collections.emptyList();
+    return () -> new Iterator<VirtualFile>() {
+      int myId;
+      VirtualFile myNext;
 
-    return new Iterable<>() {
-      @NotNull
       @Override
-      public Iterator<VirtualFile> iterator() {
-        return iterator;
+      public boolean hasNext() {
+        while (myNext == null && myId < fileIds.length) {
+          myNext = VirtualFileManager.getInstance().findFileById(fileIds[myId++]);
+        }
+        return myNext != null;
+      }
+
+      @Override
+      public VirtualFile next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        VirtualFile next = myNext;
+        myNext = null;
+        return next;
       }
     };
   }
