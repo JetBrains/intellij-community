@@ -7,14 +7,11 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
-import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.referrersx
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-
-
 
 
 
@@ -23,7 +20,7 @@ interface SelfLinkedEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: SelfLinkedEntity, ModifiableWorkspaceEntity<SelfLinkedEntity>, ObjBuilder<SelfLinkedEntity> {
       override var parentEntity: SelfLinkedEntity?
       override var entitySource: EntitySource
@@ -48,24 +45,7 @@ var SelfLinkedEntity.Builder.children: @Child List<SelfLinkedEntity>
         return referrersx(SelfLinkedEntity::parentEntity)
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            for (item in value) {
-                if ((item as SelfLinkedEntityImpl.Builder).diff == null) {
-                    item._parentEntity = this
-                    diff.addEntity(item)
-                }
-            }
-            diff.updateOneToManyChildrenOfParent(SelfLinkedEntityImpl.PARENTENTITY_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("SelfLinkedEntity", "parentEntity", true, SelfLinkedEntityImpl.PARENTENTITY_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            for (item in value) {
-                (item as SelfLinkedEntityImpl.Builder)._parentEntity = this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(SelfLinkedEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
@@ -17,7 +18,7 @@ import kotlin.reflect.KProperty1
  */
 
 /**
- * A base interface for entities. A entity may have properties of the following types:
+ * A base interface for entities. An entity may have properties of the following types:
  * * primitive types;
  * * String;
  * * enum;
@@ -89,7 +90,7 @@ import kotlin.reflect.KProperty1
  * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
  * or [modify an existing value][MutableEntityStorage.modifyEntity].
  *
- * Currently the class must inherit from ModifiableWorkspaceEntityBase.
+ * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
  */
 interface ModifiableWorkspaceEntity<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
   override var entitySource: EntitySource
@@ -132,6 +133,10 @@ interface ReferableWorkspaceEntity : WorkspaceEntity {
    * Returns all entities of type [R] which [propertyName] property refers to this entity. Consider using type-safe variant referrers(KProperty1) instead.
    */
   fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R>
+}
+
+interface ModifiableReferableWorkspaceEntity : ReferableWorkspaceEntity  {
+  fun linkExternalEntity(entityClass: KClass<out WorkspaceEntity>, entities: List<WorkspaceEntity?>)
 }
 
 /**

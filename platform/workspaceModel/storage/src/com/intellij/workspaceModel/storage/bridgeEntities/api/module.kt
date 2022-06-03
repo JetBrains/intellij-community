@@ -4,19 +4,15 @@ package com.intellij.workspaceModel.storage.bridgeEntities.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
-import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.referrersx
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-
-
-
 
 
 
@@ -39,7 +35,7 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ModuleEntity, ModifiableWorkspaceEntity<ModuleEntity>, ObjBuilder<ModuleEntity> {
         override var name: String
         override var entitySource: EntitySource
@@ -74,24 +70,7 @@ var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntit
         return referrersx(EclipseProjectPropertiesEntity::module).singleOrNull()
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as EclipseProjectPropertiesEntityImpl.Builder).diff == null) {
-                    value._module = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(EclipseProjectPropertiesEntityImpl.MODULE_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("EclipseProjectPropertiesEntity", "module", true, EclipseProjectPropertiesEntityImpl.MODULE_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as EclipseProjectPropertiesEntityImpl.Builder)._module = this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(EclipseProjectPropertiesEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
@@ -99,24 +78,7 @@ var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
         return referrersx(FacetsOrderEntity::moduleEntity).singleOrNull()
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as FacetsOrderEntityImpl.Builder).diff == null) {
-                    value._moduleEntity = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(FacetsOrderEntityImpl.MODULEENTITY_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("FacetsOrderEntity", "moduleEntity", true, FacetsOrderEntityImpl.MODULEENTITY_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as FacetsOrderEntityImpl.Builder)._moduleEntity = this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetsOrderEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
@@ -130,7 +92,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ModuleCustomImlDataEntity, ModifiableWorkspaceEntity<ModuleCustomImlDataEntity>, ObjBuilder<ModuleCustomImlDataEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
@@ -163,7 +125,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ModuleGroupPathEntity, ModifiableWorkspaceEntity<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
@@ -199,7 +161,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: JavaModuleSettingsEntity, ModifiableWorkspaceEntity<JavaModuleSettingsEntity>, ObjBuilder<JavaModuleSettingsEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource
@@ -243,7 +205,7 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ExternalSystemModuleOptionsEntity, ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity>, ObjBuilder<ExternalSystemModuleOptionsEntity> {
         override var module: ModuleEntity
         override var entitySource: EntitySource

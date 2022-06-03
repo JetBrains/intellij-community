@@ -8,17 +8,24 @@ import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
-@GeneratedCodeApiVersion(0)
-@GeneratedCodeImplVersion(0)
+@GeneratedCodeApiVersion(1)
+@GeneratedCodeImplVersion(1)
 open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
     
+    companion object {
+        
+        
+        val connections = listOf<ConnectionId>(
+        )
+
+    }
         
     @JvmField var _name: String? = null
     override val name: String
@@ -28,6 +35,10 @@ open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
     @JvmField var _anotherField: One? = null
     override val anotherField: One
         get() = _anotherField!!
+    
+    override fun connectionIdList(): List<ConnectionId> {
+        return connections
+    }
 
     class Builder(val result: TestEntityData?): ModifiableWorkspaceEntityBase<TestEntity>(), TestEntity.Builder {
         constructor(): this(TestEntityData())
@@ -48,53 +59,8 @@ open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
-            // Process entities from extension fields
-            val keysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (!key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    for (item in entity) {
-                        if (item is ModifiableWorkspaceEntityBase<*>) {
-                            builder.addEntity(item)
-                        }
-                    }
-                    entity as List<WorkspaceEntity>
-                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
-                    applyRef(key.getConnectionId(), withBuilder_entity)
-                    keysToRemove.add(key)
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyRef(key.getConnectionId(), entity)
-                    keysToRemove.add(key)
-                }
-            }
-            for (key in keysToRemove) {
-                extReferences.remove(key)
-            }
-            
-            // Adding parents and references to the parent
-            val parentKeysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    error("Cannot have parent lists")
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyParentRef(key.getConnectionId(), entity)
-                    parentKeysToRemove.add(key)
-                }
-            }
-            for (key in parentKeysToRemove) {
-                extReferences.remove(key)
-            }
+            // Process linked entities that are connected without a builder
+            processLinkedEntities(builder)
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -109,6 +75,10 @@ open class TestEntityImpl: TestEntity, WorkspaceEntityBase() {
             if (!getEntityData().isAnotherFieldInitialized()) {
                 error("Field TestEntity#anotherField should be initialized")
             }
+        }
+        
+        override fun connectionIdList(): List<ConnectionId> {
+            return connections
         }
     
         
@@ -168,6 +138,7 @@ class TestEntityData : WorkspaceEntityData<TestEntity>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -20,12 +20,17 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-@GeneratedCodeApiVersion(0)
-@GeneratedCodeImplVersion(0)
+@GeneratedCodeApiVersion(1)
+@GeneratedCodeImplVersion(1)
 open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, WorkspaceEntityBase() {
     
     companion object {
         internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryExternalSystemIdEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        
+        val connections = listOf<ConnectionId>(
+            LIBRARY_CONNECTION_ID,
+        )
+
     }
         
     @JvmField var _externalSystemId: String? = null
@@ -34,6 +39,10 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
                         
     override val library: LibraryEntity
         get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
+    
+    override fun connectionIdList(): List<ConnectionId> {
+        return connections
+    }
 
     class Builder(val result: LibraryExternalSystemIdEntityData?): ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>(), LibraryExternalSystemIdEntity.Builder {
         constructor(): this(LibraryExternalSystemIdEntityData())
@@ -54,65 +63,8 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
-            // Process entities from extension fields
-            val keysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (!key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    for (item in entity) {
-                        if (item is ModifiableWorkspaceEntityBase<*>) {
-                            builder.addEntity(item)
-                        }
-                    }
-                    entity as List<WorkspaceEntity>
-                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
-                    applyRef(key.getConnectionId(), withBuilder_entity)
-                    keysToRemove.add(key)
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyRef(key.getConnectionId(), entity)
-                    keysToRemove.add(key)
-                }
-            }
-            for (key in keysToRemove) {
-                extReferences.remove(key)
-            }
-            
-            // Adding parents and references to the parent
-            val __library = _library
-            if (__library != null && (__library is ModifiableWorkspaceEntityBase<*>) && __library.diff == null) {
-                builder.addEntity(__library)
-            }
-            if (__library != null && (__library is ModifiableWorkspaceEntityBase<*>) && __library.diff != null) {
-                // Set field to null (in referenced entity)
-                __library.extReferences.remove(ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID))
-            }
-            if (__library != null) {
-                applyParentRef(LIBRARY_CONNECTION_ID, __library)
-                this._library = null
-            }
-            val parentKeysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    error("Cannot have parent lists")
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyParentRef(key.getConnectionId(), entity)
-                    parentKeysToRemove.add(key)
-                }
-            }
-            for (key in parentKeysToRemove) {
-                extReferences.remove(key)
-            }
+            // Process linked entities that are connected without a builder
+            processLinkedEntities(builder)
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -130,10 +82,14 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
                 }
             }
             else {
-                if (_library == null) {
+                if (this.entityLinks[LIBRARY_CONNECTION_ID] == null) {
                     error("Field LibraryExternalSystemIdEntity#library should be initialized")
                 }
             }
+        }
+        
+        override fun connectionIdList(): List<ConnectionId> {
+            return connections
         }
     
         
@@ -154,23 +110,21 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
                 
             }
             
-        var _library: LibraryEntity? = null
         override var library: LibraryEntity
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: _library!!
+                    _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: this.entityLinks[LIBRARY_CONNECTION_ID]?.entity!! as LibraryEntity
                 } else {
-                    _library!!
+                    this.entityLinks[LIBRARY_CONNECTION_ID]?.entity!! as LibraryEntity
                 }
             }
             set(value) {
                 checkModificationAllowed()
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                    // Back reference for an optional of ext field
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.extReferences[ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID)] = this
+                        value.entityLinks[LIBRARY_CONNECTION_ID] = EntityLink(true, this)
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -179,13 +133,12 @@ open class LibraryExternalSystemIdEntityImpl: LibraryExternalSystemIdEntity, Wor
                     _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
                 }
                 else {
-                    // Back reference for an optional of ext field
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.extReferences[ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LIBRARY_CONNECTION_ID)] = this
+                        value.entityLinks[LIBRARY_CONNECTION_ID] = EntityLink(true, this)
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this._library = value
+                    this.entityLinks[LIBRARY_CONNECTION_ID] = EntityLink(false, value)
                 }
                 changedProperty.add("library")
             }

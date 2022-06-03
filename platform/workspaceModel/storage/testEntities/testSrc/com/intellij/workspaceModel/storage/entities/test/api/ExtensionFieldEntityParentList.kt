@@ -6,14 +6,11 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
-import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.referrersy
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-
-
 
 
 
@@ -24,7 +21,7 @@ interface MainEntityParentList : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: MainEntityParentList, ModifiableWorkspaceEntity<MainEntityParentList>, ObjBuilder<MainEntityParentList> {
       override var x: String
       override var entitySource: EntitySource
@@ -54,7 +51,7 @@ interface AttachedEntityParentList : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: AttachedEntityParentList, ModifiableWorkspaceEntity<AttachedEntityParentList>, ObjBuilder<AttachedEntityParentList> {
       override var data: String
       override var entitySource: EntitySource
@@ -80,24 +77,7 @@ var AttachedEntityParentList.Builder.ref: MainEntityParentList?
         return referrersy(MainEntityParentList::children).singleOrNull()
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as MainEntityParentListImpl.Builder).diff == null) {
-                    value._children = (value._children ?: emptyList()) + this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneParentOfChild(MainEntityParentListImpl.CHILDREN_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("MainEntityParentList", "children", false, MainEntityParentListImpl.CHILDREN_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as MainEntityParentListImpl.Builder)._children = ((value as MainEntityParentListImpl.Builder)._children ?: emptyList()) + this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(MainEntityParentList::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

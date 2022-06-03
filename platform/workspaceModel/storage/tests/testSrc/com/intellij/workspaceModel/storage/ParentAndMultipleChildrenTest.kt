@@ -153,4 +153,38 @@ class ParentAndMultipleChildrenTest {
     assertEquals(2, child.parentEntity.children.size)
     assertEquals(2, parent.children.size)
   }
+
+  @Test
+  fun `add parent and then child 5`() {
+    val parent = ParentMultipleEntity("Parent", MySource) {
+      children = listOf()
+    }
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(parent)
+
+    val child = ChildMultipleEntity("data", MySource) {
+      this.parentEntity = parent
+    }
+
+    assertEquals("Parent", child.parentEntity.children.first().parentEntity.parentData)
+    assertEquals(1, child.parentEntity.children.size)
+    assertEquals(1, parent.children.size)
+  }
+
+  @Test
+  fun `add parent and then child 6`() {
+    val parent = ParentMultipleEntity("Parent", MySource) {
+      children = listOf()
+    }
+    val builder = MutableEntityStorage.create()
+    builder.addEntity(parent)
+
+    val child = ChildMultipleEntity("data", MySource) {
+      this.parentEntity = parent
+    }
+
+    assertEquals("Parent", child.parentEntity.children.first().parentEntity.parentData)
+    assertEquals(1, child.parentEntity.children.size)
+    assertEquals(1, parent.children.size)
+  }
 }

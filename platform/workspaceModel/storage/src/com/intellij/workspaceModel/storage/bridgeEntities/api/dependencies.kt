@@ -4,21 +4,16 @@ package com.intellij.workspaceModel.storage.bridgeEntities.api
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import java.io.Serializable
-import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
-import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.referrersx
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-
-
-
-
 
 
 
@@ -37,7 +32,7 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
         override var name: String
         override var entitySource: EntitySource
@@ -72,24 +67,7 @@ var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity
         return referrersx(LibraryExternalSystemIdEntity::library).singleOrNull()
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as LibraryExternalSystemIdEntityImpl.Builder).diff == null) {
-                    value._library = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(LibraryExternalSystemIdEntityImpl.LIBRARY_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("LibraryExternalSystemIdEntity", "library", true, LibraryExternalSystemIdEntityImpl.LIBRARY_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as LibraryExternalSystemIdEntityImpl.Builder)._library = this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryExternalSystemIdEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
@@ -103,7 +81,7 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: LibraryPropertiesEntity, ModifiableWorkspaceEntity<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
         override var library: LibraryEntity
         override var entitySource: EntitySource
@@ -135,7 +113,7 @@ interface SdkEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: SdkEntity, ModifiableWorkspaceEntity<SdkEntity>, ObjBuilder<SdkEntity> {
         override var library: LibraryEntity
         override var entitySource: EntitySource

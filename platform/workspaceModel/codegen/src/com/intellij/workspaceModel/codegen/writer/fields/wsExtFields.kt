@@ -1,6 +1,6 @@
 package com.intellij.workspaceModel.codegen.fields
 
-import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.fields.javaType
@@ -36,89 +36,7 @@ val ExtField<*, *>.wsCode: String
         line("return ${wsFqn(referrFunction)}(${oppositeField.owner.javaSimpleName}::${oppositeField.javaName})$singleFunction")
       }
       section("set(value)") {
-        line("val diff = (this as ${ModifiableWorkspaceEntityBase::class.fqn}<*>).diff")
-        `if`("diff != null") {
-          when (type) {
-            is TOptional<*> -> {
-              `if`("value != null") {
-                `if`("(value as ${oppositeField.owner.javaImplFqn}.Builder).diff == null") {
-                  if (oppositeList) {
-                    line("value.${oppositeField.implFieldName} = (value.${oppositeField.implFieldName} ?: emptyList()) + this")
-                  }
-                  else {
-                    line("value.${oppositeField.implFieldName} = this")
-                  }
-                  line("diff.addEntity(value)")
-                }
-              }
-            }
-            is TRef<*> -> {
-              `if`("(value as ${oppositeField.owner.javaImplFqn}.Builder).diff == null") {
-                if (oppositeList) {
-                  line("value.${oppositeField.implFieldName} = (value.${oppositeField.implFieldName} ?: emptyList()) + this")
-                }
-                else {
-                  line("value.${oppositeField.implFieldName} = this")
-                }
-                line("diff.addEntity(value)")
-              }
-            }
-            is TList<*> -> {
-              `for`("item in value") {
-                `if`("(item as ${oppositeField.owner.javaImplFqn}.Builder).diff == null") {
-                  if (oppositeList) {
-                    line("item.${oppositeField.implFieldName} = (item.${oppositeField.implFieldName} ?: emptyList()) + this")
-                  }
-                  else {
-                    line("item.${oppositeField.implFieldName} = this")
-                  }
-                  line("diff.addEntity(item)")
-                }
-              }
-            }
-          }
-          line("diff.$updateFunction(${oppositeField.owner.javaImplName}.${oppositeField.refsConnectionId}, this, value)")
-        }
-        `else` {
-          line("val key = ${
-            ExtRefKey::class.fqn
-          }(\"${oppositeField.owner.javaSimpleName}\", \"${oppositeField.javaName}\", ${isChild}, ${oppositeField.owner.javaImplName}.${oppositeField.refsConnectionId})")
-          line("this.extReferences[key] = value")
-          line()
-          when (type) {
-            is TOptional<*> -> {
-              `if`("value != null") {
-                if (oppositeList) {
-                  line(
-                    "(value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = ((value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} ?: emptyList()) + this")
-                }
-                else {
-                  line("(value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = this")
-                }
-              }
-            }
-            is TRef<*> -> {
-              if (oppositeList) {
-                line(
-                  "(value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = ((value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} ?: emptyList()) + this")
-              }
-              else {
-                line("(value as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = this")
-              }
-            }
-            is TList<*> -> {
-              `for`("item in value") {
-                if (oppositeList) {
-                  line(
-                    "(item as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = ((item as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} ?: emptyList()) + this")
-                }
-                else {
-                  line("(item as ${oppositeField.owner.javaImplFqn}.Builder).${oppositeField.implFieldName} = this")
-                }
-              }
-            }
-          }
-        }
+        line("(this as ${ModifiableReferableWorkspaceEntity::class.fqn}).linkExternalEntity(${oppositeField.owner.name}::class, if (value is List<*>) value as List<${WorkspaceEntity::class.fqn}?> else listOf(value) as List<${WorkspaceEntity::class.fqn}?> )")
       }
     }
   }

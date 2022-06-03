@@ -15,7 +15,7 @@ interface UnknownFieldEntity : WorkspaceEntity {
   val data: Date
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: UnknownFieldEntity, ModifiableWorkspaceEntity<UnknownFieldEntity>, ObjBuilder<UnknownFieldEntity> {
       override var data: Date
       override var entitySource: EntitySource

@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -24,12 +24,17 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
 
-@GeneratedCodeApiVersion(0)
-@GeneratedCodeImplVersion(0)
+@GeneratedCodeApiVersion(1)
+@GeneratedCodeImplVersion(1)
 open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
     
     companion object {
         internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSoftLinks::class.java, SoftLinkReferencedChild::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+        
+        val connections = listOf<ConnectionId>(
+            CHILDREN_CONNECTION_ID,
+        )
+
     }
         
     @JvmField var _link: OnePersistentId? = null
@@ -86,6 +91,10 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                         
     override val children: List<SoftLinkReferencedChild>
         get() = snapshot.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList()
+    
+    override fun connectionIdList(): List<ConnectionId> {
+        return connections
+    }
 
     class Builder(val result: EntityWithSoftLinksData?): ModifiableWorkspaceEntityBase<EntityWithSoftLinks>(), EntityWithSoftLinks.Builder {
         constructor(): this(EntityWithSoftLinksData())
@@ -106,62 +115,8 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
-            val __children = _children!!
-            for (item in __children) {
-                if (item is ModifiableWorkspaceEntityBase<*>) {
-                    builder.addEntity(item)
-                }
-            }
-            val (withBuilder_children, woBuilder_children) = __children.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
-            applyRef(CHILDREN_CONNECTION_ID, withBuilder_children)
-            this._children = if (woBuilder_children.isNotEmpty()) woBuilder_children else emptyList()
-            // Process entities from extension fields
-            val keysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (!key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    for (item in entity) {
-                        if (item is ModifiableWorkspaceEntityBase<*>) {
-                            builder.addEntity(item)
-                        }
-                    }
-                    entity as List<WorkspaceEntity>
-                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
-                    applyRef(key.getConnectionId(), withBuilder_entity)
-                    keysToRemove.add(key)
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyRef(key.getConnectionId(), entity)
-                    keysToRemove.add(key)
-                }
-            }
-            for (key in keysToRemove) {
-                extReferences.remove(key)
-            }
-            
-            // Adding parents and references to the parent
-            val parentKeysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    error("Cannot have parent lists")
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyParentRef(key.getConnectionId(), entity)
-                    parentKeysToRemove.add(key)
-                }
-            }
-            for (key in parentKeysToRemove) {
-                extReferences.remove(key)
-            }
+            // Process linked entities that are connected without a builder
+            processLinkedEntities(builder)
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -200,16 +155,21 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
             if (!getEntityData().isDeepSealedClassInitialized()) {
                 error("Field EntityWithSoftLinks#deepSealedClass should be initialized")
             }
+            // Check initialization for list with ref type
             if (_diff != null) {
                 if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
                     error("Field EntityWithSoftLinks#children should be initialized")
                 }
             }
             else {
-                if (_children == null) {
+                if (this.entityLinks[CHILDREN_CONNECTION_ID] == null) {
                     error("Field EntityWithSoftLinks#children should be initialized")
                 }
             }
+        }
+        
+        override fun connectionIdList(): List<ConnectionId> {
+            return connections
         }
     
         
@@ -337,17 +297,20 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                 
             }
             
-        var _children: List<SoftLinkReferencedChild> = emptyList()
+        // List of non-abstract referenced types
+        var _children: List<SoftLinkReferencedChild>? = emptyList()
         override var children: List<SoftLinkReferencedChild>
             get() {
+                // Getter of the list of non-abstract referenced types
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList() + (_children ?: emptyList())
+                    _diff.extractOneToManyChildren<SoftLinkReferencedChild>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[CHILDREN_CONNECTION_ID]?.entity as? List<SoftLinkReferencedChild> ?: emptyList())
                 } else {
-                    _children!!
+                    this.entityLinks[CHILDREN_CONNECTION_ID]?.entity!! as List<SoftLinkReferencedChild>
                 }
             }
             set(value) {
+                // Setter of the list of non-abstract referenced types
                 checkModificationAllowed()
                 val _diff = diff
                 if (_diff != null) {
@@ -360,15 +323,13 @@ open class EntityWithSoftLinksImpl: EntityWithSoftLinks, WorkspaceEntityBase() {
                 }
                 else {
                     for (item_value in value) {
-                        // Back reference for a reference of non-ext field
-                        if (item_value is SoftLinkReferencedChildImpl.Builder) {
-                            item_value._parentEntity = this
+                        if (item_value is ModifiableWorkspaceEntityBase<*>) {
+                            item_value.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(false, this)
                         }
                         // else you're attaching a new entity to an existing entity that is not modifiable
                     }
                     
-                    _children = value
-                    // Test
+                    this.entityLinks[CHILDREN_CONNECTION_ID] = EntityLink(true, value)
                 }
                 changedProperty.add("children")
             }

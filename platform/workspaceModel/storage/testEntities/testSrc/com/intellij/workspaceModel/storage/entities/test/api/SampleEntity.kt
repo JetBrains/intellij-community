@@ -23,7 +23,7 @@ interface SampleEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: SampleEntity, ModifiableWorkspaceEntity<SampleEntity>, ObjBuilder<SampleEntity> {
       override var booleanProperty: Boolean
       override var entitySource: EntitySource
@@ -60,7 +60,7 @@ interface ChildSampleEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: ChildSampleEntity, ModifiableWorkspaceEntity<ChildSampleEntity>, ObjBuilder<ChildSampleEntity> {
       override var data: String
       override var entitySource: EntitySource
@@ -105,7 +105,7 @@ interface SecondSampleEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: SecondSampleEntity, ModifiableWorkspaceEntity<SecondSampleEntity>, ObjBuilder<SecondSampleEntity> {
       override var intProperty: Int
       override var entitySource: EntitySource
@@ -134,7 +134,7 @@ interface SourceEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: SourceEntity, ModifiableWorkspaceEntity<SourceEntity>, ObjBuilder<SourceEntity> {
       override var data: String
       override var entitySource: EntitySource
@@ -164,7 +164,7 @@ interface ChildSourceEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: ChildSourceEntity, ModifiableWorkspaceEntity<ChildSourceEntity>, ObjBuilder<ChildSourceEntity> {
       override var data: String
       override var entitySource: EntitySource
@@ -197,7 +197,7 @@ interface PersistentIdEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: PersistentIdEntity, ModifiableWorkspaceEntity<PersistentIdEntity>, ObjBuilder<PersistentIdEntity> {
       override var data: String
       override var entitySource: EntitySource

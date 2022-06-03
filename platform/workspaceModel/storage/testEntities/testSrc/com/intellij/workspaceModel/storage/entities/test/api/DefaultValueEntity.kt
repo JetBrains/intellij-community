@@ -18,7 +18,7 @@ interface DefaultValueEntity: WorkspaceEntity {
     get() = "Another Text"
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: DefaultValueEntity, ModifiableWorkspaceEntity<DefaultValueEntity>, ObjBuilder<DefaultValueEntity> {
       override var name: String
       override var entitySource: EntitySource

@@ -18,7 +18,7 @@ interface SampleEntity2 : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: SampleEntity2, ModifiableWorkspaceEntity<SampleEntity2>, ObjBuilder<SampleEntity2> {
       override var data: String
       override var entitySource: EntitySource
@@ -52,7 +52,7 @@ interface VFUEntity2 : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: VFUEntity2, ModifiableWorkspaceEntity<VFUEntity2>, ObjBuilder<VFUEntity2> {
       override var data: String
       override var entitySource: EntitySource

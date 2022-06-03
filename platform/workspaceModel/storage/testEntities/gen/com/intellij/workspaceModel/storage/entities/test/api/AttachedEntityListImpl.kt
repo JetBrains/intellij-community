@@ -6,28 +6,33 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
-import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.referrersx
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-@GeneratedCodeApiVersion(0)
-@GeneratedCodeImplVersion(0)
+@GeneratedCodeApiVersion(1)
+@GeneratedCodeImplVersion(1)
 open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
     
     companion object {
         internal val REF_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityList::class.java, AttachedEntityList::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+        
+        val connections = listOf<ConnectionId>(
+            REF_CONNECTION_ID,
+        )
+
     }
         
     override val ref: MainEntityList?
@@ -36,6 +41,10 @@ open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
     @JvmField var _data: String? = null
     override val data: String
         get() = _data!!
+    
+    override fun connectionIdList(): List<ConnectionId> {
+        return connections
+    }
 
     class Builder(val result: AttachedEntityListData?): ModifiableWorkspaceEntityBase<AttachedEntityList>(), AttachedEntityList.Builder {
         constructor(): this(AttachedEntityListData())
@@ -56,67 +65,8 @@ open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
-            // Process entities from extension fields
-            val keysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (!key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    for (item in entity) {
-                        if (item is ModifiableWorkspaceEntityBase<*>) {
-                            builder.addEntity(item)
-                        }
-                    }
-                    entity as List<WorkspaceEntity>
-                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
-                    applyRef(key.getConnectionId(), withBuilder_entity)
-                    keysToRemove.add(key)
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyRef(key.getConnectionId(), entity)
-                    keysToRemove.add(key)
-                }
-            }
-            for (key in keysToRemove) {
-                extReferences.remove(key)
-            }
-            
-            // Adding parents and references to the parent
-            val __ref = _ref
-            if (__ref != null && (__ref is ModifiableWorkspaceEntityBase<*>) && __ref.diff == null) {
-                builder.addEntity(__ref)
-            }
-            if (__ref != null && (__ref is ModifiableWorkspaceEntityBase<*>) && __ref.diff != null) {
-                // Set field to null (in referenced entity)
-                val __mutChild = ((__ref as ModifiableWorkspaceEntityBase<*>).extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] as? List<Any> ?: emptyList()).toMutableList()
-                __mutChild.remove(this)
-                __ref.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] = __mutChild
-            }
-            if (__ref != null) {
-                applyParentRef(REF_CONNECTION_ID, __ref)
-                this._ref = null
-            }
-            val parentKeysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    error("Cannot have parent lists")
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyParentRef(key.getConnectionId(), entity)
-                    parentKeysToRemove.add(key)
-                }
-            }
-            for (key in parentKeysToRemove) {
-                extReferences.remove(key)
-            }
+            // Process linked entities that are connected without a builder
+            processLinkedEntities(builder)
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -129,25 +79,29 @@ open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
                 error("Field AttachedEntityList#data should be initialized")
             }
         }
+        
+        override fun connectionIdList(): List<ConnectionId> {
+            return connections
+        }
     
         
-        var _ref: MainEntityList? = null
         override var ref: MainEntityList?
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToManyParent(REF_CONNECTION_ID, this) ?: _ref
+                    _diff.extractOneToManyParent(REF_CONNECTION_ID, this) ?: this.entityLinks[REF_CONNECTION_ID]?.entity as? MainEntityList
                 } else {
-                    _ref
+                    this.entityLinks[REF_CONNECTION_ID]?.entity as? MainEntityList
                 }
             }
             set(value) {
                 checkModificationAllowed()
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                    // Back reference for the list of ext field
+                    // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] = (value.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        val data = (value.entityLinks[REF_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[REF_CONNECTION_ID] = EntityLink(true, data)
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -156,13 +110,14 @@ open class AttachedEntityListImpl: AttachedEntityList, WorkspaceEntityBase() {
                     _diff.updateOneToManyParentOfChild(REF_CONNECTION_ID, this, value)
                 }
                 else {
-                    // Back reference for the list of ext field
+                    // Setting backref of the list
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] = (value.extReferences[ExtRefKey("AttachedEntityList", "ref", true, REF_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+                        val data = (value.entityLinks[REF_CONNECTION_ID]?.entity as? List<Any> ?: emptyList()) + this
+                        value.entityLinks[REF_CONNECTION_ID] = EntityLink(true, data)
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this._ref = value
+                    this.entityLinks[REF_CONNECTION_ID] = EntityLink(false, value)
                 }
                 changedProperty.add("ref")
             }

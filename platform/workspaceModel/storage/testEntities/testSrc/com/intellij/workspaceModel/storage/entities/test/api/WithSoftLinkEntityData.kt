@@ -46,7 +46,7 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: NamedEntity, ModifiableWorkspaceEntity<NamedEntity>, ObjBuilder<NamedEntity> {
       override var myName: String
       override var entitySource: EntitySource
@@ -99,7 +99,7 @@ interface NamedChildEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: NamedChildEntity, ModifiableWorkspaceEntity<NamedChildEntity>, ObjBuilder<NamedChildEntity> {
       override var childProperty: String
       override var entitySource: EntitySource
@@ -143,7 +143,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: WithSoftLinkEntity, ModifiableWorkspaceEntity<WithSoftLinkEntity>, ObjBuilder<WithSoftLinkEntity> {
       override var link: NameId
       override var entitySource: EntitySource
@@ -177,7 +177,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: ComposedLinkEntity, ModifiableWorkspaceEntity<ComposedLinkEntity>, ObjBuilder<ComposedLinkEntity> {
       override var link: ComposedId
       override var entitySource: EntitySource
@@ -216,7 +216,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: WithListSoftLinksEntity, ModifiableWorkspaceEntity<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
       override var myName: String
       override var entitySource: EntitySource
@@ -262,7 +262,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: ComposedIdSoftRefEntity, ModifiableWorkspaceEntity<ComposedIdSoftRefEntity>, ObjBuilder<ComposedIdSoftRefEntity> {
       override var myName: String
       override var entitySource: EntitySource

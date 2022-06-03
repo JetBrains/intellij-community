@@ -19,7 +19,7 @@ interface BaseEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder<T: BaseEntity>: BaseEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
       override var parentEntity: CompositeBaseEntity?
       override var entitySource: EntitySource
@@ -45,7 +45,7 @@ interface CompositeBaseEntity : BaseEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder<T: CompositeBaseEntity>: CompositeBaseEntity, BaseEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
       override var parentEntity: CompositeBaseEntity?
       override var children: List<BaseEntity>
@@ -71,7 +71,7 @@ interface MiddleEntity : BaseEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: MiddleEntity, BaseEntity.Builder<MiddleEntity>, ModifiableWorkspaceEntity<MiddleEntity>, ObjBuilder<MiddleEntity> {
       override var parentEntity: CompositeBaseEntity?
       override var property: String
@@ -108,7 +108,7 @@ interface LeftEntity : CompositeBaseEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: LeftEntity, CompositeBaseEntity.Builder<LeftEntity>, ModifiableWorkspaceEntity<LeftEntity>, ObjBuilder<LeftEntity> {
         override var parentEntity: CompositeBaseEntity?
         override var children: List<BaseEntity>
@@ -146,7 +146,7 @@ interface RightEntity : CompositeBaseEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: RightEntity, CompositeBaseEntity.Builder<RightEntity>, ModifiableWorkspaceEntity<RightEntity>, ObjBuilder<RightEntity> {
         override var parentEntity: CompositeBaseEntity?
         override var children: List<BaseEntity>

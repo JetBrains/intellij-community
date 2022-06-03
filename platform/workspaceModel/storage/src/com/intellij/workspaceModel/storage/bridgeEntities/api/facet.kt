@@ -1,22 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
-import com.intellij.workspaceModel.storage.referrersx
+import com.intellij.workspaceModel.storage.*
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
-import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
-import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-
-
-
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.referrersx
 
 
 
@@ -35,7 +30,7 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
         override var name: String
         override var entitySource: EntitySource
@@ -68,24 +63,7 @@ var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>
         return referrersx(FacetEntity::underlyingFacet)
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            for (item in value) {
-                if ((item as FacetEntityImpl.Builder).diff == null) {
-                    item._underlyingFacet = this
-                    diff.addEntity(item)
-                }
-            }
-            diff.updateOneToManyChildrenOfParent(FacetEntityImpl.UNDERLYINGFACET_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("FacetEntity", "underlyingFacet", true, FacetEntityImpl.UNDERLYINGFACET_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            for (item in value) {
-                (item as FacetEntityImpl.Builder)._underlyingFacet = this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 var FacetEntity.Builder.facetExternalSystemIdEntity: @Child FacetExternalSystemIdEntity?
@@ -93,24 +71,7 @@ var FacetEntity.Builder.facetExternalSystemIdEntity: @Child FacetExternalSystemI
         return referrersx(FacetExternalSystemIdEntity::facet).singleOrNull()
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as FacetExternalSystemIdEntityImpl.Builder).diff == null) {
-                    value._facet = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(FacetExternalSystemIdEntityImpl.FACET_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("FacetExternalSystemIdEntity", "facet", true, FacetExternalSystemIdEntityImpl.FACET_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as FacetExternalSystemIdEntityImpl.Builder)._facet = this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(FacetExternalSystemIdEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion

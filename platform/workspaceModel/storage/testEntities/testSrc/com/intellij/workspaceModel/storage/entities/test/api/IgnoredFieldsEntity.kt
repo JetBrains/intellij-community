@@ -31,7 +31,7 @@ interface IgnoredFieldsEntity: WorkspaceEntity {
   }
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: IgnoredFieldsEntity, ModifiableWorkspaceEntity<IgnoredFieldsEntity>, ObjBuilder<IgnoredFieldsEntity> {
       override var descriptor: AnotherDataClass
       override var entitySource: EntitySource

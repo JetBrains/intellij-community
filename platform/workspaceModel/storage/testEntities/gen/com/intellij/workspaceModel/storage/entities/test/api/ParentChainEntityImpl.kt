@@ -9,29 +9,36 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneChildOfParent
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.full.memberProperties
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 
-@GeneratedCodeApiVersion(0)
-@GeneratedCodeImplVersion(0)
+@GeneratedCodeApiVersion(1)
+@GeneratedCodeImplVersion(1)
 open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
     
     companion object {
         internal val ROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentChainEntity::class.java, CompositeAbstractEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
+        
+        val connections = listOf<ConnectionId>(
+            ROOT_CONNECTION_ID,
+        )
+
     }
         
     override val root: CompositeAbstractEntity
         get() = snapshot.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this)!!
+    
+    override fun connectionIdList(): List<ConnectionId> {
+        return connections
+    }
 
     class Builder(val result: ParentChainEntityData?): ModifiableWorkspaceEntityBase<ParentChainEntity>(), ParentChainEntity.Builder {
         constructor(): this(ParentChainEntityData())
@@ -52,59 +59,8 @@ open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
             addToBuilder()
             this.id = getEntityData().createEntityId()
             
-            val __root = _root
-            if (__root != null && __root is ModifiableWorkspaceEntityBase<*>) {
-                builder.addEntity(__root)
-                applyRef(ROOT_CONNECTION_ID, __root)
-                this._root = null
-            }
-            // Process entities from extension fields
-            val keysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (!key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    for (item in entity) {
-                        if (item is ModifiableWorkspaceEntityBase<*>) {
-                            builder.addEntity(item)
-                        }
-                    }
-                    entity as List<WorkspaceEntity>
-                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
-                    applyRef(key.getConnectionId(), withBuilder_entity)
-                    keysToRemove.add(key)
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyRef(key.getConnectionId(), entity)
-                    keysToRemove.add(key)
-                }
-            }
-            for (key in keysToRemove) {
-                extReferences.remove(key)
-            }
-            
-            // Adding parents and references to the parent
-            val parentKeysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    error("Cannot have parent lists")
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyParentRef(key.getConnectionId(), entity)
-                    parentKeysToRemove.add(key)
-                }
-            }
-            for (key in parentKeysToRemove) {
-                extReferences.remove(key)
-            }
+            // Process linked entities that are connected without a builder
+            processLinkedEntities(builder)
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -116,7 +72,7 @@ open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
                 }
             }
             else {
-                if (_root == null) {
+                if (this.entityLinks[ROOT_CONNECTION_ID] == null) {
                     error("Field ParentChainEntity#root should be initialized")
                 }
             }
@@ -124,40 +80,41 @@ open class ParentChainEntityImpl: ParentChainEntity, WorkspaceEntityBase() {
                 error("Field ParentChainEntity#entitySource should be initialized")
             }
         }
+        
+        override fun connectionIdList(): List<ConnectionId> {
+            return connections
+        }
     
         
-        var _root: CompositeAbstractEntity? = null
         override var root: CompositeAbstractEntity
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this) ?: _root!!
+                    _diff.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this) ?: this.entityLinks[ROOT_CONNECTION_ID]?.entity!! as CompositeAbstractEntity
                 } else {
-                    _root!!
+                    this.entityLinks[ROOT_CONNECTION_ID]?.entity!! as CompositeAbstractEntity
                 }
             }
             set(value) {
                 checkModificationAllowed()
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                    if (value != null) {
-                        val access = value::class.memberProperties.single { it.name == "_parentEntity" } as KMutableProperty1<*, *>
-                        // x
-                        access.setter.call(value, this)
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.entityLinks[ROOT_CONNECTION_ID] = EntityLink(false, this)
                     }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
                 }
                 if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
                     _diff.updateOneToAbstractOneChildOfParent(ROOT_CONNECTION_ID, this, value)
                 }
                 else {
-                    if (value != null) {
-                        val access = value::class.memberProperties.single { it.name == "_parentEntity" } as KMutableProperty1<*, *>
-                        // x
-                        access.setter.call(value, this)
+                    if (value is ModifiableWorkspaceEntityBase<*>) {
+                        value.entityLinks[ROOT_CONNECTION_ID] = EntityLink(false, this)
                     }
+                    // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this._root = value
+                    this.entityLinks[ROOT_CONNECTION_ID] = EntityLink(true, value)
                 }
                 changedProperty.add("root")
             }

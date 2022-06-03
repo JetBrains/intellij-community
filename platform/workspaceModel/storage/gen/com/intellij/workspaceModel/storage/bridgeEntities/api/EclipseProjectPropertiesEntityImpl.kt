@@ -9,7 +9,7 @@ import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
+import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
@@ -21,12 +21,17 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 
-@GeneratedCodeApiVersion(0)
-@GeneratedCodeImplVersion(0)
+@GeneratedCodeApiVersion(1)
+@GeneratedCodeImplVersion(1)
 open class EclipseProjectPropertiesEntityImpl: EclipseProjectPropertiesEntity, WorkspaceEntityBase() {
     
     companion object {
         internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, EclipseProjectPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+        
+        val connections = listOf<ConnectionId>(
+            MODULE_CONNECTION_ID,
+        )
+
     }
         
     override val module: ModuleEntity
@@ -52,6 +57,10 @@ open class EclipseProjectPropertiesEntityImpl: EclipseProjectPropertiesEntity, W
     @JvmField var _srcPlace: Map<String, Int>? = null
     override val srcPlace: Map<String, Int>
         get() = _srcPlace!!
+    
+    override fun connectionIdList(): List<ConnectionId> {
+        return connections
+    }
 
     class Builder(val result: EclipseProjectPropertiesEntityData?): ModifiableWorkspaceEntityBase<EclipseProjectPropertiesEntity>(), EclipseProjectPropertiesEntity.Builder {
         constructor(): this(EclipseProjectPropertiesEntityData())
@@ -73,65 +82,8 @@ open class EclipseProjectPropertiesEntityImpl: EclipseProjectPropertiesEntity, W
             this.id = getEntityData().createEntityId()
             
             index(this, "eclipseUrls", this.eclipseUrls.toHashSet())
-            // Process entities from extension fields
-            val keysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (!key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    for (item in entity) {
-                        if (item is ModifiableWorkspaceEntityBase<*>) {
-                            builder.addEntity(item)
-                        }
-                    }
-                    entity as List<WorkspaceEntity>
-                    val (withBuilder_entity, woBuilder_entity) = entity.partition { it is ModifiableWorkspaceEntityBase<*> && it.diff != null }
-                    applyRef(key.getConnectionId(), withBuilder_entity)
-                    keysToRemove.add(key)
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyRef(key.getConnectionId(), entity)
-                    keysToRemove.add(key)
-                }
-            }
-            for (key in keysToRemove) {
-                extReferences.remove(key)
-            }
-            
-            // Adding parents and references to the parent
-            val __module = _module
-            if (__module != null && (__module is ModifiableWorkspaceEntityBase<*>) && __module.diff == null) {
-                builder.addEntity(__module)
-            }
-            if (__module != null && (__module is ModifiableWorkspaceEntityBase<*>) && __module.diff != null) {
-                // Set field to null (in referenced entity)
-                __module.extReferences.remove(ExtRefKey("EclipseProjectPropertiesEntity", "module", true, MODULE_CONNECTION_ID))
-            }
-            if (__module != null) {
-                applyParentRef(MODULE_CONNECTION_ID, __module)
-                this._module = null
-            }
-            val parentKeysToRemove = ArrayList<ExtRefKey>()
-            for ((key, entity) in extReferences) {
-                if (key.isChild()) {
-                    continue
-                }
-                if (entity is List<*>) {
-                    error("Cannot have parent lists")
-                }
-                else {
-                    entity as WorkspaceEntity
-                    builder.addEntity(entity)
-                    applyParentRef(key.getConnectionId(), entity)
-                    parentKeysToRemove.add(key)
-                }
-            }
-            for (key in parentKeysToRemove) {
-                extReferences.remove(key)
-            }
+            // Process linked entities that are connected without a builder
+            processLinkedEntities(builder)
             checkInitialization() // TODO uncomment and check failed tests
         }
     
@@ -143,7 +95,7 @@ open class EclipseProjectPropertiesEntityImpl: EclipseProjectPropertiesEntity, W
                 }
             }
             else {
-                if (_module == null) {
+                if (this.entityLinks[MODULE_CONNECTION_ID] == null) {
                     error("Field EclipseProjectPropertiesEntity#module should be initialized")
                 }
             }
@@ -166,25 +118,27 @@ open class EclipseProjectPropertiesEntityImpl: EclipseProjectPropertiesEntity, W
                 error("Field EclipseProjectPropertiesEntity#srcPlace should be initialized")
             }
         }
+        
+        override fun connectionIdList(): List<ConnectionId> {
+            return connections
+        }
     
         
-        var _module: ModuleEntity? = null
         override var module: ModuleEntity
             get() {
                 val _diff = diff
                 return if (_diff != null) {
-                    _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: _module!!
+                    _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[MODULE_CONNECTION_ID]?.entity!! as ModuleEntity
                 } else {
-                    _module!!
+                    this.entityLinks[MODULE_CONNECTION_ID]?.entity!! as ModuleEntity
                 }
             }
             set(value) {
                 checkModificationAllowed()
                 val _diff = diff
                 if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
-                    // Back reference for an optional of ext field
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.extReferences[ExtRefKey("EclipseProjectPropertiesEntity", "module", true, MODULE_CONNECTION_ID)] = this
+                        value.entityLinks[MODULE_CONNECTION_ID] = EntityLink(true, this)
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     _diff.addEntity(value)
@@ -193,13 +147,12 @@ open class EclipseProjectPropertiesEntityImpl: EclipseProjectPropertiesEntity, W
                     _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
                 }
                 else {
-                    // Back reference for an optional of ext field
                     if (value is ModifiableWorkspaceEntityBase<*>) {
-                        value.extReferences[ExtRefKey("EclipseProjectPropertiesEntity", "module", true, MODULE_CONNECTION_ID)] = this
+                        value.entityLinks[MODULE_CONNECTION_ID] = EntityLink(true, this)
                     }
                     // else you're attaching a new entity to an existing entity that is not modifiable
                     
-                    this._module = value
+                    this.entityLinks[MODULE_CONNECTION_ID] = EntityLink(false, value)
                 }
                 changedProperty.add("module")
             }

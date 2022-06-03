@@ -15,7 +15,7 @@ interface BooleanEntity : WorkspaceEntity {
   val data: Boolean
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: BooleanEntity, ModifiableWorkspaceEntity<BooleanEntity>, ObjBuilder<BooleanEntity> {
       override var data: Boolean
       override var entitySource: EntitySource
@@ -42,7 +42,7 @@ interface IntEntity : WorkspaceEntity {
   val data: Int
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: IntEntity, ModifiableWorkspaceEntity<IntEntity>, ObjBuilder<IntEntity> {
       override var data: Int
       override var entitySource: EntitySource
@@ -69,7 +69,7 @@ interface StringEntity : WorkspaceEntity {
   val data: String
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: StringEntity, ModifiableWorkspaceEntity<StringEntity>, ObjBuilder<StringEntity> {
       override var data: String
       override var entitySource: EntitySource
@@ -96,7 +96,7 @@ interface ListEntity : WorkspaceEntity {
   val data: List<String>
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: ListEntity, ModifiableWorkspaceEntity<ListEntity>, ObjBuilder<ListEntity> {
       override var data: List<String>
       override var entitySource: EntitySource
@@ -124,7 +124,7 @@ interface OptionalIntEntity : WorkspaceEntity {
   val data: Int?
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: OptionalIntEntity, ModifiableWorkspaceEntity<OptionalIntEntity>, ObjBuilder<OptionalIntEntity> {
       override var data: Int?
       override var entitySource: EntitySource
@@ -151,7 +151,7 @@ interface OptionalStringEntity : WorkspaceEntity {
   val data: String?
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: OptionalStringEntity, ModifiableWorkspaceEntity<OptionalStringEntity>, ObjBuilder<OptionalStringEntity> {
       override var data: String?
       override var entitySource: EntitySource

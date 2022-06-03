@@ -6,14 +6,11 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
-import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.referrersx
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-
-
 
 
 
@@ -22,7 +19,7 @@ interface MainEntityList : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: MainEntityList, ModifiableWorkspaceEntity<MainEntityList>, ObjBuilder<MainEntityList> {
       override var x: String
       override var entitySource: EntitySource
@@ -47,24 +44,7 @@ var MainEntityList.Builder.child: @Child List<AttachedEntityList>
         return referrersx(AttachedEntityList::ref)
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            for (item in value) {
-                if ((item as AttachedEntityListImpl.Builder).diff == null) {
-                    item._ref = this
-                    diff.addEntity(item)
-                }
-            }
-            diff.updateOneToManyChildrenOfParent(AttachedEntityListImpl.REF_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("AttachedEntityList", "ref", true, AttachedEntityListImpl.REF_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            for (item in value) {
-                (item as AttachedEntityListImpl.Builder)._ref = this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(AttachedEntityList::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
@@ -76,7 +56,7 @@ interface AttachedEntityList : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: AttachedEntityList, ModifiableWorkspaceEntity<AttachedEntityList>, ObjBuilder<AttachedEntityList> {
       override var ref: MainEntityList?
       override var entitySource: EntitySource

@@ -24,7 +24,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: FacetsOrderEntity, ModifiableWorkspaceEntity<FacetsOrderEntity>, ObjBuilder<FacetsOrderEntity> {
       override var orderOfFacets: List<String>
       override var entitySource: EntitySource
@@ -60,7 +60,7 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
 
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: FacetExternalSystemIdEntity, ModifiableWorkspaceEntity<FacetExternalSystemIdEntity>, ObjBuilder<FacetExternalSystemIdEntity> {
       override var externalSystemId: String
       override var entitySource: EntitySource
@@ -95,7 +95,7 @@ interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
   val artifactEntity: ArtifactEntity
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: ArtifactExternalSystemIdEntity, ModifiableWorkspaceEntity<ArtifactExternalSystemIdEntity>, ObjBuilder<ArtifactExternalSystemIdEntity> {
       override var externalSystemId: String
       override var entitySource: EntitySource
@@ -130,7 +130,7 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
   val library: LibraryEntity
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: LibraryExternalSystemIdEntity, ModifiableWorkspaceEntity<LibraryExternalSystemIdEntity>, ObjBuilder<LibraryExternalSystemIdEntity> {
       override var externalSystemId: String
       override var entitySource: EntitySource
@@ -165,7 +165,7 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   val orderOfArtifacts: List<String>
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: ArtifactsOrderEntity, ModifiableWorkspaceEntity<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
       override var orderOfArtifacts: List<String>
       override var entitySource: EntitySource

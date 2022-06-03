@@ -6,9 +6,9 @@ import org.jetbrains.annotations.TestOnly
 
 object CodeGeneratorVersions {
   @set:TestOnly
-  var API_VERSION = 0
+  var API_VERSION = 1
   @set:TestOnly
-  var IMPL_VERSION = 0
+  var IMPL_VERSION = 1
 
   var checkApiInInterface = true
   var checkApiInImpl = true

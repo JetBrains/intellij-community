@@ -8,17 +8,12 @@ import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.workspaceModel.storage.ModifiableReferableWorkspaceEntity
+import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.ExtRefKey
-import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.referrersx
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-
-
-
 
 
 
@@ -38,7 +33,7 @@ interface ArtifactEntity : WorkspaceEntityWithPersistentId {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ArtifactEntity, ModifiableWorkspaceEntity<ArtifactEntity>, ObjBuilder<ArtifactEntity> {
         override var name: String
         override var entitySource: EntitySource
@@ -72,24 +67,7 @@ var ArtifactEntity.Builder.artifactExternalSystemIdEntity: @Child ArtifactExtern
         return referrersx(ArtifactExternalSystemIdEntity::artifactEntity).singleOrNull()
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            if (value != null) {
-                if ((value as ArtifactExternalSystemIdEntityImpl.Builder).diff == null) {
-                    value._artifactEntity = this
-                    diff.addEntity(value)
-                }
-            }
-            diff.updateOneToOneChildOfParent(ArtifactExternalSystemIdEntityImpl.ARTIFACTENTITY_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("ArtifactExternalSystemIdEntity", "artifactEntity", true, ArtifactExternalSystemIdEntityImpl.ARTIFACTENTITY_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            if (value != null) {
-                (value as ArtifactExternalSystemIdEntityImpl.Builder)._artifactEntity = this
-            }
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ArtifactExternalSystemIdEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
@@ -103,7 +81,7 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ArtifactPropertiesEntity, ModifiableWorkspaceEntity<ArtifactPropertiesEntity>, ObjBuilder<ArtifactPropertiesEntity> {
         override var artifact: ArtifactEntity
         override var entitySource: EntitySource
@@ -133,7 +111,7 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity, modifica
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder<T: PackagingElementEntity>: PackagingElementEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentEntity: CompositePackagingElementEntity?
         override var entitySource: EntitySource
@@ -160,7 +138,7 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity, modifica
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder<T: CompositePackagingElementEntity>: CompositePackagingElementEntity, PackagingElementEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?
@@ -187,7 +165,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: DirectoryPackagingElementEntity, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity>, ModifiableWorkspaceEntity<DirectoryPackagingElementEntity>, ObjBuilder<DirectoryPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?
@@ -219,7 +197,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ArchivePackagingElementEntity, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity>, ModifiableWorkspaceEntity<ArchivePackagingElementEntity>, ObjBuilder<ArchivePackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?
@@ -250,7 +228,7 @@ interface ArtifactRootElementEntity: CompositePackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ArtifactRootElementEntity, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity>, ModifiableWorkspaceEntity<ArtifactRootElementEntity>, ObjBuilder<ArtifactRootElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?
@@ -280,7 +258,7 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ArtifactOutputPackagingElementEntity, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity>, ModifiableWorkspaceEntity<ArtifactOutputPackagingElementEntity>, ObjBuilder<ArtifactOutputPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactId?
@@ -306,20 +284,7 @@ var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
         return referrersx(ArtifactEntity::artifactOutputPackagingElement).single()
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            if ((value as ArtifactEntityImpl.Builder).diff == null) {
-                value._artifactOutputPackagingElement = this
-                diff.addEntity(value)
-            }
-            diff.updateOneToOneParentOfChild(ArtifactEntityImpl.ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("ArtifactEntity", "artifactOutputPackagingElement", false, ArtifactEntityImpl.ARTIFACTOUTPUTPACKAGINGELEMENT_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            (value as ArtifactEntityImpl.Builder)._artifactOutputPackagingElement = this
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(ArtifactEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
@@ -333,7 +298,7 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ModuleOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity>, ModifiableWorkspaceEntity<ModuleOutputPackagingElementEntity>, ObjBuilder<ModuleOutputPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var module: ModuleId?
@@ -361,7 +326,7 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: LibraryFilesPackagingElementEntity, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity>, ModifiableWorkspaceEntity<LibraryFilesPackagingElementEntity>, ObjBuilder<LibraryFilesPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var library: LibraryId?
@@ -387,20 +352,7 @@ var LibraryFilesPackagingElementEntity.Builder.libraryEntity: LibraryEntity
         return referrersx(LibraryEntity::libraryFilesPackagingElement).single()
     }
     set(value) {
-        val diff = (this as ModifiableWorkspaceEntityBase<*>).diff
-        if (diff != null) {
-            if ((value as LibraryEntityImpl.Builder).diff == null) {
-                value._libraryFilesPackagingElement = this
-                diff.addEntity(value)
-            }
-            diff.updateOneToOneParentOfChild(LibraryEntityImpl.LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this, value)
-        }
-        else {
-            val key = ExtRefKey("LibraryEntity", "libraryFilesPackagingElement", false, LibraryEntityImpl.LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)
-            this.extReferences[key] = value
-            
-            (value as LibraryEntityImpl.Builder)._libraryFilesPackagingElement = this
-        }
+        (this as ModifiableReferableWorkspaceEntity).linkExternalEntity(LibraryEntity::class, if (value is List<*>) value as List<WorkspaceEntity?> else listOf(value) as List<WorkspaceEntity?> )
     }
 
 //endregion
@@ -414,7 +366,7 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ModuleSourcePackagingElementEntity, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity>, ModifiableWorkspaceEntity<ModuleSourcePackagingElementEntity>, ObjBuilder<ModuleSourcePackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var module: ModuleId?
@@ -443,7 +395,7 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ModuleTestOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity>, ModifiableWorkspaceEntity<ModuleTestOutputPackagingElementEntity>, ObjBuilder<ModuleTestOutputPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var module: ModuleId?
@@ -472,7 +424,7 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEn
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder<T: FileOrDirectoryPackagingElementEntity>: FileOrDirectoryPackagingElementEntity, PackagingElementEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
@@ -498,7 +450,7 @@ interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementE
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: DirectoryCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity>, ModifiableWorkspaceEntity<DirectoryCopyPackagingElementEntity>, ObjBuilder<DirectoryCopyPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
@@ -528,7 +480,7 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: ExtractedDirectoryPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity>, ModifiableWorkspaceEntity<ExtractedDirectoryPackagingElementEntity>, ObjBuilder<ExtractedDirectoryPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
@@ -560,7 +512,7 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: FileCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity>, ModifiableWorkspaceEntity<FileCopyPackagingElementEntity>, ObjBuilder<FileCopyPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var filePath: VirtualFileUrl
@@ -592,7 +544,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 
     //region generated code
     //@formatter:off
-    @GeneratedCodeApiVersion(0)
+    @GeneratedCodeApiVersion(1)
     interface Builder: CustomPackagingElementEntity, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity>, ModifiableWorkspaceEntity<CustomPackagingElementEntity>, ObjBuilder<CustomPackagingElementEntity> {
         override var parentEntity: CompositePackagingElementEntity?
         override var artifact: ArtifactEntity?

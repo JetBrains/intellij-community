@@ -1,8 +1,10 @@
 package com.intellij.workspaceModel.codegen.utils
 
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import org.jetbrains.deft.Obj
 import kotlin.reflect.*
 import kotlin.reflect.jvm.javaMethod
@@ -15,6 +17,7 @@ fun fqn2(function: KFunction3<EntityStorage, ConnectionId, WorkspaceEntity, Sequ
 fun fqn3(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, WorkspaceEntity?, Unit>): String = function.fqn
 fun fqn4(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, List<WorkspaceEntity>, Unit>): String = function.fqn
 fun fqn5(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, Sequence<WorkspaceEntity>, Unit>): String = function.fqn
+fun fqn6(function: KFunction2<ModifiableWorkspaceEntityBase<*>, MutableEntityStorage, Unit>): String = function.fqn
 
 private val KProperty<*>.fqn: String
   get() {

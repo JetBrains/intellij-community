@@ -17,7 +17,7 @@ interface TestEntity: WorkspaceEntity {
   val anotherField: One
   //region generated code
   //@formatter:off
-  @GeneratedCodeApiVersion(0)
+  @GeneratedCodeApiVersion(1)
   interface Builder: TestEntity, ModifiableWorkspaceEntity<TestEntity>, ObjBuilder<TestEntity> {
       override var name: String
       override var entitySource: EntitySource
