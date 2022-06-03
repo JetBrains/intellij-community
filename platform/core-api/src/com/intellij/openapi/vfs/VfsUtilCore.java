@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -27,10 +27,7 @@ import org.jetbrains.annotations.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Various utility methods for working with {@link VirtualFile}.
@@ -702,6 +699,31 @@ public class VfsUtilCore {
     return components;
   }
 
+  /**
+   * This comparator performs root traversal to avoid calling {@link VirtualFile#getPath()} which creates too many string objects
+   */
+  public static int compare(@Nullable VirtualFile v1, @Nullable VirtualFile v2) {
+    if (!Objects.equals(v1, v2)) {
+      if (v1 == null) {
+        return -1;
+      }
+
+      if (v2 == null) {
+        return 1;
+      }
+
+      VirtualFile[] parents1 = getPathComponents(v1);
+      VirtualFile[] parents2 = getPathComponents(v2);
+      for (int i = 0; i < Math.min(parents1.length, parents2.length); i++) {
+        if (!parents1[i].equals(parents2[i])) {
+          return parents1[i].getName().compareTo(parents2[i].getName());
+        }
+      }
+      return v1.getName().compareTo(v2.getName());
+    }
+    return 0;
+  }
+  
   public static boolean hasInvalidFiles(@NotNull Iterable<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {

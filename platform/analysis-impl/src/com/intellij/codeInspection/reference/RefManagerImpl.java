@@ -530,8 +530,9 @@ public class RefManagerImpl extends RefManager {
     ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
-      if (!Objects.equals(v1, v2)) {
-        return (v1==null?"":v1.getPath()).compareTo(v2==null?"":v2.getPath());
+      int v21 = VfsUtilCore.compare(v1, v2);
+      if (v21 != 0) {
+        return v21;
       }
       Segment r1 = ObjectUtils.notNull(o1.getPointer().getRange(), TextRange.EMPTY_RANGE);
       Segment r2 = ObjectUtils.notNull(o2.getPointer().getRange(), TextRange.EMPTY_RANGE);
