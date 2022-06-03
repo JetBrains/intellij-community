@@ -188,9 +188,9 @@ class ModuleStructureValidator(private val context: BuildContext, moduleJars: Mu
 
     for (includeNode in xml.children(includeName)) {
       val ref = includeNode.getAttributeValue("href") ?: continue
-      val descriptorFile = findDescriptorFile(ref, roots + descriptor.parent)
+      val descriptorFile = findDescriptorFile(ref, roots + listOf(descriptor.parent))
       if (descriptorFile == null) {
-        val library1 = findLibraryWithFile(removePrefixStrict(ref, "/"), libraries)
+        val library1 = findLibraryWithFile(ref.removePrefix("/"), libraries)
         if (library1 != null) {
           context.messages.warning("Descriptor '$ref' came from library '${library1.name}', referenced in '${descriptor.name}'")
         }
@@ -326,7 +326,7 @@ private fun removeSuffixStrict(string: String, @Suppress("SameParameterValue") s
 
 private fun findDescriptorFile(name: String, roots: List<Path>): Path? {
   for (root in roots) {
-    val descriptorFile = root.resolve(name)
+    val descriptorFile = root.resolve(name.removePrefix("/"))
     if (Files.isRegularFile(descriptorFile)) {
       return descriptorFile
     }
