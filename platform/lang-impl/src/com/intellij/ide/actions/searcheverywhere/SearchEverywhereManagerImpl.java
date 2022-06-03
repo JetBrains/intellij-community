@@ -78,10 +78,10 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     Project project = initEvent.getProject();
     Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
 
-    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors = createContributors(initEvent, project, contextComponent);
-    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors.keySet());
+    List<SearchEverywhereContributor<?>> contributors = createContributors(initEvent, project, contextComponent);
+    SearchEverywhereContributorValidationRule.updateContributorsMap(contributors);
     mySearchEverywhereUI = createView(myProject, contributors);
-    contributors.keySet().forEach(c -> Disposer.register(mySearchEverywhereUI, c));
+    contributors.forEach(c -> Disposer.register(mySearchEverywhereUI, c));
     mySearchEverywhereUI.switchToTab(tabID);
 
     myHistoryIterator = myHistoryList.getIterator(tabID);
@@ -165,24 +165,21 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     return myProject != null ? WindowStateService.getInstance(myProject) : WindowStateService.getInstance();
   }
 
-  private Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> createContributors(@NotNull AnActionEvent initEvent, Project project, Component contextComponent) {
+  private List<SearchEverywhereContributor<?>> createContributors(@NotNull AnActionEvent initEvent, Project project, Component contextComponent) {
     if (project == null) {
       ActionSearchEverywhereContributor.Factory factory = new ActionSearchEverywhereContributor.Factory();
-      return Collections.singletonMap(factory.createContributor(initEvent), SearchEverywhereTabDescriptor.IDE);
+      return Collections.singletonList(factory.createContributor(initEvent));
     }
 
-    Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> res = new HashMap<>();
-    res.put(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)),
-            SearchEverywhereTabDescriptor.IDE);
-    res.put(PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent)), SearchEverywhereTabDescriptor.PROJECT);
-    res.put(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()),
-            SearchEverywhereTabDescriptor.IDE);
+    List<SearchEverywhereContributor<?>> res = new ArrayList<>();
+    res.add(new TopHitSEContributor(project, contextComponent, s -> mySearchEverywhereUI.getSearchField().setText(s)));
+    res.add(PSIPresentationBgRendererWrapper.wrapIfNecessary(new RecentFilesSEContributor(initEvent)));
+    res.add(new RunConfigurationsSEContributor(project, contextComponent, () -> mySearchEverywhereUI.getSearchField().getText()));
 
     for (SearchEverywhereContributorFactory<?> factory : SearchEverywhereContributor.EP_NAME.getExtensionList()) {
       if (factory.isAvailable(project)) {
         SearchEverywhereContributor<?> contributor = factory.createContributor(initEvent);
-        SearchEverywhereTabDescriptor tab = factory.getTab();
-        res.put(contributor, tab);
+        res.add(contributor);
       }
     }
 
@@ -272,7 +269,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     myEverywhere = everywhere;
   }
 
-  private SearchEverywhereUI createView(Project project, Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
+  private SearchEverywhereUI createView(Project project, List<SearchEverywhereContributor<?>> contributors) {
     if (LightEdit.owns(project)) {
       contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
     }

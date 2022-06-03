@@ -17,9 +17,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.text.JTextComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -108,10 +106,5 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   @Override
   public boolean isShownInSeparateTab() {
     return false;
-  }
-
-  @Override
-  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
-    return null;
   }
 }

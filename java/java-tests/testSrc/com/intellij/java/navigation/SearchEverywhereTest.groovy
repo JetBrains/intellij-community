@@ -27,7 +27,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   SearchEverywhereUI mySearchUI
 
   private SEParam mixingResultsFlag
-  private SEParam twoTabsFlag
 
   void setUp() {
     super.setUp()
@@ -35,10 +34,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     mixingResultsFlag = new SEParam(
             { Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")},
             { Boolean it -> Experiments.getInstance().setFeatureEnabled("search.everywhere.mixed.results", it)}
-    )
-    twoTabsFlag = new SEParam(
-            { Registry.is("search.everywhere.group.contributors.by.type") },
-            { Boolean it -> Registry.get("search.everywhere.group.contributors.by.type").setValue(it) }
     )
   }
 
@@ -50,14 +45,11 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     }
 
     mixingResultsFlag.reset()
-    twoTabsFlag.reset()
 
     super.tearDown()
   }
 
   void "test switch to external files when nothing is found"() {
-    twoTabsFlag.set(false)
-
     def strBuffer = myFixture.addClass("class StrBuffer{ }")
     def stringBuffer = myFixture.findClass("java.lang.StringBuffer")
 
@@ -72,7 +64,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test mixing classes and files"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def testClass = myFixture.addClass("class TestClass{}")
     def anotherTestClass = myFixture.addClass("class AnotherTestClass{}")
@@ -97,7 +88,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test mixing results from stub contributors"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def contributor1 = new StubContributor("contributor1", 1)
     def contributor2 = new StubContributor("contributor2", 2)
@@ -114,7 +104,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test priority for actions with space in pattern"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def action1 = new StubAction("Bravo Charlie")
     def action2 = new StubAction("Alpha Bravo Charlie")
@@ -147,7 +136,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test top hit priority"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def action1 = new StubAction("Bravo Charlie")
     def action2 = new StubAction("Alpha Bravo Charlie")
@@ -181,8 +169,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test abbreviations on top"() {
-    twoTabsFlag.set(false)
-
     def abbreviationManager = AbbreviationManager.getInstance()
     def actionManager = ActionManager.getInstance()
     def ui = createTestUI([GotoActionTest.createActionContributor(project, testRootDisposable)])
@@ -212,7 +198,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test recent files at the top of results"() {
     mixingResultsFlag.set(true)
-    twoTabsFlag.set(false)
 
     def registryValue = Registry.get("search.everywhere.recent.at.top")
     def savedFlag = registryValue.asBoolean()
@@ -248,19 +233,13 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributors) {
-    def map = new HashMap<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor>()
-    contributors.forEach({map.put(it, null)})
-    return createTestUI(map)
-  }
-
-  private SearchEverywhereUI createTestUI(Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributorsMap) {
+  private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributorsList) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)
 
-    mySearchUI = new SearchEverywhereUI(project, contributorsMap)
-    def tab = contributorsMap.size() > 1
+    mySearchUI = new SearchEverywhereUI(project, contributorsList)
+    def tab = contributorsList.size() > 1
       ? SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
-      : contributorsMap.keySet().find().getSearchProviderId()
+      : contributorsList.find().getSearchProviderId()
     mySearchUI.switchToTab(tab)
     return mySearchUI
   }
