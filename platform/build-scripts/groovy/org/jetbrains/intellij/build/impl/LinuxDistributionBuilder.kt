@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.*
 import java.nio.file.attribute.PosixFilePermissions
+import java.util.concurrent.TimeUnit
 
 class LinuxDistributionBuilder(private val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
@@ -281,7 +282,8 @@ class LinuxDistributionBuilder(private val context: BuildContext,
             "snap", "-o", "result/$snapArtifact"
           ),
           workingDir = snapDir,
-          logger = context.messages
+          logger = context.messages,
+          timeoutMillis = TimeUnit.MINUTES.toMillis(context.options.snapDockerBuildTimeoutMin)
         )
         moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
         context.notifyArtifactWasBuilt(context.paths.artifactDir.resolve(snapArtifact))
