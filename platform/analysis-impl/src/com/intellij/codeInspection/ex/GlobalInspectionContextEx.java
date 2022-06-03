@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -117,20 +117,22 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
         }
       }
 
+      List<List<ScopeToolState>> states = new ArrayList<>();
+      for (Tools inspection : inspections) {
+        states.add(inspection.getTools());
+      }
       getRefManager().iterate(new RefVisitor() {
         @Override
         public void visitElement(@NotNull RefEntity refEntity) {
-          int i = 0;
-          for (Tools tools : inspections) {
-            for (ScopeToolState state : tools.getTools()) {
+          for (int i = 0; i < states.size(); i++) {
+            for (ScopeToolState state : states.get(i)) {
               try {
                 InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
-                InspectionToolResultExporter presentation = getPresentation(toolWrapper);
                 BufferedWriter writer = writers[i];
                 if (writer != null &&
                     (myGlobalReportedProblemFilter == null ||
                      myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
-                  presentation.exportResults(e -> {
+                  getPresentation(toolWrapper).exportResults(e -> {
                     try {
                       JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
                       writer.flush();
@@ -140,12 +142,14 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                     }
                   }, refEntity, d -> false);
                 }
+                else {
+                  return;
+                }
               }
               catch (Throwable e) {
                 LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
               }
             }
-            i++;
           }
         }
       });
