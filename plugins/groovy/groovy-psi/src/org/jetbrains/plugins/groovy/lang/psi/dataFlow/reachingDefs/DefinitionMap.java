@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
@@ -20,14 +19,12 @@ import java.util.function.Consumer;
  * @author peter
  */
 public final class DefinitionMap {
-  public static final DefinitionMap NEUTRAL = new DefinitionMap(new Int2ObjectOpenHashMap<>(), null);
+  public static final DefinitionMap NEUTRAL = new DefinitionMap(new Int2ObjectOpenHashMap<>());
 
   private final @NotNull Int2ObjectMap<IntSet> myMap;
-  private final @Nullable FList<DefinitionMap> closureFrames;
 
-  private DefinitionMap(@NotNull Int2ObjectMap<IntSet> map, @Nullable FList<DefinitionMap> closureFrames) {
+  private DefinitionMap(@NotNull Int2ObjectMap<IntSet> map) {
     this.myMap = map;
-    this.closureFrames = closureFrames;
   }
 
   @Contract(pure = true)
@@ -40,21 +37,7 @@ public final class DefinitionMap {
     IntSet defs = new IntArraySet(1);
     newMap.put(varIndex, defs);
     defs.add(instruction.num());
-    return new DefinitionMap(newMap, closureFrames);
-  }
-
-  @Contract(pure = true)
-  @NotNull
-  public DefinitionMap withNewClosureContext(@NotNull DefinitionMap map) {
-    return new DefinitionMap(myMap, (closureFrames != null ? closureFrames : FList.<DefinitionMap>emptyList()).prepend(map));
-  }
-
-  @Contract(pure = true)
-  @NotNull
-  public DefinitionMap withoutClosureContext() {
-    assert closureFrames != null;
-    assert !closureFrames.isEmpty();
-    return new DefinitionMap(myMap, closureFrames.getTail());
+    return new DefinitionMap(newMap);
   }
 
   @Contract(pure = true)
@@ -86,8 +69,7 @@ public final class DefinitionMap {
         newMap.put(varIndex, newDefs);
       }
     }
-    FList<DefinitionMap> actualFrame = closureFrames == null ? other.closureFrames : closureFrames;
-    return new DefinitionMap(newMap, actualFrame);
+    return new DefinitionMap(newMap);
   }
 
   public @Nullable IntSet getDefinitions(int varIndex) {
@@ -103,27 +85,16 @@ public final class DefinitionMap {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     DefinitionMap map = (DefinitionMap)o;
-    return Objects.equals(myMap, map.myMap) && Objects.equals(closureFrames, map.closureFrames);
-  }
-
-  /**
-   * null as a result is an error. It should be caught and fixed
-   */
-  public @Nullable DefinitionMap getTopClosureState() {
-    if (closureFrames == null || closureFrames.getHead() == null) {
-      return null;
-    } else {
-      return closureFrames.getHead();
-    }
+    return Objects.equals(myMap, map.myMap);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMap, System.identityHashCode(closureFrames));
+    return Objects.hash(myMap);
   }
 
   @Override
   public String toString() {
-    return myMap + " | frame: " + (closureFrames == null ? "null" : closureFrames.size());
+    return myMap.toString();
   }
 }
