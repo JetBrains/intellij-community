@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.*
+import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -640,35 +640,12 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     context.messages.info("Starting tests on runtime $runtime")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
-    val exec = builder.start()
-    val errorReader = Thread(createInputReader(exec.errorStream, System.err), "Read forked error output")
-    errorReader.start()
-    val outputReader = Thread(createInputReader(exec.inputStream, System.out), "Read forked output")
-    outputReader.start()
-    val exitCode = exec.waitFor()
-    errorReader.join(360000)
-    outputReader.join(360000)
+    builder.inheritIO()
+    val exitCode = builder.start().waitFor()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
       context.messages.error("Tests failed with exit code $exitCode")
     }
     return exitCode
-  }
-
-  private fun createInputReader(inputStream: InputStream, outputStream: PrintStream): Runnable {
-    return Runnable {
-      try {
-        inputStream.bufferedReader().use { inputReader ->
-          while (true) {
-            outputStream.println(inputReader.readLine() ?: break)
-          }
-        }
-      }
-      catch (ignored: UnsupportedEncodingException) {
-      }
-      catch (e: IOException) {
-        context.messages.error(e.message!!, e)
-      }
-    }
   }
 
   private val isBootstrapSuiteDefault: Boolean
