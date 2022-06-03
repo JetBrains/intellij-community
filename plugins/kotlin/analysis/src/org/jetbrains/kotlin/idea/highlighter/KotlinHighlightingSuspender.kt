@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
  * Do not rethrow exception too often to disable HL for a while
  */
 class KotlinHighlightingSuspender(private val project: Project) {
-    private val timeoutSeconds = Registry.intValue("kotlin.suspended.highlighting.timeout", 10)
+    private val timeoutSeconds = Registry.intValue("kotlin.highlighting.suspended.timeout", 10)
 
     private val lastThrownExceptionTimestampPerFile = mutableMapOf<VirtualFile, Long>()
     private val suspendTimeoutMs = TimeUnit.SECONDS.toMillis(timeoutSeconds.toLong())

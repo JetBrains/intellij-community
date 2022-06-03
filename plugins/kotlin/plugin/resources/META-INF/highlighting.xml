@@ -21,7 +21,7 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingSuspender"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingSuspendNotificationProvider"/>
 
-    <registryKey key="kotlin.suspended.highlighting.timeout"
+    <registryKey key="kotlin.highlighting.suspended.timeout"
                  description="Timeout (in seconds) when highlighting is temporarily turned off in case of unexpected errors."
                  defaultValue="10"
                  restartRequired="true"/>
