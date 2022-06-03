@@ -650,7 +650,10 @@ fun buildDistributions(context: BuildContext) {
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
           distributionJARsBuilder.buildSearchableOptions(context, context.classpathCustomizer)
-          distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)!!.fork().join()
+          distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish = pluginsToPublish,
+                                                                   compressPluginArchive = true,
+                                                                   buildPlatformLibTask = null,
+                                                                   context = context)?.fork()?.join()
         }
       }
 
