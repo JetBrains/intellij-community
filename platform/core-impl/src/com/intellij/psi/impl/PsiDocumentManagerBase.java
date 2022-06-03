@@ -832,6 +832,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public @NotNull Document @NotNull [] getUncommittedDocuments() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (myUncommittedDocuments.isEmpty()) {
+      // myUncommittedDocuments is ConcurrentRefHashMap, so default toArray iterates it twice, even if collection is empty
+      // (which is a common case during batch code analysis)
+      return Document.EMPTY_ARRAY;
+    }
     Document[] documents = myUncommittedDocuments.toArray(Document.EMPTY_ARRAY);
     return ArrayUtil.stripTrailingNulls(documents);
   }
