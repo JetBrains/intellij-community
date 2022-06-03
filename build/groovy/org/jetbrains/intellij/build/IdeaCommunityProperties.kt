@@ -23,11 +23,11 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
     productLayout.bundledPluginModules.addAll(BUNDLED_PLUGIN_MODULES)
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
-    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + listOf(
+    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin(emptyMap()),
       CommunityRepositoryModules.groovyPlugin(emptyList())
-    )
+    ))
 
     productLayout.addPlatformCustomizer { layout, _ ->
       layout.withModule("intellij.platform.duplicates.analysis")

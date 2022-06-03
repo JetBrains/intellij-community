@@ -4,6 +4,8 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 
 enum class OsFamily(
   /** ID of OS used in system properties for [BuildOptions]  */
@@ -25,7 +27,8 @@ enum class OsFamily(
 
   companion object {
     @JvmField
-    val ALL: List<OsFamily> = java.util.List.of(*values())
+    val ALL: PersistentList<OsFamily> = persistentListOf(*values())
+
     @JvmField
     val currentOs: OsFamily = when {
       SystemInfoRt.isWindows -> WINDOWS
@@ -33,6 +36,5 @@ enum class OsFamily(
       SystemInfoRt.isLinux -> LINUX
       else -> throw IllegalStateException("Unknown OS")
     }
-
   }
 }

@@ -5,6 +5,8 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.containers.MultiMap
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
@@ -73,7 +75,22 @@ class ProductModulesLayout {
    * For trivial plugins, i.e. for plugins which include an output of a single module and its module libraries, it's enough to use
    * [org.jetbrains.intellij.build.impl.PluginLayout.Companion.simplePlugin] as layout.
    */
-  var pluginLayouts: List<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+  var pluginLayouts: PersistentList<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+    set(value) {
+      val nameGuard = createPluginLayoutSet(value.size)
+      for (layout in value) {
+        if (!nameGuard.add(layout)) {
+          val bundlingRestrictionsAsString = if (layout.bundlingRestrictions == PluginBundlingRestrictions.NONE) {
+            ""
+          }
+          else {
+            ", bundlingRestrictions=${layout.bundlingRestrictions}"
+          }
+          throw IllegalStateException("PluginLayout(mainModule=${layout.mainModule}$bundlingRestrictionsAsString) is duplicated")
+        }
+      }
+      field = value
+    }
 
   /**
    * Fail when plugin should be build, but its definition is missing from [org.jetbrains.intellij.build.ProductModulesLayout.pluginLayouts]
@@ -164,4 +181,28 @@ class ProductModulesLayout {
   fun withoutAdditionalPlatformJar(jarName: String, moduleName: String) {
     additionalPlatformJars.remove(jarName, moduleName)
   }
+}
+
+internal fun createPluginLayoutSet(expectedSize: Int): MutableSet<PluginLayout> {
+  return ObjectLinkedOpenCustomHashSet<PluginLayout>(expectedSize, object : Hash.Strategy<PluginLayout?> {
+    override fun hashCode(layout: PluginLayout?): Int {
+      if (layout == null) {
+        return 0
+      }
+
+      var result = layout.mainModule.hashCode()
+      result = 31 * result + layout.bundlingRestrictions.hashCode()
+      return result
+    }
+
+    override fun equals(a: PluginLayout?, b: PluginLayout?): Boolean {
+      if (a == b) {
+        return true
+      }
+      if (a == null || b == null) {
+        return false
+      }
+      return a.mainModule == b.mainModule && a.bundlingRestrictions == b.bundlingRestrictions
+    }
+  })
 }

@@ -7,6 +7,7 @@ import org.jetbrains.intellij.build.*
 import java.nio.file.Files
 import java.nio.file.Path
 
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf
 import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
@@ -31,16 +32,15 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     productLayout.bundledPluginModules.add("intellij.pycharm.community.customization")
     productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt")))
 
-    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.add(
       plugin("intellij.pycharm.community.customization") {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"
         withModule("intellij.pycharm.community.ide.impl", mainJarName)
         withModule("intellij.jupyter.viewOnly")
         withModule("intellij.jupyter.core")
-      }
-    ]
-    productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]
+      })
+    productLayout.pluginModulesToPublish = persistentListOf("intellij.python.community.plugin")
   }
 
   @Override

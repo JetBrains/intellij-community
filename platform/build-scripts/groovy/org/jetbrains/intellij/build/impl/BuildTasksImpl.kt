@@ -375,7 +375,7 @@ private fun buildOsSpecificDistributions(context: BuildContext): List<Distributi
 
     val builder = getOsDistributionBuilder(os = os, ideaProperties = propertiesFile, context = context) ?: return null
     return BuildTaskRunnable("${os.osId} ${arch.name}") {
-      val osAndArchSpecificDistDirectory = DistributionJARsBuilder.getOsAndArchSpecificDistDirectory(os, arch, context)
+      val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(os, arch, context)
       builder.buildArtifacts(osAndArchSpecificDistDirectory, arch)
       DistributionForOsTaskResult(os, arch, osAndArchSpecificDistDirectory)
     }

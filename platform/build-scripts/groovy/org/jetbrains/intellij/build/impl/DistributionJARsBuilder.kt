@@ -12,8 +12,6 @@ import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -201,11 +199,9 @@ class DistributionJARsBuilder {
       else if (arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL) {
         return false
       }
-      return arch == null || bundlingRestrictions.supportedArch.contains(arch)
-    }
-
-    fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, buildContext: BuildContext): Path {
-      return buildContext.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
+      else{
+        return arch == null || bundlingRestrictions.supportedArch.contains(arch)
+      }
     }
 
     /**
@@ -877,28 +873,7 @@ fun getPluginsByModules(modules: Collection<String>, context: BuildContext): Set
 
   val pluginLayouts = context.productProperties.productLayout.pluginLayouts
   val pluginLayoutsByMainModule = pluginLayouts.groupBy { it.mainModule }
-  val result = ObjectLinkedOpenCustomHashSet<PluginLayout>(modules.size, object : Hash.Strategy<PluginLayout?> {
-    override fun hashCode(layout: PluginLayout?): Int {
-      if (layout == null) {
-        return 0
-      }
-
-      var result = layout.mainModule.hashCode()
-      result = 31 * result + layout.bundlingRestrictions.hashCode()
-      return result
-    }
-
-    override fun equals(a: PluginLayout?, b: PluginLayout?): Boolean {
-      if (a == b) {
-        return true
-      }
-      if (a == null || b == null) {
-        return false
-      }
-      return a.mainModule == b.mainModule && a.bundlingRestrictions == b.bundlingRestrictions
-    }
-  })
-
+  val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
     var customLayouts = pluginLayoutsByMainModule.get(moduleName)
     if (customLayouts == null) {
@@ -1035,4 +1010,8 @@ private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatche
   text = text.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>", "<mouse-shortcut keystroke=\"alt button1\"/>")
   text = text.replace("<mouse-shortcut keystroke=\"to be alt shift button1\"/>", "<mouse-shortcut keystroke=\"alt shift button1\"/>")
   moduleOutputPatcher.patchModuleOutput(moduleName, "keymaps/\$default.xml", text)
+}
+
+internal fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
+  return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
+import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -26,7 +27,8 @@ class PluginLayout(val mainModule: String): BaseLayout() {
 
   var pluginXmlPatcher: UnaryOperator<String> = UnaryOperator.identity()
   var directoryNameSetExplicitly: Boolean = false
-  var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
+  @JvmField
+  internal var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
   val pathsToScramble: MutableList<String> = mutableListOf()
   val scrambleClasspathPlugins: MutableList<Pair<String /*plugin name*/, String /*relative path*/>> = mutableListOf()
   var scrambleClasspathFilter: BiPredicate<BuildContext, Path> = BiPredicate { _, _ -> true }
@@ -175,7 +177,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
       /**
        * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
        */
-      var supportedOs: List<OsFamily> = OsFamily.ALL
+      var supportedOs: PersistentList<OsFamily> = OsFamily.ALL
 
       /**
        * Change this value if the plugin works on some architectures only and
@@ -188,8 +190,9 @@ class PluginLayout(val mainModule: String): BaseLayout() {
        */
       var includeInEapOnly: Boolean = false
 
-      fun build(): PluginBundlingRestrictions =
-        PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly)
+      internal fun build(): PluginBundlingRestrictions {
+        return PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly)
+      }
     }
 
     var mainJarName: String

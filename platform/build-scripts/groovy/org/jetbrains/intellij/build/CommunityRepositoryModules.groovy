@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
+import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -12,6 +13,7 @@ import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import java.nio.file.Files
 import java.nio.file.Path
 
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf
 import static org.jetbrains.intellij.build.impl.PluginLayout.simplePlugin
 import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
@@ -20,13 +22,13 @@ final class CommunityRepositoryModules {
   /**
    * Specifies non-trivial layout for all plugins which sources are located in 'community' and 'contrib' repositories
    */
-  public final static List<PluginLayout> COMMUNITY_REPOSITORY_PLUGINS = List.of(
+  public final static PersistentList<PluginLayout> COMMUNITY_REPOSITORY_PLUGINS = persistentListOf(
     plugin("intellij.ant") {
       mainJarName = "antIntegration.jar"
       withModule("intellij.ant.jps", "ant-jps.jar")
     },
     plugin("intellij.laf.macos") {
-      bundlingRestrictions.supportedOs = [OsFamily.MACOS]
+      bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     },
     plugin("intellij.webp"){
       withResource("lib/libwebp/linux", "lib/libwebp/linux")
@@ -34,7 +36,7 @@ final class CommunityRepositoryModules {
       withResource("lib/libwebp/win", "lib/libwebp/win")
     },
     plugin("intellij.laf.win10") {
-      bundlingRestrictions.supportedOs = [OsFamily.WINDOWS]
+      bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     },
     plugin("intellij.java.guiForms.designer") {
       directoryName = "uiDesigner"
@@ -189,7 +191,7 @@ final class CommunityRepositoryModules {
       withResource("resources/fish/config.fish", "fish")
     },
     plugin("intellij.emojipicker") {
-      bundlingRestrictions.supportedOs = [OsFamily.LINUX]
+      bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
     },
     plugin("intellij.textmate") {
       withModule("intellij.textmate.core")
