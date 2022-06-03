@@ -169,7 +169,7 @@ private class Uploader(serverUrl: String) {
         "The file $file does not exist"
       }
 
-      httpClient.newCall(Request.Builder().url(url).post(object : RequestBody() {
+      httpClient.newCall(Request.Builder().url(url).put(object : RequestBody() {
         override fun contentType() = MEDIA_TYPE_BINARY
 
         override fun contentLength() = Files.size(file)
