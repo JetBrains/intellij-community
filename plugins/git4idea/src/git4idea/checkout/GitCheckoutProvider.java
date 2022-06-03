@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +25,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -85,7 +85,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
                            final VirtualFile destinationParent, final String sourceRepositoryURL,
                            final String directoryName, final String parentDirectory) {
     String projectAbsolutePath = Paths.get(parentDirectory, directoryName).toAbsolutePath().toString();
-    String projectPath = PathUtil.toSystemDependentName(projectAbsolutePath);
+    String projectPath = FileUtilRt.toSystemIndependentName(projectAbsolutePath);
 
     CloneTask cloneTask = new CloneTask() {
 
