@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjec
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.SystemIndependent
 import java.util.*
 
 @Service(Level.APP)
@@ -28,7 +29,7 @@ class CloneableProjectsService {
   private val cloneableProjects: MutableSet<CloneableProject> = Collections.synchronizedSet(mutableSetOf())
 
   @RequiresEdt
-  fun runCloneTask(projectPath: String, cloneTask: CloneTask) {
+  fun runCloneTask(projectPath: @SystemIndependent String, cloneTask: CloneTask) {
     val taskInfo = cloneTask.taskInfo()
     val progressIndicator = CloneableProjectProgressIndicator(taskInfo)
     val cloneableProject = CloneableProject(projectPath, taskInfo, progressIndicator, CloneStatus.PROGRESS)
@@ -156,7 +157,7 @@ class CloneableProjectsService {
   }
 
   data class CloneableProject(
-    val projectPath: String,
+    val projectPath: @SystemIndependent String,
     val cloneTaskInfo: CloneTaskInfo,
     val progressIndicator: ProgressIndicatorEx,
     var cloneStatus: CloneStatus

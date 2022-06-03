@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -22,7 +23,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
-import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +105,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                               Listener listener,
                               WorkingCopyFormat selectedFormat) {
     String projectAbsolutePath = target.getAbsolutePath();
-    String projectPath = PathUtil.toSystemDependentName(projectAbsolutePath);
+    String projectPath = FileUtilRt.toSystemIndependentName(projectAbsolutePath);
 
     CloneTask cloneTask = new CloneTask() {
       final Ref<Boolean> checkoutSuccessful = new Ref<>();
