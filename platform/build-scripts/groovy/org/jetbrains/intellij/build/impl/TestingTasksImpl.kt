@@ -286,20 +286,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       .classes()
       .roots
       .mapNotNull {
-        val file = it.toPath()
-        if (Files.exists(file)) {
-          val path = file.toString()
-          if (path.replace(File.separatorChar, '/').contains("com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.")) {
-            // don't conflict with docker ancient okhttp
-            null
-          }
-          else {
-            path
-          }
-        }
-        else {
-          null
-        }
+        if (it.exists()) it.absolutePath else null
       }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
