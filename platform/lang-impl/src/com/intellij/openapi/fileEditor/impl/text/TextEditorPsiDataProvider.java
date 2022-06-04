@@ -161,7 +161,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       addIfNotNull(set, injectedLanguage);
       Language language = (Language)getSlowData(LANGUAGE.getName(), e, caret);
       addIfNotNull(set, language);
-      PsiFile psiFile = (PsiFile)getData(PSI_FILE.getName(), e, caret);
+      PsiFile psiFile = (PsiFile)getSlowData(PSI_FILE.getName(), e, caret);
       if (psiFile != null) {
         addIfNotNull(set, psiFile.getViewProvider().getBaseLanguage());
       }
