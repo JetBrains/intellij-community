@@ -78,7 +78,9 @@ private object_element ::= property (','|&'}') {
   pin = 1
 }
 
-property ::= property_name (':' value) {
+private property_value ::= value | PARAMETER {name="value"}
+
+property ::= property_name (':' property_value) {
   methods=[
     getName
     getNameElement

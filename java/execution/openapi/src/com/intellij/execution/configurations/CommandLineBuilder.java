@@ -3,11 +3,9 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 
 /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public final class CommandLineBuilder {
   private CommandLineBuilder() { }
 

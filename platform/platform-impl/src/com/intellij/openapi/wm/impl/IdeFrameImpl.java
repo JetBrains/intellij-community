@@ -185,8 +185,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
    * @deprecated Use {@link ProjectFrameHelper#getProject()} instead.
    */
   @Override
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   public Project getProject() {
     return myFrameHelper == null ? null : myFrameHelper.getProject();
   }

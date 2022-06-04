@@ -31,7 +31,7 @@ abstract class AbstractFirLightFacadeClassTest : AbstractUltraLightFacadeClassTe
                 classFabric.getFacadeClasses(FqName(it), scope)
             }.filterIsInstance<KtLightClass>()
             UltraLightChecker.renderLightClasses(testDataPath, lightClasses)
-        }!!
+        }
 
         KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedResult)
     }

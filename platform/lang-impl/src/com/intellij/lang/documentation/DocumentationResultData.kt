@@ -2,24 +2,32 @@
 package com.intellij.lang.documentation
 
 import com.intellij.lang.documentation.DocumentationResult.Data
-import org.jetbrains.annotations.Nls
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Image
+import java.util.function.Consumer
 
 @VisibleForTesting
 data class DocumentationResultData internal constructor(
-  val html: @Nls String,
+  internal val content: DocumentationContentData,
+  internal val links: LinkData = LinkData(),
   val anchor: String? = null,
-  val externalUrl: String? = null,
-  val linkUrls: List<String> = emptyList(),
-  val imageResolver: DocumentationImageResolver? = null,
+  internal val updates: Flow<DocumentationContentData> = emptyFlow(),
 ) : Data {
 
+  val html: String get() = content.html
+
   override fun html(html: String): Data {
-    return copy(html = html)
+    return content(content.copy(html = html))
   }
 
-  override fun imageResolver(imageResolver: DocumentationImageResolver?): Data {
-    return copy(imageResolver = imageResolver)
+  override fun images(images: Map<String, Image>): Data {
+    return content(content.copy(imageResolver = imageResolver(images)))
+  }
+
+  override fun content(content: DocumentationContent): Data {
+    return copy(content = content as DocumentationContentData)
   }
 
   override fun anchor(anchor: String?): Data {
@@ -27,6 +35,15 @@ data class DocumentationResultData internal constructor(
   }
 
   override fun externalUrl(externalUrl: String?): Data {
-    return copy(externalUrl = externalUrl)
+    return copy(links = links.copy(externalUrl = externalUrl))
+  }
+
+  override fun updates(updates: Flow<DocumentationContent>): Data {
+    @Suppress("UNCHECKED_CAST")
+    return copy(updates = updates as Flow<DocumentationContentData>)
+  }
+
+  override fun updates(updates: Consumer<in Consumer<in DocumentationContent>>): Data {
+    return updates(updates.asFlow())
   }
 }

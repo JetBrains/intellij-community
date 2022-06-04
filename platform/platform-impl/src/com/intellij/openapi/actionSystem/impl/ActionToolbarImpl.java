@@ -31,6 +31,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.animation.AlphaAnimationContext;
@@ -57,8 +58,6 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
-
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider, AlphaAnimated {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
 
@@ -70,6 +69,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final String LOADING_LABEL = "LOADING_LABEL";
   private static final String SUPPRESS_ACTION_COMPONENT_WARNING = "ActionToolbarImpl.suppressCustomComponentWarning";
   private static final String SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning";
+  public static final String DO_NOT_ADD_CUSTOMIZATION_HANDLER = "ActionToolbarImpl.suppressTargetComponentWarning";
 
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
@@ -217,13 +217,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
-    if(isCustomizationSupported()) {
-      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
-    }
-  }
+    myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
 
-  protected Boolean isCustomizationSupported() {
-    return true;
   }
 
   @Override
@@ -342,7 +337,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     List<AnAction> rightAligned = new ArrayList<>();
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
-      if (action instanceof RightAlignedToolbarAction) {
+      if (isAlignmentEnabled() && action instanceof RightAlignedToolbarAction) {
         rightAligned.add(action);
         continue;
       }
@@ -393,11 +388,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
+  protected boolean isAlignmentEnabled() {
+    return true;
+  }
+
   @Override
   protected void addImpl(Component comp, Object constraints, int index) {
     super.addImpl(comp, constraints, index);
     if (myPopupHandler != null && !ContainerUtil.exists(comp.getMouseListeners(), listener -> listener instanceof PopupHandler)) {
-      UIUtil.uiTraverser(comp).traverse().forEach(component -> component.addMouseListener(myPopupHandler));
+      UIUtil.uiTraverser(comp).traverse().forEach(component -> {
+        if (ClientProperty.isTrue(component, DO_NOT_ADD_CUSTOMIZATION_HANDLER)) return;
+        component.addMouseListener(myPopupHandler);
+      });
     }
   }
 
@@ -412,7 +414,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                  "Custom components shall not be reused.");
       }
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
-      ComponentUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
+      customComponent.putClientProperty(CustomComponentAction.ACTION_KEY, action);
     }
     tweakActionComponentUI(customComponent);
 
@@ -1400,7 +1402,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                "Toolbar actions that need local UI context would be incorrectly disabled. " +
                "Please call toolbar.setTargetComponent() explicitly.", myCreationTrace);
     }
-    Component target = myTargetComponent != null ? myTargetComponent : getFocusedComponentInWindowOrSelf(this);
+    Component target = myTargetComponent != null ? myTargetComponent : IJSwingUtilities.getFocusedComponentInWindowOrSelf(this);
     return DataManager.getInstance().getDataContext(target);
   }
 

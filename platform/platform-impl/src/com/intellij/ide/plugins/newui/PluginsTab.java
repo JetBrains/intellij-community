@@ -184,7 +184,7 @@ public abstract class PluginsTab {
     mySearchTextField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (!mySearchTextField.isSkipDocumentEvents()) {
+        if (!mySearchTextField.isSkipDocumentEvents() && !mySearchUpdateAlarm.isDisposed()) {
           mySearchUpdateAlarm.cancelAllRequests();
           mySearchUpdateAlarm.addRequest(this::searchOnTheFly, flyDelay, ModalityState.stateForComponent(mySearchTextField));
         }

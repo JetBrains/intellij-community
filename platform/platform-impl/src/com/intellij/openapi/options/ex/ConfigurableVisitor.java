@@ -97,8 +97,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   /**
    * @deprecated Use {@link #findById}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final class ByID extends ConfigurableVisitor {
     private final String id;
 

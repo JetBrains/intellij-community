@@ -220,13 +220,23 @@ public final class FindInProjectUtil {
                                 @NotNull final FindUsagesProcessPresentation processPresentation,
                                 @NotNull final Set<? extends VirtualFile> filesToStart,
                                 @NotNull final Processor<? super UsageInfo> consumer) {
-    Runnable runnable = () -> new FindInProjectTask(findModel, project, filesToStart).findUsages(processPresentation, consumer);
+    Runnable runnable = () -> new FindInProjectTask(findModel, project, filesToStart, true).findUsages(processPresentation, consumer);
     if (ProgressManager.getGlobalProgressIndicator() == null) {
       ProgressManager.getInstance().runProcess(runnable, new EmptyProgressIndicator());
     }
     else {
       runnable.run();
     }
+  }
+
+  public static void findUsages(@NotNull final FindModel findModel,
+                                @NotNull final Project project,
+                                @NotNull final ProgressIndicator progressIndicator,
+                                @NotNull final FindUsagesProcessPresentation processPresentation,
+                                @NotNull final Set<? extends VirtualFile> filesToStart,
+                                @NotNull final Processor<? super UsageInfo> consumer) {
+    Runnable runnable = () -> new FindInProjectTask(findModel, project, filesToStart, false).findUsages(processPresentation, consumer);
+    ProgressManager.getInstance().executeProcessUnderProgress(runnable, progressIndicator);
   }
 
   static boolean processUsagesInFile(@NotNull final PsiFile psiFile,

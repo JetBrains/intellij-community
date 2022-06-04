@@ -1,26 +1,41 @@
-# Some PEP8 deviations are considered irrelevant to stub files:
-#       E301 expected 1 blank line
-#       E302 expected 2 blank lines
-#       E305 expected 2 blank lines
-#       E701 multiple statements on one line (colon)
+# The following rules are incompatible with or enforced by black:
+#       E203 whitespace before ':' -- scripts only
+#       E301 expected 1 blank line -- stubs only
+#       E302 expected 2 blank lines -- stubs only
+#       E305 expected 2 blank lines -- stubs only
+#       E501 line too long
+
+# Some rules are considered irrelevant to stub files:
+#       E701 multiple statements on one line (colon) -- disallows "..." on the same line
+#       F401 imported but unused -- does not recognize re-exports
+#            https://github.com/PyCQA/pyflakes/issues/474
+#       F822 undefined name in __all__ -- flake8 does not recognize 'foo: Any'
+#            https://github.com/PyCQA/pyflakes/issues/533
+
+# Rules that are out of the control of stub authors:
 #       E741 ambiguous variable name
-#       F401 imported but unused
 #       F403 import *' used; unable to detect undefined names
 #       F405 defined from star imports
-#       F822 undefined name in __all__
 
-# Nice-to-haves ignored for now
-#       E501 line too long
+# Rules that we'd like to enable in the future:
+#       Y026 Use typing_extensions.TypeAlias for type aliases (blocked by #4913)
+#       Y027 Disallow importing typing.ContextManager, typing.OrderedDict &
+#            typing_extensions.OrderedDict (cannot be globally enabled while typeshed
+#            still contains stubs supporting Python 2).
 
 [flake8]
 per-file-ignores =
-  *.py: E203, W503
-  *.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822
+  *.py: E203, E501
+  *.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y026
   # Since typing.pyi defines "overload" this is not recognized by flake8 as typing.overload.
   # Unfortunately, flake8 does not allow to "noqa" just a specific error inside the file itself.
-  typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822
+  # https://github.com/PyCQA/flake8/issues/1079
+  #     F811 redefinition of unused '...'
+  stubs/*.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y026, Y027
+  stdlib/@python2/*.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y026, Y027
+  stdlib/@python2/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y026, Y027
+  stdlib/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y026
 
 # We are checking with Python 3 but many of the stubs are Python 2 stubs.
-builtins = StandardError,apply,basestring,buffer,cmp,coerce,execfile,file,intern,long,raw_input,reduce,reload,unichr,unicode,xrange
+builtins = buffer,file,long,raw_input,unicode,xrange
 exclude = .venv*,.git,*_pb2.pyi
-max-line-length = 130

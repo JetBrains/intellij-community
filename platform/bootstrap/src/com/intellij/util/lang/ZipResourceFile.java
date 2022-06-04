@@ -47,16 +47,11 @@ final class ZipResourceFile implements ResourceFile {
 
   @Override
   public @Nullable Attributes loadManifestAttributes() throws IOException {
-    InputStream stream = zipFile.getInputStream(JarFile.MANIFEST_NAME);
-    if (stream == null) {
-      return null;
-    }
-
-    try {
+    try (InputStream stream = zipFile.getInputStream(JarFile.MANIFEST_NAME)) {
+      if (stream == null) {
+        return null;
+      }
       return new Manifest(stream).getMainAttributes();
-    }
-    finally {
-      stream.close();
     }
   }
 

@@ -154,7 +154,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       }
     }
     RefactoringConflictsUtil.getInstance()
-      .analyzeAccessibilityConflictsAfterMemberMove(myRecordCandidate.getPsiClass(), conflicts, PRIVATE, conflictingFields);
+      .analyzeAccessibilityConflictsAfterMemberMove(myRecordCandidate.getPsiClass(), PRIVATE, conflictingFields, conflicts);
 
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ConflictsInTestsException.isTestIgnore()) {

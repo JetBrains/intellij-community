@@ -56,6 +56,10 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
       segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { it }
     }
 
+    row("tabbedPaneHeader:") {
+      tabbedPaneHeader(listOf("Tab 1", "Tab 2", "Last Tab"))
+    }
+
     row("label:") {
       label("Some label")
     }

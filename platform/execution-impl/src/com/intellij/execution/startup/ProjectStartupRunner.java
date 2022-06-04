@@ -7,12 +7,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
@@ -55,7 +51,9 @@ final class ProjectStartupRunner implements StartupActivity.DumbAware {
       }
     });
 
-    StartupManager.getInstance(project).runAfterOpened(() -> runActivities(project));
+    BeforeRunStartupTasks.Companion.beforeRunAsync(project).whenComplete((r, e) -> {
+      StartupManager.getInstance(project).runAfterOpened(() -> runActivities(project));
+    });
   }
 
   private static void runActivities(@NotNull Project project) {

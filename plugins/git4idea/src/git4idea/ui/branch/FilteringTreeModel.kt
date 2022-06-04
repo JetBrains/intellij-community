@@ -11,6 +11,7 @@ import kotlin.properties.Delegates.observable
 
 class FilteringTreeModel(private val delegate: TreeModel) : AbstractTreeModel() {
 
+  private val delegateChangesListener: TreeModelListener
   private val childrenCache = mutableMapOf<Any, List<Any>>()
 
   var filterer by observable<((Any) -> Boolean)?>(null) { _, _, _ ->
@@ -18,12 +19,13 @@ class FilteringTreeModel(private val delegate: TreeModel) : AbstractTreeModel() 
   }
 
   init {
-    delegate.addTreeModelListener(object : TreeModelListener {
+    delegateChangesListener = object : TreeModelListener {
       override fun treeNodesChanged(e: TreeModelEvent) = rebuildTree(e)
       override fun treeNodesInserted(e: TreeModelEvent) = rebuildTree(e)
       override fun treeNodesRemoved(e: TreeModelEvent) = rebuildTree(e)
       override fun treeStructureChanged(e: TreeModelEvent) = rebuildTree(e)
-    })
+    }
+    delegate.addTreeModelListener(delegateChangesListener)
   }
 
   //TODO: more granular cache updates
@@ -71,4 +73,9 @@ class FilteringTreeModel(private val delegate: TreeModel) : AbstractTreeModel() 
         (!delegate.isLeaf(it) && !isLeaf(it)) || (delegate.isLeaf(it) && filter(it))
       }.toList()
     }
+
+  override fun dispose() {
+    delegate.removeTreeModelListener(delegateChangesListener)
+    super.dispose()
+  }
 }

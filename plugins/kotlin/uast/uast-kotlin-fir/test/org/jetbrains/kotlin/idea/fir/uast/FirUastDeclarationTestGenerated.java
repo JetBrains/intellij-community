@@ -23,6 +23,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotationOnElvis.kt")
+    public void testAnnotationOnElvis() throws Exception {
+        runTest("testData/declaration/annotationOnElvis.kt");
+    }
+
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
         runTest("testData/declaration/doWhile.kt");
@@ -51,5 +56,10 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("objects.kt")
     public void testObjects() throws Exception {
         runTest("testData/declaration/objects.kt");
+    }
+
+    @TestMetadata("retention.kt")
+    public void testRetention() throws Exception {
+        runTest("testData/declaration/retention.kt");
     }
 }

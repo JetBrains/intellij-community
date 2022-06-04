@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.AbstractBundle;
@@ -245,5 +245,10 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
       LOG.info("Icon tooltip requested but not found for " + path);
     }
     return result.get();
+  }
+
+  @Override
+  public @NotNull Icon withIconBadge(@NotNull Icon icon, @NotNull Paint color) {
+    return new BadgeIcon(icon, color);
   }
 }

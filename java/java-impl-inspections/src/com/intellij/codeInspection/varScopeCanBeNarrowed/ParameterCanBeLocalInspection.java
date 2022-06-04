@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.VisibilityUtil;
@@ -169,8 +169,8 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
         SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(WriteAction.compute(() -> moveDeclaration(elementFactory, localName, parameter, initializer, action, references)));
         var processor = 
-          JavaSpecialRefactoringProvider.getInstance().getChangeSignatureProcessor(project, method, false, visibilityModifier, method.getName(),
-                                                                                   method.getReturnType(), newParams, null);
+          JavaRefactoringFactory.getInstance(project)
+            .createChangeSignatureProcessor(method, false, visibilityModifier, method.getName(), method.getReturnType(), newParams, null, null, null, null);
 
         processor.run();
         return newDeclaration.getElement();

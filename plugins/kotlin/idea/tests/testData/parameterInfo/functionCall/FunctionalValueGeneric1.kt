@@ -1,6 +1,3 @@
-// IGNORE_FIR
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
-
 fun <T> T.foo(): (item: T) -> Unit{}
 
 fun f() {

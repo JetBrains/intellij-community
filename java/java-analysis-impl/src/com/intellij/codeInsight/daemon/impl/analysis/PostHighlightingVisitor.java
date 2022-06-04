@@ -125,7 +125,7 @@ class PostHighlightingVisitor {
     boolean errorFound = false;
 
     if (isToolEnabled(myDeadCodeKey)) {
-      GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection, true);
+      GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection);
       FileViewProvider viewProvider = myFile.getViewProvider();
       Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language language : relevantLanguages) {

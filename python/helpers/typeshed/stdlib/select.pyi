@@ -1,7 +1,7 @@
 import sys
 from _typeshed import FileDescriptorLike, Self
 from types import TracebackType
-from typing import Any, Iterable, Type
+from typing import Any, Iterable
 
 if sys.platform != "win32":
     PIPE_BUF: int
@@ -33,7 +33,7 @@ error = OSError
 
 if sys.platform != "linux" and sys.platform != "win32":
     # BSD only
-    class kevent(object):
+    class kevent:
         data: Any
         fflags: int
         filter: int
@@ -50,7 +50,7 @@ if sys.platform != "linux" and sys.platform != "win32":
             udata: Any = ...,
         ) -> None: ...
     # BSD only
-    class kqueue(object):
+    class kqueue:
         closed: bool
         def __init__(self) -> None: ...
         def close(self) -> None: ...
@@ -100,12 +100,12 @@ if sys.platform != "linux" and sys.platform != "win32":
     KQ_NOTE_WRITE: int
 
 if sys.platform == "linux":
-    class epoll(object):
+    class epoll:
         def __init__(self, sizehint: int = ..., flags: int = ...) -> None: ...
         def __enter__(self: Self) -> Self: ...
         def __exit__(
             self,
-            exc_type: Type[BaseException] | None = ...,
+            exc_type: type[BaseException] | None = ...,
             exc_val: BaseException | None = ...,
             exc_tb: TracebackType | None = ...,
         ) -> None: ...

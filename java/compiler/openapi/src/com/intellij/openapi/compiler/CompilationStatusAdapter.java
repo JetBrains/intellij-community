@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.compiler;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * @deprecated Use {@link CompilationStatusListener} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public class CompilationStatusAdapter implements CompilationStatusListener {
 
 }

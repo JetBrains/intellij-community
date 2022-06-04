@@ -1,19 +1,20 @@
 import builtins
 import ctypes
 import sys
+from _typeshed import Self
 from types import TracebackType
-from typing import Any, Type, TypeVar
+from typing import Any
 
 if sys.platform == "win32":
-
-    _T = TypeVar("_T")
     def format_system_message(errno: int) -> str | None: ...
+
     class WindowsError(builtins.WindowsError):
         def __init__(self, value: int | None = ...) -> None: ...
         @property
         def message(self) -> str: ...
         @property
         def code(self) -> int: ...
+
     def handle_nonzero_success(result: int) -> None: ...
     GMEM_MOVEABLE: int
     GlobalAlloc: Any
@@ -24,6 +25,7 @@ if sys.platform == "win32":
     MapViewOfFile: Any
     UnmapViewOfFile: Any
     RtlMoveMemory: Any
+
     class MemoryMap:
         name: str
         length: int
@@ -32,12 +34,12 @@ if sys.platform == "win32":
         filemap: Any = ...
         view: Any = ...
         def __init__(self, name: str, length: int, security_attributes: Any | None = ...) -> None: ...
-        def __enter__(self: _T) -> _T: ...
+        def __enter__(self: Self) -> Self: ...
         def seek(self, pos: int) -> None: ...
         def write(self, msg: bytes) -> None: ...
         def read(self, n: int) -> bytes: ...
         def __exit__(
-            self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, tb: TracebackType | None
+            self, exc_type: type[BaseException] | None, exc_val: BaseException | None, tb: TracebackType | None
         ) -> None: ...
     READ_CONTROL: int
     STANDARD_RIGHTS_REQUIRED: int
@@ -62,15 +64,20 @@ if sys.platform == "win32":
     POLICY_READ: int
     POLICY_WRITE: int
     POLICY_EXECUTE: int
+
     class TokenAccess:
         TOKEN_QUERY: int
+
     class TokenInformationClass:
         TokenUser: int
+
     class TOKEN_USER(ctypes.Structure):
         num: int
+
     class SECURITY_DESCRIPTOR(ctypes.Structure):
         SECURITY_DESCRIPTOR_CONTROL: Any
         REVISION: int
+
     class SECURITY_ATTRIBUTES(ctypes.Structure):
         nLength: int
         lpSecurityDescriptor: Any
@@ -79,6 +86,7 @@ if sys.platform == "win32":
         def descriptor(self) -> Any: ...
         @descriptor.setter
         def descriptor(self, value: Any) -> None: ...
+
     def GetTokenInformation(token: Any, information_class: Any) -> Any: ...
     def OpenProcessToken(proc_handle: Any, access: Any) -> Any: ...
     def get_current_user() -> TOKEN_USER: ...

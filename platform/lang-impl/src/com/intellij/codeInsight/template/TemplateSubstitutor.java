@@ -5,7 +5,6 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSubstitutionContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +14,7 @@ public interface TemplateSubstitutor {
   /**
    * @deprecated use {@link #substituteTemplate(TemplateSubstitutionContext, TemplateImpl)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   default TemplateImpl substituteTemplate(@NotNull PsiFile file, int caretOffset, @NotNull TemplateImpl template) {
     throw new RuntimeException(

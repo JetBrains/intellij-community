@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -14,8 +14,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
   override val immediate: MainCoroutineDispatcher get() = Immediate
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
-    val state = context[ModalityStateElement]?.modalityState
-                ?: ModalityState.any()
+    val state = context.contextModality()
     val runnable = if (state === ModalityState.any()) {
       block
     }

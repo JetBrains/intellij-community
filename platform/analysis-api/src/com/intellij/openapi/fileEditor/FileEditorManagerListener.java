@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -27,7 +26,6 @@ public interface FileEditorManagerListener extends EventListener {
    * @deprecated use {@link #fileOpenedSync(FileEditorManager, VirtualFile, List)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   default void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
                               @NotNull Pair<FileEditor[], FileEditorProvider[]> editors) {
   }
@@ -80,8 +78,7 @@ public interface FileEditorManagerListener extends EventListener {
     /**
      * @deprecated use {@link Before} directly
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     class Adapter implements Before {
       @Override
       public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }

@@ -2,9 +2,7 @@
 package git4idea.checkin
 
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -55,9 +53,11 @@ internal class GitRepositoryCommitter(val repository: GitRepository, val commitO
   @Throws(VcsException::class)
   fun commitStaged(messageFile: File) {
     val gpgProblemDetector = GitGpgProblemDetector()
+    val emptyCommitProblemDetector = GitEmptyCommitProblemDetector()
     val handler = GitLineHandler(project, root, GitCommand.COMMIT)
     handler.setStdoutSuppressed(false)
     handler.addLineListener(gpgProblemDetector)
+    handler.addLineListener(emptyCommitProblemDetector)
 
     handler.setCommitMessage(messageFile)
     handler.setCommitOptions(commitOptions)
@@ -72,9 +72,10 @@ internal class GitRepositoryCommitter(val repository: GitRepository, val commitO
       if (gpgProblemDetector.isDetected) {
         throw GitGpgCommitException(e)
       }
-      else {
-        throw e
+      if (emptyCommitProblemDetector.isDetected) {
+        throw VcsException(GitBundle.message("git.commit.nothing.to.commit.error.message"))
       }
+      throw e
     }
   }
 }
@@ -106,6 +107,26 @@ private class GitGpgProblemDetector : GitLineHandlerListener {
 
   companion object {
     private const val PATTERN = "gpg failed to sign the data"
+  }
+}
+
+private class GitEmptyCommitProblemDetector : GitLineHandlerListener {
+  var isDetected = false
+    private set
+
+  override fun onLineAvailable(line: String, outputType: Key<*>) {
+    if (outputType === ProcessOutputTypes.STDOUT && PATTERNS.any { line.startsWith(it, ignoreCase = true) }) {
+      isDetected = true
+    }
+  }
+
+  companion object {
+    private val PATTERNS = listOf(
+      "No changes",
+      "no changes added to commit",
+      "nothing added to commit",
+      "nothing to commit"
+    )
   }
 }
 

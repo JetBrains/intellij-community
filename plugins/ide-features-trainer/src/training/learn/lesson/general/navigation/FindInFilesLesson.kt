@@ -38,7 +38,7 @@ class FindInFilesLesson(override val existedFile: String)
       showPopupTaskId = taskId
       text(LessonsBundle.message("find.in.files.show.find.popup",
         action(it), LessonUtil.actionName(it)))
-      triggerByUiComponentAndHighlight(false, false) { popup: FindPopupPanel ->
+      triggerUI().component { popup: FindPopupPanel ->
         !popup.helper.isReplaceState
       }
       test {
@@ -69,7 +69,7 @@ class FindInFilesLesson(override val existedFile: String)
 
     val neededText = "apple..."
     task {
-      triggerByPartOfComponent { table: JTable ->
+      triggerAndBorderHighlight().componentPart { table: JTable ->
         val rowIndex = table.findLastRowIndexOfItemWithText(neededText)
         if (rowIndex >= 0) {
           table.getCellRect(rowIndex, 0, false)
@@ -110,7 +110,7 @@ class FindInFilesLesson(override val existedFile: String)
     task("ReplaceInPath") {
       text(LessonsBundle.message("find.in.files.show.replace.popup",
                                  action(it), LessonUtil.actionName(it)))
-      triggerByUiComponentAndHighlight(false, false) { popup: FindPopupPanel ->
+      triggerUI().component { popup: FindPopupPanel ->
         popup.helper.isReplaceState
       }
       test { actions(it) }
@@ -119,7 +119,7 @@ class FindInFilesLesson(override val existedFile: String)
     task("orange") {
       text(LessonsBundle.message("find.in.files.type.to.replace",
                                  code("apple"), code(it)))
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: SearchTextArea ->
+      triggerAndBorderHighlight().component { ui: SearchTextArea ->
         it.startsWith(ui.textArea.text) && UIUtil.getParentOfType(FindPopupPanel::class.java, ui) != null
       }
       stateCheck {
@@ -155,10 +155,10 @@ class FindInFilesLesson(override val existedFile: String)
     task {
       val replaceAllButtonText = FindBundle.message("find.popup.replace.all.button").dropMnemonic()
       text(LessonsBundle.message("find.in.files.press.replace.all", strong(replaceAllButtonText)))
-      triggerByUiComponentAndHighlight { button: JButton ->
+      triggerAndFullHighlight().component { button: JButton ->
         button.text.isToStringContains(replaceAllButtonText)
       }
-      triggerByUiComponentAndHighlight { button: JButton ->
+      triggerAndFullHighlight().component { button: JButton ->
         UIUtil.getParentOfType(JDialog::class.java, button)?.isModal == true && button.text.isToStringContains(replaceButtonText)
       }
       showWarningIfPopupClosed(true)
@@ -196,10 +196,10 @@ class FindInFilesLesson(override val existedFile: String)
   }
 
   private fun TaskContext.highlightAndTriggerWhenButtonSelected(buttonText: String) {
-    triggerByUiComponentAndHighlight { button: ActionButton ->
+    triggerAndFullHighlight().component { button: ActionButton ->
       button.action.templateText == buttonText
     }
-    triggerByUiComponentAndHighlight(false, false) { button: ActionButton ->
+    triggerUI().component { button: ActionButton ->
       button.action.templateText == buttonText && button.isSelected
     }
   }

@@ -20,9 +20,9 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                         USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                     ULiteralExpression (value = 1) [1] : PsiType:int
                 UBinaryExpression (operator = +=) [a.mutableProp += x] : PsiType:Unit
-                    UQualifiedReferenceExpression [a.mutableProp] : PsiType:Unit
+                    UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
-                        USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:Unit
+                        USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                 UPrefixExpression (operator = ++) [++a.mutableProp] : PsiType:int
                     UQualifiedReferenceExpression [a.mutableProp] : PsiType:int

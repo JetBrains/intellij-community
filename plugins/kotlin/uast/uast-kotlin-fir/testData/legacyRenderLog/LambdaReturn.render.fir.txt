@@ -24,7 +24,7 @@ public final class LambdaReturnKt {
         var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {
                 return "a" + a
         }
-        bar({ var it: <ErrorType> ->
+        bar({ var it: int ->
 
             if (it > 5) return
             var b: int = 1
@@ -36,10 +36,10 @@ public final class LambdaReturnKt {
             @org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()
         }
         var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = {
-            return listOf(1)
+            listOf(1)
         }
     }
-    static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : kotlin.Unit {
+    private static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : void {
         invoke(1)
     }
 }

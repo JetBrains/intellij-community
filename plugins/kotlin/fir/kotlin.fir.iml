@@ -9,7 +9,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
@@ -20,6 +22,8 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent.tests" scope="TEST" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" name="kotlinc.high-level-api-impl-base" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api-impl-base-tests" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.high-level-api-fir" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="kotlinc.high-level-api-fir-tests" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.low-level-api-fir" level="project" />
@@ -44,5 +48,7 @@
     <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.symbol-light-classes" level="project" />
+    <orderEntry type="module" module-name="kotlin.fir.analysis-project-structure-ide-impl" />
+    <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
   </component>
 </module>

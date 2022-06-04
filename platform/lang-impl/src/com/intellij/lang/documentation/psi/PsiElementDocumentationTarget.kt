@@ -32,7 +32,15 @@ class PsiElementDocumentationTarget private constructor(
     project: Project,
     targetElement: PsiElement,
   ) : this(
-    project, targetElement, sourceElement = null, anchor = null
+    project, targetElement, sourceElement = null
+  )
+
+  internal constructor(
+    project: Project,
+    targetElement: PsiElement,
+    sourceElement: PsiElement?,
+  ) : this(
+    project, targetElement, sourceElement, anchor = null
   )
 
   internal constructor(
@@ -71,18 +79,20 @@ class PsiElementDocumentationTarget private constructor(
     if (urls == null || urls.isEmpty()) {
       return localDoc
     }
-    return pointer.fetchExternal(targetElement, provider, urls, localDoc?.copy(linkUrls = urls))
+    return pointer.fetchExternal(targetElement, provider, urls, localDoc?.copy(links = localDoc.links.copy(linkUrls = urls)))
   }
 
   @RequiresReadLock
   private fun localDoc(provider: DocumentationProvider): DocumentationResultData? {
     val html = localDocHtml(provider)
                ?: return null
-    return DocumentationResult
-      .documentation(html)
-      .imageResolver(pointer.imageResolver)
-      .anchor(pointer.anchor)
-      as DocumentationResultData
+    return DocumentationResultData(
+      content = DocumentationContentData(
+        html = html,
+        imageResolver = pointer.imageResolver,
+      ),
+      anchor = pointer.anchor,
+    )
   }
 
   @RequiresReadLock
@@ -128,7 +138,14 @@ class PsiElementDocumentationTarget private constructor(
         val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
                   ?: continue
         LOG.debug("Fetched documentation from $url")
-        return@Supplier DocumentationResult.documentation(doc).imageResolver(imageResolver).anchor(anchor).externalUrl(url)
+        return@Supplier DocumentationResultData(
+          content = DocumentationContentData(
+            html = doc,
+            imageResolver = imageResolver,
+          ),
+          anchor = anchor,
+          links = LinkData(externalUrl = url),
+        )
       }
       localDoc
     })

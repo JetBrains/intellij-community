@@ -37,7 +37,7 @@ class Table(DialectKWArgs, SchemaItem, TableClause):
     def tometadata(self, metadata, schema=..., referred_schema_fn: Any | None = ..., name: Any | None = ...): ...
     def to_metadata(self, metadata, schema=..., referred_schema_fn: Any | None = ..., name: Any | None = ...): ...
 
-class Column(DialectKWArgs, SchemaItem, ColumnClause):
+class Column(DialectKWArgs, SchemaItem, ColumnClause):  # type: ignore # argument disparities between base classes
     __visit_name__: str
     inherit_cache: bool
     key: Any

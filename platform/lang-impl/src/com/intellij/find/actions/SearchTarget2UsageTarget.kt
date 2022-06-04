@@ -15,10 +15,10 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.usageView.UsageViewBundle
+import com.intellij.usageView.UsageViewUtil
 import com.intellij.usages.ConfigurableUsageTarget
 import com.intellij.usages.UsageTarget
 import com.intellij.usages.UsageView
-import com.intellij.usages.impl.UsageViewImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -65,7 +65,7 @@ class SearchTarget2UsageTarget<O>(
 
   // ----- actions -----
 
-  override fun getShortcut(): KeyboardShortcut? = UsageViewImpl.getShowUsagesWithSettingsShortcut()
+  override fun getShortcut(): KeyboardShortcut? = UsageViewUtil.getShowUsagesWithSettingsShortcut()
 
   override fun getLongDescriptiveName(): @Nls String {
     val target = myPointer.dereference() ?: return UsageViewBundle.message("node.invalid")

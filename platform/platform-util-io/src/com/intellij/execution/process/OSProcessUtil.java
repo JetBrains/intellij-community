@@ -5,7 +5,6 @@ import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,8 +111,7 @@ public final class OSProcessUtil {
    *
    * @deprecated use {@link #terminateProcessGracefully(Process)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void terminateProcessGracefully(int pid) throws RuntimeException {
     if (SystemInfo.isWindows) {
       if (Registry.is("disable.winp")) {
@@ -156,8 +154,7 @@ public final class OSProcessUtil {
   /**
    * @deprecated use {@link #getProcessID(Process)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
     return (int)process.pid();
   }

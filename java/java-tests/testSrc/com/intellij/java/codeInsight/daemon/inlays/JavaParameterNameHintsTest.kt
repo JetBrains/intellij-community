@@ -97,44 +97,6 @@ class Fooo {
   }
 
 
-  fun `test no hints for generic builders`() {
-    check("""
-class Foo {
-  void test() {
-    new IntStream().skip(10);
-    new Stream<Integer>().skip(10);
-  }
-}
-
-class IntStream {
-  public IntStream skip(int n) {}
-}
-
-class Stream<T> {
-  public Stream<T> skip(int n) {}
-}
-""")
-
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Foo {
-  void test() {
-    new IntStream().skip(<hint text="n:"/>10);
-    new Stream<Integer>().skip(<hint text="n:"/>10);
-  }
-}
-
-class IntStream {
-  public IntStream skip(int n) {}
-}
-
-class Stream<T> {
-  public Stream<T> skip(int n) {}
-}
-""")
-  }
-
-
   fun `test do not show hints on setters`() {
     check("""class Groo {
 
@@ -516,83 +478,6 @@ interface DockManager {}
 interface Content {}
 """)
   }
-
-  fun `test do not inline builder pattern`() {
-    check("""
-class Builder {
-  void await(boolean value) {}
-  Builder bwait(boolean xvalue) {}
-  Builder timeWait(int time) {}
-}
-
-class Test {
-
-  public void test() {
-    Builder builder = new Builder();
-    builder.await(<hint text="value:"/>true);
-    builder.bwait(false).timeWait(100);
-  }
-
-}
-""")
-    
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Builder {
-  void await(boolean value) {}
-  Builder bwait(boolean xvalue) {}
-  Builder timeWait(int millis) {}
-}
-
-class Test {
-
-  public void test() {
-    Builder builder = new Builder();
-    builder.await(<hint text="value:"/>true);
-    builder.bwait(<hint text="xvalue:"/>false).timeWait(<hint text="millis:"/>100);
-  }
-
-}
-""")
-  }
-
-  
-  fun `test builder method only method with one param`() {
-    check("""
-class Builder {
-  Builder qwit(boolean value, String sValue) {}
-  Builder trew(boolean value) {}
-}
-
-class Test {
-  public void test() {
-    Builder builder = new Builder();
-    builder
-    .trew(false)
-    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
-  }
-}
-""")
-
-    JavaInlayParameterHintsProvider.getInstance().showForBuilderLikeMethods.set(true)
-    check("""
-class Builder {
-  Builder qwit(boolean value, String sValue) {}
-  Builder trew(boolean value) {}
-}
-
-class Test {
-  public void test() {
-    Builder builder = new Builder();
-    builder
-    .trew(<hint text="value:"/>false)
-    .qwit(<hint text="value:"/>true, <hint text="sValue:"/>"value");
-  }
-}
-""")
-  
-  }
-  
 
   fun `test do not show single parameter hint if it is string literal`() {
     check("""

@@ -16,5 +16,5 @@ class Derived extends ChangeSignatureTest {
         super(null);
     }
 
-    void foo(Class clazz) {}
+    void foo (Class clazz) {}
 }

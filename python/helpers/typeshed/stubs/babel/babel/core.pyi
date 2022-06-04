@@ -1,4 +1,5 @@
 from typing import Any
+from typing_extensions import Literal
 
 class UnknownLocaleError(Exception):
     identifier: Any
@@ -108,3 +109,21 @@ def default_locale(category: Any | None = ..., aliases=...): ...
 def negotiate_locale(preferred, available, sep: str = ..., aliases=...): ...
 def parse_locale(identifier, sep: str = ...): ...
 def get_locale_identifier(tup, sep: str = ...): ...
+def get_global(key: _GLOBAL_KEY): ...
+
+_GLOBAL_KEY = Literal[
+    "all_currencies",
+    "currency_fractions",
+    "language_aliases",
+    "likely_subtags",
+    "parent_exceptions",
+    "script_aliases",
+    "territory_aliases",
+    "territory_currencies",
+    "territory_languages",
+    "territory_zones",
+    "variant_aliases",
+    "windows_zone_mapping",
+    "zone_aliases",
+    "zone_territories",
+]

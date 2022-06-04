@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -23,14 +24,17 @@ import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
 class GHSuggestionHtmlSyntaxHighlighter(
   private val project: Project?,
-  private val suggestionInfo: GHSuggestionInfo
+  private val filePath: String,
+  private val diffHunk: String,
+  private val startLine: Int,
+  private val endLine: Int
 ) : HtmlSyntaxHighlighter {
   override fun color(language: String?, rawContent: String): HtmlChunk {
-    val name = PathUtil.getFileName(suggestionInfo.filePath)
-    val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(name) as LanguageFileType
+    val name = PathUtil.getFileName(filePath)
+    val fileType = (FileTypeRegistry.getInstance().getFileTypeByFileName(name) as? LanguageFileType) ?: PlainTextFileType.INSTANCE
     val fileLanguage = fileType.language
 
-    val originalDiffHunk = cutOriginalHunk(suggestionInfo.diffHunk, suggestionInfo.startLine - 1, suggestionInfo.endLine - 1)
+    val originalDiffHunk = cutOriginalHunk(diffHunk, startLine - 1, endLine - 1)
 
     return HtmlBuilder()
       .append(createColoredChunk(project, fileLanguage, trimStartWithMinIndent(originalDiffHunk), DiffColors.DIFF_CONFLICT))

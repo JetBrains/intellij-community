@@ -1,14 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl
 
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.dsl.gridLayout.Constraints
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-class UiDslException(message: String = "Internal error", cause: Throwable? = null) : RuntimeException(message, cause)
+class UiDslException(message: String = "Internal error", cause: Throwable? = null) : RuntimeException(message, cause) {
 
+  companion object {
+    fun error(message: String) {
+      if (PluginManagerCore.isRunningFromSources()) {
+        throw UiDslException(message)
+      }
+      else {
+        logger<UiDslException>().error(message)
+      }
+    }
+  }
+}
+
+@ApiStatus.Internal
 fun checkTrue(value: Boolean) {
   if (!value) {
     throw UiDslException()

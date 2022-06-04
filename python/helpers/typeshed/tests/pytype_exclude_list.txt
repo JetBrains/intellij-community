@@ -30,6 +30,8 @@ stubs/protobuf/google/protobuf/duration_pb2.pyi
 stubs/protobuf/google/protobuf/empty_pb2.pyi
 stubs/protobuf/google/protobuf/field_mask_pb2.pyi
 stubs/protobuf/google/protobuf/internal/containers.pyi
+stubs/protobuf/google/protobuf/internal/decoder.pyi
+stubs/protobuf/google/protobuf/internal/encoder.pyi
 stubs/protobuf/google/protobuf/internal/enum_type_wrapper.pyi
 stubs/protobuf/google/protobuf/internal/extension_dict.pyi
 stubs/protobuf/google/protobuf/json_format.pyi

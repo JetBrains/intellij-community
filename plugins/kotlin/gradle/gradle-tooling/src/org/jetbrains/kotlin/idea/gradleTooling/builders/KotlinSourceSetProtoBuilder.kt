@@ -56,11 +56,11 @@ class KotlinSourceSetProtoBuilder(
 
         val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
             val androidDependenciesForSourceSet = buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
+            val includeAndroidDependencies = importingContext.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)
 
             val dependencies = when {
-                androidDependenciesForSourceSet.isNotEmpty() -> androidDependenciesForSourceSet
-                gradleSourceSet in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
-                else -> buildMetadataDependencies(gradleSourceSet, importingContext)
+                !includeAndroidDependencies && gradleSourceSet in sourceSetsWithoutNeedOfBuildingDependenciesMetadata -> emptyList()
+                else -> buildMetadataDependencies(gradleSourceSet, importingContext) + androidDependenciesForSourceSet
             }
 
             dependencies

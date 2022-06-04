@@ -81,7 +81,10 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
     if (existingWrapper == null || existingWrapper.isInitialized != toolWrapper.isInitialized || toolWrapper.isInitialized && toolWrapper.tool !== existingWrapper.tool) {
       profile.addTool(project, toolWrapper, null)
       profile.enableTool(shortName, project)
-      Disposer.register(disposable, Disposable { profile.removeTool(toolWrapper) })
+      Disposer.register(disposable, Disposable {
+        profile.removeTool(toolWrapper)
+        HighlightDisplayKey.unregister(shortName)
+      })
     }
     else {
       profile.enableTool(shortName, project)

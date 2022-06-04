@@ -244,47 +244,44 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          if (refResolved instanceof RefMethodImpl) {
                            updateRefMethod(psiResolved, (RefMethodImpl)refResolved, node, decl);
                          }
+                         else if (refResolved instanceof RefField) {
+                           if (node instanceof UResolvable) {
+                             UMethod uProperty = UastContextKt.toUElement(((UResolvable)node).resolve(), UMethod.class);
+                             if (uProperty != null) {
+                             //  PsiMethod property = uProperty.getJavaPsi();
+                             //  RefElement refProperty = refManager.getReference(uProperty);
+                             //  if (refProperty != null) {
+                             //    refProperty.waitForInitialized();
+                             //    refFrom.addReference(refProperty, property, decl, false, true, node);
+                             //  }
+                             }
+                           }
+                         }
 
                          if (psiResolved instanceof PsiMember) {
                            //TODO support kotlin
                            addClassReferenceForStaticImport(node, (PsiMember)psiResolved, refFrom, decl);
                          }
+                       }
+
+                       @Override
+                       public boolean visitLambdaExpression(@NotNull ULambdaExpression lambda) {
+                         processFunctionalExpression(lambda, lambda.getFunctionalInterfaceType());
+                         return true;
+                       }
+
+                       @Override
+                       public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression methodRef) {
+                         RefElement refMethod = refFrom.getRefManager().getReference(methodRef.getSourcePsi());
+                         if (refFrom == refMethod) {
+                           visitReferenceExpression(methodRef);
+                           return false;
+                         }
                          else {
-                           // todo currently if psiResolved is KtParameter, it doesn't convert to UParameter, that seems wrong
-                           UParameter uParam = UastContextKt.toUElement(psiResolved, UParameter.class);
-                           if (uParam != null) {
-                             addReferenceToLambdaParameter(uParam, psiResolved, decl, refFrom);
-                           }
+                           processFunctionalExpression(methodRef, getFunctionalInterfaceType(methodRef));
+                           return true;
                          }
                        }
-
-                       @Override
-                       public boolean visitLambdaExpression(@NotNull ULambdaExpression node) {
-                         processFunctionalExpression(node, node.getFunctionalInterfaceType());
-                         return false;
-                       }
-
-                       @Override
-                       public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
-                         visitReferenceExpression(node);
-                         // todo doesn't work for kotlin
-                         PsiType interfaceType = getFunctionalInterfaceType(node);
-                         processFunctionalExpression(node, interfaceType);
-                         markParametersReferenced(node, interfaceType);
-                         return false;
-                       }
-
-                        private void markParametersReferenced(@NotNull UCallableReferenceExpression node, @Nullable PsiType type) {
-                          PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(type);
-                          if (method == null) return;
-                          for (PsiParameter param : method.getParameterList().getParameters()) {
-                            RefElement paramRef = refManager.getReference(param);
-                            if (paramRef != null) {
-                              paramRef.waitForInitialized();
-                              refFrom.addReference(paramRef, param, decl, false, true, node);
-                            }
-                          }
-                        }
 
                        private void processFunctionalExpression(@NotNull UExpression expression, @Nullable PsiType type) {
                          PsiElement aClass = PsiUtil.resolveClassInType(type);
@@ -295,14 +292,11 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            final RefElement refWhat = refManager.getReference(aClass);
                            if (refWhat != null) refWhat.waitForInitialized();
                            refFrom.addReference(refWhat, aClass, decl, false, true, null);
-                           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
-                           if (interfaceMethod != null) {
-                             RefElement interfaceMethodRef = refManager.getReference(interfaceMethod);
-                             if (interfaceMethodRef != null) interfaceMethodRef.waitForInitialized();
-                             refFrom.addReference(interfaceMethodRef, interfaceMethod, decl, false, true, null);
-                             refManager.fireNodeMarkedReferenced(interfaceMethod, expression.getSourcePsi());
-                           }
                          }
+                         PsiElement functionalExpr = expression.getSourcePsi();
+                         RefElement refFunctionalExpr = refFrom.getRefManager().getReference(functionalExpr);
+                         if (refFunctionalExpr != null) refFunctionalExpr.waitForInitialized();
+                         refFrom.addReference(refFunctionalExpr, functionalExpr, decl, false, true, expression);
                        }
 
                        @Nullable
@@ -410,27 +404,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
                      }
       );
-    }
-  }
-
-  private static void addReferenceToLambdaParameter(@NotNull UParameter uParam, @NotNull PsiElement param, @NotNull UElement decl,
-                                                    @NotNull RefJavaElementImpl refFrom) {
-    ULambdaExpression lambda = UastUtils.getParentOfType(uParam, ULambdaExpression.class);
-    if (lambda == null) return;
-    int paramIndex = -1;
-    List<UParameter> lambdaParams = lambda.getParameters();
-    for (int i = 0; i < lambdaParams.size(); i++) {
-      if (lambdaParams.get(i).equals(uParam)) {
-        paramIndex = i;
-        break;
-      }
-    }
-    if (paramIndex == -1) return;
-    RefElement method = refFrom.getRefManager().getReference(LambdaUtil.getFunctionalInterfaceMethod(lambda.getFunctionalInterfaceType()));
-    if (method instanceof RefMethod) {
-      method.waitForInitialized();
-      RefParameter[] methodParams = ((RefMethod)method).getParameters();
-      refFrom.addReference(methodParams[paramIndex], param, decl, false, true, null);
     }
   }
 

@@ -2,14 +2,14 @@
 
 package foo
 
-expect interface <!LINE_MARKER("descr='Has actuals in JVM'")!>A<!> {
-    fun <!LINE_MARKER("descr='Has actuals in JVM'")!>commonFun<!>()
-    val <!LINE_MARKER("descr='Has actuals in JVM'")!>b<!>: B
-    fun <!LINE_MARKER("descr='Has actuals in JVM'")!>bFun<!>(): B
+expect interface <!LINE_MARKER("descr='Has actuals in jvm module'")!>A<!> {
+    fun <!LINE_MARKER("descr='Has actuals in jvm module'")!>commonFun<!>()
+    val <!LINE_MARKER("descr='Has actuals in jvm module'")!>b<!>: B
+    fun <!LINE_MARKER("descr='Has actuals in jvm module'")!>bFun<!>(): B
 }
 
-expect interface <!LINE_MARKER("descr='Has actuals in JVM'")!>B<!> {
-    fun <!LINE_MARKER("descr='Has actuals in JVM'")!>commonFunB<!>()
+expect interface <!LINE_MARKER("descr='Has actuals in jvm module'")!>B<!> {
+    fun <!LINE_MARKER("descr='Has actuals in jvm module'")!>commonFunB<!>()
 }
 
 class Common {

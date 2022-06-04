@@ -173,14 +173,8 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
       if (pregenerated != null && (targetDir.exists() || targetDir.mkdirs())) {
         LOG.info("Pre-generated skeleton for " + moduleName);
         File target = new File(targetDir, pregenerated.getName());
-        try {
-          FileOutputStream fos = new FileOutputStream(target);
-          try {
-            FileUtil.copy(pregenerated.getInputStream(), fos);
-          }
-          finally {
-            fos.close();
-          }
+        try (FileOutputStream fos = new FileOutputStream(target)) {
+          FileUtil.copy(pregenerated.getInputStream(), fos);
         }
         catch (IOException e) {
           LOG.info("Error copying pre-generated skeleton", e);

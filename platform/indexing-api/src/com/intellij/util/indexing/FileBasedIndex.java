@@ -22,10 +22,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @see FileBasedIndexExtension
@@ -79,8 +76,7 @@ public abstract class FileBasedIndex {
   /**
    * @deprecated see {@link com.intellij.openapi.vfs.newvfs.ManagingFS#findFileById(int)}
    */ // note: upsource implementation requires access to Project here, please don't remove (not anymore)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
@@ -94,6 +90,15 @@ public abstract class FileBasedIndex {
   public abstract <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                                     @NotNull K dataKey,
                                                                     @NotNull GlobalSearchScope filter);
+
+  /**
+   * @return lazily reified iterator of VirtualFile's.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
+                                                                          @NotNull K dataKey,
+                                                                          @NotNull GlobalSearchScope filter);
 
   /**
    * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
@@ -338,8 +343,7 @@ public abstract class FileBasedIndex {
   }
 
   /** @deprecated inline true */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = true;
 
   @ApiStatus.Internal

@@ -43,7 +43,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       Project project = file.getProject();
       TextRange restrict = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
       if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, editor.getDocument());
-      ProperTextRange priority = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+      ProperTextRange priority = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
       return new ChameleonSyntaxHighlightingPass(file, editor.getDocument(), ProperTextRange.create(restrict),
                                                  priority, editor, new DefaultHighlightInfoProcessor());
     }

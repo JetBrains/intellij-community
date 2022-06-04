@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.configuration.notifications.checkExternalKotlinCompilerVersion
@@ -46,7 +47,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val propertyKey = LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
         val propertiesComponent = PropertiesComponent.getInstance()
 
-        val kotlinVersionVerbose = KotlinVersionVerbose.parse(KotlinCompilerVersion.VERSION)
+        val kotlinVersionVerbose = KotlinVersionVerbose.parse(KotlinPluginLayout.instance.standaloneCompilerVersion)
         val notificationText = KotlinBundle.message(
             "kotlin.external.compiler.updates.notification.content.0",
             kotlinVersionVerbose?.plainVersion.toString(),

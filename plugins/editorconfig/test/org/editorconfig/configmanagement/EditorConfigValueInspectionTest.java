@@ -34,7 +34,7 @@ public class EditorConfigValueInspectionTest extends InspectionFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/editorconfig/testData/org/editorconfig/configmanagement/inspections/";
+    return "/plugins/editorconfig/testData/org/editorconfig/configmanagement/inspections/" + getTestName(true);
   }
 
   @Override

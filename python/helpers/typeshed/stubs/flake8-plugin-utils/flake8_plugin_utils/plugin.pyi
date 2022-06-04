@@ -1,8 +1,8 @@
 import argparse
 import ast
-from typing import Any, Generic, Iterable, Iterator, Tuple, Type, TypeVar
+from typing import Any, Generic, Iterable, Iterator, TypeVar
 
-FLAKE8_ERROR = Tuple[int, int, str, Type[Any]]
+FLAKE8_ERROR = tuple[int, int, str, type[Any]]
 TConfig = TypeVar("TConfig")  # noqa: Y001
 
 class Error:
@@ -19,12 +19,12 @@ class Visitor(ast.NodeVisitor, Generic[TConfig]):
     def __init__(self, config: TConfig | None = ...) -> None: ...
     @property
     def config(self) -> TConfig: ...
-    def error_from_node(self, error: Type[Error], node: ast.AST, **kwargs: Any) -> None: ...
+    def error_from_node(self, error: type[Error], node: ast.AST, **kwargs: Any) -> None: ...
 
 class Plugin(Generic[TConfig]):
     name: str
     version: str
-    visitors: list[Type[Visitor[TConfig]]]
+    visitors: list[type[Visitor[TConfig]]]
     config: TConfig
     def __init__(self, tree: ast.AST) -> None: ...
     def run(self) -> Iterable[FLAKE8_ERROR]: ...

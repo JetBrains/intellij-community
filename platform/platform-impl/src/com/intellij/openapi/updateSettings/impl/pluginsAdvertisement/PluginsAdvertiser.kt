@@ -33,7 +33,7 @@ var isIgnoreIdeSuggestion: Boolean
   set(value) = propertiesComponent.setValue(IGNORE_ULTIMATE_EDITION, value)
 
 @JvmField
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use `notificationGroup` property")
 val NOTIFICATION_GROUP = notificationGroup
 

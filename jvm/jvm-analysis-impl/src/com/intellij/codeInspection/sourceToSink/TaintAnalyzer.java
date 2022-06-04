@@ -3,6 +3,7 @@ package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -263,13 +264,8 @@ public class TaintAnalyzer {
     return property == target;
   }
 
-  private static @Nullable PsiType getType(@Nullable PsiElement element) {
-    if (element instanceof PsiMethod) return ((PsiMethod)element).getReturnType();
-    return element instanceof PsiVariable ? ((PsiVariable)element).getType() : null;
-  }
-
-  public static @Nullable TaintValue fromAnnotation(@Nullable PsiElement target) { 
-    PsiType type = getType(target);
+  public static @Nullable TaintValue fromAnnotation(@Nullable PsiElement target) {
+    PsiType type = target == null ? null : PsiUtil.getTypeByPsiElement(target);
     if (type == null) return null;
     if (target instanceof PsiClass) return null;
     if (target instanceof PsiModifierListOwner) {

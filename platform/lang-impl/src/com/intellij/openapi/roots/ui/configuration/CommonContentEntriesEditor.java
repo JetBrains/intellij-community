@@ -33,7 +33,6 @@ import com.intellij.ui.roots.ToolbarPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -57,8 +56,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   /**
    * @deprecated Use {@link #getName()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final String NAME = "Sources";
 
   protected ContentEntryTreeEditor myRootTreeEditor;

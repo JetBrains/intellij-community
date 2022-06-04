@@ -843,10 +843,17 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     return new MyModuleIdentifier(name, group);
   }
 
+
+  /*
+  DeprecatedDependencyResolver used Google Guava library, repackaged insinde Gradle Impl Dep artifact.
+  Starting with Gradle 7.4, the Guava library requires JDK 8
+  All usages were inlined to keep code compatibility with JDK 1.6
+   */
+  // inlined guava method for compatibility
   private static interface MyPredicate<T> {
     public boolean apply(@Nullable T input);
   }
-
+  // inlined guava field for compatibility
   private static final MyPredicate<?> IS_NOT_NULL = new MyPredicate<Object>() {
     @Override
     public boolean apply(@Nullable Object input) {
@@ -854,11 +861,13 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     }
   };
 
+  // inlined guava method for compatibility
   @SuppressWarnings("unchecked")
   private static <T> MyPredicate<T> isNotNull() {
     return (MyPredicate<T>)IS_NOT_NULL;
   }
 
+  // inlined guava method for compatibility
   private static <T> Iterable<T> filter(@NotNull final Iterable<T> sourceIterable, @NotNull final MyPredicate<? super T> predicate) {
     return new Iterable<T>() {
       @NotNull
@@ -877,7 +886,6 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
                 return element;
               }
-
               return this.endOfData();
             }
           }

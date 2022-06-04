@@ -185,6 +185,7 @@ public final class ExperimentalUI {
     paths.put("actions/startDebugger.svg", "expui/run/debug.svg");
     paths.put("actions/restart.svg", "expui/run/restart.svg");
     paths.put("actions/suspend.svg", "expui/run/stop.svg");
+    paths.put("codeWithMe/cwmAccess.svg", "expui/general/addAccount.svg");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {

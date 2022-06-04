@@ -69,7 +69,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
 
     @JvmStatic
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link #doOpenProject(Path, OpenProjectTask)} ")
     fun doOpenProject(virtualFile: VirtualFile,
                       projectToClose: Project?,

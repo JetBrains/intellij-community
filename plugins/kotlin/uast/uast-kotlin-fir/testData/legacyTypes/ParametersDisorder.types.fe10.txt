@@ -5,7 +5,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = b) [@org.jetbrains.annotations.NotNull var b: float]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = withDefault) [public static final fun withDefault(@org.jetbrains.annotations.NotNull c: int, @org.jetbrains.annotations.NotNull d: java.lang.String) : void {...}]
             UParameter (name = c) [@org.jetbrains.annotations.NotNull var c: int = 1]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -13,7 +13,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
             UParameter (name = d) [@org.jetbrains.annotations.NotNull var d: java.lang.String = "aaa"]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 ULiteralExpression (value = "aaa") ["aaa"] : PsiType:String
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = withReceiver) [public static final fun withReceiver(@org.jetbrains.annotations.NotNull $this$withReceiver: java.lang.String, @org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: float) : void {...}]
             UParameter (name = $this$withReceiver) [@org.jetbrains.annotations.NotNull var $this$withReceiver: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -21,23 +21,23 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = b) [@org.jetbrains.annotations.NotNull var b: float]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = call) [public static final fun call() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [global(2.2, 2)] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [global(2.2, 2)] : PsiType:Unit
                     UIdentifier (Identifier (global)) [UIdentifier (Identifier (global))]
-                    USimpleNameReferenceExpression (identifier = global, resolvesTo = null) [global] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = global, resolvesTo = null) [global] : PsiType:Unit
                     ULiteralExpression (value = 2.2) [2.2] : PsiType:float
                     ULiteralExpression (value = 2) [2] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [withDefault("bbb")] : PsiType:void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [withDefault("bbb")] : PsiType:Unit
                     UIdentifier (Identifier (withDefault)) [UIdentifier (Identifier (withDefault))]
-                    USimpleNameReferenceExpression (identifier = withDefault, resolvesTo = null) [withDefault] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = withDefault, resolvesTo = null) [withDefault] : PsiType:Unit
                     ULiteralExpression (value = "bbb") ["bbb"] : PsiType:String
-                UQualifiedReferenceExpression ["abc".withReceiver(1, 1.2)] : PsiType:void
+                UQualifiedReferenceExpression ["abc".withReceiver(1, 1.2)] : PsiType:Unit
                     ULiteralExpression (value = "abc") ["abc"] : PsiType:String
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [withReceiver(1, 1.2)] : PsiType:void
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [withReceiver(1, 1.2)] : PsiType:Unit
                         UIdentifier (Identifier (withReceiver)) [UIdentifier (Identifier (withReceiver))]
-                        USimpleNameReferenceExpression (identifier = withReceiver, resolvesTo = null) [withReceiver] : PsiType:void
+                        USimpleNameReferenceExpression (identifier = withReceiver, resolvesTo = null) [withReceiver] : PsiType:Unit
                         ULiteralExpression (value = 1) [1] : PsiType:int
                         ULiteralExpression (value = 1.2) [1.2] : PsiType:float
                 UQualifiedReferenceExpression [Math.atan2(1.3, 3.4)] : PsiType:double
@@ -123,19 +123,19 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toTypedArray()] : PsiType:String[]
                                 UIdentifier (Identifier (toTypedArray)) [UIdentifier (Identifier (toTypedArray))]
                                 USimpleNameReferenceExpression (identifier = toTypedArray, resolvesTo = null) [toTypedArray] : PsiType:String[]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<init>(), { ...})] : PsiType:void
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<init>(), { ...})] : PsiType:Unit
                     UIdentifier (Identifier (with)) [UIdentifier (Identifier (with))]
-                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] : PsiType:void
+                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] : PsiType:Unit
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:A
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                         USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : PsiType:A
                     ULambdaExpression [{ ...}] : PsiType:Function1<? super A, ? extends Unit>
                         UBlockExpression [{...}]
-                            UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] : PsiType:void
+                            UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] : PsiType:Unit
                                 ULiteralExpression (value = "def") ["def"] : PsiType:String
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] : PsiType:void
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] : PsiType:Unit
                                     UIdentifier (Identifier (with2Receivers)) [UIdentifier (Identifier (with2Receivers))]
-                                    USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] : PsiType:void
+                                    USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] : PsiType:Unit
                                     ULiteralExpression (value = 8) [8] : PsiType:int
                                     ULiteralExpression (value = 7.0) [7.0] : PsiType:float
         UMethod (name = objectLiteral) [public static final fun objectLiteral() : void {...}]
@@ -153,7 +153,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = b) [@org.jetbrains.annotations.NotNull var b: float]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = A) [public fun A() = UastEmptyExpression]
     UClass (name = Parent) [public class Parent {...}]
         UMethod (name = Parent) [public fun Parent(@org.jetbrains.annotations.NotNull a: java.lang.String, @org.jetbrains.annotations.NotNull b: int) = UastEmptyExpression]

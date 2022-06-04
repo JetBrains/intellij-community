@@ -37,7 +37,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import kotlin.collections.ArraysKt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,8 +117,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
   /**
    * @deprecated use {@link DirtyScopeHolder#upToDateCheckFinished(Collection, Collection)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public void upToDateCheckFinished(Module @NotNull [] modules) {
     upToDateCheckFinished(ArraysKt.asList(modules), Collections.emptyList());
   }

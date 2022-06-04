@@ -1,15 +1,17 @@
-from _typeshed import SupportsWrite
 from collections.abc import Mapping
+from typing import Any
 
 from yaml.emitter import Emitter
 from yaml.representer import BaseRepresenter, Representer, SafeRepresenter
 from yaml.resolver import BaseResolver, Resolver
 from yaml.serializer import Serializer
 
+from .emitter import _WriteStream
+
 class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
     def __init__(
         self,
-        stream: SupportsWrite[bytes | str],
+        stream: _WriteStream[Any],
         default_style: str | None = ...,
         default_flow_style: bool | None = ...,
         canonical: bool | None = ...,
@@ -28,7 +30,7 @@ class BaseDumper(Emitter, Serializer, BaseRepresenter, BaseResolver):
 class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
     def __init__(
         self,
-        stream: SupportsWrite[bytes | str],
+        stream: _WriteStream[Any],
         default_style: str | None = ...,
         default_flow_style: bool | None = ...,
         canonical: bool | None = ...,
@@ -47,7 +49,7 @@ class SafeDumper(Emitter, Serializer, SafeRepresenter, Resolver):
 class Dumper(Emitter, Serializer, Representer, Resolver):
     def __init__(
         self,
-        stream: SupportsWrite[bytes | str],
+        stream: _WriteStream[Any],
         default_style: str | None = ...,
         default_flow_style: bool | None = ...,
         canonical: bool | None = ...,

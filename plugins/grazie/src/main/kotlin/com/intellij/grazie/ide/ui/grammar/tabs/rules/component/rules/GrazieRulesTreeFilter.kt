@@ -40,6 +40,7 @@ internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : Fi
         lang to rules.filter {
           lang.nativeName.contains(filterString, true) ||
           it.category.contains(filterString, true) ||
+          it.subCategory?.contains(filterString, true) == true ||
           it.presentableName.contains(filterString, true) ||
           it.searchableDescription.contains(filterString, true)
         }

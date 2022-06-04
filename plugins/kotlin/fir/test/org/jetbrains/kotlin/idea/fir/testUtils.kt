@@ -8,8 +8,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.idea.frontend.api.InvalidWayOfUsingAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSessionProvider
+import org.jetbrains.kotlin.analysis.api.InvalidWayOfUsingAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSessionProvider
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import java.io.File
 

@@ -210,10 +210,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  protected void assertWriteAccess() {
-    assert myLock.isWriteLockedByCurrentThread();
-  }
-
   @NotNull
   protected Lock getWriteLock() {
     return myLock.writeLock();
@@ -485,12 +481,18 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   protected void doClose() throws IOException {
     IOCancellationCallbackHolder.interactWithUI();
+    lockStorageWrite();
     try {
-      force();
-      myKeyStorage.close();
+      try {
+        force();
+        myKeyStorage.close();
+      }
+      finally {
+        myStorage.close();
+      }
     }
     finally {
-      myStorage.close();
+      unlockStorageWrite();
     }
   }
 

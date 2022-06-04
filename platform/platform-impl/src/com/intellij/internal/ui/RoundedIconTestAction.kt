@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -24,7 +24,6 @@ import java.awt.image.BufferedImage
 import javax.swing.*
 import javax.swing.event.ChangeListener
 
-
 @Suppress("HardCodedStringLiteral")
 class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
   override fun actionPerformed(e: AnActionEvent) {
@@ -44,7 +43,7 @@ class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
         majorTickSpacing = 10
         isOpaque = false
       }
-      val splashIcon: Icon? by lazy { IconLoader.findIcon(ApplicationInfoImpl.getShadowInstanceImpl().splashImageUrl) }
+      val splashIcon: Icon? by lazy { IconLoader.findIcon(ApplicationInfoImpl.getShadowInstanceImpl().splashImageUrl, ApplicationInfoImpl::class.java.classLoader) }
       val generatedIcon: Icon? by lazy {
         IconUtil.createImageIcon((createRandomImage(splashIcon!!.iconWidth, splashIcon!!.iconHeight) as Image))
       }
@@ -83,11 +82,11 @@ class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
         iconChooser.addActionListener(actionListener)
         formChooser.addActionListener(actionListener)
 
-        panel.add(myLabel, CENTER);
+        panel.add(myLabel, CENTER)
         val southPanel = NonOpaquePanel(BorderLayout())
         val chooserPanel = NonOpaquePanel(GridLayout(2, 1))
-        chooserPanel.add(iconChooser);
-        chooserPanel.add(formChooser);
+        chooserPanel.add(iconChooser)
+        chooserPanel.add(formChooser)
         southPanel.add(chooserPanel, WEST)
         southPanel.add(slider, CENTER)
         panel.add(southPanel, SOUTH)

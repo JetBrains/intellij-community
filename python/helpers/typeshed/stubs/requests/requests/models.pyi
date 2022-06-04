@@ -1,13 +1,17 @@
 import datetime
+from _typeshed import Self
 from json import JSONDecoder
-from typing import Any, Callable, Iterator, Text, Type
+from typing import Any, Callable, Iterator, Text, TypeVar
+
+from urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
 
 from . import auth, cookies, exceptions, hooks, status_codes, structures, utils
 from .cookies import RequestsCookieJar
-from .packages.urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
+
+_VT = TypeVar("_VT")
 
 default_hooks = hooks.default_hooks
-CaseInsensitiveDict = structures.CaseInsensitiveDict
+CaseInsensitiveDict = structures.CaseInsensitiveDict[_VT]
 HTTPBasicAuth = auth.HTTPBasicAuth
 cookiejar_from_dict = cookies.cookiejar_from_dict
 get_cookie_header = cookies.get_cookie_header
@@ -103,7 +107,7 @@ class Response:
     def __bool__(self) -> bool: ...
     def __nonzero__(self) -> bool: ...
     def __iter__(self) -> Iterator[bytes]: ...
-    def __enter__(self) -> Response: ...
+    def __enter__(self: Self) -> Self: ...
     def __exit__(self, *args: Any) -> None: ...
     @property
     def next(self) -> PreparedRequest | None: ...
@@ -126,7 +130,7 @@ class Response:
     def json(
         self,
         *,
-        cls: Type[JSONDecoder] | None = ...,
+        cls: type[JSONDecoder] | None = ...,
         object_hook: Callable[[dict[Any, Any]], Any] | None = ...,
         parse_float: Callable[[str], Any] | None = ...,
         parse_int: Callable[[str], Any] | None = ...,

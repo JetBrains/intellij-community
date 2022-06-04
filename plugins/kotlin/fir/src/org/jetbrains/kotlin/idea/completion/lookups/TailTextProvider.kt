@@ -4,21 +4,22 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.idea.frontend.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 
 internal object TailTextProvider {
-    fun KtAnalysisSession.getTailText(symbol: KtCallableSymbol): String = buildString {
+    fun KtAnalysisSession.getTailText(symbol: KtCallableSymbol, substitutor: KtSubstitutor): String = buildString {
         if (symbol is KtFunctionSymbol) {
             if (insertLambdaBraces(symbol)) {
                 append(" {...}")
             } else {
-                append(renderFunctionParameters(symbol))
+                append(renderFunctionParameters(symbol, substitutor))
             }
         }
-        symbol.receiverType?.type?.let{ receiverType ->
+        symbol.receiverType?.let { receiverType ->
             val renderedType = receiverType.render(CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS)
             append(KotlinIdeaCompletionBundle.message("presentation.tail.for.0", renderedType))
         }
@@ -26,7 +27,7 @@ internal object TailTextProvider {
 
     fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionSymbol): Boolean {
         val singleParam = symbol.valueParameters.singleOrNull()
-        return singleParam != null && !singleParam.hasDefaultValue && singleParam.annotatedType.type is KtFunctionalType
+        return singleParam != null && !singleParam.hasDefaultValue && singleParam.returnType is KtFunctionalType
     }
 
     fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionalType): Boolean {

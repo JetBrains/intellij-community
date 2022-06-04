@@ -3,68 +3,36 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenArtifactUtilKt;
 
-import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.REPOSITORY;
-import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.REPOSITORY_BLOCKED;
-
+@ApiStatus.Internal
 public class MavenResolveResultProcessor {
 
-  public static ResolveProblem getProblem(@NotNull Collection<MavenProjectReaderResult> results) {
-    Map<MavenProjectProblem.ProblemType, Set<String>> repositoryProblemByType = getRepositoryProblems(results);
-    if (!repositoryProblemByType.isEmpty()) {
-      return new ResolveProblem(
-        repositoryProblemByType.getOrDefault(REPOSITORY_BLOCKED, Collections.emptySet()),
-        repositoryProblemByType.getOrDefault(REPOSITORY, Collections.emptySet()),
-        Collections.emptySet());
-    }
+  private static final String BLOCKED_MIRROR_FOR_REPOSITORIES = "Blocked mirror for repositories:";
 
-    Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();
-    for (MavenProjectReaderResult result : results) {
-      if (result.mavenModel.getDependencies() != null) {
-        for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
-          if (!MavenArtifactUtilKt.resolved(artifact)) {
-            unresolvedArtifacts.add(artifact);
-          }
-        }
-      }
-    }
-
-    return new ResolveProblem(
-      Collections.emptySet(),
-      Collections.emptySet(),
-      unresolvedArtifacts.isEmpty() ? Collections.emptySet() : unresolvedArtifacts
-    );
-  }
-
-  public static void notifySyncForProblem(@NotNull Project project, @NotNull ResolveProblem problem) {
+  public static void notifySyncForProblem(@NotNull Project project, @NotNull ArtifactTransferProblems problem) {
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
-    for (String repositoryBlockedProblem : problem.repositoryBlockedProblems) {
-      BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, repositoryBlockedProblem);
+    for (MavenProjectProblem projectProblem : problem.repositoryBlockedProblems) {
+      if (projectProblem.getDescription() == null) continue;
+      BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, projectProblem.getDescription());
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
-        .showBuildIssue(repositoryBlockedProblem, buildIssue);
+        .showBuildIssue(buildIssue.getTitle(), buildIssue);
     }
-    for (String repositoryProblem : problem.repositoryProblems) {
+
+    for (MavenProjectProblem projectProblem : problem.unresolvedArtifactPronlems) {
+      if (projectProblem.getMavenArtifact() == null || projectProblem.getDescription() == null) continue;
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
-        .showError(repositoryProblem);
-    }
-    List<Path> files = ContainerUtil.map(problem.unresolvedArtifacts, a -> a.getFile().toPath().getParent());
-    CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
-    for (MavenArtifact artifact : problem.unresolvedArtifacts) {
-      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
-        .showBuildIssue(artifact.getMavenId().getKey(), fix);
+        .showArtifactBuildIssue(projectProblem.getMavenArtifact().getMavenId().getKey(), projectProblem.getDescription());
     }
   }
 
@@ -79,33 +47,47 @@ public class MavenResolveResultProcessor {
   }
 
   @NotNull
-  private static Map<MavenProjectProblem.ProblemType, Set<String>> getRepositoryProblems(
-    @NotNull Collection<MavenProjectReaderResult> results
-  ) {
-    return results.stream()
-      .flatMap(readerResult -> readerResult.readingProblems.stream())
-      .filter(problem -> problem.getType() == REPOSITORY_BLOCKED || problem.getType() == REPOSITORY)
-      .collect(Collectors.groupingBy(p -> p.getType(), Collectors.mapping(p -> p.getDescription(), Collectors.toSet())));
+  public static ArtifactTransferProblems getArtifactTransferProblems(@NotNull Collection<MavenProjectReaderResult> results) {
+    Set<MavenProjectProblem> repositoryBlockedProblems = new HashSet<>();
+    Set<MavenProjectProblem> unresolvedArtifactProblems = new HashSet<>();
+    Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();
+
+    boolean hasProblem = false;
+    for (MavenProjectReaderResult result : results) {
+      for (MavenProjectProblem problem : result.readingProblems) {
+        if (!hasProblem) hasProblem = true;
+        if (problem.getMavenArtifact() != null) {
+          unresolvedArtifactProblems.add(problem);
+          unresolvedArtifacts.add(problem.getMavenArtifact());
+        }
+        String message = problem.getDescription();
+        if (message != null && message.contains(BLOCKED_MIRROR_FOR_REPOSITORIES)) {
+          repositoryBlockedProblems.add(problem);
+        }
+      }
+    }
+    return new ArtifactTransferProblems(repositoryBlockedProblems, unresolvedArtifactProblems, unresolvedArtifacts);
   }
 
-  public static class ResolveProblem {
+  public static class ArtifactTransferProblems {
     @NotNull
-    public final Set<String> repositoryBlockedProblems;
+    public final Set<MavenProjectProblem> repositoryBlockedProblems;
     @NotNull
-    public final Set<String> repositoryProblems;
+    public final Set<MavenProjectProblem> unresolvedArtifactPronlems;
     @NotNull
     public final Set<MavenArtifact> unresolvedArtifacts;
 
-    public ResolveProblem(@NotNull Set<String> repositoryBlockedProblems,
-                          @NotNull Set<String> repositoryProblems,
-                          @NotNull Set<MavenArtifact> unresolvedArtifacts) {
+    public ArtifactTransferProblems(@NotNull Set<MavenProjectProblem> repositoryBlockedProblems,
+                                    @NotNull Set<MavenProjectProblem> unresolvedArtifactPronlems,
+                                    @NotNull Set<MavenArtifact> unresolvedArtifacts) {
       this.repositoryBlockedProblems = repositoryBlockedProblems;
-      this.repositoryProblems = repositoryProblems;
+      this.unresolvedArtifactPronlems = unresolvedArtifactPronlems;
       this.unresolvedArtifacts = unresolvedArtifacts;
     }
 
     public boolean isEmpty() {
-      return repositoryBlockedProblems.isEmpty() && repositoryProblems.isEmpty() && unresolvedArtifacts.isEmpty();
+      return repositoryBlockedProblems.isEmpty()
+             && unresolvedArtifactPronlems.isEmpty() && unresolvedArtifacts.isEmpty();
     }
   }
 }

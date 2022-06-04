@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -42,6 +43,7 @@ import java.util.function.Supplier;
  */
 public final class BuildContentManagerImpl implements BuildContentManager, Disposable {
   public static final Supplier<@NlsContexts.TabTitle String> BUILD_TAB_TITLE_SUPPLIER = LangBundle.messagePointer("tab.title.build");
+  private static final BadgeIconSupplier TW_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.ToolWindowBuild);
 
   private static final List<Supplier<@NlsContexts.TabTitle String>> presetOrder = List.of(
     LangBundle.messagePointer("tab.title.sync"),
@@ -72,7 +74,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
 
     toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
       builder.stripeTitle = UIBundle.messagePointer("tool.window.name.build");
-      builder.icon = AllIcons.Toolwindows.ToolWindowBuild;
+      builder.icon = TW_ICON.getOriginalIcon();
       return Unit.INSTANCE;
     });
     toolWindow.setToHideOnEmptyContent(true);
@@ -190,7 +192,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
       JComponent component = content.getComponent();
       component.invalidate();
       if (!liveContentsMap.isEmpty()) {
-        getOrCreateToolWindow().setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Toolwindows.ToolWindowBuild));
+        getOrCreateToolWindow().setIcon(TW_ICON.getLiveIndicatorIcon());
       }
     });
   }
@@ -218,7 +220,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
 
     invokeLaterIfNeeded(() -> {
       if (liveContentsMap.isEmpty()) {
-        getOrCreateToolWindow().setIcon(AllIcons.Toolwindows.ToolWindowBuild);
+        getOrCreateToolWindow().setIcon(TW_ICON.getOriginalIcon());
       }
     });
   }

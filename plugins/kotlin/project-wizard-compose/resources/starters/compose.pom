@@ -7,7 +7,7 @@
   <properties>
     <java.version>11</java.version>
     <kotlin.target>11</kotlin.target>
-    <gradle.version>7.3.3</gradle.version>
+    <gradle.version>7.4</gradle.version>
     <kotlin.version>1.6.10</kotlin.version>
     <compose.version>1.0.1</compose.version>
     <agp.version>4.2.2</agp.version>
@@ -20,7 +20,6 @@
         <artifactId>kotlin-gradle-plugin</artifactId>
         <version>${kotlin.version}</version>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
 </project>

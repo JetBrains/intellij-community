@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +132,6 @@ public class LocalFsFinder implements Finder {
 
     /** @deprecated please use {@link #VfsFile(VirtualFile)} instead */
     @Deprecated(forRemoval = true)
-    @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
     public VfsFile(@SuppressWarnings("unused") LocalFsFinder finder, VirtualFile file) {
       this(file);
     }

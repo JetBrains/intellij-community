@@ -19,7 +19,6 @@ package com.intellij.util.xml.model;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,8 +33,7 @@ public interface DomModel<T extends DomElement> {
    * @deprecated Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   T getMergedModel();
 
   @NotNull

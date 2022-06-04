@@ -3,10 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -15,10 +12,10 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -27,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Map<String, String> ATTR_REPLACEMENTS = Map.of(
@@ -39,49 +37,22 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
   private static final CallMatcher FILE_ATTR_CALL_MATCHER =
     CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, ArrayUtil.toStringArray(ATTR_REPLACEMENTS.keySet())).parameterCount(0);
 
-  
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel7OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
-        super.visitMethodCallExpression(call);
-        if (!FILE_ATTR_CALL_MATCHER.test(call)) return;
-        PsiVariable fileVariable = getFileVariable(call);
-        if (fileVariable == null) return;
-        PsiMethod containingMethod = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-        if (containingMethod == null) return;
-        if (!HighlightControlFlowUtil.isEffectivelyFinal(fileVariable, containingMethod, null)) return;
-        List<PsiMethodCallExpression> attrCalls = findAttributeCalls(fileVariable, containingMethod);
-        if (distinctCalls(attrCalls) < 2) return;
-        if (!isOnTheFly) {
-          PsiExpression[] occurrences = attrCalls.toArray(PsiExpression.EMPTY_ARRAY);
-          PsiElement anchor = CommonJavaRefactoringUtil.getAnchorElementForMultipleExpressions(occurrences, containingMethod);
-          if (anchor == null || needsTryCatchBlock(anchor)) return;
-        }
-        holder.registerProblem(call, JavaBundle.message("inspection.bulk.file.attributes.read.message"),
-                               new ReplaceWithBulkCallFix(isOnTheFly));
+      public void visitMethod(PsiMethod method) {
+        super.visitMethod(method);
+        PsiCodeBlock methodBody = method.getBody();
+        if (methodBody == null) return;
+        CallReporter reporter = new CallReporter(methodBody, isOnTheFly, holder);
+        FileAttributeCallsVisitor visitor = new FileAttributeCallsVisitor(methodBody, reporter);
+        methodBody.accept(visitor);
+        reporter.accept(visitor.myCalls);
       }
     };
-  }
-
-  @Nullable
-  private static PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
-    PsiReferenceExpression qualifier = ObjectUtils.tryCast(call.getMethodExpression().getQualifier(), PsiReferenceExpression.class);
-    if (qualifier == null) return null;
-    return ObjectUtils.tryCast(qualifier.resolve(), PsiVariable.class);
-  }
-
-  @NotNull
-  private static List<PsiMethodCallExpression> findAttributeCalls(@NotNull PsiVariable fileVar, @NotNull PsiMethod containingMethod) {
-    Collection<PsiMethodCallExpression> calls = ReferencesSearch.search(fileVar, new LocalSearchScope(containingMethod))
-      .mapping(ref -> ObjectUtils.tryCast(ref, PsiReferenceExpression.class))
-      .mapping(ref -> ref == null ? null : ExpressionUtils.getCallForQualifier(ref))
-      .filtering(FILE_ATTR_CALL_MATCHER)
-      .findAll();
-    return new ArrayList<>(calls);
   }
 
   private static long distinctCalls(@NotNull List<PsiMethodCallExpression> calls) {
@@ -91,6 +62,94 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
   private static boolean needsTryCatchBlock(@NotNull PsiElement anchor) {
     PsiClassType ioExceptionType = TypeUtils.getType("java.io.IOException", anchor);
     return !ExceptionUtil.isHandled(ioExceptionType, anchor);
+  }
+
+  private static class CallReporter implements Consumer<Map<PsiVariable, List<PsiMethodCallExpression>>> {
+
+    private final PsiElement myScope;
+    private final boolean myIsOnTheFly;
+    private final ProblemsHolder myHolder;
+
+    private CallReporter(@NotNull PsiElement scope, boolean isOnTheFly, @NotNull ProblemsHolder holder) {
+      myScope = scope;
+      myIsOnTheFly = isOnTheFly;
+      myHolder = holder;
+    }
+
+    @Override
+    public void accept(Map<PsiVariable, List<PsiMethodCallExpression>> calls) {
+      calls.forEach((variable, varCalls) -> {
+        if (distinctCalls(varCalls) < 2) return;
+        PsiExpression[] occurrences = varCalls.toArray(PsiExpression.EMPTY_ARRAY);
+        PsiElement anchor = CommonJavaRefactoringUtil.getAnchorElementForMultipleExpressions(occurrences, myScope);
+        if (anchor == null) return;
+        boolean needsTryCatchBlock = needsTryCatchBlock(anchor);
+        if (!needsTryCatchBlock) {
+          varCalls.forEach(call -> myHolder.registerProblem(call, JavaBundle.message("inspection.bulk.file.attributes.read.message"),
+                                                            new ReplaceWithBulkCallFix(myIsOnTheFly)));
+          return;
+        }
+        if (myIsOnTheFly) {
+          varCalls.forEach(call -> myHolder.registerProblem(call, JavaBundle.message("inspection.bulk.file.attributes.read.message"),
+                                                            ProblemHighlightType.INFORMATION,
+                                                            new ReplaceWithBulkCallFix(true)));
+        }
+      });
+    }
+  }
+
+  private static class FileAttributeCallsVisitor extends JavaRecursiveElementWalkingVisitor {
+
+    private final PsiElement myScope;
+    private final Map<PsiVariable, List<PsiMethodCallExpression>> myCalls = new HashMap<>();
+    private final Consumer<Map<PsiVariable, List<PsiMethodCallExpression>>> myReporter;
+
+    private FileAttributeCallsVisitor(@NotNull PsiElement scope,
+                                      @NotNull Consumer<Map<PsiVariable, List<PsiMethodCallExpression>>> reporter) {
+      myScope = scope;
+      myReporter = reporter;
+    }
+
+    @Override
+    public void visitForStatement(PsiForStatement statement) {
+      doVisitLoop(statement);
+    }
+
+    @Override
+    public void visitWhileStatement(PsiWhileStatement statement) {
+      doVisitLoop(statement);
+    }
+
+    @Override
+    public void visitForeachStatement(PsiForeachStatement statement) {
+      doVisitLoop(statement);
+    }
+
+    @Override
+    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+      doVisitLoop(statement);
+    }
+
+    private void doVisitLoop(@NotNull PsiLoopStatement loop) {
+      PsiStatement loopBody = loop.getBody();
+      if (loopBody == null) return;
+      FileAttributeCallsVisitor visitor = new FileAttributeCallsVisitor(myScope, myReporter);
+      loopBody.accept(visitor);
+      myReporter.accept(visitor.myCalls);
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      if (!FILE_ATTR_CALL_MATCHER.test(call)) return;
+      PsiReference ref = ObjectUtils.tryCast(call.getMethodExpression().getQualifier(), PsiReference.class);
+      if (ref == null) return;
+      PsiVariable variable = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+      if (variable == null) return;
+      if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, myScope, null)) return;
+      List<PsiMethodCallExpression> varCalls = myCalls.computeIfAbsent(variable, __ -> new SmartList<>());
+      varCalls.add(call);
+    }
   }
 
   private static class ReplaceWithBulkCallFix implements LocalQuickFix {
@@ -118,7 +177,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
       if (parent == null) return;
       String fileVarName = fileVariable.getName();
       if (fileVarName == null) return;
-      AttributesVariableModel attributesVariable = AttributesVariableModel.create(fileVarName, fileVariable.myContainingMethod, anchor);
+      AttributesVariableModel attributesVariable = AttributesVariableModel.create(fileVarName, fileVariable.myScope, anchor);
       if (attributesVariable == null) return;
 
       final PsiDeclarationStatement declaration;
@@ -130,7 +189,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
       else {
         declaration = addDeclaration(parent, anchor, attributesVariable.myName, attributesVariable.myType, null);
         PsiExpressionStatement assignment = addAssignment(parent, anchor, attributesVariable.myName, attributesVariable.myInitializer);
-        assignment = surroundWithTryCatch(parent, declaration, assignment);
+        assignment = surroundWithTryCatch(assignment);
         if (assignment == null) return;
         PsiExpression lhs = getLhs(assignment);
         if (lhs == null) return;
@@ -149,7 +208,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
 
       if (!myIsOnTheFly) return;
       PsiVariable attrsVariable = (PsiVariable)declaration.getDeclaredElements()[0];
-      HighlightUtils.showRenameTemplate(fileVariable.myContainingMethod, attrsVariable, usages);
+      HighlightUtils.showRenameTemplate(fileVariable.myScope, attrsVariable, usages);
     }
 
     private static @NotNull PsiExpressionStatement addAssignment(@NotNull PsiElement parent,
@@ -164,16 +223,11 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
       return (PsiExpressionStatement)codeStyleManager.shortenClassReferences(assignment);
     }
 
-    private static @Nullable PsiExpressionStatement surroundWithTryCatch(@NotNull PsiElement parent,
-                                                                         @NotNull PsiStatement prevStatement,
-                                                                         @NotNull PsiExpressionStatement assignment) {
-      JavaWithTryCatchSurrounder tryCatchSurrounder = new JavaWithTryCatchSurrounder();
-      Project project = assignment.getProject();
-      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor == null) return null;
-      tryCatchSurrounder.surroundStatements(project, editor, parent, new PsiExpressionStatement[]{assignment});
-      PsiTryStatement tryStatement = ObjectUtils.tryCast(prevStatement.getNextSibling(), PsiTryStatement.class);
-      if (tryStatement == null) return null;
+    private static @Nullable PsiExpressionStatement surroundWithTryCatch(@NotNull PsiExpressionStatement assignment) {
+      String tryCatchText = "try{" + assignment.getText() + "}" +
+                            "catch(java.io.IOException e){throw new java.io.UncheckedIOException(e);}";
+      PsiTryStatement tryStatement =
+        (PsiTryStatement)PsiReplacementUtil.replaceStatementAndShortenClassNames(assignment, tryCatchText, new CommentTracker());
       return ObjectUtils.tryCast(ControlFlowUtils.getOnlyStatementInBlock(tryStatement.getTryBlock()), PsiExpressionStatement.class);
     }
 
@@ -211,14 +265,14 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
 
     private static class FileVariableModel {
       private final PsiVariable myFileVariable;
-      private final PsiMethod myContainingMethod;
+      private final PsiElement myScope;
       private List<PsiMethodCallExpression> myAttributeCalls;
 
       private FileVariableModel(@NotNull List<PsiMethodCallExpression> attributeCalls,
-                                @NotNull PsiVariable fileVariable, @NotNull PsiMethod containingMethod) {
+                                @NotNull PsiVariable fileVariable, @NotNull PsiElement scope) {
         myAttributeCalls = attributeCalls;
         myFileVariable = fileVariable;
-        myContainingMethod = containingMethod;
+        myScope = scope;
       }
 
       private @Nullable String getName() {
@@ -227,24 +281,49 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
 
       private @Nullable PsiElement findAnchor() {
         PsiExpression[] occurrences = myAttributeCalls.toArray(PsiExpression.EMPTY_ARRAY);
-        PsiElement anchor = CommonJavaRefactoringUtil.getAnchorElementForMultipleExpressions(occurrences, myContainingMethod);
+        PsiElement anchor = CommonJavaRefactoringUtil.getAnchorElementForMultipleExpressions(occurrences, myScope);
         if (anchor == null) return null;
         PsiLambdaExpression lambda = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(anchor.getParent()), PsiLambdaExpression.class);
         if (lambda == null) return anchor;
-        PsiCodeBlock codeBlock = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambda);
+        PsiCodeBlock codeBlock = CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambda);
         // attribute calls were inside lambda, need to recalculate them
-        myAttributeCalls = findAttributeCalls(myFileVariable, myContainingMethod);
+        myAttributeCalls = findAttributeCalls(myFileVariable, myScope);
         return ControlFlowUtils.getOnlyStatementInBlock(codeBlock);
       }
 
-      private static FileVariableModel create(@NotNull PsiMethodCallExpression variableUsage) {
-        PsiMethod containingMethod = PsiTreeUtil.getParentOfType(variableUsage, PsiMethod.class);
-        if (containingMethod == null) return null;
+      @NotNull
+      private static List<PsiMethodCallExpression> findAttributeCalls(@NotNull PsiVariable fileVar, @NotNull PsiElement scope) {
+        Collection<PsiMethodCallExpression> calls = ReferencesSearch.search(fileVar, new LocalSearchScope(scope))
+          .filtering(ref -> scope == findScope(ref.getElement()))
+          .mapping(ref -> ObjectUtils.tryCast(ref, PsiReferenceExpression.class))
+          .mapping(ref -> ref == null ? null : ExpressionUtils.getCallForQualifier(ref))
+          .filtering(FILE_ATTR_CALL_MATCHER)
+          .findAll();
+        return new ArrayList<>(calls);
+      }
+
+      private static @Nullable FileVariableModel create(@NotNull PsiMethodCallExpression variableUsage) {
+        PsiElement scope = findScope(variableUsage);
+        if (scope == null) return null;
         PsiVariable psiVariable = getFileVariable(variableUsage);
         if (psiVariable == null) return null;
-        List<PsiMethodCallExpression> attributeCalls = findAttributeCalls(psiVariable, containingMethod);
+        List<PsiMethodCallExpression> attributeCalls = findAttributeCalls(psiVariable, scope);
         if (distinctCalls(attributeCalls) < 2) return null;
-        return new FileVariableModel(attributeCalls, psiVariable, containingMethod);
+        return new FileVariableModel(attributeCalls, psiVariable, scope);
+      }
+
+      @Nullable
+      private static PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
+        PsiReferenceExpression qualifier = ObjectUtils.tryCast(call.getMethodExpression().getQualifier(), PsiReferenceExpression.class);
+        if (qualifier == null) return null;
+        return ObjectUtils.tryCast(qualifier.resolve(), PsiVariable.class);
+      }
+
+      @Nullable
+      private static PsiElement findScope(@NotNull PsiElement element) {
+        PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLoopStatement.class);
+        if (scope instanceof PsiLoopStatement) scope = ((PsiLoopStatement)scope).getBody();
+        return scope;
       }
     }
 

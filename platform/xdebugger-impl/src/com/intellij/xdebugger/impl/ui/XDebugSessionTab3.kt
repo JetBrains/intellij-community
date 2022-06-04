@@ -7,6 +7,7 @@ import com.intellij.execution.runners.PreferredPlace
 import com.intellij.execution.runners.RunTab
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
+import com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -26,7 +27,6 @@ import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.content.Content
-import com.intellij.ui.content.custom.options.CustomContentLayoutOptions
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -86,6 +86,7 @@ class XDebugSessionTab3(
 
       myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false)
     }
+    applyVariablesTabLayoutSettings()
 
     splitter.secondComponent = variablesView.panel
 
@@ -98,15 +99,17 @@ class XDebugSessionTab3(
       isCloseable = false
     }
 
-    val customLayoutOptions = if (Registry.`is`("debugger.new.debug.tool.window.view"))
-      XDebugFramesAndThreadsLayoutOptions(session, content, this).apply {
-        content.putUserData(CustomContentLayoutOptions.KEY, this)
-      }
+    val customLayoutOptions = if (Registry.`is`("debugger.new.debug.tool.window.view")) {
+      val optionsCollection = XDebugTabLayoutSettings(session, content, this)
+      content.putUserData(CustomContentLayoutSettings.KEY, optionsCollection)
+      optionsCollection.threadsAndFramesOptions
+    }
     else
       null
 
     val framesView = (customLayoutOptions?.getCurrentOption() as? FramesAndThreadsLayoutOptionBase)?.createView() ?: XFramesView(myProject)
     registerThreadsView(session, content, framesView, true)
+    framesView.mainComponent?.isVisible = customLayoutOptions?.isHidden?.not() ?: true
     addVariablesAndWatches(session)
 
     myUi.addContent(content, 0, PlaceInGrid.center, false)
@@ -259,6 +262,12 @@ class XDebugSessionTab3(
       initFocusingVariablesFromFramesView()
     }
     UIUtil.removeScrollBorder(splitter)
+  }
+
+  private fun applyVariablesTabLayoutSettings() {
+    val areOptionsVisible = XDebugTabLayoutSettings.isVariablesViewVisible()
+    getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesView::class.java)?.mainComponent?.isVisible = areOptionsVisible
+    getView(DebuggerContentInfo.WATCHES_CONTENT, XVariablesView::class.java)?.mainComponent?.isVisible = areOptionsVisible
   }
 }
 

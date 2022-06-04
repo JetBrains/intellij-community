@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities.*
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility.Permissiveness.LESS
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory3
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.toDescriptor
+import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -54,7 +56,7 @@ object ChangeVisibilityOnExposureFactory : KotlinIntentionActionsFactory() {
         val protectedAllowed = exposedDeclaration.parent == userDeclaration?.parent
         if (userDeclaration != null) {
             val userDescriptor = userDeclaration.toDescriptor() as? DeclarationDescriptorWithVisibility
-            if (userDescriptor != null && isVisibleIgnoringReceiver(exposedDescriptor, userDescriptor)) {
+            if (userDescriptor != null && DescriptorVisibilityUtils.isVisibleIgnoringReceiver(exposedDescriptor, userDescriptor, exposedDeclaration.getResolutionFacade().getLanguageVersionSettings())) {
                 addFixToTargetVisibility(
                     userDeclaration, userDescriptor,
                     targetUserVisibility, PRIVATE,

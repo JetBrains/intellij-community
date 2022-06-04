@@ -139,24 +139,13 @@ public class EclipseColorSchemeImporter implements SchemeImporter<EditorColorsSc
   private static String readFromStream(@NotNull final VirtualFile file,
                                      @Nullable final EclipseThemeReader.OptionHandler optionHandler)
     throws SchemeImportException {
-    InputStream inputStream = null;
-    try {
-      inputStream = file.getInputStream();
+    try (InputStream inputStream = file.getInputStream()) {
       EclipseThemeReader themeReader = new EclipseThemeReader(optionHandler);
       themeReader.readSettings(inputStream);
       return themeReader.getThemeName();
-    } catch (IOException e) {
-      throw new SchemeImportException(e);
     }
-    finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        }
-        catch (IOException e) {
-          //
-        }
-      }
+    catch (IOException e) {
+      throw new SchemeImportException(e);
     }
   }
   

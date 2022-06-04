@@ -11,8 +11,8 @@ class Foo {
     try {
         BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
         return basicFileAttributes.isDirectory() && basicFileAttributes.isRegularFile();
-      throw new IOException("");
-    } catch (IOException e) {
+    } catch (Exception e) {
     }
+    return false;
   }
 }

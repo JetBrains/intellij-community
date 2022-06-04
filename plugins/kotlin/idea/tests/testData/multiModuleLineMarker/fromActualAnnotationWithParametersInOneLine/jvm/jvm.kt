@@ -1,6 +1,6 @@
-actual annotation class <!LINE_MARKER("descr='Has declaration in common module'")!>Ann<!>(
-        actual val <!LINE_MARKER("descr='Has declaration in common module'")!>x<!>: Int, actual val y: String,
-        actual val <!LINE_MARKER("descr='Has declaration in common module'")!>z<!>: Double, actual val b: Boolean
+actual annotation class <!LINE_MARKER("descr='Has expects in common module'")!>Ann<!>(
+        actual val <!LINE_MARKER("descr='Has expects in common module'")!>x<!>: Int, actual val y: String,
+        actual val <!LINE_MARKER("descr='Has expects in common module'")!>z<!>: Double, actual val b: Boolean
 )
 
 /*

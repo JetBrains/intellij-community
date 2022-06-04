@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,8 +42,7 @@ public class TestsProgressAnimator implements Runnable, Disposable {
   /**
    * @deprecated To be deleted when AbstractTreeBuilder would be completely eliminated
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public TestsProgressAnimator(AbstractTestTreeBuilder builder) {
     this((AbstractTestTreeBuilderBase)builder);
   }

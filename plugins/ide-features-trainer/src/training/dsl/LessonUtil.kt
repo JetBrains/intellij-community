@@ -233,7 +233,7 @@ object LessonUtil {
 
   ) {
     task {
-      triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
+      triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
         val range = xRange(ui.width)
@@ -352,7 +352,10 @@ fun LessonContext.highlightDebugActionsToolbar() {
 
 private fun TaskContext.highlightToolbarWithAction(place: String, actionId: String, clearPreviousHighlights: Boolean = true) {
   val needAction = getActionById(actionId)
-  triggerByUiComponentAndHighlight(usePulsation = true, clearPreviousHighlights = clearPreviousHighlights) { ui: ActionToolbarImpl ->
+  triggerAndFullHighlight {
+    usePulsation = true
+    this.clearPreviousHighlights = clearPreviousHighlights
+  }.component { ui: ActionToolbarImpl ->
     if (ui.size.let { it.width > 0 && it.height > 0 } && ui.place == place) {
       ui.components.filterIsInstance<ActionButton>().any { it.action == needAction }
     }
@@ -574,9 +577,9 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
 
 fun TaskContext.triggerOnQuickDocumentationPopup() {
   if (isDocumentationV2Enabled()) {
-    triggerByUiComponentAndHighlight(false, false) { _: DocumentationEditorPane -> true }
+    triggerUI().component { _: DocumentationEditorPane -> true }
   }
   else {
-    triggerByUiComponentAndHighlight(false, false) { _: DocumentationComponent -> true }
+    triggerUI().component { _: DocumentationComponent -> true }
   }
 }

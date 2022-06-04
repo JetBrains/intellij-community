@@ -718,9 +718,6 @@ public class JavaDocInfoGenerator {
       buffer.append(DocumentationMarkup.SECTIONS_START);
     }
 
-    if (!isRendered()) {
-      new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations(isRendered(), doHighlightSignatures());
-    }
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
@@ -870,7 +867,7 @@ public class JavaDocInfoGenerator {
       return new Pair<>(tag, new InheritDocProvider<>() {
         @Override
         public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-          return isRendered() ? null : findInHierarchy(psiClass, locator);
+          return findInHierarchy(psiClass, locator);
         }
 
         @Override
@@ -926,7 +923,6 @@ public class JavaDocInfoGenerator {
 
     if (!isRendered()) {
       JavaDocColorUtil.appendColorPreview(field, buffer);
-      new NonCodeAnnotationGenerator(field, buffer).explainAnnotations(isRendered(), doHighlightSignatures());
     }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);
@@ -1267,9 +1263,6 @@ public class JavaDocInfoGenerator {
       }
     }
 
-    buffer.append(DocumentationMarkup.SECTIONS_START);
-    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations(isRendered(), doHighlightSignatures());
-    buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
   public String generateMethodParameterJavaDoc() {
@@ -1398,10 +1391,6 @@ public class JavaDocInfoGenerator {
       generateSeeAlsoSection(buffer, comment);
       generateAuthorAndVersionSections(buffer, comment);
       generateUnknownTagsSections(buffer, comment);
-    }
-
-    if (!isRendered()) {
-      new NonCodeAnnotationGenerator(method, buffer).explainAnnotations(isRendered(), doHighlightSignatures());
     }
 
     buffer.append(DocumentationMarkup.SECTIONS_END);
@@ -1868,7 +1857,7 @@ public class JavaDocInfoGenerator {
     PsiElement[] children = tag.getChildren();
     for (int i = 2; i < children.length - 1; i++) { // process all children except tag opening/closing elements
       PsiElement child = children[i];
-      if (child instanceof PsiDocToken && ((PsiDocToken)child).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+      if (isLeadingAsterisks(child)) continue;
       String elementText = child.getText();
       if (child instanceof PsiWhiteSpace) {
         int pos = elementText.lastIndexOf('\n');
@@ -1906,6 +1895,10 @@ public class JavaDocInfoGenerator {
 
   private static void appendPlainText(StringBuilder buffer, String text) {
     buffer.append(StringUtil.replaceUnicodeEscapeSequences(text));
+  }
+
+  protected boolean isLeadingAsterisks(@Nullable PsiElement element) {
+    return (element instanceof PsiDocToken) && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS;
   }
 
   private void generateLinkValue(PsiInlineDocTag tag, StringBuilder buffer, boolean plainLink) {
@@ -2105,7 +2098,7 @@ public class JavaDocInfoGenerator {
       return new ParamInfo(paramName, presentableName, localTag, new InheritDocProvider<>() {
         @Override
         public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-          return isRendered() ? null : findInheritDocTag(method, tagLocator);
+          return findInheritDocTag(method, tagLocator);
         }
 
         @Override
@@ -2141,7 +2134,7 @@ public class JavaDocInfoGenerator {
     Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = tag == null ? null : new Pair<>(tag, new InheritDocProvider<>() {
       @Override
       public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
-        return isRendered() ? null : findInheritDocTag(method, new ReturnTagLocator());
+        return findInheritDocTag(method, new ReturnTagLocator());
       }
 
       @Override

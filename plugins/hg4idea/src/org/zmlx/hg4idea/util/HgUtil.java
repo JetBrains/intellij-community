@@ -74,30 +74,14 @@ public abstract class HgUtil {
   public static final @NlsSafe String HEAD_REFERENCE = "HEAD";
 
   public static File copyResourceToTempFile(String basename, String extension) throws IOException {
-    final InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
-
     final File tempFile = FileUtil.createTempFile(basename, extension);
     final byte[] buffer = new byte[4096];
 
-    OutputStream out = null;
-    try {
-      out = new FileOutputStream(tempFile, false);
+    try (InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
+         OutputStream out = new FileOutputStream(tempFile, false)) {
       int bytesRead;
       while ((bytesRead = in.read(buffer)) != -1)
         out.write(buffer, 0, bytesRead);
-    } finally {
-      try {
-        out.close();
-      }
-      catch (IOException e) {
-        // ignore
-      }
-    }
-    try {
-      in.close();
-    }
-    catch (IOException e) {
-      // ignore
     }
     tempFile.deleteOnExit();
     return tempFile;

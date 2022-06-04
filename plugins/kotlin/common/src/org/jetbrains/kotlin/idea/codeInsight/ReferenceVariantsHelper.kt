@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
@@ -117,6 +118,19 @@ class ReferenceVariantsHelper(
             val parent = element.parent
             if (parent is KtVariableDeclaration && element == parent.initializer) {
                 return variants.filter { it.findPsi() != parent }
+            } else if (element is KtParameter) {
+                // Filter out parameters initialized after the current parameter. For example
+                // ```
+                // fun test(a: Int = <caret>, b: Int) {}
+                // ```
+                // `b` should not show up in completion.
+                return variants.filter {
+                    val candidatePsi = it.findPsi()
+                    if (candidatePsi is KtParameter && candidatePsi.parent == parent) {
+                        return@filter candidatePsi.startOffset < element.startOffset
+                    }
+                    true
+                }
             }
             if (element is KtDeclaration) break // we can use variable inside lambda or anonymous object located in its initializer
         }

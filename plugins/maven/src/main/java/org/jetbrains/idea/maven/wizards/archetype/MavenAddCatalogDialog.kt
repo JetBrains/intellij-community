@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
 class MavenAddCatalogDialog(project: Project) : AbstractMavenCatalogDialog(project) {

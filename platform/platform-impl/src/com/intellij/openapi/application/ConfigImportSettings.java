@@ -43,9 +43,9 @@ public interface ConfigImportSettings {
 
   /**
    * @param prefix is a platform prefix of {@code configDirectory}
-   * @return true if configDirectory should not be seen as import candidate while finding configuration directories
+   * @return true if configDirectory should be seen as import candidate while finding configuration directories
    */
-  default boolean shouldNotBeSeenAsImportCandidate(Path configDirectory, @Nullable String prefix, @Nullable String productPrefixOtherIde) {
-    return false;
+  default boolean shouldBeSeenAsImportCandidate(Path configDirectory, @Nullable String prefix, @Nullable String productPrefixOtherIde) {
+    return true;
   }
 }

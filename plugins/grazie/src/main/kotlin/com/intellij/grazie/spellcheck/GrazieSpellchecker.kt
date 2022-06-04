@@ -12,12 +12,10 @@ import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClassLoaderUtil
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
-import org.languagetool.rules.spelling.hunspell.HunspellRule
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 
@@ -84,39 +82,14 @@ object GrazieSpellchecker : GrazieStateLifecycle {
     LangTool.runAsync { checkers.value }
   }
 
-  private fun Throwable.isFromHunspellRuleInit(): Boolean {
-    return stackTrace.any { it.className == HunspellRule::class.java.canonicalName && it.methodName == "init" }
-  }
-
-  private fun disableHunspellRuleInitialization(rule: SpellingCheckRule) {
-    if (rule !is HunspellRule) return
-
-    val field = HunspellRule::class.java.getDeclaredField("needsInit")
-    if (field.trySetAccessible()) {
-       field.set(rule, false)
-    }
-  }
-
   fun isCorrect(word: String): Boolean? {
     val myCheckers = filterCheckers(word)
 
     var isAlien = true
     myCheckers.forEach { speller ->
-      try {
-        when (speller.check(word)) {
-          true -> return true
-          false -> isAlien = false
-        }
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (t: Throwable) {
-        if (t.isFromHunspellRuleInit()) {
-          disableHunspellRuleInitialization(speller.speller)
-        }
-
-        logger.warn("Got exception during check for spelling mistakes by LanguageTool with word: $word", t)
+      when (speller.check(word)) {
+        true -> return true
+        false -> isAlien = false
       }
     }
 
@@ -132,22 +105,9 @@ object GrazieSpellchecker : GrazieStateLifecycle {
 
     val indicator = EmptyProgressIndicator.notNullize(ProgressManager.getGlobalProgressIndicator())
     return ApplicationUtil.runWithCheckCanceled(Callable {
-      filtered.mapNotNull { speller ->
+      filtered.map { speller ->
         indicator.checkCanceled()
-        try {
-          speller.suggest(word)
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (t: Throwable) {
-          if (t.isFromHunspellRuleInit()) {
-            disableHunspellRuleInitialization(speller.speller)
-          }
-
-          logger.warn("Got exception during suggest for spelling mistakes by LanguageTool with word: $word", t)
-          null
-        }
+        speller.suggest(word)
       }.flatten().toLinkedSet()
     }, indicator)
   }

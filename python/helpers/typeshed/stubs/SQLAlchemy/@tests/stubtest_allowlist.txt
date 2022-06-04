@@ -1,3 +1,6 @@
+# stub-only module
+sqlalchemy.dbapi
+
 # wrong argument name in implementation ("self" instead of "cls")
 sqlalchemy.engine.URL.__new__
 sqlalchemy.engine.url.URL.__new__
@@ -25,6 +28,8 @@ sqlalchemy.testing.util.resolve_lambda
 sqlalchemy.util.WeakSequence.__init__
 
 # not always present
+sqlalchemy.engine.Engine.logging_name  # initialized if not None
+sqlalchemy.engine.base.Engine.logging_name  # initialized if not None
 sqlalchemy.testing.util.non_refcount_gc_collect
 
 # replaced at runtime
@@ -102,6 +107,20 @@ sqlalchemy.orm.strategy_options.Load.subqueryload
 sqlalchemy.orm.strategy_options.Load.undefer
 sqlalchemy.orm.strategy_options.Load.undefer_group
 sqlalchemy.orm.strategy_options.Load.with_expression
+
+# abstract fields not present at runtime
+sqlalchemy.engine.Transaction.connection
+sqlalchemy.engine.Transaction.is_active
+sqlalchemy.engine.base.Transaction.connection
+sqlalchemy.engine.base.Transaction.is_active
+
+# initialized to None during class construction, but overridden during __init__()
+sqlalchemy.engine.Connection.engine
+sqlalchemy.engine.base.Connection.engine
+
+# uses @memoized_property at runtime, but we use @property for compatibility
+sqlalchemy.engine.URL.normalized_query
+sqlalchemy.engine.url.URL.normalized_query
 
 # unclear problems
 sqlalchemy.sql.elements.quoted_name.lower

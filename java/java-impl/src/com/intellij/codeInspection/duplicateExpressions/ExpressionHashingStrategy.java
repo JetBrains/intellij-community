@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Pavel.Dolgov
  */
-final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> {
+public final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> {
   private static final EquivalenceChecker EQUIVALENCE_CHECKER = new NoSideEffectExpressionEquivalenceChecker();
 
   @Override

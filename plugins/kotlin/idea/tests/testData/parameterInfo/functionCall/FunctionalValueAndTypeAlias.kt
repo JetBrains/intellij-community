@@ -1,4 +1,3 @@
-// IGNORE_FIR
 typealias Handler = (name: String) -> String
 
 fun x(handler: Handler): String {

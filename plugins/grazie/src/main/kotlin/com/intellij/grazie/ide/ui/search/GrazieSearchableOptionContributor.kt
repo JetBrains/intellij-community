@@ -40,6 +40,10 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
       if (categories.add(rule.category)) {
         processor.addGrammarOptions(rule.category, hit = msg("grazie.settings.grammar.scope.rules.text"))
       }
+      val subCat = rule.subCategory
+      if (subCat != null && categories.add(subCat)) {
+        processor.addGrammarOptions(subCat, hit = msg("grazie.settings.grammar.scope.rules.text"))
+      }
     }
   }
 }

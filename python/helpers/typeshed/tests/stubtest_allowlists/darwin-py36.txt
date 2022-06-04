@@ -9,3 +9,5 @@ ntpath.splitunc
 posix.stat_float_times
 ssl.OP_ENABLE_MIDDLEBOX_COMPAT
 ssl.Options.OP_ENABLE_MIDDLEBOX_COMPAT
+
+uuid.lib

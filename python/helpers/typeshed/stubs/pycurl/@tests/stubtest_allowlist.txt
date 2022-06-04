@@ -1,1 +1,1 @@
-pycurl
+pycurl.VERSION_FIRST

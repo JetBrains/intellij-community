@@ -42,8 +42,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
  * @deprecated use {@link com.intellij.openapi.roots.ui.configuration.SdkComboBox}
  * with {@link com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@Deprecated(forRemoval = true)
 public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
   private static final int MAX_PATH_LENGTH = 50;
 
@@ -174,8 +173,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
   }
 
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public void setHighlightInternalJdk(boolean highlightInternalJdk) {
     myHighlightInternalJdk = highlightInternalJdk;
   }

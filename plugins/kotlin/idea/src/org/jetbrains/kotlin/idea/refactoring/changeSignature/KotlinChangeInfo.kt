@@ -494,12 +494,21 @@ open class KotlinChangeInfo(
         fun createJavaChangeInfoForSetter(originalPsiMethod: PsiMethod, currentPsiMethod: PsiMethod): JavaChangeInfo? {
             val newJavaParameters = getJavaParameterInfos(originalPsiMethod, currentPsiMethod, listOfNotNull(receiverParameterInfo))
             val oldIndex = if (methodDescriptor.receiver != null) 1 else 0
+            val parameters = currentPsiMethod.parameterList.parameters
             if (isPrimaryMethodUpdated) {
                 val newIndex = if (receiverParameterInfo != null) 1 else 0
-                val setterParameter = currentPsiMethod.parameterList.parameters[newIndex]
+                val setterParameter = parameters[newIndex]
                 newJavaParameters.add(ParameterInfoImpl(oldIndex, setterParameter.name, setterParameter.type))
             } else {
-                newJavaParameters.add(ParameterInfoImpl(oldIndex, "receiver", PsiType.VOID))
+                if (receiverParameterInfo != null) {
+                    if (newJavaParameters.isEmpty()) {
+                        newJavaParameters.add(ParameterInfoImpl(oldIndex, "receiver", PsiType.VOID))
+                    }
+                }
+                if (oldIndex < parameters.size) {
+                    val setterParameter = parameters[oldIndex]
+                    newJavaParameters.add(ParameterInfoImpl(oldIndex, setterParameter.name, setterParameter.type))
+                }
             }
 
             val newName = JvmAbi.setterName(newName)

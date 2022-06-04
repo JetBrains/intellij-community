@@ -1,4 +1,4 @@
-#Mad party
+# Mad party
 
 * [IntelliJ platform overview](#intellij-platform-overview)
   1. # First
@@ -16,4 +16,4 @@
       * Mysterious item
       #### Header 4
 * [How to configure development environment](#configure-idea-development-environment)
-* #Header 1
+* # Header 1

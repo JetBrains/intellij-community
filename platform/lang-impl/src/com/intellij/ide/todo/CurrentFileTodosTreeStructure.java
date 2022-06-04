@@ -100,7 +100,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
 
   @Override
   protected AbstractTreeNode createRootElement() {
-    if  (!accept(myFile)) {
+    if  (myFile == null) {
       return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
     } else {
       return new SingleFileToDoNode(myProject, myFile, myBuilder);

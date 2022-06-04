@@ -244,8 +244,16 @@
       "key": "Editor.shortcutForeground"
     },
     {
-      "key": "Editor.searchFieldInsets",
+      "key": "Editor.SearchField.borderInsets",
       "description": "Additional insets around editor search/replace fields in Experimental UI"
+    },
+    {
+      "key": "Editor.SearchField.background",
+      "description": "Editor inplace search/replace fields background color"
+    },
+    {
+      "key": "Editor.Toolbar.borderColor",
+      "description": "Editor header component border"
     },
     {
       "key": "EditorTabs.background",
@@ -1009,6 +1017,11 @@
       "key": "List.hoverInactiveBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in an unfocused list if hover is allowed."
+    },
+    {
+      "key": "TabbedPane.tabSelectionArc",
+      "since": "2022.2",
+      "description": "Selection border corners radius of TabbedPane underline"
     },
     {
       "key": "Tree.hoverBackground",

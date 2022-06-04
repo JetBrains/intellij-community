@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.psi.XmlPsiBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +13,7 @@ import java.util.Map;
  * @deprecated use {@link com.intellij.xml.psi.XmlPsiBundle} instead. Some of the message keys needs to be updated.
  *             See @link {@link XmlErrorMessages#keyMappings}}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@Deprecated(forRemoval = true)
 public class XmlErrorMessages {
   private static final Map<String, String> keyMappings = ContainerUtil.newHashMap(
     new Pair<>("tag.start.is.not.closed", "xml.parsing.tag.start.is.not.closed"),

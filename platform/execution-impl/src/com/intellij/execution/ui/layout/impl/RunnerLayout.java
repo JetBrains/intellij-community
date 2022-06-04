@@ -282,8 +282,17 @@ public class RunnerLayout  {
     myLightWeightIds.add(getOrCreateContentId(content));
   }
 
+  public boolean isTabLabelsHidden() {
+    return myGeneral.isTabLabelsHidden;
+  }
+
+  public void setTabLabelsHidden(boolean tabLabelsHidden) {
+    myGeneral.isTabLabelsHidden = tabLabelsHidden;
+  }
+
   public static class General {
     public volatile boolean horizontalToolbar = false;
     public volatile Map<String, String> focusOnCondition = new HashMap<>();
+    public volatile boolean isTabLabelsHidden = true;
   }
 }

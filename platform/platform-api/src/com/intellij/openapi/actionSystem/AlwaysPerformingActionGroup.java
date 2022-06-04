@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * Markup interface to ignore the visible children count and always call "actionPerformed".
  * In menus {@link Presentation#isPerformGroup()} and {@link ActionGroup#canBePerformed(DataContext)}
@@ -28,8 +26,7 @@ import org.jetbrains.annotations.ApiStatus;
  *
  * @deprecated Use {@link com.intellij.openapi.actionSystem.impl.ActionMenu#SUPPRESS_SUBMENU} instead.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated(forRemoval = true)
 public interface AlwaysPerformingActionGroup {
 
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import gnu.trove.THashSet
 import junit.framework.AssertionFailedError
 import org.jetbrains.intellij.build.impl.LibraryLicensesListGenerator
 import org.jetbrains.jps.model.JpsProject
@@ -28,7 +27,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
       }
     }
 
-    val librariesWithLicenses = licenses.flatMapTo(THashSet()) { it.libraryNames }
+    val librariesWithLicenses = licenses.flatMap { it.libraryNames }.toSet()
 
     for ((jpsLibrary, jpsModule) in libraries) {
       val libraryName = LibraryLicensesListGenerator.getLibraryName(jpsLibrary)

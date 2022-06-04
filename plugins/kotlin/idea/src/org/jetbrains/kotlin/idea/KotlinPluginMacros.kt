@@ -21,7 +21,7 @@ class KotlinPluginMacros : PathMacroContributor {
 
     override fun forceRegisterPathMacros(macros: MutableMap<String, String>) {
         if (!isUnitTestMode()) {
-            macros[KOTLIN_BUNDLED_PATH_VARIABLE] = KotlinPluginLayout.getInstance().kotlinc.canonicalPath
+            macros[KOTLIN_BUNDLED_PATH_VARIABLE] = KotlinPluginLayout.instance.kotlinc.canonicalPath
         }
     }
 

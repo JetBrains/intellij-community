@@ -11,7 +11,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -155,8 +154,7 @@ public abstract class Invoker implements Disposable {
    * @deprecated use {@link #invoke(Runnable)} or {@link #compute(Supplier)} instead
    */
   @NotNull
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
     return invoke(task);
   }
@@ -374,8 +372,7 @@ public abstract class Invoker implements Disposable {
      * @param parent a disposable parent object
      * @deprecated use {@link #forEventDispatchThread} instead
      */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
+    @Deprecated(forRemoval = true)
     public EDT(@NotNull Disposable parent) {
       super("EDT", parent, ThreeState.UNSURE);
     }
@@ -402,8 +399,7 @@ public abstract class Invoker implements Disposable {
    *
    * @deprecated use {@link Invoker#forBackgroundThreadWithReadAction(Disposable)} instead
    */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public static final class BackgroundThread extends Invoker {
     private final ScheduledExecutorService executor;
     private volatile Thread thread;
@@ -452,8 +448,7 @@ public abstract class Invoker implements Disposable {
      *                   which allows not to use additional synchronization
      * @deprecated use {@link #forBackgroundPoolWithReadAction} instead
      */
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
+    @Deprecated(forRemoval = true)
     public Background(@NotNull Disposable parent, int maxThreads) {
       this(parent, ThreeState.YES, maxThreads);
     }

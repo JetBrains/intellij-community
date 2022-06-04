@@ -109,7 +109,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         myCustomFrameTitlePane = ExperimentalUI.isNewToolbar()
                                  ? new ToolbarFrameHeader(frame, ideMenu)
                                  : new MenuFrameHeader(frame, mySelectedEditorFilePath, ideMenu);
-        getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
+        getLayeredPane().add(myCustomFrameTitlePane, Integer.valueOf(JLayeredPane.DEFAULT_LAYER - 2));
       }
 
       if (FrameInfoHelper.isFloatingMenuBarSupported()) {

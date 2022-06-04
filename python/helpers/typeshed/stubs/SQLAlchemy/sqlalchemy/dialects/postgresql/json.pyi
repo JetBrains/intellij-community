@@ -9,6 +9,7 @@ class JSONPathType(sqltypes.JSON.JSONPathType):
 class JSON(sqltypes.JSON):
     astext_type: Any
     def __init__(self, none_as_null: bool = ..., astext_type: Any | None = ...) -> None: ...
+
     class Comparator(sqltypes.JSON.Comparator):
         @property
         def astext(self): ...
@@ -16,6 +17,7 @@ class JSON(sqltypes.JSON):
 
 class JSONB(JSON):
     __visit_name__: str
+
     class Comparator(JSON.Comparator):
         def has_key(self, other): ...
         def has_all(self, other): ...

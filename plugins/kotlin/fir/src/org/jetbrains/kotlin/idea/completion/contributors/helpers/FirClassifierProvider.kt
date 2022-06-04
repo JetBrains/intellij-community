@@ -2,11 +2,12 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.scopes.KtScopeNameFilter
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtClassifierSymbol
+import org.jetbrains.kotlin.idea.util.classIdIfNonLocal
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -16,7 +17,6 @@ internal object FirClassifierProvider {
         originalKtFile: KtFile,
         position: KtElement,
         scopeNameFilter: KtScopeNameFilter,
-        indexHelper: HLIndexHelper,
         visibilityChecker: CompletionVisibilityChecker
     ): Sequence<KtClassifierSymbol> = sequence {
         yieldAll(
@@ -24,10 +24,22 @@ internal object FirClassifierProvider {
                 .getClassifierSymbols(scopeNameFilter)
                 .filter { with(visibilityChecker) { isVisible(it) } }
         )
+    }
 
+    fun KtAnalysisSession.getAvailableClassifiersFromIndex(
+        indexHelper: HLIndexHelper,
+        scopeNameFilter: KtScopeNameFilter,
+        visibilityChecker: CompletionVisibilityChecker
+    ): Sequence<KtClassifierSymbol> = sequence {
         yieldAll(
             indexHelper.getKotlinClasses(scopeNameFilter, psiFilter = { it !is KtEnumEntry }).asSequence()
                 .map { it.getSymbol() as KtClassifierSymbol }
+                .filter { with(visibilityChecker) { isVisible(it) } }
+        )
+
+        yieldAll(
+            indexHelper.getJavaClasses(scopeNameFilter).asSequence()
+                .mapNotNull { it.classIdIfNonLocal()?.getCorrespondingToplevelClassOrObjectSymbol() }
                 .filter { with(visibilityChecker) { isVisible(it) } }
         )
     }

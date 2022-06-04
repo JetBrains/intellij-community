@@ -15,14 +15,11 @@
  */
 package com.intellij.ui;
 
-import org.jetbrains.annotations.ApiStatus;
-
 import javax.swing.*;
 
 /**
  * @deprecated use {@link JProgressBar}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@Deprecated(forRemoval = true)
 public class JBProgressBar extends JProgressBar {
 }

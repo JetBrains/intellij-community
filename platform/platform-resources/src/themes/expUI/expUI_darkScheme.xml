@@ -8,7 +8,8 @@
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="549159" />
-    <option name="ANNOTATIONS_COLOR" value="b4b8bf" />
+    <option name="ANNOTATIONS_COLOR" value="8d9199" />
+    <option name="ANNOTATIONS_LAST_COMMIT_COLOR" value="ced0d6" />
     <option name="CARET_ROW_COLOR" value="2b2d30" />
     <option name="DELETED_LINES_COLOR" value="868a91" />
     <option name="DOCUMENTATION_COLOR" value="2b2d30" />
@@ -19,7 +20,7 @@
     <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="9da0a8" />
     <option name="LOOKUP_COLOR" value="2b2d30" />
     <option name="MODIFIED_LINES_COLOR" value="375fad" />
-    <option name="VCS_ANNOTATIONS_COLOR_1" value="2F5194" />
+    <option name="VCS_ANNOTATIONS_COLOR_1" value="2f5194" />
     <option name="VCS_ANNOTATIONS_COLOR_2" value="2d416b" />
     <option name="VCS_ANNOTATIONS_COLOR_3" value="283754" />
     <option name="VCS_ANNOTATIONS_COLOR_4" value="242d42" />

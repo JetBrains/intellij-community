@@ -3,6 +3,8 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogValidation
+import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.*
@@ -10,6 +12,7 @@ import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 
 @ApiStatus.Internal
@@ -38,6 +41,11 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   val component: T
 
+  /**
+   * Comment assigned to the cell
+   */
+  val comment: JEditorPane?
+
   fun focused(): Cell<T>
 
   fun applyToComponent(task: T.() -> Unit): Cell<T>
@@ -54,11 +62,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Changes [component] font to bold
    */
   fun bold(): Cell<T>
-
-  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  fun comment(@NlsContexts.DetailedDescription comment: String?,
-              maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Cell<T>
 
   /**
    * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS and Linux use smaller font).
@@ -77,11 +80,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun comment(@NlsContexts.DetailedDescription comment: String?,
               maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
-
-  @Deprecated("Use comment(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  fun commentHtml(@NlsContexts.DetailedDescription comment: String?,
-                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<T>
 
   /**
    * See doc for overloaded method
@@ -124,7 +122,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * @deprecated use [validationRequestor] instead
    */
   @Deprecated("Use validationRequestor instead", ReplaceWith("validationRequestor(property::afterPropagation)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun graphProperty(property: GraphProperty<*>): Cell<T> =
     validationRequestor(property::afterPropagation)
 
@@ -135,9 +133,20 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Cell<T>
 
   /**
+   * Registers custom [validationRequestor] for current [component].
+   * It allows showing validation waring/error on custom event. For example on component data change.
+   */
+  fun validationRequestor(validationRequestor: DialogValidationRequestor): Cell<T>
+
+  /**
    * Adds [component] validation
    */
-  fun validationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+  fun validationOnApply(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  /**
+   * Adds [component] validation
+   */
+  fun validationOnApply(validation: DialogValidation): Cell<T>
 
   /**
    * Shows error [message] if [condition] is true. Short version for particular case of [validationOnApply]
@@ -147,7 +156,12 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   /**
    * Adds [component] validation
    */
-  fun validationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+  fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
+
+  /**
+   * Adds [component] validation
+   */
+  fun validationOnInput(validation: DialogValidation): Cell<T>
 
   /**
    * Registers [callback] that will be called for [component] from [DialogPanel.apply] method

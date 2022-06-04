@@ -11,7 +11,6 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +30,8 @@ public class ProjectViewTree extends DnDAwareTree {
   /**
    * @deprecated use another constructor instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   protected ProjectViewTree(Project project, TreeModel model) {
     this(model);
   }
@@ -58,8 +56,7 @@ public class ProjectViewTree extends DnDAwareTree {
    * @deprecated Not every tree employs {@link DefaultMutableTreeNode} so
    * use {@link #getSelectionPaths()} or {@link TreeUtil#getSelectedPathIfOne(JTree)} directly.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public DefaultMutableTreeNode getSelectedNode() {
     TreePath path = TreeUtil.getSelectedPathIfOne(this);
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);

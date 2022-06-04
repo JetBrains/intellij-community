@@ -21,8 +21,7 @@ public interface StatusBarWidget extends Disposable {
   /**
    * @deprecated do not use it
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   enum PlatformType {
     DEFAULT, MAC
   }
@@ -38,8 +37,7 @@ public interface StatusBarWidget extends Disposable {
   /**
    * @deprecated use this{@link #getPresentation()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   default WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
@@ -78,8 +76,7 @@ public interface StatusBarWidget extends Disposable {
      * @deprecated unused
      */
     @NotNull
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+    @Deprecated(forRemoval = true)
     default String getMaxPossibleText() { return ""; }
 
     float getAlignment();
@@ -96,8 +93,7 @@ public interface StatusBarWidget extends Disposable {
      * @deprecated unused
      */
     @NotNull
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+    @Deprecated(forRemoval = true)
     default String getMaxValue() { return ""; }
 
     @Nullable

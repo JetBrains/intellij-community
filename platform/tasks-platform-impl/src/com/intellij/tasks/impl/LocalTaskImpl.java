@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.impl;
 
@@ -27,8 +27,7 @@ import java.util.List;
 @Tag("task")
 @SuppressWarnings("UnusedDeclaration")
 public class LocalTaskImpl extends LocalTask {
-
-  @NonNls public static final String DEFAULT_TASK_ID = "Default";
+  public static final @NonNls String DEFAULT_TASK_ID = "Default";
 
   private String myId = "";
   private @Nls String mySummary = "";
@@ -87,15 +86,13 @@ public class LocalTaskImpl extends LocalTask {
 
   @Override
   @Attribute("id")
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
   @Override
   @Attribute("summary")
-  @NotNull
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return mySummary;
   }
 
@@ -208,10 +205,9 @@ public class LocalTaskImpl extends LocalTask {
   }
 
   @Override
-  @NotNull
   @Property(surroundWithTag = false)
-  @XCollection(elementName="changelist")
-  public List<ChangeListInfo> getChangeLists() {
+  @XCollection(elementName = "changelist")
+  public @NotNull List<ChangeListInfo> getChangeLists() {
     return myChangeLists;
   }
 
@@ -233,11 +229,10 @@ public class LocalTaskImpl extends LocalTask {
   }
 
 
-  @NotNull
   @Override
   @Property(surroundWithTag = false)
-  @XCollection(elementName="branch")
-  public List<BranchInfo> getBranches() {
+  @XCollection(elementName = "branch")
+  public @NotNull List<BranchInfo> getBranches() {
     return myBranches;
   }
 
@@ -274,14 +269,13 @@ public class LocalTaskImpl extends LocalTask {
     myClosed = closed;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     final String customIcon = getCustomIcon();
     if (customIcon != null && myRepository != null) {
       // Load icon in the classloader of the corresponding repository implementation.
       // Fallback to the platform icons if the repository wasn't found.
-      return IconLoader.getIcon(customIcon, myRepository.getClass());
+      return IconLoader.getIcon(customIcon, myRepository.getClass().getClassLoader());
     }
     return getIconFromType(myType, isIssue());
   }
@@ -300,9 +294,8 @@ public class LocalTaskImpl extends LocalTask {
     }
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     return myType;
   }
 
@@ -350,11 +343,10 @@ public class LocalTaskImpl extends LocalTask {
     myWorkItems = workItems;
   }
 
-  @NotNull
   @Property(surroundWithTag = false)
   @XCollection(elementName = "workItem")
   @Override
-  public List<WorkItem> getWorkItems() {
+  public @NotNull List<WorkItem> getWorkItems() {
     return myWorkItems;
   }
 
@@ -398,9 +390,8 @@ public class LocalTaskImpl extends LocalTask {
     return timeSpent;
   }
 
-  @NotNull
   @Override
-  public String getNumber() {
+  public @NotNull String getNumber() {
     // extract number from ID for compatibility
     return StringUtil.isEmpty(myNumber) ? extractNumberFromId(myId) : myNumber;
   }
@@ -409,9 +400,8 @@ public class LocalTaskImpl extends LocalTask {
     myNumber = number;
   }
 
-  @Nullable
   @Override
-  public String getProject() {
+  public @Nullable String getProject() {
     // extract project from ID for compatibility
     return StringUtil.isEmpty(myProject) ? extractProjectFromId(myId) : myProject;
   }
@@ -424,9 +414,8 @@ public class LocalTaskImpl extends LocalTask {
     myPresentableId = presentableId;
   }
 
-  @NotNull
   @Override
-  public String getPresentableId() {
+  public @NotNull String getPresentableId() {
     // Use global ID for compatibility
     return StringUtil.isEmpty(myPresentableId) ? getId() : myPresentableId;
   }

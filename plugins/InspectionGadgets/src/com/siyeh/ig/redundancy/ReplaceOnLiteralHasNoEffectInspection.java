@@ -36,6 +36,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
           PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiLiteralExpression.class);
         if (qualifier == null || qualifier.getTextLength() > MAX_QUALIFIER_LENGTH) return;
         String str = tryCast(qualifier.getValue(), String.class);
+        if (str == null) return;
         PsiExpression pattern = PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
         String name = call.getMethodExpression().getReferenceName();
         if (!isRedundant(str, pattern, "replace".equals(name))) return;
@@ -46,7 +47,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
                                ExpressionUtils.isVoidContext(call) ? null : new ReplaceWithQualifierFix());
       }
 
-      private boolean isRedundant(String str, PsiExpression pattern, boolean literalMatch) {
+      private boolean isRedundant(@NotNull String str, PsiExpression pattern, boolean literalMatch) {
         Object constValue = ExpressionUtils.computeConstantExpression(pattern);
         if (constValue != null) {
           return isRedundantLiteralMatch(str, constValue, literalMatch);
@@ -67,7 +68,7 @@ public class ReplaceOnLiteralHasNoEffectInspection extends AbstractBaseJavaLocal
         return false;
       }
 
-      private boolean isRedundantLiteralMatch(String str, Object value, boolean literalMatch) {
+      private boolean isRedundantLiteralMatch(@NotNull String str, Object value, boolean literalMatch) {
         String patternValue;
         if (value instanceof String) {
           patternValue = (String)value;

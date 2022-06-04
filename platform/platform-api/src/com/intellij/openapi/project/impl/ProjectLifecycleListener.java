@@ -3,7 +3,6 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -18,24 +17,21 @@ public interface ProjectLifecycleListener {
   /**
    * @deprecated Do not use.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void projectComponentsInitialized(@NotNull Project project) {
   }
 
   /**
    * @deprecated Deprecated for performance and stability reasons. Please find another solution.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void beforeProjectLoaded(@NotNull Project project) {
   }
 
   /**
    * @deprecated Deprecated for performance and stability reasons. Please find another solution.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void beforeProjectLoaded(@NotNull Path projectPath, @NotNull Project project) {
     beforeProjectLoaded(project);
   }
@@ -43,8 +39,7 @@ public interface ProjectLifecycleListener {
   /**
    * @deprecated Use {@link com.intellij.openapi.project.ProjectManagerListener#projectClosed(Project)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void afterProjectClosed(@NotNull Project project) {
   }
 }

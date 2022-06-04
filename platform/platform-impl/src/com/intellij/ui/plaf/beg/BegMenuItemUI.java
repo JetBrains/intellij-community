@@ -1,5 +1,5 @@
 
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
@@ -14,8 +14,6 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -141,7 +139,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
           g.fillRect(k, 0, j1 - k, k1);
         }
-        else if (IdeaPopupMenuUI.isPartOfPopupMenu(comp) && (Registry.is("popup.menu.roundSelection.enabled", false) || ExperimentalUI.isNewUI())) {
+        else if (IdeaPopupMenuUI.isRoundSelectionEnabled(comp)) {
           GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
           int radius = JBUI.getInt("MenuItem.Selection.arc", 8);
           g.fillRoundRect(4, 1, j1 - 8, k1 - 2, radius, radius);

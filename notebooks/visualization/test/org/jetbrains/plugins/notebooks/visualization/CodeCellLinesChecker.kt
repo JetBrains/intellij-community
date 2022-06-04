@@ -67,9 +67,8 @@ class CodeCellLinesChecker(private val description: String,
   override fun invoke(handler: CodeCellLinesChecker.() -> Unit) {
     val actualIntervalListenerCalls = mutableListOf<Pair<List<NotebookCellLines.Interval>, List<NotebookCellLines.Interval>>>()
     val intervalListener = object : NotebookCellLines.IntervalListener {
-      override fun segmentChanged(oldIntervals: List<NotebookCellLines.Interval>,
-                                  newIntervals: List<NotebookCellLines.Interval>,
-                                  eventAffectedIntervals: List<NotebookCellLines.Interval>) {
+      override fun segmentChanged(oldIntervals: List<NotebookCellLines.Interval>, oldAffectedIntervals: List<NotebookCellLines.Interval>,
+                                  newIntervals: List<NotebookCellLines.Interval>, newAffectedIntervals: List<NotebookCellLines.Interval>) {
         if (oldIntervals.isEmpty() && newIntervals.isEmpty()) return
         actualIntervalListenerCalls += oldIntervals to newIntervals
       }

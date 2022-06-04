@@ -136,7 +136,7 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     private val logger = logger<MarkdownSettings>()
 
     val defaultFontSize
-      get() = JBCefApp.normalizeScaledSize(checkNotNull(AppEditorFontOptions.getInstance().state).FONT_SIZE)
+      get() = JBCefApp.normalizeScaledSize((checkNotNull(AppEditorFontOptions.getInstance().state).FONT_SIZE + 0.5).toInt())
 
     val defaultFontFamily
       get() = checkNotNull(AppEditorFontOptions.getInstance().state).FONT_FAMILY

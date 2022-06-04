@@ -29,7 +29,7 @@ class MakeTypeParameterReifiedAndFunctionInlineFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         inlineFix.invoke(project, editor, file)
-        AddModifierFixMpp(typeParameter, KtTokens.REIFIED_KEYWORD).invoke(project, editor, file)
+        AddModifierFixFE10(typeParameter, KtTokens.REIFIED_KEYWORD).invoke(project, editor, file)
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

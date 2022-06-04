@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,8 +106,7 @@ public abstract class TaskManager {
   /**
    * @deprecated use {@link TaskManager#addTaskListener(TaskListener, Disposable)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addTaskListener(TaskListener listener);
 
   public abstract void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable);

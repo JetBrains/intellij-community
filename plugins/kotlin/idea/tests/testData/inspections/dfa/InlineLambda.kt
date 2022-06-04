@@ -92,7 +92,7 @@ fun atLeastOnce() {
     if (<warning descr="Condition 'x == 2' is always true">x == 2</warning>) {}
 }
 
-@<warning descr="[EXPERIMENTAL_IS_NOT_ENABLED] This class can only be used with the compiler argument '-opt-in=kotlin.RequiresOptIn'">OptIn</warning>(kotlin.contracts.ExperimentalContracts::class)
+@<warning descr="[OPT_IN_IS_NOT_ENABLED] This annotation should be used with the compiler argument '-opt-in=kotlin.RequiresOptIn'">OptIn</warning>(kotlin.contracts.ExperimentalContracts::class)
 inline fun runAtLeastOnce(lambda: () -> Unit) {
     contract {
         callsInPlace(lambda, InvocationKind.AT_LEAST_ONCE)

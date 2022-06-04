@@ -36,7 +36,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,7 +169,6 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
    * @deprecated use {@link #getAllEditorsWithProviders()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public FileEditorProvider @NotNull [] getProviders() {
     return getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
   }
@@ -228,13 +226,13 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
    * Sets new "pinned" state
    */
   void setPinned(final boolean pinned) {
-    if (pinned == myPinned) return;
+    boolean oldPinned = myPinned;
     myPinned = pinned;
-    Container parent = getComponent().getParent();
-    if (parent instanceof JComponent) {
-      ((JComponent)parent).putClientProperty(JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null);
+    ObjectUtils.consumeIfCast(myComponent.getParent(), JComponent.class,
+                              c -> ClientProperty.put(c, JBTabsImpl.PINNED, myPinned ? Boolean.TRUE : null));
+    if (pinned != oldPinned) {
+      myDispatcher.getMulticaster().isPinnedChanged(pinned);
     }
-    myDispatcher.getMulticaster().isPinnedChanged(pinned);
   }
 
   public boolean isPreview() {
@@ -313,7 +311,6 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
    * @deprecated use {@link #getAllEditors()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public FileEditor @NotNull [] getEditors() {
     return getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
   }
@@ -481,8 +478,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
   /**
    * @deprecated use {@link #getSelectedWithProvider()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider() {
     FileEditorWithProvider info = getSelectedWithProvider();

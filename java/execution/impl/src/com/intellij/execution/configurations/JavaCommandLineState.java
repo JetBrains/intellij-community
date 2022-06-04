@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -14,12 +14,9 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -118,20 +115,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
       shouldPrepareDebuggerConnection() ? TargetDebuggerConnectionUtil.prepareDebuggerConnection(this, request) : null;
     myTargetDebuggerConnection = targetDebuggerConnection;
 
-    Ref<TargetedCommandLineBuilder> commandLineRef = new Ref<>();
-    Ref<ExecutionException> exceptionRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      try {
-        commandLineRef.set(createTargetedCommandLine(myTargetEnvironmentRequest));
-      }
-      catch (ExecutionException e) {
-        exceptionRef.set(e);
-      }
-    });
-    if(!exceptionRef.isNull()){
-      throw exceptionRef.get();
-    }
-    myCommandLine = commandLineRef.get();
+    myCommandLine = createTargetedCommandLine(myTargetEnvironmentRequest);
 
     if (targetDebuggerConnection != null) {
       Objects.requireNonNull(request).getTargetPortBindings().add(targetDebuggerConnection.getDebuggerPortRequest());

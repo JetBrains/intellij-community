@@ -143,8 +143,7 @@ public final class PluginManagerConfigurable
   /**
    * @deprecated use {@link PluginManagerConfigurable}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public PluginManagerConfigurable(PluginManagerUISettings uiSettings) {
     this();
   }

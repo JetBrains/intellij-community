@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
 class MavenEditCatalogDialog(project: Project, private val initialCatalog: MavenCatalog) : AbstractMavenCatalogDialog(project) {

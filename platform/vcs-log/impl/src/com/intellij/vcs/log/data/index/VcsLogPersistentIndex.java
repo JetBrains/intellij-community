@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -319,7 +319,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
       try {
         StorageId storageId = indexStorageId(projectName, logId);
-        StorageLockContext storageLockContext = new StorageLockContext(true);
+        StorageLockContext storageLockContext = new StorageLockContext();
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);
@@ -474,8 +474,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   private class IndexingRequest {
     private static final int BATCH_SIZE = 20000;
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
-    private static final int LOGGED_ERRORS_COUNT = 10;
-    private static final int STOPPING_ERROR_COUNT = 100;
+    private static final int LOGGED_ERRORS_COUNT = 5;
+    private static final int STOPPING_ERROR_COUNT = 30;
     @NotNull private final VirtualFile myRoot;
     @NotNull private final IntSet myCommits;
     @NotNull private final VcsLogIndexer.PathsEncoder myPathsEncoder;

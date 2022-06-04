@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
@@ -52,11 +53,13 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
-          TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
-          if (highlightingPass != null) {
-            highlightingPass.doApplyInformationToEditor();
-          }
+          ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+            ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
+            TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
+            if (highlightingPass != null) {
+              highlightingPass.doApplyInformationToEditor();
+            }
+          }, session.getProgressIndicator());
         }
 
         repaintErrorStripeAndIcon(editor, project);

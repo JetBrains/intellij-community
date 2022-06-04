@@ -57,8 +57,7 @@ public final class PluginInstallOperation {
   /**
    * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginEnabler, ProgressIndicator)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 @NotNull List<? extends IdeaPluginDescriptor> customReposPlugins,
                                 @NotNull PluginManagerMain.PluginEnabler pluginEnabler,

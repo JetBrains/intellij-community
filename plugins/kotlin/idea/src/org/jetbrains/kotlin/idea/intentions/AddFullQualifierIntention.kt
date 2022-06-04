@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
@@ -110,8 +111,9 @@ private fun replaceExpressionWithDotQualifier(psiFactory: KtPsiFactory, expressi
 }
 
 private fun addQualifierToType(psiFactory: KtPsiFactory, userType: KtUserType, qualifier: String): KtElement {
-    val typeWithQualifier = psiFactory.createType("$qualifier.${userType.text}")
-    return userType.parent.replaced(typeWithQualifier)
+    val type = userType.parent.safeAs<KtNullableType>() ?: userType
+    val typeWithQualifier = psiFactory.createType("$qualifier.${type.text}")
+    return type.parent.replaced(typeWithQualifier)
 }
 
 private fun replaceExpressionWithQualifier(

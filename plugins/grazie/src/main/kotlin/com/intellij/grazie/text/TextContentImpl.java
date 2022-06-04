@@ -164,7 +164,16 @@ class TextContentImpl extends UserDataHolderBase implements TextContent {
 
   @Override
   public @NotNull PsiElement findPsiElementAt(int textOffset) {
-    return Objects.requireNonNull(getContainingFile().findElementAt(textOffsetToFile(textOffset)));
+    int fileOffset = textOffsetToFile(textOffset);
+    PsiFile file = getContainingFile();
+    PsiElement leaf = file.findElementAt(fileOffset);
+    if (leaf == null) {
+      if (fileOffset == file.getTextLength()) {
+        return PsiTreeUtil.getDeepestLast(file);
+      }
+      throw new RuntimeException("Cannot find offset " + fileOffset + " in file of " + file.getClass() + ", length " + file.getTextLength());
+    }
+    return leaf;
   }
 
   @Override

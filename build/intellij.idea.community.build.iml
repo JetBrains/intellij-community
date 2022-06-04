@@ -11,6 +11,7 @@
       <excludeFolder url="file://$MODULE_DIR$/protobuf/cache" />
       <excludeFolder url="file://$MODULE_DIR$/protobuf/bin" />
       <excludeFolder url="file://$MODULE_DIR$/download" />
+      <excludeFolder url="file://$MODULE_DIR$/jps-bootstrap-work" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

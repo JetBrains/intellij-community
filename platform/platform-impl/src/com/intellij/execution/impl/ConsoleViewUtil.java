@@ -123,6 +123,11 @@ public final class ConsoleViewUtil {
       }
 
       @Override
+      public float getEditorFontSize2D() {
+        return getConsoleFontSize2D();
+      }
+
+      @Override
       public String getEditorFontName() {
         return getConsoleFontName();
       }
@@ -139,6 +144,11 @@ public final class ConsoleViewUtil {
 
       @Override
       public void setEditorFontSize(int fontSize) {
+        setConsoleFontSize(fontSize);
+      }
+
+      @Override
+      public void setEditorFontSize(float fontSize) {
         setConsoleFontSize(fontSize);
       }
     };

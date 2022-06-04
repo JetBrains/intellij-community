@@ -12,7 +12,7 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A variable wrapper to be used in [UastVisitor].
  */
 interface UVariable : UDeclaration, PsiVariable {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiVariable
@@ -69,7 +69,7 @@ private fun UVariable.visitContents(visitor: UastVisitor) {
 }
 
 interface UParameter : UVariable, PsiParameter {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiParameter
@@ -90,7 +90,7 @@ interface UParameterEx : UParameter, UDeclarationEx {
 }
 
 interface UField : UVariable, PsiField {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiField
@@ -111,7 +111,7 @@ interface UFieldEx : UField, UDeclarationEx {
 }
 
 interface ULocalVariable : UVariable, PsiLocalVariable {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiLocalVariable
@@ -132,7 +132,7 @@ interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
 }
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiEnumConstant

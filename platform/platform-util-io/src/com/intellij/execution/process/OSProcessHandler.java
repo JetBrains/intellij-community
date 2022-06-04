@@ -19,7 +19,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +58,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} (or any other constructor) */
   @Deprecated(forRemoval = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
     PluginException.reportDeprecatedUsage("OSProcessHandler#OSProcessHandler(Process)", "Use `#OSProcessHandler(Process, String)` instead");

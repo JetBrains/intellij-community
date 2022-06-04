@@ -322,11 +322,11 @@ public final class StartupUiUtil {
     defaults.put("EditorPane.font", textFont);
   }
 
-  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
+  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, float size) {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
     // in headless mode just use fallback in order to avoid font loading
-    Font fontWithFallback = (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
+    Font fontWithFallback = (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) ? new Font(familyName, style, (int)size).deriveFont(size) : new StyleContext().getFont(familyName, style, (int)size).deriveFont(size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
   }
 }

@@ -1,9 +1,10 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from .ImageFile import ImageFile
 
 field: Any
 
 class ImtImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["IMT"]]
+    format_description: ClassVar[str]

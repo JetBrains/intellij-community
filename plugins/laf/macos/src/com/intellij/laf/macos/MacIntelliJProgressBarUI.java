@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
+public final class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
   public static final Gray GRAPHITE_START_COLOR = Gray.xD4;
   @SuppressWarnings("UseJBColor") public static final Color GRAPHITE_END_COLOR = new Color(0x989a9e);
 

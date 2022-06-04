@@ -31,7 +31,7 @@ import static org.jetbrains.jpsBootstrap.BuildDependenciesDownloader.info;
 
 @SuppressWarnings("SameParameterValue")
 public class JpsProjectUtils {
-  public static JpsModel loadJpsProject(Path projectHome, Path jdkHome) throws Exception {
+  public static JpsModel loadJpsProject(Path projectHome, Path jdkHome, Path kotlincHome) throws Exception {
     long startTime = System.currentTimeMillis();
 
     Path m2LocalRepository = Path.of(System.getProperty("user.home"), ".m2", "repository");
@@ -40,6 +40,9 @@ public class JpsProjectUtils {
       JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.getGlobal());
     pathVariablesConfiguration.addPathVariable(
       "MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(m2LocalRepository.toAbsolutePath().toString()));
+
+    // Required for various Kotlin compiler plugins
+    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlincHome.toString());
 
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
     JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectHome.toString());

@@ -1,4 +1,3 @@
-// IGNORE_FIR
 fun fff(p: String, c: Char) {}
 
 fun foo() {

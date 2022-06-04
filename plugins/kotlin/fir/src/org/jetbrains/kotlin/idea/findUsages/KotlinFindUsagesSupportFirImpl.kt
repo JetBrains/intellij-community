@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -12,41 +9,93 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyseInModalWindow
+import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
+import org.jetbrains.kotlin.analysis.api.calls.KtCall
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.calls
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
-import org.jetbrains.kotlin.idea.frontend.api.analyseInModalWindow
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.refactoring.formatPsiClass
+import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
-    override fun isCallReceiverRefersToCompanionObject(element: KtElement, companionObject: KtObjectDeclaration): Boolean {
-        return false
+    override fun processCompanionObjectInternalReferences(
+        companionObject: KtObjectDeclaration,
+        referenceProcessor: Processor<PsiReference>
+    ): Boolean {
+        val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
+        return !klass.anyDescendantOfType(fun(element: KtElement): Boolean {
+            if (element == companionObject) return false
+            var result = false
+            forResolvedCall(element) { call ->
+                if (callReceiverRefersToCompanionObject(call, companionObject)) {
+                    result = element.references.any {
+                        // We get both a simple named reference and an invoke function
+                        // reference for all function calls. We want the named reference.
+                        //
+                        // TODO: with FE1.0 the check for reference type is not needed.
+                        // With FE1.0 two references that point to the same PSI are
+                        // obtained and one is filtered out by the reference processor.
+                        // We should make FIR references behave the same.
+                        it !is KtInvokeFunctionReference && !referenceProcessor.process(it)
+                    }
+                }
+            }
+            return result
+        })
+    }
+
+    private fun forResolvedCall(element: KtElement, block: KtAnalysisSession.(KtCall) -> Unit) {
+        analyseWithReadAction(element) {
+            element.resolveCall()?.calls?.singleOrNull()?.let { block(it) }
+        }
+    }
+
+    private fun KtAnalysisSession.callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
+        if (call !is KtCallableMemberCall<*, *>) return false
+        val dispatchReceiver = call.partiallyAppliedSymbol.dispatchReceiver
+        val extensionReceiver = call.partiallyAppliedSymbol.extensionReceiver
+        val companionObjectSymbol = companionObject.getSymbol()
+        return (dispatchReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol ||
+                    (extensionReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol
     }
 
     override fun isDataClassComponentFunction(element: KtParameter): Boolean {
+        // TODO: implement this
         return false
     }
 
     override fun getTopMostOverriddenElementsToHighlight(target: PsiElement): List<PsiElement> {
+        // TODO: implement this
         return emptyList()
     }
 
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? {
+        // TODO: implement this
         return (declaration as? KtNamedDeclaration)?.name ?: "SUPPORT FOR FIR"
     }
 
     override fun isConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {
+        // TODO: implement this
         return false
     }
 
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
+        // TODO: implement this
         return emptyList()
     }
 

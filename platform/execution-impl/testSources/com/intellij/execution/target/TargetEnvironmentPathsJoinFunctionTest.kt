@@ -45,6 +45,8 @@ class TargetEnvironmentPathsJoinFunctionTest(private val paths: List<String>,
       arrayOf(listOf("C:/Directory With Spaces", "File With Spaces.txt"), '\\', "C:\\Directory With Spaces\\File With Spaces.txt"),
       arrayOf(listOf("C:/Directory With Spaces", "Subdirectory With Spaces/"), '\\', "C:\\Directory With Spaces\\Subdirectory With Spaces"),
 
+      arrayOf(listOf("\\\\wsl$\\Ubuntu\\foo\\bar", "baz"), '\\', "\\\\wsl\$\\Ubuntu\\foo\\bar\\baz"),
+
       arrayOf(listOf("/", "foo", "bar"), '/', "/foo/bar"),
       arrayOf(listOf("/foo", "bar", "baz"), '/', "/foo/bar/baz"),
       arrayOf(listOf("/foo/", "bar", "baz"), '/', "/foo/bar/baz"),

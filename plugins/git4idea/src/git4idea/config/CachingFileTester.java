@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,8 +96,8 @@ abstract class CachingFileTester {
       attempt++;
     }
 
-    throw new GitVersionIdentificationException("Cannot identify version of git executable: no response" +
-                                                (maxAttempts > 1 ? String.format(" in %s attempts", maxAttempts) : ""), null);
+    throw new GitVersionIdentificationException(
+      GitBundle.message("git.executable.validation.error.no.response.in.n.attempts.message", maxAttempts), null);
   }
 
   @Nullable

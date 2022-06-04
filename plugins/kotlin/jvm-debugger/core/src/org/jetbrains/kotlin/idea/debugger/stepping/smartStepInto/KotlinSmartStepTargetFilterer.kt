@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.LightClassUtil
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getMethodNameWithoutMangling
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -14,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import java.util.*
 
 class KotlinSmartStepTargetFilterer(
-    private val targets: List<SmartStepTarget>,
+    private val targets: List<KotlinMethodSmartStepTarget>,
     private val debugProcess: DebugProcessImpl
 ) {
     private val functionCounter = mutableMapOf<String, Int>()
@@ -24,7 +23,7 @@ class KotlinSmartStepTargetFilterer(
         val descriptor = function.descriptor ?: return
         val label = KotlinMethodSmartStepTarget.calcLabel(descriptor)
         val currentCount = functionCounter.increment(label) - 1
-        val matchedSteppingTargetIndex = targets.filterIsInstance<KotlinMethodSmartStepTarget>().indexOfFirst {
+        val matchedSteppingTargetIndex = targets.indexOfFirst {
             it.getDeclaration() === function && it.ordinal == currentCount
         }
         if (matchedSteppingTargetIndex < 0) return
@@ -34,7 +33,7 @@ class KotlinSmartStepTargetFilterer(
     fun visitOrdinaryFunction(owner: String, name: String, signature: String) {
         val currentCount = functionCounter.increment("$owner.$name$signature") - 1
         for ((i, target) in targets.withIndex()) {
-            if (target is KotlinMethodSmartStepTarget && target.shouldBeVisited(owner, name, signature, currentCount)) {
+            if (target.shouldBeVisited(owner, name, signature, currentCount)) {
                 targetWasVisited[i] = true
                 break
             }
@@ -42,12 +41,7 @@ class KotlinSmartStepTargetFilterer(
     }
 
     private fun KotlinMethodSmartStepTarget.shouldBeVisited(owner: String, name: String, signature: String, currentCount: Int): Boolean {
-        val actualName =
-            if (methodInfo.isNameMangledInBytecode)
-                name.getMethodNameWithoutMangling()
-            else
-                name
-
+        val actualName = name.trimIfMangledInBytecode(methodInfo.isNameMangledInBytecode)
         if (methodInfo.isInlineClassMember) {
             return matches(
                 owner,
@@ -70,7 +64,7 @@ class KotlinSmartStepTargetFilterer(
         return false
     }
 
-    fun getUnvisitedTargets(): List<SmartStepTarget> =
+    fun getUnvisitedTargets(): List<KotlinMethodSmartStepTarget> =
         targets.filterIndexed { i, _ ->
             !targetWasVisited[i]
         }

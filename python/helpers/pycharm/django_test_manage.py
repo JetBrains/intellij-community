@@ -28,7 +28,7 @@ try:
   # setup environment
   # this stuff was done earlier by setup_environ() which was removed in 1.4
   sys.path.append(os.path.join(project_directory, os.pardir))
-  project_name = os.path.basename(project_directory)
+  project_name = os.path.basename(os.path.normpath(project_directory))
   __import__(project_name)
 except ImportError:
   # project has custom structure (project directory is not importable)

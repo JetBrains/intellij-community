@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
+import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -215,6 +216,7 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
     layoutData.textColor = JBUI.CurrentTheme.Notification.Error.FOREGROUND;
     layoutData.fillColor = JBUI.CurrentTheme.Notification.Error.BACKGROUND;
     layoutData.borderColor = JBUI.CurrentTheme.Notification.Error.BORDER_COLOR;
+    layoutData.closeAll = () -> ((BalloonLayoutImpl)layout).closeAll();
 
     myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
     Disposer.register(myBalloon, () -> myBalloon = null);

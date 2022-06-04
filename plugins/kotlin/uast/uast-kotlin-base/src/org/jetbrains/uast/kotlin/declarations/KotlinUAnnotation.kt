@@ -75,13 +75,14 @@ class KotlinUAnnotation(
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtAnnotationEntry>(annotationEntry, givenParent), UAnnotation {
 
-    override val javaPsi: PsiAnnotation? =
+    override val javaPsi by lz {
         annotationEntry.actionUnderSafeAnalyzeBlock({ annotationEntry.toLightAnnotation() }, { null })
+    }
 
     override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
 
     override fun resolve(): PsiClass? {
-        return baseResolveProviderService.resolveToClass(sourcePsi)
+        return baseResolveProviderService.resolveToClass(sourcePsi, this)
     }
 
     override val uastAnchor by lz {

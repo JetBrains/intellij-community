@@ -8,7 +8,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use overloaded collapsibleGroup(...) instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 internal class CollapsiblePanelImpl(dialogPanelConfig: DialogPanelConfig,
                                     parent: RowImpl,
                                     @NlsContexts.BorderTitle title: String,

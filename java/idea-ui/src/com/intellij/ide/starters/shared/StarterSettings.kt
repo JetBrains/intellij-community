@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.UserDataHolderBase
 
 data class StarterLanguage(
   val id: String,
@@ -107,3 +108,22 @@ val GRADLE_PROJECT: StarterProjectType = StarterProjectType("gradle", "Gradle")
 
 val JUNIT_TEST_RUNNER: StarterTestRunner = StarterTestRunner("junit", "JUnit")
 val TESTNG_TEST_RUNNER: StarterTestRunner = StarterTestRunner("testng", "TestNG")
+
+open class CommonStarterContext : UserDataHolderBase() {
+  var name: String = DEFAULT_MODULE_NAME
+  var group: String = DEFAULT_MODULE_GROUP
+  var artifact: String = DEFAULT_MODULE_ARTIFACT
+  var version: String = DEFAULT_MODULE_VERSION
+
+  var isCreatingNewProject: Boolean = false
+  var gitIntegration: Boolean = false
+
+  lateinit var language: StarterLanguage
+  var projectType: StarterProjectType? = null
+  var applicationType: StarterAppType? = null
+  var testFramework: StarterTestRunner? = null
+  var includeExamples: Boolean = true
+}
+
+const val ARTIFACT_ID_PROPERTY: String = "artifactId"
+const val GROUP_ID_PROPERTY: String = "groupId"

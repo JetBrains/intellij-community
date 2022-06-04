@@ -19,6 +19,64 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class HLLocalInspectionTestGenerated extends AbstractHLLocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/inspectionsLocal/unusedVariable")
+    public static class UnusedVariable extends AbstractHLLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("unusedVariableInDestructuringDeclaration.kt")
+        public void testUnusedVariableInDestructuringDeclaration() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableInDestructuringDeclaration.kt");
+        }
+
+        @TestMetadata("unusedVariableWithAnonymousFunctionInitialize1.kt")
+        public void testUnusedVariableWithAnonymousFunctionInitialize1() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithAnonymousFunctionInitialize1.kt");
+        }
+
+        @TestMetadata("unusedVariableWithAnonymousFunctionInitialize2.kt")
+        public void testUnusedVariableWithAnonymousFunctionInitialize2() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithAnonymousFunctionInitialize2.kt");
+        }
+
+        @TestMetadata("unusedVariableWithConstantInitializer.kt")
+        public void testUnusedVariableWithConstantInitializer() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithConstantInitializer.kt");
+        }
+
+        @TestMetadata("unusedVariableWithInitializer.kt")
+        public void testUnusedVariableWithInitializer() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithInitializer.kt");
+        }
+
+        @TestMetadata("unusedVariableWithInitializerAndComment.kt")
+        public void testUnusedVariableWithInitializerAndComment() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithInitializerAndComment.kt");
+        }
+
+        @TestMetadata("unusedVariableWithLambdaInitializer1.kt")
+        public void testUnusedVariableWithLambdaInitializer1() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithLambdaInitializer1.kt");
+        }
+
+        @TestMetadata("unusedVariableWithLambdaInitializer2.kt")
+        public void testUnusedVariableWithLambdaInitializer2() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithLambdaInitializer2.kt");
+        }
+
+        @TestMetadata("unusedVariableWithNullInitializer.kt")
+        public void testUnusedVariableWithNullInitializer() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithNullInitializer.kt");
+        }
+
+        @TestMetadata("unusedVariableWithoutInitializer.kt")
+        public void testUnusedVariableWithoutInitializer() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithoutInitializer.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/redundantVisibilityModifier")
     public static class RedundantVisibilityModifier extends AbstractHLLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

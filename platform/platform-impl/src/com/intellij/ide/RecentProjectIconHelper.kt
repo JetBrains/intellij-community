@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
@@ -34,7 +34,7 @@ internal class RecentProjectIconHelper {
   companion object {
     private const val ideaDir = Project.DIRECTORY_STORE_FOLDER
 
-    fun getDotIdeaPath(path: Path): Path {
+    private fun getDotIdeaPath(path: Path): Path {
       if (path.isDirectory() || path.parent == null) return path.resolve(ideaDir)
 
       val fileName = path.fileName.toString()
@@ -45,11 +45,13 @@ internal class RecentProjectIconHelper {
       return path.parent.resolve("$ideaDir/$ideaDir.$fileNameWithoutExt/$ideaDir")
     }
 
-    fun getDotIdeaPath(path: String): Path? = try {
-      getDotIdeaPath(Path.of(path))
-    }
-    catch (e: InvalidPathException) {
-      null
+    fun getDotIdeaPath(path: String): Path? {
+      return try {
+        getDotIdeaPath(Path.of(path))
+      }
+      catch (e: InvalidPathException) {
+        null
+      }
     }
 
     @JvmStatic
@@ -58,7 +60,6 @@ internal class RecentProjectIconHelper {
         if ("svg" == file.extension.lowercase(Locale.ENGLISH)) {
           return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
             val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
-
             if (icon is ScaleContextAware) {
               icon.updateScaleContext(ScaleContext.create())
             }
@@ -166,8 +167,7 @@ internal class RecentProjectIconHelper {
 
 private data class MyIcon(val icon: Icon, val timestamp: Long?)
 
-object ProjectIconPalette : ColorPalette() {
-
+private object ProjectIconPalette : ColorPalette() {
   override val gradients: Array<kotlin.Pair<Color, Color>>
     get() = arrayOf(
       JBColor(0xDB3D3C, 0xCE443C) to JBColor(0xFF8E42, 0xE77E41),

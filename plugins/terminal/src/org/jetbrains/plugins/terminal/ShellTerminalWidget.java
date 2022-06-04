@@ -234,6 +234,11 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return highlighting;
   }
 
+  @Override
+  public @Nullable ProcessTtyConnector getProcessTtyConnector() {
+    return getProcessTtyConnector(getTtyConnector());
+  }
+
   public static @Nullable ProcessTtyConnector getProcessTtyConnector(@Nullable TtyConnector connector) {
     if (connector instanceof ProcessTtyConnector) {
       return (ProcessTtyConnector)connector;

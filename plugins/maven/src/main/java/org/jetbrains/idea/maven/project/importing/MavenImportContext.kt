@@ -11,7 +11,6 @@ import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import java.nio.file.Path
 
 sealed abstract class MavenImportContext(val project: Project, val indicator: MavenProgressIndicator)
 
@@ -46,7 +45,7 @@ class MavenResolvedContext internal constructor(project: Project,
 }
 
 class MavenPluginResolvedContext internal constructor(project: Project,
-                                                      val unresolvedPlugins: Map<MavenPlugin, Path?>,
+                                                      val unresolvedPlugins: Set<MavenPlugin>,
                                                       val resolvedContext: MavenResolvedContext) : MavenImportContext(project,
                                                                                                                       resolvedContext.indicator)
 

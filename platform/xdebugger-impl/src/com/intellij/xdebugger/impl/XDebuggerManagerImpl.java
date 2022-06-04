@@ -68,7 +68,6 @@ import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,8 +83,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   /**
    * @deprecated Use {@link #getNotificationGroup()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @Deprecated(forRemoval = true)
   public static final NotificationGroup NOTIFICATION_GROUP = getNotificationGroup();
 
   private final Project myProject;

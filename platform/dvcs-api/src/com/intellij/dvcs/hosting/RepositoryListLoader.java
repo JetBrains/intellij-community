@@ -5,7 +5,6 @@ package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +35,7 @@ public interface RepositoryListLoader {
   /**
    * @deprecated parent component is required for dialogs to not fall through on welcome screen
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default boolean enable() { return false; }
 
   /**

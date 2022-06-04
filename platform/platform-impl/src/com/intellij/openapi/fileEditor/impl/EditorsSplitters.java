@@ -56,7 +56,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -347,8 +346,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   /**
    * @deprecated Use {@link #getOpenFileList()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @NotNull VirtualFile @NotNull [] getOpenFiles() {
     return VfsUtilCore.toVirtualFileArray(getOpenFileList());
   }
@@ -763,7 +761,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @deprecated Use {@link #getAllComposites()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @NotNull List<EditorWithProviderComposite> getEditorComposites() {
     return ContainerUtil.filterIsInstance(getAllComposites(), EditorWithProviderComposite.class);
   }
@@ -778,7 +775,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @deprecated Use {@link #getAllComposites(VirtualFile)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @NotNull List<EditorWithProviderComposite> findEditorComposites(@NotNull VirtualFile file) {
     return ContainerUtil.filterIsInstance(getAllComposites(file), EditorWithProviderComposite.class);
   }

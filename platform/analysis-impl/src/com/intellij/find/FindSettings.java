@@ -4,7 +4,6 @@ package com.intellij.find;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,15 +68,13 @@ public abstract class FindSettings {
   /**
    * @deprecated use {@link FindInProjectSettings#getRecentFindStrings()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract String @NotNull [] getRecentFindStrings();
 
   /**
    * @deprecated use {@link FindInProjectSettings#getRecentReplaceStrings()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract String @NotNull [] getRecentReplaceStrings();
 
   /**

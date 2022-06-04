@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -10,21 +11,26 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.fir.fe10.*
-import org.jetbrains.kotlin.idea.fir.low.level.api.api.getResolveState
-import org.jetbrains.kotlin.idea.frontend.api.*
-import org.jetbrains.kotlin.idea.frontend.api.fir.utils.EntityWasGarbageCollectedException
-import org.jetbrains.kotlin.idea.frontend.api.fir.utils.KtAnalysisSessionFe10BindingHolder
-import org.jetbrains.kotlin.idea.frontend.api.symbols.*
-import org.jetbrains.kotlin.idea.frontend.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
-import org.jetbrains.kotlin.idea.frontend.api.tokens.assertIsValidAndAccessible
+import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.fir.utils.EntityWasGarbageCollectedException
+import org.jetbrains.kotlin.analysis.api.fir.utils.KtAnalysisSessionFe10BindingHolder
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
+import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.api.tokens.ValidityTokenFactory
+import org.jetbrains.kotlin.analysis.api.tokens.assertIsValidAndAccessible
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getResolveState
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.idea.fir.analysis.project.structure.FE10ApiUsage
+import org.jetbrains.kotlin.idea.fir.analysis.project.structure.moduleInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtElement
 import java.lang.ref.WeakReference
+import kotlin.reflect.KClass
 
 interface FE10BindingContext {
     val builtIns: KotlinBuiltIns
@@ -80,12 +86,12 @@ class FE10BindingContextImpl(
 ) : FE10BindingContext {
     private val token: ValidityToken = ValidityTokenForKtSymbolBasedWrappers(project)
 
-    private val moduleInfo = ktElement.getModuleInfo()
+    private val module: KtModule = ktElement.getKtModule(project)
 
     @OptIn(InvalidWayOfUsingAnalysisSession::class)
-    override val ktAnalysisSessionFacade = KtAnalysisSessionFe10BindingHolder.create(ktElement.getResolveState(), token, ktElement)
+    override val ktAnalysisSessionFacade = KtAnalysisSessionFe10BindingHolder.create(module.getResolveState(project), token, ktElement)
 
-    override val moduleDescriptor: ModuleDescriptor = KtSymbolBasedModuleDescriptorImpl(this, moduleInfo)
+    override val moduleDescriptor: ModuleDescriptor = KtSymbolBasedModuleDescriptorImpl(this, module)
 
     override val builtIns: KotlinBuiltIns
         get() = incorrectImplementation { DefaultBuiltIns.Instance }
@@ -117,6 +123,15 @@ private class ValidityTokenForKtSymbolBasedWrappers(val project: Project) : Vali
 
     @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
     override fun getInaccessibilityReason(): String = error("Getting inaccessibility reason for validity token when it is accessible")
+
+    override val factory: ValidityTokenFactory = ValidityTokenForKtSymbolBasedWrappersFactory
+}
+
+private object ValidityTokenForKtSymbolBasedWrappersFactory : ValidityTokenFactory() {
+    override val identifier: KClass<out ValidityToken> = ValidityTokenForKtSymbolBasedWrappers::class
+
+    override fun create(project: Project): ValidityToken =
+        ValidityTokenForKtSymbolBasedWrappers(project)
 }
 
 // This class supposed to be used for non-declaration resolved fir elements, because of that we don't case about FIR phases.
@@ -136,7 +151,7 @@ internal class FirWeakReference<out T : FirElement>(firElement: T, private val t
 
 private class KtSymbolBasedModuleDescriptorImpl(
     val context: FE10BindingContext,
-    val moduleInfo: IdeaModuleInfo
+    val module: KtModule,
 ) : ModuleDescriptor {
     override val builtIns: KotlinBuiltIns
         get() = context.builtIns
@@ -144,7 +159,7 @@ private class KtSymbolBasedModuleDescriptorImpl(
     override val stableName: Name?
         get() = context.noImplementation()
     override val platform: TargetPlatform?
-        get() = moduleInfo.platform
+        get() = module.platform
 
     override fun shouldSeeInternalsOf(targetModule: ModuleDescriptor): Boolean = context.noImplementation()
     override fun getPackage(fqName: FqName): PackageViewDescriptor = context.noImplementation()
@@ -166,7 +181,8 @@ private class KtSymbolBasedModuleDescriptorImpl(
         assert(context.ktAnalysisSessionFacade.analysisSession.token.isValid())
     }
 
-    override fun getName(): Name = moduleInfo.name
+    @OptIn(FE10ApiUsage::class)
+    override fun getName(): Name = module.moduleInfo.name
 
     override fun getOriginal(): DeclarationDescriptor = this
 

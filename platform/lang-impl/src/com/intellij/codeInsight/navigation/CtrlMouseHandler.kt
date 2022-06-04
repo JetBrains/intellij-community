@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.injected.editor.EditorWindow
-import com.intellij.internal.statistic.service.fus.collectors.QuickNavigateInfoPopupShown2
+import com.intellij.internal.statistic.service.fus.collectors.CtrlMouseHintShown
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.lang.documentation.ide.impl.injectedThenHost
@@ -308,7 +308,7 @@ class CtrlMouseHandler2(
     }
     val text = result.hintText
                ?: return null
-    QuickNavigateInfoPopupShown2.log(project, result.targetClass)
+    CtrlMouseHintShown.log(project, result.targetClass)
     val hyperlinkListener = result.targetPointer?.let {
       HintHyperlinkListener(editor, it)
     }

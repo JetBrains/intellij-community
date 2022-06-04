@@ -22,9 +22,11 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
+import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.SubstringFinder;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TtyConnector;
@@ -214,12 +216,24 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return getSettingsProvider().getUiSettingsManager().getFontSize();
   }
 
+  public float getFontSize2D() {
+    return getSettingsProvider().getUiSettingsManager().getFontSize2D();
+  }
+
   public void setFontSize(int fontSize) {
+    setFontSize((float)fontSize);
+  }
+
+  public void setFontSize(float fontSize) {
     getSettingsProvider().getUiSettingsManager().setFontSize(fontSize);
   }
 
   public void resetFontSize() {
     getSettingsProvider().getUiSettingsManager().resetFontSize();
+  }
+
+  public @Nullable ProcessTtyConnector getProcessTtyConnector() {
+    return ObjectUtils.tryCast(getTtyConnector(), ProcessTtyConnector.class);
   }
 
   static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {

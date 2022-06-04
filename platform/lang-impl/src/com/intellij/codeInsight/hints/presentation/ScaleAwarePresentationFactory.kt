@@ -70,7 +70,7 @@ private class ScaledInsetPresentation(
   private val down: Int,
   private val editor: Editor
 ) : ScaledDelegatedPresentation() {
-  override val delegate: InsetPresentation by valueOf<InsetPresentation, Int> { fontSize ->
+  override val delegate: InsetPresentation by valueOf<InsetPresentation, Float> { fontSize ->
     InsetPresentation(
       presentation,
       scaleByFont(left, fontSize),
@@ -79,7 +79,7 @@ private class ScaledInsetPresentation(
       scaleByFont(down, fontSize)
     )
   }.withState {
-    editor.colorsScheme.editorFontSize
+    editor.colorsScheme.editorFontSize2D
   }
 }
 
@@ -91,7 +91,7 @@ private class ScaledContainerPresentation(
   private val background: Color? = null,
   private val backgroundAlpha: Float = 0.55f
 ) : ScaledDelegatedPresentation() {
-  override val delegate: ContainerInlayPresentation by valueOf<ContainerInlayPresentation, Int> { fontSize ->
+  override val delegate: ContainerInlayPresentation by valueOf<ContainerInlayPresentation, Float> { fontSize ->
     ContainerInlayPresentation(
       presentation,
       scaleByFont(padding, fontSize),
@@ -100,7 +100,7 @@ private class ScaledContainerPresentation(
       backgroundAlpha
     )
   }.withState {
-    editor.colorsScheme.editorFontSize
+    editor.colorsScheme.editorFontSize2D
   }
 }
 
@@ -164,11 +164,11 @@ private class MyScaledIconPresentation(val icon: Icon,
 
   override fun toString(): String = "<$debugName>"
 
-  private val scaledIcon by valueOf<Icon, Int> { fontSize ->
+  private val scaledIcon by valueOf<Icon, Float> { fontSize ->
     (icon as? ScaleContextAware)?.updateScaleContext(ScaleContext.create(editor.component))
-    IconUtil.scaleByFont(icon, editor.component, fontSize.toFloat())
+    IconUtil.scaleByFont(icon, editor.component, fontSize)
   }.withState {
-    editor.colorsScheme.editorFontSize - fontShift
+    editor.colorsScheme.editorFontSize2D - fontShift
   }
 }
 
@@ -199,9 +199,9 @@ private class StateDependantValueBuilder<TData : Any, TState : Any>(private val 
   }
 }
 
-private fun scaleByFont(sizeFor12: Int, fontSize: Int) = (JBUIScale.getFontScale(fontSize.toFloat()) * sizeFor12).roundToInt()
+private fun scaleByFont(sizeFor12: Int, fontSize: Float) = (JBUIScale.getFontScale(fontSize) * sizeFor12).roundToInt()
 
-private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSize: Int) =
+private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSize: Float) =
   paddingFor12?.let { (left, right, top, bottom) ->
     InlayPresentationFactory.Padding(
       left = scaleByFont(left, fontSize),
@@ -211,7 +211,7 @@ private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSiz
     )
   }
 
-private fun scaleByFont(roundedCornersFor12: InlayPresentationFactory.RoundedCorners?, fontSize: Int) =
+private fun scaleByFont(roundedCornersFor12: InlayPresentationFactory.RoundedCorners?, fontSize: Float) =
   roundedCornersFor12?.let { (arcWidth, arcHeight) ->
     InlayPresentationFactory.RoundedCorners(
       arcWidth = scaleByFont(arcWidth, fontSize),

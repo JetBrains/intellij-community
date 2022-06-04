@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -765,11 +765,12 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("find-action-model"),
     jetbrainsLibrary("find-action-model-experimental"),
     jetbrainsLibrary("find-file-model"),
+    jetbrainsLibrary("fixed.kotlin-jps-plugin-classpath"),
     jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij-coverage"),
-    jetbrainsLibrary("intellij-markdown"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("io.ktor.network.jvm"),
+    jetbrainsLibrary("jetbrains.markdown.jvm"),
     jetbrainsLibrary("jetbrains.research.refactorinsight.kotlin.impl"),
     jetbrainsLibrary("jps-build-script-dependencies-bootstrap"),
     jetbrainsLibrary("jshell-frontend"),
@@ -777,13 +778,19 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlinc.allopen-compiler-plugin"),
     jetbrainsLibrary("kotlinc.analysis-api-providers"),
+    jetbrainsLibrary("kotlinc.analysis-project-structure"),
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
     jetbrainsLibrary("kotlinc.high-level-api"),
     jetbrainsLibrary("kotlinc.high-level-api-fir"),
+    jetbrainsLibrary("kotlinc.high-level-api-impl-base"),
+    jetbrainsLibrary("kotlinc.high-level-api-impl-base-tests"),
     jetbrainsLibrary("kotlinc.incremental-compilation-impl-tests"),
     jetbrainsLibrary("kotlinc.kotlin-build-common-tests"),
-    jetbrainsLibrary("kotlinc.kotlin-compiler"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-cli"),
+    jetbrainsLibrary("kotlinc.kotlin-compiler-common"),
+    jetbrainsLibrary("kotlinc.kotlin-compiler-fe10"),
+    jetbrainsLibrary("kotlinc.kotlin-compiler-fir"),
+    jetbrainsLibrary("kotlinc.kotlin-compiler-ir"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-testdata"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
@@ -791,7 +798,6 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-jps-plugin-classpath"),
     jetbrainsLibrary("kotlinc.kotlin-reflect"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-common"),
-    jetbrainsLibrary("kotlinc.kotlin-scripting-compiler"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler-impl"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-jvm"),
     jetbrainsLibrary("kotlinc.kotlin-stdlib"),

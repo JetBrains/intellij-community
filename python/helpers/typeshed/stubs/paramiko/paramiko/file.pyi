@@ -1,4 +1,4 @@
-from typing import Any, AnyStr, Generic, Iterable, Tuple
+from typing import Any, AnyStr, Generic, Iterable
 
 from paramiko.util import ClosingContextManager
 
@@ -15,7 +15,7 @@ class BufferedFile(ClosingContextManager, Generic[AnyStr]):
     FLAG_LINE_BUFFERED: int
     FLAG_UNIVERSAL_NEWLINE: int
 
-    newlines: None | AnyStr | Tuple[AnyStr, ...]
+    newlines: None | AnyStr | tuple[AnyStr, ...]
     def __init__(self) -> None: ...
     def __del__(self) -> None: ...
     def __iter__(self) -> BufferedFile[Any]: ...

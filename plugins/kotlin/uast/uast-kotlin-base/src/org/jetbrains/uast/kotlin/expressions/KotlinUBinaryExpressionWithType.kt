@@ -16,7 +16,7 @@ class KotlinUBinaryExpressionWithType(
 
     override val type by lz {
         sourcePsi.right?.let {
-            baseResolveProviderService.resolveToType(it, this)
+            baseResolveProviderService.resolveToType(it, this, boxed = false)
         } ?: UastErrorType
     }
 

@@ -204,8 +204,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   /**
    * @deprecated use {@link #getAutoRendererAsync(Type)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public NodeRenderer getAutoRenderer(ValueDescriptor descriptor) {
     Type type = descriptor.getType();
     DebuggerManagerThreadImpl.assertIsManagerThread();

@@ -3,7 +3,6 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +27,7 @@ public interface ProcessService {
    *
    * @deprecated use {@link #sendWinProcessCtrlC(Process)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   boolean sendWinProcessCtrlC(int pid);
 
   void killWinProcessRecursively(@NotNull Process process);

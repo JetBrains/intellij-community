@@ -4,6 +4,16 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
@@ -11,17 +21,6 @@ import org.jetbrains.kotlin.idea.fir.api.fixes.HLApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.fir.api.fixes.withInput
 import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplicator
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.diagnostics.KtDiagnosticWithPsi
-import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtSymbolWithMembers
-import org.jetbrains.kotlin.idea.frontend.api.symbols.psiSafe
-import org.jetbrains.kotlin.idea.frontend.api.types.KtClassType
-import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -44,12 +43,12 @@ object ChangeTypeQuickFixFactories {
     private fun getActionName(
         declaration: KtCallableDeclaration,
         presentation: String?,
-        type: CallableReturnTypeUpdaterApplicator.Type
+        typeInfo: CallableReturnTypeUpdaterApplicator.TypeInfo
     ) = ChangeTypeFixUtils.getTextForQuickFix(
         declaration,
         presentation,
-        type.isUnit,
-        type.shortTypeRepresentation
+        typeInfo.defaultType.isUnit,
+        typeInfo.defaultType.shortTypeRepresentation
     )
 
     private fun getPresentation(
@@ -95,9 +94,9 @@ object ChangeTypeQuickFixFactories {
 
     data class Input(
         val targetType: TargetType,
-        val type: CallableReturnTypeUpdaterApplicator.Type
+        val typeInfo: CallableReturnTypeUpdaterApplicator.TypeInfo
     ) : HLApplicatorInput {
-        override fun isValidFor(psi: PsiElement): Boolean = type.isValidFor(psi)
+        override fun isValidFor(psi: PsiElement): Boolean = typeInfo.isValidFor(psi)
     }
 
     val changeFunctionReturnTypeOnOverride =
@@ -164,7 +163,7 @@ object ChangeTypeQuickFixFactories {
     private fun KtAnalysisSession.createChangeOverriddenFunctionQuickFix(
         callable: KtCallableSymbol
     ): HLApplicatorTargetWithInput<KtCallableDeclaration, Input>? {
-        val type = callable.annotatedType.type
+        val type = callable.returnType
         val singleNonMatchingOverriddenFunction = findSingleNonMatchingOverriddenFunction(callable, type) ?: return null
         val singleMatchingOverriddenFunctionPsi = singleNonMatchingOverriddenFunction.psiSafe<KtCallableDeclaration>() ?: return null
         val changeToTypeInfo = createTypeInfo(type)
@@ -179,18 +178,18 @@ object ChangeTypeQuickFixFactories {
         val overriddenSymbols = callable.getDirectlyOverriddenSymbols()
         return overriddenSymbols
             .singleOrNull { overridden ->
-                !type.isSubTypeOf(overridden.annotatedType.type)
+                !type.isSubTypeOf(overridden.returnType)
             }
     }
 
-    private fun KtAnalysisSession.createTypeInfo(ktType: KtType) = with(CallableReturnTypeUpdaterApplicator.Type) {
-        createByKtType(ktType)
+    private fun KtAnalysisSession.createTypeInfo(ktType: KtType) = with(CallableReturnTypeUpdaterApplicator.TypeInfo) {
+        createByKtTypes(ktType)
     }
 
     private fun KtAnalysisSession.findLowerBoundOfOverriddenCallablesReturnTypes(symbol: KtCallableSymbol): KtType? {
         var lowestType: KtType? = null
         for (overridden in symbol.getDirectlyOverriddenSymbols()) {
-            val overriddenType = overridden.annotatedType.type
+            val overriddenType = overridden.returnType
             when {
                 lowestType == null || overriddenType isSubTypeOf lowestType -> {
                     lowestType = overriddenType

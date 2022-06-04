@@ -35,12 +35,10 @@ public class ConfigEncodingManager implements FileEncodingProvider {
 
   @Override
   public @Nullable Charset getEncoding(@NotNull VirtualFile virtualFile) {
-    if (!Utils.isApplicableTo(virtualFile) || Utils.isEditorConfigFile(virtualFile)) return null;
     Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    if (project != null && !Utils.isEnabled(CodeStyle.getSettings(project))) {
-      return null;
-    }
-    return EditorConfigEncodingCache.getInstance().getCachedEncoding(virtualFile);
+    return
+      project != null && isEnabledFor(project, virtualFile) ?
+      EditorConfigEncodingCache.getInstance().getCachedEncoding(virtualFile) : null;
   }
 
   @Nullable
@@ -55,5 +53,10 @@ public class ConfigEncodingManager implements FileEncodingProvider {
   @Nullable
   public static Charset toCharset(@NotNull String str) {
     return encodingMap.get(str);
+  }
+
+  static boolean isEnabledFor(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    return Utils.isEnabled(CodeStyle.getSettings(project)) &&
+           Utils.isApplicableTo(virtualFile) && !Utils.isEditorConfigFile(virtualFile);
   }
 }

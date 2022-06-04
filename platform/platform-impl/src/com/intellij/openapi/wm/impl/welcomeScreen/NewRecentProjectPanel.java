@@ -5,7 +5,7 @@ import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
-import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ListActions;

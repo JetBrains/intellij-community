@@ -216,39 +216,29 @@ public final class MavenExternalParameters {
   }
 
   private static void patchConfFile(File originalConf, File dest, String library) throws IOException {
-    Scanner sc = new Scanner(originalConf);
 
-    try {
-      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest), StandardCharsets.UTF_8));
+    try (Scanner sc = new Scanner(originalConf);
+         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest), StandardCharsets.UTF_8))) {
+      boolean patched = false;
 
-      try {
-        boolean patched = false;
+      while (sc.hasNextLine()) {
+        String line = sc.nextLine();
 
-        while (sc.hasNextLine()) {
-          String line = sc.nextLine();
+        out.append(line);
+        out.newLine();
 
-          out.append(line);
+        if (!patched && "[plexus.core]".equals(line)) {
+          out.append("load ").append(library);
           out.newLine();
 
-          if (!patched && "[plexus.core]".equals(line)) {
-            out.append("load ").append(library);
-            out.newLine();
-
-            patched = true;
-          }
+          patched = true;
         }
       }
-      finally {
-        out.close();
-      }
-    }
-    finally {
-      sc.close();
     }
   }
 
   private static String getArtifactResolverJar(@Nullable String mavenVersion) throws IOException {
-    Class marker;
+    Class<?> marker;
 
     if (mavenVersion != null && mavenVersion.compareTo("3.1.0") >= 0) {
       marker = MavenArtifactResolvedM31RtMarker.class;
@@ -326,12 +316,8 @@ public final class MavenExternalParameters {
     File file = new File(PathManager.getSystemPath(), "Maven/idea-projects-state-" + project.getLocationHash() + ".properties");
     FileUtil.ensureExists(file.getParentFile());
 
-    OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-    try {
+    try (OutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
       res.store(out, null);
-    }
-    finally {
-      out.close();
     }
 
     return file;
@@ -502,7 +488,6 @@ public final class MavenExternalParameters {
     if (notNullProject == null) {
       if (runConfiguration == null) return new ExecutionException(text);
       notNullProject = runConfiguration.getProject();
-      if (notNullProject == null) return new ExecutionException(text);
     }
 
     if (coreSettings == MavenProjectsManager.getInstance(notNullProject).getGeneralSettings()) {
@@ -511,17 +496,15 @@ public final class MavenExternalParameters {
 
     if (runConfiguration != null) {
       Project runCfgProject = runConfiguration.getProject();
-      if (runCfgProject != null) {
-        if (((RunManagerImpl)RunManager.getInstance(runCfgProject)).getSettings(runConfiguration) != null) {
-          return new RunConfigurationOpenerExecutionException(textWithFix, runConfiguration);
-        }
+      if (((RunManagerImpl)RunManager.getInstance(runCfgProject)).getSettings(runConfiguration) != null) {
+        return new RunConfigurationOpenerExecutionException(textWithFix, runConfiguration);
       }
     }
 
     return new ExecutionException(text);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   private static List<String> getMavenClasspathEntries(final String mavenHome) {
     File mavenHomeBootAsFile = new File(new File(mavenHome, "core"), "boot");
     // if the dir "core/boot" does not exist we are using a Maven version > 2.0.5

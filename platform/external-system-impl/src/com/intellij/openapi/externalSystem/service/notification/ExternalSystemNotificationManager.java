@@ -46,7 +46,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,8 +238,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     });
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   public void clearNotifications(final @Nullable String groupName,
                                  final @NotNull NotificationSource notificationSource,
                                  final @NotNull ProjectSystemId externalSystemId) {
@@ -370,8 +368,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     }
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   public @NotNull NewErrorTreeViewPanel prepareMessagesView(final @NotNull ProjectSystemId externalSystemId,
                                                             final @NotNull NotificationSource notificationSource,
                                                             boolean activateView) {
@@ -418,8 +415,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     return targetContent;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated(forRemoval = true)
   public static @NotNull @Nls String getContentDisplayName(
     final @NotNull NotificationSource notificationSource,
     final @NotNull ProjectSystemId externalSystemId

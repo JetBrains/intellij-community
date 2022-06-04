@@ -1262,6 +1262,10 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         newParameters[0].name = "a@bc"
     }
 
+    fun testChangeClassParameterWithEscapedName() = doTest {
+        newParameters[0].name = "`x@yz`"
+    }
+
     fun testParameterPropagation() = doTestAndIgnoreConflicts {
         val psiFactory = KtPsiFactory(project)
 

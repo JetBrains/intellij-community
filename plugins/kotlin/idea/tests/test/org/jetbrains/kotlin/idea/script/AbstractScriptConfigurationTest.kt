@@ -234,7 +234,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         val jdkKind = when ((env["javaHome"] as? List<String>)?.singleOrNull()) {
-            "9" -> TestJdkKind.FULL_JDK_9
+            "9" -> TestJdkKind.FULL_JDK_11 // TODO is that correct?
             else -> TestJdkKind.MOCK_JDK
         }
         runWriteAction {

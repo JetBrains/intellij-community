@@ -2,6 +2,6 @@ package b;
 
 import a.Outer.Inner;
 
-public class X extends Inner.A {
+public class JavaX extends Inner.A {
     Inner.A next = new Inner.A();
 }

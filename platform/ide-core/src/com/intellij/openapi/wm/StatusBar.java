@@ -62,8 +62,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    *
    * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void addWidget(@NotNull StatusBarWidget widget);
 
   /**
@@ -71,8 +70,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
    *
    * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void addWidget(@NotNull StatusBarWidget widget, @NonNls @NotNull String anchor);
 
   /**
@@ -97,15 +95,13 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   /**
    * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void addCustomIndicationComponent(@NotNull JComponent c);
 
   /**
    * @deprecated Use {@link StatusBarWidgetFactory}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void removeCustomIndicationComponent(@NotNull JComponent c);
 
   /**

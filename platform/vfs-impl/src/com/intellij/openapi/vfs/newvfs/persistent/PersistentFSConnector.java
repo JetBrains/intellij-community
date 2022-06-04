@@ -29,7 +29,8 @@ final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
   private static final AtomicInteger INITIALIZATION_COUNTER = new AtomicInteger();
-  private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false);
+  private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext();
+  private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT_RW = new StorageLockContext(true);
 
   static @NotNull PersistentFSConnection connect(@NotNull String cachesDir, int version, boolean useContentHashes) {
     return FSRecords.writeAndHandleErrors(() -> {
@@ -127,7 +128,7 @@ final class PersistentFSConnector {
       }
       records = new PersistentFSRecordsStorage(new ResizeableMappedFile(recordsFile,
                                                                         20 * 1024,
-                                                                        PERSISTENT_FS_STORAGE_CONTEXT,
+                                                                        PERSISTENT_FS_STORAGE_CONTEXT_RW,
                                                                         PagedFileStorage.BUFFER_SIZE,
                                                                         aligned,
                                                                         IOUtil.useNativeByteOrderForByteBuffers()));

@@ -86,7 +86,7 @@ abstract class ExecutionManager {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #startRunProfile(RunProfileStarter, ExecutionEnvironment)}")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun startRunProfile(starter: RunProfileStarter, @Suppress("UNUSED_PARAMETER") state: RunProfileState, environment: ExecutionEnvironment) {
     startRunProfile(starter, environment)
   }

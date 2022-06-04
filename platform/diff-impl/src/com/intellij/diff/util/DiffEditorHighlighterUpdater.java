@@ -25,7 +25,8 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
   @Override
   protected EditorHighlighter createHighlighter(boolean forceEmpty) {
     if (!forceEmpty) {
-      EditorHighlighter highlighter = DiffUtil.createEditorHighlighter(myProject, myContent);
+      CharSequence text = myEditor.getDocument().getImmutableCharSequence();
+      EditorHighlighter highlighter = DiffUtil.initEditorHighlighter(myProject, myContent, text);
       if (highlighter != null) {
         return highlighter;
       }

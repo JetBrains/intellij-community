@@ -48,25 +48,29 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   }
 
   override fun segmentChanged(oldIntervals: List<NotebookCellLines.Interval>,
+                              oldAffectedIntervals: List<NotebookCellLines.Interval>,
                               newIntervals: List<NotebookCellLines.Interval>,
-                              eventAffectedIntervals: List<NotebookCellLines.Interval>) {
+                              newAffectedIntervals: List<NotebookCellLines.Interval>) {
     when {
       oldIntervals.isEmpty() && newIntervals.isEmpty() -> {
         // content edited without affecting intervals values
-        onEdited(eventAffectedIntervals)
+        onEdited((oldAffectedIntervals + newAffectedIntervals).distinct().sortedBy { it.ordinal })
       }
       oldIntervals.size == 1 && newIntervals.size == 1 && oldIntervals.first().type == newIntervals.first().type -> {
         // only one interval changed size
         pointers[newIntervals.first().ordinal].interval = newIntervals.first()
-        onEdited(eventAffectedIntervals)
+        onEdited(newAffectedIntervals)
+        if (newIntervals.first() !in newAffectedIntervals) {
+          changeListeners.multicaster.onEdited(newIntervals.first().ordinal)
+        }
       }
       else -> {
-        pointers.removeAll(oldIntervals.mapTo(hashSetOf()) {
-          pointers[it.ordinal].also { pointer ->
-            pointer.interval = null
-            changeListeners.multicaster.onRemoved(it.ordinal)
-          }
-        })
+        for (old in oldIntervals.asReversed()) {
+          pointers[old.ordinal].interval = null
+          pointers.removeAt(old.ordinal)
+          // called in reversed order, so ordinals of previous cells remain actual
+          changeListeners.multicaster.onRemoved(old.ordinal)
+        }
 
         newIntervals.firstOrNull()?.also { firstNew ->
           pointers.addAll(firstNew.ordinal, newIntervals.map { NotebookIntervalPointerImpl(it) })
@@ -74,7 +78,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         for (newInterval in newIntervals) {
           changeListeners.multicaster.onInserted(newInterval.ordinal)
         }
-        onEdited(eventAffectedIntervals, excluded = newIntervals)
+        onEdited(newAffectedIntervals, excluded = newIntervals)
       }
     }
 

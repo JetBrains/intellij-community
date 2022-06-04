@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -56,6 +57,9 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                                              @NotNull Editor editor,
                                              @NotNull JavaCodeVisionSettings settings,
                                              @NotNull InlayHintsSink __) {
+    if (Registry.is("editor.codeVision.new")) {
+      return null;
+    }
     return new FactoryInlayHintsCollector(editor) {
       @Override
       public boolean collect(@NotNull PsiElement element, @NotNull Editor editor, @NotNull InlayHintsSink sink) {

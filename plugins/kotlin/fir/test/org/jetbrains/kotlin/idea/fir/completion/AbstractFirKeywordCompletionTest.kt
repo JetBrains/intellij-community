@@ -9,14 +9,11 @@ import java.io.File
 abstract class AbstractFirKeywordCompletionTest : AbstractKeywordCompletionTest() {
     override val captureExceptions: Boolean = false
 
-    override fun handleTestPath(path: String): String =
-        IgnoreTests.getFirTestFileIfFirPassing(
-            File(path),
-            IgnoreTests.DIRECTIVES.FIR_COMPARISON
-        ).path
+    override fun handleTestPath(path: String): File =
+        IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON)
 
     override fun executeTest(test: () -> Unit) {
-        IgnoreTests.runTestIfEnabledByFileDirective(testDataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
+        IgnoreTests.runTestIfEnabledByFileDirective(testDataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON) {
             super.executeTest(test)
             IgnoreTests.cleanUpIdenticalFirTestFile(testDataFile())
         }

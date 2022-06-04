@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,8 +22,7 @@ public final class JBSwingUtilities {
   /**
    * @deprecated Use {@link SwingUtilities#isLeftMouseButton}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean isLeftMouseButton(MouseEvent anEvent) {
     return SwingUtilities.isLeftMouseButton(anEvent);
   }
@@ -32,8 +30,7 @@ public final class JBSwingUtilities {
   /**
    * @deprecated Use {@link SwingUtilities#isRightMouseButton}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean isRightMouseButton(MouseEvent anEvent) {
     return SwingUtilities.isRightMouseButton(anEvent);
   }

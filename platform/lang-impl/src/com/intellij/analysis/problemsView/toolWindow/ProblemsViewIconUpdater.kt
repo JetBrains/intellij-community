@@ -9,14 +9,15 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 
-internal class ProblemsViewIconUpdater(private val project: Project) {
-  private val alarm = SingleAlarm({ ProblemsView.getToolWindow(project)?.setIcon(getIcon()) }, 50, project)
+open class ProblemsViewIconUpdater(project: Project) {
+  private val alarm = SingleAlarm({ ProblemsView.getToolWindow(project)?.setIcon(getIcon(getProblemCount(project))) }, 50, project)
   private val empty = Toolwindows.ToolWindowProblemsEmpty
   private val badge by lazy { BadgeIcon(empty, JBUI.CurrentTheme.IconBadge.ERROR) }
 
-  private fun getIcon() = getIcon(ProblemsCollector.getInstance(project).getProblemCount() == 0)
-  private fun getIcon(noErrors: Boolean) = when {
-    noErrors -> empty
+  protected open fun getProblemCount(project: Project) = ProblemsCollector.getInstance(project).getProblemCount()
+
+  protected open fun getIcon(problemCount: Int) = when {
+    problemCount == 0 -> empty
     ExperimentalUI.isNewUI() -> badge
     else -> Toolwindows.ToolWindowProblems
   }

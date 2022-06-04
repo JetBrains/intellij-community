@@ -11,7 +11,7 @@ UFile (package = test.pkg) [package test.pkg...]
                         UQualifiedReferenceExpression [java.lang.String.java] : PsiType:Class<String>
                             UClassLiteralExpression [java.lang.String] : PsiType:KClass<String>
                             USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<String>
-        UMethod (name = systemService1) [static fun systemService1(@org.jetbrains.annotations.NotNull $this$systemService1: test.pkg.Context) : <ErrorType> {...}]
+        UMethod (name = systemService1) [public static fun systemService1(@org.jetbrains.annotations.NotNull $this$systemService1: test.pkg.Context) : <ErrorType> {...}]
             UParameter (name = $this$systemService1) [@org.jetbrains.annotations.NotNull var $this$systemService1: test.pkg.Context]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
@@ -33,7 +33,7 @@ UFile (package = test.pkg) [package test.pkg...]
                             UClassLiteralExpression [java.lang.String] : PsiType:KClass<String>
                             USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<String>
         UMethod (name = Context) [public fun Context() = UastEmptyExpression]
-        UMethod (name = ownSystemService1) [fun ownSystemService1() : <ErrorType> {...}]
+        UMethod (name = ownSystemService1) [public fun ownSystemService1() : <ErrorType> {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return <anonymous class>(T.java)]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(T.java)]

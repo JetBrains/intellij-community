@@ -43,7 +43,7 @@
     <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
     <spellchecker.support language="textmate" implementationClass="org.jetbrains.plugins.textmate.spellchecker.TextMateSpellingStrategy"/>
     <completion.contributor language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor"/>
-    <notificationGroup id="TextMate Bundles" displayType="BALLOON"/>
+    <notificationGroup id="TextMate Bundles" displayType="BALLOON" bundle="messages.TextMateBundle" key="notification.group.textmate.bundles"/>
   </extensions>
   <actions>
     <action id="install-vscode-plugin" class="org.jetbrains.plugins.textmate.actions.InstallVSCodePluginAction"

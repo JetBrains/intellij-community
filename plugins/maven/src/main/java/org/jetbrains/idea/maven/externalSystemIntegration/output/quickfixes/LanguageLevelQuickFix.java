@@ -82,7 +82,7 @@ public abstract class LanguageLevelQuickFix {
     Editor editor = CreateFromUsageBaseFix.positionCursor(project, tagProperty.getContainingFile(), tagProperty);
     if (editor == null) return;
     template.setToReformat(true);
-    TemplateManager.getInstance(project).startTemplate(editor, template, true, Collections.emptyMap(), new TemplateFinishedEditing());
+    TemplateManager.getInstance(project).startTemplate(editor, template, new TemplateFinishedEditing());
   }
 
   protected static PsiElement getXmlTagPsiValue(@Nullable XmlTag tag) {

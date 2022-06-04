@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.*;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
@@ -103,6 +102,11 @@ final class EventLogConsole {
       }
 
       @Override
+      public float getEditorFontSize2D() {
+        return getConsoleFontSize2D();
+      }
+
+      @Override
       public String getConsoleFontName() {
         String name = NotificationsUtil.getFontName();
         return name == null ? super.getConsoleFontName() : name;
@@ -110,8 +114,13 @@ final class EventLogConsole {
 
       @Override
       public int getConsoleFontSize() {
-        Integer size = NotificationsUtil.getFontSize();
-        return size == null ? super.getConsoleFontSize() : size;
+        return (int)(getConsoleFontSize2D() + 0.5);
+      }
+
+      @Override
+      public float getConsoleFontSize2D() {
+        Float size = NotificationsUtil.getFontSize();
+        return size == null ? super.getConsoleFontSize2D() : size;
       }
 
       @Override
@@ -127,7 +136,15 @@ final class EventLogConsole {
       }
 
       @Override
+      public void setEditorFontSize(float fontSize) {
+      }
+
+      @Override
       public void setConsoleFontSize(int fontSize) {
+      }
+
+      @Override
+      public void setConsoleFontSize(float fontSize) {
       }
     };
 

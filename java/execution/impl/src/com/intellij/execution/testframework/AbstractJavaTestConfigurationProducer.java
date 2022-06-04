@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +41,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected AbstractJavaTestConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }

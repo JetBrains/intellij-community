@@ -1,10 +1,9 @@
 import sys
 from _typeshed import structseq
-from types import SimpleNamespace
-from typing import Any, Tuple, Union
-from typing_extensions import final
+from typing import Any, Protocol, Union
+from typing_extensions import Literal, final
 
-_TimeTuple = Tuple[int, int, int, int, int, int, int, int, int]
+_TimeTuple = tuple[int, int, int, int, int, int, int, int, int]
 
 altzone: int
 daylight: int
@@ -80,7 +79,13 @@ def time() -> float: ...
 if sys.platform != "win32":
     def tzset() -> None: ...  # Unix only
 
-def get_clock_info(name: str) -> SimpleNamespace: ...
+class _ClockInfo(Protocol):
+    adjustable: bool
+    implementation: str
+    monotonic: bool
+    resolution: float
+
+def get_clock_info(name: Literal["monotonic", "perf_counter", "process_time", "time", "thread_time"]) -> _ClockInfo: ...
 def monotonic() -> float: ...
 def perf_counter() -> float: ...
 def process_time() -> float: ...
@@ -94,6 +99,7 @@ if sys.version_info >= (3, 7):
     if sys.platform != "win32":
         def clock_gettime_ns(clock_id: int) -> int: ...
         def clock_settime_ns(clock_id: int, time: int) -> int: ...
+
     def monotonic_ns() -> int: ...
     def perf_counter_ns() -> int: ...
     def process_time_ns() -> int: ...

@@ -107,8 +107,7 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /** @deprecated Use {@link Presentation#setPopupGroup(boolean)} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated(forRemoval = true)
   public boolean isPopup(@NotNull String place) {
     return isPopup();
   }

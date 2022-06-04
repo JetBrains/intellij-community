@@ -19,8 +19,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
@@ -147,41 +145,8 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
     return postTasks;
   }
 
-  private boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {
-    if (obsoleteModules.isEmpty()) {
-      return false;
-    }
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() || MavenUtil.isMavenUnitTestModeEnabled()) {
-      final int[] result = new int[1];
-      MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
-                              () -> result[0] = Messages.showYesNoDialog(myProject,
-                                                                         MavenProjectBundle.message("maven.import.message.delete.obsolete",
-                                                                                                    formatModules(obsoleteModules)),
-                                                                         MavenProjectBundle.message("maven.project.import.title"),
-                                                                         Messages.getQuestionIcon()));
-
-      if (result[0] == Messages.NO) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static String formatModules(final Collection<Module> modules) {
-    StringBuilder res = new StringBuilder();
-
-    int i = 0;
-    for (Module module : modules) {
-      res.append('\'').append(module.getName()).append("'\n");
-
-      if (++i > 20) break;
-    }
-
-    if (i > 20) {
-      res.append("\n ... and other ").append(modules.size() - 20).append(" modules");
-    }
-
-    return res.toString();
+  private static boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {
+    return !obsoleteModules.isEmpty();
   }
 
   private void configureMavenProjects(MavenModuleImportContext moduleImportContext) {
@@ -216,7 +181,6 @@ public class MavenProjectTreeImporter extends MavenProjectImporterBase {
       }
     }
   }
-
 
   private void removeOutdatedCompilerConfigSettings() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();

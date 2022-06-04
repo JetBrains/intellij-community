@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,10 +24,14 @@ public class CoreLocalVirtualFile extends VirtualFile {
   private BasicFileAttributes myAttributes;
   private VirtualFile[] myChildren;
 
+  /** @deprecated please use {@link #CoreLocalVirtualFile(CoreLocalFileSystem, Path)} instead */
+  @Deprecated
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile) {
     this(fileSystem, ioFile.toPath());
   }
 
+  /** @deprecated please use {@link #CoreLocalVirtualFile(CoreLocalFileSystem, Path, boolean)} instead */
+  @Deprecated
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, boolean isDirectory) {
     this(fileSystem, ioFile.toPath(), isDirectory);
   }

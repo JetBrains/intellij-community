@@ -88,8 +88,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __annotations__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
-           "  __module__\n" +
-           "  __slots__",
+           "  __module__",
            true);
   }
 
@@ -134,8 +133,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __annotations__\n" +
            "  __dict__\n" +
            "  __doc__\n" +
-           "  __module__\n" +
-           "  __slots__",
+           "  __module__",
            true);
   }
 

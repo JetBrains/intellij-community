@@ -16,7 +16,7 @@ abstract class FeatureSuggesterTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.configureByFile(testingCodeFileName)
-    forceShowSuggestions = true
+    SuggestingUtils.forceShowSuggestions = true
     expectedSuggestion = NoSuggestion
     disposable = Disposer.newDisposable()
     FeatureSuggesterTestUtils.subscribeToSuggestions(myFixture.project, disposable) { suggestion -> expectedSuggestion = suggestion }

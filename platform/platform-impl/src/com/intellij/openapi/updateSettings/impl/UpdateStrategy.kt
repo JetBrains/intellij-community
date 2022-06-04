@@ -16,7 +16,7 @@ class UpdateStrategy @JvmOverloads constructor(
 ) {
 
   @Deprecated("Please use `UpdateStrategy(BuildNumber, Product, UpdateSettings)` instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Suppress("DEPRECATION")
   constructor(
     currentBuild: BuildNumber,

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -121,7 +122,12 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
 
   @Override
   @NotNull
-  public List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile, @NotNull Editor editor, int @NotNull [] passesToIgnore) {
+  public List<TextEditorHighlightingPass> instantiatePasses(@NotNull PsiFile psiFile,
+                                                            @NotNull Editor editor,
+                                                            int @NotNull [] passesToIgnore) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      throw new IllegalStateException("Must not instantiate passes in EDT");
+    }
     synchronized (this) {
       if (!checkedForCycles) {
         checkedForCycles = true;

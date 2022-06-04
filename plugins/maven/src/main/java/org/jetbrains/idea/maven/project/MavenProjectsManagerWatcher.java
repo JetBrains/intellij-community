@@ -118,8 +118,9 @@ public class MavenProjectsManagerWatcher {
       scheduleReadingTask(new MavenProjectsProcessorReadingTask(force, myProjectsTree, myGeneralSettings, onCompletion));
     }
     finally {
-      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
-      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      if (!forceImportAndResolve) {
+        promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      }
     }
     return promise;
   }
@@ -147,7 +148,9 @@ public class MavenProjectsManagerWatcher {
         filesToUpdate, filesToDelete, force, myProjectsTree, myGeneralSettings, onCompletion));
     }
     finally {
-      promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      if (!forceImportAndResolve) {
+        promise.onProcessed(unused -> MavenSyncConsole.finishTransaction(myProject));
+      }
     }
     return promise;
   }

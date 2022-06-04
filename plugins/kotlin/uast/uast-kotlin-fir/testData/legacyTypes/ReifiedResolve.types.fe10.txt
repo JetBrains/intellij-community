@@ -11,7 +11,7 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                     USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] : PsiType:Void
                     ULiteralExpression (value = "message") ["message"] : PsiType:String
         UMethod (name = resolve) [public static final fun resolve() : void {...}]
-            UBlockExpression [{...}] : PsiType:void
+            UBlockExpression [{...}] : PsiType:Unit
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] : PsiType:String
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                     USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] : PsiType:String
@@ -38,7 +38,7 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : PsiType:List<? extends String>
                                 UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
                                 USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : PsiType:List<? extends String>
-        UMethod (name = foo) [static fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit>) : T {...}]
+        UMethod (name = foo) [public static fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit>) : T {...}]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit> = { ...}]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 ULambdaExpression [{ ...}] : PsiType:Function1<? super T, ? extends Unit>

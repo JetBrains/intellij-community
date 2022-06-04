@@ -12,7 +12,6 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,8 +145,7 @@ public final class JBUI {
   /**
    * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static @NotNull <T extends JBScalableIcon> T scale(@NotNull T icon) {
     return JBUIScale.scaleIcon(icon);
   }
@@ -163,8 +161,7 @@ public final class JBUI {
   /**
    * @deprecated use {@link JBUIScale#isUsrHiDPI()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static boolean isUsrHiDPI() {
     return JBUIScale.isUsrHiDPI();
   }
@@ -590,6 +587,15 @@ public final class JBUI {
       }
     }
 
+    public interface Editor {
+      Color BORDER_COLOR = JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border());
+
+      interface Tooltip {
+        Color BACKGROUND = JBColor.namedColor("Editor.ToolTip.background", UIUtil.getToolTipBackground());
+        Color FOREGROUND = JBColor.namedColor("Editor.ToolTip.foreground", UIUtil.getToolTipForeground());
+      }
+    }
+
     public interface DragAndDrop {
       Color BORDER_COLOR = JBColor.namedColor("DragAndDrop.borderColor", 0x2675BF, 0x2F65CA);
       Color ROW_BACKGROUND = JBColor.namedColor("DragAndDrop.rowBackground", 0x2675BF26, 0x2F65CA33);
@@ -758,8 +764,7 @@ public final class JBUI {
       /**
        * @deprecated obsolete UI
        */
-      @Deprecated
-      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+      @Deprecated(forRemoval = true)
       public static int tabVerticalPadding() {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
       }
@@ -819,7 +824,7 @@ public final class JBUI {
 
     public static final class ComplexPopup {
 
-      public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", 0xe6e6e6);
+      public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
 
       public static Insets headerInsets() {
         return insets("ComplexPopup.Header.insets", insets(12, 10, 10, 10));
@@ -954,6 +959,7 @@ public final class JBUI {
       public static final Color FOCUS_COLOR = JBColor.namedColor("TabbedPane.focusColor", 0xDAE4ED);
       public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
       public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
+      public static final JBValue SELECTION_ARC = new JBValue.UIInteger("TabbedPane.tabSelectionArc", 0);
     }
 
     public static final class BigPopup {
@@ -1067,8 +1073,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#ENABLED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkColor() {
         return Foreground.ENABLED;
       }
@@ -1076,8 +1081,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#HOVERED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkHoverColor() {
         return Foreground.HOVERED;
       }
@@ -1085,8 +1089,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#PRESSED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkPressedColor() {
         return Foreground.PRESSED;
       }
@@ -1094,8 +1097,7 @@ public final class JBUI {
       /**
        * @deprecated use {@link Foreground#VISITED} instead
        */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
+      @Deprecated(forRemoval = true)
       public static @NotNull Color linkVisitedColor() {
         return Foreground.VISITED;
       }

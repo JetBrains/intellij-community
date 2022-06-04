@@ -5,7 +5,6 @@ import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.OpenReviewButton
 import com.intellij.collaboration.ui.codereview.OpenReviewButtonViewModel
 import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -14,6 +13,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
@@ -144,9 +144,9 @@ internal object GHPRListComponent {
 
     val controlsPanel = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
-      add(search, VerticalLayout.FILL_HORIZONTAL)
-      add(outdatedStatePanel, VerticalLayout.FILL_HORIZONTAL)
-      add(errorPane, VerticalLayout.FILL_HORIZONTAL)
+      add(search)
+      add(outdatedStatePanel)
+      add(errorPane)
     }
     val listLoaderPanel = createListLoaderPanel(listLoader, list, disposable)
     return JBUI.Panels.simplePanel(listLoaderPanel).addToTop(controlsPanel).andTransparent().also {

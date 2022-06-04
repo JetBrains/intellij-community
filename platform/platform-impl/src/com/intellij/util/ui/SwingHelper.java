@@ -36,7 +36,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -430,8 +429,7 @@ public class SwingHelper {
   /**
    * @deprecated use {@link com.intellij.ui.components.BrowserLink} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static HyperlinkLabel createWebHyperlink(@NlsSafe @NotNull String url) {
     return createWebHyperlink(url, url);
@@ -440,8 +438,7 @@ public class SwingHelper {
   /**
    * @deprecated use {@link com.intellij.ui.components.BrowserLink} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static HyperlinkLabel createWebHyperlink(@NlsContexts.LinkLabel @NotNull String text, @NotNull String url) {
     HyperlinkLabel hyperlink = new HyperlinkLabel(text);

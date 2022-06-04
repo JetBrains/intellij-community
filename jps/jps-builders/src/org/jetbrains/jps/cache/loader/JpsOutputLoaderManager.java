@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
+import static org.jetbrains.jps.incremental.storage.ProjectStamps.FORCE_DOWNLOAD_PORTABLE_CACHES;
 
 public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
@@ -86,7 +87,7 @@ public class JpsOutputLoaderManager {
   public void load(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
                    @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
     if (!canRunNewLoading()) return;
-    if (isDownloadQuickerThanLocalBuild(buildRunner, myCommitsCountBetweenCompilation, scopes)) {
+    if (FORCE_DOWNLOAD_PORTABLE_CACHES || isDownloadQuickerThanLocalBuild(buildRunner, myCommitsCountBetweenCompilation, scopes)) {
       // Drop JPS metadata to force plugin for downloading all compilation outputs
       myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.fetching.cache.for.commit", myCommitHash));
       if (isForceUpdate) {

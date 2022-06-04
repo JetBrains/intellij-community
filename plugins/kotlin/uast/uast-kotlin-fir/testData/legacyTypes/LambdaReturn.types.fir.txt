@@ -79,11 +79,11 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     UBinaryExpression (operator = +) ["a" + a] : PsiType:String
                                         ULiteralExpression (value = "a") ["a"] : PsiType:String
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: <ErrorType> ->...})] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: int ->...})] : PsiType:Unit
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
                     USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:Unit
-                    ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
-                        UParameter (name = it) [var it: <ErrorType>]
+                    ULambdaExpression [{ var it: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
+                        UParameter (name = it) [var it: int]
                         UBlockExpression [{...}] : PsiType:int
                             UIfExpression [if (it > 5) return] : PsiType:Unit
                                 UBinaryExpression (operator = >) [it > 5] : PsiType:boolean
@@ -111,28 +111,27 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                             ULiteralExpression (value = 2) [2] : PsiType:int
                                     ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: int = vardbcd0724.<anonymous class>()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] : PsiType:NonExistentClass
-                                            USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] : PsiType:NonExistentClass
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                                        UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] : PsiType:<ErrorType>
+                                            USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] : PsiType:<ErrorType>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
-                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                                     ULocalVariable (name = b) [@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] : PsiType:NonExistentClass
-                                            USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] : PsiType:NonExistentClass
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                                        UQualifiedReferenceExpression [vardbcd0724.<anonymous class>()] : PsiType:<ErrorType>
+                                            USimpleNameReferenceExpression (identifier = vardbcd0724) [vardbcd0724] : PsiType:<ErrorType>
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
-                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
-                        ULambdaExpression [{ ...}] : PsiType:Function0<? extends List<? extends Integer>>
+                        ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                             UBlockExpression [{...}] : PsiType:Unit
-                                UReturnExpression [return listOf(1)]
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] : PsiType:List<? extends Integer>
-                                        UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends Integer>
-                                        ULiteralExpression (value = 1) [1] : PsiType:int
-        UMethod (name = bar) [static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : kotlin.Unit {...}]
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] : PsiType:List<? extends Integer>
+                                    UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                                    USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends Integer>
+                                    ULiteralExpression (value = 1) [1] : PsiType:int
+        UMethod (name = bar) [private static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : void {...}]
             UParameter (name = lmbd) [@org.jetbrains.annotations.NotNull var lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:int

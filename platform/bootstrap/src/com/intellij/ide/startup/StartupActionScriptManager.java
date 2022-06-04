@@ -173,8 +173,7 @@ public final class StartupActionScriptManager {
     }
 
     /** @deprecated Use {@link #CopyCommand(Path, Path)} */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     public CopyCommand(@NotNull File source, @NotNull File destination) {
       mySource = source.getAbsolutePath();
       myDestination = destination.getAbsolutePath();

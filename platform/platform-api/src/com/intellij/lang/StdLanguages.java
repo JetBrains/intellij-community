@@ -3,7 +3,6 @@ package com.intellij.lang;
 
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Defines the standard languages supported by IDEA.
@@ -16,7 +15,7 @@ public final class StdLanguages {
    *
    * @deprecated use {@linkplain com.intellij.lang.java.JavaLanguage#INSTANCE} instead.
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final Language JAVA = StdFileTypes.JAVA.getLanguage();
 
   /**
@@ -31,7 +30,7 @@ public final class StdLanguages {
    *
    * @deprecated use {@linkplain com.intellij.openapi.fileTypes.PlainTextLanguage#INSTANCE} instead.
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final Language TEXT = FileTypes.PLAIN_TEXT.getLanguage();
 
   private StdLanguages() { }

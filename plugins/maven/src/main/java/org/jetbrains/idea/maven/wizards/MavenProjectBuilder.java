@@ -34,7 +34,6 @@ import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -291,8 +290,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   /**
    * @deprecated Use {@link #setRootDirectory(Project, Path)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean setRootDirectory(@Nullable Project projectToUpdate, @NotNull String root) {
     return setRootDirectory(projectToUpdate, Paths.get(root));
   }
@@ -323,8 +321,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     });
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
     return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
@@ -434,8 +431,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   /**
    * @deprecated Use {@link #getRootPath()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getRootDirectory() {
     Path rootPath = getRootPath();
     return rootPath == null ? null : VfsUtil.findFile(rootPath, false);

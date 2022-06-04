@@ -23,7 +23,7 @@ class CommentAwareLinkReferenceDefinitionProvider : MarkerBlockProvider<MarkerPr
       return emptyList()
     }
 
-    val matchResult = LinkReferenceDefinitionProvider.matchLinkDefinition(pos.textFromPosition) ?: return emptyList()
+    val matchResult = LinkReferenceDefinitionProvider.matchLinkDefinition(pos.textFromPosition, 0) ?: return emptyList()
     for ((i, range) in matchResult.withIndex()) {
       productionHolder.addProduction(listOf(SequentialParser.Node(
         addToRangeAndWiden(range, pos.offset), when (i) {

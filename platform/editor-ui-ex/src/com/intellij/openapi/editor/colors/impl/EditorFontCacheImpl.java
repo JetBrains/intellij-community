@@ -50,8 +50,8 @@ public class EditorFontCacheImpl extends EditorFontCache {
     EditorColorsScheme scheme = getFontCacheScheme();
     FontPreferences preferences = scheme.getFontPreferences();
     String editorFontName = preferences.getFontFamily();
-    int editorFontSize = scheme.getEditorFontSize();
-    String fallbackName = getFallbackName(editorFontName, editorFontSize);
+    float editorFontSize = scheme.getEditorFontSize2D();
+    String fallbackName = getFallbackName(editorFontName);
     if (fallbackName != null) {
       editorFontName = fallbackName;
     }
@@ -63,7 +63,7 @@ public class EditorFontCacheImpl extends EditorFontCache {
 
     FontPreferences consolePreferences = scheme.getConsoleFontPreferences();
     String consoleFontName = scheme.getConsoleFontName();
-    int consoleFontSize = scheme.getConsoleFontSize();
+    float consoleFontSize = scheme.getConsoleFontSize2D();
 
     setFont(EditorFontType.CONSOLE_PLAIN, consoleFontName, Font.PLAIN, consoleFontSize, consolePreferences);
     setFont(EditorFontType.CONSOLE_BOLD, consoleFontName, Font.BOLD, consoleFontSize, consolePreferences);
@@ -74,15 +74,15 @@ public class EditorFontCacheImpl extends EditorFontCache {
   private void setFont(EditorFontType fontType,
                        String familyName,
                        int style,
-                       int fontSize,
+                       float fontSize,
                        FontPreferences fontPreferences) {
     Font baseFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
                                               style, fontSize);
     myFonts.put(fontType, deriveFontWithLigatures(baseFont, fontPreferences.useLigatures()));
   }
 
-  private static @Nullable String getFallbackName(@NotNull String fontName, int fontSize) {
-    Font plainFont = new Font(fontName, Font.PLAIN, fontSize);
+  private static @Nullable String getFallbackName(@NotNull String fontName) {
+    Font plainFont = new Font(fontName, Font.PLAIN, 12);
     if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
       FontPreferences appPrefs = AppEditorFontOptions.getInstance().getFontPreferences();
       return appPrefs.getFontFamily();

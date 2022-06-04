@@ -58,6 +58,14 @@ public class JpsBootstrapUtil {
     }
   }
 
+  public static void fatal(String message) {
+    if (underTeamCity) {
+      System.out.println(new Message(message, "FAILURE", null).asString());
+    } else {
+      System.err.println("\nFATAL: " + message);
+    }
+  }
+
   public static void setVerboseEnabled(boolean verboseEnabled) {
     JpsBootstrapUtil.verboseEnabled = verboseEnabled;
   }

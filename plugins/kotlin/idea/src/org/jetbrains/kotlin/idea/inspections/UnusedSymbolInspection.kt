@@ -291,7 +291,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             if (descriptor is ClassDescriptor && descriptor.kind == ClassKind.ANNOTATION_CLASS) {
                 val fqName = descriptor.fqNameSafe.asString()
                 val languageVersionSettings = declaration.languageVersionSettings
-                if (fqName in languageVersionSettings.getFlag(AnalysisFlags.useExperimental)) return
+                if (fqName in languageVersionSettings.getFlag(AnalysisFlags.optIn)) return
             }
 
             // Main checks: finding reference usages && text usages
@@ -586,6 +586,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         if (descriptor !is MemberDescriptor) return false
         val commonModuleDescriptor = declaration.containingKtFile.findModuleDescriptor()
 
+        // TODO: Check if 'allImplementingDescriptors' should be used instead!
         return commonModuleDescriptor.implementingDescriptors.any { it.hasActualsFor(descriptor) } ||
                 commonModuleDescriptor.hasActualsFor(descriptor)
     }

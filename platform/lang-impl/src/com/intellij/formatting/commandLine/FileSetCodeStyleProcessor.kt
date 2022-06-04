@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -201,7 +202,7 @@ abstract class FileSetCodeStyleProcessor(
   open fun isResultSuccessful() = true
 
   override fun close() {
-    ProjectManagerEx.getInstanceEx().closeAndDispose(project)
+    ProjectManager.getInstance().closeAndDispose(project)
   }
 
   override fun processVirtualFile(virtualFile: VirtualFile, projectSettings: CodeStyleSettings?) {

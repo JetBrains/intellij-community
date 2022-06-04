@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.uast.*
@@ -103,7 +104,13 @@ class KotlinUElvisExpression(
     override val sourcePsi: PsiElement = elvisExpression
     override val psi: PsiElement = sourcePsi
     override val kind = KotlinSpecialExpressionKinds.ELVIS
-    override val uAnnotations: List<UAnnotation> = emptyList()
+
+    override val uAnnotations: List<UAnnotation>
+        get() {
+            val annotatedExpression = sourcePsi.parent as? KtAnnotatedExpression ?: return emptyList()
+            return annotatedExpression.annotationEntries.mapNotNull { languagePlugin?.convertOpt(it, this) }
+        }
+
     override val expressions: List<UExpression> by lz {
         createElvisExpressions(left, right, this, elvisExpression.parent)
     }

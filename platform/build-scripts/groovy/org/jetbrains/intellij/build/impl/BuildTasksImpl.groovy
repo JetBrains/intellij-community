@@ -993,9 +993,7 @@ idea.fatal.error.notification=disabled
           break
       }
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      /* Android Studio: Don't include JBR to unpacked distribution.
       buildContext.bundledRuntime.extractTo(BundledRuntime.getProductPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
-      Android Studio: Don't include JBR to unpacked distribution. */
 
       List<String> executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       updateExecutablePermissions(targetDirectory, executableFilesPatterns)

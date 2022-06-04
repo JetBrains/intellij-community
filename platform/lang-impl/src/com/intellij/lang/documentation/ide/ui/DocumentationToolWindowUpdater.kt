@@ -94,6 +94,7 @@ internal class DocumentationToolWindowUpdater(
   }
 
   private suspend fun focusDataContext(): DataContext = suspendCancellableCoroutine {
+    // @formatter:off
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown({
       @Suppress("DEPRECATION")
       val dataContextFromFocusedComponent = DataManager.getInstance().dataContext
@@ -101,5 +102,6 @@ internal class DocumentationToolWindowUpdater(
       val asyncDataContext = AnActionEvent.getInjectedDataContext(uiSnapshot)
       it.resume(asyncDataContext)
     }, ModalityState.any())
+    // @formatter:on
   }
 }

@@ -6,8 +6,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarActionComponent
+import javax.swing.BorderFactory
+import javax.swing.JComponent
 
 class RunToolbarWidgetAction : SegmentedBarActionComponent() {
+  val TOOLBAR_GAP = 4
 
   init {
     ActionManager.getInstance().getAction("RunToolbarMainActionsGroup")?.let {
@@ -24,5 +27,10 @@ class RunToolbarWidgetAction : SegmentedBarActionComponent() {
     component.targetComponent = component
 
     return component
+  }
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return super.createCustomComponent(presentation, place).apply {
+      border = BorderFactory.createEmptyBorder(0, TOOLBAR_GAP, 0, TOOLBAR_GAP)
+    }
   }
 }

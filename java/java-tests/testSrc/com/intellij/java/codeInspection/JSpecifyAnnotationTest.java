@@ -162,7 +162,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     @Override
     protected void reportProblem(@NotNull ProblemsHolder holder,
                                  @NotNull PsiElement anchor,
-                                 @Nullable LocalQuickFix fix,
+                                 LocalQuickFix @NotNull [] fixes,
                                  @NotNull String messageKey, Object... args) {
       switch (messageKey) {
         case "inspection.nullable.problems.primitive.type.annotation":

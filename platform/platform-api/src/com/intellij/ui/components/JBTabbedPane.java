@@ -7,7 +7,6 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,8 +90,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   }
 
   /** @deprecated Use {@link JBTabbedPane#setTabComponentInsets(Insets)} instead of overriding */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   protected Insets getInsetsForTabComponent() {
     return myTabComponentInsets;

@@ -20,7 +20,7 @@ class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.config
 
   override fun LessonContext.runTask() {
     task {
-      triggerByPartOfComponent<EditorGutterComponentEx> l@{ ui ->
+      triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
         if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
         val y = editor.visualLineToY(0)
         return@l Rectangle(25, y, ui.width - 40, editor.lineHeight * 2)

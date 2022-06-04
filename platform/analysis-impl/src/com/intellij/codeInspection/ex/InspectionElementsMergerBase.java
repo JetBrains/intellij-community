@@ -61,6 +61,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
     LinkedHashMap<String, Element> scopes = new LinkedHashMap<>();
     LinkedHashMap<String, Set<String>> mentionedTools = new LinkedHashMap<>();
     boolean enabled = false;
+    boolean enabledByDefault = false;
     String level = null;
 
     final Element toolElement = new Element(InspectionProfileImpl.INSPECTION_TOOL_TAG);
@@ -76,7 +77,8 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
           catch (WriteExternalException ignored) {}
         }
         else {
-          enabled |= isEnabledByDefault(sourceToolName);
+          enabledByDefault |= isEnabledByDefault(sourceToolName);
+          enabled |= enabledByDefault;
           if (level == null) {
             level = getDefaultSeverityLevel(sourceToolName);
           }
@@ -87,6 +89,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
         collectContent(sourceToolName, sourceElement, toolElement, scopes, mentionedTools);
 
         enabled |= Boolean.parseBoolean(sourceElement.getAttributeValue(ToolsImpl.ENABLED_ATTRIBUTE));
+        enabledByDefault |= Boolean.parseBoolean(sourceElement.getAttributeValue(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE));
         if (level == null) {
           level = getLevel(sourceElement);
         }
@@ -98,7 +101,7 @@ public abstract class InspectionElementsMergerBase extends InspectionElementsMer
       if (level != null) {
         toolElement.setAttribute(ToolsImpl.LEVEL_ATTRIBUTE, level);
       }
-      toolElement.setAttribute(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE, String.valueOf(enabled));
+      toolElement.setAttribute(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE, String.valueOf(enabledByDefault));
 
       for (String scopeName : scopes.keySet()) {
         Element scopeEl = scopes.get(scopeName);

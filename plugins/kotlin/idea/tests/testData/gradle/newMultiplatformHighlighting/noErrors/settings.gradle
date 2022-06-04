@@ -3,4 +3,3 @@ pluginManagement {
         {{kotlin_plugin_repositories}}
     }
 }
-rootProject.name = 'first'

@@ -2,7 +2,6 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.application.ApplicationManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,8 +18,7 @@ public abstract class OSProcessManager {
   /**
    * @deprecated Use {@link OSProcessUtil#killProcessTree(Process)} directly.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("MethodMayBeStatic")
   public final boolean killProcessTree(@NotNull Process process) {
     return OSProcessUtil.killProcessTree(process);

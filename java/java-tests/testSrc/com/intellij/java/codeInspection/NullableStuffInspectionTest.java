@@ -374,6 +374,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     }
   }
 
+  public void testRemoveAnnotationWithImportQuickFix() {
+    doTestWithFix("Remove annotation");
+  }
+  
   public void testQuickFixOnTypeArgumentNullable() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());

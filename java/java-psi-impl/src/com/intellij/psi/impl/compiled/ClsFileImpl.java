@@ -394,7 +394,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   }
 
   @Override
-  public PsiFile getDecompiledPsiFile() {
+  public @NotNull PsiFile getDecompiledPsiFile() {
     return (PsiFile)getMirror();
   }
 

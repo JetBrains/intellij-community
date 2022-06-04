@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +21,6 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
 
   @Deprecated
   @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @Nullable Pair<VirtualFile, Integer> getFileToSwapTo(Project project,
                                                               EditorWithProviderComposite editorWithProviderComposite) {
     return getFileToSwapTo(project, (EditorComposite) editorWithProviderComposite);

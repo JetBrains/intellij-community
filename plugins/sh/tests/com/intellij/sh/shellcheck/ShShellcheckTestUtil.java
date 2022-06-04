@@ -41,7 +41,10 @@ class ShShellcheckTestUtil {
 
     String link = getShellcheckDistributionLink();
     HttpRequest request = HttpRequest.newBuilder().uri(URI.create(link)).build();
-    HttpResponse<Path> response = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()
+    HttpResponse<Path> response = HttpClient.newBuilder()
+      .followRedirects(HttpClient.Redirect.NORMAL)
+      .version(HttpClient.Version.HTTP_1_1)
+      .build()
       .send(request, HttpResponse.BodyHandlers.ofFile(directory.resolve("shellcheck.tgz")));
     LOG.info("Getting " + link + ", status code: " + response.statusCode());
     Path archive = response.body();

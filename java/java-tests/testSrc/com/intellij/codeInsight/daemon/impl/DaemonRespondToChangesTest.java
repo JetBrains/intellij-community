@@ -163,6 +163,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
+
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_11;
+  }
+
+
+  @Override
   protected boolean doTestLineMarkers() {
     return true;
   }
@@ -1657,16 +1668,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     fail("PCE must have been thrown");
   }
 
-  @Override
-  protected Sdk getTestProjectJdk() {
-    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-  }
-
-  @Override
-  protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_11;
-  }
-
   public void testTypingInsideCodeBlockDoesntLeadToCatastrophicUnusedEverything_Stress() throws Throwable {
     InspectionProfileImpl profile = InspectionProfileManager.getInstance(getProject()).getCurrentProfile();
     profile.disableAllTools(getProject());
@@ -3147,6 +3148,43 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
     doHighlighting();
     assertNull(expectedVisibleRange); // check the inspection was run
+  }
+
+  public void testHighlightingPassesAreInstantiatedOffEDTToImproveResponsiveness() throws Throwable {
+    AtomicReference<Throwable> violation = new AtomicReference<>();
+    AtomicBoolean applied = new AtomicBoolean();
+    class MyCheckingConstructorTraceFac implements TextEditorHighlightingPassFactory {
+      @Override
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+        return new MyPass(myProject);
+      }
+
+      final class MyPass extends TextEditorHighlightingPass {
+        private MyPass(Project project) {
+          super(project, getEditor().getDocument(), false);
+          if (ApplicationManager.getApplication().isDispatchThread()) {
+            violation.set(new Throwable());
+          }
+        }
+
+        @Override
+        public void doCollectInformation(@NotNull ProgressIndicator progress) {
+        }
+
+        @Override
+        public void doApplyInformationToEditor() {
+          applied.set(true);
+        }
+      }
+    }
+    TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
+    registrar.registerTextEditorHighlightingPass(new MyCheckingConstructorTraceFac(), null, null, false, -1);
+    configureByText(JavaFileType.INSTANCE, "class C{}");
+    assertEmpty(highlightErrors());
+    assertTrue(applied.get());
+    if (violation.get() != null) {
+      throw violation.get();
+    }
   }
 }
 

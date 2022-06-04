@@ -108,7 +108,6 @@ Supports Maven and Gradle projects.
         <!--suppress PluginXmlCapitalization -->
         <notificationGroup displayType="BALLOON"
                            id="packagesearch.notification"
-                           icon="/icons/artifactSmall.svg"
                            bundle="messages.packageSearchBundle"
                            key="packagesearch.title"/>
 

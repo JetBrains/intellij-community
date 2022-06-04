@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Dimension
 import java.util.function.Supplier
 
-@ScheduledForRemoval(inVersion = "2022.2")
+@ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): ButtonSelectorToolbar {
   val actionGroup = DefaultActionGroup(options.map { ButtonSelectorAction(it, property, renderer(it)) })
@@ -47,7 +47,7 @@ fun <T> Row.segmentedButton(options: Collection<T>, property: GraphProperty<T>, 
   return result
 }
 
-@ScheduledForRemoval(inVersion = "2022.2")
+@ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
                                                         private val property: GraphProperty<T>,
@@ -91,7 +91,7 @@ private class ButtonSelector(
   }
 }
 
-@ScheduledForRemoval(inVersion = "2022.2")
+@ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 class ButtonSelectorToolbar internal constructor(
   place: String,

@@ -66,7 +66,7 @@ public class CollapseSelectionHandler implements CodeInsightActionHandler {
               }
             }
             region = foldingModel.addFoldRegion(start, end, ourPlaceHolderText);
-            LOG.assertTrue(region != null, "Fold region is not created. Folding model: " + foldingModel);
+            LOG.assertTrue(region != null, "Fold region is not created. Folding model: " + foldingModel + foldingModel.getClass());
             region.setExpanded(false);
             int offset = Math.min(start + ourPlaceHolderText.length(), doc.getTextLength());
             editor.getCaretModel().moveToOffset(offset);

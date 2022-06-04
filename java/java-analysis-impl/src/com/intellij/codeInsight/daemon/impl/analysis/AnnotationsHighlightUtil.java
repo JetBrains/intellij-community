@@ -801,7 +801,8 @@ public final class AnnotationsHighlightUtil {
 
     PsiMethod method = (PsiMethod)owner;
     PsiClass enclosingClass = method.getContainingClass();
-    if (method.isConstructor() && enclosingClass != null) {
+    boolean isConstructor = method.isConstructor();
+    if (isConstructor && enclosingClass != null) {
       enclosingClass = enclosingClass.getContainingClass();
     }
 
@@ -818,7 +819,19 @@ public final class AnnotationsHighlightUtil {
       PsiThisExpression identifier = parameter.getIdentifier();
       if (!enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
         String text = JavaErrorBundle.message("receiver.name.mismatch");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+        String name;
+        if (isConstructor) {
+          String className = enclosingClass.getName();
+          name = className != null ? className + ".this" : null;
+        }
+        else {
+          name = "this";
+        }
+        if (name != null) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createReceiverParameterNameFix(parameter, name));
+        }
+        return info;
       }
     }
 

@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.completion.context
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.analyse
-import org.jetbrains.kotlin.idea.frontend.api.analyseInDependedAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyseInDependedAnalysisSession
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -22,6 +22,10 @@ internal class FirClassifierNamePositionContext(
     val classLikeDeclaration: KtClassLikeDeclaration,
 ) : FirRawPositionCompletionContext()
 
+internal class FirValueParameterPositionContext(
+    override val position: PsiElement,
+    val ktParameter: KtParameter,
+) : FirRawPositionCompletionContext()
 
 internal class FirIncorrectPositionContext(
     override val position: PsiElement
@@ -68,6 +72,16 @@ internal class FirAnnotationTypeNameReferencePositionContext(
     val annotationEntry: KtAnnotationEntry,
 ) : FirNameReferencePositionContext()
 
+/**
+ * Example
+ * ```
+ * class A {
+ *   fun test() {
+ *     super<<caret>>
+ *   }
+ * }
+ * ```
+ */
 internal class FirSuperTypeCallNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
@@ -76,6 +90,23 @@ internal class FirSuperTypeCallNameReferencePositionContext(
     val superExpression: KtSuperExpression,
 ) : FirNameReferencePositionContext()
 
+/**
+ * Example
+ * ```
+ * class A {
+ *   fun test() {
+ *     super.<caret>
+ *   }
+ * }
+ * ```
+ */
+internal class FirSuperReceiverNameReferencePositionContext(
+    override val position: PsiElement,
+    override val reference: KtSimpleNameReference,
+    override val nameExpression: KtSimpleNameExpression,
+    override val explicitReceiver: KtExpression?,
+    val superExpression: KtSuperExpression,
+) : FirNameReferencePositionContext()
 
 internal class FirExpressionNameReferencePositionContext(
     override val position: PsiElement,
@@ -124,6 +155,9 @@ internal object FirPositionCompletionContextDetector {
         return when {
             parent is KtClassLikeDeclaration && parent.nameIdentifier == position -> {
                 FirClassifierNamePositionContext(position, parent)
+            }
+            parent is KtParameter -> {
+                FirValueParameterPositionContext(position, parent)
             }
             else -> null
         }
@@ -180,6 +214,13 @@ internal object FirPositionCompletionContextDetector {
                     position, reference, nameExpression, explicitReceiver
                 )
             }
+            explicitReceiver is KtSuperExpression -> FirSuperReceiverNameReferencePositionContext(
+                position,
+                reference,
+                nameExpression,
+                explicitReceiver,
+                explicitReceiver
+            )
             else -> {
                 FirExpressionNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)
             }
@@ -256,6 +297,7 @@ internal object FirPositionCompletionContextDetector {
             is FirPackageDirectivePositionContext,
             is FirTypeConstraintNameInWhereClausePositionContext,
             is FirIncorrectPositionContext,
+            is FirValueParameterPositionContext,
             is FirClassifierNamePositionContext -> {
                 analyse(basicContext.originalKtFile, action)
             }

@@ -10,7 +10,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,8 +33,7 @@ public interface CacheManager {
     /**
      * @deprecated use {@link CacheManager#getInstance(Project)}
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     public static CacheManager getInstance(Project project) {
       return project.getService(CacheManager.class);
     }

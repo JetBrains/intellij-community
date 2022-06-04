@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -288,7 +288,7 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
         if (myPresentation.icon().isEmpty()) {
           return null;
         }
-        return IconLoader.getIcon(myPresentation.icon(), myClass);
+        return IconLoader.getIcon(myPresentation.icon(), myClass.getClassLoader());
       }
     };
 

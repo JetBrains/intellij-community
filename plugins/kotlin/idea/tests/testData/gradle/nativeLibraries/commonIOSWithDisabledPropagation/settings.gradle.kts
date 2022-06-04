@@ -1,6 +1,5 @@
 pluginManagement {
     repositories {
-        jcenter()
-        gradlePluginPortal()
+        {{kts_kotlin_plugin_repositories}}
     }
 }

@@ -32,7 +32,10 @@ import com.intellij.util.proxy.SharedProxyConfig;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
@@ -150,7 +153,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link #initializeComponent()} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public void initComponent() {
     initializeComponent();
   }
@@ -637,17 +639,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link HttpRequests#CONNECTION_TIMEOUT} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static final int CONNECTION_TIMEOUT = HttpRequests.CONNECTION_TIMEOUT;
 
   /** @deprecated use {@link HttpRequests#READ_TIMEOUT} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static final int READ_TIMEOUT = HttpRequests.READ_TIMEOUT;
 
   /** @deprecated use {@link HttpRequests#REDIRECT_LIMIT} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public static final int REDIRECT_LIMIT = HttpRequests.REDIRECT_LIMIT;
   //</editor-fold>
 }

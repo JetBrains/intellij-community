@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import externalApp.ExternalApp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
@@ -20,7 +19,7 @@ import java.util.UUID;
 /**
  * <p>The provider of external application scripts called by Git when a remote operation needs communication with the user.</p>
  * <p>
- *   Usage:
+ * Usage:
  *   <ol>
  *     <li>Get the script from {@link #getScriptPath(GitExecutable, boolean)}.</li>
  *     <li>Set up proper environment variable
@@ -74,13 +73,13 @@ public abstract class XmlRpcHandlerService<T> implements Disposable {
    * @throws IOException if script cannot be generated
    */
   @NotNull
-  public File getScriptPath(@NotNull String scriptId, boolean useBatchFile, @Nullable ScriptGenerator.CustomScriptCommandLineBuilder customCmdBuilder) throws IOException {
+  public File getScriptPath(@NotNull String scriptId, @NotNull ScriptGenerator generator, boolean useBatchFile) throws IOException {
     synchronized (SCRIPT_FILE_LOCK) {
       String id = scriptId + (useBatchFile ? "-bat" : ""); //NON-NLS
       File scriptPath = myScriptPaths.get(id);
       if (scriptPath == null || !scriptPath.exists()) {
-        ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix + "-" + scriptId, myScriptMainClass);
-        scriptPath = generator.generate(useBatchFile, customCmdBuilder);
+        String commandLine = generator.commandLine(myScriptMainClass, useBatchFile);
+        scriptPath = ScriptGeneratorUtil.createTempScript(commandLine, myScriptTempFilePrefix + "-" + scriptId, useBatchFile);
         myScriptPaths.put(id, scriptPath);
       }
       return scriptPath;
@@ -118,6 +117,7 @@ public abstract class XmlRpcHandlerService<T> implements Disposable {
   /**
    * Creates an implementation of the xml rpc handler, which methods will be called from the external application.
    * This method should just delegate the call to the specific handler of type {@link T}, which can be achieved by {@link #getHandler(UUID)}.
+   *
    * @return New instance of the xml rpc handler delegate.
    */
   @NotNull
@@ -152,5 +152,4 @@ public abstract class XmlRpcHandlerService<T> implements Disposable {
       }
     }
   }
-
 }

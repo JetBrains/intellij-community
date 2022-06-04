@@ -1,9 +1,9 @@
 import builtins
-from typing import Any, Tuple
+from typing import Any
 
 import MySQLdb._exceptions
 
-version_info: Tuple[Any, ...]
+version_info: tuple[Any, ...]
 
 class DataError(MySQLdb._exceptions.DatabaseError): ...
 class DatabaseError(MySQLdb._exceptions.Error): ...

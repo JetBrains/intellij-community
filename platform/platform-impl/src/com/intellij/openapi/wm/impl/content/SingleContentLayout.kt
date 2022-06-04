@@ -275,9 +275,9 @@ internal class SingleContentLayout(
       label.icon = null
       label.toolTipText = null
     }
-    else if (myTabs.size == 1) {
-      label.icon = myTabs[0].content.icon
-      val displayName = myTabs[0].content.displayName
+    else if (tabs.size == 1) {
+      label.icon = tabs[0].content.icon
+      val displayName = tabs[0].content.displayName
       label.text = createProcessName(
         prefix = ui.window.stripeTitle,
         title = displayName

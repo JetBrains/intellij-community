@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -9,14 +9,15 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.analyse
-import org.jetbrains.kotlin.idea.frontend.api.components.KtTypeRendererOptions
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -49,7 +50,7 @@ class KotlinHighLevelLambdaParameterInfoHandler :
 
     override fun getArgumentListAllowedParentClasses() = setOf(KtLambdaArgument::class.java)
 
-    override fun getParameterIndex(context: UpdateParameterInfoContext, argumentList: KtLambdaArgument): Int {
+    override fun getCurrentArgumentIndex(context: UpdateParameterInfoContext, argumentList: KtLambdaArgument): Int {
         val size = (argumentList.parent as? KtCallElement)?.valueArguments?.size ?: 1
         return size - 1
     }
@@ -105,17 +106,17 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
         val callElement = argumentList.parent as? KtElement ?: return null
         return analyse(callElement) {
-            // TODO: FE 1.0 plugin collects all candidates (i.e., all overloads), even if arguments do not match. Not just resolved call.
-            // See Call.resolveCandidates() in core/src/org/jetbrains/kotlin/idea/core/Utils.kt. Note `replaceCollectAllCandidates(true)`.
-
-            val resolvedCall = when (callElement) {
-                is KtCallElement -> callElement.resolveCall()
-                is KtArrayAccessExpression -> callElement.resolveCall()
-                else -> return null
-            }
-
-            val candidates = resolvedCall?.targetFunction?.candidates ?: return null
-            context.itemsToShow = candidates.map { CandidateInfo(it.createPointer()) }.toTypedArray()
+            // findElementForParameterInfo() is only called once before the UI is shown. updateParameterInfo() is called once before the UI
+            // is shown, and is also called every time the cursor moves or the call arguments change (i.e., user types something) while the
+            // UI is shown, hence the need to resolve the call again in updateParameterInfo() (e.g., argument mappings can change).
+            //
+            // However, the candidates in findElementForParameterInfo() and updateParameterInfo() are the exact same because the name of the
+            // function call CANNOT change while the UI is shown. Because of how ParameterInfoHandler works, we have to store _something_ in
+            // `context.itemsToShow` array which becomes `context.objectsToView` array in updateParameterInfo(). Unfortunately
+            // `objectsToView` is read-only so we can't change the size of the array. So we have to store an array here of the correct size,
+            // which does mean we have to resolve here to know the number of candidates.
+            val candidatesWithMapping = resolveCallCandidates(callElement)
+            context.itemsToShow = Array(candidatesWithMapping.size) { CandidateInfo() }
 
             argumentList
         }
@@ -131,44 +132,43 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         if (context.parameterOwner !== argumentList) {
             context.removeHint()
         }
-        val parameterIndex = getParameterIndex(context, argumentList)
-        context.setCurrentParameter(parameterIndex)
+        val currentArgumentIndex = getCurrentArgumentIndex(context, argumentList)
+        context.setCurrentParameter(currentArgumentIndex)
 
         val callElement = argumentList.parent as? KtElement ?: return
         analyse(callElement) {
-            val (resolvedCall, valueArguments, arguments) = when (callElement) {
+            val (valueArguments, arguments) = when (callElement) {
                 is KtCallElement -> {
                     val valueArguments = callElement.valueArgumentList?.arguments
-                    Triple(callElement.resolveCall(), valueArguments, valueArguments?.map { it.getArgumentExpression() } ?: listOf())
+                    Pair(valueArguments, valueArguments?.map { it.getArgumentExpression() } ?: listOf())
                 }
-                is KtArrayAccessExpression -> Triple(callElement.resolveCall(), null, callElement.indexExpressions)
+                is KtArrayAccessExpression -> Pair(null, callElement.indexExpressions)
                 else -> return@analyse
             }
-            val candidates = resolvedCall?.targetFunction?.candidates ?: return@analyse
+            val candidatesWithMapping = resolveCallCandidates(callElement)
 
-            for (objectToView in context.objectsToView) {
+            for ((index, objectToView) in context.objectsToView.withIndex()) {
                 val candidateInfo = objectToView as? CandidateInfo ?: continue
-                // Find candidate matching the one in CandidateInfo
-                // TODO: restoreSymbol does not work for static members (see Nullability.kt test),
-                // functional values (see FunctionalValue*.kt tests), and Java functions (see useJava*FromLib.kt tests).
-                // HL API gets a different symbol because a new ScopeSession() is used, and therefore a new enhanced FirFunction is created.
-                val candidateToMatch = candidateInfo.candidate.restoreSymbol() ?: return@analyse
-                val candidate = candidates.firstOrNull { it == candidateToMatch } ?: return@analyse
+
+                if (index >= candidatesWithMapping.size) {
+                    // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
+                    return
+                }
+                val (candidateSignature, argumentMapping) = candidatesWithMapping[index]
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
-                val isArraySetCall = candidate.callableIdIfNonLocal?.let {
+                val isArraySetCall = candidateSignature.symbol.callableIdIfNonLocal?.let {
                     val isSet = it.callableName == OperatorNameConventions.SET
                     isSet && callElement is KtArrayAccessExpression
                 } ?: false
-                // TODO: Get substituted value parameters. Not currently available in HL API. See SubstituteFromArguments*.kt tests
-                val valueParameters = candidate.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
-                val setValueParameter = if (isArraySetCall) candidate.valueParameters.last() else null
+                val valueParameters = candidateSignature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
+                val setValueParameter = if (isArraySetCall) candidateSignature.valueParameters.last() else null
 
                 // TODO: When resolvedCall is KtFunctionalTypeVariableCall, the candidate is FunctionN.invoke() and parameter names are "p1", "p2", etc.
                 // We need to get the type of the target variable, and retrieve the parameter names from the type (KtFunctionalType).
                 // The names need to be added to KtFunctionalType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
 
-                val parameterToIndex = buildMap<KtValueParameterSymbol, Int> {
+                val parameterToIndex = buildMap<KtVariableLikeSignature<KtValueParameterSymbol>, Int> {
                     valueParameters.forEachIndexed { index, parameter -> put(parameter, index) }
                 }
 
@@ -182,8 +182,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     }
                 }
 
-                // TODO: The argument mapping should also be per-candidate once we have all candidates available.
-                val argumentMapping = resolvedCall.argumentMapping
                 val argumentToParameterIndex = LinkedHashMap<KtExpression, Int>(argumentMapping.size).apply {
                     for ((argumentExpression, parameterForArgument) in argumentMapping) {
                         if (parameterForArgument == setValueParameter) continue
@@ -191,8 +189,24 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     }
                 }
 
+                // Determine the parameter to be highlighted.
+                val highlightParameterIndex = calculateHighlightParameterIndex(
+                    arguments,
+                    currentArgumentIndex,
+                    argumentToParameterIndex,
+                    argumentMapping,
+                    parameterToIndex
+                )
+
+                val hasTypeMismatchBeforeCurrent = calculateHasTypeMismatchBeforeCurrent(
+                    arguments,
+                    currentArgumentIndex,
+                    argumentMapping,
+                    setValueParameter
+                )
+
                 // TODO: This should be changed when there are multiple candidates available; need to know which one the call is resolved to
-                val isCallResolvedToCandidate = candidates.size == 1
+                val isCallResolvedToCandidate = candidatesWithMapping.size == 1
 
                 candidateInfo.callInfo = CallInfo(
                     callElement,
@@ -201,23 +215,29 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     argumentToParameterIndex,
                     valueParameters.size,
                     parameterIndexToText,
-                    isCallResolvedToCandidate
+                    isCallResolvedToCandidate,
+                    hasTypeMismatchBeforeCurrent,
+                    highlightParameterIndex,
+                    candidateSignature.symbol.deprecationStatus != null,
                 )
             }
         }
     }
 
-    protected open fun getParameterIndex(context: UpdateParameterInfoContext, argumentList: TArgumentList): Int {
+    protected open fun getCurrentArgumentIndex(context: UpdateParameterInfoContext, argumentList: TArgumentList): Int {
         val offset = context.offset
         return argumentList.allChildren
             .takeWhile { it.startOffset < offset }
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    private fun KtAnalysisSession.renderParameter(parameter: KtValueParameterSymbol, includeName: Boolean): String {
+    private fun KtAnalysisSession.renderParameter(
+        parameter: KtVariableLikeSignature<KtValueParameterSymbol>,
+        includeName: Boolean
+    ): String {
         return buildString {
             val annotationFqNames =
-                parameter.annotations
+                parameter.symbol.annotations
                     .filter {
                         // For primary constructor parameters, the annotation use site must be "param" or unspecified.
                         it.useSiteTarget == null || it.useSiteTarget == AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
@@ -226,22 +246,67 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     .filter { it !in NULLABILITY_ANNOTATIONS }
             annotationFqNames.forEach { append("@${it.shortName().asString()} ") }
 
-            if (parameter.isVararg) {
+            if (parameter.symbol.isVararg) {
                 append("vararg ")
             }
 
             if (includeName) {
-                append(parameter.name)
+                append(parameter.symbol.name)
                 append(": ")
             }
 
-            append(parameter.annotatedType.type.render(KtTypeRendererOptions.SHORT_NAMES))
+            val returnType = parameter.returnType.takeUnless { it is KtClassErrorType } ?: parameter.symbol.returnType
+            append(returnType.render(KtTypeRendererOptions.SHORT_NAMES))
 
-            if (parameter.hasDefaultValue) {
+            if (parameter.symbol.hasDefaultValue) {
                 // TODO: append(" = " + defaultValue).
                 // HL API currently doesn't give actual default value.
             }
         }
+    }
+
+    private fun calculateHighlightParameterIndex(
+        arguments: List<KtExpression>,
+        currentArgumentIndex: Int,
+        argumentToParameterIndex: LinkedHashMap<KtExpression, Int>,
+        argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
+        parameterToIndex: Map<KtVariableLikeSignature<KtValueParameterSymbol>, Int>
+    ): Int? {
+        val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
+        val highlightParameterIndex = when {
+            currentArgumentIndex < arguments.size -> argumentToParameterIndex[arguments[currentArgumentIndex]]
+            afterTrailingComma -> {
+                // If last argument is for a vararg parameter, then the argument about to be entered at the cursor should also be
+                // for that same vararg parameter.
+                val parameterForLastArgument = argumentMapping[arguments.last()]
+                if (parameterForLastArgument?.symbol?.isVararg == true) {
+                    parameterToIndex[parameterForLastArgument]
+                } else {
+                    null
+                }
+            }
+            else -> null
+        }
+        return highlightParameterIndex
+    }
+
+    private fun KtAnalysisSession.calculateHasTypeMismatchBeforeCurrent(
+        arguments: List<KtExpression>,
+        currentArgumentIndex: Int,
+        argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
+        setValueParameter: KtVariableLikeSignature<KtValueParameterSymbol>?
+    ): Boolean {
+        for ((index, argument) in arguments.withIndex()) {
+            if (index >= currentArgumentIndex) break
+            val parameterForArgument = argumentMapping[argument] ?: continue
+            if (parameterForArgument == setValueParameter) continue
+
+            val argumentType = argument.getKtType() ?: error("Argument should have a KtType")
+            if (argumentType.isNotSubTypeOf(parameterForArgument.returnType)) {
+                return true
+            }
+        }
+        return false
     }
 
     override fun updateUI(itemToShow: CandidateInfo, context: ParameterInfoUIContext) {
@@ -259,7 +324,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
      * 2. However, the call may have a named argument that's NOT in its own position. In this case, you will have all parameters
      *    corresponding to named arguments first (in their order in the call), followed by any unused parameters in the order they
      *    are listed in the candidate. See NamedParameter*.kt tests.
-     * 3. Substituted types and default values should be rendered.
+     * 3. Substituted types and default values should be rendered. That is, types from signature should be used instead of types from
+     *    symbols.
      *
      * The logic for surrounding parameters in brackets (e.g., "[x: Int], ...") is as follows:
      * 1. When an argument is named, the parameter for that argument is surrounded in brackets.
@@ -268,6 +334,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
      *    See NamedParameter4.kt test.
      * 3. When the named argument IS in its own position, and LanguageFeature.MixedNamedArgumentsInTheirOwnPosition is DISABLED, then
      *    `namedMode = true` as described above. See MixedNamedArguments2.kt test.
+     * 4. `isDisabledBeforeHighlight = true` is used to separate used parameters (before the highlight) from unused parameters, if there
+     *    are any unused parameters.
      *
      * The logic for highlighting a parameter (i.e., by setting `highlight(Start|End)Offset`) is as follows:
      * 1. A parameter is highlighted when the cursor is on the corresponding argument in the candidate's mapping.
@@ -280,7 +348,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
      *
      * `setupUIComponentPresentation()` is called with `disabled = true` when any of the following are true:
      * 1. If the argument on the cursor does NOT map to a parameter (e.g., on N-th argument but there are < N parameters),
-     * 2. If any of the arguments before the cursor do NOT match the type of the corresponding parameter.
+     * 2. If any of the arguments before the cursor do NOT match the type of the corresponding parameter (ignoring arguments with type
+     *    errors, e.g., unresolved) or do NOT map to a parameter (e.g., named argument with an unknown name).
      * 3. If the cursor is after a trailing comma with no argument, AND LanguageFeature.TrailingCommas is DISABLED, AND there are
      *    already enough arguments in the call. (We assume the user is about to enter an argument in that position.)
      *
@@ -298,141 +367,153 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         if (currentArgumentIndex < 0) return false
 
         val callInfo = itemToShow.callInfo ?: return false
-        val (callElement, valueArguments, arguments, argumentMapping, valueParameterCount, parameterIndexToText, isCallResolvedToCandidate) = callInfo
+        with(callInfo) {
+            val supportsMixedNamedArgumentsInTheirOwnPosition =
+                callElement.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
 
-        val supportsMixedNamedArgumentsInTheirOwnPosition =
-            callElement.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
+            // TODO: This matches FE 1.0 plugin behavior. Consider just returning false here
+            checkWithAttachment(
+                arguments.size >= currentArgumentIndex,
+                lazyMessage = {
+                    "currentArgumentIndex: $currentArgumentIndex has to be not more than number of arguments ${arguments.size}"
+                },
+                attachments = {
+                    it.withAttachment("file.kt", callElement.containingFile.text)
+                    it.withAttachment("info.txt", itemToShow)
+                }
+            )
 
-        // TODO: This matches FE 1.0 plugin behavior. Consider just returning false here
-        checkWithAttachment(
-            arguments.size >= currentArgumentIndex,
-            lazyMessage = { "currentArgumentIndex: $currentArgumentIndex has to be not more than number of arguments ${arguments.size}" },
-            attachments = {
-                it.withAttachment("file.kt", callElement.containingFile.text)
-                it.withAttachment("info.txt", itemToShow)
-            }
-        )
+            var highlightStartOffset = -1
+            var highlightEndOffset = -1
+            var isDisabledBeforeHighlight = false
+            var hasUnmappedArgument = false
+            var hasUnmappedArgumentBeforeCurrent = false
+            val usedParameterIndices = HashSet<Int>()
+            val text = buildString {
+                var namedMode = false
+                var argumentIndex = 0
 
-        var highlightStartOffset = -1
-        var highlightEndOffset = -1
-        var isDisabledBeforeHighlight = false
-        val usedParameterIndices = HashSet<Int>()
-        val text = buildString {
-            var namedMode = false
-            var argumentIndex = 0
+                fun appendParameter(
+                    parameterIndex: Int,
+                    shouldHighlight: Boolean = false,
+                    isNamed: Boolean = false,
+                    markUsedUnusedParameterBorder: Boolean = false
+                ) {
+                    argumentIndex++
 
-            fun appendParameter(
-                parameterIndex: Int,
-                shouldHighlight: Boolean = false,
-                isNamed: Boolean = false,
-                markUsedUnusedParameterBorder: Boolean = false
-            ) {
-                argumentIndex++
+                    if (length > 0) {
+                        append(", ")
+                        if (markUsedUnusedParameterBorder) {
+                            // This is used to "disable" the used parameters, when in "named mode" and there are more unused parameters.
+                            // See NamedParameter3.kt test. Disabling them gives a visual cue that they are already used.
 
-                if (length > 0) {
-                    append(", ")
-                    if (markUsedUnusedParameterBorder) {
-                        // TODO: This matches FE 1.0 plugin behavior, but consider removing "disable before highlight".
-                        // It's odd that we disable the used parameters, even though they might match. See NamedParameter3.kt test:
-                        // `y = false` matches, and we disable it even though the next argument could match too (e.g., `x = `).
+                            // Highlight the space after the comma; highlighted text needs to be at least one character long
+                            highlightStartOffset = length - 1
+                            highlightEndOffset = length
+                            isDisabledBeforeHighlight = true
+                        }
+                    }
 
-                        // Highlight the space after the comma; highlighted text needs to be at least one character long
-                        highlightStartOffset = length - 1
+                    if (shouldHighlight) {
+                        highlightStartOffset = length
+                    }
+
+                    val surroundInBrackets = isNamed || namedMode
+                    if (surroundInBrackets) {
+                        append("[")
+                    }
+                    append(parameterIndexToText[parameterIndex])
+                    if (surroundInBrackets) {
+                        append("]")
+                    }
+
+                    if (shouldHighlight) {
                         highlightEndOffset = length
-                        isDisabledBeforeHighlight = true
                     }
                 }
 
-                if (shouldHighlight) {
-                    highlightStartOffset = length
-                }
+                if (valueArguments != null) {
+                    for (valueArgument in valueArguments) {
+                        val parameterIndex = argumentToParameterIndex[valueArgument.getArgumentExpression()]
+                        if (valueArgument.isNamed() &&
+                            !(supportsMixedNamedArgumentsInTheirOwnPosition && parameterIndex != null && parameterIndex == argumentIndex)
+                        ) {
+                            // "Named mode" (all arguments should be named) begins when there is a named argument NOT in their own position
+                            // or a named argument is unmapped (i.e., non-existent name),
+                            // or named arguments in their own position is not supported.
+                            namedMode = true
+                        }
 
-                val surroundInBrackets = isNamed || namedMode
-                if (surroundInBrackets) {
-                    append("[")
-                }
-                append(parameterIndexToText[parameterIndex])
-                if (surroundInBrackets) {
-                    append("]")
-                }
+                        if (parameterIndex == null) {
+                            hasUnmappedArgument = true
+                            if (argumentIndex < currentArgumentIndex) {
+                                hasUnmappedArgumentBeforeCurrent = true
+                            }
+                            argumentIndex++
+                            continue
+                        }
+                        if (!usedParameterIndices.add(parameterIndex)) continue
 
-                if (shouldHighlight) {
-                    highlightEndOffset = length
-                }
-            }
-
-            if (valueArguments != null) {
-                for (valueArgument in valueArguments) {
-                    val parameterIndex = argumentMapping[valueArgument.getArgumentExpression()] ?: continue
-                    if (!usedParameterIndices.add(parameterIndex)) continue
-
-                    if (valueArgument.isNamed() &&
-                        !(supportsMixedNamedArgumentsInTheirOwnPosition && parameterIndex == argumentIndex)
-                    ) {
-                        // "Named mode" (all arguments should be named) begins when there is a named argument NOT in their own position
-                        // or named arguments in their own position is not supported.
-                        namedMode = true
+                        val shouldHighlight = parameterIndex == highlightParameterIndex
+                        appendParameter(parameterIndex, shouldHighlight, valueArgument.isNamed())
                     }
+                } else {
+                    // This is for array get/set calls which don't have KtValueArguments.
+                    for (argument in arguments) {
+                        val parameterIndex = argumentToParameterIndex[argument]
+                        if (parameterIndex == null) {
+                            hasUnmappedArgument = true
+                            if (argumentIndex <= currentArgumentIndex) {
+                                hasUnmappedArgumentBeforeCurrent = true
+                            }
+                            argumentIndex++
+                            continue
+                        }
+                        if (!usedParameterIndices.add(parameterIndex)) continue
 
-                    val shouldHighlight = argumentIndex == currentArgumentIndex
-                    appendParameter(parameterIndex, shouldHighlight, valueArgument.isNamed())
-                }
-            } else {
-                // This is for array get/set calls which don't have KtValueArguments.
-                for (argument in arguments) {
-                    val parameterIndex = argumentMapping[argument] ?: continue
-                    if (!usedParameterIndices.add(parameterIndex)) continue
-
-                    val shouldHighlight = argumentIndex == currentArgumentIndex
-                    appendParameter(parameterIndex, shouldHighlight)
-                }
-            }
-
-            for (parameterIndex in 0 until valueParameterCount) {
-                if (parameterIndex !in usedParameterIndices) {
-                    if (argumentIndex != parameterIndex) {
-                        namedMode = true
+                        val shouldHighlight = parameterIndex == highlightParameterIndex
+                        appendParameter(parameterIndex, shouldHighlight)
                     }
-                    // Highlight the first unused parameter if it is in the correct position
-                    val shouldHighlight = !namedMode && highlightStartOffset == -1
-                    appendParameter(
-                        parameterIndex,
-                        shouldHighlight,
-                        markUsedUnusedParameterBorder = namedMode && highlightStartOffset == -1
-                    )
+                }
+
+                for (parameterIndex in 0 until valueParameterCount) {
+                    if (parameterIndex !in usedParameterIndices) {
+                        // Highlight the first unused parameter if it is in the correct position
+                        val shouldHighlight = !namedMode && highlightStartOffset == -1
+                        appendParameter(
+                            parameterIndex,
+                            shouldHighlight,
+                            markUsedUnusedParameterBorder = namedMode && highlightStartOffset == -1
+                        )
+                    }
+                }
+
+                if (length == 0) {
+                    append(CodeInsightBundle.message("parameter.info.no.parameters"))
                 }
             }
 
-            if (length == 0) {
-                append(CodeInsightBundle.message("parameter.info.no.parameters"))
-            }
+            val backgroundColor = if (isCallResolvedToCandidate) GREEN_BACKGROUND else context.defaultParameterColor
+
+            // Disabled when there are too many arguments.
+            val allParametersUsed = usedParameterIndices.size == valueParameterCount
+            val supportsTrailingCommas = callElement.languageVersionSettings.supportsFeature(LanguageFeature.TrailingCommas)
+            val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
+            val isInPositionToEnterArgument = !supportsTrailingCommas && afterTrailingComma
+            val tooManyArgs = allParametersUsed && (isInPositionToEnterArgument || hasUnmappedArgument)
+
+            val isDisabled = tooManyArgs || hasTypeMismatchBeforeCurrent || hasUnmappedArgumentBeforeCurrent
+
+            context.setupUIComponentPresentation(
+                text,
+                highlightStartOffset,
+                highlightEndOffset,
+                isDisabled,
+                /*strikeout=*/ isDeprecated,
+                isDisabledBeforeHighlight,
+                backgroundColor
+            )
         }
-
-        val backgroundColor = if (isCallResolvedToCandidate) GREEN_BACKGROUND else context.defaultParameterColor
-        // TODO: Strikeout if deprecated. Deprecation status not currently in HL API
-        val strikeout = false
-
-        // Disabled when there are too many arguments.
-        val allParametersUsed = usedParameterIndices.size == valueParameterCount
-        val supportsTrailingCommas = callElement.languageVersionSettings.supportsFeature(LanguageFeature.TrailingCommas)
-        val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
-        val tooManyArgs = allParametersUsed && ((!supportsTrailingCommas && afterTrailingComma) || arguments.size > valueParameterCount)
-
-        // TODO: Also disable if not all arguments before the current are matched. Need to check this in updateParameterInfo()
-        // See UpdateInTyping.kt tests
-        val hasMismatchBeforeCurrent = false
-
-        val isDisabled = tooManyArgs || hasMismatchBeforeCurrent
-
-        context.setupUIComponentPresentation(
-            text,
-            highlightStartOffset,
-            highlightEndOffset,
-            isDisabled,
-            strikeout,
-            isDisabledBeforeHighlight,
-            backgroundColor
-        )
 
         return true
     }
@@ -444,11 +525,13 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val argumentToParameterIndex: LinkedHashMap<KtExpression, Int>,
         val valueParameterCount: Int,
         val parameterIndexToText: Map<Int, String>,
-        val isCallResolvedToCandidate: Boolean
+        val isCallResolvedToCandidate: Boolean,
+        val hasTypeMismatchBeforeCurrent: Boolean,
+        val highlightParameterIndex: Int?,
+        val isDeprecated: Boolean,
     )
 
     data class CandidateInfo(
-        val candidate: KtSymbolPointer<KtFunctionLikeSymbol>,
         var callInfo: CallInfo? = null  // Populated in updateParameterInfo()
     )
 }

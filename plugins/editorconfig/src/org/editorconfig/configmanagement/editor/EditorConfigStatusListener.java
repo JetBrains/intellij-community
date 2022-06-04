@@ -5,18 +5,11 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
@@ -28,15 +21,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.ConfigEncodingManager;
 import org.editorconfig.configmanagement.EditorConfigEncodingCache;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.psi.EditorConfigOption;
 import org.editorconfig.language.psi.EditorConfigSection;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public final class EditorConfigStatusListener implements CodeStyleSettingsListener, Disposable {
@@ -44,8 +34,6 @@ public final class EditorConfigStatusListener implements CodeStyleSettingsListen
   private final VirtualFile myVirtualFile;
   private final Project myProject;
   private Set<String> myEncodings;
-
-  private MyReloadTask myReloadTask;
 
   public EditorConfigStatusListener(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     myProject = project;
@@ -96,62 +84,12 @@ public final class EditorConfigStatusListener implements CodeStyleSettingsListen
     CodeStyleSettingsManager.removeListener(myProject, this);
   }
 
-  private void onEncodingChanged() {
-    if (myReloadTask != null) {
-      myReloadTask.interrupt();
-    }
-    MyReloadTask reloadTask = new MyReloadTask();
-    ProgressManager.getInstance().run(reloadTask);
-    myReloadTask = reloadTask;
+  private static void onEncodingChanged() {
+    EditorConfigEncodingCache.getInstance().reset();
   }
 
   private static boolean containsValidEncodings(@NotNull Set<String> encodings) {
     return ContainerUtil.and(encodings, encoding -> ConfigEncodingManager.toCharset(encoding) != null);
-  }
-
-  private class MyReloadTask extends Task.Backgroundable {
-    private volatile boolean myInterrupted;
-
-    private MyReloadTask() {
-      super(EditorConfigStatusListener.this.myProject, EditorConfigBundle.message("encoding.change.reloading.files"), false);
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      EditorConfigEncodingCache.getInstance().reset();
-      List<VirtualFile> filesToReload = new ArrayList<>();
-      VirtualFile parentDir = myVirtualFile.getParent();
-      final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      VfsUtilCore.visitChildrenRecursively(
-        parentDir,
-        new VirtualFileVisitor<>() {
-          @Override
-          public boolean visitFile(@NotNull VirtualFile file) {
-            if (myInterrupted) throw new ProcessCanceledException();
-            if (!file.isDirectory() &&
-                !Utils.EDITOR_CONFIG_FILE_NAME.equals(file.getName()) &&
-                fileDocumentManager.getCachedDocument(file) != null) {
-              filesToReload.add(file);
-            }
-            return true;
-          }
-        }
-      );
-      ApplicationManager.getApplication().invokeLater(
-        () -> {
-          if (myProject != null) {
-            filesToReload.forEach(file -> {
-              EditorConfigEncodingCache.getInstance().cacheEncoding(myProject, file);
-            });
-          }
-          fileDocumentManager.reloadFiles(filesToReload.toArray(VirtualFile.EMPTY_ARRAY));
-        });
-    }
-
-
-    void interrupt() {
-      myInterrupted = true;
-    }
   }
 
   @NotNull

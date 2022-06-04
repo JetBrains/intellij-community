@@ -270,6 +270,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     else if (uElement instanceof UField) {
       return new RefFieldImpl((UField)uElement, psi, myRefManager);
     }
+    else if (uElement instanceof ULambdaExpression || uElement instanceof UCallableReferenceExpression) {
+      return new RefFunctionalExpressionImpl((UExpression)uElement, psi, myRefManager);
+    }
     return null;
   }
 

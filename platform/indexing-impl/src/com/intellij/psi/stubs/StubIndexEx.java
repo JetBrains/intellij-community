@@ -8,11 +8,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.*;
@@ -144,7 +144,7 @@ public abstract class StubIndexEx extends StubIndex {
       return false;
     }
 
-    Iterator<VirtualFile> singleFileInScope = extractSingleFile(scope);
+    Iterator<VirtualFile> singleFileInScope = extractSingleFileOrEmpty(scope);
     Iterator<VirtualFile> fileStream;
     boolean shouldHaveKeys;
 
@@ -328,8 +328,7 @@ public abstract class StubIndexEx extends StubIndex {
                                                                          @NotNull Project project,
                                                                          @NotNull GlobalSearchScope scope) {
     IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
-    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
-    return fileSet.stream().filter(scope::contains).iterator();
+    return FileBasedIndexEx.createLazyFileIterator(result, scope);
   }
 
   @Override
@@ -466,21 +465,26 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @SuppressWarnings("unchecked")
-  private static @Nullable Iterator<VirtualFile> extractSingleFile(@Nullable GlobalSearchScope scope) {
-    if (!(scope instanceof Iterable)) {
-      return null;
-    }
-    Iterable<VirtualFile> scopeAsFileIterable = (Iterable<VirtualFile>)scope;
-    Iterator<VirtualFile> result = null;
+  private static @Nullable Iterator<VirtualFile> extractSingleFileOrEmpty(@Nullable GlobalSearchScope scope) {
+    if (scope == null) return null;
+
+    VirtualFileEnumeration enumeration = VirtualFileEnumeration.extract(scope);
+    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? enumeration.asIterable() :
+                                                scope instanceof Iterable<?> ? (Iterable<VirtualFile>)scope :
+                                                null;
+    if (scopeAsFileIterable == null) return null;
+
+    VirtualFile result = null;
+    boolean isFirst = true;
     for (VirtualFile file : scopeAsFileIterable) {
-      if (result == null) {
-        result = file != null ? ObjectIterators.singleton(file) : ObjectIterators.emptyIterator();
-      }
-      else {
-        return null;
-      }
+      if (!isFirst) return null;
+      result = file;
+      isFirst = false;
     }
-    return result;
+
+    return isFirst ? ObjectIterators.emptyIterator() :
+           result instanceof VirtualFileWithId ? ObjectIterators.singleton(result) :
+           null;
   }
 
   private static final class KeyAndFileId<K> {

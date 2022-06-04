@@ -23,7 +23,6 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1196,8 +1195,7 @@ public class CommonCodeStyleSettings {
   /**
    * @deprecated Use {@link CodeStyle#getLocalLanguageSettings(Editor, int)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
     return CodeStyle.getLocalLanguageSettings(editor, tailOffset);
   }

@@ -22,8 +22,7 @@ public abstract class RunProfileStarter {
    */
   @SuppressWarnings("unused")
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     throw new AbstractMethodError();
   }

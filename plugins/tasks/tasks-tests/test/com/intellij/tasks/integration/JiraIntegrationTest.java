@@ -21,6 +21,7 @@ import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.tasks.*;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -273,7 +274,7 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
       Assume.assumeTrue("Server '" + myRepository.getUrl() + "' is inaccessible", accessible);
     }
     catch (IOException e) {
-      Assume.assumeNoException(e);
+      ExternalResourcesChecker.reportUnavailability(baseUrl, e);
     }
     finally {
       if (!accessible) {

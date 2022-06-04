@@ -5,12 +5,16 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.util.toUiPathProperty
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
@@ -49,18 +53,15 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
   private fun suggestName(): String {
     val location = context.projectFileDirectory
-    if (context.isCreatingNewProject) {
-      return suggestUniqueName(location)
+    if (FileUtil.pathsEqual(File(location).parent, path)) {
+      return File(location).name
     }
-    if (FileUtil.pathsEqual(location, path)) {
-      return suggestUniqueName(location)
-    }
-    return File(location).name
+    return suggestUniqueName()
   }
 
-  private fun suggestUniqueName(location: String): String {
+  private fun suggestUniqueName(): String {
     val moduleNames = findAllModules().map { it.name }.toSet()
-    return FileUtil.createSequentFileName(File(location), "untitled", "") {
+    return FileUtil.createSequentFileName(File(path), "untitled", "") {
       !it.exists() && it.name !in moduleNames
     }
   }
@@ -75,6 +76,10 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
     return findAllModules().asSequence()
       .flatMap { it.rootManager.contentRoots.asSequence() }
       .any { it.isDirectory && FileUtil.pathsEqual(it.path, path) }
+  }
+
+  init {
+    nameProperty.dependsOn(pathProperty, ::suggestUniqueName)
   }
 
   override fun setupUI(builder: Panel) {
@@ -103,6 +108,17 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       onApply {
         context.projectName = name
         context.setProjectFileDirectory(Path.of(path, name), false)
+      }
+    }
+  }
+
+  override fun setupProject(project: Project) {
+    if (context.isCreatingNewProject) {
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          val projectManager = ProjectRootManager.getInstance(project)
+          projectManager.projectSdk = context.projectJdk
+        }
       }
     }
   }

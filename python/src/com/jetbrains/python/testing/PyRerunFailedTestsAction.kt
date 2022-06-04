@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
@@ -30,6 +31,7 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.CommandLinePatcher
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import java.util.function.Function
 
 class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : AbstractRerunFailedTestsAction(componentContainer) {
@@ -94,23 +96,23 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
       return super.execute(executor, converter)
     }
 
+    /**
+     * *To be deprecated. The part of the legacy implementation based on [GeneralCommandLine].*
+     */
     override fun getTestSpecs(): List<String> {
       // Method could be called on any thread (as any method of this class), and we need read action
       return ReadAction.compute(ThrowableComputable<List<String>, RuntimeException> { getTestSpecImpl() })
     }
 
+    override fun getTestSpecs(request: TargetEnvironmentRequest): List<TargetEnvironmentFunction<String>> =
+      ReadAction.compute(ThrowableComputable<List<TargetEnvironmentFunction<String>>, RuntimeException> {
+        getTestSpecImpl(request)
+      })
+
     @RequiresReadLock
     private fun getTestSpecImpl(): List<String> {
-      val failedTestLocations = mutableListOf<Pair<Location<*>, AbstractTestProxy>>()
       val failedTests = getFailedTests(project)
-      for (failedTest in failedTests) {
-        if (failedTest.isLeaf) {
-          val location = failedTest.getLocation(project, myConsoleProperties.scope)
-          if (location != null) {
-            failedTestLocations.add(Pair.create(location, failedTest))
-          }
-        }
-      }
+      val failedTestLocations = getTestLocations(failedTests)
       val result: List<String> =
         if (configuration is PyRerunAwareConfiguration) {
           (configuration as PyRerunAwareConfiguration).getTestSpecsForRerun(myConsoleProperties.scope, failedTestLocations)
@@ -123,6 +125,37 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
         LOG.warn("Can't resolve specs for the following tests: ${locations.joinToString(separator = ", ")}")
       }
       return result
+    }
+
+    @RequiresReadLock
+    private fun getTestSpecImpl(request: TargetEnvironmentRequest): List<TargetEnvironmentFunction<String>> {
+      val failedTests = getFailedTests(project)
+      val failedTestLocations = getTestLocations(failedTests)
+      val result: List<TargetEnvironmentFunction<String>> =
+        if (configuration is PyRerunAwareConfiguration) {
+          (configuration as PyRerunAwareConfiguration).getTestSpecsForRerun(request, myConsoleProperties.scope, failedTestLocations)
+        }
+        else {
+          failedTestLocations.mapNotNull { configuration.getTestSpec(request, it.first, it.second) }
+        }
+      if (result.isEmpty()) {
+        val locations = failedTests.map { it.locationUrl }
+        LOG.warn("Can't resolve specs for the following tests: ${locations.joinToString(separator = ", ")}")
+      }
+      return result
+    }
+
+    private fun getTestLocations(tests: List<AbstractTestProxy>): List<Pair<Location<*>, AbstractTestProxy>> {
+      val testLocations = mutableListOf<Pair<Location<*>, AbstractTestProxy>>()
+      for (test in tests) {
+        if (test.isLeaf) {
+          val location = test.getLocation(project, myConsoleProperties.scope)
+          if (location != null) {
+            testLocations.add(Pair.create(location, test))
+          }
+        }
+      }
+      return testLocations
     }
 
     override fun addAfterParameters(cmd: GeneralCommandLine) {
@@ -147,11 +180,11 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
       state.customizeEnvironmentVars(envs, passParentEnvs)
     }
 
-    override fun customizePythonExecutionEnvironmentVars(targetEnvironmentRequest: TargetEnvironmentRequest,
+    override fun customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
                                                          envs: Map<String, Function<TargetEnvironment, String>>,
                                                          passParentEnvs: Boolean) {
-      super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
-      state.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs)
+      super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
+      state.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
     }
   }
 

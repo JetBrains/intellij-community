@@ -1,1 +1,2 @@
 // runForGradleGroovy false
+// keepKotlinVersion true

@@ -78,9 +78,9 @@
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.importing.MavenImportingManager"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager" preload="true"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenProjectIndicesManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
@@ -186,6 +186,8 @@
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationParameterDomExtender"/>
+
+    <dom.gotoSuper implementation="org.jetbrains.idea.maven.dom.navigation.MavenGotoSuperHandler"/>
 
     <completion.contributor language="any"
                             implementationClass="org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor"
@@ -617,7 +619,7 @@
             icon="AllIcons.Nodes.Folder"/>
     <action id="Maven.ShowIgnored"
             class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-            icon="AllIcons.Actions.ShowHiddens"/>
+            icon="AllIcons.Actions.ToggleVisibility"/>
     <action id="Maven.ShowBasicPhasesOnly"
             class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
             icon="AllIcons.General.Filter"/>

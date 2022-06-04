@@ -10,7 +10,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -55,8 +54,7 @@ public final class ModuleUtil extends ModuleUtilCore {
   }
 
   /** @deprecated use {@link ModuleType#get(Module)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static ModuleType<?> getModuleType(@NotNull Module module) {
     return ModuleType.get(module);
   }

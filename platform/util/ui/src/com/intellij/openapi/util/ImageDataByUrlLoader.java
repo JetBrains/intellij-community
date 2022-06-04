@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.ui.icons.IconTransform;
@@ -56,16 +56,13 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
   }
 
   ImageDataByUrlLoader(@NotNull String path,
-                       @Nullable Class<?> clazz,
+                       @Nullable Class<?> ownerClass,
                        @Nullable ClassLoader classLoader,
-                       @Nullable IconLoader.HandleNotFound handleNotFound,
+                       @NotNull IconLoader.HandleNotFound handleNotFound,
                        boolean useCacheOnLoad) {
     overriddenPath = path;
-    ownerClass = clazz;
+    this.ownerClass = ownerClass;
     this.classLoader = classLoader;
-    if (handleNotFound == null) {
-      handleNotFound = IconLoader.STRICT_LOCAL.get() ? IconLoader.HandleNotFound.THROW_EXCEPTION : IconLoader.HandleNotFound.IGNORE;
-    }
     this.handleNotFound = handleNotFound;
     this.useCacheOnLoad = useCacheOnLoad;
     url = UNRESOLVED_URL;

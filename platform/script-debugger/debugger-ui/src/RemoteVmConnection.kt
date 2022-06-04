@@ -141,8 +141,14 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
         })
       .setTitle(XDebuggerBundle.message("script.debugger.popup.title.choose.page"))
       .setCancelOnWindowDeactivation(false)
+      .setCancelOnClickOutside(false)
+      .setRequestFocus(true)
       .setItemChosenCallback { value ->
         result.setResult(value)
+      }
+      .setCancelCallback {
+        result.setResult(model[0])
+        true
       }
     if (selectedIndex != -1) {
       builder.setSelectedValue(model[selectedIndex], false)

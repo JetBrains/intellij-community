@@ -37,7 +37,7 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
       return AllIcons.Toolwindows.ToolWindowProject;
     }
     else {
-      return Objects.requireNonNull(IconLoader.findIcon(path, null, ProjectViewToolWindowFactory.class.getClassLoader(), null, false));
+      return Objects.requireNonNull(IconLoader.findIcon(path, ProjectViewToolWindowFactory.class.getClassLoader()));
     }
   }
 

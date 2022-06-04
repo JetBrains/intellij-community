@@ -21,7 +21,7 @@ class InlineIconButton(val icon: Icon,
                        val hoveredIcon: Icon = icon,
                        val disabledIcon: Icon = IconLoader.getDisabledIcon(icon),
                        @NlsContexts.Tooltip val tooltip: String? = null,
-                       val shortcut: ShortcutSet? = null)
+                       var shortcut: ShortcutSet? = null)
   : JComponent() {
 
   var actionListener: ActionListener? = null

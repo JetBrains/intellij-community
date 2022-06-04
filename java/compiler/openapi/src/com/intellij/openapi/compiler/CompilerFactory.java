@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.compiler;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use {@link Compiler#EP_NAME} extension point to register compilers instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public interface CompilerFactory {
   Compiler[] createCompilers(@NotNull CompilerManager compilerManager);
 }

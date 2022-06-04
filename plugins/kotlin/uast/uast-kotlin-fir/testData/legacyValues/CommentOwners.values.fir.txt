@@ -2,7 +2,7 @@ UFile (package = ) [public final class CommentOwnersKt {...]
     UClass (name = CommentOwnersKt) [public final class CommentOwnersKt {...}]
         UField (name = topLevelProperty) [@org.jetbrains.annotations.NotNull private static final var topLevelProperty: int = 42]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            ULiteralExpression (value = 42) [42] = (long)42
+            ULiteralExpression (value = 42) [42] = 42
         UMethod (name = getTopLevelProperty) [public static final fun getTopLevelProperty() : int = UastEmptyExpression]
         UMethod (name = topLevelFun) [public static final fun topLevelFun() : void {...}]
             UBlockExpression [{...}] = Nothing
@@ -30,14 +30,14 @@ UFile (package = ) [public final class CommentOwnersKt {...]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [funPlainCall(42)] = external funPlainCall(42)((long)42)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [funPlainCall(42)] = external funPlainCall(42)(42)
                     UIdentifier (Identifier (funPlainCall)) [UIdentifier (Identifier (funPlainCall))]
-                    USimpleNameReferenceExpression (identifier = funPlainCall, resolvesTo = null) [funPlainCall] = external funPlainCall(42)((long)42)
-                    ULiteralExpression (value = 42) [42] = (long)42
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [funNamedArgumentsCall(42)] = external funNamedArgumentsCall(42)((long)42)
+                    USimpleNameReferenceExpression (identifier = funPlainCall, resolvesTo = null) [funPlainCall] = external funPlainCall(42)(42)
+                    ULiteralExpression (value = 42) [42] = 42
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [funNamedArgumentsCall(42)] = external funNamedArgumentsCall(42)(42)
                     UIdentifier (Identifier (funNamedArgumentsCall)) [UIdentifier (Identifier (funNamedArgumentsCall))]
-                    USimpleNameReferenceExpression (identifier = funNamedArgumentsCall, resolvesTo = null) [funNamedArgumentsCall] = external funNamedArgumentsCall(42)((long)42)
-                    ULiteralExpression (value = 42) [42] = (long)42
+                    USimpleNameReferenceExpression (identifier = funNamedArgumentsCall, resolvesTo = null) [funNamedArgumentsCall] = external funNamedArgumentsCall(42)(42)
+                    ULiteralExpression (value = 42) [42] = 42
                 UWhileExpression [while (true) {...}] = Undetermined
                     ULiteralExpression (value = true) [true] = true
                     UBlockExpression [{...}] = Nothing(break)
@@ -48,11 +48,11 @@ UFile (package = ) [public final class CommentOwnersKt {...]
                     UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var localValueDefinition: int = 42] = Undetermined
                     ULocalVariable (name = localValueDefinition) [var localValueDefinition: int = 42]
-                        ULiteralExpression (value = 42) [42] = (long)42
+                        ULiteralExpression (value = 42) [42] = 42
     UClass (name = TopLevelClass) [public final class TopLevelClass {...}]
         UField (name = classLevelProperty) [@org.jetbrains.annotations.NotNull private final var classLevelProperty: int = 42]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            ULiteralExpression (value = 42) [42] = (long)42
+            ULiteralExpression (value = 42) [42] = 42
         UMethod (name = getClassLevelProperty) [public final fun getClassLevelProperty() : int = UastEmptyExpression]
         UMethod (name = classLevelMethod) [public final fun classLevelMethod() : void {...}]
             UBlockExpression [{...}] = Nothing

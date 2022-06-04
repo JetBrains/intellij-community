@@ -53,8 +53,7 @@ public final class LocalChangesWouldBeOverwrittenHelper {
   /**
    * @deprecated use {@link #showErrorNotification(Project, String, VirtualFile, String, Collection)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void showErrorNotification(@NotNull final Project project,
                                            @NotNull final VirtualFile root,
                                            @NotNull final String operationName,

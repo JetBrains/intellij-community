@@ -19,8 +19,7 @@ public class IdeUICustomization {
    * @deprecated it's hard to properly localize 'project' term in the middle of a sentence; if you need to use a 'project' term,
    * put the whole message to ProjectConceptBundle.properties and refer to it via {@link #projectMessage} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public String getProjectConceptName() {
     return "project";
@@ -37,8 +36,7 @@ public class IdeUICustomization {
   /**
    * @deprecated use {@code projectMessage("tab.title.project")} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @Nls(capitalization = Nls.Capitalization.Title)
   public String getProjectDisplayName() {
     return projectMessage("tab.title.project");
@@ -55,8 +53,7 @@ public class IdeUICustomization {
   /**
    * @deprecated use {@code projectMessage("select.in.item.project.view")} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public String getProjectViewSelectInTitle() {
     return projectMessage("select.in.item.project.view");
   }

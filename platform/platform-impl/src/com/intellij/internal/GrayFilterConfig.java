@@ -66,7 +66,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
           JLabel label = new JLabel((String)data[row][column]);
           label.setOpaque(true);
           label.setBackground(JBColor.border());
-          label.setBorder(JBUI.Borders.emptyLeft(UISettings.getDefFontSize()));
+          label.setBorder(JBUI.Borders.emptyLeft((int) Math.ceil(UISettings.getDefFontSize())));
           return label;
         };
       }
@@ -117,7 +117,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     for (int c=0; c<table.getColumnCount(); c++)
       table.getColumnModel().getColumn(c).setPreferredWidth(JBUIScale.scale(100));
     for (int r=0; r<table.getRowCount(); r++)
-      table.setRowHeight(r, UISettings.getDefFontSize() * 2);
+      table.setRowHeight(r, (int)Math.ceil(UISettings.getDefFontSize() * 2));
 
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(table, BorderLayout.CENTER);

@@ -17,7 +17,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,8 +72,7 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
   protected abstract PsiClass findClass(String className);
 
   /** @deprecated use {@link AppClassBrowser#AppClassBrowser(Project, ConfigurationModuleSelector)} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("rawtypes")
   public static ClassBrowser createApplicationClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector) {
     return new AppClassBrowser(project, moduleSelector);

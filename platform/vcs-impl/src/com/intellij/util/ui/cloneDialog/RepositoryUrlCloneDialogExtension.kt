@@ -102,7 +102,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     }
 
     override fun doClone(checkoutListener: CheckoutProvider.Listener) {
-      getCurrentVcsComponent()?.doClone(project, checkoutListener)
+      getCurrentVcsComponent()?.doClone(checkoutListener)
     }
 
     override fun doValidateAll(): List<ValidationInfo> {

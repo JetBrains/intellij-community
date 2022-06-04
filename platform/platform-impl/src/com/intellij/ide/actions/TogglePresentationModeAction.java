@@ -39,7 +39,7 @@ import java.util.Map;
 public final class TogglePresentationModeAction extends AnAction implements DumbAware {
   private static final Map<Object, Object> ourSavedValues = new LinkedHashMap<>();
   private static float ourSavedScaleFactor = JBUIScale.scale(1f);
-  private static int ourSavedConsoleFontSize;
+  private static float ourSavedConsoleFontSize;
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -95,9 +95,9 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
   private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    int fontSize = inPresentation ? settings.getPresentationModeFontSize() : globalScheme.getEditorFontSize();
+    float fontSize = inPresentation ? settings.getPresentationModeFontSize() : globalScheme.getEditorFontSize2D();
     if (inPresentation) {
-      ourSavedConsoleFontSize = globalScheme.getConsoleFontSize();
+      ourSavedConsoleFontSize = globalScheme.getConsoleFontSize2D();
       globalScheme.setConsoleFontSize(fontSize);
     }
     else {

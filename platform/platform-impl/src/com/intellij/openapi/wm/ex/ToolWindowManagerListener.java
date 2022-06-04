@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -51,8 +50,7 @@ public interface ToolWindowManagerListener extends EventListener {
    * @deprecated use {@link #toolWindowShown(ToolWindow)} instead
    */
   @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
   }
 

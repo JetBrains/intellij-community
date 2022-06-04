@@ -82,7 +82,7 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
 
   private fun actionPerformed(event: AnActionEvent, problem: HighlightingProblem) {
     val intentions = getCachedIntentions(event, problem, true) ?: return
-    val editor = intentions.editor ?: return
+    val editor: Editor = intentions.editor ?: return
     if (intentions.offset >= 0) editor.caretModel.moveToOffset(intentions.offset.coerceAtMost(editor.document.textLength))
     show(event, JBPopupFactory.getInstance().createListPopup(
       object : IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions) {

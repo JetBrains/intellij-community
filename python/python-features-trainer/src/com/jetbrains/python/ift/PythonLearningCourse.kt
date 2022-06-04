@@ -8,7 +8,7 @@ import com.jetbrains.python.ift.lesson.basic.PythonContextActionsLesson
 import com.jetbrains.python.ift.lesson.basic.PythonSelectLesson
 import com.jetbrains.python.ift.lesson.basic.PythonSurroundAndUnwrapLesson
 import com.jetbrains.python.ift.lesson.completion.*
-import com.jetbrains.python.ift.lesson.essensial.PythonOnboardingTour
+import com.jetbrains.python.ift.lesson.essensial.PythonOnboardingTourLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonDeclarationAndUsagesLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonFileStructureLesson
 import com.jetbrains.python.ift.lesson.navigation.PythonRecentFilesLesson
@@ -45,7 +45,7 @@ class PythonLearningCourse : LearningCourseBase(PythonLanguage.INSTANCE.id) {
                    description = PythonLessonsBundle.message("python.onboarding.module.description", LessonUtil.productName),
                    primaryLanguage = langSupport,
                    moduleType = LessonType.PROJECT) {
-      listOf(PythonOnboardingTour())
+      listOf(PythonOnboardingTourLesson())
     }
   )
   else emptyList()

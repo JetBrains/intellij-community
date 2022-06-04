@@ -1,4 +1,4 @@
-from typing import Any, Text, Type
+from typing import Any, Text
 
 from .bucketlistresultset import BucketListResultSet
 from .connection import S3Connection
@@ -19,8 +19,8 @@ class Bucket:
     MFADeleteRE: str
     name: Text
     connection: S3Connection
-    key_class: Type[Key]
-    def __init__(self, connection: S3Connection | None = ..., name: Text | None = ..., key_class: Type[Key] = ...) -> None: ...
+    key_class: type[Key]
+    def __init__(self, connection: S3Connection | None = ..., name: Text | None = ..., key_class: type[Key] = ...) -> None: ...
     def __iter__(self): ...
     def __contains__(self, key_name) -> bool: ...
     def startElement(self, name, attrs, connection): ...

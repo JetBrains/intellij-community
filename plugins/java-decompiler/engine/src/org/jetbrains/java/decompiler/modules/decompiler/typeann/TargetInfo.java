@@ -61,6 +61,15 @@ public interface TargetInfo {
     }
 
     /**
+     * @return All formal parameter type annotations from a {@link TypeAnnotation} list.
+     */
+    public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations) {
+      return typeAnnotations.stream()
+        .filter(typeAnnotation -> typeAnnotation.getTargetInfo() instanceof FormalParameterTarget)
+        .collect(Collectors.toList());
+    }
+
+    /**
      * @return All formal parameter target annotations from a {@link TypeAnnotation} list at a specified index.
      */
     public static List<TypeAnnotation> extract(List<TypeAnnotation> typeAnnotations, int formalParameterIndex) {

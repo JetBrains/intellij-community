@@ -21,8 +21,7 @@ import java.awt.event.InputEvent;
  * @see <a href="https://jetbrains.github.io/ui/controls/link/">IJ Platform UI Guidelines | Link</a>
  * @deprecated use {@link com.intellij.ui.components.AnActionLink} instead
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private static final EmptyIcon ICON = JBUIScale.scaleIcon(EmptyIcon.create(0, 12));
   private final AnAction myAction;

@@ -1,1 +1,2 @@
 redis.client.Pipeline.transaction  # instance attribute has same name as superclass method
+redis.ocsp  # requires cryptography to be installed

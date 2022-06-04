@@ -472,7 +472,6 @@ public interface Application extends ComponentManager {
 
   /** @deprecated use {@link #isDisposed()} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   default boolean isDisposeInProgress() {
     return isDisposed();
   }
@@ -498,12 +497,10 @@ public interface Application extends ComponentManager {
 
   /** @deprecated use {@link #runReadAction(Runnable)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @NotNull AccessToken acquireReadActionLock();
 
   /** @deprecated use {@link #runWriteAction}, {@link WriteAction#run(ThrowableRunnable)}, or {@link WriteAction#compute} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
   /**

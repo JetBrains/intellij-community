@@ -57,6 +57,10 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
     myExePath = TargetValue.fixed(exePath);
   }
 
+  public @NotNull TargetValue<String> getExePath() {
+    return myExePath;
+  }
+
   public void setWorkingDirectory(@NotNull TargetValue<String> workingDirectory) {
     myWorkingDirectory = workingDirectory;
   }

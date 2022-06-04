@@ -28,6 +28,16 @@ public class HighLevelBasicCompletionHandlerTestGenerated extends AbstractHighLe
         runTest("../completion/tests/testData/handlers/basic/AddLabelToReturn.kt");
     }
 
+    @TestMetadata("AmbiguousSuperMethod.kt")
+    public void testAmbiguousSuperMethod() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/AmbiguousSuperMethod.kt");
+    }
+
+    @TestMetadata("AmbiguousSuperMethodWithArgument.kt")
+    public void testAmbiguousSuperMethodWithArgument() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");
+    }
+
     @TestMetadata("ClassKeywordBeforeName.kt")
     public void testClassKeywordBeforeName() throws Exception {
         runTest("../completion/tests/testData/handlers/basic/ClassKeywordBeforeName.kt");
@@ -223,6 +233,11 @@ public class HighLevelBasicCompletionHandlerTestGenerated extends AbstractHighLe
         runTest("../completion/tests/testData/handlers/basic/SuperMethod2.kt");
     }
 
+    @TestMetadata("SuperMethodWithDifferentParameterNames.kt")
+    public void testSuperMethodWithDifferentParameterNames() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/SuperMethodWithDifferentParameterNames.kt");
+    }
+
     @TestMetadata("SuperTypeArg.kt")
     public void testSuperTypeArg() throws Exception {
         runTest("../completion/tests/testData/handlers/basic/SuperTypeArg.kt");
@@ -241,6 +256,26 @@ public class HighLevelBasicCompletionHandlerTestGenerated extends AbstractHighLe
     @TestMetadata("TypeParameter.kt")
     public void testTypeParameter() throws Exception {
         runTest("../completion/tests/testData/handlers/basic/TypeParameter.kt");
+    }
+
+    @TestMetadata("UnstableSmartCast.kt")
+    public void testUnstableSmartCast() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast.kt");
+    }
+
+    @TestMetadata("UnstableSmartCast_notDenotable.kt")
+    public void testUnstableSmartCast_notDenotable() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_notDenotable.kt");
+    }
+
+    @TestMetadata("UnstableSmartCast_typeAlias.kt")
+    public void testUnstableSmartCast_typeAlias() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_typeAlias.kt");
+    }
+
+    @TestMetadata("UnstableSmartCast_typeParams.kt")
+    public void testUnstableSmartCast_typeParams() throws Exception {
+        runTest("../completion/tests/testData/handlers/basic/UnstableSmartCast_typeParams.kt");
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

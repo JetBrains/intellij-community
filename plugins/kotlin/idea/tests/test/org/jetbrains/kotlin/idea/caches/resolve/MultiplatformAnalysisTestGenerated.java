@@ -58,6 +58,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/correctOverloadResolutionAmbiguity/");
     }
 
+    @TestMetadata("defaultArguments")
+    public void testDefaultArguments() throws Exception {
+        runTest("testData/multiplatform/defaultArguments/");
+    }
+
     @TestMetadata("diamondActualInBottom")
     public void testDiamondActualInBottom() throws Exception {
         runTest("testData/multiplatform/diamondActualInBottom/");
@@ -186,6 +191,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
     @TestMetadata("kt44898")
     public void testKt44898() throws Exception {
         runTest("testData/multiplatform/kt44898/");
+    }
+
+    @TestMetadata("kt48291")
+    public void testKt48291() throws Exception {
+        runTest("testData/multiplatform/kt48291/");
     }
 
     @TestMetadata("lambdas")

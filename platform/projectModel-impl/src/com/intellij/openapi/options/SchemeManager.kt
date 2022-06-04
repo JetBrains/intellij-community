@@ -28,7 +28,7 @@ abstract class SchemeManager<T> {
   abstract fun reload()
 
   @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
     @Suppress("UNCHECKED_CAST")
     addScheme(scheme as T, replaceExisting)

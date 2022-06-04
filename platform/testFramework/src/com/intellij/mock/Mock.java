@@ -40,7 +40,7 @@ public class Mock {
   public static class MyFileEditor extends UserDataHolderBase implements DocumentsEditor {
     private final Document @NotNull [] DOCUMENTS;
 
-    public MyFileEditor(Document @NotNull ... DOCUMENTS) {
+    public MyFileEditor(@NotNull Document @NotNull ... DOCUMENTS) {
       this.DOCUMENTS = DOCUMENTS;
     }
     public MyFileEditor() {
@@ -48,7 +48,7 @@ public class Mock {
     }
 
     @Override
-    public Document @NotNull [] getDocuments() {
+    public @NotNull Document @NotNull [] getDocuments() {
       return DOCUMENTS;
     }
 

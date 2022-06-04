@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 
@@ -114,8 +113,7 @@ public class MavenImportingSettings implements Cloneable {
    * @deprecated see {@link MavenImportingSettings#setImportAutomatically(boolean)} for details
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public boolean isImportAutomatically() {
     return importAutomatically;
   }
@@ -125,8 +123,7 @@ public class MavenImportingSettings implements Cloneable {
    * @deprecated Auto-import cannot be disabled
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public void setImportAutomatically(@SuppressWarnings("unused") boolean importAutomatically) {
     this.importAutomatically = importAutomatically;
   }

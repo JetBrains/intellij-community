@@ -152,6 +152,7 @@
     },
 
     "ComboBox": {
+      "background": "Grey13",
       "ArrowButton.background": "Grey13"
     },
 
@@ -179,12 +180,23 @@
       "hoverInactiveBackground": "Grey13"
     },
 
-    "Editor.searchFieldInsets": "7,10,7,8",
+    "Editor": {
+      "SearchField" : {
+        "borderInsets" : "7,10,7,8",
+        "background": "Grey13"
+      },
+
+      "Toolbar" : {
+        "borderColor" : "Grey11"
+      }
+    },
 
     "FileColor": {
       "Yellow": "Yellow11",
       "Green": "Green11"
     },
+
+    "Label.errorForeground": "#d92b2b",
 
     "Link": {
       "activeForeground": "Blue4",
@@ -234,7 +246,14 @@
       }
     },
 
+    "NotificationsToolwindow": {
+      "newNotification.background": "Grey11",
+      "newNotification.hoverBackground": "#CFDEFCB3",
+      "Notification.hoverBackground": "#CFDEFCB3"
+    },
+
     "Popup": {
+      "background": "Grey13",
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey7",
@@ -244,10 +263,10 @@
         }
       },
       "Header": {
-        "activeBackground": "Grey12",
-        "inactiveBackground": "Grey11"
-      },
-      "borderWidth": 0.5
+        "activeBackground": "Grey13",
+        "inactiveBackground": "Grey13",
+        "inactiveForeground": "Grey7"
+      }
     },
 
     "CompletionPopup": {
@@ -264,22 +283,32 @@
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
 
+    "SearchField": {
+      "errorForeground": "#d92b2b",
+      "errorBackground": "Red10"
+    },
+
     "SearchEverywhere": {
       "Tab.selectedBackground": "Blue13",
       "SearchField.background": "Grey13",
       "Advertiser.foreground": "Grey7"
     },
 
+    "SearchMatch": {
+      "startBackground": "Yellow9",
+      "endBackground": "Yellow9"
+    },
+
     "StatusBar": {
       "Widget": {
-        "foreground": "Grey7",
+        "foreground": "Grey5",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "pressedBackground": "Grey10",
         "widgetInsets": "6,8,6,8"
       },
       "Breadcrumbs": {
-        "foreground": "Grey7",
+        "foreground": "Grey5",
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey11",
         "floatingBackground": "Grey13",
@@ -288,6 +317,11 @@
         "floatingToolbarInsets": "8,12,8,12",
         "itemBackgroundInsets": "2,4,2,4"
       }
+    },
+
+    "TabbedPane": {
+      "tabHeight": 40,
+      "tabSelectionArc": 4
     },
 
     "ToolTip":{
@@ -337,6 +371,8 @@
         "pressedBackground": "Grey1"
       }
     },
+
+    "OnePixelDivider.background": "Grey11",
 
     "TitlePane": {
       "Button": {

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
@@ -69,6 +69,7 @@ class ChangeToLabeledReturnFix(
                 Errors.RETURN_NOT_ALLOWED ->
                     diagnostic.psiElement as? KtReturnExpression
                 Errors.TYPE_MISMATCH,
+                Errors.TYPE_MISMATCH_WARNING,
                 Errors.CONSTANT_EXPECTED_TYPE_MISMATCH,
                 Errors.NULL_FOR_NONNULL_TYPE ->
                     getLambdaReturnExpression(diagnostic.psiElement, context)

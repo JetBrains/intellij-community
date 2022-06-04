@@ -7,4 +7,3 @@ fun test(x: Int): String {
         else -> ""
     }
 }
-/* IGNORE_FIR */

@@ -14,7 +14,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,8 +54,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   /**
    * @deprecated Use {@link LazyRunConfigurationProducer}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected RunConfigurationProducer(@NotNull Class<? extends ConfigurationType> type) {
     this(ConfigurationTypeUtil.findConfigurationType(type));
   }

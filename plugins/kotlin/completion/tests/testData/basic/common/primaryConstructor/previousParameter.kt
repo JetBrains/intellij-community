@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 class X(val y: Int, val x: Int = <caret>)
 
 // EXIST: y

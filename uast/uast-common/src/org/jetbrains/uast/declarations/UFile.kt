@@ -16,7 +16,7 @@ interface UFile : UElement, UAnnotated {
   /**
    * Returns the original [PsiFile].
    */
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiFile

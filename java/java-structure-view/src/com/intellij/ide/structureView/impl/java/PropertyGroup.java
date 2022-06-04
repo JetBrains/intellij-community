@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.WeighedItem;
@@ -199,7 +199,7 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
   }
 
   private static Icon loadIcon(@NonNls String resourceName) {
-    Icon icon = IconLoader.findIcon(resourceName, PropertyGroup.class, PropertyGroup.class.getClassLoader(), null, true);
+    Icon icon = IconLoader.findIcon(resourceName, PropertyGroup.class.getClassLoader());
     Application application = ApplicationManager.getApplication();
     if (icon == null && application != null && application.isUnitTestMode()) {
       return new ImageIcon();

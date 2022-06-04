@@ -2,14 +2,17 @@
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
+import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.annotations.*
+import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.AbstractReceiverParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ReceiverParameterDescriptorImpl
-import org.jetbrains.kotlin.idea.frontend.api.symbols.*
-import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.*
-import org.jetbrains.kotlin.idea.frontend.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.*
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -69,10 +72,27 @@ private fun KtClassKind.toDescriptorKlassKind(): ClassKind =
         KtClassKind.INTERFACE -> ClassKind.INTERFACE
     }
 
+private fun KtAnnotationValue.toConstantValue(): ConstantValue<*> {
+    return when (this) {
+        KtUnsupportedAnnotationValue -> ErrorValue.create("Unsupported annotation value")
+        is KtArrayAnnotationValue -> ArrayValue(values.map { it.toConstantValue() }) { TODO() }
+        is KtAnnotationApplicationValue -> TODO()
+        is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> KClassValue(classId, arrayDimensions = 0)
+        is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> TODO()
+        is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> ErrorValue.create("Unresolved class")
+        is KtEnumEntryAnnotationValue -> {
+            val callableId = callableId ?: return ErrorValue.create("Unresolved enum entry")
+            val classId = callableId.classId ?: return ErrorValue.create("Unresolved enum entry")
+            EnumValue(classId, callableId.callableName)
+        }
+        is KtConstantAnnotationValue -> constantValue.toConstantValue()
+    }
+}
+
 private fun KtConstantValue.toConstantValue(): ConstantValue<*> =
     when (this) {
-        KtUnsupportedConstantValue -> ErrorValue.create("Error value for KtUnsupportedConstantValue")
-        is KtSimpleConstantValue<*> -> when (constantValueKind) {
+        is KtConstantValue.KtErrorConstantValue -> ErrorValue.create(errorMessage)
+        else -> when (constantValueKind) {
             ConstantValueKind.Null -> NullValue()
             ConstantValueKind.Boolean -> BooleanValue(value as Boolean)
             ConstantValueKind.Char -> CharValue(value as Char)
@@ -102,7 +122,7 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: FE10BindingContex
     override fun getSource(): SourceElement = ktSymbol.psi.safeAs<KtPureElement>().toSourceElement()
 
     override fun getContainingDeclaration(): DeclarationDescriptor {
-        if (ktSymbol !is KtSymbolWithKind) error("ContainingDeclaration should be overriden")
+        if (ktSymbol !is KtSymbolWithKind) error("ContainingDeclaration should be overridden")
 
         val containerSymbol = context.withAnalysisSession {
             (ktSymbol as KtSymbolWithKind).getContainingSymbol()
@@ -146,7 +166,7 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: FE10BindingContex
 }
 
 class KtSymbolBasedAnnotationDescriptor(
-    private val ktAnnotationCall: KtAnnotationCall,
+    private val ktAnnotationCall: KtAnnotationApplication,
     val context: FE10BindingContext
 ) : AnnotationDescriptor {
     override val type: KotlinType
@@ -156,7 +176,7 @@ class KtSymbolBasedAnnotationDescriptor(
         get() = ktAnnotationCall.classId?.asSingleFqName()
 
     override val allValueArguments: Map<Name, ConstantValue<*>> =
-        ktAnnotationCall.arguments.associate { Name.identifier(it.name) to it.expression.toConstantValue() }
+        ktAnnotationCall.arguments.associate { it.name to it.expression.toConstantValue() }
 
     override val source: SourceElement
         get() = ktAnnotationCall.psi.toSourceElement()
@@ -201,6 +221,8 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
     override fun getThisAsReceiverParameter(): ReceiverParameterDescriptor =
         ReceiverParameterDescriptorImpl(this, ImplicitClassReceiver(this), Annotations.EMPTY)
 
+    override fun getContextReceivers(): List<ReceiverParameterDescriptor> = implementationPlanned()
+
     override fun getOriginal(): ClassDescriptor = this
 
     override fun getUnsubstitutedPrimaryConstructor(): ClassConstructorDescriptor? = context.withAnalysisSession {
@@ -231,7 +253,6 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
     override fun getDefaultFunctionTypeForSamInterface(): SimpleType = noImplementation()
 }
 
-
 class KtSymbolBasedTypeParameterDescriptor(
     override val ktSymbol: KtTypeParameterSymbol, context: FE10BindingContext
 ) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, TypeParameterDescriptor {
@@ -259,12 +280,11 @@ class KtSymbolBasedTypeParameterDescriptor(
     override fun getStorageManager(): StorageManager = noImplementation()
 }
 
-
 abstract class KtSymbolBasedFunctionLikeDescriptor(context: FE10BindingContext) :
     KtSymbolBasedDeclarationDescriptor(context), FunctionDescriptor {
     abstract override val ktSymbol: KtFunctionLikeSymbol
 
-    override fun getReturnType(): KotlinType = ktSymbol.annotatedType.toKotlinType(context)
+    override fun getReturnType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
 
     override fun getValueParameters(): List<ValueParameterDescriptor> = ktSymbol.valueParameters.mapIndexed { index, it ->
         KtSymbolBasedValueParameterDescriptor(it, context,this, index)
@@ -300,6 +320,7 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, c
     KtSymbolBasedNamed {
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = getExtensionReceiverParameter(ktSymbol)
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = getDispatchReceiverParameter(ktSymbol)
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = implementationPlanned()
 
     override fun getPackageFqNameIfTopLevel(): FqName = (ktSymbol.callableIdIfNonLocal ?: error("should be top-level")).packageName
 
@@ -317,7 +338,6 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, c
     override fun getModality(): Modality = ktSymbol.modality
 
     override fun getTypeParameters(): List<TypeParameterDescriptor> = getTypeParameters(ktSymbol)
-
 
     override fun getOverriddenDescriptors(): Collection<FunctionDescriptor> {
         val overriddenKtSymbols = context.withAnalysisSession {
@@ -350,6 +370,7 @@ class KtSymbolBasedConstructorDescriptor(
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = null
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = getDispatchReceiverParameter(ktSymbol)
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = ktSBClassDescriptor.contextReceivers
 
     override fun getConstructedClass(): ClassDescriptor = ktSBClassDescriptor
     override fun getContainingDeclaration(): ClassDescriptor = ktSBClassDescriptor
@@ -395,6 +416,7 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = getExtensionReceiverParameter(ktSymbol)
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = null
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = implementationPlanned()
 
     override fun getPackageFqNameIfTopLevel(): FqName = error("Impossible to be a top-level declaration")
 
@@ -429,17 +451,17 @@ class KtSymbolBasedAnonymousFunctionDescriptor(
     override fun newCopyBuilder(): FunctionDescriptor.CopyBuilder<out SimpleFunctionDescriptor> = noImplementation()
 }
 
-private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KtPossibleMemberSymbol): ReceiverParameterDescriptor? {
-    val ktDispatchTypeAndAnnotations = ktSymbol.dispatchType ?: return null
+private fun KtSymbolBasedDeclarationDescriptor.getDispatchReceiverParameter(ktSymbol: KtCallableSymbol): ReceiverParameterDescriptor? {
+    val ktDispatchTypeAndAnnotations = context.withAnalysisSession { ktSymbol.getDispatchReceiverType() } ?: return null
     return KtSymbolStubDispatchReceiverParameterDescriptor(ktDispatchTypeAndAnnotations, context)
 }
 
 private fun <T> T.getExtensionReceiverParameter(
     ktSymbol: KtCallableSymbol,
 ): ReceiverParameterDescriptor? where T : KtSymbolBasedDeclarationDescriptor, T : CallableDescriptor {
-    val receiverTypeAndAnnotation = ktSymbol.receiverType ?: return null
-    val receiverValue = ExtensionReceiver(this, receiverTypeAndAnnotation.type.toKotlinType(context), null)
-    return ReceiverParameterDescriptorImpl(this, receiverValue, receiverTypeAndAnnotation.getDescriptorsAnnotations(context))
+    val receiverType = ktSymbol.receiverType ?: return null
+    val receiverValue = ExtensionReceiver(this, receiverType.toKotlinType(context), null)
+    return ReceiverParameterDescriptorImpl(this, receiverValue, receiverType.getDescriptorsAnnotations(context))
 }
 
 private fun KtSymbolBasedDeclarationDescriptor.getTypeParameters(ktSymbol: KtSymbolWithTypeParameters) =
@@ -489,10 +511,11 @@ class KtSymbolBasedValueParameterDescriptor(
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = null
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = null
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = emptyList()
 
     override fun getTypeParameters(): List<TypeParameterDescriptor> = emptyList()
 
-    override fun getReturnType(): KotlinType = ktSymbol.annotatedType.toKotlinType(context)
+    override fun getReturnType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
 
     override fun getValueParameters(): List<ValueParameterDescriptor> = emptyList()
     override fun hasStableParameterNames(): Boolean = false
@@ -502,7 +525,7 @@ class KtSymbolBasedValueParameterDescriptor(
 
     override fun getVisibility(): DescriptorVisibility = DescriptorVisibilities.LOCAL
 
-    override fun getType(): KotlinType = ktSymbol.annotatedType.toKotlinType(context)
+    override fun getType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
     override fun getContainingDeclaration(): CallableDescriptor = containingDeclaration
     override fun getPackageFqNameIfTopLevel(): FqName = error("Couldn't be top-level")
 
@@ -513,6 +536,8 @@ class KtSymbolBasedValueParameterDescriptor(
             if (!ktSymbol.isVararg) return null
             return context.builtIns.getArrayElementType(type)
         }
+
+    override fun cleanCompileTimeInitializerCache() {}
 
     override fun getOriginal(): ValueParameterDescriptor = context.incorrectImplementation { this }
 
@@ -555,9 +580,11 @@ class KtSymbolBasedPropertyDescriptor(
 
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = getDispatchReceiverParameter(ktSymbol)
 
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = implementationPlanned()
+
     override fun getTypeParameters(): List<TypeParameterDescriptor> = emptyList()
 
-    override fun getReturnType(): KotlinType = ktSymbol.annotatedType.toKotlinType(context)
+    override fun getReturnType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
 
     override fun getValueParameters(): List<ValueParameterDescriptor> = emptyList()
     override fun hasStableParameterNames(): Boolean = false
@@ -567,11 +594,16 @@ class KtSymbolBasedPropertyDescriptor(
 
     override fun <V : Any?> getUserData(key: CallableDescriptor.UserDataKey<V>?): V? = null
 
-    override fun getType(): KotlinType = ktSymbol.annotatedType.toKotlinType(context)
+    override fun getType(): KotlinType = ktSymbol.returnType.toKotlinType(context)
 
     override fun isVar(): Boolean = !ktSymbol.isVal
 
-    override fun getCompileTimeInitializer(): ConstantValue<*>? = ktSymbol.initializer?.toConstantValue()
+    override fun getCompileTimeInitializer(): ConstantValue<*>? {
+        val constantInitializer = ktSymbol.initializer as? KtConstantInitializerValue ?: return null
+        return constantInitializer.constant.toConstantValue()
+    }
+
+    override fun cleanCompileTimeInitializerCache() {}
 
     override fun isConst(): Boolean = ktSymbol.initializer != null
 
@@ -628,6 +660,7 @@ abstract class KtSymbolBasedVariableAccessorDescriptor(
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? = propertyDescriptor.extensionReceiverParameter
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? = propertyDescriptor.dispatchReceiverParameter
+    override fun getContextReceiverParameters(): List<ReceiverParameterDescriptor> = propertyDescriptor.contextReceiverParameters
 
     override fun getTypeParameters(): List<TypeParameterDescriptor> = emptyList()
 
@@ -715,7 +748,6 @@ class KtSymbolBasedPropertySetterDescriptor(
     override fun getOriginal(): PropertySetterDescriptor = context.incorrectImplementation { this }
     override fun getOverriddenDescriptors(): Collection<PropertySetterDescriptor> = implementationPostponed()
 }
-
 
 class KtSymbolBasedPackageFragmentDescriptor(
     override val fqName: FqName,

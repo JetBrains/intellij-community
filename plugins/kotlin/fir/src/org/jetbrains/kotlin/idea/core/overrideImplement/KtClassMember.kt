@@ -6,17 +6,17 @@ import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
+import org.jetbrains.kotlin.analysis.api.components.RendererModifier
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.idea.frontend.api.components.RendererModifier
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -32,7 +32,7 @@ import javax.swing.Icon
 internal data class KtClassMemberInfo(
     // TODO: use a `KtSymbolPointer` instead to avoid storing `KtSymbol` in an object after KT-46249 is fixed.
     val symbol: KtCallableSymbol,
-    val memberText: String,
+    @NlsSafe val memberText: String,
     val memberIcon: Icon?,
     val containingSymbolText: String?,
     val containingSymbolIcon: Icon?,
@@ -146,7 +146,7 @@ private fun KtAnalysisSession.generateFunction(
     bodyType: BodyType,
     isOverride: Boolean,
 ): KtCallableDeclaration {
-    val returnType = symbol.annotatedType.type
+    val returnType = symbol.returnType
     val returnsUnit = returnType.isUnit
 
     val body = if (bodyType != BodyType.NO_BODY) {
@@ -157,16 +157,8 @@ private fun KtAnalysisSession.generateFunction(
 
     val factory = KtPsiFactory(project)
     val functionText = symbol.render(renderOptions.copy(forceRenderingOverrideModifier = isOverride)) + body
-    return when (symbol) {
-        is KtConstructorSymbol -> {
-            if (symbol.isPrimary) {
-                factory.createPrimaryConstructor(functionText)
-            } else {
-                factory.createSecondaryConstructor(functionText)
-            }
-        }
-        else -> factory.createFunction(functionText)
-    }
+
+    return factory.createFunction(functionText)
 }
 
 private fun KtAnalysisSession.generateProperty(
@@ -176,7 +168,7 @@ private fun KtAnalysisSession.generateProperty(
     bodyType: BodyType,
     isOverride: Boolean,
 ): KtCallableDeclaration {
-    val returnType = symbol.annotatedType.type
+    val returnType = symbol.returnType
     val returnsNotUnit = !returnType.isUnit
 
     val body =
@@ -211,7 +203,7 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
                 project,
                 templateKind,
                 symbol.name.asString(),
-                symbol.annotatedType.type.render(),
+                symbol.returnType.render(),
                 null
             )
         }

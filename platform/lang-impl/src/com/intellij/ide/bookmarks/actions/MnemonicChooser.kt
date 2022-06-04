@@ -35,7 +35,7 @@ private val SHARED_LAYOUT by lazy {
   }
 }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("This class will be removed soon", ReplaceWith("com.intellij.ide.bookmark.actions.BookmarkTypeChooser"), DeprecationLevel.ERROR)
 internal class MnemonicChooser(
   private val manager: BookmarkManager,

@@ -1,7 +1,7 @@
 import sys
-from collections.abc import Mapping, Set
+from collections.abc import Mapping, Set as AbstractSet
 from datetime import datetime
-from typing import Any, Tuple, overload
+from typing import Any, overload
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -11,14 +11,14 @@ else:
 @overload
 def search_dates(
     text: str,
-    languages: list[str] | Tuple[str, ...] | Set[str] | None,
+    languages: list[str] | tuple[str, ...] | AbstractSet[str] | None,
     settings: Mapping[Any, Any] | None,
     add_detected_language: Literal[True],
 ) -> list[tuple[str, datetime, str]]: ...
 @overload
 def search_dates(
     text: str,
-    languages: list[str] | Tuple[str, ...] | Set[str] | None = ...,
+    languages: list[str] | tuple[str, ...] | AbstractSet[str] | None = ...,
     settings: Mapping[Any, Any] | None = ...,
     add_detected_language: Literal[False] = ...,
 ) -> list[tuple[str, datetime]]: ...

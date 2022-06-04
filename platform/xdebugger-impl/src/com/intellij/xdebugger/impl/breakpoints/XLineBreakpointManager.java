@@ -185,16 +185,27 @@ public final class XLineBreakpointManager {
   }
 
   public void queueBreakpointUpdate(final XBreakpoint<?> slave) {
+    queueBreakpointUpdate(slave, null);
+  }
+
+   public void queueBreakpointUpdate(final XBreakpoint<?> slave, @Nullable Runnable callOnUpdate) {
     if (slave instanceof XLineBreakpointImpl<?>) {
-      queueBreakpointUpdate((XLineBreakpointImpl<?>)slave);
+      queueBreakpointUpdate((XLineBreakpointImpl<?>)slave, callOnUpdate);
     }
   }
 
   public void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint) {
+    queueBreakpointUpdate(breakpoint, null);
+  }
+
+  public void queueBreakpointUpdate(@NotNull final XLineBreakpointImpl<?> breakpoint, @Nullable Runnable callOnUpdate) {
     myBreakpointsUpdateQueue.queue(new Update(breakpoint) {
       @Override
       public void run() {
         breakpoint.updateUI();
+        if (callOnUpdate != null) {
+          callOnUpdate.run();
+        }
       }
     });
   }

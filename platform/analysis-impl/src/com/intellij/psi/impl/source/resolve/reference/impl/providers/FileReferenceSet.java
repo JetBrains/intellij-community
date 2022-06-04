@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,8 +115,7 @@ public class FileReferenceSet {
    * This should be removed.
    * @deprecated use {@link FileReference#getContexts()} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected Collection<PsiFileSystemItem> getExtraContexts() {
     return emptyList();
   }

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +25,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected PostfixTemplateWithExpressionSelector(@NotNull @NlsSafe String name,
                                                   @NotNull @NlsSafe String key,
                                                   @NotNull @NlsSafe String example,
@@ -38,8 +36,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected PostfixTemplateWithExpressionSelector(@NotNull @NlsSafe String name,
                                                   @NotNull @NlsSafe String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {

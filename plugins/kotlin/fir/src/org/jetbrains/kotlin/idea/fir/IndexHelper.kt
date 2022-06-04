@@ -4,17 +4,25 @@ package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.search.AllClassesSearchExecutor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
+import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.util.isSyntheticKotlinClass
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 /*
 * Move to another module
@@ -95,6 +103,29 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         return out
     }
 
+    fun getJavaClasses(nameFilter: (Name) -> Boolean): Collection<PsiClass> {
+        val names = mutableSetOf<String>()
+        AllClassesSearchExecutor.processClassNames(project, scope) { name ->
+            if (nameFilter(Name.identifier(name))) {
+                names.add(name)
+            }
+            true
+        }
+        val result = mutableListOf<PsiClass>()
+        AllClassesSearchExecutor.processClassesByNames(project, scope, names) { psiClass ->
+            // Skip Kotlin classes
+            if (psiClass is KtLightClass ||
+                psiClass.isSyntheticKotlinClass() ||
+                psiClass.getKotlinFqName()?.isJavaClassNotToBeUsedInKotlin() == true
+            )
+                return@processClassesByNames true
+
+            result.add(psiClass)
+            true
+        }
+        return result
+    }
+
     companion object {
         private fun CallableId.asStringForIndexes(): String =
             (if (packageName.isRoot) callableName.asString() else toString()).replace('/', '.')
@@ -106,5 +137,13 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
             asSingleFqName().asStringForIndexes()
 
         private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
+
+        @OptIn(ExperimentalStdlibApi::class)
+        fun createForPosition(position: PsiElement): HLIndexHelper {
+            val module = position.getKtModule()
+            val allScopes = module.allDirectDependencies().mapTo(mutableSetOf()) { it.contentScope }
+            allScopes.add(module.contentScope)
+            return HLIndexHelper(position.project, GlobalSearchScope.union(allScopes))
+        }
     }
 }

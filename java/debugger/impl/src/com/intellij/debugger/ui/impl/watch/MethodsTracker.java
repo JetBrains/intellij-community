@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.sun.jdi.Method;
@@ -38,12 +38,16 @@ public class MethodsTracker {
 
   public MethodOccurrence getMethodOccurrence(int frameIndex, @Nullable Method method) {
     return myCache.computeIfAbsent(frameIndex, __ -> {
-      int occurrence = method != null ? myMethodCounter.addTo(method, 1) : 0;
-      return new MethodOccurrence(method, occurrence);
+      synchronized (myMethodCounter) {
+        int occurrence = method != null ? myMethodCounter.addTo(method, 1) : 0;
+        return new MethodOccurrence(method, occurrence);
+      }
     });
   }
 
   private int getOccurrenceCount(@Nullable Method method) {
-    return myMethodCounter.getInt(method);
+    synchronized (myMethodCounter) {
+      return myMethodCounter.getInt(method);
+    }
   }
 }

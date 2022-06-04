@@ -1,4 +1,4 @@
-from typing import Any, Text, Type
+from typing import Any, Text
 
 from boto.connection import AWSAuthConnection
 from boto.exception import BotoClientError
@@ -48,7 +48,7 @@ class S3Connection(AWSAuthConnection):
     DefaultCallingFormat: Any
     QueryString: str
     calling_format: Any
-    bucket_class: Type[Bucket]
+    bucket_class: type[Bucket]
     anon: Any
     def __init__(
         self,
@@ -66,7 +66,7 @@ class S3Connection(AWSAuthConnection):
         calling_format: Any = ...,
         path: str = ...,
         provider: str = ...,
-        bucket_class: Type[Bucket] = ...,
+        bucket_class: type[Bucket] = ...,
         security_token: Any | None = ...,
         suppress_consec_slashes: bool = ...,
         anon: bool = ...,
@@ -75,7 +75,7 @@ class S3Connection(AWSAuthConnection):
     ) -> None: ...
     def __iter__(self): ...
     def __contains__(self, bucket_name): ...
-    def set_bucket_class(self, bucket_class: Type[Bucket]) -> None: ...
+    def set_bucket_class(self, bucket_class: type[Bucket]) -> None: ...
     def build_post_policy(self, expiration_time, conditions): ...
     def build_post_form_args(
         self,

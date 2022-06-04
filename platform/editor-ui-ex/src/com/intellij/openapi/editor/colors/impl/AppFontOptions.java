@@ -68,7 +68,10 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
 
   private static void copyState(PersistentFontPreferences state, @NotNull ModifiableFontPreferences fontPreferences) {
     fontPreferences.clear();
-    int fontSize = UISettings.restoreFontSize(state.FONT_SIZE, state.FONT_SCALE);
+    // Check both float and integer font size for compatibility
+    float stateFontSize = state.FONT_SIZE_2D != (float)FontPreferences.DEFAULT_FONT_SIZE ?
+                          state.FONT_SIZE_2D : state.FONT_SIZE;
+    float fontSize = UISettings.restoreFontSize(stateFontSize, state.FONT_SCALE);
     String[] names = migrateFamilyNameIfNeeded(state.FONT_FAMILY, state.FONT_REGULAR_SUB_FAMILY, state.FONT_BOLD_SUB_FAMILY);
     fontPreferences.register(names[0], fontSize);
     fontPreferences.setRegularSubFamily(names[1]);

@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,8 +46,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getVirtualFile
 /**
  * @deprecated Use {@link SimpleChangesBrowser}
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated(forRemoval = true)
 public class ChangesBrowser extends JPanel implements DataProvider, TypeSafeDataProvider, Disposable {
 
   protected final ChangesTreeList<Change> myViewer;

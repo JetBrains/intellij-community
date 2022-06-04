@@ -8,10 +8,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.idea.frontend.api.types.KtClassType
-import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtClassType
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -21,7 +21,7 @@ internal object FirSuperEntriesProvider {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
         val containingClassSymbol = containingClass.getClassOrObjectSymbol()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
-            val classType = superType.type as? KtNonErrorClassType ?: return@mapNotNull null
+            val classType = superType as? KtNonErrorClassType ?: return@mapNotNull null
             classType.classSymbol as? KtNamedClassOrObjectSymbol
         }
     }

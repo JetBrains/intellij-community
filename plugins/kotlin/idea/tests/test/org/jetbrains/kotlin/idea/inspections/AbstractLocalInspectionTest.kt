@@ -4,8 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
-import com.intellij.codeHighlighting.TextEditorHighlightingPass
-import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.SystemInfo
@@ -13,26 +12,18 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.util.io.outputStream
 import com.intellij.util.io.write
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jdom.Element
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import kotlin.io.path.*
 
 
@@ -171,16 +162,15 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             Pass.UPDATE_FOLDING,
             Pass.WOLF
         )
-        val passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myFixture.project)
-        // to exclude AbstractHighlightingPassBase instances based on their ids
-        passRegistrar.instantiatePasses(
-            file, editor, passIdsToIgnore.toIntArray()
-        ).filterIsInstance<AbstractHighlightingPassBase>().map(TextEditorHighlightingPass::getId).forEach(passIdsToIgnore::add)
 
         val caretOffset = myFixture.caretOffset
-        val highlightInfos = CodeInsightTestFixtureImpl.instantiateAndRun(
-            file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
-        ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset }
+        val highlightInfos: MutableList<HighlightInfo> = ArrayList()
+        // exclude AbstractHighlightingPassBase-derived passes in tests
+        AbstractHighlightingPassBase.ignoreThesePassesInTests {
+            highlightInfos.addAll(CodeInsightTestFixtureImpl.instantiateAndRun(
+                file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
+            ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset })
+        }
 
         Assert.assertTrue(
             if (!problemExpected)

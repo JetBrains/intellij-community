@@ -139,7 +139,6 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     if (useSchannel) {
       myHandler.overwriteConfig("http.sslBackend=schannel");
     }
-
   }
 
   private void cleanupHttpAuth() {
@@ -184,8 +183,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
                            executable.isLocal() &&
                            (!Registry.is("git.use.shell.script.on.windows") ||
                             !GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion));
-    File scriptFile = service.getScriptPath(executable.getId(), useBatchFile, executable instanceof ScriptGenerator.CustomScriptCommandLineBuilder
-                                                                              ? (ScriptGenerator.CustomScriptCommandLineBuilder)executable : null);
+    File scriptFile = service.getScriptPath(executable.getId(), new GitScriptGenerator(executable), useBatchFile);
     myHandler.addCustomEnvironmentVariable(env, scriptFile);
   }
 

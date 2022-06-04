@@ -252,21 +252,22 @@ public final class CachedIntentions {
                                             @NotNull PsiElement element,
                                             @NotNull  PsiFile containingFile,
                                             @Nullable Editor containingEditor) {
-    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor, (cached, action) -> {
-      if (action instanceof QuickFixWrapper) {
-        // remove only inspection fixes after invocation,
-        // since intention actions might be still available
-        removeActionFromCached(cached);
-        markInvoked(action);
-      }
-    });
+    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(),
+                                                                                     (cached, action) -> {
+          if (action instanceof QuickFixWrapper) {
+            // remove only inspection fixes after invocation,
+            // since intention actions might be still available
+            removeActionFromCached(cached);
+            markInvoked(action);
+          }
+        });
     for (IntentionAction option : descriptor.getOptions(element, containingEditor)) {
       Editor editor = ObjectUtils.chooseNotNull(myEditor, containingEditor);
       if (editor == null) continue;
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
         .chooseBetweenHostAndInjected(myFile, editor, containingFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, option));
       if (availableIn == null) continue;
-      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
+      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, (__1, __2) -> {});
       boolean isErrorFix = myErrorFixes.contains(textCaching);
       if (isErrorFix) {
         cachedAction.addErrorFix(option);

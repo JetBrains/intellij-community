@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 @Target(AnnotationTarget.CLASS, AnnotationTarget.EXPRESSION)
 @Retention(AnnotationRetention.SOURCE)
 annotation class Ann

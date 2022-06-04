@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
@@ -463,7 +464,11 @@ internal open class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): PanelImpl {
-    dialogPanelConfig.validationRequestors.add(validationRequestor)
+    return validationRequestor(DialogValidationRequestor.create(validationRequestor))
+  }
+
+  override fun validationRequestor(validationRequestor: DialogValidationRequestor): PanelImpl {
+    dialogPanelConfig.panelValidationRequestors.add(validationRequestor)
     return this
   }
 }

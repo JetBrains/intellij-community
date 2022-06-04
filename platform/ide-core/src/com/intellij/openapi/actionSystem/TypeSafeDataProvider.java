@@ -2,15 +2,13 @@
 
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated This API proved to be rather inconvenient
  * @see DataProvider
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated(forRemoval = true)
 public interface TypeSafeDataProvider {
   void calcData(@NotNull DataKey key, @NotNull DataSink sink);
 }

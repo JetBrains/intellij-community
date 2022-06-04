@@ -25,7 +25,7 @@ object KotlinPathsProvider {
 
     fun getKotlinPaths(project: Project) =
         KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.let { getKotlinPaths(it) }
-            ?: KotlinPathsFromHomeDir(KotlinPluginLayout.getInstance().kotlinc)
+            ?: KotlinPathsFromHomeDir(KotlinPluginLayout.instance.kotlinc)
 
     fun lazyUnpackKotlincDist(packedDist: File, version: String): File {
         val destination = getKotlinPaths(version).homePath

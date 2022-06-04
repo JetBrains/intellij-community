@@ -48,7 +48,11 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement>
 
+    fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator
+
     fun resolveCall(ktElement: KtElement): PsiMethod?
+
+    fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod?
 
     fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean
 
@@ -62,19 +66,21 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiClass?
 
-    fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry): PsiClass?
+    fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry, source: UElement): PsiClass?
 
     fun resolveToDeclaration(ktExpression: KtExpression): PsiElement?
 
-    fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType?
+    fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType?
 
-    fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType?
+    fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType?
 
     // ----------
     // Types
     // ----------
 
     fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType?
+
+    fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType?
 
     fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType?
 
@@ -84,7 +90,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType?
 
-    fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType?
+    fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType?
 
     fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType?
 

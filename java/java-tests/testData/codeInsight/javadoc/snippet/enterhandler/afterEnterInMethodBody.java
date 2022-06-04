@@ -7,7 +7,7 @@ class Main {
    * class HelloWorld {
    *   void f() {
    *     System.out.println();
-   *   <caret>
+   *     <caret>
    *   }
    * }
    * }

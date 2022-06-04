@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -38,8 +37,7 @@ public final class PyResolveContext {
    * to explicitly specify type evaluation context.
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static PyResolveContext defaultContext() {
     return new PyResolveContext(false, true, false, TypeEvalContext.codeInsightFallback(null));
   }
@@ -54,8 +52,7 @@ public final class PyResolveContext {
    * to explicitly specify type evaluation context.
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public static PyResolveContext implicitContext() {
     return new PyResolveContext(true, true, false, TypeEvalContext.codeInsightFallback(null));
   }

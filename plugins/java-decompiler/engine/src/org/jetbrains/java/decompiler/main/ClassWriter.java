@@ -100,6 +100,9 @@ public class ClassWriter {
         MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node.lambdaInformation.content_method_descriptor);
         MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node.lambdaInformation.method_descriptor);
 
+        List<TypeAnnotation> parameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(TypeAnnotation.listFrom(mt));
+        boolean explicitlyTyped = !parameterTypeAnnotations.isEmpty();
+
         if (!lambdaToAnonymous) {
           buffer.append('(');
 
@@ -111,6 +114,13 @@ public class ClassWriter {
             if (i >= start_index) {
               if (!firstParameter) {
                 buffer.append(", ");
+              }
+
+              if (explicitlyTyped) {
+                List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
+                VarType type = md_content.params[i];
+                buffer.append(ExprProcessor.getCastTypeName(type, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations)));
+                buffer.append(' ');
               }
 
               String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));

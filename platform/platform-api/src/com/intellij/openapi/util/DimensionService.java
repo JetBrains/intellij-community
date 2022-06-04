@@ -17,7 +17,6 @@ import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.ObjectIntMap;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +62,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    *
    * @deprecated use {@link #getLocation(String, Project)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public synchronized Point getLocation(String key) {
     return getLocation(key, guessProject());
@@ -98,8 +96,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    *
    * @deprecated use {@link #setLocation(String, Point, Project)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
   }
@@ -127,8 +124,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    *
    * @deprecated use {@link #getSize(String, Project)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key) {
     return getSize(key, guessProject());
@@ -159,8 +155,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    *
    * @deprecated use {@link #setSize(String, Dimension, Project)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());
   }

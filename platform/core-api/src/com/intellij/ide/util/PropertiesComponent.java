@@ -65,14 +65,12 @@ public abstract class PropertiesComponent {
   /**
    * @deprecated Use {@link #getList(String)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @Deprecated
   public abstract String @Nullable [] getValues(@NonNls @NotNull String name);
 
   /**
    * @deprecated Use {@link #getList(String)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @Deprecated
   public abstract void setValues(@NonNls @NotNull String name, String[] values);
 

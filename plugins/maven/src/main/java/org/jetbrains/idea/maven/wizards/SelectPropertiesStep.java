@@ -19,7 +19,6 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenPropertiesPanel;
@@ -66,8 +65,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   /**
    * @deprecated use {@link SelectPropertiesStep#SelectPropertiesStep(Project, AbstractMavenModuleBuilder)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public SelectPropertiesStep(@Nullable Project project, MavenModuleBuilder builder) {
     this(project, (AbstractMavenModuleBuilder)builder);
   }

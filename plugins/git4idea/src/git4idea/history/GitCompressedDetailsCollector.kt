@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.project.Project
@@ -14,7 +14,7 @@ internal class GitCompressedDetailsCollector(project: Project, root: VirtualFile
 
   override fun createCommit(records: List<GitCompressedRecord>,
                             factory: VcsLogObjectsFactory,
-                            renameLimit: GitCommitRequirements.DiffRenameLimit): GitCompressedDetails {
+                            requirements: GitCommitRequirements): GitCompressedDetails {
     val metadata = GitLogUtil.createMetadata(root, records.first(), factory)
     return GitCompressedDetails(metadata, records.map { it.changes }, records.map { it.renames })
   }

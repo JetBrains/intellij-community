@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
@@ -102,7 +102,7 @@ a<caret>a
 List<String> ss = []
 ss.collect { i<caret>t }
 ''', '''\
-<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a> <span style="color:#000000;">it</span></pre></div><table class='sections'></table><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#0000ff;">Object</span></code></a> <span style="color:#000000;">it</span></pre></div><p style='padding-left:8px;'><span style="color: #909090">[Inferred type]</span> <a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a>'''
   }
 
   void 'test code tag'() {
@@ -159,6 +159,22 @@ class GroovyDocTest<T> { }
 new Gr<caret>oovyDocTest<Integer>()""", """\
 <div class='definition'><pre><span style="color:#000043;font-weight:bold;">class</span> <span style="color:#000000;">GroovyDocTest</span><span style="">&lt;</span><span style="color:#20999d;">T</span><span style="">&gt;</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'><code>&lt;<span style="color:#20999d;">T</span>&gt;</code> &ndash;  kej</td></table>\
 """
+  }
+
+  void 'test render multiline inline code tag'() {
+    doTest """
+/**
+ * {@code
+ * aaa
+ * bbb
+ * ccc
+ * }
+ */
+def foo() {}
+fo<caret>o()
+""", "<div class='definition'><pre><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#000000;\">Object</span></code></a>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n" +
+     "   <code style='font-size:100%;'><span style=\"\"><span style=\"\">aaa</span><span style=\"\">&#32;bbb</span><span style=\"\">&#32;ccc</span></span></code>\n" +
+     " </div><table class='sections'></table><div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://_\"><code><span style=\"color:#000000;\">_</span></code></a></div>"
   }
 
   private void doTest(String text, @Language("HTML") String doc) {

@@ -31,7 +31,8 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.JavaSpecialRefactoringProvider;
+import com.intellij.refactoring.ChangeSignatureRefactoring;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
@@ -105,7 +106,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                                                 @NotNull List<? extends ParameterInfoImpl> parameterInfos,
                                                                 final boolean allowDelegation,
                                                                 final PsiReferenceExpression refExpr,
-                                                                @Nullable Consumer<? super List<ParameterInfoImpl>> callback) {
+                                                                @Nullable Consumer<? super List<ParameterInfo>> callback) {
     return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
       @Override
       protected int getSelectedIdx() {
@@ -121,22 +122,16 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       @Override
       protected BaseRefactoringProcessor createRefactoringProcessor() {
         final List<ParameterInfoImpl> parameters = getParameters();
-        var provider = JavaSpecialRefactoringProvider.getInstance();
-        return provider.getChangeSignatureProcessorWithCallback(
-          myProject,
-          myMethod.getMethod(),
-          isGenerateDelegate(),
-          getVisibility(),
-          getMethodName(),
-          getReturnType(),
-          parameters.toArray(new ParameterInfoImpl[0]),
-          getExceptions(),
-          myMethodsToPropagateParameters,
-          myMethodsToPropagateExceptions, () -> {
-            if (callback != null) {
-              callback.consume(getParameters());
-            }
-          });
+        ParameterInfoImpl @NotNull [] parameterInfo = parameters.toArray(new ParameterInfoImpl[0]);
+        return ((ChangeSignatureRefactoringImpl)JavaRefactoringFactory.getInstance(myProject)
+          .createChangeSignatureProcessor(myMethod.getMethod(), isGenerateDelegate(), getVisibility(), getMethodName(), getNewReturnType(),
+                                          parameterInfo,
+                                          getExceptions(),
+                                          myMethodsToPropagateParameters, myMethodsToPropagateExceptions, infos -> {
+              if (callback != null) {
+                callback.consume(new ArrayList<>(getParameters()));
+              }
+            })).getProcessor();
       }
     };
   }
@@ -517,11 +512,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       myProject,
       JavaRefactoringBundle.message("changeSignature.processing.changes.title"),
       () -> {
-        var provider = JavaSpecialRefactoringProvider.getInstance();
-        return provider.getChangeSignatureProcessorWithCallback(
-          myProject, getMethod(), isGenerateDelegate(), getVisibility(), getMethodName(), getReturnType(),
-          parameters.toArray(new ParameterInfoImpl[0]), getExceptions(), myMethodsToPropagateParameters, myMethodsToPropagateExceptions,
-          null);
+        ParameterInfoImpl @NotNull [] parameterInfo = parameters.toArray(new ParameterInfoImpl[0]);
+        ChangeSignatureRefactoring refactoring = JavaRefactoringFactory.getInstance(myProject)
+          .createChangeSignatureProcessor(getMethod(), isGenerateDelegate(), getVisibility(), getMethodName(), getNewReturnType(),
+                                          parameterInfo,
+                                          getExceptions(),
+                                          myMethodsToPropagateParameters, myMethodsToPropagateExceptions, null);
+        return ((ChangeSignatureRefactoringImpl)refactoring).getProcessor();
       }
     );
   }
@@ -536,6 +533,20 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       try {
         final PsiType type = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
         return CanonicalTypes.createTypeWrapper(type);
+      }
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
+        return null;
+      }
+    }
+
+    return null;
+  }
+  
+  @Nullable
+  protected PsiType getNewReturnType() {
+    if (myReturnTypeField != null) {
+      try {
+        return ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         return null;

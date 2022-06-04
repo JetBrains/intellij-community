@@ -8,7 +8,7 @@
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="7fc784" />
-    <option name="ANNOTATIONS_COLOR" value="0" />
+    <option name="ANNOTATIONS_LAST_COMMIT_COLOR" value="0" />
     <option name="CARET_ROW_COLOR" value="f5f8fe" />
     <option name="DELETED_LINES_COLOR" value="767a8a" />
     <option name="DOCUMENTATION_COLOR" value="ffffff" />
@@ -30,6 +30,7 @@
     <option name="VCS_ANNOTATIONS_COLOR_4" value="edf2fa" />
     <option name="VCS_ANNOTATIONS_COLOR_5" value="f7f8fa" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="f7e2cb" />
+    <option name="ANNOTATIONS_COLOR" value="5a5d6b" />
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />

@@ -218,7 +218,7 @@ class PyTypedDictInspection : PyInspection() {
         }
       }
 
-      if (PyTypingTypeProvider.resolveToQualifiedNames(callee, myTypeEvalContext).contains(PyTypingTypeProvider.MAPPING_GET)) {
+      if (PyTypedDictTypeProvider.isGetMethodToOverride(node, myTypeEvalContext)) {
         val keyArgument = node.getArgument(0, "key", PyExpression::class.java) ?: return
         val key = PyEvaluator.evaluate(keyArgument, String::class.java)
         if (key == null) {

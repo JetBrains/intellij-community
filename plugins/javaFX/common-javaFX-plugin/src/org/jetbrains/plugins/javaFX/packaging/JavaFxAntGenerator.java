@@ -268,29 +268,22 @@ public final class JavaFxAntGenerator {
                                                      final boolean allowNoNamed) {
     if (!StringUtil.isEmptyOrSpaces(paramFile)) {
       final Properties properties = new Properties();
-      try {
-        final FileInputStream paramsInputStream = new FileInputStream(paramFile);
-        try {
-          properties.load(paramsInputStream);
-          for (Object o : properties.keySet()) {
-            final String propName = (String)o;
-            final String propValue = properties.getProperty(propName);
-            if (!StringUtil.isEmptyOrSpaces(propValue)) {
-              applicationTag
-                .add(new SimpleTag(paramTagName, Couple.of("name", propName), Couple.of("value", propValue)));
-            }
-            else if (allowNoNamed) {
-              applicationTag.add(new SimpleTag("fx:argument", propName) {
-                @Override
-                public void generate(StringBuilder buf) {
-                  buf.append("<").append(getName()).append(">").append(propName).append("</").append(getName()).append(">");
-                }
-              });
-            }
+      try (FileInputStream paramsInputStream = new FileInputStream(paramFile)) {
+        properties.load(paramsInputStream);
+        for (Object o : properties.keySet()) {
+          final String propName = (String)o;
+          final String propValue = properties.getProperty(propName);
+          if (!StringUtil.isEmptyOrSpaces(propValue)) {
+            applicationTag.add(new SimpleTag(paramTagName, Couple.of("name", propName), Couple.of("value", propValue)));
           }
-        }
-        finally {
-          paramsInputStream.close();
+          else if (allowNoNamed) {
+            applicationTag.add(new SimpleTag("fx:argument", propName) {
+              @Override
+              public void generate(StringBuilder buf) {
+                buf.append("<").append(getName()).append(">").append(propName).append("</").append(getName()).append(">");
+              }
+            });
+          }
         }
       }
       catch (IOException ignore) {

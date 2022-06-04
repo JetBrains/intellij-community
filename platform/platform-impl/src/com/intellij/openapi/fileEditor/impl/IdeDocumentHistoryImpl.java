@@ -198,7 +198,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
                                    EnumeratorLongDescriptor.INSTANCE,
                                    256,
                                    0,
-                                   new StorageLockContext(true));
+                                   new StorageLockContext());
   }
 
   private void registerViewed(@NotNull VirtualFile file) {

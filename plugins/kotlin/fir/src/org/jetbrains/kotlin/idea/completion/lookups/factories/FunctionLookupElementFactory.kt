@@ -9,60 +9,77 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.suggested.endOffset
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
-import org.jetbrains.kotlin.idea.completion.lookups.QuotedNamesAwareInsertionHandler
-import org.jetbrains.kotlin.idea.completion.lookups.addCallableImportIfRequired
-import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
-import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.symbols.*
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
+import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
+import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS
-import org.jetbrains.kotlin.idea.core.withRootPrefixIfNeeded
-import org.jetbrains.kotlin.idea.frontend.api.components.KtDeclarationRendererOptions
 
 internal class FunctionLookupElementFactory {
     fun KtAnalysisSession.createLookup(
         symbol: KtFunctionSymbol,
         options: CallableInsertionOptions,
+        substitutor: KtSubstitutor,
     ): LookupElementBuilder {
         val lookupObject = FunctionCallLookupObject(
             symbol.name,
             options,
-            renderFunctionParameters(symbol),
+            renderFunctionParameters(symbol, substitutor),
             inputValueArguments = symbol.valueParameters.isNotEmpty(),
             insertEmptyLambda = insertLambdaBraces(symbol),
         )
 
-        val insertionHandler = when (val insertionStrategy = options.insertionStrategy) {
-            CallableInsertionStrategy.AsCall -> FunctionInsertionHandler
-            CallableInsertionStrategy.AsIdentifier -> QuotedNamesAwareInsertionHandler()
-            is CallableInsertionStrategy.AsIdentifierCustom -> object : QuotedNamesAwareInsertionHandler() {
+        val builder = LookupElementBuilder.create(lookupObject, symbol.name.asString())
+            .withTypeText(substitutor.substituteOrSelf(symbol.returnType).render(TYPE_RENDERING_OPTIONS))
+            .withTailText(getTailText(symbol, substitutor))
+            .let { withSymbolInfo(symbol, it) }
+
+        return updateLookupElementBuilder(options, builder)
+    }
+
+    private fun updateLookupElementBuilder(
+        options: CallableInsertionOptions,
+        builder: LookupElementBuilder,
+        insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
+    ): LookupElementBuilder {
+        return when (insertionStrategy) {
+            CallableInsertionStrategy.AsCall -> builder.withInsertHandler(FunctionInsertionHandler)
+            CallableInsertionStrategy.AsIdentifier -> builder.withInsertHandler(QuotedNamesAwareInsertionHandler())
+            is CallableInsertionStrategy.AsIdentifierCustom -> builder.withInsertHandler(object : QuotedNamesAwareInsertionHandler() {
                 override fun handleInsert(context: InsertionContext, item: LookupElement) {
                     super.handleInsert(context, item)
                     insertionStrategy.insertionHandlerAction(context)
                 }
+            })
+            is CallableInsertionStrategy.WithCallArgs -> {
+                val argString = insertionStrategy.args.joinToString(", ", prefix = "(", postfix = ")")
+                builder.withInsertHandler(
+                    object : QuotedNamesAwareInsertionHandler() {
+                        override fun handleInsert(context: InsertionContext, item: LookupElement) {
+                            super.handleInsert(context, item)
+                            context.insertSymbol(argString)
+                        }
+                    }
+                ).withTailText(argString, false)
+            }
+            is CallableInsertionStrategy.WithSuperDisambiguation -> {
+                val resultBuilder = updateLookupElementBuilder(options, builder, insertionStrategy.subStrategy)
+                updateLookupElementBuilderToInsertTypeQualifierOnSuper(resultBuilder, insertionStrategy)
             }
         }
-
-        return LookupElementBuilder.create(lookupObject, symbol.name.asString())
-            .withTailText(getTailText(symbol), true)
-            .withTypeText(symbol.annotatedType.type.render(TYPE_RENDERING_OPTIONS))
-            .withInsertHandler(insertionHandler)
-            .let { withSymbolInfo(symbol, it) }
     }
 }
-
 
 internal data class FunctionCallLookupObject(
     override val shortName: Name,

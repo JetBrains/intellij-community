@@ -52,14 +52,20 @@ abstract class KotlinMultiplatformDependenciesBuilder : KotlinMultiplatformCompo
         val singleDependencyFiles = resolvedDependencies.mapNotNullTo(LinkedHashSet()) {
             (it as? FileCollectionDependency)?.files?.singleOrNull()
         }
+
+        val filterAar = importingContext.getProperty(GradleImportProperties.INCLUDE_ANDROID_DEPENDENCIES)
+
         // Workaround for duplicated dependencies specified as a file collection (KT-26675)
         // Drop this code when the issue is fixed in the platform
-        return resolvedDependencies.filter { dependency ->
+        return resolvedDependencies.asSequence().filter { dependency ->
             if (dependency !is FileCollectionDependency) return@filter true
             val files = dependency.files
             if (files.size <= 1) return@filter true
             (files.any { it !in singleDependencyFiles })
-        }
+        }.filter {
+            // If we're handling Android dependencies, then aars will be transformed to jars in  the process
+            !filterAar || it.packaging != "aar"
+        }.toList()
     }
 
     protected class MetadataDependencyTransformationBuilder(val sourceSet: Any) {

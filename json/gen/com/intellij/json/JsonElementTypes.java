@@ -30,6 +30,7 @@ public interface JsonElementTypes {
   IElementType L_CURLY = new JsonTokenType("{");
   IElementType NULL = new JsonTokenType("null");
   IElementType NUMBER = new JsonTokenType("NUMBER");
+  IElementType PARAMETER = new JsonTokenType("PARAMETER");
   IElementType R_BRACKET = new JsonTokenType("]");
   IElementType R_CURLY = new JsonTokenType("}");
   IElementType SINGLE_QUOTED_STRING = new JsonTokenType("SINGLE_QUOTED_STRING");

@@ -6,6 +6,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.tools.projectWizard.Versions
@@ -33,7 +34,6 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
             ?: VersionsDownloader.downloadLatestEapOrStableKotlinVersion()
             ?: Versions.KOTLIN
 
-        val jvmTargetVersions = JvmTarget.values().map { it.description }.toSet()
         return kotlinVersionWithDefaultValues(version)
     }
 
@@ -48,8 +48,8 @@ class IdeaKotlinVersionProviderService : KotlinVersionProviderService(), IdeaWiz
         private const val KOTLIN_COMPILER_VERSION_TAG = "kotlin.compiler.version"
 
         private fun getKotlinVersionFromCompiler() =
-            KotlinCompilerVersion.getVersion()
-                ?.takeUnless { it.contains(SNAPSHOT_TAG, ignoreCase = true) }
+            KotlinPluginLayout.instance.standaloneCompilerVersion
+                .takeUnless { it.contains(SNAPSHOT_TAG, ignoreCase = true) }
                 ?.let { Version.fromString(it.substringBefore("-release")) }
     }
 }

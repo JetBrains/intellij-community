@@ -8,50 +8,16 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.core.isAndroidModule
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.util.actualsForExpected
-import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 
-private fun ModuleDescriptor?.getPlatformName(): String? {
-    if (this == null) return null
-    val moduleInfo = getCapability(ModuleInfo.Capability) as? ModuleSourceInfo
-    if (moduleInfo != null && moduleInfo.module.isAndroidModule()) {
-        return "Android"
-    }
-    val platform = platform ?: return null
-
-    // TODO(dsavvinov): use better description
-    return when {
-        platform.isCommon() -> "common"
-        else -> {
-            assert(platform.componentPlatforms.map { it.platformName }.toSet().size == 1) {
-                "Expected the same platform name for component platforms in non-common module"
-            }
-            platform.first().platformName
-        }
-    }
-}
-
+@Suppress("DuplicatedCode")
 fun getPlatformActualTooltip(declaration: KtDeclaration): String? {
-    val actualDeclarations = declaration.actualsForExpected()
-    if (actualDeclarations.isEmpty()) return null
+    val actualDeclarations = declaration.actualsForExpected().mapNotNull { it.toDescriptor() }
+    val modulesString = getModulesStringForExpectActualMarkerTooltip(actualDeclarations) ?: return null
 
-    return actualDeclarations.asSequence()
-        .mapNotNull { it.toDescriptor()?.module }
-        .groupBy { it.getPlatformName() }
-        .filter { (platform, _) -> platform != null }
-        .entries
-        .joinToString(prefix = KotlinBundle.message("highlighter.prefix.text.has.actuals.in") + " ") { (platform, modules) ->
-            val modulesSuffix = if (modules.size <= 1) "" else KotlinBundle.message("highlighter.text.modules", modules.size)
-            if (platform == null) {
-                throw AssertionError("Platform should not be null")
-            }
-            platform + modulesSuffix
-        }
+    return KotlinBundle.message("highlighter.prefix.text.has.actuals.in", modulesString)
 }
 
 fun KtDeclaration.allNavigatableActualDeclarations(): Set<KtDeclaration> =

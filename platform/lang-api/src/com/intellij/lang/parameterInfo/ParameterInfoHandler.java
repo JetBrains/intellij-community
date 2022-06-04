@@ -16,7 +16,6 @@ package com.intellij.lang.parameterInfo;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,28 +94,23 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
   default void syncUpdateOnCaretMove(@NotNull UpdateParameterInfoContext context) {}
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default Object @Nullable [] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default @Nullable String getParameterCloseChars() { return null; }
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default boolean tracksParameterIndex() { return false; }
 
   /** @deprecated unused */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default boolean couldShowInLookup() { return false; }
 
   /** @deprecated unused */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return null;
   }

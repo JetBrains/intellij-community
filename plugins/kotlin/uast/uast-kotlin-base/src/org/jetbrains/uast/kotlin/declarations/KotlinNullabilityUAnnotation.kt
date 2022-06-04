@@ -28,8 +28,13 @@ class KotlinNullabilityUAnnotation(
         get() = null
     override val sourcePsi: PsiElement?
         get() = null
+
+    private val nullability : TypeNullability? by lz {
+        baseKotlinUastResolveProviderService.nullability(annotatedElement)
+    }
+
     override val qualifiedName: String?
-        get() = when (baseKotlinUastResolveProviderService.nullability(annotatedElement)) {
+        get() = when (nullability) {
             TypeNullability.NOT_NULL -> NotNull::class.qualifiedName
             TypeNullability.NULLABLE -> Nullable::class.qualifiedName
             TypeNullability.FLEXIBLE -> null
@@ -40,8 +45,12 @@ class KotlinNullabilityUAnnotation(
 
     override fun findDeclaredAttributeValue(name: String?): UExpression? = null
 
-    override fun resolve(): PsiClass? = qualifiedName?.let {
-        val project = annotatedElement.project
-        JavaPsiFacade.getInstance(project).findClass(it, GlobalSearchScope.allScope(project))
+    private val _resolved: PsiClass? by lz {
+        qualifiedName?.let {
+            val project = annotatedElement.project
+            JavaPsiFacade.getInstance(project).findClass(it, GlobalSearchScope.allScope(project))
+        }
     }
+
+    override fun resolve(): PsiClass? = _resolved
 }

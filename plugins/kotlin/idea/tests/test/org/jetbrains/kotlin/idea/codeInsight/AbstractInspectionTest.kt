@@ -11,13 +11,14 @@ import com.intellij.util.ThrowableRunnable
 import org.jdom.Document
 import org.jdom.input.SAXBuilder
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.versions.lastStableKnownCompilerVersionShort
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.junit.runner.Description
 import java.io.File
@@ -109,7 +110,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
 
                         file.extension == "gradle" -> {
                             val text = FileUtil.loadFile(file, true)
-                            val fileText = text.replace("\$PLUGIN_VERSION", kotlinCompilerVersionShort())
+                            val fileText = text.replace("\$PLUGIN_VERSION", KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort)
                             configureByText(file.name, fileText)!!
                         }
 

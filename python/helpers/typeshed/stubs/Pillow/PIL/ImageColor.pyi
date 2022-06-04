@@ -1,8 +1,8 @@
-from typing import Tuple, Union
+from typing import Union
 
-_RGB = Union[Tuple[int, int, int], Tuple[int, int, int, int]]
+_RGB = Union[tuple[int, int, int], tuple[int, int, int, int]]
 _Ink = Union[str, int, _RGB]
-_GreyScale = Tuple[int, int]
+_GreyScale = tuple[int, int]
 
 def getrgb(color: _Ink) -> _RGB: ...
 def getcolor(color: _Ink, mode: str) -> _RGB | _GreyScale: ...

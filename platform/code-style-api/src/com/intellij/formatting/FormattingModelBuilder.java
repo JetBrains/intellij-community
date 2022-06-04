@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +53,7 @@ public interface FormattingModelBuilder {
   /**
    * @deprecated use {@link #createModel(FormattingContext)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default @NotNull FormattingModel createModel(final @NotNull PsiElement element,
                                                final @NotNull TextRange range,
                                                final @NotNull CodeStyleSettings settings,
@@ -66,8 +64,7 @@ public interface FormattingModelBuilder {
   /**
    * @deprecated use {@link #createModel(FormattingContext)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default @NotNull FormattingModel createModel(final @NotNull PsiElement element,
                                                final @NotNull CodeStyleSettings settings,
                                                @NotNull FormattingMode mode) {
@@ -77,8 +74,7 @@ public interface FormattingModelBuilder {
   /**
    * @deprecated use {@link #createModel(FormattingContext)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default @NotNull FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     return createModel(FormattingContext.create(element, settings));
   }

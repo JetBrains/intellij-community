@@ -182,17 +182,16 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       group(message("title.accessibility")) {
         row {
           val isOverridden = GeneralSettings.isSupportScreenReadersOverridden()
-          checkBox(message("checkbox.support.screen.readers"))
-            .bindSelected(generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders)
-            .comment(if (isOverridden) message("option.is.overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS) else null)
-            .enabled(!isOverridden)
-
-          comment(message("support.screen.readers.comment"))
-
           val mask = if (SystemInfo.isMac) InputEvent.META_MASK else InputEvent.CTRL_MASK
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask))
           val ctrlShiftTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask + InputEvent.SHIFT_MASK))
-          rowComment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
+          checkBox(message("checkbox.support.screen.readers"))
+            .bindSelected(generalSettings::isSupportScreenReaders, generalSettings::setSupportScreenReaders)
+            .comment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
+            .enabled(!isOverridden)
+
+          comment(if (isOverridden) message("overridden.by.jvm.property", GeneralSettings.SUPPORT_SCREEN_READERS)
+                  else message("support.screen.readers.comment"))
         }
 
         row {
@@ -402,8 +401,15 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 }
 
 internal fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue: Int): Cell<ComboBox<String>> {
+  return fontSizeComboBox(PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) }))
+}
+
+internal fun Row.fontSizeComboBox(getter: () -> Float, setter: (Float) -> Unit, defaultValue: Float): Cell<ComboBox<String>> {
+  return fontSizeComboBox(PropertyBinding({ getter().toString() }, { setter(getFloatValue(it, defaultValue)) }))
+}
+
+internal fun Row.fontSizeComboBox(modelBinding: PropertyBinding<String?>): Cell<ComboBox<String>> {
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
-  val modelBinding: PropertyBinding<String?> = PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) })
   return comboBox(model)
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
@@ -421,6 +427,14 @@ internal fun Row.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defa
 private fun getIntValue(text: String?, defaultValue: Int): Int {
   if (text != null && text.isNotBlank()) {
     val value = text.toIntOrNull()
+    if (value != null && value > 0) return value
+  }
+  return defaultValue
+}
+
+private fun getFloatValue(text: String?, defaultValue: Float): Float {
+  if (text != null && text.isNotBlank()) {
+    val value = text.toFloatOrNull()
     if (value != null && value > 0) return value
   }
   return defaultValue

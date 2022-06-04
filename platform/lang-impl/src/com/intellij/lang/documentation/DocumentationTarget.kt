@@ -53,7 +53,7 @@ interface DocumentationTarget {
 
   /**
    * If the documentation can be computed in the current read action, then the implementation is expected to do so,
-   * and return [DocumentationResult.documentation] or [DocumentationResult.externalDocumentation].
+   * and return [DocumentationResult.documentation].
    * For example, the implementation may compute the documentation from a `PsiElement` which represents a comment.
    *
    * Otherwise, the function is supposed to obtain the necessary data inside the current read action,

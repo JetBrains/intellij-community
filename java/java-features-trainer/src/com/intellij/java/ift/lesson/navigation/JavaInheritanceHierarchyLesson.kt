@@ -58,7 +58,7 @@ class JavaInheritanceHierarchyLesson
     task("GotoImplementation") {
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.invoke.implementations.again", icon(AllIcons.Gutter.ImplementedMethod),
                                      action(it)))
-      triggerByUiComponentAndHighlight { ui: InplaceButton ->
+      triggerAndFullHighlight().component { ui: InplaceButton ->
         ui.toolTipText == IdeBundle.message("show.in.find.window.button.name")
       }
       restoreIfModifiedOrMoved()
@@ -73,7 +73,7 @@ class JavaInheritanceHierarchyLesson
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.open.in.find.tool.window", findToolWindow(),
                                      icon(ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND,
                                                                                                  AllIcons.General.Pin_tab))))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: BaseLabel ->
+      triggerUI().component { ui: BaseLabel ->
         ui.text == (CodeInsightBundle.message("goto.implementation.findUsages.title", "foo")) ||
         ui.text == (JavaAnalysisBundle.message("navigate.to.overridden.methods.title", "foo"))
       }

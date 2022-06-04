@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import com.google.protobuf.gradle.*
 
 val grpcVersion = "1.31.1"
 val grpcKotlinVersion = "0.2.0" // CURRENT_GRPC_KOTLIN_VERSION
-val protobufVersion = "3.15.8"
+val protobufVersion = "3.19.4"
 val coroutinesVersion = "1.3.8"
 
 plugins {

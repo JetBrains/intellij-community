@@ -2,57 +2,78 @@ package typeAnnotations;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.function.Consumer;
 
 public class MemberDeclarationTypeAnnotations<@A P extends @B Number & @F Serializable> {
    @L String s1 = "";
    @B int f1 = 0;
+   Consumer<String> c = (@A String s) -> {
+      System.out.println(s);// 12
+   };
+   SomeFunInterface<String, String> sf = (String s1, @B String s2) -> {
+      System.out.println(s1);// 14
+   };
 
    @K
    public @L @A MemberDeclarationTypeAnnotations() {
-   }// 14
+   }// 18
 
    @K
    public <@A T extends @B Number & @F Serializable> @L @C Number foo(@D T @E [] a) {
-      return 0;// 18
+      return 0;// 22
    }
 
    @K
    public <T> @C Number bar(@D T @E [] a) throws @A IOException, @B IllegalStateException {
-      return 0;// 23
+      return 0;// 27
    }
 
    public void fooBar(@L @A String param1, @K @L @B String param2) {
-   }// 26
+   }// 30
 }
 
 class 'typeAnnotations/MemberDeclarationTypeAnnotations' {
+   method 'lambda$new$0 (Ljava/lang/String;)V' {
+      0      10
+      4      10
+      7      11
+   }
+
+   method 'lambda$new$1 (Ljava/lang/String;Ljava/lang/String;)V' {
+      0      13
+      4      13
+      7      14
+   }
+
    method '<init> ()V' {
-      f      11
+      21      18
    }
 
    method 'foo ([Ljava/lang/Number;)Ljava/lang/Number;' {
-      0      15
-      1      15
-      4      15
+      0      22
+      1      22
+      4      22
    }
 
    method 'bar ([Ljava/lang/Object;)Ljava/lang/Number;' {
-      0      20
-      1      20
-      4      20
+      0      27
+      1      27
+      4      27
    }
 
    method 'fooBar (Ljava/lang/String;Ljava/lang/String;)V' {
-      0      24
+      0      31
    }
 }
 
 Lines mapping:
-14 <-> 12
-18 <-> 16
-23 <-> 21
-26 <-> 25
+12 <-> 11
+14 <-> 14
+18 <-> 19
+22 <-> 23
+27 <-> 28
+30 <-> 32
 Not mapped:
 8
 10
-13
+17

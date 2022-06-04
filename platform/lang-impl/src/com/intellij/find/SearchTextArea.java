@@ -34,7 +34,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,6 +57,7 @@ import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends JPanel implements PropertyChangeListener {
   private static final JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
+  private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Editor.SearchField.background", UIUtil.getTextFieldBackground());
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
@@ -104,8 +104,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   /**
    * @deprecated infoMode is not used. Use the other constructor.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, @SuppressWarnings("unused") boolean infoMode) {
     this (textArea, searchMode);
   }
@@ -204,7 +203,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   public void updateUI() {
     super.updateUI();
     updateFont();
-    setBackground(UIUtil.getTextFieldBackground());
+    setBackground(BACKGROUND_COLOR);
   }
 
   private void updateFont() {
@@ -232,7 +231,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
     removeAll();
     setLayout(new BorderLayout(JBUIScale.scale(3), 0));
-    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.searchFieldInsets", JBUI.insets(SystemInfo.isLinux ? 2 : 1))));
+    setBorder(JBUI.Borders.empty(JBUI.insets("Editor.SearchField.borderInsets", JBUI.insets(SystemInfo.isLinux ? 2 : 1))));
 
     add(historyButtonWrapper, BorderLayout.WEST);
     add(myScrollPane, BorderLayout.CENTER);
@@ -348,7 +347,6 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
    * @deprecated use this wrapper component with JBTextArea and its getEmptyText() instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
   private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {

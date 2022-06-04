@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,8 +59,7 @@ public class LogMessage extends AbstractMessage {
   }
 
   /** @deprecated pass all attachments to {@link #createEvent(Throwable, String, Attachment...)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated(forRemoval = true)
   public synchronized void addAttachment(@NotNull Attachment attachment) {
     myAttachments.add(attachment);
   }

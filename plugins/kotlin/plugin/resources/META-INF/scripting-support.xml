@@ -86,6 +86,11 @@
                  defaultValue="true"
                  restartRequired="true"/>
 
+    <registryKey key="kotlin.scripting.fs.roots.storage.enabled"
+                 description="Cache resolved dependencies paths across all scripts"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
 

@@ -284,12 +284,8 @@ public final class FormsInstrumenter extends FormsBuilder {
         }
         final File formFile = new File(sourceRoot, path);
         if (formFile.exists()) {
-          final BufferedInputStream stream = new BufferedInputStream(new FileInputStream(formFile));
-          try {
+          try (BufferedInputStream stream = new BufferedInputStream(new FileInputStream(formFile))) {
             return loadForm(formFileName, stream);
-          }
-          finally {
-            stream.close();
           }
         }
       }

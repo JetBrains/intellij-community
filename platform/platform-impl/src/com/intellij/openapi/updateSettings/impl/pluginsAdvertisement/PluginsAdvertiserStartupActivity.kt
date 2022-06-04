@@ -47,11 +47,10 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
             .notify(project)
         }, ModalityState.NON_MODAL, project.disposed)
       }
-      return
     }
 
     try {
-      if (extensions == null || extensions.outdated) {
+      if (extensions == null || extensions.outdated || includeIgnored) {
         @Suppress("DEPRECATION")
         val extensionsMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(),
                                                          FileTypeFactory.FILE_TYPE_FACTORY_EP.name)
@@ -64,19 +63,22 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
         EditorNotifications.getInstance(project).updateAllNotifications()
       }
 
-      if (extensionsService.dependencies == null || extensionsService.dependencies!!.outdated) {
+      if (extensionsService.dependencies == null || extensionsService.dependencies!!.outdated || includeIgnored) {
         val dependencyMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(), DEPENDENCY_SUPPORT_FEATURE)
         extensionsService.dependencies?.update(dependencyMap) ?: run {
           extensionsService.dependencies = PluginFeatureMap(dependencyMap)
         }
       }
       ProgressManager.checkCanceled()
-      PluginAdvertiserService.getInstance().run(
-        project,
-        customPlugins,
-        unknownFeatures,
-        includeIgnored
-      )
+
+      if (unknownFeatures.isNotEmpty()) {
+        PluginAdvertiserService.getInstance().run(
+          project,
+          customPlugins,
+          unknownFeatures,
+          includeIgnored
+        )
+      }
     }
     catch (e: Exception) {
       if (e !is ControlFlowException) {

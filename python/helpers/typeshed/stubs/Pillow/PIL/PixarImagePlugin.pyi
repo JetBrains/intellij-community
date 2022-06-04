@@ -1,5 +1,8 @@
+from typing import ClassVar
+from typing_extensions import Literal
+
 from .ImageFile import ImageFile
 
 class PixarImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["PIXAR"]]
+    format_description: ClassVar[str]

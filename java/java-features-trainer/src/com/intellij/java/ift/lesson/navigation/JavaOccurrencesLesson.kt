@@ -61,7 +61,7 @@ class JavaOccurrencesLesson
 
     task("Find") {
       text(JavaLessonsBundle.message("java.find.occurrences.invoke.find", code("cellphone"), action(it)))
-      triggerByUiComponentAndHighlight(false, false) { _: SearchTextArea -> true }
+      triggerUI().component { _: SearchTextArea -> true }
       restoreIfModifiedOrMoved()
       test { actions(it) }
     }

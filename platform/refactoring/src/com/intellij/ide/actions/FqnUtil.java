@@ -26,7 +26,7 @@ import java.io.File;
 
 public class FqnUtil {
   @Nullable
-  static String getQualifiedNameFromProviders(@Nullable PsiElement element) {
+  public static String getQualifiedNameFromProviders(@Nullable PsiElement element) {
     if (element == null) return null;
     return DumbService.getInstance(element.getProject()).computeWithAlternativeResolveEnabled(() ->
                                                                                                 QualifiedNameProviderUtil.getQualifiedName(element));
@@ -56,7 +56,7 @@ public class FqnUtil {
   }
 
   @NotNull
-  static @NlsSafe String getFileFqn(final PsiFile file) {
+  public static @NlsSafe String getFileFqn(final PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     return virtualFile == null ? file.getName() : getVirtualFileFqn(virtualFile, file.getProject());
   }

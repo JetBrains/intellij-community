@@ -565,7 +565,7 @@ public final class FSRecords {
   public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
     if (names.isEmpty()) return true;
     if (Registry.is("indexing.filename.over.vfs.with.reverse.index")) {
-      return ReverseNameIndex.processFilesWithNames(names, processor, () -> ourConnection.getRecords());
+      return InvertedNameIndex.processFilesWithNames(names, processor, () -> ourConnection.getRecords());
     }
     long start = System.nanoTime();
     IntOpenHashSet nameIds = new IntOpenHashSet();

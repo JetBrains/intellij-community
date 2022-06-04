@@ -1,12 +1,14 @@
 import collections.abc
 import sys
 from _typeshed import Self, SupportsKeysAndGetItem
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Any, Generic, NoReturn, TypeVar, overload
 
 from ..cimmutabledict import immutabledict as immutabledict
 from ..sql.elements import ColumnElement
 
+_KT = TypeVar("_KT")
+_VT = TypeVar("_VT")
 _S = TypeVar("_S")
 _T = TypeVar("_T")
 
@@ -19,9 +21,12 @@ class ImmutableContainer:
     def __setitem__(self, *arg: object, **kw: object) -> NoReturn: ...
     def __setattr__(self, *arg: object, **kw: object) -> NoReturn: ...
 
-def coerce_to_immutabledict(d) -> immutabledict: ...
+@overload
+def coerce_to_immutabledict(d: None) -> immutabledict[Any, Any]: ...
+@overload
+def coerce_to_immutabledict(d: Mapping[_KT, _VT]) -> immutabledict[_KT, _VT]: ...
 
-EMPTY_DICT: immutabledict
+EMPTY_DICT: immutabledict[Any, Any]
 
 class FacadeDict(ImmutableContainer, dict[Any, Any]):
     clear: Any

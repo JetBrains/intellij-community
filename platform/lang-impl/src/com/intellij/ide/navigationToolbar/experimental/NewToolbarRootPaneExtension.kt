@@ -12,6 +12,7 @@ import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -159,6 +160,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
         toolbar.targetComponent = null
         toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
         component.add(toolbar.component, layoutConstraints)
+        toolbar.updateActionsImmediately()
       }
     }
     component.revalidate()
@@ -190,6 +192,9 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
   inner class CustomizeToolbarAction : DumbAwareAction(ActionsBundle.message("action.CustomizeToolbarAction.text")) {
     override fun actionPerformed(e: AnActionEvent) {
       object : DialogWrapper(project, true) {
+        init {
+          title = ActionsBundle.message("action.CustomizeToolbarAction.dialog.title")
+        }
         var customizeWidget = object : CustomizableActionsPanel() {
           override fun patchActionsTreeCorrespondingToSchema(root: DefaultMutableTreeNode?) {
             val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? ActionGroup
@@ -282,6 +287,11 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     panel.isEnabled = toolbarSettings.isEnabled
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
     project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
+
+    val rightPanel = layout.getLayoutComponent(BorderLayout.EAST)
+    if (!panel.isVisible && rightPanel != null) {
+      panel.remove(rightPanel)
+    }
 
     panel.revalidate()
     panel.repaint()

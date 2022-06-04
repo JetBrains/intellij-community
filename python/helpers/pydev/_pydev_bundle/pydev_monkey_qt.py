@@ -1,6 +1,7 @@
 from __future__ import nested_scopes
 
 from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle.pydevd_constants import IS_PY38
 import os
 
 def set_trace_in_qt():
@@ -37,6 +38,17 @@ def patch_qt(qt_support_mode):
 
         patch_qt_on_import = None
         try:
+            # PY-50959
+            # Problem:
+            # 1. We have Python 3.8;
+            # 2. PyQt compatible = Auto or PySide2;
+            # 3. We try to import numpy, we get "AttributeError: module 'numpy.core' has no attribute 'numerictypes'"
+            #
+            # Solution:
+            # We decided to turn off patching for PySide2 if we have Python 3.8
+            # Here we skip 'import PySide2' and keep trying to import another qt libraries
+            if IS_PY38:
+                raise ImportError
             import PySide2  # @UnresolvedImport @UnusedImport
             qt_support_mode = 'pyside2'
         except:
@@ -55,6 +67,11 @@ def patch_qt(qt_support_mode):
                         return
 
     if qt_support_mode == 'pyside2':
+        # PY-50959
+        # We can get here only if PyQt compatible = PySide2, in this case we should return
+        # See comment above about PY-50959
+        if IS_PY38:
+            return
         try:
             import PySide2.QtCore  # @UnresolvedImport
             _internal_patch_qt(PySide2.QtCore, qt_support_mode)

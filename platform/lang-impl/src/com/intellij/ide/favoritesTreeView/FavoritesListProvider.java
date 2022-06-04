@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.CommonActionsPanel;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.util.Set;
  * @deprecated implement {@link com.intellij.ide.bookmark.BookmarksListProvider} instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2023.3")
 public interface FavoritesListProvider extends Comparator<FavoriteTreeNodeDescriptor>, Comparable<FavoritesListProvider> {
   ExtensionPointName<FavoritesListProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoritesListProvider");
 

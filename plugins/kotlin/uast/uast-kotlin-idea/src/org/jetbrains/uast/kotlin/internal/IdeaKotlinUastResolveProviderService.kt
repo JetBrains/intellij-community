@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
+import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.resolveToDeclarationImpl
@@ -27,11 +27,13 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getBindingContextIfAny(element: KtElement): BindingContext? =
         element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
 
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper = KotlinTypeMapper(
-        getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
-        JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,
-        useOldInlineClassesManglingScheme = false
-    )
+    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
+        return KotlinTypeMapper(
+            getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
+            JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,
+            useOldInlineClassesManglingScheme = false
+        )
+    }
 
     override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
 

@@ -9,7 +9,7 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.J2KFusCollector"/>
     <statistics.counterUsagesCollector groupId="kotlin.gradle.library" version="1"/>
-    <statistics.counterUsagesCollector groupId="kotlin.gradle.performance" version="2"/>
+    <statistics.counterUsagesCollector groupId="kotlin.gradle.performance" version="3"/>
     <statistics.counterUsagesCollector groupId="kotlin.ide.debugger" version="2"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector"/>

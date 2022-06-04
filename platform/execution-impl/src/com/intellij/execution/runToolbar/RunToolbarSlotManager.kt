@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.AppUIUtil
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 import java.util.*
 import javax.swing.SwingUtilities
@@ -133,6 +132,11 @@ class RunToolbarSlotManager(val project: Project) {
           }
         }
 
+        if(slotsData.isEmpty()) {
+          mainSlotData = SlotDate(UUID.randomUUID().toString())
+          slotsData[mainSlotData.id] = mainSlotData
+        }
+
         if (RunToolbarProcess.logNeeded) LOG.info("SM restoreRunConfigurations: ${configurations.values} RunToolbar")
 
         val con = project.messageBus.connect(disp)
@@ -149,6 +153,17 @@ class RunToolbarSlotManager(val project: Project) {
             } ?: kotlin.run {
               mainSlotData.configuration = settings
               if (RunToolbarProcess.logNeeded) LOG.info("SM runConfigurationSelected: $settings change main configuration RunToolbar")
+              update()
+            }
+          }
+
+          override fun runConfigurationRemoved(settings: RunnerAndConfigurationSettings) {
+            var changed = false
+            slotsData.filter { it.value == settings && it.value.environment == null }.forEach {
+              changed = true
+              it.value.configuration = RunManager.getInstance(project).selectedConfiguration
+            }
+            if (changed) {
               update()
             }
           }

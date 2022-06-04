@@ -21,7 +21,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
 
   companion object {
     fun createClassPathArgFile(paths: PathsProvider, classpath: List<String>): File {
-      val launcherFolder = paths.launcherFolder
+      val launcherFolder = paths.logFolder
       if (!launcherFolder.exists()) {
         launcherFolder.mkdirs()
       }

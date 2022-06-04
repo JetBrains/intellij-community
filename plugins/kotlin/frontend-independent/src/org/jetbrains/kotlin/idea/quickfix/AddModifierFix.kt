@@ -24,7 +24,7 @@ open class AddModifierFix(
     override fun getText(): String {
         val element = element ?: return ""
         if (modifier in modalityModifiers || modifier in KtTokens.VISIBILITY_MODIFIERS || modifier == KtTokens.CONST_KEYWORD) {
-            return KotlinBundle.message("fix.add.modifier.text", RemoveModifierFix.getElementName(element), modifier.value)
+            return KotlinBundle.message("fix.add.modifier.text", RemoveModifierFixBase.getElementName(element), modifier.value)
         }
         return KotlinBundle.message("fix.add.modifier.text.generic", modifier.value)
     }
@@ -52,7 +52,7 @@ open class AddModifierFix(
     //  FIR version of [org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt#canRefactor]
     override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean = element != null
 
-    interface Factory<T: AddModifierFix> {
+    interface Factory<T : AddModifierFix> {
         fun createFactory(modifier: KtModifierKeywordToken): QuickFixesPsiBasedFactory<PsiElement> {
             return createFactory(modifier, KtModifierListOwner::class.java)
         }

@@ -615,7 +615,8 @@ public class KotlinTestUtils {
     private static void runTestImpl(@NotNull DoTest test, @NotNull TestCase testCase, String testDataFilePath) throws Exception {
         String absoluteTestDataFilePath;
 
-        if (testDataFilePath.startsWith("/")) {
+        File testDataFile = new File(testDataFilePath);
+        if (testDataFile.isAbsolute()) {
             absoluteTestDataFilePath = testDataFilePath;
         } else {
             File testRoot = TestMetadataUtil.getTestRoot(testCase.getClass());

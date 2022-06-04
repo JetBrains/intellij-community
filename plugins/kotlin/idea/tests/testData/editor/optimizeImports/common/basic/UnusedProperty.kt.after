@@ -1,0 +1,6 @@
+// FIR_COMPARISON
+package test
+
+fun usage() {
+    val p = dependency.prop
+}

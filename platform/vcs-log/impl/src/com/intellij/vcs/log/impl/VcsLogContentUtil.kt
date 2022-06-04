@@ -123,7 +123,7 @@ object VcsLogContentUtil {
     ContentUtilEx.updateTabbedContentDisplayName(manager, component)
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use VcsProjectLog#runWhenLogIsReady(Project, Consumer) instead.")
   @JvmStatic
   @RequiresBackgroundThread

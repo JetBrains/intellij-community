@@ -8,22 +8,25 @@ import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
@@ -33,7 +36,10 @@ import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
     fun getBindingContext(element: KtElement): BindingContext
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
+
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     fun getTypeMapper(element: KtElement): KotlinTypeMapper?
+
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
 
     override val languagePlugin: UastLanguagePlugin
@@ -100,22 +106,13 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         if (arguments.isEmpty()) return null
         if (arguments.size == 1) {
             val argument = arguments.single()
-            val expression = argument.getArgumentExpression()
             if (parameter.varargElementType != null && argument.getSpreadElement() == null) {
-                return createVarargsHolder(arguments, parent)
+                return baseKotlinConverter.createVarargsHolder(arguments, parent)
             }
-            return baseKotlinConverter.convertOrEmpty(expression, parent)
+            return baseKotlinConverter.convertOrEmpty(argument.getArgumentExpression(), parent)
         }
-        return createVarargsHolder(arguments, parent)
+        return baseKotlinConverter.createVarargsHolder(arguments, parent)
     }
-
-    private fun createVarargsHolder(
-        arguments: List<ValueArgument>,
-        parent: UElement?,
-    ): KotlinUExpressionList =
-        KotlinUExpressionList(null, UastSpecialExpressionKind.VARARGS, parent).apply {
-            expressions = arguments.map { baseKotlinConverter.convertOrEmpty(it.getArgumentExpression(), parent) }
-        }
 
     override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
         val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
@@ -142,7 +139,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             KotlinUParameter(
                 UastKotlinPsiParameterBase(
                     name = p.name.asString(),
-                    type = p.type.toPsiType(parent, ktLambdaExpression, false),
+                    type = p.type.toPsiType(parent, ktLambdaExpression, ktLambdaExpression.typeOwnerKind, boxed = false),
                     parent = ktLambdaExpression,
                     ktOrigin = ktLambdaExpression,
                     language = ktLambdaExpression.language,
@@ -155,8 +152,29 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
     }
 
+    override fun resolveBitwiseOperators(ktBinaryExpression: KtBinaryExpression): UastBinaryOperator {
+        val other = UastBinaryOperator.OTHER
+        val ref = ktBinaryExpression.operationReference
+        val resolvedCall = ktBinaryExpression.operationReference.getResolvedCall(ref.analyze()) ?: return other
+        val resultingDescriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return other
+        val applicableOperator = KotlinUBinaryExpression.BITWISE_OPERATORS[resultingDescriptor.name.asString()] ?: return other
+
+        val containingClass = resultingDescriptor.containingDeclaration as? ClassDescriptor ?: return other
+        return if (containingClass.typeConstructor.supertypes.any {
+                it.constructor.declarationDescriptor?.fqNameSafe?.asString() == "kotlin.Number"
+            }) applicableOperator else other
+    }
+
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
         return resolveToPsiMethod(ktElement)
+    }
+
+    override fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
+        val resolvedCall = ktSimpleNameExpression.getResolvedCall(ktSimpleNameExpression.analyze()) ?: return null
+        val resultingDescriptor = resolvedCall.resultingDescriptor as? SyntheticJavaPropertyDescriptor ?: return null
+        val access = ktSimpleNameExpression.readWriteAccess(useResolveForReadWrite = false)
+        val descriptor = (if (access.isWrite) resultingDescriptor.setMethod else resultingDescriptor.getMethod) ?: return null
+        return resolveToPsiMethod(ktSimpleNameExpression, descriptor)
     }
 
     override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
@@ -196,7 +214,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolveToClassIfConstructorCallImpl(ktCallElement, source) as? PsiClass
     }
 
-    override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry): PsiClass? {
+    override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry, source: UElement): PsiClass? {
         val classDescriptor = ktAnnotationEntry.resolveToClassDescriptor() ?: return null
         return ktAnnotationEntry.calleeExpression?.let { ktExpression ->
             resolveToDeclarationImpl(ktExpression, classDescriptor) as? PsiClass
@@ -219,25 +237,33 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolveToDeclarationImpl(ktExpression)
     }
 
-    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType? {
-        return ktTypeReference.toPsiType(source)
+    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement, boxed: Boolean): PsiType? {
+        return ktTypeReference.toPsiType(source, boxed)
     }
 
-    override fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType? {
-        return ktTypeReference.getType()?.toPsiType(lightDeclaration, ktTypeReference, false)
+    override fun resolveToType(ktTypeReference: KtTypeReference, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
+        return ktTypeReference.getType()
+            ?.toPsiType(containingLightDeclaration, ktTypeReference, ktTypeReference.typeOwnerKind, boxed = false)
     }
 
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
         val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
-        return receiver.type.toPsiType(source, ktCallElement, boxed = true)
+        return receiver.type.toPsiType(source, ktCallElement, ktCallElement.typeOwnerKind, boxed = true)
+    }
+
+    override fun getAccessorReceiverType(ktSimpleNameExpression: KtSimpleNameExpression, source: UElement): PsiType? {
+        val resolvedCall = ktSimpleNameExpression.getResolvedCall(ktSimpleNameExpression.analyze()) ?: return null
+        if (resolvedCall.resultingDescriptor !is SyntheticJavaPropertyDescriptor) return null
+        val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
+        return receiver.type.toPsiType(source, ktSimpleNameExpression, ktSimpleNameExpression.typeOwnerKind, boxed = true)
     }
 
     override fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType? {
         val ktType =
             ktDoubleColonExpression.analyze()[BindingContext.DOUBLE_COLON_LHS, ktDoubleColonExpression.receiverExpression]?.type
                 ?: return null
-        return ktType.toPsiType(source, ktDoubleColonExpression, boxed = true)
+        return ktType.toPsiType(source, ktDoubleColonExpression, ktDoubleColonExpression.typeOwnerKind, boxed = true)
     }
 
     override fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType? {
@@ -248,25 +274,40 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
         return CommonSupertypes
             .commonSupertype(listOf(leftType, rightType))
-            .toPsiType(uExpression, ktElement, boxed = false)
+            .toPsiType(uExpression, ktElement, ktElement.typeOwnerKind, boxed = false)
     }
 
     override fun getType(ktExpression: KtExpression, source: UElement): PsiType? {
+        return when (ktExpression) {
+            is KtArrayAccessExpression -> {
+                getExpressionType(ktExpression, source) ?: run {
+                    // for unknown reason in assignment position there is no `EXPRESSION_TYPE_INFO` so we getting it from the array type
+                    val arrayExpression = ktExpression.arrayExpression ?: return null
+                    val arrayType = arrayExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, arrayExpression]?.type ?: return null
+                    return arrayType.arguments.firstOrNull()?.type
+                        ?.toPsiType(source, arrayExpression, arrayExpression.typeOwnerKind, boxed = false)
+                }
+            }
+            else -> getExpressionType(ktExpression, source)
+        }
+    }
+
+    private fun getExpressionType(ktExpression: KtExpression, source: UElement): PsiType? {
         val ktType = ktExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktExpression]?.type ?: return null
-        return ktType.toPsiType(source, ktExpression, boxed = false)
+        return ktType.toPsiType(source, ktExpression, ktExpression.typeOwnerKind, boxed = false)
     }
 
     override fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType? {
         return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
             ?.returnType
             ?.takeIf { !it.isError }
-            ?.toPsiType(source, ktDeclaration, boxed = false)
+            ?.toPsiType(source, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
     }
 
-    override fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType? {
+    override fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType? {
         return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
             ?.returnType
-            ?.toPsiType(lightDeclaration, ktDeclaration, boxed = false)
+            ?.toPsiType(containingLightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
     }
 
     override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
@@ -277,10 +318,11 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             builtIns = descriptor.builtIns,
             annotations = descriptor.annotations,
             receiverType = descriptor.extensionReceiverParameter?.type,
+            contextReceiverTypes = descriptor.contextReceiverParameters.map { it.type },
             parameterTypes = descriptor.valueParameters.map { it.type },
             parameterNames = descriptor.valueParameters.map { it.name },
             returnType = returnType
-        ).toPsiType(source, ktFunction, boxed = false)
+        ).toPsiType(source, ktFunction, ktFunction.typeOwnerKind, boxed = false)
     }
 
     override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
@@ -312,6 +354,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
         val compileTimeConst = ktElement.analyze()[BindingContext.COMPILE_TIME_VALUE, ktElement]
         if (compileTimeConst is UnsignedErrorValueTypeConstant) return null
-        return compileTimeConst?.getValue(TypeUtils.NO_EXPECTED_TYPE)
+        val ktType = ktElement.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktElement]?.type ?: TypeUtils.NO_EXPECTED_TYPE
+        return compileTimeConst?.takeUnless { it.isError }?.getValue(ktType)
     }
 }

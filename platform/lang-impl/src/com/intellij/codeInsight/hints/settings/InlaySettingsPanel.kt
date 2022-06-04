@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -38,7 +39,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   val tree: CheckboxTree
   private val rightPanel: JPanel = JPanel(MigLayout("wrap, insets 0 10 0 0, gapy 20, fillx"))
-  private val groups: Map<InlayGroup, List<InlayProviderSettingsModel>>
+  private val groups: MutableMap<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
 
   init {
@@ -46,12 +47,19 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
       provider.getSupportedLanguages(project).flatMap { provider.createModels(project, it) }
     }
     groups = models.groupBy { it.group }.toSortedMap()
+    val globalSettings = groups.keys.associateWith { InlayGroupSettingProvider.EP.findForGroup(it) }
 
     val root = CheckedTreeNode()
     val lastSelected = InlayHintsSettings.instance().getLastViewedProviderId()
     var nodeToSelect: CheckedTreeNode? = null
+
+    // filling code vision settings
+    if (Registry.`is`("editor.codeVision.new")) {
+      groups.remove(InlayGroup.CODE_VISION_GROUP)
+    }
+
     for (group in groups) {
-      val groupNode = CheckedTreeNode(group.key)
+      val groupNode = CheckedTreeNode(globalSettings[group.key] ?: group.key)
       root.add(groupNode)
       val primaryLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
       val sortedMap = group.value.groupBy { it.language }.toSortedMap(
@@ -70,7 +78,11 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
           langNode = groupNode.firstChild as CheckedTreeNode
           startFrom = 1
         }
-        else {
+        else if(lang.key == Language.ANY){
+          langNode = groupNode
+          startFrom = 0
+        }
+        else{
           langNode = CheckedTreeNode(lang.key)
           groupNode.add(langNode)
           startFrom = 0
@@ -120,6 +132,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   @Nls
   private fun getName(node: DefaultMutableTreeNode?, parent: DefaultMutableTreeNode?): String {
     when (val item = node?.userObject) {
+      is InlayGroupSettingProvider -> return item.group.toString()
       is InlayGroup -> return item.toString()
       is Language -> return item.displayName
       is InlayProviderSettingsModel -> return if (parent?.userObject is InlayGroup) item.language.displayName else item.name
@@ -166,6 +179,9 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
     rightPanel.removeAll()
     currentEditor = null
     when (val item = treeNode?.userObject) {
+      is InlayGroupSettingProvider -> {
+        rightPanel.add(item.component)
+      }
       is InlayProviderSettingsModel -> {
         if (treeNode.isLeaf) {
           addDescription(item.description)
@@ -193,7 +209,7 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun addPreview(previewText: String?, model: InlayProviderSettingsModel) {
     if (previewText != null) {
-      val editorTextField = createEditor(model.language, project) { editor ->
+      val editorTextField = createEditor(model.getCasePreviewLanguage(null) ?: model.language, project) { editor ->
         currentEditor = editor
         updateHints(editor, model)
       }
@@ -249,6 +265,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun reset(node: CheckedTreeNode, settings: InlayHintsSettings) {
     when (val item = node.userObject) {
+      is InlayGroupSettingProvider -> {
+        item.reset()
+        node.isChecked = item.isEnabled
+      }
       is InlayProviderSettingsModel -> {
         item.reset()
         resetNode(node, isModelEnabled(item, settings))
@@ -296,6 +316,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {
     node.children().toList().forEach { apply(it as CheckedTreeNode, settings) }
     when (val item = node.userObject) {
+      is InlayGroupSettingProvider -> {
+        item.isEnabled = node.isChecked
+        item.apply()
+      }
       is InlayProviderSettingsModel -> {
         item.isEnabled = node.isChecked
         item.apply()
@@ -327,6 +351,10 @@ class InlaySettingsPanel(val project: Project): JPanel(BorderLayout()) {
 
   private fun isModified(node: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
     when (val item = node.userObject) {
+      is InlayGroupSettingProvider -> {
+        if(item.isModified())
+          return true
+      }
       is InlayProviderSettingsModel -> {
         if (item.isModified() || (node.isChecked != isModelEnabled(item, settings)))
           return true

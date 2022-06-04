@@ -75,7 +75,8 @@ VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 }
 
 <AFTER_PLAIN_TAG_NAME> {
-  {WS_NL}                       { yybegin(COMMENT_DATA); return TokenType.WHITE_SPACE; }
+  {WS}                          { yybegin(COMMENT_DATA); return TokenType.WHITE_SPACE; }
+  {NL_CHARS}                    { yybegin(TOP_LEVEL); return TokenType.WHITE_SPACE; }
   "}"                           { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END; }
 }
 

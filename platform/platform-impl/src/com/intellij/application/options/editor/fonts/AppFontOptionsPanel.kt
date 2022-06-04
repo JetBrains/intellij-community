@@ -52,7 +52,11 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
   }
 
   override fun setFontSize(fontSize: Int) {
-    scheme.editorFontSize = fontSize
+    setFontSize(fontSize.toFloat())
+  }
+
+  override fun setFontSize(fontSize: Float) {
+    scheme.setEditorFontSize(fontSize)
   }
 
   override fun getLineSpacing(): Float {

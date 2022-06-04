@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -9,13 +9,18 @@ import java.util.Comparator;
 /**
  * Implementation of <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html">
  * "Sorting for Humans: Natural Sort Order"</a>
+ *
  * @author Bas Leijdekkers
  */
 public final class NaturalComparator implements Comparator<String> {
+  public static final Comparator<String> INSTANCE = new NaturalComparator(true);
+  public static final Comparator<String> CASE_SENSITIVE_INSTANCE = new NaturalComparator(false);
 
-  public static final Comparator<String> INSTANCE = new NaturalComparator();
+  private final boolean myIgnoreCase;
 
-  private NaturalComparator() {}
+  private NaturalComparator(boolean ignoreCase) {
+    myIgnoreCase = ignoreCase;
+  }
 
   @Override
   public int compare(String s1, String s2) {
@@ -23,7 +28,7 @@ public final class NaturalComparator implements Comparator<String> {
     if (s1 == s2) return 0;
     if (s1 == null) return -1;
     if (s2 == null) return +1;
-    return naturalCompare(s1, s2, s1.length(), s2.length(), true);
+    return naturalCompare(s1, s2, s1.length(), s2.length(), myIgnoreCase);
   }
 
   @Contract(pure = true)

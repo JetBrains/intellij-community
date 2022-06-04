@@ -2,10 +2,8 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
+import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -33,12 +31,9 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 return false
             }
         })
-        // TODO: Handle FirEqualityOperatorCall in KtFirCallResolver#resolveCall(KtBinaryExpression)
-        if (!isFirUastPlugin) {
-            Assert.assertEquals("Expect != (String.equals)", 1, resolvedBinaryOperators.size)
-            val op = resolvedBinaryOperators.single()
-            Assert.assertEquals("equals", op.name)
-        }
+        Assert.assertEquals("Expect != (String.equals)", 1, resolvedBinaryOperators.size)
+        val op = resolvedBinaryOperators.single()
+        Assert.assertEquals("equals", op.name)
 
         val kt44412 = facade.methods.find { it.name == "kt44412" }
             ?: throw IllegalStateException("Target function not found at ${uFile.asRefNames()}")
@@ -99,12 +94,9 @@ interface UastResolveApiTestBase : UastPluginSelection {
             }
         })
         Assert.assertNotNull("Foo::bar is not resolved", barReference)
-        if (!isFirUastPlugin) {
-            // TODO: FIR UAST doesn't need this unwrapping. Is this a breaking change?
-            barReference = (barReference as KtLightMethod).kotlinOrigin
-        }
-        Assert.assertTrue("Foo::bar is not a function", barReference is KtNamedFunction)
-        Assert.assertEquals("Foo.bar", (barReference as KtNamedFunction).fqName?.asString())
+        val barReferenceOrigin = (barReference as KtLightMethod).kotlinOrigin
+        Assert.assertTrue("Foo::bar is not a function", barReferenceOrigin is KtNamedFunction)
+        Assert.assertEquals("Foo.bar", (barReferenceOrigin as KtNamedFunction).fqName?.asString())
     }
 
     fun checkCallbackForImports(filePath: String, uFile: UFile) {
@@ -166,5 +158,43 @@ interface UastResolveApiTestBase : UastPluginSelection {
             }
         })
         Assert.assertNull("plain `this` has `null` label", thisReference)
+    }
+
+    fun checkCallbackForRetention(uFilePath: String, uFile: UFile) {
+
+        fun checkRetentionAndResolve(uAnnotation: UAnnotation) {
+            if (uAnnotation.qualifiedName?.endsWith("Retention") == true) {
+                val value = uAnnotation.findAttributeValue("value")
+                val reference = value as? UReferenceExpression
+                TestCase.assertNotNull("Can't find the reference to @Retention value", reference)
+                // Resolve @Retention value
+                val resolvedValue = reference!!.resolve()
+                TestCase.assertNotNull("Can't resolve @Retention value", resolvedValue)
+                TestCase.assertEquals("SOURCE", (resolvedValue as? PsiNamedElement)?.name)
+            }
+        }
+
+        // Lookup @Anno directly from the source file
+        val anno = uFile.classes.find { it.name == "Anno" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+        TestCase.assertTrue("@Anno is not an annotation?!", anno.isAnnotationType)
+        anno.uAnnotations.forEach(::checkRetentionAndResolve)
+
+        // Lookup @Anno indirectly from an annotated test class
+        val testClass = uFile.classes.find { it.name == "TestClass" }
+            ?: throw IllegalStateException("Target class not found at ${uFile.asRefNames()}")
+        val annoOnTestClass = testClass.uAnnotations.find { it.qualifiedName?.endsWith("Anno") == true }
+            ?: throw IllegalStateException("Target annotation not found at ${testClass.asSourceString()}")
+        // Resolve @Anno to PsiClass
+        val resolvedAnno = annoOnTestClass.resolve()
+        TestCase.assertNotNull("Can't resolve @Anno on TestClass", resolvedAnno)
+        for (psi in resolvedAnno!!.annotations) {
+            val uAnnotation = anno.uAnnotations.find { it.javaPsi == psi } ?: continue
+            val rebuiltAnnotation = psi.toUElement(UAnnotation::class.java)
+            TestCase.assertNotNull("Should be able to rebuild UAnnotation from $psi", rebuiltAnnotation)
+            TestCase.assertEquals(uAnnotation.qualifiedName, rebuiltAnnotation!!.qualifiedName)
+            // Check Retention on a rebuilt UAnnotation
+            checkRetentionAndResolve(rebuiltAnnotation)
+        }
     }
 }

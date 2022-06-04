@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.testGenerator
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
-//import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
-//import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassSanityTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest15
@@ -70,7 +68,10 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
+//import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
+//import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
+//import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
 //import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
@@ -85,17 +86,21 @@ import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 //import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
 //import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
 //import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
+//import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
+//import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
+//import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
 //import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
 //import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
 //import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
+//import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDeclarationResolveTest
+//import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 //import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 //import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 //import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
-//import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
-//import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
-//import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
-//import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 //import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
+//import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
+//import org.jetbrains.kotlin.idea.fir.uast.*
+//import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
@@ -106,6 +111,7 @@ import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
+import org.jetbrains.kotlin.idea.inspections.AbstractViewOfflineInspectionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractConcatenatedStringGeneratorTest
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest2
@@ -176,15 +182,15 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
-import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractProjectTemplateBuildFileGenerationTest
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractYamlBuildFileGenerationTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNewWizardProjectImportTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProjectImportTest
-import org.jetbrains.kotlin.idea.inspections.AbstractViewOfflineInspectionTest
 import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -509,7 +515,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractLocalInspectionTest> {
-            model("inspectionsLocal", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
+            model(
+                "inspectionsLocal", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"),
+                // In FE1.0, this is a quickfix rather than a local inspection
+                excludedDirectories = listOf("unusedVariable")
+            )
         }
 
         testClass<AbstractViewOfflineInspectionTest> {
@@ -1029,8 +1039,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractSessionsInvalidationTest> {
             model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
         }
-    }*/
+    }
 
+    testGroup("fir-low-level-api-ide-impl") {
+        testClass<AbstractFirLibraryModuleDeclarationResolveTest> {
+            model("libraryModuleResolve", isRecursive = false)
+        }
+    }*/
 
     /*testGroup("idea/idea-fir-performance-tests/tests", "idea") {
          testClass<AbstractFirHighlightingPerformanceTest> {
@@ -1059,22 +1074,33 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/addExclExclCall", pattern = pattern)
             model("quickfix/addInitializer", pattern = pattern)
             model("quickfix/addPropertyAccessors", pattern = pattern)
+            model("quickfix/checkArguments", pattern = pattern, isRecursive = false)
+            model("quickfix/conflictingImports", pattern = pattern)
             model("quickfix/expressions", pattern = pattern)
             model("quickfix/lateinit", pattern = pattern)
+            model("quickfix/localVariableWithTypeParameters", pattern = pattern)
             model("quickfix/modifiers", pattern = pattern, isRecursive = false)
             model("quickfix/nullables", pattern = pattern)
             model("quickfix/override", pattern = pattern, isRecursive = false)
             model("quickfix/override/typeMismatchOnOverride", pattern = pattern, isRecursive = false)
+            model("quickfix/removeRedundantSpreadOperator", pattern = pattern)
             model("quickfix/replaceInfixOrOperatorCall", pattern = pattern)
+            model("quickfix/replaceWithArrayCallInAnnotation", pattern = pattern)
             model("quickfix/replaceWithDotCall", pattern = pattern)
             model("quickfix/replaceWithSafeCall", pattern = pattern)
+            model("quickfix/specifyVisibilityInExplicitApiMode", pattern = pattern)
+            model("quickfix/supercalls", pattern = pattern)
+            model("quickfix/surroundWithArrayOfForNamedArgumentsToVarargs", pattern = pattern)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
             model("quickfix/variables/removeValVarFromParameter", pattern = pattern)
             model("quickfix/when", pattern = pattern)
             model("quickfix/wrapWithSafeLetCall", pattern = pattern)
+            model("quickfix/typeAddition", pattern = pattern)
+            model("quickfix/typeMismatch/casts", pattern = pattern)
             model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
             model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
             model("quickfix/toString", pattern = pattern)
+            model("quickfix/specifySuperType", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
@@ -1109,11 +1135,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib")
             )
         }
+
+        testClass<AbstractFirJvmOptimizeImportsTest> {
+            model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
+            model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
+        }
     }*/
 
     /*testGroup("fir", testDataPath = "..") {
         testClass<AbstractHLLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("idea/tests/testData/inspectionsLocal/unusedVariable", pattern = pattern)
             model("idea/tests/testData/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("fir/testData/inspectionsLocal", pattern = pattern)
         }
@@ -1121,17 +1153,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     /*testGroup("fir", testDataPath = "../completion/tests/testData") {
         testClass<AbstractHighLevelJvmBasicCompletionTest> {
-            model("basic/common")
-            model("basic/java")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
         }
 
         testClass<AbstractHighLevelBasicCompletionHandlerTest> {
-            model("handlers/basic", pattern = KT_WITHOUT_DOTS)
+            model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractFirKeywordCompletionHandlerTest> {
-            model("handlers/keywords", pattern = KT_WITHOUT_DOTS)
+            model("handlers/keywords", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractHighLevelWeigherTest> {
@@ -1303,13 +1335,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJSBasicCompletionTest> {
-            model("basic/common")
-            model("basic/js")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/js", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJvmBasicCompletionTest> {
-            model("basic/common")
-            model("basic/java")
+            model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractJvmSmartCompletionTest> {
@@ -1325,19 +1357,19 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractBasicCompletionHandlerTest> {
-            model("handlers/basic", pattern = KT_WITHOUT_DOTS)
+            model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractSmartCompletionHandlerTest> {
-            model("handlers/smart")
+            model("handlers/smart", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractKeywordCompletionHandlerTest> {
-            model("handlers/keywords")
+            model("handlers/keywords", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractCompletionCharFilterTest> {
-            model("handlers/charFilter", pattern = KT_WITHOUT_DOTS)
+            model("handlers/charFilter", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
         }
 
         testClass<AbstractMultiFileJvmBasicCompletionTest> {
@@ -1485,6 +1517,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("")
         }
 
+        testClass<AbstractFirLegacyUastResolveEverythingTest> {
+            model("")
+        }
+
         testClass<AbstractFirLegacyUastTypesTest> {
             model("")
         }
@@ -1511,6 +1547,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFE1LegacyUastIdentifiersTest> {
+            model("")
+        }
+
+        testClass<AbstractFE1LegacyUastResolveEverythingTest> {
             model("")
         }
 

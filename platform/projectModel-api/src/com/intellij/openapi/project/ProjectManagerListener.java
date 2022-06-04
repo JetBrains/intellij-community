@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -25,7 +24,6 @@ public interface ProjectManagerListener extends EventListener {
    * @deprecated Use {@link VetoableProjectManagerListener} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   default boolean canCloseProject(@NotNull Project project) {
     return true;
   }

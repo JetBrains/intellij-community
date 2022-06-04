@@ -73,8 +73,7 @@ public final class ProjectUtil extends ProjectUtilCore {
   private ProjectUtil() { }
 
   /** @deprecated Use {@link #updateLastProjectLocation(Path)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void updateLastProjectLocation(@NotNull String projectFilePath) {
     updateLastProjectLocation(Path.of(projectFilePath));
   }
@@ -107,10 +106,10 @@ public final class ProjectUtil extends ProjectUtilCore {
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
-  /** @deprecated Use {@link ProjectManagerEx#closeAndDispose(Project)} */
+  /** @deprecated Use {@link ProjectManager#closeAndDispose(Project)} */
   @Deprecated
   public static boolean closeAndDispose(@NotNull Project project) {
-    return ProjectManagerEx.getInstanceEx().closeAndDispose(project);
+    return ProjectManager.getInstance().closeAndDispose(project);
   }
 
   public static Project openOrImport(@NotNull Path path, Project projectToClose, boolean forceOpenInNewFrame) {

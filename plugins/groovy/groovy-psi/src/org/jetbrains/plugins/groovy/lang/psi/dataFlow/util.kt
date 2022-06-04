@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow
 
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.util.PsiTreeUtil
@@ -30,9 +29,8 @@ internal fun getSimpleInstructions(flow: Array<Instruction>): BitSet =
 
 private typealias InstructionsByElement = (PsiElement) -> Collection<Instruction>
 private typealias ReadInstructions = Collection<ReadWriteVariableInstruction>
-private val READS = Key<ReadInstructions>("groovy.dfa.read.instructon.in.scope")
 
-internal fun findReadDependencies(writeInstruction: Instruction, instructionsByElement: InstructionsByElement): ReadInstructions {
+internal fun findReadDependencies(writeInstruction: Instruction, instructionsByElement: InstructionsByElement, cache: MutableMap<PsiElement, ReadInstructions>): ReadInstructions {
   require(
     writeInstruction is ReadWriteVariableInstruction && writeInstruction.isWrite ||
     writeInstruction is MixinTypeInstruction ||
@@ -40,7 +38,7 @@ internal fun findReadDependencies(writeInstruction: Instruction, instructionsByE
   )
   val element = writeInstruction.element ?: return emptyList()
   val scope = findDependencyScope(element) ?: return emptyList()
-  return findReadsInsideCacheable(scope, instructionsByElement)
+  return findReadsInsideCacheable(scope, instructionsByElement, cache)
 }
 
 private fun findDependencyScope(element: PsiElement): PsiElement? {
@@ -63,15 +61,10 @@ private fun findDependencyScope(element: PsiElement): PsiElement? {
   }
 }
 
-private fun findReadsInsideCacheable(scope : PsiElement, instructionsByElement: InstructionsByElement): ReadInstructions {
-  val existing = scope.getUserData(READS)
-  if (existing == null) {
-    val newReads = findReadsInside(scope, instructionsByElement)
-    scope.putUserData(READS, newReads)
-    return newReads
-  } else {
-    return existing
-  }
+private fun findReadsInsideCacheable(scope: PsiElement,
+                                     instructionsByElement: InstructionsByElement,
+                                     cache: MutableMap<PsiElement, ReadInstructions>): ReadInstructions {
+  return cache.computeIfAbsent(scope) { findReadsInside(scope, instructionsByElement) }
 }
 
 private fun findReadsInside(scope: PsiElement, instructionsByElement: InstructionsByElement): ReadInstructions {

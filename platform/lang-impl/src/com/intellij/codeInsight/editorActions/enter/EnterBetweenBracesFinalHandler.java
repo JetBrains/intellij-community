@@ -5,6 +5,7 @@ package com.intellij.codeInsight.editorActions.enter;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter {
   @Override
   public Result preprocessEnter(@NotNull final PsiFile file,
-                                @NotNull final Editor editor,
+                                @NotNull Editor editor,
                                 @NotNull final Ref<Integer> caretOffsetRef,
                                 @NotNull final Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext,
@@ -55,6 +56,9 @@ public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter 
     if (indentInsideJavadoc != null &&
         project != null &&
         data.isLeadingAsteriskEnabled()) {
+      if (editor instanceof EditorWindow) {
+        editor = ((EditorWindow)editor).getDelegate();
+      }
       editor.getDocument().insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
     }
 

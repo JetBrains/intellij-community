@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.resolve.scopes.*
 import org.jetbrains.kotlin.resolve.scopes.utils.addImportingScopes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
+import org.jetbrains.kotlin.idea.core.util.externalDescriptors
 import javax.inject.Inject
 
 class CodeFragmentAnalyzer(

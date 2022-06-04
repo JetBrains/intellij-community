@@ -360,7 +360,7 @@ class InternalDecoratorImpl internal constructor(
     get() = header.getToolbarWestActions()
 
   override fun toString(): String {
-    return toolWindow.id + ": " + StringUtil.trimMiddle(contentManager.contents.joinToString { it.displayName }, 40) +
+    return toolWindow.id + ": " + StringUtil.trimMiddle(contentManager.contents.joinToString { it.displayName ?: "null" }, 40) +
            " #" + System.identityHashCode(this)
   }
 

@@ -1,33 +1,29 @@
 <html>
 <body>
-Reports multiple 'java.io.File' attribute calls in a row, such as:
+Reports multiple <code>java.io.File</code> attribute calls in a row, such as:
 <ul>
-  <li>isDirectory</li>
-  <li>isFile</li>
-  <li>lastModified</li>
-  <li>length</li>
+  <li><code>isDirectory</code></li>
+  <li><code>isFile</code></li>
+  <li><code>lastModified</code></li>
+  <li><code>length</code></li>
 </ul>
-This calls can be replaced with a bulk 'Files.readAttributes' call. 
+This calls can be replaced with a bulk <code>Files.readAttributes</code> call. 
 Usually bulk method is more performant then multiple attribute calls.
 <p>Example:</p>
 <pre><code>
-boolean isNewFile(File file, long lastModified) {
+boolean isNewFile(File file, long lastModified) throws IOException {
   return file.isFile() && file.lastModified() > lastModified;
 }
 </code></pre>
 <p>After quick-fix is applied:</p>
 <pre><code>
-boolean isNewFile(File file, long lastModified) {
-  BasicFileAttributes basicFileAttributes;
-  try {
-    basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-  } catch (IOException e) {
-    throw new RuntimeException(e);
-  }
-  return basicFileAttributes.isRegularFile() && basicFileAttributes.lastModifiedTime().toMillis() > lastModified;
+boolean isNewFile(File file, long lastModified) throws IOException {
+  BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+  return fileAttributes.isRegularFile() && fileAttributes.lastModifiedTime().toMillis() > lastModified;
 }
 </code></pre>
 <!-- tooltip end -->
+<p>This inspection does not show warning if <code>IOException</code> is not handled in current context, but the quick-fix is still available.</p>
 <p>This inspection only reports if the language level of the project or module is 7 or higher.</p>
 <p><small>New in 2022.1</small></p>
 </body>

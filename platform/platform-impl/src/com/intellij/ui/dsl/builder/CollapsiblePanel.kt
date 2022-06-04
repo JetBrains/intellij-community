@@ -4,7 +4,7 @@ package com.intellij.ui.dsl.builder
 import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use CollapsibleRow instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 interface CollapsiblePanel : Panel {
 
   var expanded: Boolean

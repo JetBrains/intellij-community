@@ -16,7 +16,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.dsl.builder.impl.UtilsKt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
@@ -58,9 +57,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   private boolean myIsInSchemeChange;
   private final JLabel mySizeLabel = new JLabel(ApplicationBundle.message("editbox.font.size"));
-  private final JTextField myEditorFontSizeField = new IntegerField(null,
-                                                                    EditorFontsConstants.getMinEditorFontSize(),
-                                                                    EditorFontsConstants.getMaxEditorFontSize());
+  private final JTextField myEditorFontSizeField = new JBTextField(4);
 
   protected final static int ADDITIONAL_VERTICAL_GAP = 12;
   protected final static int BASE_INSET = 5;
@@ -101,7 +98,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
         if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN) return;
         boolean up = e.getKeyCode() == KeyEvent.VK_UP;
         try {
-          int value = Integer.parseInt(myEditorFontSizeField.getText());
+          float value = Float.parseFloat(myEditorFontSizeField.getText());
           value += (up ? 1 : -1);
           value = MathUtil.clamp(value, EditorFontsConstants.getMinEditorFontSize(), EditorFontsConstants.getMaxEditorFontSize());
           myEditorFontSizeField.setText(String.valueOf(value));
@@ -343,9 +340,9 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   protected void setDelegatingPreferences(boolean isDelegating) {
   }
 
-  private int getFontSizeFromField() {
+  private float getFontSizeFromField() {
     try {
-      return MathUtil.clamp(Integer.parseInt(myEditorFontSizeField.getText()), 
+      return MathUtil.clamp(Float.parseFloat(myEditorFontSizeField.getText()),
                             EditorFontsConstants.getMinEditorFontSize(), EditorFontsConstants.getMaxEditorFontSize());
     }
     catch (NumberFormatException e) {
@@ -390,7 +387,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       modifiableFontPreferences.setUseLigatures(myEnableLigaturesCheckbox.isSelected());
       String primaryFontFamily = myPrimaryCombo.getFontName();
       String secondaryFontFamily = mySecondaryCombo.isNoFontSelected() ? null : mySecondaryCombo.getFontName();
-      int fontSize = getFontSizeFromField();
+      float fontSize = getFontSizeFromField();
       if (primaryFontFamily != null) {
         if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
           modifiableFontPreferences.addFontFamily(primaryFontFamily);
@@ -417,7 +414,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myPrimaryCombo.setFontName(fontPreferences.getFontFamily());
     boolean isThereSecondaryFont = fontFamilies.size() > 1;
     mySecondaryCombo.setFontName(isThereSecondaryFont ? fontFamilies.get(1) : null);
-    myEditorFontSizeField.setText(String.valueOf(fontPreferences.getSize(fontPreferences.getFontFamily())));
+    myEditorFontSizeField.setText(String.valueOf(fontPreferences.getSize2D(fontPreferences.getFontFamily())));
 
     boolean isReadOnlyColorScheme = isReadOnly();
     updateCustomOptions();
@@ -453,6 +450,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   protected abstract FontPreferences getFontPreferences();
 
   protected abstract void setFontSize(int fontSize);
+
+  protected void setFontSize(float fontSize) {
+    setFontSize((int)(fontSize + 0.5));
+  }
 
   protected abstract float getLineSpacing();
 

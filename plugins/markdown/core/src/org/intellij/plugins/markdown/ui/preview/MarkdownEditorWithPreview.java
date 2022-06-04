@@ -48,19 +48,24 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     myAutoScrollPreview = settings.isAutoScrollEnabled();
 
     final var settingsChangedListener = new MarkdownSettings.ChangeListener() {
+      private boolean wasVerticalSplitBefore = settings.isVerticalSplit();
+
       @Override
-      public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {}
+      public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {
+        wasVerticalSplitBefore = settings.isVerticalSplit();
+      }
 
       @Override
       public void settingsChanged(@NotNull MarkdownSettings settings) {
         setAutoScrollPreview(settings.isAutoScrollEnabled());
-        handleLayoutChange(!settings.isVerticalSplit());
+        if (wasVerticalSplitBefore != settings.isVerticalSplit()) {
+          handleLayoutChange(!settings.isVerticalSplit());
+        }
       }
     };
     project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
     getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener());
   }
-
 
   public void addLayoutListener(SplitLayoutListener listener) {
     myLayoutListeners.add(listener);

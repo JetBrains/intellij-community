@@ -88,8 +88,8 @@ class MixedListFactory extends SEResultsListFactory {
           }
         }
 
-        if (ExperimentalUI.isNewUI()) {
-          component.setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : JBUI.CurrentTheme.Popup.BACKGROUND);
+        if (ExperimentalUI.isNewUI() && !isSelected && component.getBackground() == UIUtil.getListBackground()) {
+          component.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
         }
 
         AppUIUtil.targetToDevice(component, list);

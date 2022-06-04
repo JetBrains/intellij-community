@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Type
+from typing import Any, ClassVar
 
 from docutils import Component
 
@@ -13,4 +13,4 @@ class Parser(Component):
 
 _parser_aliases: dict[str, str]
 
-def get_parser_class(parser_name: str) -> Type[Parser]: ...
+def get_parser_class(parser_name: str) -> type[Parser]: ...

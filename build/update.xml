@@ -11,19 +11,12 @@
     <attribute name="distOutputRelativePath" default="dist"/>
 
     <sequential>
-      <java classname="org.apache.tools.ant.Main" dir="${project.home}" fork="true" failonerror="true">
-        <jvmarg line="-Xmx512m"/>
-        <jvmarg line="&quot;-Dintellij.build.output.root=@{deploy}&quot;"/>
-        <jvmarg line="&quot;-Dintellij.build.local.plugins.repository=${intellij.build.local.plugins.repository}&quot;"/>
-        <jvmarg line="&quot;-DdistOutputRelativePath=@{distOutputRelativePath}&quot;"/>
-        <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
-        <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>
-        <classpath>
-          <fileset dir="${project.home}/lib/ant/lib" includes="*.jar"/>
-        </classpath>
-        <arg value="-f"/>
-        <arg value="${project.home}/build/gant.xml"/>
-      </java>
+      <exec failonerror="true" executable="${basedir}/updateFromSources.cmd">
+        <arg value="-Dintellij.build.output.root=@{deploy}"/>
+        <arg value="-Dintellij.build.local.plugins.repository=${intellij.build.local.plugins.repository}"/>
+        <arg value="-DdistOutputRelativePath=@{distOutputRelativePath}"/>
+        <arg value="-DdevIdeaHome=${project.home}"/>
+      </exec>
     </sequential>
   </macrodef>
 

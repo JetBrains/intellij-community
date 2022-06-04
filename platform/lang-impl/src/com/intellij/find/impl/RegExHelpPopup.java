@@ -21,7 +21,6 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,8 +77,7 @@ public final class RegExHelpPopup extends JPanel {
   /**
    * @deprecated Use {@link #createRegExLink(String, Component)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static LinkLabel createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner, @SuppressWarnings("unused") @Nullable Logger logger) {
     return createRegExLink(title, owner, (String)null);
   }

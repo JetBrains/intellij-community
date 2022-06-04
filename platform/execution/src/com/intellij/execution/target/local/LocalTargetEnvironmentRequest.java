@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.local;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.LocalPtyOptions;
@@ -99,7 +100,7 @@ public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest 
 
   @NotNull
   @Override
-  public LocalTargetEnvironment prepareEnvironment(@NotNull TargetProgressIndicator progressIndicator) {
+  public LocalTargetEnvironment prepareEnvironment(@NotNull TargetProgressIndicator progressIndicator) throws ExecutionException {
     LocalTargetEnvironment environment = new LocalTargetEnvironment(this);
     environmentPrepared(environment, progressIndicator);
     return environment;

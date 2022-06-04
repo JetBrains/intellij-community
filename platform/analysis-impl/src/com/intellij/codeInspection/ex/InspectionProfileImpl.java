@@ -7,6 +7,7 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -53,6 +54,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private volatile String myToolShortName;
   private List<String> myScopesOrder = new ArrayList<>();
   private @NlsContexts.DetailedDescription String myDescription;
+  private Disposable myDisposable;
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
@@ -499,6 +501,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       myLockedProfile = isLocked;
     }
 
+    // initialize is invoked in synchronized block, so we can publish the new value of myDisposable here
+    myDisposable = project != null ? Disposer.newDisposable(project, "[" + getClass().getSimpleName() + "] " + myName) : null;
     myToolSupplier.addListener(new InspectionToolsSupplier.Listener() {
       @Override
       public void toolAdded(@NotNull InspectionToolWrapper inspectionTool) {
@@ -511,7 +515,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         removeTool(inspectionTool);
         getProfileManager().fireProfileChanged(InspectionProfileImpl.this);
       }
-    }, project);
+    }, myDisposable);
 
     copyToolsConfigurations(project);
 
@@ -585,12 +589,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public void removeTool(@NotNull InspectionToolWrapper<?, ?> inspectionTool) {
     String shortName = inspectionTool.getShortName();
-    removeTool(shortName);
-  }
-
-  public void removeTool(@NotNull String shortName) {
     myTools.remove(shortName);
-    HighlightDisplayKey.unregister(shortName);
   }
 
   private static @Nullable InspectionElementsMergerBase getMerger(@NotNull String shortName) {
@@ -633,14 +632,20 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return new InspectionProfileModifiableModel(this);
   }
 
-  public void cleanup(@NotNull Project project) {
+  public void cleanup(@Nullable Project project) {
     if (!wasInitialized()) {
       return;
     }
 
-    for (ToolsImpl toolList : myTools.values()) {
-      if (toolList.isEnabled()) {
-        toolList.cleanupTools(project);
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+    }
+
+    if (project != null) {
+      for (ToolsImpl toolList : myTools.values()) {
+        if (toolList.isEnabled()) {
+          toolList.cleanupTools(project);
+        }
       }
     }
   }

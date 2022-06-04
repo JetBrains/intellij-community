@@ -24,17 +24,16 @@ public interface RefactoringConflictsUtil {
   /**
    * Analyzes accessibility after members move to other place (for example class) and contributes to the conflicts map if needed.
    * Ensures that all references to members will be able to resolve after move.
-   *
-   * @param targetClass   class to which all members will be moved
-   * @param conflicts     map of conflicts to which this method will contribute
+   *  @param targetClass   class to which all members will be moved
    * @param newVisibility visibility of all members after move
    * @param membersToMove set of members to be moved
+   * @param conflicts     map of conflicts to which this method will contribute
    */
   @Contract(mutates = "param4")
   void analyzeAccessibilityConflictsAfterMemberMove(@NotNull PsiClass targetClass,
-                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                     @Nullable @PsiModifier.ModifierConstant String newVisibility,
-                                                    @NotNull Set<? extends PsiMember> membersToMove);
+                                                    @NotNull Set<? extends PsiMember> membersToMove,
+                                                    @NotNull MultiMap<PsiElement, String> conflicts);
 
   /**
    * Analyzes accessibility after members move to other place (for example class) and contributes to the conflicts map if needed.

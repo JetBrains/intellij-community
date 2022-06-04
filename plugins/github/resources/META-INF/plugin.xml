@@ -95,6 +95,8 @@
   <actions>
     <action id="Github.Share" class="org.jetbrains.plugins.github.GithubShareAction">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.ToolbarWidget.ShareProject" relative-to-action="Start.Use.Vcs" anchor="before"/>
+      <override-text place="Vcs.Toolbar.Widget"/>
     </action>
     <action id="Github.Sync.Fork" class="org.jetbrains.plugins.github.GithubSyncForkAction">
       <add-to-group group-id="Git.Menu"/>

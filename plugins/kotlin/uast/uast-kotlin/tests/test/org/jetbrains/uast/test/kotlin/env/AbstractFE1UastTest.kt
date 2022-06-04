@@ -2,14 +2,14 @@
 
 package org.jetbrains.uast.test.kotlin.env
 
+import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.test.kotlin.AbstractKotlinUastTest
-import java.io.File
 import java.nio.file.Paths
 
 abstract class AbstractFE1UastTest : AbstractKotlinUastTest() {
-    override var testDataDir = File("testData")
+    override var testDataDir = KotlinRoot.DIR_PATH.resolve("uast/uast-kotlin/tests/testData").toFile()
 
     fun doTest(filePath: String) {
         val normalizedFile = Paths.get(filePath).normalize().toFile()

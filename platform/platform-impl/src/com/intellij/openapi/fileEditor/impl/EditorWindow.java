@@ -45,7 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -483,7 +482,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #getSelectedComposite}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @Nullable EditorWithProviderComposite getSelectedEditor() {
     return (EditorWithProviderComposite)getSelectedComposite(false);
   }
@@ -496,7 +494,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #getSelectedComposite}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @Nullable EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
     return (EditorWithProviderComposite)getSelectedComposite(ignorePopup);
   }
@@ -519,7 +516,6 @@ public final class EditorWindow {
    * @deprecated {@link #getAllComposites()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public EditorWithProviderComposite @NotNull [] getEditors() {
     return ContainerUtil.filterIsInstance(getAllComposites(), EditorWithProviderComposite.class)
       .toArray(new EditorWithProviderComposite[0]);
@@ -533,7 +529,6 @@ public final class EditorWindow {
    * @deprecated {@link #setSelectedComposite(EditorComposite, boolean)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public void setSelectedEditor(@NotNull EditorComposite composite, boolean focusEditor) {
     setSelectedComposite(composite, focusEditor);
   }
@@ -552,7 +547,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #setComposite(EditorComposite, boolean)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public void setEditor(@NotNull EditorWithProviderComposite editor, boolean focusEditor) {
     setComposite(editor, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
@@ -561,7 +555,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #setComposite(EditorComposite, FileEditorOpenOptions)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public void setEditor(@NotNull EditorWithProviderComposite editor, @NotNull FileEditorOpenOptions options) {
     setComposite(editor, options);
   }
@@ -1224,7 +1217,6 @@ public final class EditorWindow {
    * @deprecated Use {@link #getComposite(VirtualFile)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public @Nullable EditorWithProviderComposite findFileComposite(@NotNull VirtualFile file) {
     return (EditorWithProviderComposite)getComposite(file);
   }

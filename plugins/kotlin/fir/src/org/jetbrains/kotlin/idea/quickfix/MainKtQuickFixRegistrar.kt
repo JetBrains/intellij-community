@@ -2,45 +2,45 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixRegistrar
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesList
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesListBuilder
-import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(KtFirDiagnostic.RedundantModifier::class, RemoveModifierFix.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.IncompatibleModifiers::class, RemoveModifierFix.removeNonRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.RepeatedModifier::class, RemoveModifierFix.removeNonRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.DeprecatedModifierPair::class, RemoveModifierFix.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.TypeParametersInEnum::class, RemoveModifierFix.removeRedundantModifier)
-        registerPsiQuickFixes(KtFirDiagnostic.RedundantOpenInInterface::class, RemoveModifierFix.removeRedundantOpenModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantModifier::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.IncompatibleModifiers::class, RemoveModifierFixBase.removeNonRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.RepeatedModifier::class, RemoveModifierFixBase.removeNonRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.DeprecatedModifierPair::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.TypeParametersInEnum::class, RemoveModifierFixBase.removeRedundantModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantOpenInInterface::class, RemoveModifierFixBase.removeRedundantOpenModifier)
         registerPsiQuickFixes(KtFirDiagnostic.NonAbstractFunctionWithNoBody::class, AddFunctionBodyFix, AddModifierFix.addAbstractModifier)
         registerPsiQuickFixes(
             KtFirDiagnostic.AbstractPropertyInNonAbstractClass::class,
             AddModifierFix.addAbstractToContainingClass,
-            RemoveModifierFix.removeAbstractModifier
+            RemoveModifierFixBase.removeAbstractModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.AbstractFunctionInNonAbstractClass::class,
             AddModifierFix.addAbstractToContainingClass,
-            RemoveModifierFix.removeAbstractModifier
+            RemoveModifierFixBase.removeAbstractModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.NonFinalMemberInFinalClass::class,
             AddModifierFix.addOpenToContainingClass,
-            RemoveModifierFix.removeOpenModifier
+            RemoveModifierFixBase.removeOpenModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.PrivateSetterForOpenProperty::class,
             AddModifierFix.addFinalToProperty,
-            RemoveModifierFix.removePrivateModifier
+            RemoveModifierFixBase.removePrivateModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.PrivateSetterForAbstractProperty::class,
-            RemoveModifierFix.removePrivateModifier
+            RemoveModifierFixBase.removePrivateModifier
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.NestedClassNotAllowed::class,
@@ -48,7 +48,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         )
         registerPsiQuickFixes(
             KtFirDiagnostic.WrongModifierTarget::class,
-            RemoveModifierFix.removeNonRedundantModifier,
+            RemoveModifierFixBase.removeNonRedundantModifier,
             ChangeVariableMutabilityFix.CONST_VAL_FACTORY
         )
         registerPsiQuickFixes(
@@ -62,6 +62,10 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerPsiQuickFixes(
             KtFirDiagnostic.VirtualMemberHidden::class,
             AddModifierFix.addOverrideModifier
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.AbstractPropertyInPrimaryConstructorParameters::class,
+            RemoveModifierFixBase.removeAbstractModifier
         )
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnLoopParameter::class, RemoveValVarFromParameterFix)
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnFunParameter::class, RemoveValVarFromParameterFix)
@@ -77,6 +81,12 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
         registerApplicator(AddLateInitFactory.addLateInitFactory)
         registerApplicators(AddAccessorsFactories.addAccessorsToUninitializedProperty)
+
+        registerPsiQuickFixes(KtFirDiagnostic.LocalVariableWithTypeParameters::class, RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
+        registerPsiQuickFixes(
+            KtFirDiagnostic.LocalVariableWithTypeParametersWarning::class,
+            RemovePsiElementSimpleFix.RemoveTypeParametersFactory
+        )
     }
 
     private val overrides = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -91,6 +101,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
 
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(ImportQuickFix.FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
     }
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -130,12 +141,18 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
 
         registerPsiQuickFixes(KtFirDiagnostic.NullableSupertype::class, RemoveNullableFix.removeForSuperType)
         registerPsiQuickFixes(KtFirDiagnostic.InapplicableLateinitModifier::class, RemoveNullableFix.removeForLateInitProperty)
+        registerPsiQuickFixes(
+            KtFirDiagnostic.TypeArgumentsRedundantInSuperQualifier::class,
+            RemovePsiElementSimpleFix.RemoveTypeArgumentsFactory
+        )
     }
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {
         // TODO: NON_EXHAUSTIVE_WHEN[_ON_SEALED_CLASS] will be replaced in future. We need to register the fix for those diagnostics as well
         registerPsiQuickFixes(KtFirDiagnostic.NoElseInWhen::class, AddWhenElseBranchFix)
         registerApplicator(AddWhenRemainingBranchFixFactories.noElseInWhen)
+        registerPsiQuickFixes(KtFirDiagnostic.CommaInWhenConditionWithoutArgument::class, CommaInWhenConditionWithoutArgumentFix)
+        registerPsiQuickFixes(KtFirDiagnostic.SenselessNullInWhen::class, RemoveWhenBranchFix)
     }
 
     private val typeMismatch = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -147,8 +164,45 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicator(AddToStringFixFactories.assignmentTypeMismatch)
         registerApplicator(AddToStringFixFactories.returnTypeMismatch)
         registerApplicator(AddToStringFixFactories.initializerTypeMismatch)
+
+        registerApplicator(CastExpressionFixFactories.smartcastImpossible)
+        registerApplicator(CastExpressionFixFactories.typeMismatch)
+        registerApplicator(CastExpressionFixFactories.throwableTypeMismatch)
+        registerApplicator(CastExpressionFixFactories.argumentTypeMismatch)
+        registerApplicator(CastExpressionFixFactories.assignmentTypeMismatch)
+        registerApplicator(CastExpressionFixFactories.returnTypeMismatch)
+        registerApplicator(CastExpressionFixFactories.initializerTypeMismatch)
     }
 
+    private val needExplicitType = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(SpecifyExplicitTypeFixFactories.ambiguousAnonymousTypeInferred)
+        registerApplicator(SpecifyExplicitTypeFixFactories.noExplicitReturnTypeInApiMode)
+        registerApplicator(SpecifyExplicitTypeFixFactories.noExplicitReturnTypeInApiModeWarning)
+    }
+
+    private val superKeyword = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(SpecifySuperTypeFixFactory.ambiguousSuper)
+    }
+    private val vararg = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(
+            KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationError::class,
+            ReplaceWithArrayCallInAnnotationFix
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormAnnotationWarning::class,
+            ReplaceWithArrayCallInAnnotationFix
+        )
+        registerApplicator(SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory.assigningSingleElementToVarargInNamedFormFunction)
+        registerApplicator(SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory.assigningSingleElementToVarargInNamedFormFunctionWarning)
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantSpreadOperatorInNamedFormInAnnotation::class, ReplaceWithArrayCallInAnnotationFix)
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantSpreadOperatorInNamedFormInFunction::class, RemoveRedundantSpreadOperatorFix)
+        registerPsiQuickFixes(KtFirDiagnostic.NonVarargSpread::class, RemovePsiElementSimpleFix.RemoveSpreadFactory)
+    }
+
+    private val visibility = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(ChangeVisibilityFixFactories.noExplicitVisibilityInApiMode)
+        registerApplicator(ChangeVisibilityFixFactories.noExplicitVisibilityInApiModeWarning)
+    }
 
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         keywords,
@@ -158,6 +212,10 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         mutability,
         expressions,
         whenStatements,
-        typeMismatch
+        typeMismatch,
+        needExplicitType,
+        superKeyword,
+        vararg,
+        visibility,
     )
 }

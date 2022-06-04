@@ -59,8 +59,20 @@ interface NotebookCellLines {
      * If document is changed, but intervals aren’t changed, both [oldIntervals] and [newIntervals] are empty,
      * and the [modificationStamp] stamp doesn’t change.
      *
-     * [eventAffectedIntervals] are current (not old) intervals, which text or markers were modified by events.
-     * If existing line is edited, [eventAffectedIntervals] contains one interval with the line, but [newIntervals] are empty.
+     * [oldAffectedIntervals] and [oldAffectedIntervals] are same as event.oldFragment and event.newFragment
+     * [oldAffectedIntervals] are intervals containing oldFragment and same with [newAffectedIntervals]
+     *
+     * If existing line is edited, [oldAffectedIntervals] and/or [newAffectedIntervals] contain interval with the line,
+     * but [oldIntervals] and  [newIntervals] are empty.
+     *
+     * Both [oldAffectedIntervals] and [newAffectedIntervals] are necessary to distinguish last cell line removing and whole cell removing.
+     * "#%%\n 1 \n\n#%%\n 2" -> "#%%\n 1 \n": [oldAffectedIntervals] contains second cell, [newAffectedIntervals] are empty
+     *            ^^^^^^^^^
+     * "#%%\n 1 \n text"     -> "#%%\n 1 \n": [oldAffectedIntervals] contain cell, [newAffectedIntervals] are empty
+     *            ^^^^^
+     * "#%%\n 1  text \n#%%\n 2" -> "#%% 1 \n#%%\n new": [oldAffectedIntervals] contain all cells,
+     *           ^^^^^^^^^^^^^^            ^^^^^^^^^^^
+     * [newAffectedIntervals] contain only second cell, because range of inserted text related to second cell only
      *
      * It is guaranteed that:
      * * Ordinals from every list defines an arithmetical progression where
@@ -70,7 +82,8 @@ interface NotebookCellLines {
      *
      * See `NotebookCellLinesTest` for examples of calls for various changes.
      */
-    fun segmentChanged(oldIntervals: List<Interval>, newIntervals: List<Interval>, eventAffectedIntervals: List<Interval>)
+    fun segmentChanged(oldIntervals: List<Interval>, oldAffectedIntervals: List<Interval>,
+                       newIntervals: List<Interval>, newAffectedIntervals: List<Interval>)
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>

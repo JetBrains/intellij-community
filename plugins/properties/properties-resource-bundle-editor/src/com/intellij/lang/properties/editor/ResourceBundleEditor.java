@@ -799,8 +799,9 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @Override
-  public Document @NotNull [] getDocuments() {
-    return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile));
+  public @NotNull Document @NotNull [] getDocuments() {
+    return ContainerUtil.mapNotNull(myEditors.keySet(), propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile))
+      .toArray(Document.EMPTY_ARRAY);
   }
 
   Map<VirtualFile, EditorEx> getTranslationEditors() {

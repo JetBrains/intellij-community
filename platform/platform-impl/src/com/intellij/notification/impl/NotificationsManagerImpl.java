@@ -639,7 +639,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     hoverAdapter.addSource(pane);
 
     if (actions) {
-      createActionPanel(notification, centerPanel, layoutData.fillColor, layoutData.configuration.actionGap, hoverAdapter);
+      createActionPanel(notification, centerPanel, layoutData.configuration.actionGap, hoverAdapter);
     }
 
     if (expandAction != null) {
@@ -753,7 +753,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   private static void createActionPanel(Notification notification,
                                         NotificationCenterPanel centerPanel,
-                                        Color background,
                                         int gap,
                                         HoverAdapter hoverAdapter) {
     NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseDirection());
@@ -763,7 +762,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     int actionsSize = actions.size();
 
     if (ActionCenter.isEnabled() && notification.isSuggestionType()) {
-      if (actionsSize == 1) {
+      if (actionsSize > 0) {
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());
         button.setOpaque(false);
@@ -773,15 +772,23 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
           Notification.fire(notification, action, DataManager.getInstance().getDataContext(button));
         });
-      }
-      else if (actionsSize > 1) {
-        Action[] buttonActions = new Action[actionsSize - 1];
-        for (int i = 0; i < buttonActions.length; i++) {
-          buttonActions[i] = createAction(notification, actions.get(i + 1));
+
+        actionPanel.checkActionWidth = actionsSize > 1;
+
+        if (actionsSize == 2) {
+          actionPanel.addAction(createAction(notification, actions.get(1)));
         }
-        NotificationOptionButton button = new NotificationOptionButton(createAction(notification, actions.get(0)), buttonActions);
-        button.setBackground(background);
-        actionPanel.addAction(button);
+        else if (actionsSize > 2) {
+          DefaultActionGroup group = new DefaultActionGroup();
+          for (int i = 1; i < actionsSize; i++) {
+            group.add(actions.get(i));
+          }
+
+          DropDownAction dropDownAction =
+            new DropDownAction(IdeBundle.message("notifications.action.more"), (link, ignored) -> showPopup(link, group));
+          actionPanel.addAction(dropDownAction);
+          Notification.setDataProvider(notification, dropDownAction);
+        }
       }
     }
     else {
@@ -790,15 +797,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
 
       for (AnAction action : actions) {
-        Presentation presentation = action.getTemplatePresentation();
-        @SuppressWarnings("DialogTitleCapitalization") String text =
-          presentation.getText();  // action templates are unfit for the context :/
-        actionPanel.addActionLink(
-          new LinkLabel<>(text, presentation.getIcon(), (link, _action) -> {
-            NotificationCollector.getInstance()
-              .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
-            Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
-          }, action));
+        actionPanel.addActionLink(createAction(notification, action));
       }
 
       if (actionsSize > 1 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
@@ -824,15 +823,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     hoverAdapter.addSource(actionPanel);
   }
 
-  private static @NotNull Action createAction(@NotNull Notification notification, @NotNull AnAction action) {
-    return new AbstractAction(action.getTemplateText()) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        NotificationCollector.getInstance()
-          .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.BALLOON);
-        Notification.fire(notification, action, DataManager.getInstance().getDataContext((Component)e.getSource()));
-      }
-    };
+  private static @NotNull LinkLabel<AnAction> createAction(@NotNull Notification notification, @NotNull AnAction action) {
+    Presentation presentation = action.getTemplatePresentation();
+    @SuppressWarnings("DialogTitleCapitalization") String text =
+      presentation.getText();  // action templates are unfit for the context :/
+    return new LinkLabel<>(text, presentation.getIcon(), (link, _action) -> {
+      NotificationCollector.getInstance()
+        .logNotificationActionInvoked(null, notification, _action, NotificationCollector.NotificationPlace.BALLOON);
+      Notification.fire(notification, _action, DataManager.getInstance().getDataContext(link));
+    }, action);
   }
 
   private static void addDropDownAction(Notification notification, NotificationActionPanel actionPanel) {
@@ -1199,6 +1198,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     private final List<LinkLabel<AnAction>> actionLinks = new ArrayList<>();
     private final Notification.CollapseActionsDirection collapseActionsDirection;
     private DropDownAction groupedActionsLink;
+    boolean checkActionWidth;
 
     private NotificationActionPanel(int gap, Notification.CollapseActionsDirection direction) {
       super(new HorizontalLayout(gap, SwingConstants.CENTER));
@@ -1339,6 +1339,28 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         int expandWidth = myExpandAction == null || myLayoutData.showMinSize ? 0 : myExpandAction.getPreferredSize().width;
         width -= myLayoutData.configuration.actionGap + expandWidth;
 
+        if (myActionPanel.checkActionWidth && myActionPanel.getPreferredSize().width - width > 0 && width > 0) {
+          Component component0 = myActionPanel.getComponent(0);
+          Component component1 = myActionPanel.getComponent(1);
+          Dimension size0 = component0.getPreferredSize();
+          Dimension size1 = component1.getPreferredSize();
+          int halfWidth = width / 2;
+
+          if (size0.width > halfWidth && size1.width > halfWidth) {
+            cutWidth(component0, size0, halfWidth);
+            cutWidth(component1, size1, halfWidth);
+          }
+          else if (size0.width > halfWidth) {
+            cutWidth(component0, size0, size0.width - myActionPanel.getPreferredSize().width + width);
+          }
+          else {
+            cutWidth(component1, size1, size1.width - myActionPanel.getPreferredSize().width + width);
+          }
+
+          myActionPanel.checkActionWidth = false;
+          myActionPanel.doLayout();
+        }
+
         if (myActionPanel.actionLinks.size() > 1) {
           myActionPanel.groupedActionsLink.setVisible(false);
           for (LinkLabel<AnAction> link : myActionPanel.actionLinks) {
@@ -1370,6 +1392,19 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         Dimension size = myActionPanel.getPreferredSize();
         int y = parent.getHeight() - size.height - myLayoutData.configuration.bottomSpaceHeight;
         myActionPanel.setBounds(0, y, width, size.height);
+      }
+    }
+
+    private static void cutWidth(@NotNull Component component, @NotNull Dimension size, int width) {
+      size.width = width;
+      component.setPreferredSize(size);
+      if (component instanceof JButton) {
+        JButton button = (JButton)component;
+        button.setToolTipText(button.getText());
+      }
+      else if (component instanceof JLabel) {
+        JLabel label = (JLabel)component;
+        label.setToolTipText(label.getText());
       }
     }
   }

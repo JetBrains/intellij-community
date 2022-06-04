@@ -210,5 +210,9 @@
     <extensionPoint name="vcs.envCustomizer"
                     interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

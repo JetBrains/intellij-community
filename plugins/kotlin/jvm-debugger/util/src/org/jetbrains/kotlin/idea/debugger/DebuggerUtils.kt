@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import java.nio.file.Path
 import java.util.*
 
 object DebuggerUtils {
@@ -97,7 +98,13 @@ object DebuggerUtils {
         return extension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
     }
 
-    fun String.getMethodNameWithoutMangling() =
+    fun String.trimIfMangledInBytecode(isMangledInBytecode: Boolean): String =
+        if (isMangledInBytecode)
+            getMethodNameWithoutMangling()
+        else
+            this
+
+    private fun String.getMethodNameWithoutMangling() =
         substringBefore('-')
 
     fun isKotlinFakeLineNumber(location: Location): Boolean {
@@ -111,8 +118,8 @@ object DebuggerUtils {
         // numbers. They cause us to step to line 1 of the current file.
         try {
             if (location.lineNumber("Kotlin") == 1 &&
-                location.sourcePath("Kotlin") == "kotlin/jvm/internal/FakeKt" &&
-                location.sourceName("Kotlin") == "fake.kt"
+                location.sourceName("Kotlin") == "fake.kt" &&
+                Path.of(location.sourcePath("Kotlin")) == Path.of("kotlin/jvm/internal/FakeKt")
             ) {
                 return true
             }

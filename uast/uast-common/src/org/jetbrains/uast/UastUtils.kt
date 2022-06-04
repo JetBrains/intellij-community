@@ -170,7 +170,7 @@ fun skipParenthesizedExprUp(elem: UElement?): UElement? {
 fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
 
 @Deprecated("use UastFacade", ReplaceWith("UastFacade"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 @Suppress("Deprecation")
 tailrec fun UElement.getUastContext(): UastContext {
   val psi = this.sourcePsi

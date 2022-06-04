@@ -3,6 +3,9 @@ package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.TaskCancellation
+import com.intellij.openapi.progress.impl.CancellableTaskCancellation
+import com.intellij.openapi.progress.impl.NonCancellableTaskCancellation
 import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
@@ -22,6 +25,8 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.io.File
 import javax.swing.*
 
@@ -97,6 +102,31 @@ internal class ProgressDialogUI : Disposable {
     UIUtil.dispose(myTitlePanel)
     UIUtil.dispose(backgroundButton)
     UIUtil.dispose(cancelButton)
+  }
+
+  fun initCancellation(cancellation: TaskCancellation, cancelAction: () -> Unit) {
+    when (cancellation) {
+      is NonCancellableTaskCancellation -> {
+        cancelButton.isVisible = false
+      }
+      is CancellableTaskCancellation -> {
+        cancellation.buttonText?.let {
+          cancelButton.text = it
+        }
+        cancellation.tooltipText?.let {
+          cancelButton.toolTipText = it
+        }
+        val buttonListener = ActionListener {
+          cancelAction()
+        }
+        cancelButton.addActionListener(buttonListener)
+        cancelButton.registerKeyboardAction(
+          buttonListener,
+          KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+          JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+        )
+      }
+    }
   }
 
   fun updateTitle(title: @ProgressTitle String?) {

@@ -107,7 +107,7 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
     for ((regex, reason) in DENIED_TAGS) {
       if (regex.find(text, 0) != null) {
-        throw UiDslException("Invalid html: $reason, text: $text")
+        UiDslException.error("Invalid html: $reason, text: $text")
       }
     }
 

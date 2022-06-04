@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -47,6 +48,13 @@ public final class FileTypeIndex {
   }
 
   public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().processValues(NAME, fileType, null, (file, value) -> processor.process(file), scope);
+    @NotNull Iterator<VirtualFile> files = FileBasedIndex.getInstance().getContainingFilesIterator(NAME, fileType, scope);
+    while (files.hasNext()) {
+      VirtualFile file = files.next();
+      if (!processor.process(file)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

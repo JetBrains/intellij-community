@@ -62,64 +62,58 @@ public class JUnit5TestRunnerUtil {
 
     if (suiteClassNames.length == 1 && suiteClassNames[0].charAt(0) == '@') {
       // all tests in the package specified
-      try {
-        BufferedReader reader = new BufferedReader(new FileReader(suiteClassNames[0].substring(1)));
-        try {
-          final String packageName = reader.readLine();
-          if (packageName == null) return null;
+      try (BufferedReader reader = new BufferedReader(new FileReader(suiteClassNames[0].substring(1)))) {
+        final String packageName = reader.readLine();
+        if (packageName == null) return null;
 
-          String tags = reader.readLine();
-          String filters = reader.readLine();
-          String line;
+        String tags = reader.readLine();
+        String filters = reader.readLine();
+        String line;
 
-          List<DiscoverySelector> selectors = new ArrayList<>();
-          while ((line = reader.readLine()) != null) {
-            DiscoverySelector selector = createSelector(line, null);
-            if (selector != null) {
-              selectors.add(selector);
+        List<DiscoverySelector> selectors = new ArrayList<>();
+        while ((line = reader.readLine()) != null) {
+          DiscoverySelector selector = createSelector(line, null);
+          if (selector != null) {
+            selectors.add(selector);
+          }
+        }
+        if (hasBrokenSelector(selectors)) {
+          builder.filters(createMethodFilter(new ArrayList<>(selectors)));
+          for (int i = 0; i < selectors.size(); i++) {
+            DiscoverySelector selector = selectors.get(i);
+            if (selector instanceof MethodSelector) {
+              selectors.set(i, createClassSelector(((MethodSelector)selector).getClassName()));
             }
           }
-          if (hasBrokenSelector(selectors)) {
-            builder.filters(createMethodFilter(new ArrayList<>(selectors)));
-            for (int i = 0; i < selectors.size(); i++) {
-              DiscoverySelector selector = selectors.get(i);
-              if (selector instanceof MethodSelector) {
-                selectors.set(i, createClassSelector(((MethodSelector)selector).getClassName()));
+        }
+        packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
+        if (selectors.isEmpty()) {
+          builder.selectors(DiscoverySelectors.selectPackage(packageName));
+        }
+        else {
+          builder.selectors(selectors);
+          if (!packageName.isEmpty()) {
+            builder.filters(PackageNameFilter.includePackageNames(packageName));
+          }
+        }
+        if (filters != null && !filters.isEmpty()) {
+          String[] classNames = filters.split("\\|\\|");
+          for (String className : classNames) {
+            if (!className.contains("*")) {
+              try {
+                Class.forName(className, false, JUnit5TestRunnerUtil.class.getClassLoader());
+              }
+              catch (ClassNotFoundException e) {
+                System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), className));
               }
             }
           }
-          packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
-          if (selectors.isEmpty()) {
-            builder.selectors(DiscoverySelectors.selectPackage(packageName));
-          }
-          else {
-            builder.selectors(selectors);
-            if (!packageName.isEmpty()) {
-              builder.filters(PackageNameFilter.includePackageNames(packageName));
-            }
-          }
-          if (filters != null && !filters.isEmpty()) {
-            String[] classNames = filters.split("\\|\\|");
-            for (String className : classNames) {
-              if (!className.contains("*")) {
-                try {
-                  Class.forName(className, false, JUnit5TestRunnerUtil.class.getClassLoader());
-                }
-                catch (ClassNotFoundException e) {
-                  System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), className));
-                }
-              }
-            }
-            builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
-          }
-          if (tags != null && !tags.isEmpty()) {
-            builder.filters(TagFilter.includeTags(tags.split(" ")));
-          }
-          return builder.filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*", "com\\.intellij\\.junit3.*")).build();
+          builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
         }
-        finally {
-          reader.close();
+        if (tags != null && !tags.isEmpty()) {
+          builder.filters(TagFilter.includeTags(tags.split(" ")));
         }
+        return builder.filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*", "com\\.intellij\\.junit3.*")).build();
       }
       catch (IOException e) {
         e.printStackTrace();

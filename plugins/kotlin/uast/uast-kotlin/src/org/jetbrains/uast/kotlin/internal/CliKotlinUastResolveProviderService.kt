@@ -22,17 +22,19 @@ import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 
 class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
+
     val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
         get() = getExtensions(AnalysisHandlerExtension.extensionPointName)
                 .filterIsInstance<UastAnalysisHandlerExtension>()
                 .firstOrNull()
 
-    override fun getBindingContext(element: KtElement): BindingContext {
-        return element.project.analysisCompletedHandler?.getBindingContext() ?: BindingContext.EMPTY
+    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
+        @Suppress("DEPRECATION")
+        return element.project.analysisCompletedHandler?.getTypeMapper()
     }
 
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
-        return element.project.analysisCompletedHandler?.getTypeMapper()
+    override fun getBindingContext(element: KtElement): BindingContext {
+        return element.project.analysisCompletedHandler?.getBindingContext() ?: BindingContext.EMPTY
     }
 
     override fun isJvmElement(psiElement: PsiElement) = true
@@ -54,6 +56,7 @@ class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
 
     fun getLanguageVersionSettings() = languageVersionSettings
 
+    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     fun getTypeMapper(): KotlinTypeMapper? {
         if (typeMapper != null) return typeMapper
         val bindingContext = context ?: return null

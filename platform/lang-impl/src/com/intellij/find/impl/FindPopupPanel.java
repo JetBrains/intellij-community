@@ -15,10 +15,12 @@ import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -60,6 +62,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
 import com.intellij.ui.dsl.builder.SpacingConfiguration;
+import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.popup.PopupState;
@@ -626,7 +629,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     Pair<FindPopupScopeUI.ScopeType, JComponent>[] scopeComponents = myScopeUI.getComponents();
 
     myScopeDetailsPanel = new JPanel(new CardLayout());
-    myScopeDetailsPanel.setBorder(JBUI.Borders.emptyBottom(UIUtil.isUnderDefaultMacTheme() ? 0 : 3));
 
     List<AnAction> scopeActions = new ArrayList<>(scopeComponents.length);
     for (Pair<FindPopupScopeUI.ScopeType, JComponent> scopeComponent : scopeComponents) {
@@ -634,7 +636,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       scopeActions.add(new MySelectScopeToggleAction(scopeType));
       myScopeDetailsPanel.add(scopeType.name, scopeComponent.second);
     }
-    myScopeSelectionToolbar = createToolbar(scopeActions.toArray(AnAction.EMPTY_ARRAY));
+    myScopeSelectionToolbar = createScopeToolbar(scopeActions.toArray(AnAction.EMPTY_ARRAY));
     myScopeSelectionToolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     mySelectedScope = scopeComponents[0].first;
 
@@ -796,9 +798,11 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     previewPanel.add(myUsagePreviewTitle, BorderLayout.NORTH);
     previewPanel.add(myCodePreviewComponent, BorderLayout.CENTER);
     myPreviewSplitter.setSecondComponent(previewPanel);
-    JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
-    scopesPanel.add(myScopeSelectionToolbar.getComponent());
-    scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
+    JPanel scopesPanel = new JPanel();
+    new RowBuilder(scopesPanel)
+      .gap(26)
+      .add(myScopeSelectionToolbar.getComponent())
+      .addResizable(myScopeDetailsPanel);
     setLayout(new MigLayout("flowx, ins 0, gap 0, fillx, hidemode 3"));
 
     myIsPinned.set(UISettings.getInstance().getPinFindInPath());
@@ -822,11 +826,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       scopesPanel.setOpaque(false);
       myScopeSelectionToolbar.getComponent().setOpaque(false);
       myScopeDetailsPanel.setOpaque(false);
-      for (Component component : UIUtil.uiTraverser(myScopeDetailsPanel).traverse()) {
-        if (component instanceof JComponent) {
-          ((JComponent)component).setOpaque(false);
-        }
-      }
+      UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
       myUsagePreviewTitle.setBorder(JBUI.Borders.empty(12, 8, 5, 0));
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
@@ -1642,6 +1642,42 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     toolbar.setForceMinimumSize(true);
     toolbar.setTargetComponent(toolbar);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setBorder(JBUI.Borders.empty(3));
+    return toolbar;
+  }
+
+  @NotNull
+  private static ActionToolbarImpl createScopeToolbar(AnAction @NotNull ... actions) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true) {
+      @Override
+      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
+                                                          ActionButtonLook look,
+                                                          @NotNull String place,
+                                                          @NotNull Presentation presentation,
+                                                          @NotNull Dimension minimumSize) {
+        if (!ExperimentalUI.isNewUI()) {
+          return super.createToolbarButton(action, look, place, presentation, minimumSize);
+        }
+
+        ActionButtonWithText result = new ActionButtonWithText(action, presentation, place, minimumSize){
+          @Override
+          protected Insets getMargins() {
+            return new JBInsets(4, 6, 4, 6);
+          }
+        };
+
+        result.setLook(look);
+        result.setBorder(JBUI.Borders.emptyRight(4));
+        result.setFont(JBFont.medium());
+
+        return result;
+      }
+    };
+
+    toolbar.setForceMinimumSize(true);
+    toolbar.setTargetComponent(toolbar);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+
     return toolbar;
   }
 

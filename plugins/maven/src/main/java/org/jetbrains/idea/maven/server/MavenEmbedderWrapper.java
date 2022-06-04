@@ -52,6 +52,18 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     });
   }
 
+  public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator, boolean forceUpdateSnapshots) {
+    boolean alwaysUpdateSnapshots =
+      forceUpdateSnapshots
+      ? forceUpdateSnapshots
+      : MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().isAlwaysUpdateSnapshots();
+    setCustomization(console, indicator, null, false, alwaysUpdateSnapshots, null);
+    perform(() -> {
+      doCustomize();
+      return null;
+    });
+  }
+
   public void customizeForResolve(MavenWorkspaceMap workspaceMap,
                                   MavenConsole console,
                                   MavenProgressIndicator indicator,
@@ -156,7 +168,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
 
   @Override
   protected synchronized void cleanup() {
-    myProgressPullingFuture.cancel(true);
+    if (myProgressPullingFuture != null) myProgressPullingFuture.cancel(true);
     int count = myFails.get();
     if (count != 0) {
        MavenLog.LOG.warn("Maven embedder download listener was failed: " + count + " times");

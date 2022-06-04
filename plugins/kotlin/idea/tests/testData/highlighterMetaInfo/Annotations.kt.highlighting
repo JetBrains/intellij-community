@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Target<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>CLASS<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>EXPRESSION<!>)
 <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Retention<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationRetention<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>SOURCE<!>)
 <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Ann<!>

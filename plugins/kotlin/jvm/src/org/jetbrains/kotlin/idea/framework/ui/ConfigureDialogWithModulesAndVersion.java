@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinJvmBundle;
 import org.jetbrains.kotlin.idea.KotlinPluginUtil;
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtilsKt;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
 import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription;
@@ -41,6 +42,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt.getLastStableKnownCompilerVersionShort;
 
 public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
     private static final String VERSIONS_LIST_URL =
@@ -157,7 +160,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         public static Collection<String> loadVersions(String minimumVersion) throws Exception {
         List<String> versions = new ArrayList<>();
 
-        String kotlinCompilerVersionShort = KotlinRuntimeLibraryUtilKt.kotlinCompilerVersionShort();
+        String kotlinCompilerVersionShort = getLastStableKnownCompilerVersionShort(KotlinPluginLayout.getInstance());
         RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(kotlinCompilerVersionShort);
         if (repositoryDescription != null && repositoryDescription.getBintrayUrl() != null) {
             HttpURLConnection eapConnection = HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.getBintrayUrl() + kotlinCompilerVersionShort);

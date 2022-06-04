@@ -183,6 +183,11 @@ public class FontOptions extends AbstractFontOptionsPanel {
 
   @Override
   protected void setFontSize(int fontSize) {
+    setFontSize((float)fontSize);
+  }
+
+  @Override
+  protected void setFontSize(float fontSize) {
     getCurrentScheme().setEditorFontSize(fontSize);
   }
 

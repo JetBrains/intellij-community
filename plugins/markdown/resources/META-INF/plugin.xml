@@ -160,6 +160,7 @@ Includes the following features:</p>
 
     <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager"
                         serviceImplementation="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager$Impl"/>
+    <search.optionContributor implementation="org.intellij.plugins.markdown.extensions.ExtensionSearchableOptionContributor"/>
 
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="org.intellij.plugins.markdown.ui.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
@@ -268,7 +269,7 @@ Includes the following features:</p>
                  defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2021.12-3.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
     <registryKey key="markdown.mermaid.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-8.13.6-4.js"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/mermaid/mermaid-8.14.0-5.js"
                  description="Link which Markdown plugin will use to download Mermaid.js library"/>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"

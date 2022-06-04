@@ -299,6 +299,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
+      buildContext.notifyArtifactBuilt(buildContext.paths.artifactDir.resolve(snapArtifact))
     }
   }
 

@@ -1,0 +1,11 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.fir.analysis.project.structure.ProjectStructureProviderIdeImpl"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProvider"
+                    serviceImplementation="org.jetbrains.kotlin.idea.fir.analysis.project.structure.KtModuleScopeProviderIdeImpl"/>
+
+  </extensions>
+</idea-plugin>

@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +29,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask<?>> {
   /**
    * @deprecated Use {@link #EP_NAME}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask<?>>> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.stepsBeforeRunProvider");
 

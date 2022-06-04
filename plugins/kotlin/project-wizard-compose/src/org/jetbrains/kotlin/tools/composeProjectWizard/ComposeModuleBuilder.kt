@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.tools.composeProjectWizard
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.local.gradle.GradleResourcesProvider
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
@@ -35,9 +35,9 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
     override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
     override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_11.toJavaVersion()
 
-    override fun isAvailable(): Boolean {
-        return Registry.`is`("compose.wizard.enabled", false)
-    }
+    //override fun isAvailable(): Boolean {
+    //    return Registry.`is`("compose.wizard.enabled", false)
+    //}
 
     override fun getStarterPack(): StarterPack {
         return StarterPack("compose", listOf(
@@ -70,6 +70,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
 
     override fun getAssets(starter: Starter): List<GeneratorAsset> {
         val ftManager = FileTemplateManager.getInstance(ProjectManager.getInstance().defaultProject)
+        val standardAssetsProvider = StandardAssetsProvider()
 
         val configType = starterContext.getUserData(COMPOSE_CONFIG_TYPE_KEY)
         val platform = starterContext.getUserData(COMPOSE_PLATFORM_KEY)
@@ -79,7 +80,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
 
         assets.add(
             GeneratorTemplateFile(
-                "gradle/wrapper/gradle-wrapper.properties",
+                standardAssetsProvider.gradleWrapperPropertiesLocation,
                 ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_GRADLE_WRAPPER_PROPERTIES)
             )
         )
@@ -95,9 +96,9 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
                 ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_SETTINGS_GRADLE)
             )
         )
-        assets.addAll(GradleResourcesProvider().getGradlewResources())
 
-
+        assets.addAll(standardAssetsProvider.getGradlewAssets())
+        assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
 
         if (configType == ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM) {
             if (platform == ComposePWInitialStep.ComposePlatform.DESKTOP) {

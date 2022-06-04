@@ -23,8 +23,12 @@ from types import (
 if sys.version_info >= (3, 7):
     from types import ClassMethodDescriptorType, WrapperDescriptorType, MemberDescriptorType, MethodDescriptorType
 
-from typing import Any, ClassVar, NamedTuple, Protocol, Tuple, Type, TypeVar, Union
-from typing_extensions import Literal, TypeGuard
+from typing import Any, ClassVar, Coroutine, NamedTuple, Protocol, TypeVar, Union
+from typing_extensions import Literal, ParamSpec, TypeGuard
+
+_P = ParamSpec("_P")
+_T_cont = TypeVar("_T_cont", contravariant=True)
+_V_cont = TypeVar("_V_cont", contravariant=True)
 
 #
 # Types and members
@@ -41,24 +45,24 @@ class BlockFinder:
     last: int
     def tokeneater(self, type: int, token: str, srowcol: tuple[int, int], erowcol: tuple[int, int], line: str) -> None: ...
 
-CO_OPTIMIZED: int
-CO_NEWLOCALS: int
-CO_VARARGS: int
-CO_VARKEYWORDS: int
-CO_NESTED: int
-CO_GENERATOR: int
-CO_NOFREE: int
-CO_COROUTINE: int
-CO_ITERABLE_COROUTINE: int
-CO_ASYNC_GENERATOR: int
-TPFLAGS_IS_ABSTRACT: int
+CO_OPTIMIZED: Literal[1]
+CO_NEWLOCALS: Literal[2]
+CO_VARARGS: Literal[4]
+CO_VARKEYWORDS: Literal[8]
+CO_NESTED: Literal[16]
+CO_GENERATOR: Literal[32]
+CO_NOFREE: Literal[64]
+CO_COROUTINE: Literal[128]
+CO_ITERABLE_COROUTINE: Literal[256]
+CO_ASYNC_GENERATOR: Literal[512]
+TPFLAGS_IS_ABSTRACT: Literal[1048576]
 
 modulesbyfile: dict[str, Any]
 
 def getmembers(object: object, predicate: Callable[[Any], bool] | None = ...) -> list[tuple[str, Any]]: ...
 def getmodulename(path: str) -> str | None: ...
 def ismodule(object: object) -> TypeGuard[ModuleType]: ...
-def isclass(object: object) -> TypeGuard[Type[Any]]: ...
+def isclass(object: object) -> TypeGuard[type[Any]]: ...
 def ismethod(object: object) -> TypeGuard[MethodType]: ...
 def isfunction(object: object) -> TypeGuard[FunctionType]: ...
 
@@ -79,9 +83,6 @@ if sys.version_info >= (3, 8):
 
 else:
     def isasyncgenfunction(object: object) -> bool: ...
-
-_T_cont = TypeVar("_T_cont", contravariant=True)
-_V_cont = TypeVar("_V_cont", contravariant=True)
 
 class _SupportsSet(Protocol[_T_cont, _V_cont]):
     def __set__(self, __instance: _T_cont, __value: _V_cont) -> None: ...
@@ -125,7 +126,7 @@ def isdatadescriptor(object: object) -> TypeGuard[_SupportsSet[Any, Any] | _Supp
 #
 # Retrieving source code
 #
-_SourceObjectType = Union[ModuleType, Type[Any], MethodType, FunctionType, TracebackType, FrameType, CodeType, Callable[..., Any]]
+_SourceObjectType = Union[ModuleType, type[Any], MethodType, FunctionType, TracebackType, FrameType, CodeType, Callable[..., Any]]
 
 def findsource(object: _SourceObjectType) -> tuple[list[str], int]: ...
 def getabsfile(object: _SourceObjectType, _filename: str | None = ...) -> str: ...
@@ -166,32 +167,31 @@ class Signature:
     empty = _empty
     @property
     def parameters(self) -> types.MappingProxyType[str, Parameter]: ...
-    # TODO: can we be more specific here?
     @property
     def return_annotation(self) -> Any: ...
     def bind(self, *args: Any, **kwargs: Any) -> BoundArguments: ...
     def bind_partial(self, *args: Any, **kwargs: Any) -> BoundArguments: ...
     def replace(
-        self: Self, *, parameters: Sequence[Parameter] | Type[_void] | None = ..., return_annotation: Any = ...
+        self: Self, *, parameters: Sequence[Parameter] | type[_void] | None = ..., return_annotation: Any = ...
     ) -> Self: ...
     if sys.version_info >= (3, 10):
         @classmethod
         def from_callable(
-            cls,
+            cls: type[Self],
             obj: Callable[..., Any],
             *,
             follow_wrapped: bool = ...,
             globals: Mapping[str, Any] | None = ...,
             locals: Mapping[str, Any] | None = ...,
             eval_str: bool = ...,
-        ) -> Signature: ...
+        ) -> Self: ...
     else:
         @classmethod
-        def from_callable(cls, obj: Callable[..., Any], *, follow_wrapped: bool = ...) -> Signature: ...
+        def from_callable(cls: type[Self], obj: Callable[..., Any], *, follow_wrapped: bool = ...) -> Self: ...
 
 if sys.version_info >= (3, 10):
     def get_annotations(
-        obj: Callable[..., Any] | Type[Any] | ModuleType,
+        obj: Callable[..., Any] | type[Any] | ModuleType,
         *,
         globals: Mapping[str, Any] | None = ...,
         locals: Mapping[str, Any] | None = ...,
@@ -213,28 +213,32 @@ class _ParameterKind(enum.IntEnum):
 class Parameter:
     def __init__(self, name: str, kind: _ParameterKind, *, default: Any = ..., annotation: Any = ...) -> None: ...
     empty = _empty
-    name: str
-    default: Any
-    annotation: Any
 
-    kind: _ParameterKind
     POSITIONAL_ONLY: ClassVar[Literal[_ParameterKind.POSITIONAL_ONLY]]
     POSITIONAL_OR_KEYWORD: ClassVar[Literal[_ParameterKind.POSITIONAL_OR_KEYWORD]]
     VAR_POSITIONAL: ClassVar[Literal[_ParameterKind.VAR_POSITIONAL]]
     KEYWORD_ONLY: ClassVar[Literal[_ParameterKind.KEYWORD_ONLY]]
     VAR_KEYWORD: ClassVar[Literal[_ParameterKind.VAR_KEYWORD]]
+    @property
+    def name(self) -> str: ...
+    @property
+    def default(self) -> Any: ...
+    @property
+    def kind(self) -> _ParameterKind: ...
+    @property
+    def annotation(self) -> Any: ...
     def replace(
         self: Self,
         *,
-        name: str | Type[_void] = ...,
-        kind: _ParameterKind | Type[_void] = ...,
+        name: str | type[_void] = ...,
+        kind: _ParameterKind | type[_void] = ...,
         default: Any = ...,
         annotation: Any = ...,
     ) -> Self: ...
 
 class BoundArguments:
     arguments: OrderedDict[str, Any]
-    args: Tuple[Any, ...]
+    args: tuple[Any, ...]
     kwargs: dict[str, Any]
     signature: Signature
     def __init__(self, signature: Signature, arguments: OrderedDict[str, Any]) -> None: ...
@@ -248,7 +252,7 @@ class BoundArguments:
 # seem to be supporting this at the moment:
 # _ClassTreeItem = list[_ClassTreeItem] | Tuple[type, Tuple[type, ...]]
 def getclasstree(classes: list[type], unique: bool = ...) -> list[Any]: ...
-def walktree(classes: list[type], children: dict[Type[Any], list[type]], parent: Type[Any] | None) -> list[Any]: ...
+def walktree(classes: list[type], children: dict[type[Any], list[type]], parent: type[Any] | None) -> list[Any]: ...
 
 class Arguments(NamedTuple):
     args: list[str]
@@ -262,14 +266,14 @@ if sys.version_info < (3, 11):
         args: list[str]
         varargs: str | None
         keywords: str | None
-        defaults: Tuple[Any, ...]
+        defaults: tuple[Any, ...]
     def getargspec(func: object) -> ArgSpec: ...
 
 class FullArgSpec(NamedTuple):
     args: list[str]
     varargs: str | None
     varkw: str | None
-    defaults: Tuple[Any, ...] | None
+    defaults: tuple[Any, ...] | None
     kwonlyargs: list[str]
     kwonlydefaults: dict[str, Any] | None
     annotations: dict[str, Any]
@@ -291,7 +295,7 @@ if sys.version_info < (3, 11):
         args: list[str],
         varargs: str | None = ...,
         varkw: str | None = ...,
-        defaults: Tuple[Any, ...] | None = ...,
+        defaults: tuple[Any, ...] | None = ...,
         kwonlyargs: Sequence[str] | None = ...,
         kwonlydefaults: dict[str, Any] | None = ...,
         annotations: dict[str, Any] = ...,
@@ -313,8 +317,8 @@ def formatargvalues(
     formatvarkw: Callable[[str], str] | None = ...,
     formatvalue: Callable[[Any], str] | None = ...,
 ) -> str: ...
-def getmro(cls: type) -> Tuple[type, ...]: ...
-def getcallargs(__func: Callable[..., Any], *args: Any, **kwds: Any) -> dict[str, Any]: ...
+def getmro(cls: type) -> tuple[type, ...]: ...
+def getcallargs(__func: Callable[_P, Any], *args: _P.args, **kwds: _P.kwargs) -> dict[str, Any]: ...
 
 class ClosureVars(NamedTuple):
     nonlocals: Mapping[str, Any]
@@ -362,26 +366,25 @@ def getattr_static(obj: object, attr: str, default: Any | None = ...) -> Any: ..
 # Current State of Generators and Coroutines
 #
 
-# TODO In the next two blocks of code, can we be more specific regarding the
-# type of the "enums"?
+GEN_CREATED: Literal["GEN_CREATED"]
+GEN_RUNNING: Literal["GEN_RUNNING"]
+GEN_SUSPENDED: Literal["GEN_SUSPENDED"]
+GEN_CLOSED: Literal["GEN_CLOSED"]
 
-GEN_CREATED: str
-GEN_RUNNING: str
-GEN_SUSPENDED: str
-GEN_CLOSED: str
+def getgeneratorstate(
+    generator: Generator[Any, Any, Any]
+) -> Literal["GEN_CREATED", "GEN_RUNNING", "GEN_SUSPENDED", "GEN_CLOSED"]: ...
 
-def getgeneratorstate(generator: Generator[Any, Any, Any]) -> str: ...
+CORO_CREATED: Literal["CORO_CREATED"]
+CORO_RUNNING: Literal["CORO_RUNNING"]
+CORO_SUSPENDED: Literal["CORO_SUSPENDED"]
+CORO_CLOSED: Literal["CORO_CLOSED"]
 
-CORO_CREATED: str
-CORO_RUNNING: str
-CORO_SUSPENDED: str
-CORO_CLOSED: str
-# TODO can we be more specific than "object"?
-def getcoroutinestate(coroutine: object) -> str: ...
+def getcoroutinestate(
+    coroutine: Coroutine[Any, Any, Any]
+) -> Literal["CORO_CREATED", "CORO_RUNNING", "CORO_SUSPENDED", "CORO_CLOSED"]: ...
 def getgeneratorlocals(generator: Generator[Any, Any, Any]) -> dict[str, Any]: ...
-
-# TODO can we be more specific than "object"?
-def getcoroutinelocals(coroutine: object) -> dict[str, Any]: ...
+def getcoroutinelocals(coroutine: Coroutine[Any, Any, Any]) -> dict[str, Any]: ...
 
 # Create private type alias to avoid conflict with symbol of same
 # name created in Attribute class.

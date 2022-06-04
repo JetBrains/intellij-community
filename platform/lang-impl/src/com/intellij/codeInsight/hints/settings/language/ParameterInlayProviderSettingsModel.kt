@@ -34,6 +34,10 @@ class ParameterInlayProviderSettingsModel(
     return getCasePreview(language, provider, case)
   }
 
+  override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language {
+    return language
+  }
+
   override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
     return provider.getProperty("inlay.parameters." + case.id)
   }

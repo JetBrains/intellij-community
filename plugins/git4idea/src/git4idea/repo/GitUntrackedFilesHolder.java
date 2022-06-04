@@ -142,8 +142,7 @@ public class GitUntrackedFilesHolder implements Disposable {
    * @throws VcsException if there is an unexpected error during Git execution.
    * @deprecated use {@link #retrieveUntrackedFilePaths} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public Collection<VirtualFile> retrieveUntrackedFiles() throws VcsException {
     return ContainerUtil.mapNotNull(retrieveUntrackedFilePaths(), FilePath::getVirtualFile);

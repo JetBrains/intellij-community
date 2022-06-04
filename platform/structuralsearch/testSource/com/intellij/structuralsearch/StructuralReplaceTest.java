@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -2094,7 +2094,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s3 = "$type$ $var$ = $init$;";
 
     String expected = "class Foo {\n" +
-                      "  void foo(int i, int i2, int i3) {\n" +
+                      "  void foo(int i,int i2, int i3) {\n" +
                       "     int x = 5;\n" +
                       "  }\n" +
                       "}";

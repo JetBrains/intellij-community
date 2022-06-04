@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Iterable, Iterator, Text, TypeVar
+from typing import Any, Callable, Iterable, Iterator, Text, TypeVar
 from typing_extensions import TypedDict
 
 _T = TypeVar("_T")
@@ -101,7 +101,7 @@ class PortScannerYield(PortScannerAsync):
     def wait(self, timeout: int | None = ...) -> None: ...
     def still_scanning(self) -> None: ...  # type: ignore[override]
 
-class PortScannerHostDict(Dict[str, Any]):
+class PortScannerHostDict(dict[str, Any]):
     def hostnames(self) -> list[_ResultHostNames]: ...
     def hostname(self) -> str: ...
     def state(self) -> str: ...

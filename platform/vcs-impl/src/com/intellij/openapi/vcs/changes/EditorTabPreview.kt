@@ -60,7 +60,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     }
   }
 
-  private fun installSelectionHandler(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
+  fun installSelectionHandler(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
     installSelectionChangedHandler(tree) {
       if (isOpenEditorDiffPreviewWithSingleClick) {
         if (!openPreview(false)) closePreview() // auto-close editor tab if nothing to preview
@@ -132,7 +132,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     if (isPreviewVisible) openPreview(focus) else closePreview()
   }
 
-  protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
+  protected fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpenWithRemotes(previewFile)
 
   fun closePreview() {
     FileEditorManager.getInstance(project).closeFile(previewFile)

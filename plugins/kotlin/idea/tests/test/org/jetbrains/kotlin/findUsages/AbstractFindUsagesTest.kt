@@ -206,14 +206,14 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                                 configurator.editor,
                                 TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED or TargetElementUtil.getInstance().referenceSearchFlags,
                             )
-                        }!!
+                        }
                     }
 
                     isFindFileUsages -> configurator.file
                     else -> configurator.elementAtCaret
                 }
 
-                UsefulTestCase.assertInstanceOf(caretElement, caretElementClass)
+                UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
                 val containingFile = caretElement.containingFile
                 val project = configurator.project

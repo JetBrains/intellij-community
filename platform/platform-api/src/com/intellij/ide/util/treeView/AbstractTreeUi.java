@@ -47,8 +47,7 @@ import java.util.function.Supplier;
 /**
  * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class AbstractTreeUi {
   private static final Logger LOG = Logger.getInstance(AbstractTreeBuilder.class);
   protected JTree myTree;// protected for TestNG

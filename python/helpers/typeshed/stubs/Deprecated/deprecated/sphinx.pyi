@@ -1,4 +1,4 @@
-from typing import Any, Callable, Type, TypeVar
+from typing import Any, Callable, TypeVar
 from typing_extensions import Literal
 
 from .classic import ClassicAdapter, _Actions
@@ -10,14 +10,14 @@ class SphinxAdapter(ClassicAdapter):
     reason: str
     version: str
     action: _Actions | None
-    category: Type[Warning]
+    category: type[Warning]
     def __init__(
         self,
         directive: Literal["versionadded", "versionchanged", "deprecated"],
         reason: str = ...,
         version: str = ...,
         action: _Actions | None = ...,
-        category: Type[Warning] = ...,
+        category: type[Warning] = ...,
     ) -> None: ...
     def __call__(self, wrapped: _F) -> Callable[[_F], _F]: ...
 
@@ -29,5 +29,5 @@ def deprecated(
     line_length: int = ...,
     *,
     action: _Actions | None = ...,
-    category: Type[Warning] | None = ...,
+    category: type[Warning] | None = ...,
 ) -> Callable[[_F], _F]: ...

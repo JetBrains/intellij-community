@@ -16,6 +16,7 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateParseException;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -102,10 +103,15 @@ public abstract class FileTemplateBase implements FileTemplate {
   }
 
   @Override
-  public final String @NotNull [] getUnsetAttributes(@NotNull Properties properties, @NotNull Project project) throws ParseException {
+  public final String @NotNull [] getUnsetAttributes(@NotNull Properties properties, @NotNull Project project) throws
+                                                                                                               FileTemplateParseException {
+    try {
     Set<String> attributes = new OrderedSet<>(Arrays.asList(FileTemplateUtil.calculateAttributes(getText(), properties, false, project)));
     attributes.addAll(Arrays.asList(FileTemplateUtil.calculateAttributes(getFileName(), properties, false, project)));
     return ArrayUtil.toStringArray(attributes);
+    } catch (ParseException e) {
+      throw new FileTemplateParseException(e);
+    }
   }
 
   @NotNull

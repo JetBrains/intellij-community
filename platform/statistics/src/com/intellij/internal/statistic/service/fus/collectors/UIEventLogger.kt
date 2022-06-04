@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.lang.Language
 
-private val uiEventGroup = EventLogGroup("ui.event", 15)
+private val uiEventGroup = EventLogGroup("ui.event", 16)
 
 @JvmField
 val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
@@ -120,8 +120,8 @@ val QuickNavigateInfoPopupShown: EventId1<Language?> = uiEventGroup.registerEven
 )
 
 @JvmField
-val QuickNavigateInfoPopupShown2: EventId1<Class<*>?> = uiEventGroup.registerEvent(
-  "QuickNavigateInfoPopupShownClass",
+val CtrlMouseHintShown: EventId1<Class<*>?> = uiEventGroup.registerEvent(
+  "CtrlMouseHintShown",
   EventFields.Class("target_class"),
 )
 

@@ -53,6 +53,7 @@ import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -268,9 +269,9 @@ fun configureFacetByGradleModule(
         .firstOrNull { it.data.sourceSetName == sourceSetName }
 
     val compilerVersion = kotlinGradleSourceSetDataNode?.data?.kotlinPluginVersion
+    // required for GradleFacetImportTest.{testCommonImportByPlatformPlugin, testKotlinAndroidPluginDetection}
         ?: KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode)
         ?: return null
-
 
     // TODO there should be a way to figure out the correct platform version
     val platform = platformKind?.defaultPlatform

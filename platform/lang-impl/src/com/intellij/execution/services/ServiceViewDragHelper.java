@@ -52,7 +52,7 @@ final class ServiceViewDragHelper {
         @Override
         public boolean update(DnDEvent event) {
           Object o = event.getAttachedObject();
-          boolean dropPossible = o instanceof ServiceViewDragBean && event.getPoint().y < decorator.getHeaderHeight();
+          boolean dropPossible = o instanceof ServiceViewDragBean && event.getPointOn(decorator).y < decorator.getHeaderHeight();
           event.setDropPossible(dropPossible, "");
           if (dropPossible) {
             if (contentManager.getIndexOfContent(dropTargetContent) < 0) {

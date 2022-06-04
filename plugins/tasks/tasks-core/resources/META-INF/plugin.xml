@@ -145,6 +145,6 @@
     <tasks.commitPlaceholderProvider implementation="com.intellij.tasks.impl.DefaultCommitPlaceholderProvider"/>
 
     <vcs.changeListDecorator implementation="com.intellij.tasks.impl.TaskManagerDecorator"/>
-    <notificationGroup id="Task Group" displayType="BALLOON"/>
+    <notificationGroup id="Task Group" displayType="BALLOON" bundle="messages.TaskBundle" key="notification.group.tasks"/>
   </extensions>
 </idea-plugin>

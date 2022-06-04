@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author vlan
@@ -32,19 +32,8 @@ public final class PyStdlibUtil {
   private static Set<String> loadStdlibPackagesList() {
     final Logger log = Logger.getInstance(PyStdlibUtil.class.getName());
     final String helperPath = PythonHelpersLocator.getHelperPath("/tools/stdlib_packages.txt");
-    try {
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(helperPath), StandardCharsets.UTF_8));
-      try {
-        final Set<String> result = new HashSet<>();
-        String line;
-        while ((line = reader.readLine()) != null) {
-          result.add(line);
-        }
-        return result;
-      }
-      finally {
-        reader.close();
-      }
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(helperPath), StandardCharsets.UTF_8))) {
+      return reader.lines().collect(Collectors.toSet());
     }
     catch (IOException e) {
       log.error("Cannot read list of standard library packages: " + e.getMessage());

@@ -35,8 +35,7 @@ public abstract class SdkListItem {
     }
 
     /** @deprecated use {@link #name} */
-    @ApiStatus.ScheduledForRemoval(inVersion = "20201.1")
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public @NotNull String getName() {
       return name;
     }
@@ -63,8 +62,7 @@ public abstract class SdkListItem {
     }
 
     /** @deprecated use {@link #sdk} */
-    @ApiStatus.ScheduledForRemoval(inVersion = "20201.1")
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public @NotNull Sdk getSdk() {
       return sdk;
     }

@@ -43,8 +43,8 @@ public class ResetFontSizeAction extends EditorAction {
         return;
       }
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      int fontSize = ConsoleViewUtil.isConsoleViewEditor(editor)
-                     ? globalScheme.getConsoleFontSize() : globalScheme.getEditorFontSize();
+      float fontSize = ConsoleViewUtil.isConsoleViewEditor(editor)
+                     ? globalScheme.getConsoleFontSize2D() : globalScheme.getEditorFontSize2D();
       EditorEx editorEx = (EditorEx)editor;
       editorEx.setFontSize(fontSize);
     }

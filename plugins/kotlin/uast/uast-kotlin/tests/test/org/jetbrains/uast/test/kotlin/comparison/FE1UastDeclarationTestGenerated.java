@@ -25,6 +25,11 @@ public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDec
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationOnElvis.kt")
+        public void testAnnotationOnElvis() throws Exception {
+            runTest("../../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
+        }
+
         @TestMetadata("doWhile.kt")
         public void testDoWhile() throws Exception {
             runTest("../../uast-kotlin-fir/testData/declaration/doWhile.kt");
@@ -53,6 +58,11 @@ public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDec
         @TestMetadata("objects.kt")
         public void testObjects() throws Exception {
             runTest("../../uast-kotlin-fir/testData/declaration/objects.kt");
+        }
+
+        @TestMetadata("retention.kt")
+        public void testRetention() throws Exception {
+            runTest("../../uast-kotlin-fir/testData/declaration/retention.kt");
         }
     }
 

@@ -94,7 +94,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     val testVmOptions = listOf(
       "-Djb.consents.confirmation.enabled=false", // hz
       "-Djb.privacy.policy.text=\"<!--999.999-->\"", // EULA
-      "-Didea.initially.ask.config=force-not",
+      "-Didea.initially.ask.config=never",
       "-Dfus.internal.test.mode=true",
       "-Didea.suppress.statistics.report=true",
       "-Drsch.send.usage.stat=false",

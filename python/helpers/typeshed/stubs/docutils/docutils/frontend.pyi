@@ -1,7 +1,7 @@
 import optparse
 from collections.abc import Iterable, Mapping
 from configparser import RawConfigParser
-from typing import Any, ClassVar, Tuple, Type
+from typing import Any, ClassVar
 
 from docutils import SettingsSpec
 from docutils.parsers import Parser
@@ -45,7 +45,7 @@ def validate_smartquotes_locales(
 ) -> list[tuple[str, str]]: ...
 def make_paths_absolute(pathdict, keys, base_path: Any | None = ...) -> None: ...
 def make_one_path_absolute(base_path, path) -> str: ...
-def filter_settings_spec(settings_spec, *exclude, **replace) -> Tuple[Any, ...]: ...
+def filter_settings_spec(settings_spec, *exclude, **replace) -> tuple[Any, ...]: ...
 
 class Values(optparse.Values):
     def update(self, other_dict, option_parser) -> None: ...
@@ -64,7 +64,7 @@ class OptionParser(optparse.OptionParser, SettingsSpec):
     version_template: ClassVar[str]
     def __init__(
         self,
-        components: Iterable[Type[Parser]] = ...,
+        components: Iterable[type[Parser]] = ...,
         defaults: Mapping[str, Any] | None = ...,
         read_config_files: bool | None = ...,
         *args,

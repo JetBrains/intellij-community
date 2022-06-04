@@ -12,7 +12,7 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A method visitor to be used in [UastVisitor].
  */
 interface UMethod : UDeclaration, PsiMethod {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiMethod
@@ -92,7 +92,7 @@ interface UMethod : UDeclaration, PsiMethod {
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiAnnotationMethod

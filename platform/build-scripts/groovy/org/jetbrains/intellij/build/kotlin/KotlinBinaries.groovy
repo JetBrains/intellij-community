@@ -5,7 +5,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 
 import java.nio.file.Files
@@ -25,10 +24,6 @@ final class KotlinBinaries {
     this.communityHome = communityHome
   }
 
-  @Lazy Path kotlinJpsPluginJar = {
-    KotlinCompilerDependencyDownloader.downloadKotlinJpsPlugin(new BuildDependenciesCommunityRoot(Path.of(communityHome)))
-  }()
-
   @Lazy Path kotlinCompilerHome = {
     Path compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(new BuildDependenciesCommunityRoot(Path.of(communityHome)))
     def kotlinc = compilerHome.resolve("bin/kotlinc")
@@ -38,41 +33,7 @@ final class KotlinBinaries {
     compilerHome
   }()
 
-  /**
-   * we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
-   */
-  private void ensureKotlinJpsPluginIsAddedToClassPath(AntBuilder ant, Path kotlinJpsPluginJar, Path kotlinCompilerHome) {
-    if (KotlinBinaries.class.getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
-      return
-    }
-
-    def kotlincLibPath = "$kotlinCompilerHome/lib"
-    def kotlinJpsPluginJarFile = kotlinJpsPluginJar.toFile()
-    if (kotlinJpsPluginJarFile.exists() && new File(kotlincLibPath).exists()) {
-      BuildUtils.addToJpsClassPath(kotlinJpsPluginJarFile.absolutePath, ant)
-      ["kotlin-stdlib.jar"].each {
-        def completePath = "$kotlincLibPath/$it"
-        if (!new File(completePath).exists()) {
-          throw new IllegalStateException("KotlinBinaries: '$completePath' doesn't exist")
-        }
-        BuildUtils.addToJpsClassPath(completePath, ant)
-      }
-    }
-    else {
-      messages.error("Could not find Kotlin JARs at $kotlinJpsPluginJar and $kotlinCompilerHome")
-    }
-  }
-
   boolean isCompilerRequired() {
     return !CompilationTasksImpl.areCompiledClassesProvided(options)
-  }
-
-  void setUpCompilerIfRequired(AntBuilder ant) {
-    if (!options.skipDependencySetup) {
-      def isCompilerRequired = isCompilerRequired()
-      if (isCompilerRequired) {
-        ensureKotlinJpsPluginIsAddedToClassPath(ant, kotlinJpsPluginJar, kotlinCompilerHome)
-      }
-    }
   }
 }

@@ -37,7 +37,7 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
             PsiTestUtil.addSourceRoot(commonModule, commonSrcDir)
             ModuleRootModificationUtil.addDependency(myModule, commonModule, DependencyScope.COMPILE, false)
             commonModule.createMultiplatformFacetM3(COMMON_MODULE_TARGET_PLATFORM, true, emptyList(), listOf(commonSrcPath))
-            myModule.createMultiplatformFacetM3(JvmPlatforms.jvm18, true, listOf(COMMON_MODULE_NAME), listOf(jvmSrcPath))
+            myModule.createMultiplatformFacetM3(JvmPlatforms.jvm8, true, listOf(COMMON_MODULE_NAME), listOf(jvmSrcPath))
         }
     }
 
@@ -45,7 +45,7 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
         private val COMMON_MODULE_TARGET_PLATFORM =
             TargetPlatform(
                 setOf(
-                    JvmPlatforms.jvm18.single(),
+                    JvmPlatforms.jvm8.single(),
                     JsPlatforms.defaultJsPlatform.single(),
                     NativePlatforms.unspecifiedNativePlatform.single()
                 )

@@ -62,7 +62,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
       text(LessonsBundle.message("editor.coding.assistance.show.warning.description", action(it)))
       // escapeHtml required in case of hieroglyph localization
       val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))
-      triggerByUiComponentAndHighlight<JEditorPane>(false, false) { ui ->
+      triggerUI().component { ui: JEditorPane ->
         ui.text.isToStringContains(inspectionInfoLabelText)
       }
       restoreIfModifiedOrMoved()
@@ -75,7 +75,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
 
     task {
       text(LessonsBundle.message("editor.coding.assistance.fix.warning") + " " + getFixWarningText())
-      triggerByPartOfComponent { ui: HyperlinkLabel ->
+      triggerAndBorderHighlight().componentPart { ui: HyperlinkLabel ->
         if (ui.text == warningIntentionText) {
           Rectangle(ui.x - 20, ui.y - 10, ui.width + 125, ui.height + 10)
         }

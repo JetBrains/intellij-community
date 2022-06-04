@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Any, ClassVar
+from typing_extensions import Literal
 
 from ._binary import o8 as o8
 from .ImageFile import ImageFile
@@ -75,8 +76,8 @@ class PngStream(ChunkStream):
     def chunk_fdAT(self, pos, length): ...
 
 class PngImageFile(ImageFile):
-    format: str
-    format_description: str
+    format: ClassVar[Literal["PNG"]]
+    format_description: ClassVar[str]
     @property
     def text(self): ...
     fp: Any

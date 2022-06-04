@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 open class Base {
     open fun foo(p1: Int, vararg p2: Int){}
 }

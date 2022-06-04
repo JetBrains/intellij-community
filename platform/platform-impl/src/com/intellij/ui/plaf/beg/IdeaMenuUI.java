@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
@@ -200,7 +198,7 @@ public class IdeaMenuUI extends BasicMenuUI {
     if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
       g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
     }
-    else if (IdeaPopupMenuUI.isPartOfPopupMenu(comp) && (Registry.is("popup.menu.roundSelection.enabled", false) || ExperimentalUI.isNewUI())) {
+    else if (IdeaPopupMenuUI.isRoundSelectionEnabled(comp)) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       int radius = JBUI.getInt("MenuItem.Selection.arc", 8);
       g.fillRoundRect(4, 1, jMenu.getWidth() - 8, jMenu.getHeight() - 2, radius, radius);

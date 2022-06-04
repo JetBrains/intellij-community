@@ -341,7 +341,7 @@ public final class ConfigImportHelper {
 
   private static boolean shouldAskForConfig() {
     String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
-    if ("force-not".equals(showImportDialog)) {
+    if ("force-not".equals(showImportDialog) || "default-production".equals(showImportDialog) || "never".equals(showImportDialog)) {
       return false;
     }
     return PluginManagerCore.isRunningFromSources() ||
@@ -350,6 +350,11 @@ public final class ConfigImportHelper {
   }
 
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
+    String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
+    if ("never".equals(showImportDialog)) {
+      return null;
+    }
+
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
@@ -474,7 +479,7 @@ public final class ConfigImportHelper {
             String name = path.getFileName().toString();
             if (nameMatchesPrefixStrictly(name, prefix, dotted)) {
               if (settings != null &&
-                  settings.shouldNotBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
+                  !settings.shouldBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
                 continue;
               }
               exactCandidates.add(path);
@@ -482,7 +487,7 @@ public final class ConfigImportHelper {
             else if (exactCandidates.isEmpty() && productPrefixOtherIde != null) {
               if (nameMatchesPrefixStrictly(name, productPrefixOtherIde, dotted)) {
                 if (settings != null &&
-                    settings.shouldNotBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
+                    !settings.shouldBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
                   continue;
                 }
                 otherPreferredCandidates.add(path);

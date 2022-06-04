@@ -22,12 +22,12 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.util.projectStructure.version
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
@@ -71,18 +71,48 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
     fun findExistingJar(library: Library): VirtualFile? =
         library.getFiles(OrderRootType.CLASSES).firstOrNull { it.name.startsWith(mavenArtifactId) }
 
-    val repositoryLibraryProperties: RepositoryLibraryProperties get() =
-        RepositoryLibraryProperties(KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID, mavenArtifactId, kotlinCompilerVersionShort(), true, emptyList())
+    val repositoryLibraryProperties: RepositoryLibraryProperties
+        get() = RepositoryLibraryProperties(
+            KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID,
+            mavenArtifactId,
+            KotlinPluginLayout.instance.lastStableKnownCompilerVersionShort,
+            true,
+            emptyList()
+        )
 }
 
 @NlsSafe
-fun bundledRuntimeVersion(): String = KotlinCompilerVersion.VERSION
+@Deprecated(
+    "Replace with `KotlinPluginLayout.standaloneCompilerVersion` or `KotlinPluginLayout.ideCompilerVersion`, depending on use-case.",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith(
+        "KotlinPluginLayout.getInstance().standaloneCompilerVersion",
+        "org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout"
+    )
+)
+fun bundledRuntimeVersion(): String = KotlinPluginLayout.instance.standaloneCompilerVersion
+
+private val KOTLIN_COMPILER_VERSION_SEPARATOR = "-(?:dev|release)".toRegex()
 
 /**
  * Bundled compiler version usually looks like: `1.5.0-release-759`.
  * `kotlinCompilerVersionShort` would return `1.5.0` in such case
  */
-fun kotlinCompilerVersionShort() = KotlinCompilerVersion.VERSION.substringBefore("-release")
+val KotlinPluginLayout.lastStableKnownCompilerVersionShort: String
+    get() {
+        val parts = KOTLIN_COMPILER_VERSION_SEPARATOR.split(lastStableKnownCompilerVersion)
+        return parts.first()
+    }
+
+private val KOTLIN_COMPILER_VERSION_PATTERN = "(\\d+)\\.(\\d+)(?:\\.(\\d+))?.*".toRegex()
+
+fun KotlinVersion.Companion.fromString(version: String): KotlinVersion? {
+    val (major, minor, patch) = KOTLIN_COMPILER_VERSION_PATTERN.matchEntire(version)?.destructured ?: return null
+    val majorValue = major.toIntOrNull() ?: return null
+    val minorValue = minor.toIntOrNull() ?: return null
+    val patchValue = patch.toIntOrNull() ?: 0
+    return KotlinVersion(majorValue, minorValue, patchValue)
+}
 
 data class BinaryVersionedFile<out T : BinaryVersion>(val file: VirtualFile, val version: T, val supportedVersion: T)
 
@@ -119,10 +149,8 @@ private fun <T : BinaryVersion> getLibraryRootsWithAbiIncompatibleVersion(
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")
 
-fun hasKotlinJsKjsmFile(project: Project, scope: GlobalSearchScope): Boolean {
-    return project.runReadActionInSmartMode {
-        KotlinJavaScriptMetaFileIndex.hasSomethingInPackage(KOTLIN_JS_FQ_NAME, scope)
-    }
+fun hasKotlinJsKjsmFile(scope: GlobalSearchScope): Boolean = runReadAction {
+    KotlinJavaScriptMetaFileIndex.hasSomethingInPackage(KOTLIN_JS_FQ_NAME, scope)
 }
 
 fun getStdlibArtifactId(sdk: Sdk?, version: String): String {

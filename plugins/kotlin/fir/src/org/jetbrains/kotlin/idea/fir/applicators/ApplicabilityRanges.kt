@@ -5,13 +5,12 @@ package org.jetbrains.kotlin.idea.fir.applicators
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityTarget
+import org.jetbrains.kotlin.idea.util.nameIdentifierTextRangeInThis
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtModifierListOwner
-import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.*
 
 object ApplicabilityRanges {
     val SELF = applicabilityTarget<PsiElement> { it }
@@ -36,5 +35,20 @@ object ApplicabilityRanges {
         } else {
             listOf(TextRange(0, element.textLength))
         }
+    }
+
+    val DECLARATION_WITHOUT_INITIALIZER = applicabilityRange<KtCallableDeclaration> {
+        val selfRange = TextRange(0, it.textLength)
+        if (it !is KtDeclarationWithInitializer) return@applicabilityRange selfRange
+        val initializer = it.initializer ?: return@applicabilityRange selfRange
+        // The IDE seems to treat the end offset inclusively when checking if the caret is within the range. Hence we do minus one here
+        // so that the intention is available from the following highlighted range.
+        //   val i = 1
+        //   ^^^^^^^^
+        TextRange(0, initializer.startOffsetInParent - 1)
+    }
+
+    val DECLARATION_NAME = applicabilityTarget<KtNamedDeclaration> {  element ->
+        element.nameIdentifier
     }
 }

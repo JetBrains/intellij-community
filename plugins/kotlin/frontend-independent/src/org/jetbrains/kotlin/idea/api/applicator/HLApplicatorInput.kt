@@ -10,11 +10,11 @@ import com.intellij.psi.PsiElement
  * Created by [HLApplicatorInputProvider] or via [org.jetbrains.kotlin.idea.fir.api.fixes.HLDiagnosticFixFactory]
  *
  * Should not store inside
- * - Everything that came from [org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession] like :
- *      - [org.jetbrains.kotlin.idea.frontend.api.symbols.KtSymbol] consider using [org.jetbrains.kotlin.idea.frontend.api.symbols.pointers.KtSymbolPointer] instead
- *      - [org.jetbrains.kotlin.idea.frontend.api.types.KtType]
- *      - [org.jetbrains.kotlin.idea.frontend.api.calls.KtCall]
- * - [org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession] instance itself
+ * - Everything that came from [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] like :
+ *      - [org.jetbrains.kotlin.analysis.api.symbols.KtSymbol] consider using [org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer] instead
+ *      - [org.jetbrains.kotlin.analysis.api.types.KtType]
+ *      - [org.jetbrains.kotlin.analysis.api.calls.KtCall]
+ * - [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] instance itself
  * - [PsiElement] consider using [com.intellij.psi.SmartPsiElementPointer] instead
  *
  */

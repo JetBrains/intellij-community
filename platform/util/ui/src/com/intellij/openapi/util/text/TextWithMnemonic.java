@@ -60,7 +60,6 @@ public final class TextWithMnemonic {
    * @deprecated use {@link #getMnemonicChar} or {@link #getMnemonicCode} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public int getMnemonic() {
     char ch = getMnemonicChar();
     return ch == KeyEvent.CHAR_UNDEFINED ? 0 : Character.toUpperCase(ch);
@@ -120,7 +119,6 @@ public final class TextWithMnemonic {
    * @deprecated use {@link #withMnemonicIndex} or {@link #fromPlainTextWithIndex(String, int)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public TextWithMnemonic setMnemonicAt(int index) {
     if (index < 0 || index >= myText.length() + myMnemonicSuffix.length()) {
       throw new IndexOutOfBoundsException(String.valueOf(index));

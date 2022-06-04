@@ -35,6 +35,8 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
     @ReportValue
     public                    int    FONT_SIZE   = FontPreferences.DEFAULT_FONT_SIZE;
     @ReportValue
+    public                    float  FONT_SIZE_2D   = FontPreferences.DEFAULT_FONT_SIZE;
+    @ReportValue
     public @NlsSafe @NotNull  String FONT_FAMILY = FontPreferences.DEFAULT_FONT_NAME;
     @ReportValue
     public @NlsSafe @Nullable String FONT_REGULAR_SUB_FAMILY;
@@ -60,6 +62,7 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
       FONT_REGULAR_SUB_FAMILY = fontPreferences.getRegularSubFamily();
       FONT_BOLD_SUB_FAMILY = fontPreferences.getBoldSubFamily();
       FONT_SIZE = fontPreferences.getSize(FONT_FAMILY);
+      FONT_SIZE_2D = fontPreferences.getSize2D(FONT_FAMILY);
       FONT_SCALE = UISettings.getDefFontScale();
       LINE_SPACING = fontPreferences.getLineSpacing();
       USE_LIGATURES = fontPreferences.useLigatures();

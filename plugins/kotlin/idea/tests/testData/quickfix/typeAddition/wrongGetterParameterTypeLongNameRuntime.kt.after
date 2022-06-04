@@ -6,3 +6,4 @@ class A() {
     val i: java.util.HashSet<Int>
         get(): HashSet<Int> = java.util.LinkedHashSet<Int>()
 }
+/* IGNORE_FIR */

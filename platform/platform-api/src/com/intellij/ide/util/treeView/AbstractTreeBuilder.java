@@ -14,7 +14,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +32,7 @@ import java.util.*;
 /**
  * @deprecated use {@link com.intellij.ui.tree.AsyncTreeModel} and {@link com.intellij.ui.tree.StructureTreeModel} instead.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated
+@Deprecated(forRemoval = true)
 public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
   private static final @NonNls String TREE_BUILDER = "TreeBuilder";
@@ -268,8 +266,7 @@ public class AbstractTreeBuilder implements Disposable {
   /**
    * @deprecated use {@link AbstractTreeUi#buildNodeForElement(Object)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void buildNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForElement(element);
@@ -278,8 +275,7 @@ public class AbstractTreeBuilder implements Disposable {
   /**
    * @deprecated use {@link AbstractTreeUi#getNodeForElement(Object, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public @Nullable DefaultMutableTreeNode getNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.getNodeForElement(element, false);

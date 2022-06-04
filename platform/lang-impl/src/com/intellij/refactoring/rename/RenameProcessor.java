@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -158,7 +159,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
         return true;
       }
-      ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
+      ConflictsDialogBase conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
       if (!conflictsDialog.showAndGet()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
         return false;

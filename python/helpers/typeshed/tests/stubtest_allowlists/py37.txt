@@ -12,6 +12,7 @@ asyncio.futures.Future._callbacks  # Usually initialized from c object
 asyncio.staggered  # Added in Python 3.8
 asyncio.threads  # Added in Python 3.9
 asyncio.trsock  # Added in Python 3.8
+asyncio.mixins  # Added in Python 3.10
 builtins.dict.get
 builtins.str.maketrans
 cmath.log
@@ -24,6 +25,10 @@ collections.UserString.maketrans
 contextvars.Context.__init__  # Default C __init__ signature is wrong
 contextvars.ContextVar.get
 dataclasses.field
+dummy_threading.Condition.acquire
+dummy_threading.Condition.release
+dummy_threading.Event.isSet
+dummy_threading.local.__new__
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 hmac.HMAC.__init__
@@ -88,8 +93,6 @@ collections.Sequence.index  # Supporting None in end is not mandatory
 # Exists at runtime, but missing from stubs
 _dummy_thread.RLock
 _imp.source_hash
-asyncio.BufferedProtocol.eof_received
-asyncio.protocols.BufferedProtocol.eof_received
 contextvars.ContextVar.__class_getitem__
 datetime.datetime_CAPI
 distutils.command.bdist_wininst
@@ -103,26 +106,8 @@ distutils.cygwinccompiler.RE_VERSION
 distutils.dist.command_re
 distutils.fancy_getopt.longopt_re
 distutils.fancy_getopt.neg_alias_re
-dummy_threading.Barrier
-dummy_threading.BoundedSemaphore
-dummy_threading.BrokenBarrierError
-dummy_threading.Condition
-dummy_threading.Event
 dummy_threading.Lock
 dummy_threading.RLock
-dummy_threading.Semaphore
-dummy_threading.TIMEOUT_MAX
-dummy_threading.Thread
-dummy_threading.ThreadError
-dummy_threading.Timer
-dummy_threading.active_count
-dummy_threading.current_thread
-dummy_threading.enumerate
-dummy_threading.get_ident
-dummy_threading.local
-dummy_threading.main_thread
-dummy_threading.setprofile
-dummy_threading.settrace
 dummy_threading.stack_size
 html.parser.HTMLParser.unescape
 platform.popen

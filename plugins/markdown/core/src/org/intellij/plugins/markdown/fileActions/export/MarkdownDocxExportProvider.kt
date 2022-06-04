@@ -10,11 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.settings.pandoc.PandocExecutableDetector
+import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import java.util.*
 
 internal class MarkdownDocxExportProvider : MarkdownExportProvider {
@@ -48,19 +48,16 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
     }
 
     override fun onThrowable(error: Throwable) {
-      MarkdownNotifier.showErrorNotification(project, "[${mdFile.name}] ${error.localizedMessage}")
+      MarkdownNotifications.showError(project, message = "[${mdFile.name}] ${error.localizedMessage}")
     }
 
     override fun onSuccess() {
       if (output.stderrLines.isEmpty()) {
         MarkdownImportExportUtils.refreshProjectDirectory(project, mdFile.parent.path)
-        MarkdownNotifier.showInfoNotification(
-          project,
-          MarkdownBundle.message("markdown.export.success.msg", mdFile.name)
-        )
+        MarkdownNotifications.showInfo(project, message = MarkdownBundle.message("markdown.export.success.msg", mdFile.name))
       }
       else {
-        MarkdownNotifier.showErrorNotification(project, "[${mdFile.name}] ${output.stderrLines.joinToString("\n")}")
+        MarkdownNotifications.showError(project, message = "[${mdFile.name}] ${output.stderrLines.joinToString("\n")}")
       }
     }
 

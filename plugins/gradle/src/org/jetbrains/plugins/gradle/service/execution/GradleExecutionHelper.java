@@ -24,12 +24,12 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
 import org.gradle.api.logging.LogLevel;
-import org.gradle.internal.logging.LoggingConfigurationBuildOptions;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -51,6 +51,7 @@ import org.jetbrains.plugins.gradle.util.GradleProperties;
 import org.jetbrains.plugins.gradle.util.GradlePropertiesUtil;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.awt.geom.IllegalPathStateException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -60,7 +61,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
@@ -245,6 +246,11 @@ public class GradleExecutionHelper {
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+      try {
+        // if autoimport is active, it should be notified of new files creation as early as possible,
+        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
+        VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(projectPath, "gradle").toFile());
+      } catch (IllegalPathStateException ignore) {}
     }
   }
 
@@ -432,12 +438,14 @@ public class GradleExecutionHelper {
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     if (forTestLauncher) {
       operation.addProgressListener(gradleProgressListener,
+                                    OperationType.FILE_DOWNLOAD,
                                     OperationType.TASK,
                                     OperationType.TEST,
                                     OperationType.TEST_OUTPUT);
     } else {
       operation.addProgressListener(gradleProgressListener,
-                                    OperationType.TASK);
+                                    OperationType.TASK,
+                                    OperationType.FILE_DOWNLOAD);
     }
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);

@@ -42,15 +42,15 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                             USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends T>
                             USimpleNameReferenceExpression (identifier = at) [at] : PsiType:T
-                UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->...})]
-                    ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->...})]
-                        UQualifiedReferenceExpression [tl.map({ var it: <ErrorType> ->...})] : PsiType:List<? extends String>
+                UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: T ->...})]
+                    ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: T ->...})]
+                        UQualifiedReferenceExpression [tl.map({ var it: T ->...})] : PsiType:List<? extends String>
                             USimpleNameReferenceExpression (identifier = tl) [tl] : PsiType:List<? extends T>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: <ErrorType> ->...})] : PsiType:List<? extends String>
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: T ->...})] : PsiType:List<? extends String>
                                 UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
                                 USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] : PsiType:List<? extends String>
-                                ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super T, ? extends String>
-                                    UParameter (name = it) [var it: <ErrorType>]
+                                ULambdaExpression [{ var it: T ->...}] : PsiType:Function1<? super T, ? extends String>
+                                    UParameter (name = it) [var it: T]
                                     UBlockExpression [{...}] : PsiType:String
                                         UReturnExpression [return it.toString()]
                                             UQualifiedReferenceExpression [it.toString()] : PsiType:String

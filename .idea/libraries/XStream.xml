@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="XStream" type="repository">
-    <properties maven-id="com.thoughtworks.xstream:xstream:1.4.18" />
+    <properties maven-id="com.thoughtworks.xstream:xstream:1.4.19" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.18/xstream-1.4.18.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.19/xstream-1.4.19.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.18/xstream-1.4.18-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/xstream/xstream/1.4.19/xstream-1.4.19-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2-sources.jar!/" />
     </SOURCES>
   </library>

@@ -3,8 +3,7 @@
 Sample paragraph with two spaces
 
 Other paragraph with newline too early
-
-# Other header
+#Other header
 
 ```kotlin
 val a = 12

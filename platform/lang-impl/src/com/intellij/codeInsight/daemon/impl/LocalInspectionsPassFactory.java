@@ -32,7 +32,7 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
     if (textRange == null){
       return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     }
-    TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+    TextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
     return new MyLocalInspectionsPass(file, editor.getDocument(), textRange, visibleRange, new DefaultHighlightInfoProcessor());
   }
 

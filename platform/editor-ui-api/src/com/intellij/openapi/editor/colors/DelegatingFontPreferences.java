@@ -48,6 +48,11 @@ public final class DelegatingFontPreferences extends FontPreferences {
   }
 
   @Override
+  public float getSize2D(@NotNull String fontFamily) {
+    return myDelegateSupplier.get().getSize2D(fontFamily);
+  }
+
+  @Override
   public void copyTo(@NotNull FontPreferences preferences) {
     myDelegateSupplier.get().copyTo(preferences);
   }

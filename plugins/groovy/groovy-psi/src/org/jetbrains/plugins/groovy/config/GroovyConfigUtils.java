@@ -180,15 +180,11 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   public boolean isSDKHome(VirtualFile file) {
     if (file != null && file.isDirectory()) {
       final String path = file.getPath();
-      if (LibrariesUtil.getFilesInDirectoryByPattern(path + LIB, GROOVY_JAR_PATTERN).length > 0 ||
-          LibrariesUtil.getFilesInDirectoryByPattern(path + EMBEDDABLE, GROOVY_ALL_JAR_PATTERN).length > 0 ||
-          LibrariesUtil.getFilesInDirectoryByPattern(path, GROOVY_JAR_PATTERN).length > 0) {
-        return true;
-      }
+      GroovyHomeKind kind = GroovyHomeKind.fromString(path);
+      return kind != null;
     }
     return false;
   }
-
 
   @NotNull
   public String getSDKLibVersion(Library library) {

@@ -29,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -385,8 +384,7 @@ public abstract class VcsVFSListener implements Disposable {
   /**
    * @deprecated Use {@link #VcsVFSListener(AbstractVcs)} followed by {@link #installListeners()}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
     this(vcs);
     installListeners();

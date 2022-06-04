@@ -1,16 +1,18 @@
 import socket
 import ssl
-from typing import Any, BinaryIO, List, Pattern, Tuple, overload
+from typing import Any, BinaryIO, Pattern, overload
+from typing_extensions import Literal
 
-_LongResp = Tuple[bytes, List[bytes], int]
+_LongResp = tuple[bytes, list[bytes], int]
 
 class error_proto(Exception): ...
 
-POP3_PORT: int
-POP3_SSL_PORT: int
-CR: bytes
-LF: bytes
-CRLF: bytes
+POP3_PORT: Literal[110]
+POP3_SSL_PORT: Literal[995]
+CR: Literal[b"\r"]
+LF: Literal[b"\n"]
+CRLF: Literal[b"\r\n"]
+HAVE_SSL: bool
 
 _list = list  # conflicts with a method named "list"
 

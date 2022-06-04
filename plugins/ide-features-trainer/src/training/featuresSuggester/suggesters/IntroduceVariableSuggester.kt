@@ -2,7 +2,11 @@ package training.featuresSuggester.suggesters
 
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.PsiElement
-import training.featuresSuggester.*
+import training.featuresSuggester.FeatureSuggesterBundle
+import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggesterSupport
+import training.featuresSuggester.SuggestingUtils.asString
+import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
 import training.util.WeakReferenceDelegator
 import java.awt.datatransfer.DataFlavor

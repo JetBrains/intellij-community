@@ -50,7 +50,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -472,8 +471,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   /**
    * @deprecated use {@link ProjectStructureConfigurable#getModulesConfig()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static ModuleStructureConfigurable getInstance(final Project project) {
     return ProjectStructureConfigurable.getInstance(project).getModulesConfig();
   }

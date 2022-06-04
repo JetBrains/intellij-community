@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
@@ -28,7 +28,10 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.*;
-import com.intellij.refactoring.move.*;
+import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
+import com.intellij.refactoring.move.MoveDialogBase;
+import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.ui.ClassNameReferenceEditor;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
@@ -327,7 +330,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
   @Override
   protected void validateButtons() {
-    validateButtonsAsync();
+    validateButtonsAsync(ModalityState.stateForComponent(myMainPanel));
   }
 
   @Nullable

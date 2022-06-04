@@ -79,20 +79,9 @@ private fun findSmartStepTargets(position: SourcePosition, session: DebuggerSess
     val lines = topmostElement.getLines() ?: return emptyList()
     val targets = findSmartStepTargets(topmostElement, lines)
     if (session != null) {
-        return targets.filterAlreadyExecuted(
-            session.process,
-            lines.toClosedRange()
-        )
+        return calculateSmartStepTargetsToShow(targets, session.process, lines.toClosedRange())
     }
     return targets
-}
-
-private fun List<SmartStepTarget>.filterAlreadyExecuted(debugProcess: DebugProcessImpl, lines: ClosedRange<Int>): List<SmartStepTarget> {
-    DebuggerManagerThreadImpl.assertIsManagerThread()
-    if (debugProcess.isDexDebug() || size <= 1) return this
-    val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
-    val location = frameProxy?.safeLocation() ?: return this
-    return filterSmartStepTargets(location, lines, this, debugProcess)
 }
 
 private fun findSmartStepTargets(topmostElement: KtElement, lines: Range<Int>): List<SmartStepTarget> {
@@ -100,6 +89,31 @@ private fun findSmartStepTargets(topmostElement: KtElement, lines: Range<Int>): 
     val visitor = SmartStepTargetVisitor(topmostElement, lines, targets)
     topmostElement.accept(visitor, null)
     return targets
+}
+
+private fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarget>, debugProcess: DebugProcessImpl, lines: ClosedRange<Int>): List<SmartStepTarget> {
+    val lambdaTargets = mutableListOf<SmartStepTarget>()
+    val methodTargets = mutableListOf<KotlinMethodSmartStepTarget>()
+    for (target in targets) {
+        if (target is KotlinMethodSmartStepTarget) {
+            methodTargets.add(target)
+        } else {
+            lambdaTargets.add(target)
+        }
+    }
+
+    return lambdaTargets + methodTargets.filterAlreadyExecuted(debugProcess, lines)
+}
+
+private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
+    debugProcess: DebugProcessImpl,
+    lines: ClosedRange<Int>
+): List<KotlinMethodSmartStepTarget> {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
+    if (debugProcess.isDexDebug() || size <= 1) return this
+    val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
+    val location = frameProxy?.safeLocation() ?: return this
+    return filterSmartStepTargets(location, lines, this, debugProcess)
 }
 
 private fun SourcePosition.getTopmostElement(): KtElement? {
@@ -117,9 +131,9 @@ private fun KtElement.getLines(): Range<Int>? {
 private fun filterSmartStepTargets(
     location: Location,
     lines: ClosedRange<Int>,
-    targets: List<SmartStepTarget>,
+    targets: List<KotlinMethodSmartStepTarget>,
     debugProcess: DebugProcessImpl
-): List<SmartStepTarget> {
+): List<KotlinMethodSmartStepTarget> {
     val method = location.safeMethod() ?: return targets
     val targetFilterer = KotlinSmartStepTargetFilterer(targets, debugProcess)
     val targetFiltererAdapter = KotlinSmartStepTargetFiltererAdapter(

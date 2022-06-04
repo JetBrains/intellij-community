@@ -2,10 +2,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsManager;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -66,7 +63,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
 
   private static final Logger LOG = Logger.getInstance(CopiesPanel.class);
 
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Svn Roots Detection Errors", STICKY_BALLOON, true);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Svn Roots Detection Errors");
 
   private static final String TOOLBAR_GROUP = "Svn.WorkingCopiesView.Toolbar";
   private static final String TOOLBAR_PLACE = "Svn.WorkingCopiesView";

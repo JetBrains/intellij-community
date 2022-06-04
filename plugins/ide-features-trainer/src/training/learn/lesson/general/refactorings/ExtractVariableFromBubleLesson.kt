@@ -28,7 +28,7 @@ class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
 
       task {
         transparentRestore = true
-        triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
+        triggerAndBorderHighlight().listItem { item ->
           item is BaseReplaceChoice && item.formatDescription(3) == actionString(3)
         }
         restoreByTimer() // the refactoring may be called from the wrong place

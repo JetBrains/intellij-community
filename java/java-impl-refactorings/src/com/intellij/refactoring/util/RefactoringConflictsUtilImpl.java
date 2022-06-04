@@ -51,8 +51,9 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
 
   @Override
   public void analyzeAccessibilityConflictsAfterMemberMove(@NotNull PsiClass targetClass,
-                                                           @NotNull MultiMap<PsiElement, String> conflicts,
-                                                           @Nullable String newVisibility, @NotNull Set<? extends PsiMember> membersToMove) {
+                                                           @Nullable String newVisibility,
+                                                           @NotNull Set<? extends PsiMember> membersToMove,
+                                                           @NotNull MultiMap<PsiElement, String> conflicts) {
     analyzeAccessibilityConflictsAfterMemberMove(membersToMove, targetClass, newVisibility, targetClass, null, Conditions.alwaysTrue(),
                                                  conflicts);
   }

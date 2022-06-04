@@ -85,7 +85,7 @@ fun guessProjectForContentFile(file: VirtualFile,
 
 fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean = ProjectCoreUtil.isProjectOrWorkspaceFile(file)
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "This method is an unreliable hack, find another way to locate a project instance.")
 fun guessCurrentProject(component: JComponent?): Project {
   var project: Project? = null

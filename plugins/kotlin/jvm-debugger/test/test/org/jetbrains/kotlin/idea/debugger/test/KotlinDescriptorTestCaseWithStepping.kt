@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
-import com.sun.jdi.request.StepRequest
+import junit.framework.AssertionFailedError
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils.getTopmostElementAtOffset
@@ -34,16 +34,21 @@ import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.KotlinSteppingCommandProvider
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepTarget
+import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
 import org.jetbrains.kotlin.idea.debugger.test.util.render
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
+import java.nio.charset.StandardCharsets
 
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
     companion object {
@@ -67,6 +72,8 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     private val commandProvider get() = myCommandProvider!!
 
     private val classPath = mutableListOf<String>()
+
+    private val thrownExceptions = mutableListOf<Throwable>()
 
     private fun initContexts(suspendContext: SuspendContextImpl) {
         myEvaluationContext = createEvaluationContext(suspendContext)
@@ -175,15 +182,46 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private fun checkNumberOfSmartStepTargets(expectedNumber: Int) {
         val smartStepFilters = createSmartStepIntoFilters()
-        assertEquals(
-            "Actual and expected numbers of smart step targets do not match",
-            expectedNumber,
-            smartStepFilters.size
-        )
+        try {
+            assertEquals(
+                "Actual and expected numbers of smart step targets do not match",
+                expectedNumber,
+                smartStepFilters.size
+            )
+        } catch (ex: AssertionFailedError) {
+            thrownExceptions.add(ex)
+        }
     }
 
     private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int = 0) {
         this.doSmartStepInto(chooseFromList, false)
+    }
+
+    override fun throwExceptionsIfAny() {
+        if (thrownExceptions.isNotEmpty()) {
+            if (!isTestIgnored()) {
+                throw AssertionError(
+                    "Test failed with exceptions:\n${thrownExceptions.renderStackTraces()}"
+                )
+            } else {
+                (checker as? KotlinOutputChecker)?.threwException = true
+            }
+        }
+    }
+
+    private fun List<Throwable>.renderStackTraces(): String {
+        val outputStream = ByteArrayOutputStream()
+        PrintStream(outputStream, true, StandardCharsets.UTF_8).use {
+            for (throwable in this) {
+                throwable.printStackTrace(it)
+            }
+        }
+        return outputStream.toString(StandardCharsets.UTF_8)
+    }
+
+    protected fun isTestIgnored(): Boolean {
+        val outputFile = getExpectedOutputFile()
+        return outputFile.exists() && isIgnoredTarget(targetBackend(), outputFile)
     }
 
     private fun SuspendContextImpl.printContext() {

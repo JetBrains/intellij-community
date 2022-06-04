@@ -37,7 +37,6 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
   private final WeakReference<ClassLoader> originalClassLoaderRef;
 
   private final int imageFlags;
-  private boolean myPatched = false;
 
   RasterizedImageDataLoader(@NotNull String path,
                             @NotNull WeakReference<ClassLoader> classLoaderRef,
@@ -66,13 +65,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
                                                 int imageFlags) {
     String effectivePath = normalizePath(patched.first);
     WeakReference<ClassLoader> effectiveClassLoaderRef = patched.second == null ? originalClassLoaderRef : new WeakReference<>(patched.second);
-    RasterizedImageDataLoader loader = new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey, imageFlags);
-    loader.setPatched(true);
-    return loader;
-  }
-
-  private void setPatched(boolean patched) {
-    myPatched = patched;
+    return new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey, imageFlags);
   }
 
   @Override
@@ -86,9 +79,17 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
     if (classLoader == null) {
       return null;
     }
-    boolean isSvg = cacheKey != 0;
+
     // use cache key only if path to image is not customized
-    return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, originalPath == path ? cacheKey : 0, imageFlags, myPatched);
+    if (originalPath == path) {
+      boolean isSvg = cacheKey != 0;
+      // use cache key only if path to image is not customized
+      return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, cacheKey, imageFlags, false);
+    }
+    else {
+      boolean isSvg = path.endsWith(".svg");
+      return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, 0, imageFlags, true);
+    }
   }
 
   @Override
@@ -185,18 +186,24 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       }
     }
 
-    List<Pair<String,Float>> effectivePaths;
+    List<Pair<String, Float>> effectivePaths;
     if (patched) {
-      Pair<String, Float> retinaDark = Pair.create(name + "@2x_dark." + ext, isSvg ? scale : 2);
-      Pair<String, Float> dark       = Pair.create(name + "_dark." + ext, isSvg ? scale : 1);
-      Pair<String, Float> retina     = Pair.create(name + "@2x." + ext, isSvg ? scale : 2);
-      Pair<String, Float> plain      = Pair.create(path, isSvg ? scale : 1);
-      effectivePaths = isRetina && isDark ? Arrays.asList(retinaDark, dark, retina, plain)
-                                          : isDark ? Arrays.asList(dark, plain)
-                                                   : isRetina ? Arrays.asList(retina, plain)
-                                                              : List.of(plain);
-    } else {
-      effectivePaths = List.of(Pair.create(effectivePath, imageScale));
+      Pair<String, Float> retinaDark = new Pair<>(name + "@2x_dark." + ext, isSvg ? scale : 2);
+      Pair<String, Float> dark = new Pair<>(name + "_dark." + ext, isSvg ? scale : 1);
+      Pair<String, Float> retina = new Pair<>(name + "@2x." + ext, isSvg ? scale : 2);
+      Pair<String, Float> plain = new Pair<>(path, isSvg ? scale : 1);
+      if (isRetina && isDark) {
+        effectivePaths = Arrays.asList(retinaDark, dark, retina, plain);
+      }
+      else if (isDark) {
+        effectivePaths = List.of(dark, plain);
+      }
+      else {
+        effectivePaths = isRetina ? List.of(retina, plain) : List.of(plain);
+      }
+    }
+    else {
+      effectivePaths = List.of(new Pair<>(effectivePath, imageScale));
     }
 
     ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);

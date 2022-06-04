@@ -25,14 +25,14 @@ class InlayTextMetricsStorage(val editor: EditorImpl) {
   private var smallTextMetrics : InlayTextMetrics? = null
   private var normalTextMetrics : InlayTextMetrics? = null
 
-  val smallTextSize: Int
+  val smallTextSize: Float
     @RequiresEdt
-    get() = max(1, editor.colorsScheme.editorFontSize - 1)
+    get() = max(1f, editor.colorsScheme.editorFontSize2D - 1f)
 
 
-  val normalTextSize: Int
+  val normalTextSize: Float
     @RequiresEdt
-    get() = editor.colorsScheme.editorFontSize
+    get() = editor.colorsScheme.editorFontSize2D
 
   @RequiresEdt
   fun getFontMetrics(small: Boolean): InlayTextMetrics {
@@ -72,10 +72,10 @@ class InlayTextMetrics(
   val fontType: Int
 ) {
   companion object {
-    internal fun create(editor: EditorImpl, size: Int, fontType: Int) : InlayTextMetrics {
+    internal fun create(editor: EditorImpl, size: Float, fontType: Int) : InlayTextMetrics {
       val font = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
         val editorFont = EditorUtil.getEditorFont()
-        editorFont.deriveFont(fontType, size.toFloat())
+        editorFont.deriveFont(fontType, size)
       } else {
         val familyName = StartupUiUtil.getLabelFont().family
         UIUtil.getFontWithFallback(familyName, fontType, size)
@@ -105,8 +105,8 @@ class InlayTextMetrics(
   private val lineHeight = editor.lineHeight
   private val editorComponent = editor.component
 
-  fun isActual(size: Int, familyName: String) : Boolean {
-    if (size != font.size) return false
+  fun isActual(size: Float, familyName: String) : Boolean {
+    if (size != font.size2D) return false
     if (font.family != familyName) return false
     return getCurrentContext(editorComponent).equals(fontMetrics.fontRenderContext)
   }

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,8 +104,7 @@ public abstract class SyntheticLibrary {
   /**
    * @deprecated use {@link #newImmutableLibrary(List)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<? extends VirtualFile> sourceRoots) {
     return newImmutableLibrary(asList(sourceRoots), Collections.emptySet(), null);

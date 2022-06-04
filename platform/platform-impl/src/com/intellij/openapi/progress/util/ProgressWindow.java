@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +92,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     myDialogInitialization = () -> {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      Window parentWindow = calcParentWindow(parentComponent);
+      Window parentWindow = calcParentWindow(parentComponent, myProject);
       myDialog = new ProgressDialog(this, shouldShowBackground, cancelText, parentWindow);
       Disposer.register(this, myDialog);
     };
@@ -115,14 +116,15 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     initialization.run();
   }
 
-  private Window calcParentWindow(@Nullable Component parent) {
-    if (parent == null && myProject == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+  @Internal
+  public static @Nullable Window calcParentWindow(@Nullable Component parent, @Nullable Project project) {
+    if (parent == null && project == null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       parent = JOptionPane.getRootFrame();
     }
     if (parent != null) {
       return ComponentUtil.getWindow(parent);
     }
-    Window parentWindow = WindowManager.getInstance().suggestParentWindow(myProject);
+    Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
     return parentWindow != null ? parentWindow : WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
   }
 

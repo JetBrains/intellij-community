@@ -131,7 +131,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * Returns the file for which {@link FileEditorProvider#createEditor)} was called.
    * The default implementation is temporary, and shall be dropped in the future.
    */
-  default @Nullable VirtualFile getFile() {
+  default VirtualFile getFile() {
     PluginException.reportDeprecatedDefault(getClass(), "getFile", "A proper @NotNull implementation required");
     return FILE_KEY.get(this);
   }
@@ -139,8 +139,8 @@ public interface FileEditor extends UserDataHolder, Disposable {
   /**
    * Returns the files for which {@link com.intellij.ide.SaveAndSyncHandler)} should be called on frame activation.
    */
-  default @NotNull List<VirtualFile> getFilesToRefresh() {
+  default @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
     VirtualFile file = getFile();
-    return file != null ? Collections.singletonList(file) : Collections.emptyList();
+    return file == null ? Collections.emptyList() : Collections.singletonList(file);
   }
 }

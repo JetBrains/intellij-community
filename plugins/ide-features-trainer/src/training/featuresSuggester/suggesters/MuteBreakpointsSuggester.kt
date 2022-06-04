@@ -5,9 +5,9 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.SuggestingUtils.findBreakpointOnPosition
 import training.featuresSuggester.Suggestion
 import training.featuresSuggester.actions.*
-import training.featuresSuggester.findBreakpointOnPosition
 import kotlin.math.abs
 
 class MuteBreakpointsSuggester : AbstractFeatureSuggester() {

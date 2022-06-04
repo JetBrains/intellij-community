@@ -123,7 +123,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
               "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   fun inUndoTransparentAction(): AppUIExecutorImpl {
     return withConstraint(object : ContextConstraint {
       override fun isCorrectContext(): Boolean =
@@ -139,7 +139,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
               "Use runWriteAction instead.", ReplaceWith("this"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval
   fun inWriteAction(): AppUIExecutorImpl {
     return withConstraint(object : ContextConstraint {
       override fun isCorrectContext(): Boolean =
@@ -160,14 +160,14 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
 @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
             "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@ApiStatus.ScheduledForRemoval
 fun AppUIExecutor.inUndoTransparentAction(): AppUIExecutor {
   return (this as AppUIExecutorImpl).inUndoTransparentAction()
 }
 
 @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
             "Use runWriteAction instead.", ReplaceWith("this"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@ApiStatus.ScheduledForRemoval
 fun AppUIExecutor.inWriteAction():AppUIExecutor {
   return (this as AppUIExecutorImpl).inWriteAction()
 }

@@ -13,7 +13,7 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
 abstract class AbstractMavenCatalogDialog(private val project: Project) : DialogWrapper(project, true) {
@@ -44,20 +44,18 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
   override fun createCenterPanel() = panel {
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.label")) {
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
-      val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      val descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)
         .bindText(locationProperty.trim())
         .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateCatalogLocation(location) }
-        .validationOnApply { validateCatalogLocation(location) }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
         .bindText(nameProperty.trim())
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateName() }
-        .validationOnApply { validateName() }
     }
     onApply { onApply() }
   }

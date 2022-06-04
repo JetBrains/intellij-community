@@ -29,10 +29,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlNamespaceHelper;
-import com.intellij.xml.XmlTagNameProvider;
+import com.intellij.xml.*;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.util.XmlUtil;
@@ -57,8 +54,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
     PsiFile psiFile = tag.getContainingFile();
     XmlExtension xmlExtension = XmlExtension.getExtension(psiFile);
-    List<String> nsInfo = new ArrayList<>();
-    List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(tag, namespaces, nsInfo);
+    List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(tag, namespaces, null);
 
     if (psiFile instanceof XmlFile && ((XmlFile) psiFile).getRootTag() == tag) {
       addXmlProcessingInstructions(elements, tag);
@@ -69,8 +65,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
 
     final Set<String> visited = new HashSet<>();
-    for (int i = 0; i < variants.size(); i++) {
-      XmlElementDescriptor descriptor = variants.get(i);
+    for (XmlElementDescriptor descriptor : variants) {
       String qname = descriptor.getName(tag);
       if (!visited.add(qname)) continue;
       if (!prefix.isEmpty() && qname.startsWith(prefix + ":")) {
@@ -81,14 +76,11 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (declaration != null && !declaration.isValid()) {
         LOG.error(descriptor + " contains invalid declaration: " + declaration);
       }
-      LookupElementBuilder lookupElement = declaration == null ? LookupElementBuilder.create(qname) : LookupElementBuilder.create(declaration, qname);
+      LookupElementBuilder lookupElement =
+        declaration == null ? LookupElementBuilder.create(qname) : LookupElementBuilder.create(declaration, qname);
       final int separator = qname.indexOf(':');
       if (separator > 0) {
         lookupElement = lookupElement.withLookupString(qname.substring(separator + 1));
-      }
-      String ns = nsInfo.get(i);
-      if (StringUtil.isNotEmpty(ns)) {
-        lookupElement = lookupElement.withTypeText(ns, true);
       }
       Icon icon = AllIcons.Nodes.Tag;
       if (descriptor instanceof PsiPresentableMetaData) {
@@ -98,7 +90,8 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (xmlExtension.useXmlTagInsertHandler()) {
         lookupElement = lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE);
       }
-      boolean deprecated = descriptor instanceof HtmlElementDescriptorImpl && ((HtmlElementDescriptorImpl)descriptor).isDeprecated();
+      boolean deprecated =
+        descriptor instanceof XmlDeprecationOwnerDescriptor && ((XmlDeprecationOwnerDescriptor)descriptor).isDeprecated();
       if (deprecated) {
         lookupElement = lookupElement.withStrikeoutness(true);
       }

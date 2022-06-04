@@ -19,7 +19,6 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -43,8 +42,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider} methods.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static SpellCheckingEditorCustomization getInstance(boolean enabled) {
     return (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enabled);

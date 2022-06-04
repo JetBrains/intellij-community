@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.containers.Interner;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,8 +85,7 @@ public final class BuildScriptClasspathData extends AbstractExternalEntityData {
     /**
      * @deprecated use ClasspathEntry{@link #create(Set, Set, Set)} to avoid memory leaks
      */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated(forRemoval = true)
     @PropertyMapping({"classesFile", "sourcesFile", "javadocFile"})
     public ClasspathEntry(@NotNull Set<String> classesFile, @NotNull Set<String> sourcesFile, @NotNull Set<String> javadocFile) {
       this.classesFile = classesFile;

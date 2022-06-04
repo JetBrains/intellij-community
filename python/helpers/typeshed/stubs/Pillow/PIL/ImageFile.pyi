@@ -1,8 +1,7 @@
-from typing import Any, NoReturn, TypeVar
+from _typeshed import Self
+from typing import Any, NoReturn
 
 from .Image import Image
-
-_T = TypeVar("_T")
 
 MAXBLOCK: int
 SAFEBLOCK: Any
@@ -10,7 +9,6 @@ LOAD_TRUNCATED_IMAGES: bool
 ERRORS: Any
 
 def raise_oserror(error) -> NoReturn: ...
-def raise_ioerror(error) -> NoReturn: ...
 
 class ImageFile(Image):
     custom_mimetype: Any
@@ -42,7 +40,7 @@ class Parser:
     def reset(self) -> None: ...
     decode: Any
     def feed(self, data) -> None: ...
-    def __enter__(self: _T) -> _T: ...
+    def __enter__(self: Self) -> Self: ...
     def __exit__(self, *args: Any) -> None: ...
     def close(self) -> Image: ...
 

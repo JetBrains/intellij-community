@@ -3,17 +3,17 @@ UFile (package = ) [import java.util.stream.Stream...]
     UClass (name = LambdasKt) [public final class LambdasKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Stream<String>
-                UQualifiedReferenceExpression [Stream.empty().filter({ var it: <ErrorType> ->...})] : PsiType:Stream<String>
+                UQualifiedReferenceExpression [Stream.empty().filter({ var it: java.lang.String ->...})] : PsiType:Stream<String>
                     UQualifiedReferenceExpression [Stream.empty()] : PsiType:Stream<String>
                         USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [empty()] : PsiType:Stream<String>
                             UIdentifier (Identifier (empty)) [UIdentifier (Identifier (empty))]
                             USimpleNameReferenceExpression (identifier = empty, resolvesTo = null) [empty] : PsiType:Stream<String>
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: <ErrorType> ->...})] : PsiType:Stream<String>
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [filter({ var it: java.lang.String ->...})] : PsiType:Stream<String>
                         UIdentifier (Identifier (filter)) [UIdentifier (Identifier (filter))]
                         USimpleNameReferenceExpression (identifier = filter, resolvesTo = null) [filter] : PsiType:Stream<String>
-                        ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super String, ? extends Boolean>
-                            UParameter (name = it) [var it: <ErrorType>]
+                        ULambdaExpression [{ var it: java.lang.String ->...}] : PsiType:Function1<? super String, ? extends Boolean>
+                            UParameter (name = it) [var it: java.lang.String]
                             UBlockExpression [{...}] : PsiType:boolean
                                 UReturnExpression [return it.isEmpty()]
                                     UQualifiedReferenceExpression [it.isEmpty()] : PsiType:boolean
@@ -21,8 +21,8 @@ UFile (package = ) [import java.util.stream.Stream...]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isEmpty()] : PsiType:boolean
                                             UIdentifier (Identifier (isEmpty)) [UIdentifier (Identifier (isEmpty))]
                                             USimpleNameReferenceExpression (identifier = isEmpty, resolvesTo = null) [isEmpty] : PsiType:boolean
-        UMethod (name = doSelectItem) [public static final fun doSelectItem(@org.jetbrains.annotations.NotNull selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
-            UParameter (name = selectItemFunction) [@org.jetbrains.annotations.NotNull var selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
+        UMethod (name = doSelectItem) [public static final fun doSelectItem(@org.jetbrains.annotations.NotNull selectItemFunction: kotlin.jvm.functions.Function0<kotlin.Unit>) : void {...}]
+            UParameter (name = selectItemFunction) [@org.jetbrains.annotations.NotNull var selectItemFunction: kotlin.jvm.functions.Function0<kotlin.Unit>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
@@ -31,10 +31,10 @@ UFile (package = ) [import java.util.stream.Stream...]
                 UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                     ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}]
-                            UBlockExpression [{...}] : PsiType:NonExistentClass
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:NonExistentClass
+                            UBlockExpression [{...}] : PsiType:<ErrorType>
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                     UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
-                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
                     UIdentifier (Identifier (baz)) [UIdentifier (Identifier (baz))]
                     USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit

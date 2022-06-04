@@ -1,20 +1,18 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
+import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
-import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
-import org.jetbrains.kotlin.idea.frontend.api.analyseWithReadAction
-import org.jetbrains.kotlin.idea.frontend.api.symbols.*
-import org.jetbrains.kotlin.idea.references.KtSimpleReference
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
 
@@ -25,15 +23,12 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
 
         fun getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
             when (reference) {
-                is KtArrayAccessReference -> {
-                    TODO("FIR Implement implicit get/set")
-//                    return when {
-//                        //KtFirArrayAccessReference
-////                        context[BindingContext.INDEXED_LVALUE_GET, refExpr] != null -> IMPLICIT_GET
-////                        context[BindingContext.INDEXED_LVALUE_SET, refExpr] != null -> IMPLICIT_SET
-//                        else -> null
-//                    }
-                }
+                is KtArrayAccessReference ->
+                    return when ((functionSymbol as KtFunctionSymbol).name) {
+                        OperatorNameConventions.GET -> IMPLICIT_GET
+                        OperatorNameConventions.SET -> IMPLICIT_SET
+                        else -> error("Expected get or set operator but resolved to unexpected symbol {functionSymbol.render()}")
+                    }
                 is KtInvokeFunctionReference -> return IMPLICIT_INVOKE
             }
 
@@ -44,7 +39,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
 
                 with(refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }) {
                     this?.calleeExpression is KtSimpleNameExpression
-                } -> if (functionSymbol is KtConstructorSymbol) CLASS_NEW_OPERATOR else FUNCTION_CALL //HLAPI resolveCall -> CallInfo ->
+                } -> if (functionSymbol is KtConstructorSymbol) CLASS_NEW_OPERATOR else FUNCTION_CALL
 
                 refExpr.getParentOfTypeAndBranch<KtBinaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtUnaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtWhenConditionInRange> { operationReference } != null -> FUNCTION_CALL
 

@@ -97,6 +97,22 @@ public class GitLineHandler extends GitTextHandler {
     myIgnoreAuthenticationRequest = authenticationMode;
   }
 
+  /** @deprecated Please use overload {@link #setIgnoreAuthenticationMode(AuthenticationMode)}*/
+  @Deprecated(forRemoval = true)
+  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
+    switch (authenticationMode) {
+      case NONE:
+        myIgnoreAuthenticationRequest = AuthenticationMode.NONE;
+        break;
+      case SILENT:
+        myIgnoreAuthenticationRequest = AuthenticationMode.SILENT;
+        break;
+      case FULL:
+        myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
+        break;
+    }
+  }
+
   @Nullable
   public AuthenticationGate getAuthenticationGate() {
     return myAuthenticationGate;

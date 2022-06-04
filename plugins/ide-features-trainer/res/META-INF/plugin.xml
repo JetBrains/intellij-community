@@ -77,7 +77,7 @@
     <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
                              instance="training.ui.FeaturesTrainerSettingsPanel"/>
 
-    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false" icon="training.FeaturesTrainerIcons.Img.FeatureTrainer"/>
+    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"/>
   </extensions>
 
   <actions>

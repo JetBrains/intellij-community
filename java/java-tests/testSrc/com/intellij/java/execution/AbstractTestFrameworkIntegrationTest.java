@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
-import org.junit.Assume;
 
 import java.io.File;
 import java.text.ParseException;
@@ -147,7 +147,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
                                             descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
     }
     catch (Exception e) {
-      Assume.assumeTrue(false);
+      ExternalResourcesChecker.reportUnavailability("Maven artifact " + descriptor.getMavenId(), e);
     }
     assertFalse("No files retrieved for: " + descriptor.getGroupId(), files.isEmpty());
     for (File artifact : files) {

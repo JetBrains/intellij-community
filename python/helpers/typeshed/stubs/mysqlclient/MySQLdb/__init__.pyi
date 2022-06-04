@@ -1,4 +1,4 @@
-from typing import Any, FrozenSet
+from typing import Any
 
 from MySQLdb import connections as connections, constants as constants, converters as converters, cursors as cursors
 from MySQLdb._mysql import (
@@ -35,7 +35,7 @@ threadsafety: int
 apilevel: str
 paramstyle: str
 
-class DBAPISet(FrozenSet[Any]):
+class DBAPISet(frozenset[Any]):
     def __eq__(self, other): ...
 
 STRING: Any

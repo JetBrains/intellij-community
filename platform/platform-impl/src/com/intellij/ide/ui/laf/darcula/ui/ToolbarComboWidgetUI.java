@@ -123,7 +123,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static Rectangle drawText(JComponent c, @NotNull String fullText, int maxWidth, Graphics2D g) {
-    FontMetrics metrics = g.getFontMetrics();
+    FontMetrics metrics = c.getFontMetrics(c.getFont());
     Rectangle clipBounds = g.getClipBounds();
     clipBounds.width = maxWidth;
 
@@ -138,12 +138,13 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
   private static String calcShownText(String text, FontMetrics metrics, int maxWidth) {
     int width = metrics.stringWidth(text);
+    if (width <= maxWidth) return text;
+
     while (width > maxWidth && text.length() > MIN_TEXT_LENGTH) {
       text = text.substring(0, text.length() - 1);
       width = metrics.stringWidth(text + "...");
     }
-
-    return text;
+    return text + "...";
   }
 
   private static int calcMaxTextWidth(ToolbarComboWidget c, Rectangle paintRect) {

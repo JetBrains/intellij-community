@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate
 
+import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
+import com.intellij.codeInsight.hints.VcsCodeVisionProvider
 import com.intellij.codeInsight.hints.isCodeAuthorInlayHintsEnabled
 import com.intellij.codeInsight.hints.refreshCodeAuthorInlayHints
 import com.intellij.ide.PowerSaveMode
@@ -15,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
@@ -48,7 +52,10 @@ internal class AnnotationsPreloader(private val project: Project) {
           annotationProvider.populateCache(file)
           LOG.debug { "Preloaded VCS annotations for ${file.name} in ${System.currentTimeMillis() - start} ms" }
 
-          runInEdt { refreshCodeAuthorInlayHints(project, file) }
+          runInEdt {
+            refreshCodeAuthorInlayHints(project, file)
+            CodeVisionHost.getInstance(project).invalidateProvider(CodeVisionHost.LensInvalidateSignal(null, listOf(VcsCodeVisionProvider.id)))
+          }
         }
         catch (e: VcsException) {
           LOG.info(e)
@@ -77,8 +84,15 @@ internal class AnnotationsPreloader(private val project: Project) {
     private val LOG = logger<AnnotationsPreloader>()
 
     // TODO: check cores number?
-    internal fun isEnabled(): Boolean =
-      (isCodeAuthorInlayHintsEnabled() || AdvancedSettings.getBoolean("vcs.annotations.preload")) && !PowerSaveMode.isEnabled()
+    internal fun isEnabled(): Boolean {
+      if (PowerSaveMode.isEnabled()) return false
+      val enabledInSettings = if (Registry.`is`("editor.codeVision.new")) {
+        CodeVisionSettings.instance().isProviderEnabled(VcsCodeVisionProvider.id)
+      } else {
+        isCodeAuthorInlayHintsEnabled()
+      }
+      return enabledInSettings || AdvancedSettings.getBoolean("vcs.annotations.preload")
+    }
 
     internal fun canPreload(project: Project, file: VirtualFile): Boolean =
       getAnnotationProvider(project, file) != null

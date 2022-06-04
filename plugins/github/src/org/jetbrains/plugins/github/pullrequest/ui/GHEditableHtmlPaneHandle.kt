@@ -3,13 +3,12 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.scale.JBUIScale
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingSubmittableTextFieldModel
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
+import com.intellij.ui.components.panels.VerticalLayout
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingCommentTextFieldModel
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHCommentTextFieldFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import java.util.concurrent.CompletableFuture
@@ -22,7 +21,7 @@ internal open class GHEditableHtmlPaneHandle(private val project: Project,
                                              private val loadSource: () -> CompletableFuture<String>,
                                              private val updateText: (String) -> CompletableFuture<out Any?>) {
 
-  val panel = NonOpaquePanel(VerticalLayout(JBUIScale.scale(8))).apply {
+  val panel = NonOpaquePanel(VerticalLayout(8, VerticalLayout.FILL)).apply {
     add(wrapEditorPane(editorPane))
   }
 
@@ -34,16 +33,16 @@ internal open class GHEditableHtmlPaneHandle(private val project: Project,
     if (editor == null) {
       val placeHolderText = StringUtil.repeatSymbol('\n', Integer.max(0, getLineCount() - 1))
 
-      val model = GHPreLoadingSubmittableTextFieldModel(project, placeHolderText, loadSource()) { newText ->
+      val model = GHPreLoadingCommentTextFieldModel(project, placeHolderText, loadSource()) { newText ->
         updateText(newText).successOnEdt {
           hideEditor()
         }
       }
 
-      editor = GHSubmittableTextFieldFactory(model).create(CommonBundle.message("button.submit"), onCancel = {
+      editor = GHCommentTextFieldFactory(model).create(CommonBundle.message("button.submit"), onCancel = {
         hideEditor()
       })
-      panel.add(editor!!, VerticalLayout.FILL_HORIZONTAL)
+      panel.add(editor!!)
       panel.validate()
       panel.repaint()
     }

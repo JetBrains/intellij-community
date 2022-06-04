@@ -177,10 +177,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironment,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
-    super.customizePythonExecutionEnvironmentVars(targetEnvironment, envs, passParentEnvs);
+  protected void customizePythonExecutionEnvironmentVars(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
+    super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs);
     if (emulateTerminal()) {
       if (!SystemInfo.isWindows) {
         envs.put("TERM", TargetEnvironmentFunctions.constant("xterm-256color"));

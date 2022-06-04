@@ -35,7 +35,7 @@ import com.intellij.ui.layout.Row as RowV1
 
 
 @Deprecated("Please, migrate on Kotlin UI DSL Version 2")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 fun RowV1.sdkComboBox(
   sdkModel: ProjectSdksModel,
   sdkProperty: GraphProperty<Sdk?>,
@@ -46,7 +46,7 @@ fun RowV1.sdkComboBox(
 }
 
 @Deprecated("Please, recompile code", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 fun Row.sdkComboBox(
   context: WizardContext,
   sdkProperty: GraphProperty<Sdk?>,

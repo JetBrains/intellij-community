@@ -35,6 +35,7 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
                        distribution: AbstractWslDistribution,
                        linToWinCopy: Boolean = true,
                        onlyExtensions: Array<String> = emptyArray()) {
+      LOGGER.info("Sync " + if (linToWinCopy) "$linuxDir -> $windowsDir" else "$windowsDir -> $linuxDir")
       val win = WindowsFileStorage(windowsDir, distribution, onlyExtensions)
       val lin = LinuxFileStorage(linuxDir, distribution, onlyExtensions)
       if (linToWinCopy) {
@@ -48,6 +49,7 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
 
   init {
     if (dest.isEmpty()) { //Shortcut: no need to sync anything, just copy everything
+      LOGGER.info("Destination folder is empty, will copy all files")
       copyFilesInParallel(source.getAllFilesInDir())
     }
     else {
@@ -90,7 +92,9 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
    * It may split files to the several chunks to copy them in parallel, see [MIN_CHUNK_SIZE]
    */
   private fun copyFilesInParallel(filesToCopy: Collection<String>) {
-    if (filesToCopy.isEmpty()) return
+    if (filesToCopy.isEmpty()) {
+      LOGGER.info("Nothing to copy: all files are same")
+    }
     LOGGER.info("Will copy ${filesToCopy.size} files")
     // Copy files in parallel
     // 4 suggested by V.Lagunov and https://pkolaczk.github.io/disk-parallelism/

@@ -62,7 +62,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
     StorageId hashesStorageId = new StorageId(project.getName(), HASHES_STORAGE, logId, VERSION);
-    StorageLockContext storageLockContext = new StorageLockContext(true);
+    StorageLockContext storageLockContext = new StorageLockContext();
 
     myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageId, commitIdKeyDescriptor,
                                                                                                storageLockContext),

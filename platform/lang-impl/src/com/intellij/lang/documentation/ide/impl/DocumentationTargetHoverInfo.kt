@@ -6,6 +6,7 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
+import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.waitForContent
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
@@ -50,12 +51,12 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
         return@runBlockingCancellable null
       }
     }
-    val (browser, browseJob) = DocumentationBrowser.createBrowserAndGetJob(project, request)
+    val browser = DocumentationBrowser.createBrowser(project, request)
     withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
       // to avoid flickering: wait a bit before showing the hover popup,
       // otherwise, the popup will be shown with "Fetching..." message,
       // which will immediately get replaced with loaded docs
-      browseJob.join()
+      browser.waitForContent()
     }
     DocumentationTargetHoverInfo(browser)
   }

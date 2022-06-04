@@ -780,21 +780,21 @@ object UpdateChecker {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
   @Suppress("DEPRECATION")
   @JvmField
   val NOTIFICATIONS =
     NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
 
-  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
   @Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
   @JvmStatic
   val disabledToUpdatePlugins: Set<String>
     get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use checkForPluginUpdates", replaceWith = ReplaceWith(""))
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =

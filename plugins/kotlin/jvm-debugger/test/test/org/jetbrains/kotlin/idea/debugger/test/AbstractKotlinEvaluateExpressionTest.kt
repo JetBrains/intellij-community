@@ -10,11 +10,11 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
-import com.intellij.debugger.impl.OutputChecker
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.ObjectReference
 import org.jetbrains.eval4j.ObjectValue
@@ -29,12 +29,10 @@ import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinterDelegate
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
-import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
-import org.jetbrains.kotlin.test.TargetBackend
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.tree.TreeNode
@@ -190,7 +188,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
                         this@AbstractKotlinEvaluateExpressionTest.project
                     )
                 }
-                    ?: throw AssertionError("Cannot create an Evaluator for Evaluate Expression")
 
                 val value = evaluator.evaluate(evaluationContext)
                 val actualResult = value.asValue().asString()
@@ -234,22 +231,10 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
         }
     }
 
-    override fun initOutputChecker(): OutputChecker {
-        return KotlinOutputChecker(
-            getTestDataPath(),
-            testAppPath,
-            appOutputPath,
-            targetBackend(),
-            getExpectedOutputFile()
-        )
-    }
-
     override fun throwExceptionsIfAny() {
+        super.throwExceptionsIfAny()
         if (exceptions.isNotEmpty()) {
-            val outputFile = getExpectedOutputFile()
-            val isIgnored = outputFile.exists() && InTextDirectivesUtils.isIgnoredTarget(targetBackend(), outputFile)
-
-            if (!isIgnored) {
+            if (!isTestIgnored()) {
                 for (exc in exceptions.values) {
                     exc.printStackTrace()
                 }

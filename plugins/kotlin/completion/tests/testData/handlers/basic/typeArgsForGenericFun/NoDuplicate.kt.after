@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // FIR_COMPARISON
 fun <T> create(): List<T> = listOf()
 fun test() {

@@ -6,8 +6,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import java.net.URL
 import kotlin.io.path.Path
@@ -23,6 +23,14 @@ internal fun createCatalog(name: String, location: String): MavenCatalog? {
     val url = getUrlOrNull(location) ?: return null
     return MavenCatalog.Remote(name, url)
   }
+}
+
+internal fun createCatalog(location: String): MavenCatalog? {
+  if (location.isNotEmpty()) {
+    val name = suggestCatalogNameByLocation(location)
+    return createCatalog(name, location)
+  }
+  return null
 }
 
 internal fun getPathOrError(location: String) = runCatching { Path(FileUtil.expandUserHome(location)) }

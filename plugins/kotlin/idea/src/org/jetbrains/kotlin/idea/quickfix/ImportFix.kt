@@ -2,15 +2,12 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.codeInspection.HintAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal open class ImportFix(expression: KtSimpleNameExpression) : AbstractImportFix(expression, MyFactory) {
     override fun elementsToCheckDiagnostics(): Collection<PsiElement> {
@@ -19,8 +16,6 @@ internal open class ImportFix(expression: KtSimpleNameExpression) : AbstractImpo
     }
 
     companion object MyFactory : Factory() {
-        private val lazyImportSuggestionCalculation = Registry.`is`("kotlin.lazy.import.suggestions", false)
-
         override fun createImportAction(diagnostic: Diagnostic): ImportFix? {
             val simpleNameExpression = when (val element = diagnostic.psiElement) {
                 is KtSimpleNameExpression -> element
@@ -28,7 +23,7 @@ internal open class ImportFix(expression: KtSimpleNameExpression) : AbstractImpo
                 else -> null
             } as? KtSimpleNameExpression ?: return null
 
-            val hintsEnabled = !lazyImportSuggestionCalculation || ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(diagnostic.psiFile)
+            val hintsEnabled = AbstractImportFixInfo.isHintsEnabled(diagnostic.psiFile)
             return if (hintsEnabled) ImportFixWithHint(simpleNameExpression) else ImportFix(simpleNameExpression)
         }
     }

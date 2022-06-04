@@ -33,23 +33,34 @@ ossaudiodev
 spwd
 
 # Platform differences that cannot be captured by the type system
-fcntl.[A-Z0-9_]+
 os.SCHED_[A-Z_]+
 posix.SCHED_[A-Z_]+
+
+# Some of these exist on non-windows, but they are useless and this is not intended
+stat.FILE_ATTRIBUTE_[A-Z_]+
 
 # Loadable SQLite extensions are disabled on GitHub runners
 (sqlite3(.dbapi2)?.Connection.enable_load_extension)?
 (sqlite3(.dbapi2)?.Connection.load_extension)?
+
+# Methods that come from __getattr__() at runtime
+tkinter.Tk.createfilehandler
+tkinter.Tk.deletefilehandler
 
 # Exists at runtime, but missing from stubs
 distutils.msvccompiler.MSVCCompiler.get_msvc_paths
 distutils.msvccompiler.MSVCCompiler.set_path_env_var
 distutils.msvccompiler.MacroExpander
 mimetypes.MimeTypes.read_windows_registry
-os.ST_NOSUID
-os.ST_RDONLY
 selectors.DefaultSelector.fileno
 socket.AddressInfo.AI_DEFAULT
 socket.AddressInfo.AI_MASK
 socket.AddressInfo.AI_V4MAPPED_CFG
 socket.MsgFlag.MSG_EOF
+
+posix.NGROUPS_MAX
+posix.error.characters_written
+resource.error.characters_written
+select.POLLRDHUP
+webbrowser.MacOSX.__init__
+webbrowser.MacOSXOSAScript.__init__

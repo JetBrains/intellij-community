@@ -1,4 +1,4 @@
-from typing import Any, Iterable, List, TypeVar
+from typing import Any, Iterable, TypeVar
 from xml.etree.ElementTree import Element, ElementTree
 
 from . import Markdown
@@ -6,7 +6,7 @@ from .util import Registry
 
 _T = TypeVar("_T")
 
-class State(List[_T]):
+class State(list[_T]):
     def set(self, state: _T) -> None: ...
     def reset(self) -> None: ...
     def isstate(self, state: _T) -> bool: ...

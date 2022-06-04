@@ -308,7 +308,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (isFlatFlow) {
       FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(closure);
       myFunctionalScopeStack.addLast(closure);
-      addNode(startClosure);
+      addNodeAndCheckPending(startClosure);
       addFunctionalExpressionParameters(closure);
       addControlFlowInstructions(closure);
       InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);

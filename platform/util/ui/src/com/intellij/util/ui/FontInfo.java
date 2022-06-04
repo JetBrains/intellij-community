@@ -20,14 +20,14 @@ public final class FontInfo {
                                                               // (we're making it even larger to account with >1 monitor scales)
 
   private final String myName;
-  private final int myDefaultSize;
+  private final float myDefaultSize;
   private final boolean myMonospaced;
   private volatile Font myFont;
 
   private FontInfo(String name, Font font, boolean monospaced) {
     myName = name;
     myFont = font;
-    myDefaultSize = font.getSize();
+    myDefaultSize = font.getSize2D();
     myMonospaced = monospaced;
   }
 
@@ -50,9 +50,17 @@ public final class FontInfo {
    * @return a font with the specified size
    */
   public Font getFont(int size) {
+    return getFont((float)size);
+  }
+
+  /**
+   * @param size required font size
+   * @return a font with the specified size
+   */
+  public Font getFont(float size) {
     Font font = myFont;
-    if (size != font.getSize()) {
-      font = font.deriveFont((float)size);
+    if (size != font.getSize2D()) {
+      font = font.deriveFont(size);
       myFont = font;
     }
     return font;
@@ -167,7 +175,7 @@ public final class FontInfo {
           throw new IllegalArgumentException("not supported " + font);
         }
       }
-      else if (DEFAULT_SIZE != font.getSize()) {
+      else if ((float)DEFAULT_SIZE != font.getSize2D()) {
         font = font.deriveFont((float)DEFAULT_SIZE);
         name = font.getFontName(ENGLISH);
       }

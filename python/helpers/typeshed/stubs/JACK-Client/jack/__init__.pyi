@@ -1,3 +1,4 @@
+from _typeshed import Self
 from typing import Any, Callable, Generator, Iterable, Iterator, Sequence, overload
 
 _NDArray = Any  # FIXME: no typings for numpy arrays
@@ -50,6 +51,8 @@ class Client:
         servername: str | None = ...,
         session_id: str | None = ...,
     ) -> None: ...
+    def __enter__(self: Self) -> Self: ...
+    def __exit__(self, *args: object) -> None: ...
     @property
     def name(self) -> str: ...
     @property

@@ -37,7 +37,7 @@ public final class TabsUtil {
     UISettings uiSettings = UISettings.getInstance();
     Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
     if (uiSettings.getOverrideLafFonts()) {
-      return font.deriveFont((float)uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
+      return font.deriveFont(uiSettings.getFontSize2D() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
     }
 
     return font;

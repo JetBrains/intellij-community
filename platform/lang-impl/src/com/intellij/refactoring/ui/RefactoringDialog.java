@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.Refactoring;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
@@ -177,8 +178,12 @@ public abstract class RefactoringDialog extends DialogWrapper {
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
   }
-  
+
   protected void validateButtonsAsync() {
+    validateButtonsAsync(ModalityState.stateForComponent(getContentPanel()));
+  }
+
+  protected void validateButtonsAsync(@NotNull ModalityState modalityState) {
     setErrorText(null);
     ReadAction.nonBlocking(() -> {
         try {
@@ -188,7 +193,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
         catch (ConfigurationException e) {
           return e;
         }
-      }).finishOnUiThread(ModalityState.stateForComponent(getContentPanel()), e -> {
+      }).finishOnUiThread(modalityState, e -> {
         if (e != null) {
           setErrorText(e.getMessage());
         }
@@ -257,6 +262,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
   protected void invokeRefactoring(BaseRefactoringProcessor processor) {
     final Runnable prepareSuccessfulCallback = () -> close(DialogWrapper.OK_EXIT_CODE);
     processor.setPrepareSuccessfulSwingThreadCallback(prepareSuccessfulCallback);
+    processor.setPreviewUsages(isPreviewUsages());
+    processor.run();
+  }
+  
+  protected void invokeRefactoring(Refactoring processor) {
+    final Runnable prepareSuccessfulCallback = () -> close(DialogWrapper.OK_EXIT_CODE);
+    processor.setInteractive(prepareSuccessfulCallback);
     processor.setPreviewUsages(isPreviewUsages());
     processor.run();
   }

@@ -7,7 +7,6 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +52,12 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setEditorFontName(String fontName);
 
   int getEditorFontSize();
+  /**
+   * Floating-point version of {@link #getEditorFontSize()}
+   */
+  default float getEditorFontSize2D() {
+    return getEditorFontSize();
+  }
 
   /**
    * Sets font size. Note, that this method checks that {@code fontSize} is within bounds and could change it if it is
@@ -61,21 +66,25 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setEditorFontSize(int fontSize);
+  /**
+   * Floating-point version of {@link #setEditorFontSize(int)}
+   */
+  default void setEditorFontSize(float fontSize) {
+    setEditorFontSize((int)(fontSize + 0.5));
+  }
 
   /**
    * @deprecated Quick documentation component's font size is stored in application level property, and can be obtained
    * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#getQuickDocFontSize()}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default FontSize getQuickDocFontSize() { return FontSize.SMALL; }
 
   /**
    * @deprecated Quick documentation component's font size is stored in application level property, and can be set
    * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#setQuickDocFontSize(FontSize)}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default void setQuickDocFontSize(@NotNull FontSize fontSize) {}
 
   @NotNull
@@ -85,8 +94,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @deprecated Use {@link #getFontPreferences()} and {@link ModifiableFontPreferences}
    * to change fonts.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   void setFont(EditorFontType key, Font font);
 
   float getLineSpacing();
@@ -125,7 +133,19 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setConsoleFontName(String fontName);
 
   int getConsoleFontSize();
+  /**
+   * Floating-point version of {@link #getConsoleFontSize()}
+   */
+  default float getConsoleFontSize2D() {
+    return getConsoleFontSize();
+  }
   void setConsoleFontSize(int fontSize);
+  /**
+   * Floating-point version of {@link #setConsoleFontSize(int)}
+   */
+  default void setConsoleFontSize(float fontSize) {
+    setConsoleFontSize((int)(fontSize + 0.5));
+  }
 
   float getConsoleLineSpacing();
   void setConsoleLineSpacing(float lineSpacing);

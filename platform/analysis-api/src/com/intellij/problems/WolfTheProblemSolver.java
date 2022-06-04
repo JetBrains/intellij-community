@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -56,8 +55,7 @@ public abstract class WolfTheProblemSolver {
   /**
    * @deprecated use {@link com.intellij.problems.ProblemListener} directly
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract static class ProblemListener implements com.intellij.problems.ProblemListener {
     @Override
     public void problemsAppeared(@NotNull VirtualFile file) {}
@@ -69,8 +67,7 @@ public abstract class WolfTheProblemSolver {
   /**
    * @deprecated Use message bus {@link ProblemListener#TOPIC} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void addProblemListener(@NotNull ProblemListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void queue(@NotNull VirtualFile suspiciousFile);

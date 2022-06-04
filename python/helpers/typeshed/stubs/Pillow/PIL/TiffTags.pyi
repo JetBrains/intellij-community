@@ -1,4 +1,4 @@
-from typing import Any, Dict, NamedTuple, Tuple, Union
+from typing import Any, NamedTuple, Union
 from typing_extensions import Literal
 
 class _TagInfo(NamedTuple):
@@ -36,7 +36,7 @@ DOUBLE: Literal[12]
 IFD: Literal[13]
 
 _TagType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-_TagTuple = Union[Tuple[str, _TagType, int], Tuple[str, _TagInfo, int, Dict[str, int]]]
+_TagTuple = Union[tuple[str, _TagType, int], tuple[str, _TagInfo, int, dict[str, int]]]
 
 TAGS_V2: dict[int, _TagTuple]
 TAGS_V2_GROUPS: dict[int, dict[int, _TagTuple]]

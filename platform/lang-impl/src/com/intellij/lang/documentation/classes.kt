@@ -5,8 +5,26 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.progress.withJob
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
+import java.awt.Image
+import java.util.function.Consumer
 import java.util.function.Supplier
+
+internal data class DocumentationContentData internal constructor(
+  val html: @Nls String,
+  val imageResolver: DocumentationImageResolver?,
+) : DocumentationContent
+
+internal data class LinkData(
+  val externalUrl: String? = null,
+  val linkUrls: List<String> = emptyList(),
+)
 
 internal class AsyncDocumentation(
   val supplier: AsyncSupplier<DocumentationResult.Data?>
@@ -30,4 +48,25 @@ internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
       this@asAsyncSupplier.get()
     }
   }
+}
+
+internal fun imageResolver(map: Map<String, Image>): DocumentationImageResolver? {
+  if (map.isEmpty()) {
+    return null
+  }
+  return DocumentationImageResolver(map.toMap()::get)
+}
+
+@Suppress("OPT_IN_USAGE")
+internal fun <X> Consumer<in Consumer<in X>>.asFlow(): Flow<X> {
+  val flow = channelFlow {
+    withJob {
+      accept { content ->
+        check(trySend(content).isSuccess) // sanity check
+      }
+    }
+  }
+  return flow
+    .buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    .flowOn(Dispatchers.IO)
 }

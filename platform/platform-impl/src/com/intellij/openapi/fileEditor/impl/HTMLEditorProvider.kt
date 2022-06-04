@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.ide.browsers.actions.WebPreviewFileType
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.DumbAware
@@ -16,14 +14,10 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val fileEditor = file.getUserData(EDITOR_KEY)
-    return if (fileEditor != null) fileEditor else {
-      val newEditor = HTMLFileEditor(project, file as LightVirtualFile, file.getUserData(AFFINITY_KEY)!!)
-      file.putUserData(EDITOR_KEY, newEditor)
-      newEditor
-    }
-  }
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor =
+    file.getUserData(EDITOR_KEY) ?:
+    HTMLFileEditor(project, file as LightVirtualFile, file.getUserData(AFFINITY_KEY)!!)
+      .also { file.putUserData(EDITOR_KEY, it) }
 
   override fun accept(project: Project, file: VirtualFile): Boolean =
     JBCefApp.isSupported() && isHTMLEditor(file)
@@ -37,11 +31,13 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     val EDITOR_KEY: Key<FileEditor> = Key.create("html.editor.component.key")
 
     @JvmStatic
+    @Suppress("DEPRECATION")
     fun openEditor(project: Project, @DialogTitle title: String, @DetailedDescription html: String) {
       HTMLEditorProviderManager.getInstance(project).openEditor(title, html)
     }
 
     @JvmStatic
+    @Suppress("DEPRECATION")
     fun openEditor(project: Project, @DialogTitle title: String, url: String, @DetailedDescription timeoutHtml: String? = null) {
       HTMLEditorProviderManager.getInstance(project).openEditor(title,url, timeoutHtml)
     }

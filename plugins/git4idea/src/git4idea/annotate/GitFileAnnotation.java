@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 public final class GitFileAnnotation extends FileAnnotation {
@@ -278,6 +279,7 @@ public final class GitFileAnnotation extends FileAnnotation {
           shownInLog = CompletableFuture.completedFuture(false); // can't use log tabs in modal dialogs (ex: commit, merge)
         }
         shownInLog.whenCompleteAsync((success, ex) -> {
+          if (ex instanceof CancellationException) return;
           if (ex != null) {
             LOG.error(ex);
           }

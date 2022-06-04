@@ -19,7 +19,7 @@ object RunnableManager {
     }
 
     fun runAll() {
-        for (t : tasks) {
+        for (t in tasks) {
             Thread(t).start()
         }
     }

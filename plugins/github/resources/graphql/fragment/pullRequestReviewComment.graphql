@@ -3,15 +3,12 @@ fragment pullRequestReviewComment on PullRequestReviewComment {
     databaseId
     url
     state
-    path
     commit {
         ...commitHash
     }
-    position
     originalCommit {
         ...commitHash
     }
-    originalPosition
     replyTo {
         ...nodeInfo
     }

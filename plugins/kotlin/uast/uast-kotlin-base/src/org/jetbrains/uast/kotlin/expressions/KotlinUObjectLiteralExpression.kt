@@ -47,7 +47,7 @@ class KotlinUObjectLiteralExpression(
     override val typeArguments by lz {
         val psi = superClassConstructorCall ?: return@lz emptyList<PsiType>()
         psi.typeArguments.map { typeArgument ->
-            typeArgument.typeReference?.let { baseResolveProviderService.resolveToType(it, this) } ?: UastErrorType
+            typeArgument.typeReference?.let { baseResolveProviderService.resolveToType(it, this, boxed = true) } ?: UastErrorType
         }
     }
 

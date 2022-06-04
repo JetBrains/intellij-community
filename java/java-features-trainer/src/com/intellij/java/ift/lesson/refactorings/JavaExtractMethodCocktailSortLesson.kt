@@ -35,7 +35,7 @@ class JavaExtractMethodCocktailSortLesson
       task {
         text(JavaLessonsBundle.message("java.extract.method.edit.method.name", rawEnter()))
 
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
+        triggerUI().component { dialog: JDialog ->
           dialog.title == processDuplicatesTitle
         }
 

@@ -6,7 +6,7 @@ class BuildSystemType(
     val name: String,
     val language: String,
     @Deprecated("This property will be removed soon as it is unused.")
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @ApiStatus.ScheduledForRemoval
     val statisticsKey: String
 ) {
 

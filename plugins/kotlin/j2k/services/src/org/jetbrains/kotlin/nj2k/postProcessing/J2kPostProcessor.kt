@@ -123,15 +123,15 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
         ),
 
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveProjectionFactory(true),
+            RemoveModifierFixBase.createRemoveProjectionFactory(true),
             Errors.REDUNDANT_PROJECTION
         ),
         diagnosticBasedProcessing(
-            AddModifierFixMpp.createFactory(KtTokens.OVERRIDE_KEYWORD),
-            Errors.VIRTUAL_MEMBER_HIDDEN
+          AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD),
+          Errors.VIRTUAL_MEMBER_HIDDEN
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
+            RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
             Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS, Errors.NON_FINAL_MEMBER_IN_OBJECT
         ),
         diagnosticBasedProcessing(
@@ -139,7 +139,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.INVISIBLE_MEMBER
         ),
         diagnosticBasedProcessing(
-            RemoveModifierFix.removeNonRedundantModifier,
+            RemoveModifierFixBase.removeNonRedundantModifier,
             Errors.WRONG_MODIFIER_TARGET
         ),
         diagnosticBasedProcessing(
@@ -147,7 +147,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.EXPOSED_FUNCTION_RETURN_TYPE,
             Errors.EXPOSED_PARAMETER_TYPE,
             Errors.EXPOSED_PROPERTY_TYPE,
-            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR,
+            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.errorFactory,
+            Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.warningFactory,
             Errors.EXPOSED_RECEIVER_TYPE,
             Errors.EXPOSED_SUPER_CLASS,
             Errors.EXPOSED_SUPER_INTERFACE

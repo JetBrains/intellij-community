@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -106,7 +106,7 @@ class KotlinParameterInfo(
     }
 
     fun getInheritedName(inheritedCallable: KotlinCallableDefinitionUsage<*>): String {
-        val name = Name.identifier(name).render()
+        val name = this.name.quoteIfNeeded()
         if (!inheritedCallable.isInherited) return name
 
         val baseFunction = inheritedCallable.baseFunction
@@ -156,7 +156,7 @@ class KotlinParameterInfo(
             buffer.append(valOrVar).append(' ')
         }
 
-        buffer.append(getInheritedName(inheritedCallable).quoteIfNeeded())
+        buffer.append(getInheritedName(inheritedCallable))
 
         if (requiresExplicitType(inheritedCallable)) {
             buffer.append(": ").append(renderType(parameterIndex, inheritedCallable))

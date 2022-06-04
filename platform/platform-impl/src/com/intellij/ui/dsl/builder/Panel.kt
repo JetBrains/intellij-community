@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.impl.toBindingInternal
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -95,7 +95,7 @@ interface Panel : CellBase<Panel> {
             init: Panel.() -> Unit): Row
 
   @Deprecated("Use overloaded group(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun group(@NlsContexts.BorderTitle title: String? = null,
             indent: Boolean = true,
             topGroupGap: Boolean? = null,
@@ -125,7 +125,7 @@ interface Panel : CellBase<Panel> {
                        init: Panel.() -> Unit): CollapsibleRow
 
   @Deprecated("Use overloaded collapsibleGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun collapsibleGroup(@NlsContexts.BorderTitle title: String,
                        indent: Boolean = true,
                        topGroupGap: Boolean? = null,
@@ -133,11 +133,11 @@ interface Panel : CellBase<Panel> {
                        init: Panel.() -> Unit): CollapsiblePanel
 
   @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun buttonGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit)
 
   @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String? = null,
                       indent: Boolean = title != null, init: Panel.() -> Unit)
 
@@ -174,10 +174,12 @@ interface Panel : CellBase<Panel> {
    * @param validationRequestor gets callback (component validator) that should be subscribed on custom event.
    */
   fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): Panel
+
+  fun validationRequestor(validationRequestor: DialogValidationRequestor): Panel
 }
 
 @Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
                                                noinline setter: (T) -> Unit,
                                                title: @NlsContexts.BorderTitle String? = null,
@@ -187,7 +189,7 @@ inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
 }
 
 @Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {
@@ -195,7 +197,7 @@ inline fun <reified T : Any> Panel.buttonGroup(prop: KMutableProperty0<T>, title
 }
 
 @Deprecated("Use buttonsGroup(...) instead")
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@ApiStatus.ScheduledForRemoval
 inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, title: @NlsContexts.BorderTitle String? = null,
                                                indent: Boolean = title != null,
                                                crossinline init: Panel.() -> Unit) {

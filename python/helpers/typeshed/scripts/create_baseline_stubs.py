@@ -44,7 +44,7 @@ def get_installed_package_info(project: str) -> Optional[Tuple[str, str]]:
 
 def run_stubgen(package: str) -> None:
     print(f"Running stubgen: stubgen -p {package}")
-    subprocess.run(["python", "-m", "mypy.stubgen", "-p", package], check=True)
+    subprocess.run(["stubgen", "-p", package], check=True)
 
 
 def copy_stubs(src_base_dir: str, package: str, stub_dir: str) -> None:

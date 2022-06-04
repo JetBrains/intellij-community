@@ -67,15 +67,13 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   /**
    * @deprecated use {@link ChangeListManager#editComment}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void setComment(@Nullable String comment);
 
   /**
    * @deprecated use {@link ChangeListManager#setReadOnly}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract void setReadOnly(boolean isReadOnly);
 
   public static @NotNull @NlsSafe String getDefaultName() {

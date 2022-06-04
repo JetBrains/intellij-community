@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
@@ -558,16 +557,16 @@ public final class TextDiffViewerUtil {
     public void propertyChange(PropertyChangeEvent evt) {
       if (myDuringUpdate) return;
 
-      if (!EditorEx.PROP_FONT_SIZE.equals(evt.getPropertyName())) return;
+      if (!EditorEx.PROP_FONT_SIZE_2D.equals(evt.getPropertyName())) return;
       if (evt.getOldValue().equals(evt.getNewValue())) return;
-      int fontSize = ((Integer)evt.getNewValue()).intValue();
+      float fontSize = ((Float)evt.getNewValue()).floatValue();
 
       for (EditorEx editor : myEditors) {
         if (evt.getSource() != editor) updateEditor(editor, fontSize);
       }
     }
 
-    public void updateEditor(@NotNull EditorEx editor, int fontSize) {
+    public void updateEditor(@NotNull EditorEx editor, float fontSize) {
       try {
         myDuringUpdate = true;
         editor.setFontSize(fontSize);

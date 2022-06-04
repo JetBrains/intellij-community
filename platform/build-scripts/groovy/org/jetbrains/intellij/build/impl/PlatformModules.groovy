@@ -96,6 +96,7 @@ final class PlatformModules {
     "intellij.platform.projectModel.impl",
     "intellij.platform.macro",
     "intellij.platform.execution.impl",
+    "intellij.platform.wsl.impl",
     "intellij.platform.externalSystem.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
@@ -121,6 +122,7 @@ final class PlatformModules {
     "intellij.platform.feedback",
     "intellij.platform.warmup",
     "intellij.platform.buildScripts.downloader",
+    "intellij.platform.usageView.impl",
     )
 
   private static final String UTIL_JAR = "util.jar"

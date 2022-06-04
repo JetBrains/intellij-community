@@ -17,7 +17,6 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,8 +90,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
    * @deprecated SimpleCoverageAnnotator doesn't require normalized file paths any more
    * so now coverage report should work w/o usage of this method
   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static String getFilePath(final String filePath) {
     return normalizeFilePath(filePath);
   }

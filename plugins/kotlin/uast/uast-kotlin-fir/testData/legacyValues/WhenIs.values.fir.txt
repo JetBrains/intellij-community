@@ -10,14 +10,14 @@ UFile (package = ) [public final class WhenIsKt {...]
                         UExpressionList (when) [    it is java.lang.String -> {...    ] = Undetermined
                             USwitchClauseExpressionWithBody [it is java.lang.String -> {...] = Undetermined
                                 UBinaryExpressionWithType [it is java.lang.String] = Undetermined
-                                    USimpleNameReferenceExpression (identifier = it) [it] = Nothing
+                                    USimpleNameReferenceExpression (identifier = it) [it] = external it()
                                     UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
                                 UExpressionList (when_entry) [{...] = Undetermined
                                     UYieldExpression [yield bar] = UYieldResult(Undetermined)
                                         USimpleNameReferenceExpression (identifier = bar) [bar] = Undetermined
                             USwitchClauseExpressionWithBody [it !is java.lang.String -> {...] = Undetermined
                                 UBinaryExpressionWithType [it !is java.lang.String] = Undetermined
-                                    USimpleNameReferenceExpression (identifier = it) [it] = Nothing
+                                    USimpleNameReferenceExpression (identifier = it) [it] = external it()
                                     UTypeReferenceExpression (name = java.lang.String) [java.lang.String] = Undetermined
                                 UExpressionList (when_entry) [{...] = Undetermined
                                     UYieldExpression [yield "<error>"] = UYieldResult("<error>")

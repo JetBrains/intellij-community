@@ -5,19 +5,8 @@ package org.jetbrains.kotlin
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 
-fun <R> executeOnPooledThreadInReadAction(action: () -> R): R? {
-    var exception: Exception? = null
-    val result = ApplicationManager.getApplication().executeOnPooledThread<R> {
-        try {
-            runReadAction(action)
-        } catch (e: Exception) {
-            exception = e
-            null
-        }
-    }.get()
+fun <R> executeOnPooledThreadInReadAction(action: () -> R): R {
+    val result = ApplicationManager.getApplication().executeOnPooledThread<R> { runReadAction(action) }
 
-    exception?.run {
-        throw this
-    }
-    return result
+    return result.get()
 }

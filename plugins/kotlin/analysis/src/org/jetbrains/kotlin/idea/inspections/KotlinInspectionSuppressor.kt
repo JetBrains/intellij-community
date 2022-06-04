@@ -31,5 +31,5 @@ class KotlinInspectionSuppressor : InspectionSuppressor {
 
     override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean = KotlinCacheService.getInstance(element.project)
         .getSuppressionCache()
-        .isSuppressed(element, toolId, Severity.WARNING)
+        .isSuppressed(element, element.containingFile, toolId, Severity.WARNING)
 }

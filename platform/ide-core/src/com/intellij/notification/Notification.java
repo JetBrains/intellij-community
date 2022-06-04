@@ -48,8 +48,8 @@ import static com.intellij.openapi.util.NlsContexts.*;
  */
 public class Notification {
   /**
-   * Tells which actions to keep (i.e. do not put under the "Actions" dropdown) when actions do not fit horizontally
-   * into the width of the notification.
+   * Tells which actions to keep when actions do not fit horizontally into the width of the notification
+   * (i.e. do not put under the "Actions" dropdown).
    */
   public enum CollapseActionsDirection {KEEP_LEFTMOST, KEEP_RIGHTMOST}
 
@@ -152,11 +152,6 @@ public class Notification {
 
   public @NotNull String getGroupId() {
     return myGroupId;
-  }
-
-  public void configureDoNotAskOption(@NotNull String id, @NotNull @Nls String displayName) {
-    myDoNotAskId = id;
-    myDoNotAskDisplayName = displayName;
   }
 
   public boolean canShowFor(@Nullable Project project) {

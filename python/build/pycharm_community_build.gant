@@ -1,5 +1,0 @@
-import org.jetbrains.intellij.build.BuildTasks
-
-target("default": "Default") {
-  BuildTasks.buildProduct("org.jetbrains.intellij.build.pycharm.PyCharmCommunityProperties", ["python/build/groovy"], "", this)
-}

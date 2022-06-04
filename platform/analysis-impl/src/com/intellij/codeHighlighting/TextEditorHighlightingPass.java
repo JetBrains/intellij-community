@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -42,7 +42,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myProject = project;
     myRunIntentionPassAfter = runIntentionPassAfter;
     myInitialDocStamp = document.getModificationStamp();
-    myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
+    myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(project).getModificationCount();
   }
   protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document) {
     this(project, document, true);
@@ -74,6 +74,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     return (Condition<Object>)o -> ReadAction.compute(() -> !isValid());
   }
 
+  /**
+   * @return true if the file being highlighted hasn't changed since the pass instantiation and the highlighting results can be applied safely.
+   */
   protected boolean isValid() {
     if (myProject.isDisposed()) {
       return false;

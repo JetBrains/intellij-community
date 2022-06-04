@@ -50,8 +50,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * @deprecated please use {@link KillableProcessHandler#KillableProcessHandler(GeneralCommandLine)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
     this(mediate(commandLine, withMediator, false));
   }
@@ -82,8 +81,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   /**
    * @deprecated just don't use this method
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   @NotNull
   protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows) {
@@ -166,8 +164,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * @deprecated graceful termination with WinP is enabled by default; please don't use this method
    */
   @ApiStatus.Experimental
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(forRemoval = true)
   public void setShouldKillProcessSoftlyWithWinP(boolean shouldKillProcessSoftlyWithWinP) {
     myShouldKillProcessSoftlyWithWinP = shouldKillProcessSoftlyWithWinP;
   }
