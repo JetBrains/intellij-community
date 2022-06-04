@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
@@ -169,6 +170,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     checkAvailability();
+    ProgressManager.checkCanceled();
+    SlowOperations.assertSlowOperationsAreAllowed();
     dispatchPendingEvents();
     return getRootIndex(file).getInfoForFile(file);
   }
