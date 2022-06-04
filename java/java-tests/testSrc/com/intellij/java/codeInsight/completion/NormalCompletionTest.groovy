@@ -2672,6 +2672,14 @@ class Abc {
   }
 
   @NeedsIndex.ForStandardLibrary
+  void testClassLiteralCompletionClassExists() {
+    myFixture.configureByText("Test.java", "class Test {Class<? extends CharSequence> get() {return StringBu<caret>.class}}")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {Class<? extends CharSequence> get() {return StringBuffer.class}}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
   void testClassLiteralCompletionNoBound() {
     myFixture.configureByText("Test.java", "class Test {Class<?> get() {return String<caret>}}")
     myFixture.completeBasic()
