@@ -24,11 +24,11 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixService
 import org.jetbrains.kotlin.psi.KtFile
 

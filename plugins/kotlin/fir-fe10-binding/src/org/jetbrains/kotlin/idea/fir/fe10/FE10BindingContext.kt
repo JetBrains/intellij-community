@@ -3,13 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.utils.EntityWasGarbageCollectedException
 import org.jetbrains.kotlin.analysis.api.fir.utils.KtAnalysisSessionFe10BindingHolder
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
@@ -32,7 +26,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtElement
 import java.lang.ref.WeakReference
-import kotlin.reflect.KClass
 
 interface FE10BindingContext {
     val builtIns: KotlinBuiltIns
