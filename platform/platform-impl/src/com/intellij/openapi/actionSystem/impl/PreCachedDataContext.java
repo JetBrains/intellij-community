@@ -322,10 +322,12 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
     String slowProvidersKeyName = PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getName();
     Object slowProviders = dataManager.getDataFromProviderAndRules(slowProvidersKeyName, GetDataRuleType.FAST, dataProvider);
-    if (slowProviders != null) {
-      Object parentProviders = parentMap == null ? null : parentMap.get(slowProvidersKeyName);
-      cachedData.put(slowProvidersKeyName, parentProviders == null ? slowProviders :
-                                           ContainerUtil.concat((Iterable<?>)slowProviders, (Iterable<?>)parentProviders));
+    Object parentProviders = parentMap == null ? null : parentMap.get(slowProvidersKeyName);
+    if (slowProviders != null && parentProviders != null) {
+      cachedData.put(slowProvidersKeyName, ContainerUtil.concat((Iterable<?>)slowProviders, (Iterable<?>)parentProviders));
+    }
+    else if (slowProviders != null || parentProviders != null) {
+      cachedData.put(slowProvidersKeyName, Objects.requireNonNullElse(slowProviders, parentProviders));
     }
   }
 
