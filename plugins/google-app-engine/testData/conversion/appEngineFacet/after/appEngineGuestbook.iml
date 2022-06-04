@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="web" name="Web">
@@ -34,4 +33,3 @@
     <orderEntry type="library" name="Java EE 6" level="project" />
   </component>
 </module>
-

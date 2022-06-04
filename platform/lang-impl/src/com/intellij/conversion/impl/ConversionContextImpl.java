@@ -51,7 +51,7 @@ import java.util.stream.Stream;
 public final class ConversionContextImpl implements ConversionContext {
   private static final Logger LOG = Logger.getInstance(ConversionContextImpl.class);
 
-  private final Map<Path, SettingsXmlFile> mySettingsFiles = new HashMap<>();
+  private final Map<Path, SettingsXmlFile> fileToSettings = new HashMap<>();
   private final StorageScheme myStorageScheme;
   private final Path myProjectBaseDir;
   private final SettingsXmlFile myProjectFile;
@@ -148,7 +148,7 @@ public final class ConversionContextImpl implements ConversionContext {
 
       int secondOffset = moduleCount / 2;
       return computeModuleFilesTimestamp(moduleFiles.subList(0, secondOffset), executor)
-        .thenCombine(computeModuleFilesTimestamp(moduleFiles.subList(secondOffset, moduleCount), executor), (v1, v2) -> ContainerUtil.concat(v1, v2));
+        .thenCombine(computeModuleFilesTimestamp(moduleFiles.subList(secondOffset, moduleCount), executor), ContainerUtil::concat);
     }, executor));
 
     for (Path subDirName : dirs) {
@@ -494,7 +494,10 @@ public final class ConversionContextImpl implements ConversionContext {
 
   public void saveFiles(@NotNull Collection<? extends Path> files) throws IOException {
     for (Path file : files) {
-      SettingsXmlFile xmlFile = mySettingsFiles.get(file);
+      SettingsXmlFile xmlFile = fileToSettings.get(file);
+      if (xmlFile == null) {
+        xmlFile = fileToModuleSettings.get(file);
+      }
       if (xmlFile != null) {
         xmlFile.save();
       }
@@ -502,7 +505,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   @NotNull SettingsXmlFile getOrCreateFile(@NotNull Path file) throws CannotConvertException {
-    return mySettingsFiles.computeIfAbsent(file, file1 -> new SettingsXmlFile(file1));
+    return fileToSettings.computeIfAbsent(file, SettingsXmlFile::new);
   }
 
   @Override
