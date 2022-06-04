@@ -94,6 +94,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
 
+  public static final Key<Boolean> MANUAL_HYPERLINK = Key.create("MANUAL_HYPERLINK");
+
   private static boolean ourTypedHandlerInitialized;
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private static final CharMatcher NEW_LINE_MATCHER = CharMatcher.anyOf("\n\r");
@@ -783,7 +785,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ApplicationManager.getApplication().assertIsDispatchThread();
     Editor editor = getEditor();
     for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-      if (highlighter.getUserData(ConsoleTokenUtil.MANUAL_HYPERLINK) == null) {
+      if (highlighter.getUserData(MANUAL_HYPERLINK) == null) {
         editor.getMarkupModel().removeHighlighter(highlighter);
       }
     }

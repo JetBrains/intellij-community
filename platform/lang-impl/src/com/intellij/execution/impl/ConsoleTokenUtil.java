@@ -29,7 +29,6 @@ class ConsoleTokenUtil {
   private static final char BACKSPACE = '\b';
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
   private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
-  static final Key<Boolean> MANUAL_HYPERLINK = Key.create("MANUAL_HYPERLINK");
 
   // convert all "a\bc" sequences to "c", not crossing the line boundaries in the process
   private static void normalizeBackspaceCharacters(@NotNull StringBuilder text) {
@@ -210,7 +209,7 @@ class ConsoleTokenUtil {
       }
       HyperlinkInfo info = token.getHyperlinkInfo();
       if (info != null) {
-        hyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
+        hyperlinks.createHyperlink(start, offset, null, info).putUserData(ConsoleViewImpl.MANUAL_HYPERLINK, true);
       }
       createTokenRangeHighlighter(editor, project, token.contentType, start, offset, false);
       offset = start;
