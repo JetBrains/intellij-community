@@ -81,6 +81,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
             runTest("testData/highlighter/deprecated/Operation.kt");
         }
 
+        @TestMetadata("OperationSuppressedDeprecation.kt")
+        public void testOperationSuppressedDeprecation() throws Exception {
+            runTest("testData/highlighter/deprecated/OperationSuppressedDeprecation.kt");
+        }
+
         @TestMetadata("Property.kt")
         public void testProperty() throws Exception {
             runTest("testData/highlighter/deprecated/Property.kt");

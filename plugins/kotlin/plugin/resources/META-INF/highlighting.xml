@@ -34,8 +34,7 @@
 
     <registryKey key="kotlin.highlighting.suppress.deprecated"
                  description="Suppress kotlin.Deprecated warning"
-                 defaultValue="false"
-                 restartRequired="true"/>
+                 defaultValue="false"/>
 
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinBeforeResolveHighlightingPass$Registrar"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.DebugInfoHighlightingPass$Registrar"/>

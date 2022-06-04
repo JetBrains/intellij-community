@@ -81,6 +81,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
             runTest("../idea/tests/testData/highlighter/deprecated/Operation.kt");
         }
 
+        @TestMetadata("OperationSuppressedDeprecation.kt")
+        public void testOperationSuppressedDeprecation() throws Exception {
+            runTest("../idea/tests/testData/highlighter/deprecated/OperationSuppressedDeprecation.kt");
+        }
+
         @TestMetadata("Property.kt")
         public void testProperty() throws Exception {
             runTest("../idea/tests/testData/highlighter/deprecated/Property.kt");

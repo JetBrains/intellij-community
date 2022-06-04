@@ -212,6 +212,7 @@ internal class ElementAnnotator(
     companion object {
         val LOG = Logger.getInstance(ElementAnnotator::class.java)
 
-        val suppressDeprecatedAnnotation = Registry.`is`("kotlin.highlighting.suppress.deprecated")
+        val suppressDeprecatedAnnotation
+            get() = Registry.`is`("kotlin.highlighting.suppress.deprecated")
     }
 }
