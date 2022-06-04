@@ -43,7 +43,7 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
 
   @Override
   public PsiFile findFile(@NotNull VirtualFile file) {
-    return getFileManager().findFile(file);
+    return null;
   }
 
   @Override
