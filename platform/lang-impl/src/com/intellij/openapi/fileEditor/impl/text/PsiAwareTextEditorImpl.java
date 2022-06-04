@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.codeInsight.codeVision.CodeVisionHost;
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
@@ -15,13 +14,11 @@ import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -121,7 +118,6 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   private static final class PsiAwareTextEditorComponent extends TextEditorComponent {
     private final Project myProject;
-    private final VirtualFile myFile;
 
     private PsiAwareTextEditorComponent(@NotNull Project project,
                                         @NotNull VirtualFile file,
@@ -129,7 +125,6 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                                         @NotNull EditorImpl editor) {
       super(project, file, textEditor, editor);
       myProject = project;
-      myFile = file;
     }
 
     @Override
@@ -154,9 +149,6 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
           if (lookup != null && lookup.isVisible()) {
             return lookup.getBounds();
           }
-        }
-        if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-          return ModuleUtilCore.findModuleForFile(myFile, myProject);
         }
         return superProvider.getData(dataId);
       };
