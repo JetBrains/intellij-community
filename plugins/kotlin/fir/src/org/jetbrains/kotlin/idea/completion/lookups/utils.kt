@@ -6,11 +6,11 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.refactoring.suggested.endOffset
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
 import org.jetbrains.kotlin.idea.completion.KotlinFirIconProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.util.shortenReferencesInRange
@@ -27,9 +27,9 @@ internal fun KtAnalysisSession.withSymbolInfo(
 
 
 // FIXME: This is a hack, we should think how we can get rid of it
+@OptIn(KtAllowAnalysisOnEdt::class)
 internal inline fun <T> withAllowedResolve(action: () -> T): T {
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
-    return hackyAllowRunningOnEdt(action)
+    return allowAnalysisOnEdt(action)
 }
 
 internal fun CharSequence.skipSpaces(index: Int): Int =
@@ -46,7 +46,7 @@ internal fun CharSequence.indexOfSkippingSpace(c: Char, startIndex: Int): Int? {
 
 internal fun shortenReferencesForFirCompletion(targetFile: KtFile, textRange: TextRange) {
     val shortenings = withAllowedResolve {
-        analyse(targetFile) {
+        analyze(targetFile) {
             collectPossibleReferenceShortenings(targetFile, textRange)
         }
     }

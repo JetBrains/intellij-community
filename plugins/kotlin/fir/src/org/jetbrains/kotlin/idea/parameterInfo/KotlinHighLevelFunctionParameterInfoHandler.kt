@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.calls.KtApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
@@ -106,7 +106,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             ?: return null
 
         val callElement = argumentList.parent as? KtElement ?: return null
-        return analyse(callElement) {
+        return analyze(callElement) {
             // findElementForParameterInfo() is only called once before the UI is shown. updateParameterInfo() is called once before the UI
             // is shown, and is also called every time the cursor moves or the call arguments change (i.e., user types something) while the
             // UI is shown, hence the need to resolve the call again in updateParameterInfo() (e.g., argument mappings can change).
@@ -139,14 +139,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         context.setCurrentParameter(currentArgumentIndex)
 
         val callElement = argumentList.parent as? KtElement ?: return
-        analyse(callElement) {
+        analyze(callElement) {
             val (valueArguments, arguments) = when (callElement) {
                 is KtCallElement -> {
                     val valueArguments = callElement.valueArgumentList?.arguments
                     Pair(valueArguments, valueArguments?.map { it.getArgumentExpression() } ?: listOf())
                 }
                 is KtArrayAccessExpression -> Pair(null, callElement.indexExpressions)
-                else -> return@analyse
+                else -> return@analyze
             }
             val candidatesWithMapping = collectCallCandidates(callElement)
             val hasMultipleApplicableBestCandidates = candidatesWithMapping.count { it.isApplicableBestCandidate } > 1

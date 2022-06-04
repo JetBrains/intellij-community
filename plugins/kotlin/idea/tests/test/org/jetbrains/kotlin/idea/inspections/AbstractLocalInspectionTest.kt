@@ -154,24 +154,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             state.tool.tool.readSettings(inspectionSettings)
         }
 
-        val passIdsToIgnore = mutableListOf(
-            Pass.LINE_MARKERS,
-            Pass.SLOW_LINE_MARKERS,
-            Pass.EXTERNAL_TOOLS,
-            Pass.POPUP_HINTS,
-            Pass.UPDATE_ALL,
-            Pass.UPDATE_FOLDING,
-            Pass.WOLF
-        )
-
-        val caretOffset = myFixture.caretOffset
-        val highlightInfos: MutableList<HighlightInfo> = ArrayList()
-        // exclude AbstractHighlightingPassBase-derived passes in tests
-        AbstractHighlightingPassBase.ignoreThesePassesInTests {
-            highlightInfos.addAll(CodeInsightTestFixtureImpl.instantiateAndRun(
-                file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
-            ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset })
-        }
+        val highlightInfos = collectHighlightInfos()
 
         Assert.assertTrue(
             if (!problemExpected)
@@ -236,6 +219,27 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             localFixAction.invoke(project, editor, file)
         }
         return true
+    }
+
+    protected open fun collectHighlightInfos(): List<HighlightInfo> {
+        val passIdsToIgnore = mutableListOf(
+            Pass.LINE_MARKERS,
+            Pass.SLOW_LINE_MARKERS,
+            Pass.EXTERNAL_TOOLS,
+            Pass.POPUP_HINTS,
+            Pass.UPDATE_ALL,
+            Pass.UPDATE_FOLDING,
+            Pass.WOLF
+        )
+
+        val caretOffset = myFixture.caretOffset
+
+        // exclude AbstractHighlightingPassBase-derived passes in tests
+        return AbstractHighlightingPassBase.ignoreThesePassesInTests {
+            CodeInsightTestFixtureImpl.instantiateAndRun(
+                file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
+            ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset }
+        }
     }
 
     protected open fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {

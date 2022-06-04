@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.google.common.collect.ImmutableMap
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.fir.fe10.FE10BindingContext
 import org.jetbrains.kotlin.idea.fir.fe10.toKotlinType
 import org.jetbrains.kotlin.idea.fir.fe10.withAnalysisSession
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KtSymbolBasedBindingContext(val context: FE10BindingContext) : BindingContext {
     private val LOG = Logger.getInstance(KtSymbolBasedBindingContext::class.java)
@@ -23,6 +25,7 @@ class KtSymbolBasedBindingContext(val context: FE10BindingContext) : BindingCont
     init {
         CallAndResolverCallWrappers(this)
         ToDescriptorBindingContextValueProviders(this)
+        MiscBindingContextValueProvider(this)
     }
 
     fun <K, V> registerGetterByKey(slice: ReadOnlySlice<K, V>, getter: (K) -> V?) {
@@ -37,12 +40,19 @@ class KtSymbolBasedBindingContext(val context: FE10BindingContext) : BindingCont
     override fun <K : Any?, V : Any?> get(slice: ReadOnlySlice<K, V>, key: K): V? {
         val getter = getterBySlice[slice]
         if (getter == null) {
-            LOG.info("Key not registered: $slice")
+            if (context.enableLogging) LOG.warn("Key not registered: $slice")
             return null
         }
 
         @Suppress("UNCHECKED_CAST")
-        return (getter as (K) -> V?)(key)
+        val v = if (key == null) null else (getter as (K) -> V?)(key)
+
+        if (context.enableLogging) {
+            val psiText = key.safeAs<PsiElement>()?.text ?: key
+            println("$slice: $psiText -> $v")
+        }
+
+        return v
     }
 
     override fun getType(expression: KtExpression): KotlinType? =

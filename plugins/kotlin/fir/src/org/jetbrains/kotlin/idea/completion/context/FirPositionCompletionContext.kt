@@ -6,8 +6,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
-import org.jetbrains.kotlin.analysis.api.analyseInDependedAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -281,16 +281,16 @@ internal object FirPositionCompletionContextDetector {
         } ?: FirTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)
     }
 
-    inline fun analyseInContext(
+    inline fun analyzeInContext(
         basicContext: FirBasicCompletionContext,
         positionContext: FirRawPositionCompletionContext,
         action: KtAnalysisSession.() -> Unit
     ) {
         return when (positionContext) {
-            is FirNameReferencePositionContext -> analyseInDependedAnalysisSession(
+            is FirNameReferencePositionContext -> analyzeInDependedAnalysisSession(
                 basicContext.originalKtFile,
                 positionContext.nameExpression,
-                action
+                action = action
             )
             is FirUnknownPositionContext,
             is FirImportDirectivePositionContext,
@@ -299,7 +299,7 @@ internal object FirPositionCompletionContextDetector {
             is FirIncorrectPositionContext,
             is FirValueParameterPositionContext,
             is FirClassifierNamePositionContext -> {
-                analyse(basicContext.originalKtFile, action)
+                analyze(basicContext.originalKtFile, action = action)
             }
         }
     }

@@ -7,7 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.KotlinOptimizeImportsQuickFix
 import org.jetbrains.kotlin.psi.KtFile
@@ -16,7 +16,7 @@ internal class KotlinHLUnusedImportInspection : AbstractKotlinInspection() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<out ProblemDescriptor>? {
         if (file !is KtFile) return null
 
-        val result = analyse(file) {
+        val result = analyze(file) {
             analyseImports(file)
         }
 

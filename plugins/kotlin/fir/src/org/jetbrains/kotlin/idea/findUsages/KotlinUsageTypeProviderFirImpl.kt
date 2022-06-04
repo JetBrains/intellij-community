@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
+import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.findUsages.UsageTypeEnum.*
 import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
@@ -47,7 +47,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
             }
         }
 
-        return analyseWithReadAction(refExpr) {
+        return analyzeWithReadAction(refExpr) {
             when (val targetElement = reference.resolveToSymbol()) {
                 is KtClassOrObjectSymbol ->
                     when {

@@ -997,6 +997,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/dependentOnFile.kt");
             }
 
+            @TestMetadata("distinctSequence.kt")
+            public void testDistinctSequence() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/distinctSequence.kt");
+            }
+
             @TestMetadata("doubles.kt")
             public void testDoubles() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/doubles.kt");
@@ -1320,6 +1325,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             @TestMetadata("privatePropertyWithNonDefaultAccessor.kt")
             public void testPrivatePropertyWithNonDefaultAccessor() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithNonDefaultAccessor.kt");
+            }
+
+            @TestMetadata("privateToplevelProperty.kt")
+            public void testPrivateToplevelProperty() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateToplevelProperty.kt");
             }
 
             @TestMetadata("protectedMember.kt")

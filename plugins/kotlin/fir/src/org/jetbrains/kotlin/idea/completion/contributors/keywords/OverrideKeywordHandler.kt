@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -17,7 +18,8 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.KtGenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
@@ -28,8 +30,6 @@ import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 
 internal class OverrideKeywordHandler(
@@ -66,6 +66,7 @@ internal class OverrideKeywordHandler(
         } else allMembers.toList()
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun KtAnalysisSession.createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
         classOrObject: KtClassOrObject,
@@ -103,9 +104,8 @@ internal class OverrideKeywordHandler(
                 generateMemberInNewAnalysisSession(classOrObject, memberPointer, member, project)
             },
             shortenReferences = { element ->
-                @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
-                val shortenings = hackyAllowRunningOnEdt {
-                    analyse(classOrObject) {
+                val shortenings = allowAnalysisOnEdt {
+                    analyze(classOrObject) {
                         collectPossibleReferenceShortenings(element.containingKtFile, element.textRange)
                     }
                 }
@@ -125,14 +125,14 @@ internal class OverrideKeywordHandler(
         }
     }
 
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun generateMemberInNewAnalysisSession(
         classOrObject: KtClassOrObject,
         memberPointer: KtSymbolPointer<KtCallableSymbol>,
         member: KtClassMember,
         project: Project
-    ) = hackyAllowRunningOnEdt {
-        analyse(classOrObject) {
+    ) = allowAnalysisOnEdt {
+        analyze(classOrObject) {
             val memberInCorrectAnalysisSession = createCopyInCurrentAnalysisSession(memberPointer, member)
             generateMember(
                 project,

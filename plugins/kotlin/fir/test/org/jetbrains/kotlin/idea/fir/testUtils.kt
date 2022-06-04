@@ -6,14 +6,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analysis.api.InvalidWayOfUsingAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSessionProvider
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import java.io.File
 
-@OptIn(InvalidWayOfUsingAnalysisSession::class)
+@OptIn(KtAnalysisApiInternals::class)
 fun Project.invalidateCaches() {
     LibraryModificationTracker.getInstance(this).incModificationCount()
     service<KotlinModificationTrackerFactory>().incrementModificationsCount()

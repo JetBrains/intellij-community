@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.imports
 import com.intellij.lang.ImportOptimizer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtImportOptimizerResult
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -14,7 +14,7 @@ internal class KotlinFirImportOptimizer : ImportOptimizer {
     override fun processFile(file: PsiFile): ImportOptimizer.CollectingInfoRunnable {
         require(file is KtFile)
 
-        val result = analyse(file) {
+        val result = analyze(file) {
             analyseImports(file)
         }
 

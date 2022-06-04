@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.fir.api.applicator
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.ForbidKtResolve
+import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 
 /**
  * Provides a presentation to display an message in the editor which may be latter fixed by [HLApplicator]
  */
 sealed class HLPresentation<PSI : PsiElement> {
-    fun getHighlightType(element: PSI): ProblemHighlightType = ForbidKtResolve.forbidResolveIn("HLPresentation.getHighlightType") {
+    fun getHighlightType(element: PSI): ProblemHighlightType = KtAnalysisAllowanceManager.forbidAnalysisInside("HLPresentation.getHighlightType") {
         getHighlightTypeImpl(element)
     }
 

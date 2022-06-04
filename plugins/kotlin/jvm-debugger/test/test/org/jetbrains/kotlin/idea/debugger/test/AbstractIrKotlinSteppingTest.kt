@@ -2,11 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
-import org.jetbrains.kotlin.test.TargetBackend
-
 abstract class AbstractIrKotlinSteppingTest : AbstractKotlinSteppingTest() {
     override fun useIrBackend() = true
-
-    override fun targetBackend(): TargetBackend =
-        TargetBackend.JVM_IR
 }

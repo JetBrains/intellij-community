@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.fir.inspections
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import org.jetbrains.kotlin.idea.fir.highlighter.KotlinHighLevelDiagnosticHighlightingPass
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.test.utils.IgnoreTests
@@ -13,6 +15,10 @@ abstract class AbstractHLLocalInspectionTest : AbstractLocalInspectionTest() {
     override val inspectionFileName: String = ".firInspection"
 
     override fun checkForUnexpectedErrors(fileText: String) {}
+
+    override fun collectHighlightInfos(): List<HighlightInfo> {
+        return KotlinHighLevelDiagnosticHighlightingPass.ignoreThisPassInTests { super.collectHighlightInfos() }
+    }
 
     override fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {

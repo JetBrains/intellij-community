@@ -54,6 +54,7 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletio
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.*
 import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractSequenceTraceTestCase
+import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractSequenceTraceWithIREvaluatorTestCase
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateJavaToLibrarySourceTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToDecompiledLibraryTest
 import org.jetbrains.kotlin.idea.decompiler.navigation.AbstractNavigateToLibrarySourceTest
@@ -88,9 +89,7 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibr
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
 import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
-import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
+import org.jetbrains.kotlin.idea.fir.inspections.*
 import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
@@ -230,11 +229,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
         }
 
-        testClass<AbstractKotlinEvaluateExpressionWithIRFragmentCompilerTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR)
-        }
-
         testClass<AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
@@ -277,6 +271,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
+            model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
+        }
+
+        testClass<AbstractSequenceTraceWithIREvaluatorTestCase> { // TODO: implement mapping logic for terminal operations
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 
@@ -877,7 +875,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractExtractionTest> {
             model("refactoring/introduceVariable", pattern = KT_OR_KTS, testMethodName = "doIntroduceVariableTest")
-            model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest")
+            model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("inplace"))
             model("refactoring/introduceProperty", pattern = KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
             model("refactoring/introduceParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceSimpleParameterTest")
             model("refactoring/introduceLambdaParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceLambdaParameterTest")
@@ -1202,12 +1200,30 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
 
-    /*testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
+    testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
         testClass<AbstractFe10BindingIntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/intentions/conventionNameCalls", pattern = pattern)
         }
-    }*/
+    }
+
+    testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
+        testClass<AbstractFe10BindingLocalInspectionTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("testData/inspectionsLocal/addOperatorModifier", pattern = pattern)
+            model("testData/inspectionsLocal/booleanLiteralArgument", pattern = pattern)
+            model("testData/inspectionsLocal/convertSealedSubClassToObject", pattern = pattern)
+            model("testData/inspectionsLocal/cascadeIf", pattern = pattern)
+        }
+    }
+
+    testGroup("fir-fe10-binding", testDataPath = "../idea/tests") {
+        testClass<AbstractFe10BindingQuickFixTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
+            model("testData/quickfix/addVarianceModifier", pattern = pattern)
+            model("testData/quickfix/canBePrimaryConstructorProperty", pattern = pattern)
+        }
+    }
 
     testGroup("scripting-support") {
         testClass<AbstractScratchRunActionTest> {

@@ -7,14 +7,16 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.core.insertMembersAfter
+import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.components.RendererModifier
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -27,24 +29,26 @@ import org.jetbrains.kotlin.psi.psiUtil.prevSiblingOfSameType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-internal abstract class KtGenerateMembersHandler(final override val toImplement: Boolean) :
-    AbstractGenerateMembersHandler<KtClassMember>() {
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+internal abstract class KtGenerateMembersHandler(
+    final override val toImplement: Boolean
+) : AbstractGenerateMembersHandler<KtClassMember>() {
+
+    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun generateMembers(
         editor: Editor,
         classOrObject: KtClassOrObject,
         selectedElements: Collection<KtClassMember>,
         copyDoc: Boolean
     ) {
-        // Using hackyAllowRunningOnEdt here because we don't want to pre-populate all possible textual overrides before user selection.
-        val (commands, insertedBlocks) = hackyAllowRunningOnEdt {
-            val entryMembers = analyse(classOrObject) {
+        // Using allowAnalysisOnEdt here because we don't want to pre-populate all possible textual overrides before user selection.
+        val (commands, insertedBlocks) = allowAnalysisOnEdt {
+            val entryMembers = analyze(classOrObject) {
                 this.generateMembers(editor, classOrObject, selectedElements, copyDoc)
             }
             val insertedBlocks = insertMembersAccordingToPreferredOrder(entryMembers, editor, classOrObject)
             // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
             // members.
-            val commands = analyse(classOrObject) {
+            val commands = analyze(classOrObject) {
                 insertedBlocks.mapNotNull { block ->
                     val declarations = block.declarations.mapNotNull { it.element }
                     val first = declarations.firstOrNull() ?: return@mapNotNull null

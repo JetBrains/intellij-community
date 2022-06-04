@@ -20,9 +20,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
@@ -39,7 +40,12 @@ class KotlinHighLevelDiagnosticHighlightingPass(
     val annotationHolder = AnnotationHolderImpl(AnnotationSession(ktFile), false)
 
     override fun doCollectInformation(progress: ProgressIndicator) {
-        analyse(ktFile) {
+        if (IGNORE_IN_TESTS) {
+            assert(ApplicationManager.getApplication().isUnitTestMode)
+            return
+        }
+
+        analyze(ktFile) {
             ktFile.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).forEach { diagnostic ->
                 addDiagnostic(diagnostic)
             }
@@ -80,10 +86,35 @@ class KotlinHighLevelDiagnosticHighlightingPass(
 
 
     override fun doApplyInformationToEditor() {
+        if (IGNORE_IN_TESTS) {
+            assert(ApplicationManager.getApplication().isUnitTestMode)
+            return
+        }
+
         val diagnosticInfos = annotationHolder.map(HighlightInfo::fromAnnotation)
         UpdateHighlightersUtil.setHighlightersToEditor(
             myProject, myDocument, /*startOffset=*/0, ktFile.textLength, diagnosticInfos, colorsScheme, id
         )
+    }
+
+    companion object {
+        @Volatile
+        private var IGNORE_IN_TESTS: Boolean = false;
+
+        /**
+         * Make {@link KotlinHighLevelDiagnosticHighlightingPass} passes report nothing inside this method
+         */
+        @TestOnly
+        fun <T> ignoreThisPassInTests(action: () -> T): T {
+            assert(ApplicationManager.getApplication().isUnitTestMode)
+            IGNORE_IN_TESTS = true
+            try {
+                return action()
+            }
+            finally {
+                IGNORE_IN_TESTS = false
+            }
+        }
     }
 }
 

@@ -3,15 +3,19 @@
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.InvalidWayOfUsingAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.fir.utils.EntityWasGarbageCollectedException
 import org.jetbrains.kotlin.analysis.api.fir.utils.KtAnalysisSessionFe10BindingHolder
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
+import org.jetbrains.kotlin.analysis.api.lifetime.assertIsValidAndAccessible
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
-import org.jetbrains.kotlin.analysis.api.tokens.ValidityTokenFactory
-import org.jetbrains.kotlin.analysis.api.tokens.assertIsValidAndAccessible
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
@@ -34,6 +38,9 @@ interface FE10BindingContext {
     val builtIns: KotlinBuiltIns
     val ktAnalysisSessionFacade: KtAnalysisSessionFe10BindingHolder
     val moduleDescriptor: ModuleDescriptor
+
+    // This property used to disable some logic used locally for debug purposes
+    val enableLogging: Boolean get() = false
 
     /**
      * Legend:
@@ -82,11 +89,10 @@ class FE10BindingContextImpl(
     val project: Project,
     val ktElement: KtElement
 ) : FE10BindingContext {
-    private val token: ValidityToken = ValidityTokenForKtSymbolBasedWrappers(project)
+    private val token: KtLifetimeToken = KtLifetimeTokenForKtSymbolBasedWrappers(project)
 
     private val module: KtModule = ktElement.getKtModule(project)
 
-    @OptIn(InvalidWayOfUsingAnalysisSession::class)
     override val ktAnalysisSessionFacade = KtAnalysisSessionFe10BindingHolder.create(module.getFirResolveSession(project), token, ktElement)
 
     override val moduleDescriptor: ModuleDescriptor = KtSymbolBasedModuleDescriptorImpl(this, module)
@@ -104,7 +110,7 @@ class FE10BindingContextImpl(
         TODO("SE_to_implement. $additionalInfo")
 }
 
-private class ValidityTokenForKtSymbolBasedWrappers(val project: Project) : ValidityToken() {
+private class KtLifetimeTokenForKtSymbolBasedWrappers(val project: Project) : KtLifetimeToken() {
     private val modificationTracker = project.createProjectWideOutOfBlockModificationTracker()
     private val onCreatedTimeStamp = modificationTracker.modificationCount
 
@@ -119,22 +125,21 @@ private class ValidityTokenForKtSymbolBasedWrappers(val project: Project) : Vali
 
     override fun isAccessible(): Boolean = true
 
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
     override fun getInaccessibilityReason(): String = error("Getting inaccessibility reason for validity token when it is accessible")
 
-    override val factory: ValidityTokenFactory = ValidityTokenForKtSymbolBasedWrappersFactory
+    override val factory = KtLifetimeTokenForKtSymbolBasedWrappersFactory
 }
 
-private object ValidityTokenForKtSymbolBasedWrappersFactory : ValidityTokenFactory() {
-    override val identifier: KClass<out ValidityToken> = ValidityTokenForKtSymbolBasedWrappers::class
+private object KtLifetimeTokenForKtSymbolBasedWrappersFactory : KtLifetimeTokenFactory() {
+    override val identifier= KtLifetimeTokenForKtSymbolBasedWrappers::class
 
-    override fun create(project: Project): ValidityToken =
-        ValidityTokenForKtSymbolBasedWrappers(project)
+    override fun create(project: Project): KtLifetimeTokenForKtSymbolBasedWrappers =
+        KtLifetimeTokenForKtSymbolBasedWrappers(project)
 }
 
 // This class supposed to be used for non-declaration resolved fir elements, because of that we don't case about FIR phases.
 // TODO: review FIR access -- by common IDEA FIR design access FIR should be under read lock
-internal class FirWeakReference<out T : FirElement>(firElement: T, private val token: ValidityToken) {
+internal class FirWeakReference<out T : FirElement>(firElement: T, private val token: KtLifetimeToken) {
     private val firWeakRef = WeakReference(firElement)
 
     inline fun <R> withFir(action: (T) -> R): R {

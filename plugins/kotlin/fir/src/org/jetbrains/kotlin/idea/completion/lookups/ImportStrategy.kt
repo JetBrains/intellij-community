@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.lookups
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.utils.addImportToFile
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
@@ -51,7 +51,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
     if (file.importDirectives.any { it.importPath?.fqName == nameToImport }) return true
 
     withAllowedResolve {
-        analyse(file) {
+        analyze(file) {
             val scopes = file.getScopeContextForFile().scopes
             if (!scopes.mayContainName(nameToImport.shortName())) return false
 

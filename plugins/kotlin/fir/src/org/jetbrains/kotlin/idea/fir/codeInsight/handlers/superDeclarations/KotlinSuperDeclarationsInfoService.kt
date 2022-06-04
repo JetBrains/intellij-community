@@ -9,13 +9,13 @@ import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.psi.*
 
@@ -34,9 +34,9 @@ object KotlinSuperDeclarationsInfoService {
     }
 
     fun getForDeclaration(declaration: KtDeclaration): KotlinSuperDeclarationsInfo? {
-        @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
-        return hackyAllowRunningOnEdt {
-            analyse(declaration) {
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        return allowAnalysisOnEdt {
+            analyze(declaration) {
                 val symbol = declaration.getSymbol()
                 // TODO add navigation to expect declarations here
                 createList(symbol)

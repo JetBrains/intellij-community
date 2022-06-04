@@ -20,7 +20,7 @@ class FirCompletionDummyIdentifierProviderService : CompletionDummyIdentifierPro
     override fun allTargetsAreFunctionsOrClasses(nameReferenceExpression: KtNameReferenceExpression): Boolean {
         return true
         // TODO fir cannot handle invalid code and handles listOf< as binary expression
-//        return analyse(nameReferenceExpression) {
+//        return analyze(nameReferenceExpression) {
 //            val reference = nameReferenceExpression.mainReference
 //            val targets = reference.resolveToSymbols()
 //            targets.isNotEmpty() && targets.all { target ->

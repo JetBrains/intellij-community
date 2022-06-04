@@ -9,12 +9,12 @@ import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
 import org.jetbrains.kotlin.idea.fir.api.fixes.HLQuickFix
 import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.util.generateWhenBranches
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtWhenExpression
@@ -25,7 +25,7 @@ object AddWhenRemainingBranchFixFactories {
     val applicator: HLApplicator<KtWhenExpression, Input> = getApplicator(false)
     val applicatorUsingStarImport: HLApplicator<KtWhenExpression, Input> = getApplicator(true)
 
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
+    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun getApplicator(useStarImport: Boolean = false) = applicator<KtWhenExpression, Input> {
         familyAndActionName(
             if (useStarImport) KotlinBundle.lazyMessage("fix.add.remaining.branches.with.star.import")
@@ -34,8 +34,8 @@ object AddWhenRemainingBranchFixFactories {
         applyTo { whenExpression, input ->
             if (useStarImport) assert(input.enumToStarImport != null)
             generateWhenBranches(whenExpression, input.whenMissingCases)
-            val shortenCommand = hackyAllowRunningOnEdt {
-                analyse(whenExpression) {
+            val shortenCommand = allowAnalysisOnEdt {
+                analyze(whenExpression) {
                     collectPossibleReferenceShorteningsInElement(
                         whenExpression,
                         callableShortenOption = {

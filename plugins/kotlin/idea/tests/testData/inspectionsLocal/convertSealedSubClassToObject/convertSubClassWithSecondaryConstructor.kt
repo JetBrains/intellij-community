@@ -3,7 +3,7 @@
 
 sealed class Sealed
 
-<caret>class SubSealed : Sealed() {
+<caret>class SubSealed : Sealed {
     constructor() {
         println("init")
     }

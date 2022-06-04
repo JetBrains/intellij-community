@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -13,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -29,6 +32,12 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
         ?: FirKotlinUastLanguagePlugin()
 }
+
+internal inline fun <R> analyzeForUast(
+    useSiteKtElement: KtElement,
+    action: KtAnalysisSession.() -> R
+): R =
+    analyze(useSiteKtElement, KtAlwaysAccessibleLifetimeTokenFactory, action)
 
 internal fun KtAnalysisSession.containingKtClass(
     ktConstructorSymbol: KtConstructorSymbol,
@@ -146,7 +155,7 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
 internal fun KtSymbol.psiForUast(project: Project): PsiElement? {
     return when (origin) {
         KtSymbolOrigin.LIBRARY -> {
-            FirPsiDeclarationProvider.findPsi(this, project) ?: psi
+            DecompiledPsiDeclarationProvider.findPsi(this, project) ?: psi
         }
         else -> psi
     }

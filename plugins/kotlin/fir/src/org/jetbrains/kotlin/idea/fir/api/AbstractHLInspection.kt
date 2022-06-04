@@ -9,9 +9,9 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicator
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.fir.api.applicator.*
-import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
-import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
-import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -76,9 +76,9 @@ abstract class AbstractHLInspection<PSI : KtElement, INPUT : HLApplicatorInput>(
         }
     }
 
-    @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
-    private fun getInput(element: PSI): INPUT? = hackyAllowRunningOnEdt {
-        analyseWithReadAction(element) {
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    private fun getInput(element: PSI): INPUT? = allowAnalysisOnEdt {
+        analyzeWithReadAction(element) {
             with(inputProvider) { provideInput(element) }
         }
     }

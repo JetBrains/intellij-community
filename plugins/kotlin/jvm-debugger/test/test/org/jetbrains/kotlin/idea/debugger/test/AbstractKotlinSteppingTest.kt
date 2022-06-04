@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.debugger.test
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
-import org.jetbrains.kotlin.test.TargetBackend
 
 abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping() {
     private enum class Category(val instruction: SteppingInstructionKind?) {
@@ -28,9 +27,6 @@ abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping
         category = null
         super.tearDown()
     }
-
-    override fun targetBackend(): TargetBackend =
-        TargetBackend.JVM_OLD
 
     private fun doTest(path: String, category: Category) {
         this.category = category

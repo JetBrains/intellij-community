@@ -6,4 +6,3 @@ fun context() {
     fun funA() {}
     <caret>importedFunA()
 }
-/* IGNORE_FIR */

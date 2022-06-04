@@ -76,11 +76,11 @@ abstract class AbstractHighlightingPassBase(
          * Make {@link AbstractHighlightingPassBase}-derived passes report nothing inside this method
          */
         @TestOnly
-        fun ignoreThesePassesInTests(action: ()->Unit) {
+        fun <T> ignoreThesePassesInTests(action: () -> T): T {
             assert(ApplicationManager.getApplication().isUnitTestMode)
             IGNORE_IN_TESTS = true
             try {
-              action.invoke()
+              return action.invoke()
             }
             finally {
               IGNORE_IN_TESTS = false

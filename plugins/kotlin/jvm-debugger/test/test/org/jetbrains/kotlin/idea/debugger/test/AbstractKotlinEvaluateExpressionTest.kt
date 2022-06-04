@@ -14,7 +14,6 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.ObjectReference
 import org.jetbrains.eval4j.ObjectValue
@@ -22,7 +21,6 @@ import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompiler
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
@@ -57,6 +55,9 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
 
     private var isMultipleBreakpointsTest = false
     private var isFrameTest = false
+
+    override fun fragmentCompilerBackend() =
+        FragmentCompilerBackend.JVM
 
     private val exceptions = ConcurrentHashMap<String, Throwable>()
 

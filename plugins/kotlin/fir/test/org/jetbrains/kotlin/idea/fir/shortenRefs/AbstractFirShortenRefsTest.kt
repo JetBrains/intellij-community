@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.fir.shortenRefs
 
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.AbstractImportsTest
-import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
@@ -20,7 +20,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
         val selection = runReadAction { TextRange(selectionModel.selectionStart, selectionModel.selectionEnd) }
 
         val shortenings = executeOnPooledThreadInReadAction {
-            analyse(file) {
+            analyze(file) {
                 collectPossibleReferenceShortenings(file, selection)
             }
         }

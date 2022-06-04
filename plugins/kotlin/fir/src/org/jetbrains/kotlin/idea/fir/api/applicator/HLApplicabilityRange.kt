@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.api.applicator
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.ForbidKtResolve
+import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -26,7 +26,7 @@ sealed class HLApplicabilityRange<in ELEMENT : PsiElement> {
      * The ranges are relative to [element]
      *  i.e. if range covers the whole element when it should return `[0, element.length)`
      */
-    fun getApplicabilityRanges(element: ELEMENT): List<TextRange> = ForbidKtResolve.forbidResolveIn("getApplicabilityRanges") {
+    fun getApplicabilityRanges(element: ELEMENT): List<TextRange> = KtAnalysisAllowanceManager.forbidAnalysisInside("getApplicabilityRanges") {
         getApplicabilityRangesImpl(element)
     }
 
