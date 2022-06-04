@@ -96,12 +96,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       }
       else {
         DataKey<?>[] keys = DataKey.allKeys();
-        myDataKeysCount = keys.length;
-        if (ourDataKeysIndices.size() < myDataKeysCount) {
-          for (DataKey<?> key : keys) {
-            ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
-          }
-        }
+        myDataKeysCount = updateDataKeyIndices(keys);
         myCachedData = preGetAllData(components, initial, myDataManager, keys);
         ourInstances.add(this);
       }
@@ -146,12 +141,13 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     DataKey<?>[] keys = DataKey.allKeys();
     ProviderData cachedData = new ProviderData();
     Component component = SoftReference.dereference(myComponentRef.ref);
+    int dataKeysCount = updateDataKeyIndices(keys);
     doPreGetAllData(dataProvider, cachedData, component, myDataManager, keys, myCachedData.getHead());
     FList<ProviderData> newCachedData = myCachedData.prepend(cachedData);
     AtomicReference<KeyFMap> userData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
     return this instanceof InjectedDataContext
-           ? new InjectedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, myDataKeysCount)
-           : new PreCachedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, myDataKeysCount);
+           ? new InjectedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, dataKeysCount)
+           : new PreCachedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, dataKeysCount);
   }
 
   @Override
@@ -275,6 +271,16 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       for (ProviderData map : context.myCachedData) map.clear();
     }
     ourInstances.clear();
+  }
+
+  private static int updateDataKeyIndices(DataKey<?> @NotNull [] keys) {
+    if (ourDataKeysIndices.size() >= keys.length) {
+      return ourDataKeysIndices.size();
+    }
+    for (DataKey<?> key : keys) {
+      ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
+    }
+    return ourDataKeysIndices.size();
   }
 
   private static @NotNull FList<ProviderData> preGetAllData(@NotNull List<Component> components,
