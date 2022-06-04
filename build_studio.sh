@@ -11,28 +11,6 @@ function die() {
   exit 1
 }
 
-function set_java_home() {
-    readonly JDK_REPO="$(cd ../../prebuilts/studio/jdk/jdk11 && pwd)"
-    case `uname -s` in
-        MINGW64_NT-10.0)
-            export JAVA_HOME="${JDK_REPO}/win"
-            ;;
-        CYGWIN_NT-10.0)
-            export JAVA_HOME="${JDK_REPO}/win"
-            ;;
-        Darwin)
-            if [[ "$(uname -m)" == "arm64" ]]; then
-                export JAVA_HOME="${JDK_REPO}/mac-arm64/Contents/Home"
-            else
-                export JAVA_HOME="${JDK_REPO}/mac/Contents/Home"
-            fi
-            ;;
-        *)
-            export JAVA_HOME="${JDK_REPO}/linux"
-            ;;
-    esac
-}
-
 function get_absolute_path() {
   ( unset CDPATH; cd "$1" && pwd ) 2> /dev/null
 }
@@ -47,8 +25,6 @@ mkdir -p "$DIST"
 OUT="$(get_absolute_path "$OUT")"
 DIST="$(get_absolute_path "$DIST")"
 
-ANT="java -jar lib/ant/lib/ant-launcher.jar -f build.xml"
-
 INCREMENTAL=false
 while [[ $# -gt 0 ]]; do
   if [[ $1 = "--incremental" ]]; then
@@ -59,13 +35,10 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-set_java_home
-
-export PATH="${JAVA_HOME}/bin:${PATH}"
-
 readonly AS_BUILD_NUMBER="$(sed "s/SNAPSHOT/__BUILD_NUMBER__/" build.txt)"
 
 declare -ar BUILD_PROPERTIES=(
+  "-Didea.home.path=${PROG_DIR}"
   "-Dintellij.build.output.root=${OUT}"
   "-Dbuild.number=${AS_BUILD_NUMBER}"
   "-Dintellij.build.dev.mode=false"
@@ -74,9 +47,9 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.incremental.compilation=${INCREMENTAL}"
 )
 
-$ANT "${BUILD_PROPERTIES[@]}" build
+"${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "${BUILD_PROPERTIES[@]}" intellij.idea.community.build AndroidStudioBuildTarget
 
-$ANT "-Dintellij.build.output.root=$OUT/updater" fullupdater
+"${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "-Dintellij.build.output.root=${OUT}/updater" intellij.idea.community.build FullUpdaterBuildTarget
 
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
