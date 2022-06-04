@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.text.LiteralFormatUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -66,7 +67,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
   }
 
   static String getLiteralText(PsiLiteralExpression firstArgument) {
-    final String text = firstArgument.getText();
+    final String text = LiteralFormatUtil.removeUnderscores(firstArgument.getText());
     final char c = text.charAt(text.length() - 1);
     return c == 'd' || c == 'D' || c == 'f' || c == 'F'
            ? text.substring(0, text.length() - 1)
