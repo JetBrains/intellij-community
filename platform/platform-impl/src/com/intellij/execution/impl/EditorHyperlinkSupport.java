@@ -241,8 +241,8 @@ public class EditorHyperlinkSupport {
           if (highlightAttributes != null) {
             ex.setTextAttributes(highlightAttributes);
           }
+          associateHyperlink(ex, hyperlinkInfo, followedHyperlinkAttributes);
         });
-    associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
     return highlighter;
   }
 
