@@ -19,7 +19,7 @@ public class ReplaceAssignmentWithPostfixExpressionIntention extends MutablyName
 
   @Override
   public @NotNull String getFamilyName() {
-    return IntentionPowerPackBundle.message("replace.operator.assignment.with.postfix.expression.intention.family.name");
+    return IntentionPowerPackBundle.message("replace.assignment.with.postfix.expression.intention.family.name");
   }
 
   @NotNull
