@@ -8,10 +8,12 @@ import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.render.RenderingUtil;
+import com.intellij.ui.tree.ui.Control;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.JBUI;
@@ -63,6 +65,7 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     tree.setBorder(JBUI.Borders.emptyLeft(16));
     tree.setCellRenderer(new MyCellRenderer());
     tree.setRowHeight(0);
+    //ClientProperty.put(tree, Control.Painter.KEY, new MyControlPainter());
 
     tree.addTreeSelectionListener(e -> {
       WelcomeScreenTab tab = TreeUtil.getUserObject(WelcomeScreenTab.class, e.getPath().getLastPathComponent());
@@ -217,6 +220,47 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
         return JBUI.Panels.simplePanel(screenTab.getAssociatedComponent());
       }
     };
+  }
+
+  private static final class MyControlPainter implements Control.Painter {
+    private Control.Painter delegate = Control.Painter.DEFAULT;
+
+    @Override
+    public int getRendererOffset(@NotNull Control control, int depth, boolean leaf) {
+      if (depth == 1) {
+        if (leaf) {
+          return delegate.getRendererOffset(control, 0, leaf);
+        }
+        return delegate.getRendererOffset(control, 1, leaf);
+      }
+      return delegate.getRendererOffset(control, depth-1, leaf);
+    }
+
+    @Override
+    public int getControlOffset(@NotNull Control control, int depth, boolean leaf) {
+      if (depth == 1) {
+        if (leaf) {
+          return delegate.getControlOffset(control, 0, leaf);
+        }
+        return delegate.getControlOffset(control, 1, leaf);
+      }
+      return delegate.getControlOffset(control, depth-1, leaf);
+    }
+
+    @Override
+    public void paint(@NotNull Component c,
+                      @NotNull Graphics g,
+                      int x,
+                      int y,
+                      int width,
+                      int height,
+                      @NotNull Control control,
+                      int depth,
+                      boolean leaf,
+                      boolean expanded,
+                      boolean selected) {
+      delegate.paint(c, g, x, y, width, height, control, depth, leaf, expanded, selected);
+    }
   }
 
   private static final class MyCellRenderer implements TreeCellRenderer {
