@@ -15,6 +15,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Ty
 UTypeReferenceExpression (name = kotlin.PublishedApi) -> USimpleNameReferenceExpression (identifier = PublishedApi) -> Decompiled_Class: PublishedApi
 UTypeReferenceExpression (name = java.lang.reflect.Type) -> USimpleNameReferenceExpression (identifier = Type) -> Decompiled_Class: Type
     ULocalVariable (name = base) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> Kotlin_Light_Method:
     UTypeReferenceExpression (name = TypeBase<T>) -> USimpleNameReferenceExpression (identifier = TypeBase) -> Kotlin_Light_Class:@PublishedApi
 internal open class TypeBase<T>: TypeBase
     UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> TYPE_PARAMETER: T

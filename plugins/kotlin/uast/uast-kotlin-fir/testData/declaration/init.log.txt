@@ -7,6 +7,12 @@ UFile (package = )
                         UObjectLiteralExpression
                             UClass (name = null)
                                 UMethod (name = )
+                                    UBlockExpression
+                                        UBlockExpression
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                                UIdentifier (Identifier (println))
+                                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                                                ULiteralExpression (value = "object.init")
     UClass (name = Foo)
         UField (name = s)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)

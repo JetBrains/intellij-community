@@ -50,7 +50,11 @@ UFile (package = ) [import java.io.Closeable...]
                                             ULiteralExpression (value = 0) [0] : PsiType:int
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] : PsiType:void
-                                UMethod (name = ) [private fun () = UastEmptyExpression]
+                                UMethod (name = ) [private fun () {...}]
+                                    UBlockExpression [{...}]
+                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()]
+                                            UIdentifier (Identifier (InputStream)) [UIdentifier (Identifier (InputStream))]
+                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: InputStream) [<init>]
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] : PsiType:void
                 UDeclarationsExpression [var runnable: <ErrorType> = anonymous null]

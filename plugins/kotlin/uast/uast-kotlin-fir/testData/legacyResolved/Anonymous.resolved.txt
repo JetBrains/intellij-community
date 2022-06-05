@@ -22,6 +22,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = In
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
     UTypeReferenceExpression (name = java.io.Closeable) -> USimpleNameReferenceExpression (identifier = Closeable) -> Decompiled_Class: Closeable
     ULocalVariable (name = runnableIs) -> UObjectLiteralExpression -> Decompiled_Method:
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) -> Decompiled_Method:
     UTypeReferenceExpression (name = java.io.InputStream) -> USimpleNameReferenceExpression (identifier = InputStream) -> Decompiled_Method: InputStream
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> Decompiled_Class: Runnable
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
