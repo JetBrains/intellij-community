@@ -245,7 +245,6 @@ public final class CachedIntentions {
     if (cachedActions.equals(wrappedNew)) {
       return false;
     }
-    cachedActions.clear();
     cachedActions.addAll(wrappedNew);
     return true;
   }
