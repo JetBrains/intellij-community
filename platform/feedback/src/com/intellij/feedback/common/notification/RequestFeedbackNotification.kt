@@ -9,8 +9,12 @@ import com.intellij.openapi.util.NlsSafe
  * Basic notification for feedback requests
  */
 
-class RequestFeedbackNotification(@NlsSafe title: String, @NlsSafe content: String) : Notification(
-  "Feedback In IDE",
+open class RequestFeedbackNotification(groupId: String, @NlsSafe title: String, @NlsSafe content: String) : Notification(
+  groupId,
   title, content,
   NotificationType.INFORMATION
-)
+) {
+  init {
+    isSuggestionType = true
+  }
+}

@@ -50,8 +50,10 @@ enum class IdleFeedbackTypes {
     }
 
     override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(NPWFeedbackBundle.message("notification.created.project.request.feedback.title"),
-                                         NPWFeedbackBundle.message("notification.created.project.request.feedback.content"))
+      return RequestFeedbackNotification(
+        "Feedback In IDE",
+        NPWFeedbackBundle.message("notification.created.project.request.feedback.title"),
+        NPWFeedbackBundle.message("notification.created.project.request.feedback.content"))
     }
 
     override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
