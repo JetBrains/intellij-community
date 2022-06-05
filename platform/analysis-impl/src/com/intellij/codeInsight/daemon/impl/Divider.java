@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -27,6 +28,7 @@ import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public final class Divider {
+  private static final Logger LOG = Logger.getInstance(Divider.class);
   private static final int STARTING_TREE_HEIGHT = 10;
 
   public static final class DividedElements {
@@ -57,6 +59,10 @@ public final class Divider {
     FileViewProvider viewProvider = file.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
       PsiFile root = viewProvider.getPsi(language);
+      if (root == null) {
+        LOG.error(viewProvider + "("+viewProvider.getClass()+").getPsi(" + language + ") is null for file "+file);
+        continue;
+      }
       if (rootFilter == null || !rootFilter.test(root)) {
         continue;
       }
