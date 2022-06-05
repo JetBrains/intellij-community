@@ -65,6 +65,7 @@ UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (ident
 UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     UBlockExpression -> UObjectLiteralExpression -> Kotlin_Light_Method:
+    UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) -> Kotlin_Light_Method:
     UTypeReferenceExpression (name = Parent) -> USimpleNameReferenceExpression (identifier = Parent) -> Kotlin_Light_Method: Parent
     null -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Value_Parameter: b
     null -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a

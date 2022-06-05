@@ -6,7 +6,7 @@ KotlinUFile:objects.kt(
             KotlinUAnonymousClass:<no name provided>(
                 KotlinUMethod:run(
                 )
-                KotlinUMethod:<no name provided>(
+                KotlinConstructorUMethod:<no name provided>(
                 )
             )
         )

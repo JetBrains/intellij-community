@@ -647,11 +647,7 @@ interface BaseKotlinConverter {
                     el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
                 }
                 is KtSuperTypeCallEntry -> {
-                    el<UExpression> {
-                        (element.getParentOfType<KtClassOrObject>(true)?.parent as? KtObjectLiteralExpression)
-                            ?.toUElementOfType<UExpression>()
-                            ?: KotlinUFunctionCallExpression(element, givenParent)
-                    }
+                    el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
                 }
                 is KtImportDirective -> {
                     el<UImportStatement>(build(::KotlinUImportStatement))

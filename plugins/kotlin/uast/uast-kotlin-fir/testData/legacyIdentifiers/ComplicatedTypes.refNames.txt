@@ -15,7 +15,7 @@ Type -> USimpleNameReferenceExpression (identifier = Type) from KtNameReferenceE
 PublishedApi -> UAnnotation (fqName = kotlin.PublishedApi) from KtNameReferenceExpression
 Type -> USimpleNameReferenceExpression (identifier = Type) from KtNameReferenceExpression
 TypeBase -> USimpleNameReferenceExpression (identifier = TypeBase) from KtObjectLiteralExpression
-TypeBase -> UObjectLiteralExpression from KtNameReferenceExpression
+TypeBase -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) from KtNameReferenceExpression
 T -> USimpleNameReferenceExpression (identifier = T) from KtNameReferenceExpression
 genericSuperclass -> USimpleNameReferenceExpression (identifier = genericSuperclass) from KtDotQualifiedExpression
 java -> USimpleNameReferenceExpression (identifier = java) from KtDotQualifiedExpression
