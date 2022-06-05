@@ -670,7 +670,8 @@ public class JobUtilTest extends LightPlatformTestCase {
           jobs.add(job);
 
           boolean ok = run.waitFor(30_000);
-          assertTrue(ok);
+          String threadDump = ThreadDumper.dumpThreadsToString();
+          assertTrue(threadDump, ok);
           cancelAndWait(Collections.singletonList(job));
         }));
         if (exception != null) throw exception;
