@@ -714,7 +714,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   @Nullable
-  private Object getData(@NotNull String dataId, Supplier<JBIterable<?>> selection) {
+  private Object getData(@NotNull String dataId, Supplier<? extends JBIterable<?>> selection) {
     DataProvider dataProvider = getDataProviderInner(selection);
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       Object data = modelExtension.getData(dataId, dataProvider);
@@ -724,12 +724,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   @NotNull
-  private DataProvider getDataProvider(Supplier<JBIterable<?>> selection) {
+  private DataProvider getDataProvider(Supplier<? extends JBIterable<?>> selection) {
     return d -> getData(d, selection);
   }
 
   @NotNull
-  private DataProvider getDataProviderInner(Supplier<JBIterable<?>> selection) {
+  private DataProvider getDataProviderInner(Supplier<? extends JBIterable<?>> selection) {
     return d -> getDataImpl(d, this, selection);
   }
 

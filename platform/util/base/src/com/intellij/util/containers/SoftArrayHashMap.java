@@ -45,7 +45,7 @@ public final class SoftArrayHashMap<T,V> implements Cloneable {
     return get(key, 0);
   }
 
-  public boolean processLeafEntries(@NotNull BiPredicate<T, V> processor) {
+  public boolean processLeafEntries(@NotNull BiPredicate<? super T, ? super V> processor) {
     if (myValuesMap != null) {
       for (T t : myValuesMap.keySet()) {
         if (!processor.test(t, myValuesMap.get(t))) {

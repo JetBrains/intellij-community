@@ -332,7 +332,7 @@ public class Mappings {
       return depClasses;
     }
 
-    private IntSet propagateMemberAccessRec(final IntSet acc, final boolean isField, final boolean root, final Predicate<ProtoMember> isSame, final int reflcass) {
+    private IntSet propagateMemberAccessRec(final IntSet acc, final boolean isField, final boolean root, final Predicate<? super ProtoMember> isSame, final int reflcass) {
       if (acc.contains(reflcass)) {
         return acc; // SOE prevention
       }
@@ -362,7 +362,7 @@ public class Mappings {
       return acc;
     }
 
-    IntSet propagateMemberAccess(final boolean isField, final Predicate<ProtoMember> isSame, final int className) {
+    IntSet propagateMemberAccess(final boolean isField, final Predicate<? super ProtoMember> isSame, final int className) {
       return propagateMemberAccessRec(new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR), isField, true, isSame, className);
     }
 
@@ -391,7 +391,7 @@ public class Mappings {
       };
     }
 
-    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final Predicate<MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
+    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
       if (m.name == myInitName) {
         return; // overriding is not defined for constructors
       }
@@ -442,7 +442,7 @@ public class Mappings {
       return result;
     }
 
-    private boolean hasOverriddenMethods(final ClassRepr fromClass, final Predicate<MethodRepr> predicate, IntSet visitedClasses) {
+    private boolean hasOverriddenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, IntSet visitedClasses) {
       if (visitedClasses == null) {
         visitedClasses = new IntOpenHashSet();
         visitedClasses.add(fromClass.name);
@@ -483,7 +483,7 @@ public class Mappings {
       return false;
     }
 
-    private void addOverridenMethods(final ClassRepr fromClass, final Predicate<MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
+    private void addOverridenMethods(final ClassRepr fromClass, final Predicate<? super MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, IntSet visitedClasses) {
       if (visitedClasses == null) {
         visitedClasses = new IntOpenHashSet();
         visitedClasses.add(fromClass.name);
@@ -577,7 +577,7 @@ public class Mappings {
       return Iterators.flat(collectRecursively(cls, c-> c.getMethods()));
     }
 
-    private Iterable<OverloadDescriptor> findAllOverloads(final ClassRepr cls, Function<MethodRepr, Integer> correspondenceFinder) {
+    private Iterable<OverloadDescriptor> findAllOverloads(final ClassRepr cls, Function<? super MethodRepr, Integer> correspondenceFinder) {
       Function<ClassRepr, Iterable<OverloadDescriptor>> converter = c -> c == null? Collections.emptyList() : Iterators.filter(Iterators.map(c.getMethods(), m -> {
         Integer accessScope = correspondenceFinder.apply(m);
         return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
@@ -589,7 +589,7 @@ public class Mappings {
       ));
     }
 
-    private <T> Iterable<T> collectRecursively(ClassRepr cls, Function<ClassRepr, T> mapper) {
+    private <T> Iterable<T> collectRecursively(ClassRepr cls, Function<? super ClassRepr, ? extends T> mapper) {
       return Iterators.flat(Iterators.asIterable(mapper.apply(cls)), Iterators.flat(Iterators.map(cls.getSuperTypes(), st -> {
         final ClassRepr cr = classReprByName(st.className);
         return cr != null ? collectRecursively(cr, mapper) : Collections.emptyList();
@@ -2297,7 +2297,7 @@ public class Mappings {
 
     private void processDependentFile(int depClass,
                                       @NotNull File depFile,
-                                      Ref<Boolean> incrementalMode,
+                                      Ref<? super Boolean> incrementalMode,
                                       DiffState state,
                                       Collection<? super File> affectedFiles,
                                       Collection<? extends File> compiledFiles) {
@@ -2946,7 +2946,7 @@ public class Mappings {
         }
       }
 
-      private boolean addConstantUsages(ClassRepr repr, Collection<Callbacks.ConstantRef> cRefs) {
+      private boolean addConstantUsages(ClassRepr repr, Collection<? extends Callbacks.ConstantRef> cRefs) {
         boolean addedNewUsages = false;
         if (cRefs != null) {
           for (Callbacks.ConstantRef ref : cRefs) {
@@ -3186,7 +3186,7 @@ public class Mappings {
     }
   }
 
-  private static <T> Supplier<T> lazy(Supplier<T> calculation) {
+  private static <T> Supplier<T> lazy(Supplier<? extends T> calculation) {
     return new Supplier<T>() {
       Ref<T> calculated;
       @Override

@@ -29,7 +29,7 @@ public class PackagesNotificationPanel {
     this(PackagesNotificationPanel::showError);
   }
 
-  public PackagesNotificationPanel(@NotNull BiConsumer<String, PackageManagementService.ErrorDescription> showErrorFunction) {
+  public PackagesNotificationPanel(@NotNull BiConsumer<? super String, ? super PackageManagementService.ErrorDescription> showErrorFunction) {
     myHtmlViewer = SwingHelper.createHtmlViewer(true, null, null, null);
     myHtmlViewer.setVisible(false);
     myHtmlViewer.setOpaque(true);

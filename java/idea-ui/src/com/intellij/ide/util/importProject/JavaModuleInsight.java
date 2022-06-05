@@ -147,7 +147,7 @@ public final class JavaModuleInsight extends ModuleInsight {
   }
 
   @Override
-  protected void scanSourceFileForImportedPackages(final CharSequence chars, final Consumer<String> result) {
+  protected void scanSourceFileForImportedPackages(final CharSequence chars, final Consumer<? super String> result) {
     myLexer.start(chars);
 
     JavaSourceRootDetectionUtil.skipWhiteSpaceAndComments(myLexer);
@@ -230,7 +230,7 @@ public final class JavaModuleInsight extends ModuleInsight {
   }
 
   @Override
-  protected void scanLibraryForDeclaredPackages(File file, Consumer<String> result) throws IOException {
+  protected void scanLibraryForDeclaredPackages(File file, Consumer<? super String> result) throws IOException {
     try (ZipFile zip = new ZipFile(file)) {
       final Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {

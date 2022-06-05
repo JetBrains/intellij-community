@@ -26,7 +26,7 @@ public class FormatOnSaveOptionsBase<S extends FormatOnSaveOptionsBase.StateBase
   }
 
   static class StateBase implements Cloneable {
-    StateBase(@NotNull Function<DefaultsProvider, Collection<FileType>> enabledByDefaultProvider) {
+    StateBase(@NotNull Function<? super DefaultsProvider, ? extends Collection<FileType>> enabledByDefaultProvider) {
       for (DefaultsProvider provider : EP_NAME.getExtensionList()) {
         Collection<@NotNull FileType> fileTypes = enabledByDefaultProvider.apply(provider);
         mySelectedFileTypes.addAll(ContainerUtil.map(fileTypes, FileType::getName));

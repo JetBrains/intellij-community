@@ -311,7 +311,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   public final void processResources(@NotNull String dir,
-                                     @NotNull Predicate<String> fileNameFilter,
+                                     @NotNull Predicate<? super String> fileNameFilter,
                                      @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     classPath.processResources(dir, fileNameFilter, consumer);
   }

@@ -107,16 +107,16 @@ public final class CompletionInitializationUtil {
                                     initContext.getEditor(), indicator);
   }
 
-  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
+  public static Supplier<? extends OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
     final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
 
     return doInsertDummyIdentifier(initContext, topLevelOffsets, false, registerDisposable);
   }
 
-  private static Supplier<OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
+  private static Supplier<? extends OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
                                                                  OffsetsInFile topLevelOffsets,
-                                                                 boolean noWriteLock, Consumer<Supplier<Disposable>> registerDisposable) {
+                                                                 boolean noWriteLock, Consumer<? super Supplier<Disposable>> registerDisposable) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -143,16 +143,16 @@ public final class CompletionInitializationUtil {
     //kskrygan: this check is non-relevant for CWM (quick doc and other features work separately)
     //and we are trying to avoid useless write locks during completion
     return skipWriteLockIfNeeded(noWriteLock, () -> {
-      registerDisposable.accept(() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
+      registerDisposable.accept((Supplier<Disposable>)() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
       OffsetsInFile copyOffsets = apply.get();
 
-      registerDisposable.accept(() -> copyOffsets.getOffsets());
+      registerDisposable.accept((Supplier<Disposable>)() -> copyOffsets.getOffsets());
 
       return copyOffsets;
     });
   }
 
-  private static Supplier<OffsetsInFile> skipWriteLockIfNeeded(boolean skipWriteLock, Supplier<OffsetsInFile> toWrap) {
+  private static Supplier<? extends OffsetsInFile> skipWriteLockIfNeeded(boolean skipWriteLock, Supplier<? extends OffsetsInFile> toWrap) {
     if (skipWriteLock) {
       return toWrap;
     }

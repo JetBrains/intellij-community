@@ -234,7 +234,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     return state.withNewType(descriptorId, type);
   }
 
-  private <T> T runWithoutCaching(@NotNull TypeDfaState state, Supplier<T> computation) {
+  private <T> T runWithoutCaching(@NotNull TypeDfaState state, Supplier<? extends T> computation) {
     Map<VariableDescriptor, DFAType> unwrappedVariables = getCurrentVariableTypes(state);
     return TypeInferenceHelper.doInference(unwrappedVariables, computation);
   }

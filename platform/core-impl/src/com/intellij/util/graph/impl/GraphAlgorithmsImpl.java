@@ -63,7 +63,7 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
   }
 
   @Override
-  public <Node> void iterateOverAllSimpleCycles(@NotNull Graph<Node> graph, @NotNull Consumer<List<Node>> cycleConsumer) {
+  public <Node> void iterateOverAllSimpleCycles(@NotNull Graph<Node> graph, @NotNull Consumer<? super List<Node>> cycleConsumer) {
     new SimpleCyclesIterator<>(graph).iterateSimpleCycles(cycleConsumer);
   }
 

@@ -86,7 +86,7 @@ public class WizardContext extends UserDataHolderBase {
 
     default void switchToRequested(@NotNull String placeId) { }
 
-    default void switchToRequested(@NotNull String placeId, @NotNull Consumer<Step> configure) {
+    default void switchToRequested(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
       switchToRequested(placeId);
     }
   }
@@ -186,7 +186,7 @@ public class WizardContext extends UserDataHolderBase {
     requestSwitchTo(placeId, __ -> {});
   }
 
-  public void requestSwitchTo(@NotNull String placeId, @NotNull Consumer<Step> configure) {
+  public void requestSwitchTo(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
     for (Listener listener : myListeners) {
       listener.switchToRequested(placeId, configure);
     }

@@ -276,7 +276,7 @@ public final class Utils {
   static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull ActionUpdater updater,
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
-                                                             @Nullable Consumer<String> missedKeys) {
+                                                             @Nullable Consumer<? super String> missedKeys) {
     int maxTime = Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
@@ -481,7 +481,7 @@ public final class Utils {
 
   @ApiStatus.Internal
   public static <T> void updateComponentActions(@NotNull JComponent component,
-                                                @NotNull Iterable<AnAction> actions,
+                                                @NotNull Iterable<? extends AnAction> actions,
                                                 @NotNull DataContext dataContext,
                                                 @NotNull String place,
                                                 @NotNull PresentationFactory presentationFactory,
@@ -717,7 +717,7 @@ public final class Utils {
     return result[0];
   }
 
-  private static <T> T computeWithRetries(@NotNull Supplier<T> computable, @Nullable BooleanSupplier expire, @Nullable Runnable onProcessed) {
+  private static <T> T computeWithRetries(@NotNull Supplier<? extends T> computable, @Nullable BooleanSupplier expire, @Nullable Runnable onProcessed) {
     ProcessCanceledWithReasonException lastCancellation = null;
     int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
     for (int i = 0; i < retries; i++) {

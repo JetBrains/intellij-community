@@ -28,7 +28,7 @@ public final class ActionPanel extends NonOpaquePanel {
   private boolean myAutoHide;
   private boolean myActionsIsVisible = false;
 
-  public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Consumer<MouseEvent> pass, Consumer<Boolean> hover) {
+  public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Consumer<? super MouseEvent> pass, Consumer<? super Boolean> hover) {
     myTabs = tabs;
     myInfo = tabInfo;
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();

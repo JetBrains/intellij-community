@@ -88,7 +88,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private final boolean myAssigneeVisible;
   private final Set<String> myAcceptedNotices;
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
-  private int myIndex, myLastIndex = -1;
+  private int myIndex;
+  private int myLastIndex = -1;
   private Long myDevelopersTimestamp;
 
   private JLabel myCountLabel;
@@ -685,7 +686,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     String disable = DiagnosticBundle.message("error.dialog.disable.plugin.action.disable");
     String cancel = IdeBundle.message("button.cancel");
 
-    boolean doDisable, doRestart;
+    boolean doDisable;
+    boolean doRestart;
     if (canRestart) {
       String restart = DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
       int result = Messages.showYesNoCancelDialog(project, message, title, disable, restart, cancel, Messages.getQuestionIcon());
@@ -1115,9 +1117,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     REPORT_ALL(dialog -> dialog.new ReportAllAction()),
     REPORT_AND_CLEAR_ALL(dialog -> dialog.new ReportAndClearAllAction());
 
-    private final Function<IdeErrorsDialog, Action> myActionProducer;
+    private final Function<? super IdeErrorsDialog, ? extends Action> myActionProducer;
 
-    ReportAction(Function<IdeErrorsDialog, Action> actionProducer) {
+    ReportAction(Function<? super IdeErrorsDialog, ? extends Action> actionProducer) {
       myActionProducer = actionProducer;
     }
 

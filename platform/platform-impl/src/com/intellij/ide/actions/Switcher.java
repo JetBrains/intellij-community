@@ -772,11 +772,11 @@ public final class Switcher extends BaseSwitcherAction {
       }
     }
 
-    private void registerAction(@NotNull Consumer<InputEvent> action, @NonNls String @NotNull ... keys) {
+    private void registerAction(@NotNull Consumer<? super InputEvent> action, @NonNls String @NotNull ... keys) {
       registerAction(action, onKeyRelease.getShortcuts(keys));
     }
 
-    private void registerAction(@NotNull Consumer<InputEvent> action, @NotNull ShortcutSet shortcuts) {
+    private void registerAction(@NotNull Consumer<? super InputEvent> action, @NotNull ShortcutSet shortcuts) {
       if (shortcuts.getShortcuts().length == 0) return; // ignore empty shortcut set
       LightEditActionFactory.create(event -> {
         if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());

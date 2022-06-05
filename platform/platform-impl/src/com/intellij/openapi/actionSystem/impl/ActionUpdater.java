@@ -79,8 +79,8 @@ final class ActionUpdater {
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheSlowDataKeys;
   private boolean myForceAsync;
-  private final Function<AnActionEvent, AnActionEvent> myEventTransform;
-  private final Consumer<Runnable> myLaterInvocator;
+  private final Function<? super AnActionEvent, ? extends AnActionEvent> myEventTransform;
+  private final Consumer<? super Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
 
   private int myEDTCallsCount;
@@ -99,8 +99,8 @@ final class ActionUpdater {
                 @NotNull String place,
                 boolean isContextMenuAction,
                 boolean isToolbarAction,
-                @Nullable Function<AnActionEvent, AnActionEvent> eventTransform,
-                @Nullable Consumer<Runnable> laterInvocator) {
+                @Nullable Function<? super AnActionEvent, ? extends AnActionEvent> eventTransform,
+                @Nullable Consumer<? super Runnable> laterInvocator) {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
     myPresentationFactory = presentationFactory;
     myDataContext = dataContext;
@@ -598,10 +598,11 @@ final class ActionUpdater {
 
   @NotNull
   UpdateSession asFastUpdateSession(@Nullable Consumer<? super String> missedKeys,
-                                    @Nullable Consumer<Runnable> laterInvocator) {
+                                    @Nullable Consumer<? super Runnable> laterInvocator) {
     DataContext frozenContext = Utils.freezeDataContext(myDataContext, missedKeys);
+    Consumer<? super Runnable> invocator = Objects.requireNonNull(ObjectUtils.<Consumer<? super Runnable>>coalesce(laterInvocator, myLaterInvocator));
     ActionUpdater updater = new ActionUpdater(myPresentationFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
-                                              myEventTransform, Objects.requireNonNull(ObjectUtils.coalesce(laterInvocator, myLaterInvocator)));
+                                              myEventTransform, invocator);
     updater.myPreCacheSlowDataKeys = false;
     return updater.asUpdateSession();
   }
@@ -780,7 +781,7 @@ final class ActionUpdater {
     }
 
     @Override
-    public <T> @NotNull T computeOnEdt(@NotNull String operationName, @NotNull Supplier<T> supplier) {
+    public <T> @NotNull T computeOnEdt(@NotNull String operationName, @NotNull Supplier<? extends T> supplier) {
       return updater.computeOnEdt(operationName, supplier, true);
     }
   }

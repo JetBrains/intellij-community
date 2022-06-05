@@ -59,7 +59,7 @@ final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionCh
     return last;
   }
 
-  @NotNull MovementAvailability canMoveToStackTop(@NotNull DocumentReference reference, @NotNull Set<ActionChangeRange> rangesToMove) {
+  @NotNull MovementAvailability canMoveToStackTop(@NotNull DocumentReference reference, @NotNull Set<? extends ActionChangeRange> rangesToMove) {
     LinkedList<ActionChangeRange> stack = getStack(reference);
     ActionChangeRange[] affected = getAffectedRanges(stack, rangesToMove);
     if (affected == null) {
@@ -92,10 +92,10 @@ final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionCh
     trimInvalid(stack);
   }
 
-  private static ActionChangeRange @Nullable [] getAffectedRanges(@NotNull LinkedList<ActionChangeRange> stack,
-                                                                  @NotNull Set<ActionChangeRange> rangesToMove) {
+  private static ActionChangeRange @Nullable [] getAffectedRanges(@NotNull LinkedList<? extends ActionChangeRange> stack,
+                                                                  @NotNull Set<? extends ActionChangeRange> rangesToMove) {
     Set<ActionChangeRange> notSeenRanges = new HashSet<>(rangesToMove);
-    ListIterator<ActionChangeRange> iterator = stack.listIterator(stack.size());
+    ListIterator<? extends ActionChangeRange> iterator = stack.listIterator(stack.size());
     int affectedRangeCount = 0;
     while (iterator.hasPrevious()) {
       affectedRangeCount++;
@@ -153,7 +153,7 @@ final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ActionCh
     return false;
   }
 
-  void trimStacks(@NotNull Iterable<DocumentReference> references) {
+  void trimStacks(@NotNull Iterable<? extends DocumentReference> references) {
     for (DocumentReference reference : references) {
       trimInvalid(getStack(reference));
     }

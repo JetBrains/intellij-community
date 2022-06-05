@@ -339,7 +339,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
 
   private static void addExecutorActions(@NotNull DefaultActionGroup group,
-                                         @NotNull Function<Executor, ExecutorRegistryImpl.ExecutorAction> actionCreator) {
+                                         @NotNull Function<? super Executor, ? extends ExecutorRegistryImpl.ExecutorAction> actionCreator) {
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       if (executor instanceof ExecutorGroup) {
         for (Executor childExecutor : ((ExecutorGroup<?>)executor).childExecutors()) {

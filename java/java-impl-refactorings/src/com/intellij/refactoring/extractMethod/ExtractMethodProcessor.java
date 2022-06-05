@@ -221,7 +221,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   /**
    * Invoked in atomic action
    */
-  public boolean prepare(@Nullable java.util.function.Consumer<ExtractMethodProcessor> pass) throws PrepareFailedException {
+  public boolean prepare(@Nullable Consumer<? super ExtractMethodProcessor> pass) throws PrepareFailedException {
     if (myElements.length == 0) return false;
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
@@ -897,12 +897,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  public void previewRefactoring(@Nullable Set<TextRange> textRanges) {
+  public void previewRefactoring(@Nullable Set<? extends TextRange> textRanges) {
     initDuplicates(textRanges);
     chooseAnchor();
   }
 
-  protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
+  protected void initDuplicates(@Nullable Set<? extends TextRange> textRanges) {
     myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED, textRanges);
     if (myParametrizedDuplicates != null && !myParametrizedDuplicates.isEmpty()) {
       myExactDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.EXACT, textRanges);
@@ -1868,7 +1868,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean chooseTargetClass(PsiElement codeFragment,
-                                    final java.util.function.Consumer<ExtractMethodProcessor> extractPass,
+                                    final Consumer<? super ExtractMethodProcessor> extractPass,
                                     @Nullable PsiClass defaultTargetClass) throws PrepareFailedException {
     final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements, myOutputVariables);
 
@@ -2039,7 +2039,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return variable.getName();
   }
 
-  private static boolean shouldAcceptCurrentTarget(java.util.function.Consumer<ExtractMethodProcessor> extractPass, PsiElement target) {
+  private static boolean shouldAcceptCurrentTarget(java.util.function.Consumer<? super ExtractMethodProcessor> extractPass, PsiElement target) {
     return extractPass == null && !(target instanceof PsiAnonymousClass);
   }
 

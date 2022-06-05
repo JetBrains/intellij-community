@@ -12,5 +12,5 @@ import org.jetbrains.annotations.NotNull;
 public interface FindModelExtension {
   ExtensionPointName<FindModelExtension> EP_NAME = ExtensionPointName.create("com.intellij.findModelExtension");
 
-  boolean iterateAdditionalFiles(@NotNull FindModel findModel, @NotNull Project project, @NotNull Processor<VirtualFile> consumer);
+  boolean iterateAdditionalFiles(@NotNull FindModel findModel, @NotNull Project project, @NotNull Processor<? super VirtualFile> consumer);
 }

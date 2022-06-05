@@ -153,7 +153,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
     }
   }
 
-  private static void renamePackageStatements(@NotNull Iterable<PsiPackageAccessibilityStatement> packageStatements,
+  private static void renamePackageStatements(@NotNull Iterable<? extends PsiPackageAccessibilityStatement> packageStatements,
                                               @NotNull PsiPackage oldPackage,
                                               @NotNull PsiPackage newPackage) {
     for (PsiPackageAccessibilityStatement exportStatement : packageStatements) {

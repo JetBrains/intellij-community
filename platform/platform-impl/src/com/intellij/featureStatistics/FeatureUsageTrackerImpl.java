@@ -229,7 +229,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     }
   }
 
-  private static void triggerFeatureUsed(Function<ProductivityFeaturesRegistry, FeatureDescriptor> featureGetter) {
+  private static void triggerFeatureUsed(Function<? super ProductivityFeaturesRegistry, ? extends FeatureDescriptor> featureGetter) {
     ProductivityFeaturesRegistry featuresRegistry = ProductivityFeaturesRegistry.getInstance();
     if (featuresRegistry != null) {
       FeatureDescriptor feature = featureGetter.fun(featuresRegistry);

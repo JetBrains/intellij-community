@@ -93,7 +93,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  public static @NotNull Path packLogs(@Nullable Project project, @NotNull Consumer<Compressor> additionalFiles) throws IOException {
+  public static @NotNull Path packLogs(@Nullable Project project, @NotNull Consumer<? super Compressor> additionalFiles) throws IOException {
     PerformanceWatcher.getInstance().dumpThreads("", false);
 
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.ENGLISH);

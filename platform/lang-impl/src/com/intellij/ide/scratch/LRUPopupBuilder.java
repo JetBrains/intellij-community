@@ -62,7 +62,7 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project,
                                                                @NotNull @PopupTitle String title,
-                                                               @Nullable Function<Language, Icon> iconProvider) {
+                                                               @Nullable Function<? super Language, ? extends Icon> iconProvider) {
     return new LRUPopupBuilder<Language>(project, title) {
       @Override
       public String getDisplayName(Language language) {

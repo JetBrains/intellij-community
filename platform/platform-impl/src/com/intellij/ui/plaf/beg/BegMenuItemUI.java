@@ -560,7 +560,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
    *   <li>Selected/unselected A means enabled/disabled B</li>
    * </ol>
    */
-  public static void registerMultiChoiceSupport(@NotNull JPopupMenu component, @NotNull Consumer<JPopupMenu> onUpdate) {
+  public static void registerMultiChoiceSupport(@NotNull JPopupMenu component, @NotNull Consumer<? super JPopupMenu> onUpdate) {
     component.addPropertyChangeListener(KEEP_MENU_OPEN_PROP, evt -> onUpdate.accept((JPopupMenu)evt.getSource()));
   }
 

@@ -20,7 +20,7 @@ import javax.swing.JPanel
 
 abstract class LanguageRuntimeConfigurable(private val config: LanguageRuntimeConfiguration,
                                            private val targetType: TargetEnvironmentType<*>,
-                                           private val targetProvider: Supplier<TargetEnvironmentConfiguration>,
+                                           private val targetProvider: Supplier<out TargetEnvironmentConfiguration>,
                                            private val project: Project) :
   BoundConfigurable(config.displayName, config.getRuntimeType().helpTopic) {
   private lateinit var mainPanel: DialogPanel

@@ -68,7 +68,7 @@ class EclipseProjectDetector extends ProjectDetector {
   }
 
   @Override
-  public void detectProjects(Consumer<List<String>> onFinish) {
+  public void detectProjects(Consumer<? super List<String>> onFinish) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();

@@ -234,9 +234,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Nullable
   private static <T extends RangeMarkerEx> RangeMarkerImpl getNodeMarker(@NotNull IntervalNode<T> node) {
-    List<Supplier<T>> keys = node.intervals;
+    List<Supplier<? extends T>> keys = node.intervals;
     for (int i = keys.size() - 1; i >= 0; i--) {
-      Supplier<T> key = keys.get(i);
+      Supplier<? extends T> key = keys.get(i);
       RangeMarkerImpl marker = (RangeMarkerImpl)key.get();
       if (marker != null) {
         if (marker.isValid()) return marker;

@@ -18,7 +18,7 @@ public final class Bfs {
   public static <Node> void performBfs(
     @NotNull OutboundSemiGraph<Node> graph,
     @NotNull Node root,
-    @NotNull BiConsumer<Node, Integer> visitor
+    @NotNull BiConsumer<? super Node, ? super Integer> visitor
   ) {
     final Set<Node> visited = new HashSet<>();
     final Queue<WithIndex<Node>> queue = new ArrayDeque<>();

@@ -41,7 +41,7 @@ public abstract class GraphAlgorithms {
 
   public abstract <Node> void iterateOverAllSimpleCycles(
     @NotNull Graph<Node> graph,
-    @NotNull Consumer<List<Node>> cycleConsumer
+    @NotNull Consumer<? super List<Node>> cycleConsumer
   );
 
   @NotNull

@@ -207,7 +207,7 @@ class ForkedDebuggerThread extends Thread {
     }
   }
 
-  private void reattachRemoteDebugger(@NotNull RemoteConfiguration runConfiguration, @NotNull Consumer<DebugProcess> callback) {
+  private void reattachRemoteDebugger(@NotNull RemoteConfiguration runConfiguration, @NotNull Consumer<? super DebugProcess> callback) {
     DebuggerManager debuggerManager = DebuggerManager.getInstance(myProject);
     DebugProcess debugProcess = debuggerManager.getDebugProcess(myMainProcessHandler);
     if (debugProcess instanceof DebugProcessImpl) {

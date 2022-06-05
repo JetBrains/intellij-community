@@ -29,7 +29,7 @@ class CollectionListModelWithBatchUpdate<T> extends CollectionListModel<T> {
    *
    * @param action that performs batch update; accepts this model as a parameter
    */
-  public void performBatchUpdate(Consumer<CollectionListModel<T>> action) {
+  public void performBatchUpdate(Consumer<? super CollectionListModel<T>> action) {
     try {
       myListenersMuted = true;
       action.accept(this);

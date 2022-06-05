@@ -74,7 +74,6 @@ import java.util.function.Consumer;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings("unchecked")
 public final class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
   private static final ExtensionPointName<ProjectCategory> CATEGORY_EP =
@@ -114,7 +113,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myContext = context;
     myContext.addContextListener(new WizardContext.Listener() {
       @Override
-      public void switchToRequested(@NotNull String placeId, @NotNull Consumer<Step> configure) {
+      public void switchToRequested(@NotNull String placeId, @NotNull Consumer<? super Step> configure) {
         TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
         if (groupToSelect != null) {
           myProjectTypeList.setSelectedValue(groupToSelect, true);

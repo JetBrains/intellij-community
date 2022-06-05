@@ -111,9 +111,9 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
 
 class HighlightAction extends DumbAwareAction {
   private final TextAttributesKey myEditorAttributesKey;
-  private final Consumer<TextAttributesKey> myActionPerformed;
+  private final Consumer<? super TextAttributesKey> myActionPerformed;
 
-  HighlightAction(@Nls String name, TextAttributesKey attributes, Consumer<TextAttributesKey> actionPerformed) {
+  HighlightAction(@Nls String name, TextAttributesKey attributes, Consumer<? super TextAttributesKey> actionPerformed) {
     super(name);
     myEditorAttributesKey = attributes;
     myActionPerformed = actionPerformed;

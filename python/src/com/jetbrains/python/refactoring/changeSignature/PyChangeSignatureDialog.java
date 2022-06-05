@@ -91,7 +91,7 @@ public class PyChangeSignatureDialog extends
 
   @Nullable
   @Override
-  protected CallerChooserBase<PyFunction> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<PyFunction>> callback) {
+  protected CallerChooserBase<PyFunction> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PyFunction>> callback) {
     return null;
   }
 

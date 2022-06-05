@@ -159,7 +159,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
   @Nullable
   @Override
-  protected CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<PsiMethod>> callback) {
+  protected CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PsiMethod>> callback) {
     return null; //todo next iteration
   }
 
