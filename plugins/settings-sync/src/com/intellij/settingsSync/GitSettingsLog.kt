@@ -4,10 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.io.createFile
-import com.intellij.util.io.exists
-import com.intellij.util.io.isFile
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.MergeResult.MergeStatus.FAST_FORWARD
@@ -86,8 +83,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       if (path.isFile()) {
         // 'path' is e.g. 'ROOT_CONFIG/options/editor.xml'
         val target = settingsSyncStorage.resolve(fileSpec)
-        NioFiles.createDirectories(target.parent)
-        Files.copy(path, target, StandardCopyOption.REPLACE_EXISTING)
+        path.copy(target)
       }
       else {
         // 'path' is e.g. 'ROOT_CONFIG/keymaps/'
