@@ -8,12 +8,17 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.IndentedIcon
 import com.intellij.util.ui.UIUtil
 import java.awt.Cursor
+import java.awt.Font
 import java.awt.Insets
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import kotlin.math.max
 
-class CollapsibleTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
+interface CollapsibleTitledSeparator {
+  fun setTitleFont(font: Font)
+}
+
+class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : TitledSeparator(title), CollapsibleTitledSeparator {
   val expandedProperty = AtomicBooleanProperty(true)
   var expanded by expandedProperty
 

@@ -23,7 +23,7 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
                                   init: Panel.() -> Unit) :
   RowImpl(dialogPanelConfig, panelContext, parent, RowLayout.INDEPENDENT), CollapsibleRow {
 
-  private val collapsibleTitledSeparator = CollapsibleTitledSeparator(title)
+  private val collapsibleTitledSeparator = CollapsibleTitledSeparatorImpl(title)
 
   override var expanded by collapsibleTitledSeparator::expanded
 
@@ -33,6 +33,11 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
 
   override fun addExpandedListener(action: (Boolean) -> Unit) {
     collapsibleTitledSeparator.expandedProperty.afterChange { action(it) }
+  }
+
+  override fun applyToTitleComponent(task: (CollapsibleTitledSeparator) -> Unit): CollapsibleRowImpl {
+    task(collapsibleTitledSeparator)
+    return this
   }
 
   init {

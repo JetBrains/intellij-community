@@ -32,7 +32,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparator
+import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.util.ui.UIUtil
@@ -149,7 +149,7 @@ class MavenRunConfigurationSettingsEditor(
     configure: SettingsFragmentsContainer<S>.() -> Unit
   ) = add(object : NestedGroupFragment<S>(id, name, group, { true }) {
 
-    private val separator = CollapsibleTitledSeparator(group)
+    private val separator = CollapsibleTitledSeparatorImpl(group)
     private val checkBox: JCheckBox
     private val checkBoxWithLink: JComponent
 
@@ -228,7 +228,7 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  private fun bind(separator: CollapsibleTitledSeparator, fragment: SettingsEditorFragment<*, *>) {
+  private fun bind(separator: CollapsibleTitledSeparatorImpl, fragment: SettingsEditorFragment<*, *>) {
     val mutex = AtomicBoolean()
     separator.onAction {
       mutex.lockOrSkip {
