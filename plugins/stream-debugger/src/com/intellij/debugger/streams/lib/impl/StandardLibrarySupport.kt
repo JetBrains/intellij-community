@@ -18,6 +18,8 @@ class StandardLibrarySupport
                                      FilterOperation("skip"),
                                      FilterOperation("peek"),
                                      FilterOperation("onClose"),
+                                     FilterOperation("takeWhile"),
+                                     FilterOperation("dropWhile"),
                                      MappingOperation("map"),
                                      MappingOperation("mapToInt"),
                                      MappingOperation("mapToLong"),
@@ -28,6 +30,10 @@ class StandardLibrarySupport
                                      FlatMappingOperation("flatMapToInt"),
                                      FlatMappingOperation("flatMapToLong"),
                                      FlatMappingOperation("flatMapToDouble"),
+                                     FlatMappingOperation("mapMulti"),
+                                     FlatMappingOperation("mapMultiToInt"),
+                                     FlatMappingOperation("mapMultiToLong"),
+                                     FlatMappingOperation("mapMultiToDouble"),
                                      DistinctOperation("distinct", { num, call, dsl -> DistinctTraceHandler(num, call, dsl) }),
                                      SortedOperation("sorted"),
                                      ParallelOperation("parallel"))
@@ -43,6 +49,7 @@ class StandardLibrarySupport
                                     OptionalResultOperation("findAny"),
                                     OptionalResultOperation("findFirst"),
                                     ToCollectionOperation("toArray"),
+                                    ToCollectionOperation("toList"),
                                     ToCollectionOperation("collect"))
   }
 }
