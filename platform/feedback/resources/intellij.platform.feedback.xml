@@ -4,6 +4,7 @@
     <applicationService serviceImplementation="com.intellij.feedback.common.state.DontShowAgainFeedbackService"/>
 
     <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages" key="notification.group.feedback"/>
+    <notificationGroup displayType="BALLOON" id="Kotlin Rejecters Feedback In IDE" bundle="messages.KotlinRejectersFeedbackMessages"/>
 
     <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
     <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
@@ -27,7 +28,7 @@
               text="Show New Project Feedback Dialog" internal="true"/>
       <action id="com.intellij.feedback.kotlinRejecters.TestShowKotlinRejectersFeedbackDialogAction"
               class="com.intellij.feedback.kotlinRejecters.TestShowKotlinRejectersFeedbackDialogAction"
-              text="Show Feedback Dialog About Disabled Kotlin Plugin" internal="true"/>
+              text="Show Feedback Dialog for Kotlin Rejecters" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
   </actions>
