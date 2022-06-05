@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -309,7 +310,11 @@ final class ActionUpdater {
 
   @NotNull
   private CancellablePromise<List<AnAction>> doExpandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
-    ComponentManager disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
+    ClientId clientId = ClientId.getCurrent();
+    ComponentManager disposableParent =
+      myProject != null ? ClientSessionsManager.getProjectSession(myProject, clientId) : ClientSessionsManager.getAppSession(clientId);
+    LOG.assertTrue(disposableParent != null);
+
     ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
 
@@ -350,7 +355,6 @@ final class ActionUpdater {
       };
     };
     ourPromises.add(promise);
-    ClientId clientId = ClientId.getCurrent();
     boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK);
     Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
     executor.execute(() -> {
