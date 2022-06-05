@@ -24,7 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public abstract class NewEditChangelistPanel extends JPanel {
@@ -33,7 +35,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
   private final JPanel myAdditionalControlsPanel;
   private final JCheckBox myMakeActiveCheckBox;
 
-  private Consumer<LocalChangeList> myConsumer;
+  private final List<Consumer<LocalChangeList>> myConsumers = new ArrayList<>();
   protected final Project myProject;
 
   public NewEditChangelistPanel(final Project project) {
@@ -97,7 +99,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     myMakeActiveCheckBox.setSelected(VcsConfiguration.getInstance(myProject).MAKE_NEW_CHANGELIST_ACTIVE);
     for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
       support.installSearch(myNameTextField, myDescriptionTextArea);
-      myConsumer = support.addControls(myAdditionalControlsPanel, initial);
+      ContainerUtil.addIfNotNull(myConsumers, support.addControls(myAdditionalControlsPanel, initial));
     }
     myNameTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -120,8 +122,8 @@ public abstract class NewEditChangelistPanel extends JPanel {
   }
 
   public void changelistCreatedOrChanged(@NotNull LocalChangeList list) {
-    if (myConsumer != null) {
-      myConsumer.consume(list);
+    for (Consumer<LocalChangeList> consumer : myConsumers) {
+      consumer.consume(list);
     }
   }
 
