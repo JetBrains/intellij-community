@@ -17,23 +17,41 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 sealed class ClientSessionsManager<T : ClientSession> {
   companion object {
+    /**
+     * Returns a project-level session for a particular client.
+     * @see ClientSession
+     */
     @JvmStatic
     @JvmOverloads
     fun getProjectSession(project: Project, clientId: ClientId = ClientId.current): ClientProjectSession? {
       return getInstance(project).getSession(clientId)
     }
 
+    /**
+     * Returns an application-level session for a particular client.
+     * @see ClientSession
+     */
     @JvmStatic
     @JvmOverloads
     fun getAppSession(clientId: ClientId = ClientId.current): ClientAppSession? {
       return getInstance().getSession(clientId)
     }
 
+    /**
+     * Returns all project-level sessions.
+     * @param includeLocal specifies whether the local session should be included
+     * @see ClientSession
+     */
     @JvmStatic
     fun getProjectSessions(project: Project, includeLocal: Boolean): List<ClientProjectSession> {
       return getInstance(project).getSessions(includeLocal)
     }
 
+    /**
+     * Returns all application-level sessions.
+     * @param includeLocal specifies whether the local session should be included
+     * @see ClientSession
+     */
     @JvmStatic
     fun getAppSessions(includeLocal: Boolean): List<ClientAppSession> {
       return getInstance().getSessions(includeLocal)
@@ -83,7 +101,7 @@ open class ClientAppSessionsManager : ClientSessionsManager<ClientAppSession>() 
   }
 
   /**
-   * used for ClientId overriding in JetBrains Client
+   * Used for [ClientId] overriding in JetBrains Client
    */
   protected open fun createLocalSession(application: ApplicationImpl): ClientAppSessionImpl {
     return ClientAppSessionImpl(ClientId.localId, application)
