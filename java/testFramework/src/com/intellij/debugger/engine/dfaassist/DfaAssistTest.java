@@ -25,7 +25,7 @@ import java.util.function.Function;
  * A facility to test DfaAssist
  */
 public abstract class DfaAssistTest extends LightPlatformCodeInsightTestCase {
-  protected void doTest(String text, BiConsumer<MockVirtualMachine, MockStackFrame> mockValues, String fileName) {
+  protected void doTest(String text, BiConsumer<? super MockVirtualMachine, ? super MockStackFrame> mockValues, String fileName) {
     String filteredText = text.replaceAll("/\\*\\w+\\*/", "");
     configureFromFileText(fileName, filteredText);
     PsiFile file = getFile();

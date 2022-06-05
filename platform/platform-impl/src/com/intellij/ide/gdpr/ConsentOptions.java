@@ -243,7 +243,7 @@ public final class ConsentOptions {
     return getConsents(consent -> true);
   }
   
-  public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<Consent> filter) {
+  public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (myIsEAP) {
       // for EA builds there is a different option for statistics sending management

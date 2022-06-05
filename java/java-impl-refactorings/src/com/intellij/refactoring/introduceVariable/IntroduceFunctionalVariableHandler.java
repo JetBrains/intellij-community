@@ -298,7 +298,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     }
 
     @Override
-    public boolean prepare(@Nullable Consumer<ExtractMethodProcessor> pass) throws PrepareFailedException {
+    public boolean prepare(@Nullable Consumer<? super ExtractMethodProcessor> pass) throws PrepareFailedException {
       final boolean prepare = super.prepare(pass);
       if (prepare) {
         if (myNotNullConditionalCheck || myNullConditionalCheck) {

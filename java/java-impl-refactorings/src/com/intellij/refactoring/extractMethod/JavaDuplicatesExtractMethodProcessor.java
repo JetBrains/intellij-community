@@ -163,7 +163,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     return prepare(null, showErrorHint);
   }
 
-  private boolean prepare(@Nullable Consumer<ExtractMethodProcessor> pass, boolean showErrorHint) {
+  private boolean prepare(@Nullable Consumer<? super ExtractMethodProcessor> pass, boolean showErrorHint) {
     setShowErrorDialogs(false);
     try {
       if (prepare(pass)) {

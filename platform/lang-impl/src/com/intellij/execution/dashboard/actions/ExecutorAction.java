@@ -152,7 +152,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
     runSubProcess(settings, target, descriptor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
   }
 
-  private void runSubProcess(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor, @Nullable Consumer<ExecutionEnvironment> envCustomization) {
+  private void runSubProcess(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor, @Nullable Consumer<? super ExecutionEnvironment> envCustomization) {
     RunConfiguration configuration = settings.getConfiguration();
     Project project = configuration.getProject();
     RunManager runManager = RunManager.getInstance(project);

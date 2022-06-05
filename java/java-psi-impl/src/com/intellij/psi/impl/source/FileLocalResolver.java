@@ -123,7 +123,7 @@ public class FileLocalResolver {
   }
 
   @NotNull
-  private JBIterable<LighterASTNode> walkChildrenScopes(JBIterable<LighterASTNode> children) {
+  private JBIterable<LighterASTNode> walkChildrenScopes(JBIterable<? extends LighterASTNode> children) {
     return children.flatMap(child -> getDeclarations(child, null));
   }
 

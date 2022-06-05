@@ -568,7 +568,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected CallerChooserBase<PsiMethod> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<Set<PsiMethod>> callback) {
+  protected CallerChooserBase<PsiMethod> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<? super Set<PsiMethod>> callback) {
     return new JavaCallerChooser(getMethod(), myProject, title, treeToReuse, callback);
   }
 

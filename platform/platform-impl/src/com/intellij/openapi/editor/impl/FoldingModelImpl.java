@@ -959,7 +959,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
       @Override
       void onRemoved() {
-        for (Supplier<FoldRegionImpl> getter : intervals) {
+        for (Supplier<? extends FoldRegionImpl> getter : intervals) {
           removeRegionFromGroup(getter.get());
         }
       }

@@ -103,7 +103,7 @@ public final class Presentation implements Cloneable {
 
   private int myFlags = IS_ENABLED | IS_VISIBLE;
   private @NotNull Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
-  private @NotNull Supplier<TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
+  private @NotNull Supplier<? extends TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
   private Icon myIcon;
@@ -208,7 +208,7 @@ public final class Presentation implements Cloneable {
    *
    * @param textWithMnemonicSupplier text with mnemonic to set
    */
-  public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
+  public void setTextWithMnemonic(@NotNull Supplier<? extends TextWithMnemonic> textWithMnemonicSupplier) {
     String oldText = getText();
     String oldTextWithSuffix = getText(true);
     int oldMnemonic = getMnemonic();
@@ -248,7 +248,7 @@ public final class Presentation implements Cloneable {
   }
 
   @NotNull
-  public Supplier<TextWithMnemonic> getTextWithPossibleMnemonic() {
+  public Supplier<? extends TextWithMnemonic> getTextWithPossibleMnemonic() {
     return myTextWithMnemonicSupplier;
   }
 

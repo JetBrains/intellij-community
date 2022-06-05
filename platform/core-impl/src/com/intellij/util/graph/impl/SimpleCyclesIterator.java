@@ -20,7 +20,7 @@ public class SimpleCyclesIterator<Node> {
   private Graph<Node> myGraph;
 
   // The main state of the algorithm.
-  private Consumer<List<Node>> myCycleConsumer = null;
+  private @NotNull Consumer<? super List<Node>> myCycleConsumer = null;
   private Node[] myIToV = null;
   private Map<Node, Integer> myVToI = null;
   private Set<Node> myBlocked = null;
@@ -46,7 +46,7 @@ public class SimpleCyclesIterator<Node> {
     myGraph = graph;
   }
 
-  public void iterateSimpleCycles(@NotNull Consumer<List<Node>> consumer) {
+  public void iterateSimpleCycles(@NotNull Consumer<? super List<Node>> consumer) {
     if (myGraph == null) {
       throw new IllegalArgumentException("Null graph.");
     }
@@ -273,7 +273,7 @@ public class SimpleCyclesIterator<Node> {
   }
 
   @SuppressWarnings("unchecked")
-  private void initState(@NotNull Consumer<List<Node>> consumer) {
+  private void initState(@NotNull Consumer<? super List<Node>> consumer) {
     myCycleConsumer = consumer;
     myIToV = (Node[])myGraph.getNodes().toArray();
     myVToI = new HashMap<>();

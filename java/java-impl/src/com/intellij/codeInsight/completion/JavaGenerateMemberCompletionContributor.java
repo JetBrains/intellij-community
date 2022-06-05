@@ -203,7 +203,7 @@ public final class JavaGenerateMemberCompletionContributor {
                                                              PsiSubstitutor substitutor,
                                                              boolean generateDefaultMethods,
                                                              PsiClass targetClass,
-                                                             @Nullable Consumer<InsertionContext> wizardRunner) {
+                                                             @Nullable Consumer<? super InsertionContext> wizardRunner) {
 
     RowIcon icon = IconManager
       .getInstance()

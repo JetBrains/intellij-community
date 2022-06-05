@@ -131,7 +131,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     identifierTable = processor.getIdentifierTable();
   }
 
-  static void processSearchableOptions(@NotNull Predicate<String> fileNameFilter, @NotNull BiConsumer<String, Element> consumer) {
+  static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter, @NotNull BiConsumer<? super String, ? super Element> consumer) {
     Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPluginSet().getRawListOfEnabledModules()) {
       ClassLoader classLoader = plugin.getPluginClassLoader();

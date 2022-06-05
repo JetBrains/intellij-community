@@ -56,5 +56,5 @@ public interface SdkDownload {
                       @NotNull SdkModel sdkModel,
                       @NotNull JComponent parentComponent,
                       @Nullable Sdk selectedSdk,
-                      @NotNull Consumer<SdkDownloadTask> sdkCreatedCallback);
+                      @NotNull Consumer<? super SdkDownloadTask> sdkCreatedCallback);
 }

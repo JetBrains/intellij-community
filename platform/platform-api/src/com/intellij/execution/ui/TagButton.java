@@ -39,7 +39,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
   public static final Function<JComponent, JComponent> COMPONENT_VALIDATOR_TAG_PROVIDER = e -> ((TagButton)e).myButton;
   protected final InplaceButton myCloseButton;
 
-  public TagButton(@Nls String text, Consumer<AnActionEvent> action) {
+  public TagButton(@Nls String text, Consumer<? super AnActionEvent> action) {
     myText = text;
     myButton = new JButton(text) {
 
@@ -144,7 +144,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
     layoutButtons();
   }
 
-  private void remove(Consumer<AnActionEvent> action, AnActionEvent e) {
+  private void remove(Consumer<? super AnActionEvent> action, AnActionEvent e) {
     setVisible(false);
     action.accept(e);
   }

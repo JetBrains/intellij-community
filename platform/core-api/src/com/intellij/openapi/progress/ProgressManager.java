@@ -270,5 +270,5 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * Makes {@link #getProgressIndicator()} return {@code null} within {@code computable}.
    */
   @ApiStatus.Internal
-  public abstract <X> X silenceGlobalIndicator(@NotNull Supplier<X> computable);
+  public abstract <X> X silenceGlobalIndicator(@NotNull Supplier<? extends X> computable);
 }

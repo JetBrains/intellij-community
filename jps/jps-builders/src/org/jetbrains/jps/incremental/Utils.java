@@ -63,7 +63,7 @@ public final class Utils {
     return getDataStorageRoot(systemRoot, projectPath, s -> s.hashCode());
   }
 
-  public static File getDataStorageRoot(final File systemRoot, String projectPath, Function<String, Integer> hashFunction) {
+  public static File getDataStorageRoot(final File systemRoot, String projectPath, Function<? super String, Integer> hashFunction) {
 
     projectPath = FileUtil.toCanonicalPath(projectPath);
     if (projectPath == null) {

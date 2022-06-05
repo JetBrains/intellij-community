@@ -375,7 +375,7 @@ public final class ExistingTemplatesComponent {
     }
   }
 
-  public void onConfigurationSelected(Consumer<Configuration> consumer) {
+  public void onConfigurationSelected(Consumer<? super Configuration> consumer) {
     patternTree.addTreeSelectionListener(event -> {
       final var selection = patternTree.getLastSelectedPathComponent();
       if (!(selection instanceof DefaultMutableTreeNode) || myDraftTemplateAutoselect) {

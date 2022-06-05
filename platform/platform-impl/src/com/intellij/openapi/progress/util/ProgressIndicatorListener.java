@@ -45,7 +45,7 @@ public interface ProgressIndicatorListener {
     });
   }
 
-  static void whenProgressFractionChanged(@NotNull ProgressIndicator progress, @NotNull Consumer<Double> consumer) {
+  static void whenProgressFractionChanged(@NotNull ProgressIndicator progress, @NotNull Consumer<? super Double> consumer) {
     ProgressIndicatorListener listener = new ProgressIndicatorListener() {
       @Override
       public void onFractionChanged(double fraction) {

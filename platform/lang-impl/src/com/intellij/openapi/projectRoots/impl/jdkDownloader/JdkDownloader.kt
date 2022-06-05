@@ -55,7 +55,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
                               sdkModel: SdkModel,
                               parentComponent: JComponent,
                               selectedSdk: Sdk?,
-                              sdkCreatedCallback: Consumer<SdkDownloadTask>) {
+                              sdkCreatedCallback: Consumer<in SdkDownloadTask>) {
     val dataContext = DataManager.getInstance().getDataContext(parentComponent)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     if (project?.isDisposed == true) return

@@ -201,11 +201,11 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return myCreatedProject;
   }
 
-  protected Project createProjectFromTemplate(@NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+  protected Project createProjectFromTemplate(@NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
     return createProjectFromTemplate(UIBundle.message("label.project.wizard.project.generator.name"), adjuster);
   }
 
-  protected Project createProjectFromTemplate(@NotNull String group, @NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+  protected Project createProjectFromTemplate(@NotNull String group, @NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
     return createProject(step -> {
       var npwStep = getNewProjectWizardStep(step, group);
       if (npwStep != null) {
@@ -221,14 +221,14 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return createModuleFromWizard(project);
   }
 
-  protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+  protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
     return createModuleFromTemplate(project, UIBundle.message("label.project.wizard.module.generator.name"), adjuster);
   }
 
   protected Module createModuleFromTemplate(
     @NotNull Project project,
     @NotNull String group,
-    @NotNull Consumer<NewProjectWizardStep> adjuster
+    @NotNull Consumer<? super NewProjectWizardStep> adjuster
   ) throws IOException {
     return createModuleFromTemplate(group, null, project, step -> {
       var npwStep = getNewProjectWizardStep(step, group);

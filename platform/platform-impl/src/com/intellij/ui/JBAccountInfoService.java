@@ -28,7 +28,7 @@ public interface JBAccountInfoService {
   @Nullable
   JBAccountInfoService.JBAData getUserData();
 
-  void invokeJBALogin(@Nullable Consumer<String> userIdConsumer, @Nullable Runnable onFailure);
+  void invokeJBALogin(@Nullable Consumer<? super String> userIdConsumer, @Nullable Runnable onFailure);
 
   @Nullable
   static JBAccountInfoService getInstance() {

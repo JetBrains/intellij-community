@@ -50,9 +50,9 @@ public final class SpeedSearchUtil {
   }
 
   public static void applySpeedSearchHighlighting(@NotNull SimpleColoredComponent coloredComponent,
-                                                  @Nullable Iterable<TextRange> ranges,
+                                                  @Nullable Iterable<? extends TextRange> ranges,
                                                   boolean selected) {
-    Iterator<TextRange> rangesIterator = ranges != null ? ranges.iterator() : null;
+    Iterator<? extends TextRange> rangesIterator = ranges != null ? ranges.iterator() : null;
     if (rangesIterator == null || !rangesIterator.hasNext()) return;
     Color bg = UIUtil.getTreeBackground(selected, true);
 

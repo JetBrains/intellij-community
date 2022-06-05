@@ -32,11 +32,11 @@ import java.util.function.Supplier;
  * {@link com.intellij.openapi.application.ReadAction#nonBlocking}.
  */
 public abstract class FileTypeRegistry {
-  private static Supplier<FileTypeRegistry> instanceGetter;
+  private static Supplier<? extends FileTypeRegistry> instanceGetter;
 
   @ApiStatus.Internal
-  public static Supplier<FileTypeRegistry> setInstanceSupplier(@NotNull Supplier<FileTypeRegistry> supplier) {
-    Supplier<FileTypeRegistry> oldValue = instanceGetter;
+  public static Supplier<? extends FileTypeRegistry> setInstanceSupplier(@NotNull Supplier<? extends FileTypeRegistry> supplier) {
+    Supplier<? extends FileTypeRegistry> oldValue = instanceGetter;
     instanceGetter = supplier;
     return oldValue;
   }
@@ -60,7 +60,7 @@ public abstract class FileTypeRegistry {
   }
 
   public static FileTypeRegistry getInstance() {
-    Supplier<FileTypeRegistry> instanceGetter = FileTypeRegistry.instanceGetter;
+    Supplier<? extends FileTypeRegistry> instanceGetter = FileTypeRegistry.instanceGetter;
     if (instanceGetter == null) {
       // in tests FileTypeManager service maybe not preloaded, so, ourInstanceGetter is not set
       return ((ComponentManagerEx)ApplicationManager.getApplication())

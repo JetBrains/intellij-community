@@ -62,7 +62,7 @@ final class CtxToolWindows {
     // no necessity to do it here
   }
 
-  private static void forEachToolWindow(@NotNull Project project, Consumer<ToolWindow> func) {
+  private static void forEachToolWindow(@NotNull Project project, Consumer<? super ToolWindow> func) {
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
     for (ToolWindow window : toolWindowManager.getToolWindows()) {
       func.accept(window);

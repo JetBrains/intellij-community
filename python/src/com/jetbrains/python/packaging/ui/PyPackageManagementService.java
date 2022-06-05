@@ -25,6 +25,7 @@ import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,7 +240,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @Override
-  public void uninstallPackages(@NotNull List<InstalledPackage> installedPackages, @NotNull Listener listener) {
+  public void uninstallPackages(List<? extends InstalledPackage> installedPackages, @NotNull Listener listener) {
     final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override
@@ -263,12 +264,12 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @Override
-  public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
+  public void fetchPackageVersions(String packageName, CatchingConsumer<? super List<String>, ? super Exception> consumer) {
     PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, consumer);
   }
 
   @Override
-  public void fetchPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<String, Exception> consumer) {
+  public void fetchPackageDetails(@NotNull String packageName, CatchingConsumer<? super @Nls String, ? super Exception> consumer) {
     PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new CatchingConsumer<>() {
       @Override
       public void consume(PackageDetails.Info details) {
@@ -399,7 +400,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   }
 
   @Override
-  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
+  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<? super String, ? super Exception> consumer) {
     myExecutorService.execute(() -> {
       if (myProject.isDisposed()) return;
       try {

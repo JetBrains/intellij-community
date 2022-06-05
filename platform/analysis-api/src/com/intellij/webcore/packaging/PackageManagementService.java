@@ -156,11 +156,11 @@ public abstract class PackageManagementService {
   public abstract void installPackage(RepoPackage repoPackage, @Nullable String version, boolean forceUpgrade,
                                       @Nullable String extraOptions, Listener listener, boolean installToUser);
 
-  public abstract void uninstallPackages(List<InstalledPackage> installedPackages, Listener listener);
+  public abstract void uninstallPackages(List<? extends InstalledPackage> installedPackages, Listener listener);
 
-  public abstract void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer);
+  public abstract void fetchPackageVersions(String packageName, CatchingConsumer<? super List<String>, ? super Exception> consumer);
 
-  public abstract void fetchPackageDetails(String packageName, CatchingConsumer<@Nls String, Exception> consumer);
+  public abstract void fetchPackageDetails(String packageName, CatchingConsumer<? super @Nls String, ? super Exception> consumer);
 
   /**
    * @return identifier of this service for reported usage data (sent for JetBrains implementations only).

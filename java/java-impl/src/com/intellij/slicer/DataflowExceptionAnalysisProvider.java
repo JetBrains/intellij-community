@@ -41,14 +41,14 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   @Override
   public @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
                                               @NotNull ExceptionInfo info,
-                                              @NotNull Supplier<List<StackLine>> nextFrames) {
+                                              @NotNull Supplier<? extends List<StackLine>> nextFrames) {
     AnalysisStartingPoint analysis = getAnalysis(anchor, info);
     return createAction(analysis, nextFrames);
   }
 
   @Override
   public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor,
-                                                             @NotNull Supplier<List<StackLine>> nextFrames) {
+                                                             @NotNull Supplier<? extends List<StackLine>> nextFrames) {
     AnalysisStartingPoint analysis = getIntermediateRowAnalysis(anchor);
     return createAction(analysis, nextFrames);
   }
@@ -314,7 +314,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   private @Nullable AnAction createAction(@Nullable AnalysisStartingPoint analysis,
-                                          @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
+                                          @NotNull Supplier<? extends List<StackLine>> nextFramesSupplier) {
     if (analysis == null) return null;
     String text = DfaBasedFilter.getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
     if (text.isEmpty()) return null;
@@ -323,11 +323,11 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
 
   private final class DfaFromStacktraceAction extends AnAction {
     private final @NotNull AnalysisStartingPoint myAnalysis;
-    private @NotNull final Supplier<List<StackLine>> myNextFramesSupplier;
+    private final @NotNull Supplier<? extends List<StackLine>> myNextFramesSupplier;
 
     private DfaFromStacktraceAction(@NotNull AnalysisStartingPoint analysis,
                                     String text,
-                                    @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
+                                    @NotNull Supplier<? extends List<StackLine>> nextFramesSupplier) {
       super(null, JavaBundle
         .message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null);
       myAnalysis = analysis;

@@ -218,9 +218,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   }
 
   @NotNull
-  private static JBIterable<FoundItemDescriptor<PsiFileSystemItem>> moveDirectoriesToEnd(@NotNull Iterable<FoundItemDescriptor<PsiFileSystemItem>> iterable) {
+  private static JBIterable<FoundItemDescriptor<PsiFileSystemItem>> moveDirectoriesToEnd(@NotNull Iterable<? extends FoundItemDescriptor<PsiFileSystemItem>> iterable) {
     List<FoundItemDescriptor<PsiFileSystemItem>> dirs = new ArrayList<>();
-    return JBIterable.from(iterable).filter(res -> {
+    return JBIterable.<FoundItemDescriptor<PsiFileSystemItem>>from(iterable).filter(res -> {
       if (res.getItem() instanceof PsiDirectory) {
         dirs.add(new FoundItemDescriptor<>(res.getItem(), DIRECTORY_MATCH_DEGREE));
         return false;
@@ -232,7 +232,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   @NotNull
   private Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
                                                                             @NotNull List<? extends MatchResult> matchResults,
-                                                                            @NotNull Function<String, Object[]> indexResult) {
+                                                                            @NotNull Function<? super String, Object[]> indexResult) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     Map<PsiFileSystemItem, Integer> matchDegrees = new HashMap<>();
@@ -437,7 +437,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     private boolean hasSuggestionsOutsideProject(@NotNull String pattern,
-                                                 @NotNull List<MatchResult> group,
+                                                 @NotNull List<? extends MatchResult> group,
                                                  @NotNull DirectoryPathMatcher dirMatcher) {
       FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, myProject, true);
       GlobalSearchScope scope = dirMatcher.narrowDown(parameters.getSearchScope());

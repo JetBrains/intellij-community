@@ -18,7 +18,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FocusUtil;
@@ -90,7 +89,7 @@ class EmptyStateProjectsPanel extends BorderLayoutPanel {
         super.actionsUpdated(forced, newVisibleActions);
         if (forced && !newVisibleActions.isEmpty() && getComponents().length > 0 && !wasFocusRequested) {
           ObjectUtils.doIfNotNull(FocusUtil.findFocusableComponentIn(getComponents()[0], null),
-                                  (Function<Component, Object>)component -> {
+                                  component -> {
                                     wasFocusRequested =true;
                                     return IdeFocusManager.getGlobalInstance().requestFocus(component, true);
                                   });

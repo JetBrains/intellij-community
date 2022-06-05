@@ -21,10 +21,10 @@ public final class DirectByteBufferPool {
 
   private final ConcurrentSkipListMap<Integer, ByteBuffer> pool = new ConcurrentSkipListMap<>();
   private final AtomicInteger count = new AtomicInteger();
-  private final Consumer<ByteBuffer> releaser;
+  private final @NotNull Consumer<? super ByteBuffer> releaser;
 
   // ByteBufferCleaner cannot be located in this module (JDK 9 at least is required)
-  public DirectByteBufferPool(@NotNull Consumer<ByteBuffer> releaser) {
+  public DirectByteBufferPool(@NotNull Consumer<? super ByteBuffer> releaser) {
     this.releaser = releaser;
   }
 

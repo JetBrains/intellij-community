@@ -29,14 +29,14 @@ abstract class AbstractLanguageInjectionTestCase : LightJavaCodeInsightFixtureTe
 }
 
 class StoringFixPresenter : InjectLanguageAction.FixPresenter {
-  private lateinit var processor: Processor<PsiLanguageInjectionHost>
+  private lateinit var processor: Processor<in PsiLanguageInjectionHost>
   private lateinit var pointer: SmartPsiElementPointer<PsiLanguageInjectionHost>
 
   override fun showFix(editor: Editor,
                        range: TextRange,
                        pointer: SmartPsiElementPointer<PsiLanguageInjectionHost>,
-                       text: String,
-                       data: Processor<PsiLanguageInjectionHost>) {
+                       text: kotlin.String,
+                       data: Processor<in PsiLanguageInjectionHost>) {
     this.processor = data
     this.pointer = pointer
   }

@@ -55,7 +55,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     };
   }
 
-  private static long distinctCalls(@NotNull List<PsiMethodCallExpression> calls) {
+  private static long distinctCalls(@NotNull List<? extends PsiMethodCallExpression> calls) {
     return StreamEx.of(calls).distinct(call -> call.getMethodExpression().getReferenceName()).count();
   }
 
@@ -102,10 +102,10 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
 
     private final PsiElement myScope;
     private final Map<PsiVariable, List<PsiMethodCallExpression>> myCalls = new HashMap<>();
-    private final Consumer<Map<PsiVariable, List<PsiMethodCallExpression>>> myReporter;
+    private final Consumer<? super Map<PsiVariable, List<PsiMethodCallExpression>>> myReporter;
 
     private FileAttributeCallsVisitor(@NotNull PsiElement scope,
-                                      @NotNull Consumer<Map<PsiVariable, List<PsiMethodCallExpression>>> reporter) {
+                                      @NotNull Consumer<? super Map<PsiVariable, List<PsiMethodCallExpression>>> reporter) {
       myScope = scope;
       myReporter = reporter;
     }

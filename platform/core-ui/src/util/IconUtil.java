@@ -647,7 +647,7 @@ public final class IconUtil {
     return scaleByIcon(icon, ancestor, defaultIcon, Icon::getIconHeight);
   }
 
-  private static Icon scaleByIcon(@Nullable Icon icon, Component ancestor, @NotNull Icon defaultIcon, @NotNull ToIntFunction<Icon> size) {
+  private static Icon scaleByIcon(@Nullable Icon icon, Component ancestor, @NotNull Icon defaultIcon, @NotNull ToIntFunction<? super Icon> size) {
     if (icon == null || icon == defaultIcon) return defaultIcon;
     int actual = size.applyAsInt(icon);
     int expected = size.applyAsInt(defaultIcon);

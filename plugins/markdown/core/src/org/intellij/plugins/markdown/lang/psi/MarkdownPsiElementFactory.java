@@ -285,7 +285,7 @@ public final class MarkdownPsiElementFactory {
   public static @NotNull MarkdownList createList(
     @NotNull Project project,
     @NotNull Iterable<@NotNull String> items,
-    @NotNull Function<Integer, String> markerSupplier
+    @NotNull Function<? super Integer, String> markerSupplier
   ) {
     final var builder = new StringBuilder();
     var itemIndex = 0;

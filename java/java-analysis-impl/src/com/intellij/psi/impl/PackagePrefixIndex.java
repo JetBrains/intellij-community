@@ -67,7 +67,7 @@ public class PackagePrefixIndex {
         }
       }
       
-      private void updateMap(@NotNull JavaSourceRootEntity entity, @NotNull EntityStorage storageAfter, @NotNull BiConsumer<String, Module> updater) {
+      private void updateMap(@NotNull JavaSourceRootEntity entity, @NotNull EntityStorage storageAfter, @NotNull BiConsumer<? super String, ? super Module> updater) {
         String prefix = entity.getPackagePrefix();
         if (StringUtil.isNotEmpty(prefix)) {
           Module module = ModuleEntityUtils.findModule(entity.getSourceRoot().getContentRoot().getModule(), storageAfter);

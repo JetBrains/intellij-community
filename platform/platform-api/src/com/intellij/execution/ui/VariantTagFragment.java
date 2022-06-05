@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +167,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     private final DropDownLink<V> myDropDown;
     private VariantTagFragment<?, V> myFragment;
 
-    private VariantTagButton(@Nls String text, Consumer<AnActionEvent> action) {
+    private VariantTagButton(@Nls String text, Consumer<? super AnActionEvent> action) {
       super(text, action);
       myDropDown = new DropDownLink<>(null, link -> showPopup());
       myDropDown.setAutoHideOnDisable(false);

@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 
 public class JavaHomeFinderBasic {
   @SuppressWarnings("NonConstantLogger") private final Logger log = Logger.getInstance(getClass());
-  private final List<Supplier<Set<String>>> myFinders = new ArrayList<>();
+  private final List<Supplier<? extends Set<String>>> myFinders = new ArrayList<>();
   private final JavaHomeFinder.SystemInfoProvider mySystemInfo;
 
   private boolean myCheckDefaultInstallDir = true;
@@ -87,7 +87,7 @@ public class JavaHomeFinderBasic {
     return scanAll(ContainerUtil.map(mySpecifiedPaths, Paths::get), true);
   }
 
-  protected void registerFinder(@NotNull Supplier<Set<String>> finder) {
+  protected void registerFinder(@NotNull Supplier<? extends Set<String>> finder) {
     myFinders.add(finder);
   }
 
@@ -95,7 +95,7 @@ public class JavaHomeFinderBasic {
   public final Set<String> findExistingJdks() {
     Set<String> result = new TreeSet<>();
 
-    for (Supplier<Set<String>> action : myFinders) {
+    for (Supplier<? extends Set<String>> action : myFinders) {
       try {
         result.addAll(action.get());
       }

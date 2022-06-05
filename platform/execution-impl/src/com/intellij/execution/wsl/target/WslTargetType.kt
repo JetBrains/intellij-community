@@ -66,7 +66,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
                                              title: String?,
                                              textComponentAccessor: TextComponentAccessor<T>,
                                              component: T,
-                                             configurationSupplier: Supplier<TargetEnvironmentConfiguration>): ActionListener = ActionListener {
+                                             configurationSupplier: Supplier<out TargetEnvironmentConfiguration>): ActionListener = ActionListener {
     val configuration = configurationSupplier.get()
     if (configuration is WslTargetEnvironmentConfiguration) {
       configuration.distribution?.let {

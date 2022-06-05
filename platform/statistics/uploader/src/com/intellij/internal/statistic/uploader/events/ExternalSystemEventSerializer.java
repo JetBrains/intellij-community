@@ -91,7 +91,7 @@ public final class ExternalSystemEventSerializer {
   }
 
   @NotNull
-  private static <V> List<V> parseValues(@NotNull String part, @NotNull Function<String, V> processor) {
+  private static <V> List<V> parseValues(@NotNull String part, @NotNull Function<? super String, ? extends V> processor) {
     try {
       if (part.startsWith("[") && part.endsWith("]")) {
         String unwrappedPart = part.substring(1, part.length() - 1);
@@ -118,7 +118,7 @@ public final class ExternalSystemEventSerializer {
     return valuesToString(errors, error -> String.valueOf(error));
   }
 
-  private static <V> String valuesToString(@NotNull List<V> values, @NotNull Function<V, String> processor) {
+  private static <V> String valuesToString(@NotNull List<? extends V> values, @NotNull Function<? super V, String> processor) {
     return values.stream().map(processor).collect(Collectors.joining(",", "[", "]"));
   }
 

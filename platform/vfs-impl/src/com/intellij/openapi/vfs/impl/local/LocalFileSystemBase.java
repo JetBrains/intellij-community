@@ -110,7 +110,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
 
       @Override
-      public void afterDone(@NotNull ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
+      public void afterDone(@NotNull ThrowableConsumer<? super LocalFileOperationsHandler, ? extends IOException> invoker) {
         for (LocalFileOperationsHandler handler : FILE_OPERATIONS_HANDLER_EP_NAME.getExtensionList()) {
           handler.afterDone(invoker);
         }
@@ -344,7 +344,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return false;
   }
 
-  private void auxNotifyCompleted(@NotNull ThrowableConsumer<LocalFileOperationsHandler, IOException> consumer) {
+  private void auxNotifyCompleted(@NotNull ThrowableConsumer<? super LocalFileOperationsHandler, ? extends IOException> consumer) {
     for (LocalFileOperationsHandler handler : myHandlers) {
       handler.afterDone(consumer);
     }

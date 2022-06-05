@@ -2206,7 +2206,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return pane.getHorizontalScrollBar();
   }
 
-  private void forHorizontalScrollBar(@NotNull Consumer<JScrollBar> consumer) {
+  private void forHorizontalScrollBar(@NotNull Consumer<? super JScrollBar> consumer) {
     JScrollBar bar = findHorizontalScrollBar();
     if (bar != null) consumer.consume(bar);
   }
