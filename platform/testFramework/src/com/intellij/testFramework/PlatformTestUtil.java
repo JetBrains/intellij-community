@@ -460,7 +460,7 @@ public final class PlatformTestUtil {
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
-    assertEventQueueDispatchThread();
+    assertDispatchThreadWithoutWriteAccess();
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
