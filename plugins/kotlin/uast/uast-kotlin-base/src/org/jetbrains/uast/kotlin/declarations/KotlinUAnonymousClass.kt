@@ -43,7 +43,12 @@ class KotlinUAnonymousClass(
     override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(psi.containingFile)
 
     override val uastAnchor: UIdentifier? by lz {
-        val ktClassOrObject = (psi.originalElement as? KtLightClass)?.kotlinOrigin as? KtObjectDeclaration ?: return@lz null
-        KotlinUIdentifier(ktClassOrObject.getObjectKeyword(), this)
+        val ktClassOrObject = (psi.originalElement as? KtLightClass)?.kotlinOrigin ?: return@lz null
+        val sourcePsi = when (ktClassOrObject) {
+            is KtObjectDeclaration -> ktClassOrObject.getObjectKeyword()
+            is KtEnumEntry -> ktClassOrObject.nameIdentifier
+            else -> null
+        } ?: return@lz null
+        KotlinUIdentifier(sourcePsi, this)
     }
 }
