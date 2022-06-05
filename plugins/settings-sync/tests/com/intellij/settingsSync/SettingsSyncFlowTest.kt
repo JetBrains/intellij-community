@@ -28,9 +28,10 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     file.writeText("LaF Initial")
     val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, MockSettingsSyncIdeMediator.getAllFilesFromSettings(configDir))
     log.initialize()
+    log.logExistingSettings()
 
     // modify between sessions
-    val contentBetweenSessions = "LaF Initial"
+    val contentBetweenSessions = "LaF Between Sessions"
     file.writeText(contentBetweenSessions)
 
     initSettingsSync()
