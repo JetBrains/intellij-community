@@ -187,7 +187,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       return false;
     }
 
-    CheckCanceledHook[] activeHooks = myHooks.toArray(new CheckCanceledHook[0]);
+    CheckCanceledHook[] activeHooks = myHooks.isEmpty() ? CheckCanceledHook.EMPTY_ARRAY : myHooks.toArray(CheckCanceledHook.EMPTY_ARRAY);
     boolean result = myRunSleepHook && sleepIfNeededToGivePriorityToAnotherThread();
     for (CheckCanceledHook hook : activeHooks) {
       if (hook.runHook(indicator)) {
@@ -199,7 +199,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
 
   @Override
   protected boolean hasCheckCanceledHooks() {
-    return !myHooks.isEmpty() || myRunSleepHook;
+    return myRunSleepHook || !myHooks.isEmpty();
   }
 
   @Override
