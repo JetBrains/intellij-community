@@ -145,6 +145,8 @@
     <keyboard-shortcut first-keystroke="meta F10"/>
   </action>
   <action id="QuickJavaDoc">
+    <keyboard-shortcut first-keystroke="meta K" second-keystroke="I"/>
+    <keyboard-shortcut first-keystroke="meta K" second-keystroke="meta I"/>
     <keyboard-shortcut first-keystroke="control shift F1"/>
   </action>
   <action id="ShowBookmarks">

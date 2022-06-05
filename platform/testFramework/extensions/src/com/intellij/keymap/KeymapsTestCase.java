@@ -294,7 +294,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt F11",                  "ForceStepInto", "RunJsbtTask"},
       {"meta I",                   "DatabaseView.PropertiesAction", "IncrementalSearch", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
       {"F5",                       "Graph.RouteEdges", "PoBrowserRefresh", "Resume"},
-      {"meta F1",                  "ExternalJavaDoc", "ShowErrorDescription"},
       {"shift meta MINUS",         "Forward", "NotebookSplitCellAction"},
       {"F7",                       "CompileDirty", "NextDiff"},
       {"meta ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "Docker.RemoteServers.StartComposeService", "EditorStartNewLineBefore", "SplitChooser.Duplicate", "Terminal.SmartCommandExecution.Run", "ViewSource", "org.jetbrains.r.actions.RunSelection"},
