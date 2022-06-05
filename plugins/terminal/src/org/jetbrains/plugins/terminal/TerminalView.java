@@ -14,10 +14,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -58,8 +55,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
-import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
+import org.jetbrains.plugins.terminal.action.*;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
@@ -127,7 +123,9 @@ public final class TerminalView implements Disposable {
       return;
     }
     myToolWindow = toolWindow;
-    myTerminalRunner.initToolWindow(toolWindow, () -> newTab(toolWindow, null));
+
+    toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"));
+    toolWindow.setTabDoubleClickActions(Collections.singletonList(new RenameTerminalSessionAction()));
 
     myProject.getMessageBus().connect(toolWindow.getDisposable())
       .subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
