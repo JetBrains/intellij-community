@@ -87,7 +87,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
         // 'path' is e.g. 'ROOT_CONFIG/options/editor.xml'
         val target = settingsSyncStorage.resolve(fileSpec)
         NioFiles.createDirectories(target.parent)
-        Files.copy(path, target, LinkOption.NOFOLLOW_LINKS)
+        Files.copy(path, target, StandardCopyOption.REPLACE_EXISTING)
       }
       else {
         // 'path' is e.g. 'ROOT_CONFIG/keymaps/'
