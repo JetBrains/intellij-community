@@ -1355,6 +1355,8 @@
       <synonym key="action.SelectOpenedFileInProjectView.text"/>
     </action>
 
+    <action id="ClearAllNotifications" class="com.intellij.notification.impl.ClearAllNotificationsAction"/>
+
     <group id="ProjectViewToolbar">
       <reference ref="SelectInProjectView"/>
       <reference ref="ExpandAll"/>
