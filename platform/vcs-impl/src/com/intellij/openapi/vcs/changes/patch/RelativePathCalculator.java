@@ -3,13 +3,14 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 public final class RelativePathCalculator {
-  private static final int ourNumOfAllowedStepsAbove = 1;
-  private static final int ourAllowedStepsDown = 2;
+  private static final int MAX_STEPS_UP = 3; // max depth of ../../../../../../ chain
+  private static final int MAX_STEPS_DOWN = 4; // max depth of ./very/deep/path/to/shifted/directory/
 
   private final String myShifted;
   private final String myBase;
@@ -33,8 +34,6 @@ public final class RelativePathCalculator {
     final String[] baseParts = split(myBase);
     final String[] shiftedParts = split(myShifted);
 
-    boolean rename = checkRename(baseParts, shiftedParts);
-
     int cnt = 0;
     while (true) {
       if (baseParts.length <= cnt || shiftedParts.length <= cnt) {
@@ -48,13 +47,21 @@ public final class RelativePathCalculator {
       ++cnt;
     }
 
-    final int stepsUp = baseParts.length - cnt - 1;
-    if (!rename && stepsUp > ourNumOfAllowedStepsAbove && shiftedParts.length - cnt <= ourAllowedStepsDown) {
+    int stepsUp = baseParts.length - cnt - 1;
+    int stepsDown = shiftedParts.length - cnt - 1;
+
+    if (stepsDown > MAX_STEPS_DOWN) {
       return myShifted;
     }
-    final StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < stepsUp; i++) {
-      sb.append("../");
+
+    StringBuilder sb = new StringBuilder();
+    if (stepsUp < MAX_STEPS_UP) {
+      for (int i = 0; i < stepsUp; i++) {
+        sb.append("../");
+      }
+    }
+    else {
+      sb.append(StringUtil.ELLIPSIS + "/");
     }
 
     for (int i = cnt; i < shiftedParts.length - 1; i++) {
@@ -71,17 +78,6 @@ public final class RelativePathCalculator {
     }
 
     return sb.toString();
-  }
-
-  private static boolean checkRename(final String[] baseParts, final String[] shiftedParts) {
-    if (baseParts.length == shiftedParts.length) {
-      for (int i = 0; i < baseParts.length; i++) {
-        if (!stringEqual(baseParts[i], shiftedParts[i])) {
-          return i == baseParts.length - 1;
-        }
-      }
-    }
-    return false;
   }
 
   public static String[] split(@NotNull String s) {
