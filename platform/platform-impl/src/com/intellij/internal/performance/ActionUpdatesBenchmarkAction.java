@@ -212,7 +212,7 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
                     () -> activityRunner.run(actionName, id, () -> ActionUtil.performDumbAwareUpdate(action, event, true)));
       count++;
       if (!(action instanceof ActionGroup)) continue;
-      String childrenActionName = className + ".getChildren-" + (event.getPresentation().isEnabled() ? "enabled" : "disabled") + actionIdIfNeeded;
+      String childrenActionName = className + ".getChildren(" + (event.getPresentation().isEnabled() ? "+" : "-") + ")" + actionIdIfNeeded;
       runAndMeasure(results, results2, childrenActionName, event, updateThread,
                     () -> activityRunner.run(actionName, id, () -> ((ActionGroup)action).getChildren(event)));
     }
@@ -223,11 +223,13 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
       if (result.first < MIN_REPORTED_UPDATE_MILLIS) break;
       LOG.info(result.first + " ms - " + result.second);
     }
-    LOG.info("---- slow data usage for " + results2.size() + " actions ---- ");
-    results2.sort(Pair.comparingByFirst());
+    StringBuilder sb = new StringBuilder();
+    sb.append("---- slow data usage for ").append(results2.size()).append(" actions ---- ");
+    results2.sort(Pair.comparingBySecond());
     for (Pair<String, String> pair : results2) {
-      LOG.info(pair.first + " - " + pair.second);
+      sb.append("\n").append(pair.second).append(" - ").append(pair.first);
     }
+    LOG.info(sb.toString());
   }
 
   private static void runAndMeasure(@NotNull List<Pair<Integer, String>> results,
@@ -251,13 +253,9 @@ public class ActionUpdatesBenchmarkAction extends DumbAwareAction {
         results.add(Pair.create((int)elapsed, actionName));
       }
       if (updateThread == ActionUpdateThread.OLD_EDT) {
-        if (ruleKeys.isEmpty()) {
-          if (event.getPresentation().isEnabled()) {
-            results2.add(Pair.create("BGT or EDT", actionName));
-          }
-        }
-        else {
-          results2.add(Pair.create(ContainerUtil.sorted(ruleKeys).toString(), actionName));
+        boolean enabled = event.getPresentation().isEnabled();
+        if (!ruleKeys.isEmpty() || enabled) {
+          results2.add(Pair.create(ContainerUtil.sorted(ruleKeys) + " - " + (enabled ? "enabled" : "disabled"), actionName));
         }
       }
     });
