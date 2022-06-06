@@ -125,7 +125,7 @@ private class JUnitMalformedSignatureVisitor(
     shouldBeStatic = false,
     shouldBeVoidType = true,
     validVisibility = { UastVisibility.PUBLIC },
-    validParameters = { emptyList() }
+    validParameters = { method -> method.uastParameters.filter { MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations) } }
   )
 
   private val beforeAfterEachProblem = AnnotatedSignatureProblem(
@@ -139,7 +139,8 @@ private class JUnitMalformedSignatureVisitor(
       else method.uastParameters.filter {
         it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO ||
         it.type.canonicalText == ORG_JUNIT_JUPITER_API_REPETITION_INFO ||
-        it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER
+        it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_REPORTER ||
+        MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations)
       }
     }
   )
@@ -149,7 +150,7 @@ private class JUnitMalformedSignatureVisitor(
     shouldBeStatic = true,
     shouldBeVoidType = true,
     validVisibility = { UastVisibility.PUBLIC },
-    validParameters = { emptyList() }
+    validParameters = { method -> method.uastParameters.filter { MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations) } }
   )
 
   private val beforeAfterAllProblem = AnnotatedSignatureProblem(
@@ -161,7 +162,9 @@ private class JUnitMalformedSignatureVisitor(
     validParameters = { method ->
       if (method.uastParameters.isEmpty()) emptyList()
       else if (method.hasParameterResolver()) listOf(method.uastParameters.first())
-      else method.uastParameters.filter { it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO }
+      else method.uastParameters.filter {
+        it.type.canonicalText == ORG_JUNIT_JUPITER_API_TEST_INFO || MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations)
+      }
     }
   )
 
@@ -170,11 +173,7 @@ private class JUnitMalformedSignatureVisitor(
     shouldBeStatic = false,
     shouldBeVoidType = true,
     validVisibility = { UastVisibility.PUBLIC },
-    validParameters = { method ->
-      method.uastParameters.filter {
-        MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations)
-      }
-    }
+    validParameters = { method -> method.uastParameters.filter { MetaAnnotationUtil.isMetaAnnotated(it, ignorableAnnotations) } }
   )
 
   private val junit5TestProblem = AnnotatedSignatureProblem(
