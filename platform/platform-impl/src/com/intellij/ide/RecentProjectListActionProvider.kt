@@ -18,12 +18,15 @@ open class RecentProjectListActionProvider {
     fun getInstance() = service<RecentProjectListActionProvider>()
   }
 
-  fun collectProjects(): List<RecentProjectTreeItem> {
+  fun collectProjects(withOpened: Boolean = true): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-    val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
     val openedPaths = ProjectUtil.getOpenProjects().mapNotNull { openProject ->
       recentProjectManager.getProjectPath(openProject)
     }.toSet()
+    val allRecentProjectPaths = if (withOpened)
+      LinkedHashSet(recentProjectManager.getRecentPaths())
+    else
+      LinkedHashSet(recentProjectManager.getRecentPaths()).apply { removeAll(openedPaths) }
 
     val recentProjects = mutableListOf<RecentProjectTreeItem>()
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
