@@ -39,7 +39,7 @@ import kotlin.streams.toList
 
 class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
-  val ignorableAnnotations: List<String> = ArrayList(listOf("mockit.Mocked"))
+  val ignorableAnnotations: List<String> = ArrayList(listOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir"))
 
   override fun createOptionsPanel(): JComponent = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
     ignorableAnnotations, JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by")
