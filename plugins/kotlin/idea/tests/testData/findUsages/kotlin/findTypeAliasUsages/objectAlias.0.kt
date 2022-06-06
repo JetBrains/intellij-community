@@ -7,3 +7,4 @@ fun f2() {
     Alias
     val a: Alias
 }
+// FIR_COMPARISON

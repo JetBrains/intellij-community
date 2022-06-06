@@ -49,12 +49,14 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
 
         return analyzeWithReadAction(refExpr) {
             when (val targetElement = reference.resolveToSymbol()) {
-                is KtClassOrObjectSymbol ->
-                    when {
-                        // Treat object accesses as variables to simulate the old behaviour (when variables were created for objects)
-                        targetElement is KtEnumEntrySymbol -> getVariableUsageType(refExpr)
-                        targetElement.classKind == KtClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
-                        targetElement.classKind == KtClassKind.OBJECT -> getVariableUsageType(refExpr)
+                is KtClassLikeSymbol ->
+                    when (targetElement) {
+                        is KtEnumEntrySymbol -> getVariableUsageType(refExpr)
+                        is KtClassOrObjectSymbol -> when {
+                            targetElement.classKind == KtClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
+                            targetElement.classKind == KtClassKind.OBJECT -> getVariableUsageType(refExpr)
+                            else -> getClassUsageType(refExpr)
+                        }
                         else -> getClassUsageType(refExpr)
                     }
                 is KtPackageSymbol -> //TODO FIR Implement package symbol type
