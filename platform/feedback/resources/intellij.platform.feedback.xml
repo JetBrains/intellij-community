@@ -3,8 +3,10 @@
 
     <applicationService serviceImplementation="com.intellij.feedback.common.state.DontShowAgainFeedbackService"/>
 
-    <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages" key="notification.group.feedback"/>
-    <notificationGroup displayType="BALLOON" id="Kotlin Rejecters Feedback In IDE" bundle="messages.KotlinRejectersFeedbackMessages"/>
+    <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages"
+                       key="notification.group.feedback"/>
+    <notificationGroup displayType="BALLOON" id="Kotlin Rejecters Feedback In IDE" bundle="messages.KotlinRejectersFeedbackMessages"
+                       key="notification.group.kotlin.rejecters.feedback"/>
 
     <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
     <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
@@ -19,7 +21,7 @@
     <listener class="com.intellij.feedback.common.OpenApplicationFeedbackShower"
               topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
-  
+
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
