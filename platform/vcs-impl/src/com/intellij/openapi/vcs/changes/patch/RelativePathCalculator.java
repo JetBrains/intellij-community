@@ -1,12 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -16,8 +13,6 @@ public final class RelativePathCalculator {
 
   private final String myShifted;
   private final String myBase;
-
-  private boolean myRename;
 
   public RelativePathCalculator(@NotNull String base, @NotNull String shifted) {
     myShifted = shifted;
@@ -38,7 +33,7 @@ public final class RelativePathCalculator {
     final String[] baseParts = split(myBase);
     final String[] shiftedParts = split(myShifted);
 
-    myRename = checkRename(baseParts, shiftedParts);
+    boolean rename = checkRename(baseParts, shiftedParts);
 
     int cnt = 0;
     while (true) {
@@ -54,7 +49,7 @@ public final class RelativePathCalculator {
     }
 
     final int stepsUp = baseParts.length - cnt - 1;
-    if (!myRename && stepsUp > ourNumOfAllowedStepsAbove && shiftedParts.length - cnt <= ourAllowedStepsDown) {
+    if (!rename && stepsUp > ourNumOfAllowedStepsAbove && shiftedParts.length - cnt <= ourAllowedStepsDown) {
       return myShifted;
     }
     final StringBuilder sb = new StringBuilder();
@@ -78,10 +73,6 @@ public final class RelativePathCalculator {
     return sb.toString();
   }
 
-  private boolean isRename() {
-    return myRename;
-  }
-
   private static boolean checkRename(final String[] baseParts, final String[] shiftedParts) {
     if (baseParts.length == shiftedParts.length) {
       for (int i = 0; i < baseParts.length; i++) {
@@ -91,18 +82,6 @@ public final class RelativePathCalculator {
       }
     }
     return false;
-  }
-
-  public static @NlsContexts.Label @Nullable String getMovedString(final String beforeName, final String afterName) {
-    if (beforeName != null && afterName != null && !stringEqual(beforeName, afterName)) {
-      RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
-      String result = calculator.execute();
-
-      return calculator.isRename()
-             ? VcsBundle.message("change.file.renamed.to.text", result)
-             : VcsBundle.message("change.file.moved.to.text", result);
-    }
-    return null;
   }
 
   public static String[] split(@NotNull String s) {
