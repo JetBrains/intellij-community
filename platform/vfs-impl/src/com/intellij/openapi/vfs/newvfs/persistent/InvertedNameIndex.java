@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 /**
@@ -24,35 +26,47 @@ import java.util.function.IntPredicate;
  * @see InvertedNameIndex#checkConsistency
  */
 final class InvertedNameIndex {
+  private static final ReadWriteLock myRwLock = new ReentrantReadWriteLock();
 
   private static final Int2IntMap ourSingleData = new Int2IntOpenHashMap();
   private static final Int2ObjectMap<int[]> ourMultiData = new Int2ObjectOpenHashMap<>();
   private static final boolean ourCheckConsistency = SystemProperties.getBooleanProperty("idea.vfs.name.index.check.consistency", false);
 
   static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
-    FSRecords.lock.readLock().lock();
+    myRwLock.readLock().lock();
     try {
       return processData(names, processor);
     }
     finally {
-      FSRecords.lock.readLock().unlock();
+      myRwLock.readLock().unlock();
     }
   }
 
   static void updateFileName(int fileId, int newNameId, int oldNameId) {
-    FSRecords.LOG.assertTrue(FSRecords.lock.isWriteLocked(), "no write lock");
-    if (oldNameId != 0) {
-      deleteDataInner(fileId, oldNameId);
+    myRwLock.writeLock().lock();
+    try {
+      if (oldNameId != 0) {
+        deleteDataInner(fileId, oldNameId);
+      }
+      if (newNameId != 0) {
+        updateDataInner(fileId, newNameId);
+      }
     }
-    if (newNameId != 0) {
-      updateDataInner(fileId, newNameId);
+    finally {
+      myRwLock.writeLock().unlock();
     }
   }
 
   static void clear() {
-    FSRecords.LOG.assertTrue(FSRecords.lock.isWriteLocked(), "no write lock");
-    ourSingleData.clear();
-    ourMultiData.clear();
+    myRwLock.writeLock().lock();
+    try {
+      FSRecords.LOG.assertTrue(FSRecords.lock.isWriteLocked(), "no write lock");
+      ourSingleData.clear();
+      ourMultiData.clear();
+    }
+    finally {
+      myRwLock.writeLock().unlock();
+    }
   }
 
   private static boolean processData(@NotNull Set<String> names, @NotNull IntPredicate processor) {
@@ -79,30 +93,36 @@ final class InvertedNameIndex {
   }
 
   static void updateDataInner(int fileId, int nameId) {
-    int single = ourSingleData.get(nameId);
-    int[] multi = ourMultiData.get(nameId);
-    if (single == 0 && multi == null) {
-      ourSingleData.put(nameId, fileId);
+    myRwLock.writeLock().lock();
+    try {
+      int single = ourSingleData.get(nameId);
+      int[] multi = ourMultiData.get(nameId);
+      if (single == 0 && multi == null) {
+        ourSingleData.put(nameId, fileId);
+      }
+      else if (multi == null) {
+        ourMultiData.put(nameId, new int[]{single, fileId});
+        ourSingleData.remove(nameId);
+      }
+      else if (multi.length == 2) {
+        ourMultiData.put(nameId, new int[]{3, multi[0], multi[1], fileId, 0});
+      }
+      else if (multi[multi.length - 1] == 0) {
+        multi[0]++;
+        multi[multi[0]] = fileId;
+      }
+      else {
+        int[] next = Arrays.copyOf(multi, multi.length * 2 + 1);
+        next[0]++;
+        next[next[0]] = fileId;
+        ourMultiData.put(nameId, next);
+      }
+      if (ourCheckConsistency) {
+        checkConsistency(nameId);
+      }
     }
-    else if (multi == null) {
-      ourMultiData.put(nameId, new int[]{single, fileId});
-      ourSingleData.remove(nameId);
-    }
-    else if (multi.length == 2) {
-      ourMultiData.put(nameId, new int[]{3, multi[0], multi[1], fileId, 0});
-    }
-    else if (multi[multi.length - 1] == 0) {
-      multi[0]++;
-      multi[multi[0]] = fileId;
-    }
-    else {
-      int[] next = Arrays.copyOf(multi, multi.length * 2 + 1);
-      next[0]++;
-      next[next[0]] = fileId;
-      ourMultiData.put(nameId, next);
-    }
-    if (ourCheckConsistency) {
-      checkConsistency(nameId);
+    finally {
+      myRwLock.writeLock().unlock();
     }
   }
 
@@ -158,13 +178,19 @@ final class InvertedNameIndex {
   }
 
   static void checkConsistency() {
-    IntIterator keyIt1 = ourSingleData.keySet().intIterator();
-    while (keyIt1.hasNext()) {
-      checkConsistency(keyIt1.nextInt());
+    myRwLock.readLock().lock();
+    try {
+      IntIterator keyIt1 = ourSingleData.keySet().intIterator();
+      while (keyIt1.hasNext()) {
+        checkConsistency(keyIt1.nextInt());
+      }
+      IntIterator keyIt2 = ourMultiData.keySet().intIterator();
+      while (keyIt2.hasNext()) {
+        checkConsistency(keyIt2.nextInt());
+      }
     }
-    IntIterator keyIt2 = ourMultiData.keySet().intIterator();
-    while (keyIt2.hasNext()) {
-      checkConsistency(keyIt2.nextInt());
+    finally {
+      myRwLock.readLock().unlock();
     }
   }
 

@@ -52,14 +52,9 @@ final class PersistentFSRecordAccessor {
     PersistentFSConnection connection = myFSConnection;
     connection.markDirty();
 
-    final int free = connection.getFreeRecord();
+    final int free = connection.reserveFreeRecord();
     if (free == 0) {
-      final int fileLength = length();
-      LOG.assertTrue(fileLength % RECORD_SIZE == 0, "record file length = " + fileLength + ", record size = " + RECORD_SIZE);
-      int newRecord = fileLength / RECORD_SIZE;
-      connection.getRecords().cleanRecord(newRecord);
-      assert fileLength + RECORD_SIZE == length();
-      return newRecord;
+      return allocateRecord();
     }
     else {
       deleteContentAndAttributes(free);
@@ -134,6 +129,13 @@ final class PersistentFSRecordAccessor {
   private int length() {
     return (int)myFSConnection.getRecords().length();
   }
+
+
+  private int allocateRecord() {
+    return myFSConnection.getRecords().allocateRecord();
+  }
+
+
 
   private void deleteContentAndAttributes(int id) throws IOException {
     myPersistentFSContentAccessor.deleteContent(id);

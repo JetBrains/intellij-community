@@ -113,13 +113,16 @@ public final class FSRecords {
     long timestamp = attributes.lastModified;
     long length = attributes.isDirectory() ? -1L : attributes.length;
     int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
-    return writeAndHandleErrors(() -> {
-      setAttributes(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
-      InvertedNameIndex.updateFileName(fileId, nameId, 0);
 
-      ourNamesIndexModCount.incrementAndGet();
-      return nameId;
+    writeAndHandleErrors(() -> {
+      setAttributes(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
+      return null;
     });
+
+    InvertedNameIndex.updateFileName(fileId, nameId, 0);
+    ourNamesIndexModCount.incrementAndGet();
+
+    return nameId;
   }
 
   @NotNull
@@ -179,7 +182,13 @@ public final class FSRecords {
 
   // todo: Address  / capacity store in records table, size store with payload
   public static int createRecord() {
-    return writeAndHandleErrors(() -> ourRecordAccessor.createRecord());
+    try {
+      return ourRecordAccessor.createRecord();
+    }
+    catch (Exception e) {
+      handleError(e);
+      throw new RuntimeException(e);
+    }
   }
 
   public static long getNamesIndexModCount() {

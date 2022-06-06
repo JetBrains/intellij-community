@@ -144,8 +144,10 @@ final class PersistentFSConnection {
     return myRecords.getTimestamp();
   }
 
-  int getFreeRecord() {
-    return myFreeRecords.isEmpty() ? 0 : myFreeRecords.removeInt(myFreeRecords.size() - 1);
+  int reserveFreeRecord() {
+    synchronized (myFreeRecords) {
+      return myFreeRecords.isEmpty() ? 0 : myFreeRecords.removeInt(myFreeRecords.size() - 1);
+    }
   }
 
   void createBrokenMarkerFile(@Nullable Throwable reason) {
@@ -169,7 +171,7 @@ final class PersistentFSConnection {
   }
 
   @TestOnly
-  int getPersistentModCount() throws IOException {
+  int getPersistentModCount() {
     return myRecords.getGlobalModCount();
   }
 
@@ -179,7 +181,6 @@ final class PersistentFSConnection {
   }
 
   void markDirty() throws IOException {
-    assert FSRecords.lock.isWriteLocked();
     if (!myDirty) {
       myDirty = true;
       myRecords.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);

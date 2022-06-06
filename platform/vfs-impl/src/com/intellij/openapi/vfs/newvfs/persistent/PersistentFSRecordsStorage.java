@@ -56,11 +56,14 @@ public final class PersistentFSRecordsStorage {
   private final ByteBuffer myPooledWriteBuffer = ByteBuffer.allocateDirect(RECORD_SIZE);
   @NotNull
   private final AtomicInteger myGlobalModCount;
+  @NotNull
+  private final AtomicInteger myRecordCount;
 
   public PersistentFSRecordsStorage(@NotNull ResizeableMappedFile file) throws IOException {
     myFile = file;
     if (myFile.isNativeBytesOrder()) myPooledWriteBuffer.order(ByteOrder.nativeOrder());
     myGlobalModCount = new AtomicInteger(readGlobalModCount());
+    myRecordCount = new AtomicInteger((int)(length() / RECORD_SIZE));
   }
 
   int getGlobalModCount() {
@@ -234,9 +237,14 @@ public final class PersistentFSRecordsStorage {
 
   void cleanRecord(int id) throws IOException {
     write(() -> {
+      myRecordCount.updateAndGet(operand -> Math.max(id + 1, operand));
       myFile.put(((long)id) * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
       return null;
     });
+  }
+
+  int allocateRecord() {
+    return myRecordCount.getAndIncrement();
   }
 
   private int getRecordInt(int id, int offset) throws IOException {

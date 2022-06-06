@@ -354,24 +354,12 @@ public class PagedFileStorage implements Forceable {
       oldSize = 0;
     }
     if (oldSize == newSize && oldSize == length()) return;
-    //
-    //final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    //myStorageLockContext.getBufferCache().invalidateBuffer(myStorageIndex | (oldSize / myPageSize)); // TODO long page
-    //final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-
     resizeFile(newSize);
 
     // it is not guaranteed that new partition will consist of null
     // after resize, so we should fill it manually
     long delta = newSize - oldSize;
     if (delta > 0) fillWithZeros(oldSize, delta);
-
-    //if (IOStatistics.DEBUG) {
-    //  long finished = System.currentTimeMillis();
-    //  if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
-    //    IOStatistics.dump("Resized "+myFile + " from " + oldSize + " to " + newSize + " for " + (finished - started) + ", unmap all:" + (finished - unmapAllFinished));
-    //  }
-    //}
   }
 
   private void resizeFile(long newSize) throws IOException {
