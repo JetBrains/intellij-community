@@ -4,10 +4,13 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.highlighter.ElementAnnotator.Companion.suppressDeprecatedAnnotationRegistryKey
 import java.util.concurrent.TimeUnit
 
 /**
@@ -23,6 +26,14 @@ class KotlinHighlightingSuspender(private val project: Project) {
     private val suspendTimeoutMs = TimeUnit.SECONDS.toMillis(timeoutSeconds.toLong())
 
     private val updateQueue = Alarm(Alarm.ThreadToUse.SWING_THREAD, KotlinPluginDisposable.getInstance(project))
+
+    init {
+        suppressDeprecatedAnnotationRegistryKey.addListener(object : RegistryValueListener {
+            override fun afterValueChanged(value: RegistryValue) {
+                ElementAnnotator.updateSuppressDeprecatedAnnotationValue()
+            }
+        }, KotlinPluginDisposable.getInstance(project))
+    }
 
     /**
      * @return true, when file is suspended for the 1st time (within a timeout window)
