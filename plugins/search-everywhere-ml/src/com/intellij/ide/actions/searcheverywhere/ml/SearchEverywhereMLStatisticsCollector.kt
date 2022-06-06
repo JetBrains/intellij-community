@@ -6,6 +6,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider.Companion.SE_TABS
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereStateFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
@@ -20,6 +22,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor
 import kotlin.math.round
 
 internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
+  private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
   override fun getGroup(): EventLogGroup {
     return GROUP
@@ -126,16 +129,10 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       if (elementData != null) {
         data.addAll(elementData)
       }
-      val contributorPriorities = mixedListInfo.contributorPriorities
+
       val contributors = elements.map { element -> element.contributor }.toHashSet()
       data.add(CONTRIBUTORS.with(contributors.map { c ->
-        val contributorInfo = arrayListOf<EventPair<*>>(
-          CONTRIBUTOR_INFO_ID.with(c.searchProviderId),
-          CONTRIBUTOR_WEIGHT.with(c.sortWeight)
-        )
-        contributorPriorities[c.searchProviderId]?.let {
-          priority -> contributorInfo.add(CONTRIBUTOR_PRIORITY.with(priority))
-        }
+        val contributorInfo = contributorFeaturesProvider.getFeatures(c, mixedListInfo)
         ObjectEventData(contributorInfo)
       }))
       eventId.log(data)
@@ -267,17 +264,6 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
     private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
     private val TIME_TO_FIRST_RESULT_DATA_KEY = EventFields.Int("timeToFirstResult")
 
-    private val SE_TABS = listOf(
-      "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
-      "FileSearchEverywhereContributor", "RecentFilesSEContributor",
-      "SymbolSearchEverywhereContributor", "ActionSearchEverywhereContributor",
-      "RunConfigurationsSEContributor", "CommandsContributor",
-      "TopHitSEContributor", "com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor",
-      "TmsSearchEverywhereContributor", "YAMLKeysSearchEverywhereContributor",
-      "UrlSearchEverywhereContributor", "Vcs.Git", "AutocompletionContributor",
-      "TextSearchContributor", "DbSETablesContributor", "third.party"
-    )
-
     // context fields
     private val PROJECT_OPENED_KEY = EventFields.Boolean("projectOpened")
     private val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("projectDisposed")
@@ -310,11 +296,8 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
       "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_ID_KEY, ML_WEIGHT_KEY
     )
 
-    // information about contributors
-    private val CONTRIBUTOR_INFO_ID = EventFields.String("id", SE_TABS)
-    private val CONTRIBUTOR_PRIORITY = EventFields.Int("priority")
-    private val CONTRIBUTOR_WEIGHT = EventFields.Int("weight")
-    private val CONTRIBUTORS = ObjectListEventField("contributors", CONTRIBUTOR_INFO_ID, CONTRIBUTOR_WEIGHT, CONTRIBUTOR_PRIORITY)
+    private val CONTRIBUTORS = ObjectListEventField("contributors",
+                                                    *SearchEverywhereContributorFeaturesProvider.getFeaturesDeclarations().toTypedArray())
 
     // events
     private val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)

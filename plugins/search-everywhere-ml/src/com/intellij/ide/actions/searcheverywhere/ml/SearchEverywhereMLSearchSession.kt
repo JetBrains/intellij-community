@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereContributorStatistician
 import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
@@ -14,7 +15,7 @@ import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMLSearchSession(project: Project?,
-                                               private val mixedListInfo: SearchEverywhereMixedListInfo,
+                                               val mixedListInfo: SearchEverywhereMixedListInfo,
                                                private val sessionId: Int) {
   val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
@@ -73,6 +74,12 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
       if (project != null) {
         val statisticianService = service<SearchEverywhereStatisticianService>()
         selectedItems.forEach { statisticianService.increaseUseCount(it) }
+
+        if (state.tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID) {
+          elementsProvider.invoke()
+            .slice(indexes.asIterable())
+            .forEach { SearchEverywhereContributorStatistician.increaseUseCount(it.contributor.searchProviderId) }
+        }
       }
 
       logger.onItemSelected(

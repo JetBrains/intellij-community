@@ -43,7 +43,8 @@ internal abstract class SearchEverywhereRankingModelTest
                                  searchQuery: String,
                                  featuresProviderCache: FeaturesProviderCache?): Map<String, Any?> {
     return featuresProviders.map {
-      val features = it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight, featuresProviderCache)
+      val features = it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight,
+                                           featuresProviderCache)
       val featuresAsMap = hashMapOf<String, Any?>()
       for (feature in features) {
         featuresAsMap[feature.field.name] = feature.data

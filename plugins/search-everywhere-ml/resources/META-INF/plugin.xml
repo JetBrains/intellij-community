@@ -53,6 +53,9 @@
     <statistician key="searchEverywhere"
                   implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereSymbolStatistician"/>
 
+    <statistician key="searchEverywhereContributor"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereContributorStatistician"/>
+
     <statistics.validation.customValidationRule
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereRunConfigurationFeaturesProvider$RunConfigurationTypeValidator"/>
     <statistics.counterUsagesCollector

@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereTabWithMl
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
@@ -75,11 +76,13 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     }
 
     val contributors = searchEverywhereUI.foundElementsInfo.map { info -> info.contributor }.toHashSet()
+    val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
+    val contributorFeatures = contributors.map { contributorFeaturesProvider.getFeatures(it, searchSession.mixedListInfo)}
     return mapOf(
       SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(),
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
       SEARCH_STATE_FEATURES_KEY to state!!.searchStateFeatures.associate { it.field.name to it.data },
-      CONTRIBUTORS_KEY to contributors.map { c -> ContributorInfo(c.searchProviderId, c.sortWeight) },
+      CONTRIBUTORS_KEY to contributorFeatures.map { c -> c.associate { it.field.name to it.data }.toSortedMap() },
       FOUND_ELEMENTS_KEY to features
     )
   }
