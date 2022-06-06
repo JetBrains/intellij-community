@@ -29,25 +29,25 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE = "org.junit.jupiter.params.provider.MethodSource";
   public static final String ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF = "org.junit.jupiter.api.condition.EnabledIf";
   public static final String ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF = "org.junit.jupiter.api.condition.DisabledIf";
-  public static final String ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE = "org.junit.jupiter.params.provider.ValueSource";
-  public static final String ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE = "org.junit.jupiter.params.provider.EnumSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE_SHORT = "EnumSource";
-  public static final String ORG_JUNIT_JUPITER_PARAMS_NULL_SOURCE = "org.junit.jupiter.params.provider.NullSource";
-  public static final String ORG_JUNIT_JUPITER_PARAMS_EMPTY_SOURCE = "org.junit.jupiter.params.provider.EmptySource";
-  public static final String ORG_JUNIT_JUPITER_PARAMS_NULL_AND_EMPTY_SOURCE = "org.junit.jupiter.params.provider.NullAndEmptySource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_SOURCE = "org.junit.jupiter.params.provider.NullSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_EMPTY_SOURCE = "org.junit.jupiter.params.provider.EmptySource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE = "org.junit.jupiter.params.provider.ValueSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE = "org.junit.jupiter.params.provider.EnumSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE = "org.junit.jupiter.params.provider.NullAndEmptySource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_ENUM = "org.junit.jupiter.params.provider.NullEnum";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE = "org.junit.jupiter.params.provider.CsvSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE = "org.junit.jupiter.params.provider.CsvFileSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE = "org.junit.jupiter.params.provider.ArgumentsSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES = "org.junit.jupiter.params.provider.ArgumentsSources";
   public static final Collection<String> SOURCE_ANNOTATIONS = ContainerUtil
-    .immutableList(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE,
-                   ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
+    .immutableList(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE,
+                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
                    ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE,
                    ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES,
-                   ORG_JUNIT_JUPITER_PARAMS_NULL_SOURCE,
-                   ORG_JUNIT_JUPITER_PARAMS_EMPTY_SOURCE,
-                   ORG_JUNIT_JUPITER_PARAMS_NULL_AND_EMPTY_SOURCE);
+                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_SOURCE,
+                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_EMPTY_SOURCE,
+                   ORG_JUNIT_JUPITER_PARAMS_PROVIDER_NULL_AND_EMPTY_SOURCE);
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS = "org.junit.jupiter.params.provider.Arguments";
   public static final String ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH = "org.junit.jupiter.params.converter.ConvertWith";
   public static final String ORG_JUNIT_JUPITER_API_TEST = "org.junit.jupiter.api.Test";
