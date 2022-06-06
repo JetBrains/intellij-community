@@ -17,6 +17,52 @@ class ResizableMappedFileTest {
   val disposable = DisposableRule()
 
   @Test
+  fun `put data to non-existing page`() {
+    val storagePath = tempDir.newDirectoryPath().resolve("non-existing-page-test")
+
+    val address = 5L * PagedFileStorage.MB + 123
+    val value = 112233L
+
+    ResizeableMappedFile(
+      storagePath,
+      PagedFileStorage.MB,
+      null,
+      PagedFileStorage.MB,
+      true
+    ).use { file ->
+      file.write {
+        file.putLong(address, value)
+        Assert.assertEquals(value, file.getLong(address))
+
+        file.force()
+
+        Assert.assertEquals(value, file.getLong(address))
+
+        file.force()
+        StorageLockContext.forceDirectMemoryCache()
+
+        Assert.assertEquals(value, file.getLong(address))
+      }
+    }
+
+    ResizeableMappedFile(
+      storagePath,
+      PagedFileStorage.MB,
+      null,
+      PagedFileStorage.MB,
+      true
+    ).use { file ->
+      file.write {
+        Assert.assertEquals(value, file.getLong(address))
+
+        Assert.assertEquals(address + 8, file.length())
+      }
+    }
+
+    Assert.assertTrue(address + 8 < storagePath.size())
+  }
+
+  @Test
   fun testCacheMisses() {
     val fileCount = (StorageLockContext.getCacheMaxSize() / PagedFileStorage.MB + 10).toInt()
     val pageSize = PagedFileStorage.MB
