@@ -43,11 +43,6 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
   }
 
-  override fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double {
-    val session = getCurrentSession() ?: return -1.0
-    return session.getMLWeight(contributor, element, matchingDegree)
-  }
-
   fun getCurrentSession(): SearchEverywhereMLSearchSession? {
     if (isEnabled()) {
       return activeSession.get()

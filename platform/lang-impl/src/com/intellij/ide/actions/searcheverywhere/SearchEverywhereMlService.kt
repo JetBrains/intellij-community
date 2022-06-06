@@ -36,8 +36,6 @@ abstract class SearchEverywhereMlService {
 
   abstract fun shouldOrderByMl(): Boolean
 
-  abstract fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double
-
   abstract fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
 
   @Contract("_, _, _ -> new")
