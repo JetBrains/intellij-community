@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
@@ -364,6 +365,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   @Internal
   class MyProjectListener : ProjectManagerListener {
     private val manager = instanceEx
+    private val cloneService: CloneableProjectsService
+      get() = CloneableProjectsService.getInstance()
 
     override fun projectOpened(project: Project) {
       if (manager.disableUpdatingRecentInfo.get() || LightEdit.owns(project)) {
@@ -372,6 +375,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       val path = manager.getProjectPath(project)
       if (path != null) {
+        cloneService.removeClonedProject(path)
         manager.markPathRecent(path, project)
       }
       manager.updateLastProjectPath()

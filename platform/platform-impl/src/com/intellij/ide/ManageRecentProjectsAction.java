@@ -42,7 +42,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
     RecentProjectFilteringTree recentProjectFilteringTree = RecentProjectPanelComponentFactory.createComponent(
-      disposable, List.of(ProjectCollectors.recentProjectsCollector)
+      disposable, List.of(ProjectCollectors.recentProjectsCollector, ProjectCollectors.clonedProjectsCollector)
     );
     Tree recentProjectTree = recentProjectFilteringTree.getTree();
     SearchTextField searchTextField = recentProjectFilteringTree.installSearchField();

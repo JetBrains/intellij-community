@@ -494,28 +494,22 @@ class RecentProjectFilteringTree(
           }
         }
 
-        projectCloneStatusPanel.apply {
-          isVisible = false
-          isEnabled = false
-        }
-        toolTipText = null
-
-        val icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
+        val projectIcon = recentProjectsManager.getProjectIcon(item.projectPath, true)
         when (cloneStatus) {
           CloneStatus.PROGRESS -> {
             projectCloneStatusPanel.isVisible = true
             projectCloneStatusPanel.isEnabled = true
             projectProgressLabel.text = taskInfo.actionTitle
-            projectIconLabel.icon = icon
+            projectIconLabel.icon = projectIcon
             toolTipText = taskInfo.actionTooltipText
           }
           CloneStatus.FAILURE -> {
             projectPathLabel.text = taskInfo.failedTitle
-            projectIconLabel.icon = IconUtil.desaturate(icon)
+            projectIconLabel.icon = IconUtil.desaturate(projectIcon)
           }
           CloneStatus.CANCEL -> {
             projectPathLabel.text = taskInfo.canceledTitle
-            projectIconLabel.icon = IconUtil.desaturate(icon)
+            projectIconLabel.icon = IconUtil.desaturate(projectIcon)
           }
           else -> {}
         }

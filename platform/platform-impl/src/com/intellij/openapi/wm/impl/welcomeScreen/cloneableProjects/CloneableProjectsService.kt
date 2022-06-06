@@ -2,13 +2,11 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects
 
 import com.intellij.CommonBundle
-import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.Service.Level
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -74,12 +72,17 @@ class CloneableProjectsService {
     cloneableProject.progressIndicator.cancel()
   }
 
-  fun removeCloneProject(cloneableProject: CloneableProject) {
+  fun removeCloneableProject(cloneableProject: CloneableProject) {
     if (cloneableProject.cloneStatus == CloneStatus.PROGRESS) {
       cloneableProject.progressIndicator.cancel()
     }
 
     cloneableProjects.removeIf { it.projectPath == cloneableProject.projectPath }
+    fireCloneRemovedEvent()
+  }
+
+  fun removeClonedProject(projectPath: String) {
+    RecentlyClonedProjectsState.instance.removeClonedProject(projectPath)
     fireCloneRemovedEvent()
   }
 
@@ -89,14 +92,11 @@ class CloneableProjectsService {
     fireCloneAddedEvent(cloneableProject)
   }
 
-  private fun upgradeCloneProjectToRecent(cloneableProject: CloneableProject) {
-    val recentProjectsManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-    recentProjectsManager.addRecentPath(cloneableProject.projectPath, RecentProjectMetaInfo())
-    removeCloneProject(cloneableProject)
-  }
-
   private fun onSuccess(cloneableProject: CloneableProject) {
-    upgradeCloneProjectToRecent(cloneableProject)
+    cloneableProject.cloneStatus = CloneStatus.SUCCESS
+    cloneableProjects.removeIf { it.projectPath == cloneableProject.projectPath }
+    RecentlyClonedProjectsState.instance.addClonedProject(cloneableProject.projectPath)
+    fireCloneSuccessEvent()
   }
 
   private fun onFailure(cloneableProject: CloneableProject) {
@@ -119,6 +119,12 @@ class CloneableProjectsService {
     ApplicationManager.getApplication().messageBus
       .syncPublisher(TOPIC)
       .onCloneRemoved()
+  }
+
+  private fun fireCloneSuccessEvent() {
+    ApplicationManager.getApplication().messageBus
+      .syncPublisher(TOPIC)
+      .onCloneSuccess()
   }
 
   private fun fireCloneFailedEvent() {
@@ -181,6 +187,9 @@ class CloneableProjectsService {
 
     @JvmDefault
     fun onCloneRemoved() {}
+
+    @JvmDefault
+    fun onCloneSuccess() {}
 
     @JvmDefault
     fun onCloneFailed() {}
