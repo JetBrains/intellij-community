@@ -68,12 +68,9 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
     val elementId = session.itemIdProvider.getId(element)
     val mlFeatures = state.getElementFeatures(elementId, element, contributor, priority).features
+    val mlWeight = if (shouldOrderByMl()) state.getMLWeight(session.cachedContextInfo, mlFeatures) else null
 
-    // We can only compute the ML weight if we are in a tab which has a ML model
-    val mlWeight = state.takeIf { SearchEverywhereTabWithMl.findById(it.tabId) != null }
-      ?.getMLWeight(session.cachedContextInfo, mlFeatures)
-
-    val foundElementInfo = if (shouldOrderByMl() && mlWeight != null) {
+    val foundElementInfo = if (mlWeight != null) {
       val priorityWithMl = getPriorityWithMl(element, mlWeight, priority)
       SearchEverywhereFoundElementInfo(element, priorityWithMl, contributor)
     }
