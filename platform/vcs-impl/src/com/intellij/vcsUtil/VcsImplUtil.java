@@ -19,14 +19,12 @@ import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.changes.IgnoredFileGenerator;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import java.io.File;
 import java.nio.charset.Charset;
 
 import static com.intellij.openapi.vcs.FileStatus.IGNORED;
@@ -56,17 +54,7 @@ public final class VcsImplUtil {
   @NlsSafe
   @NotNull
   public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
-    VirtualFile projectDir = project.getBaseDir();
-
-    String repositoryPath = root.getPresentableUrl();
-    if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
-      if (relativePath != null) {
-        repositoryPath = relativePath;
-      }
-    }
-
-    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+    return VcsUtil.getShortVcsRootName(project, root);
   }
 
   @Nullable

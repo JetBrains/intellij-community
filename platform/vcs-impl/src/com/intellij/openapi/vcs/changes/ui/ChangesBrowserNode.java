@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -20,6 +19,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -317,19 +317,18 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
     if (parentPath != null) {
-      appendParentPath(renderer, parentPath.getPresentableUrl());
+      String presentablePath = VcsUtil.getPresentablePath(renderer.getProject(), parentPath, true, true);
+      if (presentablePath.isEmpty()) return;
+      renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile parentPath) {
     if (parentPath != null) {
-      appendParentPath(renderer, parentPath.getPresentableUrl());
+      String presentablePath = VcsUtil.getPresentablePath(renderer.getProject(), parentPath, true, true);
+      if (presentablePath.isEmpty()) return;
+      renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-  }
-
-  private static void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {
-    renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath),
-                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {

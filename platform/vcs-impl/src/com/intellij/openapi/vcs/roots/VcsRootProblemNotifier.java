@@ -28,7 +28,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOTS_INVALID;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOTS_REGISTERED;
@@ -126,9 +125,9 @@ public final class VcsRootProblemNotifier {
                 (event, notification) -> addMappings(importantUnregisteredRoots));
       NotificationAction ignoreAction = NotificationAction
         .create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.ignore"), (event, notification) -> {
-        mySettings.addIgnoredUnregisteredRoots(map(importantUnregisteredRoots, rootError -> rootError.getMapping().getDirectory()));
-        notification.expire();
-      });
+          mySettings.addIgnoredUnregisteredRoots(map(importantUnregisteredRoots, rootError -> rootError.getMapping().getDirectory()));
+          notification.expire();
+        });
       notificationActions = new NotificationAction[]{enableIntegration, getConfigureNotificationAction(), ignoreAction};
     }
 
@@ -144,18 +143,20 @@ public final class VcsRootProblemNotifier {
 
   @NotNull
   private NotificationAction getConfigureNotificationAction() {
-    return NotificationAction.create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.configure"), (event, notification) -> {
-      if (!myProject.isDisposed()) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, VcsMappingConfigurable.class);
+    return NotificationAction.create(
+      VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.configure"),
+      (event, notification) -> {
+        if (!myProject.isDisposed()) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, VcsMappingConfigurable.class);
 
-        BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
-          Collection<VcsRootError> errorsAfterPossibleFix = new VcsRootProblemNotifier(myProject).scan();
-          if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
-            notification.expire();
-          }
-        });
-      }
-    });
+          BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+            Collection<VcsRootError> errorsAfterPossibleFix = new VcsRootProblemNotifier(myProject).scan();
+            if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
+              notification.expire();
+            }
+          });
+        }
+      });
   }
 
   private void addMappings(Collection<? extends VcsRootError> importantUnregisteredRoots) {
@@ -264,7 +265,8 @@ public final class VcsRootProblemNotifier {
     else if (invalidRoots.isEmpty()) {
       String vcs = getVcsName(unregisteredRoots);
       title = rootsAlreadyAdded ? VcsBundle.message("roots.notification.title.vcs.name.integration.enabled", vcs)
-                                : VcsBundle.message("notification.title.vcs.name.repository.repositories.found", vcs, unregisteredRoots.size());
+                                : VcsBundle.message("notification.title.vcs.name.repository.repositories.found", vcs,
+                                                    unregisteredRoots.size());
     }
     else {
       title = VcsBundle.message("roots.notification.title.vcs.root.configuration.problems");
@@ -319,17 +321,8 @@ public final class VcsRootProblemNotifier {
   @VisibleForTesting
   @NotNull
   String getPresentableMapping(@NotNull String mapping) {
-    String presentablePath = null;
-    String projectDir = myProject.getBasePath();
-    if (projectDir != null && FileUtil.isAncestor(projectDir, mapping, true)) {
-      String relativePath = FileUtil.getRelativePath(projectDir, mapping, '/');
-      if (relativePath != null) {
-        presentablePath = toSystemDependentName(VcsBundle.message("label.relative.project.path.presentation", relativePath));
-      }
-    }
-    if (presentablePath == null) {
-      presentablePath = FileUtil.getLocationRelativeToUserHome(toSystemDependentName(mapping));
-    }
+    FilePath filePath = VcsUtil.getFilePath(mapping);
+    String presentablePath = VcsUtil.getPresentablePath(myProject, filePath, false, false);
     return escapeXmlEntities(presentablePath);
   }
 }

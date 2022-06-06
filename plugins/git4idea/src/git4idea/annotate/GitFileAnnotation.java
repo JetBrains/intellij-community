@@ -182,7 +182,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     atb.appendLine(VcsBundle.message("commit.description.tooltip.date", DateFormatUtil.formatDateTime(getDate(lineInfo))));
 
     if (!myFilePath.equals(lineInfo.getFilePath())) {
-      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.getFilePath().getPresentableUrl());
+      String path = VcsUtil.getPresentablePath(myProject, lineInfo.getFilePath(), true, false);
       atb.appendLine(VcsBundle.message("commit.description.tooltip.path", path));
     }
 
