@@ -86,15 +86,22 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     fun update() {
       val wasReset = resetIfMissing()
-      guessAndSetRepoAndAccount()?.let { (repo, account) ->
-        try {
-          val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account)
-          showPullRequestsComponent(repo, account, requestExecutor, wasReset)
-        }
-        catch (e: Exception) {
-          null
-        }
-      } ?: showSelectors()
+      val repoAndAccount = guessAndSetRepoAndAccount()
+      if (repoAndAccount == null) {
+        showSelectors()
+        return
+      }
+
+      val (repo, account) = repoAndAccount
+      val requestExecutor = try {
+        GithubApiRequestExecutorManager.getInstance().getExecutor(account)
+      }
+      catch (e: Exception) {
+        showSelectors()
+        return
+      }
+
+      showPullRequestsComponent(repo, account, requestExecutor, wasReset)
     }
 
     private fun guessAndSetRepoAndAccount(): Pair<GHGitRepositoryMapping, GithubAccount>? {
