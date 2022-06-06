@@ -70,7 +70,7 @@ internal class FileTestFixtureImpl(
   }
 
   private fun createFixtureStateFile(): VirtualFile {
-    return runWriteActionAndWait {
+    return runWriteActionAndGet {
       root.findOrCreateFile("_FileTestFixture.xml")
     }
   }

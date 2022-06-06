@@ -4,7 +4,7 @@
 package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.openapi.externalSystem.util.findOrCreateFile
-import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
+import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.externalSystem.util.text
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
@@ -39,7 +39,7 @@ fun VirtualFile.createSettingsFile(relativeModulePath: String, configure: Gradle
 
 fun VirtualFile.createSettingsFile(content: String) = createSettingsFile(".", content)
 fun VirtualFile.createSettingsFile(relativeModulePath: String, content: String) =
-  runWriteActionAndWait {
+  runWriteActionAndGet {
     findOrCreateFile("$relativeModulePath/settings.gradle")
       .also { it.text = content }
   }
@@ -55,7 +55,7 @@ fun VirtualFile.createBuildFile(
 
 fun VirtualFile.createBuildFile(content: String) = createBuildFile(".", content)
 fun VirtualFile.createBuildFile(relativeModulePath: String, content: String) =
-  runWriteActionAndWait {
+  runWriteActionAndGet {
     findOrCreateFile("$relativeModulePath/build.gradle")
       .also { it.text = content }
   }

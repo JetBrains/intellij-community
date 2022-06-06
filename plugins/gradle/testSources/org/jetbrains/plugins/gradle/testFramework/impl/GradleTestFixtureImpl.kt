@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgress
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.findOrCreateDirectory
 import com.intellij.openapi.externalSystem.util.forceCloseProject
+import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
@@ -112,13 +113,13 @@ internal class GradleTestFixtureImpl(
     val systemDirectory = fileSystem.findOrCreateDirectory(systemPath)
     val fixtureRoot = "_GradleTestFixture/$gradleVersion"
     VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
-    return runWriteActionAndWait {
+    return runWriteActionAndGet {
       systemDirectory.findOrCreateDirectory(fixtureRoot)
     }
   }
 
   private fun createProjectRoot(): VirtualFile {
-    return runWriteActionAndWait {
+    return runWriteActionAndGet {
       fixtureRoot.findOrCreateDirectory(projectName)
     }
   }
