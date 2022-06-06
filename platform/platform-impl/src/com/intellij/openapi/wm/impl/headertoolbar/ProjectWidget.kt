@@ -103,11 +103,9 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
 
 private class ProjectWidget(private val project: Project): ToolbarComboWidget(), Disposable {
 
-  private val ACTION_PLACE = ActionPlaces.PROJECT_WIDGET_POPUP
-
   override fun doExpand(e: InputEvent) {
     val dataContext = DataManager.getInstance().getDataContext(this)
-    val anActionEvent = AnActionEvent.createFromInputEvent(e, ACTION_PLACE, null, dataContext)
+    val anActionEvent = AnActionEvent.createFromInputEvent(e, ActionPlaces.PROJECT_WIDGET_POPUP, null, dataContext)
     val step = createStep(createActionGroup(anActionEvent))
 
     val widgetRenderer = ProjectWidgetRenderer(step::getSeparatorAbove)
@@ -133,6 +131,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     val res = DefaultActionGroup()
 
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
+    res.addAll(group.getChildren(initEvent).asList())
     group.getChildren(initEvent).forEach { res.add(it) }
     res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
     RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res.add(it) }
@@ -142,7 +141,7 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
   private fun createStep(actionGroup: ActionGroup): ListPopupStep<Any> {
     val context = DataManager.getInstance().getDataContext(this)
-    return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ACTION_PLACE, false, false,
+    return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, false,
                                                           null, this, false, 0, false)
   }
 
