@@ -119,6 +119,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
           buildBlockContent(mainUi, model.context, request, blockId)?.let {
             combinedViewer.addChildBlock(it, index > 0)
             mainUi.countDifferences(blockId, it.viewer)
+            request.onAssigned(true)
           }
         }
 
