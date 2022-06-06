@@ -669,6 +669,11 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
   }
 
+  /**
+   * To be deprecated.
+   * <p>
+   * The part of the legacy implementation based on {@link GeneralCommandLine}.
+   */
   public static void disableBuiltinBreakpoint(@Nullable Sdk sdk, Map<String, String> env) {
     if (sdk != null) {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);

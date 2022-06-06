@@ -28,9 +28,12 @@ import com.intellij.remote.RemoteSdkPropertiesPaths
 import com.intellij.util.io.isAncestor
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PythonHelpersLocator
+import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.nio.file.Path
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
@@ -227,4 +230,13 @@ fun TargetEnvironmentRequest.ensureProjectAndModuleDirsAreOnTarget(project: Proj
     }
   }
   project.basePath?.let { addPathToVolume(Path.of(it)) }
+}
+
+/**
+ * Mimics [PyDebugRunner.disableBuiltinBreakpoint] for [PythonExecution].
+ */
+fun PythonExecution.disableBuiltinBreakpoint(sdk: Sdk?) {
+  if (sdk != null && PythonSdkFlavor.getFlavor(sdk)?.getLanguageLevel(sdk)?.isAtLeast(LanguageLevel.PYTHON37) == true) {
+    addEnvironmentVariable("PYTHONBREAKPOINT", "0")
+  }
 }
