@@ -4643,6 +4643,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("binaryExpressionWithLineBreak.java")
+        public void testBinaryExpressionWithLineBreak() throws Exception {
+            runTest("testData/newJ2k/returnStatement/binaryExpressionWithLineBreak.java");
+        }
+
         @TestMetadata("currentMethodBug.java")
         public void testCurrentMethodBug() throws Exception {
             runTest("testData/newJ2k/returnStatement/currentMethodBug.java");

@@ -16413,6 +16413,81 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("binaryExpressionInAssignment.kt")
+        public void testBinaryExpressionInAssignment() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInAssignment.kt");
+        }
+
+        @TestMetadata("binaryExpressionInBlock.kt")
+        public void testBinaryExpressionInBlock() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInBlock.kt");
+        }
+
+        @TestMetadata("binaryExpressionInElseBranch.kt")
+        public void testBinaryExpressionInElseBranch() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInElseBranch.kt");
+        }
+
+        @TestMetadata("binaryExpressionInExpressionBodyFunction.kt")
+        public void testBinaryExpressionInExpressionBodyFunction() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInExpressionBodyFunction.kt");
+        }
+
+        @TestMetadata("binaryExpressionInForBody.kt")
+        public void testBinaryExpressionInForBody() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInForBody.kt");
+        }
+
+        @TestMetadata("binaryExpressionInForHeader.kt")
+        public void testBinaryExpressionInForHeader() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInForHeader.kt");
+        }
+
+        @TestMetadata("binaryExpressionInFunctionArgument.kt")
+        public void testBinaryExpressionInFunctionArgument() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInFunctionArgument.kt");
+        }
+
+        @TestMetadata("binaryExpressionInFunctionParameter.kt")
+        public void testBinaryExpressionInFunctionParameter() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInFunctionParameter.kt");
+        }
+
+        @TestMetadata("binaryExpressionInIfBranch.kt")
+        public void testBinaryExpressionInIfBranch() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInIfBranch.kt");
+        }
+
+        @TestMetadata("binaryExpressionInIndexOperator.kt")
+        public void testBinaryExpressionInIndexOperator() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInIndexOperator.kt");
+        }
+
+        @TestMetadata("binaryExpressionInLambda.kt")
+        public void testBinaryExpressionInLambda() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInLambda.kt");
+        }
+
+        @TestMetadata("binaryExpressionInStringTemplate.kt")
+        public void testBinaryExpressionInStringTemplate() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInStringTemplate.kt");
+        }
+
+        @TestMetadata("binaryExpressionInWhenEntry.kt")
+        public void testBinaryExpressionInWhenEntry() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInWhenEntry.kt");
+        }
+
+        @TestMetadata("binaryExpressionInWhileBody.kt")
+        public void testBinaryExpressionInWhileBody() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInWhileBody.kt");
+        }
+
+        @TestMetadata("binaryExpressionInWhileCondition.kt")
+        public void testBinaryExpressionInWhileCondition() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/binaryExpressionInWhileCondition.kt");
+        }
+
         @TestMetadata("callInsideCallWithLambdaOnly.kt")
         public void testCallInsideCallWithLambdaOnly() throws Exception {
             runTest("testData/intentions/removeUnnecessaryParentheses/callInsideCallWithLambdaOnly.kt");
@@ -16426,6 +16501,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("elvisRhsEmptyReturn.kt")
         public void testElvisRhsEmptyReturn() throws Exception {
             runTest("testData/intentions/removeUnnecessaryParentheses/elvisRhsEmptyReturn.kt");
+        }
+
+        @TestMetadata("infixFunctionCall.kt")
+        public void testInfixFunctionCall() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/infixFunctionCall.kt");
+        }
+
+        @TestMetadata("interfaceDelegation.kt")
+        public void testInterfaceDelegation() throws Exception {
+            runTest("testData/intentions/removeUnnecessaryParentheses/interfaceDelegation.kt");
         }
 
         @TestMetadata("lambda.kt")
