@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.test.junit
 
-import com.intellij.codeInspection.test.junit.JUnitMalformedMemberInspection
+import com.intellij.codeInspection.test.junit.JUnitMalformedDeclarationInspection
 import com.intellij.codeInspection.tests.UastInspectionTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
-abstract class JUnitMalformedMemberTestBase : UastInspectionTestBase() {
-  override val inspection = JUnitMalformedMemberInspection()
+abstract class JUnitMalformedDeclarationTestBase : UastInspectionTestBase() {
+  override val inspection = JUnitMalformedDeclarationInspection()
 
   protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {

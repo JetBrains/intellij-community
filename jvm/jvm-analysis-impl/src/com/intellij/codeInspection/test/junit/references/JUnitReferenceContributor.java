@@ -31,7 +31,7 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
   }
 
   private static PsiElementPattern.Capture<PsiLanguageInjectionHost> getEnumSourceNamesPattern() {
-    return getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE, "names")
+    return getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE, "names")
       .withAncestor(4, PlatformPatterns.psiElement(PsiAnnotation.class).and(new PsiJavaElementPattern<>(
         new InitialPatternCondition<>(PsiAnnotation.class) {
           @Override

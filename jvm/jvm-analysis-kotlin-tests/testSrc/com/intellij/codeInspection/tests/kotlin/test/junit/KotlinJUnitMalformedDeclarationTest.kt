@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
 import com.intellij.codeInspection.tests.ULanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMalformedMemberTestBase
+import com.intellij.codeInspection.tests.test.junit.JUnitMalformedDeclarationTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -10,7 +10,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
 import java.io.File
 
-class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
+class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(sdkLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
@@ -20,7 +20,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
   }
 
   /* Malformed extensions */
-  fun `test Malformed extension no highlighting`() {
+  fun `test malformed extension no highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.extension.RegisterExtension
@@ -29,18 +29,18 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
       }
     """.trimIndent())
   }
-  fun `test Malformed extension highlighting`() {
+  fun `test malformed extension highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.extension.RegisterExtension
-        val <warning descr="A.Rule5 should implement org.junit.jupiter.api.extension.Extension">myRule5</warning> = Rule5()
+        val <warning descr="'A.Rule5' should implement 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = Rule5()
         class Rule5 { }
       }
     """.trimIndent())
   }
 
   /* Malformed nested class */
-  fun `test Malformed nested no highlighting`() {
+  fun `test malformed nested no highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
@@ -48,7 +48,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
       }
     """.trimIndent())
   }
-  fun `test Malformed nested class highlighting`() {
+  fun `test malformed nested class highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
@@ -284,9 +284,9 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
   fun `test malformed parameterized value source multiple parameters`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class ValueSourcesTest { 
-        @org.junit.jupiter.params.<warning descr="Multiple parameters are not supported by this source">ParameterizedTest</warning>
+        @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = ["foo"])
-        fun testWithMultipleParams(argument: String, i: Int) { }
+        fun <warning descr="Multiple parameters are not supported by this source">testWithMultipleParams</warning>(argument: String, i: Int) { }
       }
     """.trimIndent())
   }
@@ -295,8 +295,8 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(ints = [1])
-        @org.junit.jupiter.api.<warning descr="Suspicious combination '@Test' and '@ParameterizedTest'">Test</warning>
-        fun testWithTestAnnotation(i: Int) { }
+        @org.junit.jupiter.api.Test
+        fun <warning descr="Suspicious combination of '@Test' and '@ParameterizedTest'">testWithTestAnnotation</warning>(i: Int) { }
       }
     """.trimIndent())
   }
@@ -304,17 +304,17 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class ValueSourcesTest { 
         @org.junit.jupiter.params.provider.ValueSource(ints = [1])
-        @org.junit.jupiter.api.<warning descr="Suspicious combination '@Test' and parameterized source">Test</warning>
-        fun testWithTestAnnotationNoParameterized(i: Int) { }
+        @org.junit.jupiter.api.Test
+        fun <warning descr="Suspicious combination of '@ValueSource' and '@Test'">testWithTestAnnotationNoParameterized</warning>(i: Int) { }
       }
     """.trimIndent())
   }
   fun `test malformed parameterized no argument source provided`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class ValueSourcesTest {       
-        @org.junit.jupiter.params.<warning descr="No sources are provided, the suite would be empty">ParameterizedTest</warning>
+        @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ArgumentsSources()
-        fun emptyArgs(param: String) { }
+        fun <warning descr="No sources are provided, the suite would be empty">emptyArgs</warning>(param: String) { }
       }        
     """.trimIndent())
   }
@@ -514,9 +514,9 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
   fun `test malformed repeated test combination of @Test and @RepeatedTest`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class WithRepeatedAndTests {
-        <warning descr="Suspicious combination @Test and @RepeatedTest">@org.junit.jupiter.api.Test</warning>
+        @org.junit.jupiter.api.Test
         @org.junit.jupiter.api.RepeatedTest(1)
-        fun repeatedTestAndTest() { }
+        fun <warning descr="Suspicious combination of '@Test' and '@RepeatedTest'">repeatedTestAndTest</warning>() { }
       }
     """.trimIndent())
   }
@@ -524,10 +524,10 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class WithRepeatedInfoAndTest {
         @org.junit.jupiter.api.BeforeEach
-        fun beforeEach(<warning descr="RepetitionInfo won't be injected for @Test methods">repetitionInfo</warning>: org.junit.jupiter.api.RepetitionInfo) { }
+        fun beforeEach(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
 
         @org.junit.jupiter.api.Test
-        fun nonRepeated(<warning descr="RepetitionInfo is injected for @RepeatedTest only">repetitionInfo</warning>: org.junit.jupiter.api.RepetitionInfo) { }
+        fun <warning descr="Method 'nonRepeated' annotated with '@Test' is malformed">nonRepeated</warning>(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
       }      
     """.trimIndent() )
   }
@@ -537,21 +537,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll
-          fun <warning descr="'beforeAllWithRepetitionInfo()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAllWithRepetitionInfo</warning>(<warning descr="RepetitionInfo is injected for @BeforeEach/@AfterEach only, but not for BeforeAll">repetitionInfo</warning>: org.junit.jupiter.api.RepetitionInfo) { }
-        }
-      }
-    """.trimIndent())
-  }
-  fun `test malformed repeated test with injected RepetitionInfo for @ParameterizedTest method`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
-      class WithParameterized {
-        @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("a")
-        fun testAccidentalRepetitionInfo(s: Any, <warning descr="RepetitionInfo is injected for @RepeatedTest only">repetitionInfo</warning>: org.junit.jupiter.api.RepetitionInfo) { }
-        
-        companion object {
-          @JvmStatic
-          fun a(): Array<Any> = arrayOf("1", "2")
+          fun <warning descr="Method 'beforeAllWithRepetitionInfo' annotated with '@BeforeAll' is malformed">beforeAllWithRepetitionInfo</warning>(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
         }
       }
     """.trimIndent())
@@ -573,7 +559,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class MainTest {
         @org.junit.Before
-        fun <warning descr="'before()' has incorrect signature for a '@org.junit.Before' method">before</warning>(i: Int): String { return "${'$'}i" }
+        fun <warning descr="Method 'before' annotated with '@Before' is malformed">before</warning>(i: Int): String { return "${'$'}i" }
       }
     """.trimIndent())
   }
@@ -581,7 +567,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
-        fun <warning descr="'beforeEach()' has incorrect signature for a '@org.junit.jupiter.api.BeforeEach' method">beforeEach</warning>(i: Int): String { return "" }
+        fun <warning descr="Method 'beforeEach' annotated with '@BeforeEach' is malformed">beforeEach</warning>(i: Int): String { return "" }
       }
     """.trimIndent())
   }
@@ -671,7 +657,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class MainTest {
         @org.junit.BeforeClass
-        fun <warning descr="'beforeClass()' has incorrect signature for a '@org.junit.BeforeClass' method">beforeClass</warning>() { }
+        fun <warning descr="Method 'beforeClass' annotated with '@BeforeClass' is malformed">beforeClass</warning>() { }
       }
     """.trimIndent())
   }
@@ -681,7 +667,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         companion object {
           @JvmStatic
           @org.junit.BeforeClass
-          private fun <warning descr="'beforeClass()' has incorrect signature for a '@org.junit.BeforeClass' method">beforeClass</warning>() { }
+          private fun <warning descr="Method 'beforeClass' annotated with '@BeforeClass' is malformed">beforeClass</warning>() { }
         }
       }
     """.trimIndent())
@@ -692,7 +678,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         companion object {
           @JvmStatic
           @org.junit.BeforeClass
-          fun <warning descr="'beforeClass()' has incorrect signature for a '@org.junit.BeforeClass' method">beforeClass</warning>(i: Int) { System.out.println(i) }
+          fun <warning descr="Method 'beforeClass' annotated with '@BeforeClass' is malformed">beforeClass</warning>(i: Int) { System.out.println(i) }
         }
       }
     """.trimIndent())
@@ -703,7 +689,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         companion object {
           @JvmStatic
           @org.junit.BeforeClass
-          fun <warning descr="'beforeClass()' has incorrect signature for a '@org.junit.BeforeClass' method">beforeClass</warning>(): String { return "" }
+          fun <warning descr="Method 'beforeClass' annotated with '@BeforeClass' is malformed">beforeClass</warning>(): String { return "" }
         }
       }
     """.trimIndent())
@@ -712,7 +698,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeAll
-        fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>() { }
+        fun <warning descr="Method 'beforeAll' annotated with '@BeforeAll' is malformed">beforeAll</warning>() { }
       }
     """.trimIndent())
   }
@@ -722,7 +708,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll
-          private fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>() { }
+          private fun <warning descr="Method 'beforeAll' annotated with '@BeforeAll' is malformed">beforeAll</warning>() { }
         }
       }
     """.trimIndent())
@@ -733,7 +719,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll
-          fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>(i: Int) { System.out.println(i) }
+          fun <warning descr="Method 'beforeAll' annotated with '@BeforeAll' is malformed">beforeAll</warning>(i: Int) { System.out.println(i) }
         }
       }
     """.trimIndent())
@@ -744,7 +730,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll
-          fun <warning descr="'beforeAll()' has incorrect signature for a '@org.junit.jupiter.api.BeforeAll' method">beforeAll</warning>(): String { return "" }
+          fun <warning descr="Method 'beforeAll' annotated with '@BeforeAll' is malformed">beforeAll</warning>(): String { return "" }
         }
       }
     """.trimIndent())
@@ -789,7 +775,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
       class Test {
          @JvmField
          @org.junit.experimental.theories.DataPoint
-         val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be static">f1</warning>: Any? = null
+         val <warning descr="Field 'f1' annotated with '@DataPoint' is malformed">f1</warning>: Any? = null
       }
     """.trimIndent())
   }
@@ -799,7 +785,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         companion object {
           @JvmStatic
           @org.junit.experimental.theories.DataPoint
-          private val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be public">f1</warning>: Any? = null
+          private val <warning descr="Field 'f1' annotated with '@DataPoint' is malformed">f1</warning>: Any? = null
         }
       }
     """.trimIndent())
@@ -808,7 +794,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
-         private val <warning descr="Fields annotated with 'org.junit.experimental.theories.DataPoint' should be public and static">f1</warning>: Any? = null
+         private val <warning descr="Field 'f1' annotated with '@DataPoint' is malformed">f1</warning>: Any? = null
       }
     """.trimIndent())
   }
@@ -816,7 +802,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
-         private fun <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoint' should be public and static">f1</warning>(): Any? = null
+         private fun <warning descr="Method 'f1' annotated with '@DataPoint' is malformed">f1</warning>(): Any? = null
       }
     """.trimIndent())
   }
@@ -824,7 +810,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoints
-         private fun <warning descr="Methods annotated with 'org.junit.experimental.theories.DataPoints' should be public and static">f1</warning>(): Any? = null
+         private fun <warning descr="Method 'f1' annotated with '@DataPoints' is malformed">f1</warning>(): Any? = null
       }
     """.trimIndent())
   }
@@ -844,13 +830,13 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
               val f1: Any? = null
           }
       }
-    """.trimIndent(), "Make field 'f1' public")
+    """.trimIndent(), "Fix 'f1' field signature")
   }
   fun `test malformed datapoint make field public and static quickfix`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       class Test {
-        @org.junit.experimental.theories.DataPoint
-        val f<caret>1: Any? = null
+          @org.junit.experimental.theories.DataPoint
+          val f<caret>1: Any? = null
       }
     """.trimIndent(), """
       class Test {
@@ -860,13 +846,13 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
               val f1: Any? = null
           }
       }
-    """.trimIndent(), "Make field 'f1' public and static")
+    """.trimIndent(), "Fix 'f1' field signature")
   }
   fun `test malformed datapoint make method public and static quickfix`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       class Test {
-        @org.junit.experimental.theories.DataPoint
-        private fun f<caret>1(): Any? = null
+          @org.junit.experimental.theories.DataPoint
+          private fun f<caret>1(): Any? = null
       }
     """.trimIndent(), """
       class Test {
@@ -876,7 +862,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
               fun f1(): Any? = null
           }
       }
-    """.trimIndent(), "Make method 'f1' public and static")
+    """.trimIndent(), "Fix 'f1' method signature")
   }
 
   /* Malformed setup/teardown */
@@ -890,7 +876,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class C : junit.framework.TestCase() {
-        private fun <warning descr="'setUp()' has incorrect signature">setUp</warning>(i: Int) { System.out.println(i) }
+        private fun <warning descr="Method 'setUp' is malformed">setUp</warning>(i: Int) { System.out.println(i) }
       }  
     """.trimIndent())
   }
@@ -915,7 +901,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
 
       class PrivateRule {
         @org.junit.Rule
-        var <warning descr="Fields annotated with '@org.junit.Rule' should be 'public'">x</warning> = SomeTestRule()
+        var <warning descr="Field 'x' annotated with '@Rule' is malformed">x</warning> = SomeTestRule()
       }
     """.trimIndent())
   }
@@ -931,7 +917,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
       
       object ObjRule {
         @org.junit.Rule
-        private var <warning descr="Fields annotated with '@org.junit.Rule' should be 'public' and non-static">x</warning> = SomeTestRule()
+        private var <warning descr="Field 'x' annotated with '@Rule' is malformed">x</warning> = SomeTestRule()
       }
 
       class ClazzRule {
@@ -939,7 +925,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         fun x() = OtherRule
         
         @org.junit.Rule
-        fun <warning descr="Method return type should be subtype of 'org.junit.rules.TestRule' or 'org.junit.rules.MethodRule'">y</warning>() = 0
+        fun <warning descr="Method 'y' annotated with '@Rule' is malformed">y</warning>() = 0
 
         @org.junit.Rule
         public fun z() = object : org.junit.rules.TestRule {
@@ -947,7 +933,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         }
 
         @org.junit.Rule
-        public fun <warning descr="Method return type should be subtype of 'org.junit.rules.TestRule' or 'org.junit.rules.MethodRule'">a</warning>() = object { }
+        public fun <warning descr="Method 'a' annotated with '@Rule' is malformed">a</warning>() = object { }
       }  
     """.trimIndent())
   }
@@ -959,7 +945,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
       
       class PrivateRule {
         @org.junit.Rule
-        private fun <warning descr="Methods annotated with '@org.junit.Rule' should be 'public'">x</warning>() = SomeTestRule()
+        private fun <warning descr="Method 'x' annotated with '@Rule' is malformed">x</warning>() = SomeTestRule()
       }
     """.trimIndent())
   }
@@ -967,7 +953,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class PrivateRule {
         @org.junit.Rule
-        fun <warning descr="Method return type should be subtype of 'org.junit.rules.TestRule' or 'org.junit.rules.MethodRule'">x</warning>() = 0
+        fun <warning descr="Method 'x' annotated with '@Rule' is malformed">x</warning>() = 0
       }
     """.trimIndent())
   }
@@ -979,10 +965,10 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
       
       object PrivateClassRule {
         @org.junit.ClassRule
-        private var <warning descr="Fields annotated with '@org.junit.ClassRule' should be 'public'">x</warning> = SomeTestRule()
+        private var <warning descr="Field 'x' annotated with '@ClassRule' is malformed">x</warning> = SomeTestRule()
       
         @org.junit.ClassRule
-        private var <warning descr="Field type should be subtype of 'org.junit.rules.TestRule'"><warning descr="Fields annotated with '@org.junit.ClassRule' should be 'public'">y</warning></warning> = 0
+        private var <warning descr="Field 'y' annotated with '@ClassRule' is malformed">y</warning> = 0
       }
     """.trimIndent())
   }
@@ -998,29 +984,29 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
         @org.junit.Rule
         var x = 0
       }
-    """.trimIndent(), "Make field 'x' public")
+    """.trimIndent(), "Fix 'x' field signature")
   }
   fun `test malformed class rule make field public quickfix`() {
     myFixture.testQuickFix(ULanguage.KOTLIN, """
       class SomeTestRule : org.junit.rules.TestRule {
-        override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
+          override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
       }
 
       object PrivateClassRule {
-        @org.junit.ClassRule
-        private var x<caret> = SomeTestRule()
+          @org.junit.ClassRule
+          private var x<caret> = SomeTestRule()
       }
     """.trimIndent(), """
       class SomeTestRule : org.junit.rules.TestRule {
-        override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
+          override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description): org.junit.runners.model.Statement = base
       }
 
       object PrivateClassRule {
-        @kotlin.jvm.JvmField
-        @org.junit.ClassRule
-        var x = SomeTestRule()
+          @kotlin.jvm.JvmField
+          @org.junit.ClassRule
+          var x = SomeTestRule()
       }
-    """.trimIndent(), "Make field 'x' public")
+    """.trimIndent(), "Fix 'x' field signature")
   }
 
   /* Malformed test */
@@ -1028,13 +1014,13 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       public class JUnit3TestMethodIsPublicVoidNoArg : junit.framework.TestCase() {
         fun testOne() { }
-        public fun <warning descr="Test method 'testTwo()' is not declared 'public void'">testTwo</warning>(): Int { return 2 }
-        public fun <warning descr="Test method 'testFour()' should probably not have parameters">testFour</warning>(i: Int) { println(i) }
+        public fun <warning descr="Method 'testTwo' is malformed">testTwo</warning>(): Int { return 2 }
+        public fun <warning descr="Method 'testFour' is malformed">testFour</warning>(i: Int) { println(i) }
         public fun testFive() { }
         private fun testSix(i: Int) { println(i) } //ignore when method doesn't look like test anymore
         companion object {
           @JvmStatic
-          public fun <warning descr="Test method 'testThree()' should not be 'static'">testThree</warning>() { }
+          public fun <warning descr="Method 'testThree' is malformed">testThree</warning>() { }
         }
       }
     """.trimIndent())
@@ -1047,13 +1033,13 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       public class JUnit4TestMethodIsPublicVoidNoArg {
         @org.junit.Test fun testOne() { }
-        @org.junit.Test public fun <warning descr="Test method 'testTwo()' is not declared 'public void'">testTwo</warning>(): Int { return 2 }
-        @org.junit.Test public fun <warning descr="Test method 'testFour()' should probably not have parameters">testFour</warning>(i: Int) { }
+        @org.junit.Test public fun <warning descr="Method 'testTwo' annotated with '@Test' is malformed">testTwo</warning>(): Int { return 2 }
+        @org.junit.Test public fun <warning descr="Method 'testFour' annotated with '@Test' is malformed">testFour</warning>(i: Int) { }
         @org.junit.Test public fun testFive() { }
         @org.junit.Test public fun testMock(@mockit.Mocked s: String) { }
         companion object {
           @JvmStatic
-          @org.junit.Test public fun <warning descr="Test method 'testThree()' should not be 'static'">testThree</warning>() { }
+          @org.junit.Test public fun <warning descr="Method 'testThree' annotated with '@Test' is malformed">testThree</warning>() { }
         }
       }
     """.trimIndent())
@@ -1062,7 +1048,7 @@ class KotlinJUnitMalformedMemberTest : JUnitMalformedMemberTestBase() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       @org.junit.runner.RunWith(org.junit.runner.Runner::class)
       class JUnit4RunWith {
-          @org.junit.Test public fun testMe(i: Int): Int { return -1 }
+          @org.junit.Test public fun <warning descr="Method 'testMe' annotated with '@Test' is malformed">testMe</warning>(i: Int): Int { return -1 }
       }
     """.trimIndent())
   }
