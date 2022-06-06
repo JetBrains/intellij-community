@@ -165,6 +165,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testTypeUseAnnotation() throws Exception {
             runTest("testData/newJ2k/annotations/typeUseAnnotation.java");
         }
+
+        @TestMetadata("typeUseAnnotationDeclaration.java")
+        public void testTypeUseAnnotationDeclaration() throws Exception {
+            runTest("testData/newJ2k/annotations/typeUseAnnotationDeclaration.java");
+        }
+
+        @TestMetadata("typeUseAnnotationDeclaration2.java")
+        public void testTypeUseAnnotationDeclaration2() throws Exception {
+            runTest("testData/newJ2k/annotations/typeUseAnnotationDeclaration2.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

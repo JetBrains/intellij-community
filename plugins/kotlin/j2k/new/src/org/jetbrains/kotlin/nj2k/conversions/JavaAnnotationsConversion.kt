@@ -44,31 +44,22 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
     }
 
     private fun JKAnnotation.tryConvertTargetAnnotation(): Boolean {
-        if (classSymbol.fqName == JvmAnnotationNames.TARGET_ANNOTATION.asString()) {
-            classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.Target")
-
-            arguments.singleOrNull()
-                ?.let { parameter ->
-                    when (val value = parameter.value) {
-                        is JKKtAnnotationArrayInitializerExpression -> value.initializers
-                        else -> listOf(value)
-                    }
-                }
-                ?.flatMap { value ->
-                    value.fieldAccessFqName()
-                        ?.let { targetMappings[it] }
-                        ?.map { fqName -> JKFieldAccessExpression(symbolProvider.provideFieldSymbol(fqName)) }
-                        ?: listOf(value.copyTreeAndDetach())
-                }
-                ?.map { JKAnnotationParameterImpl(it) }
-                ?.let {
-                    arguments = it
-                }
-
-            return true
+        if (classSymbol.fqName != JvmAnnotationNames.TARGET_ANNOTATION.asString()) {
+            return false
         }
-
-        return false
+        classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.Target")
+        val argument = arguments.singleOrNull() ?: return true
+        val javaTargets: List<JKAnnotationMemberValue> = when (val value = argument.value) {
+            is JKKtAnnotationArrayInitializerExpression -> value.initializers
+            else -> listOf(value)
+        }
+        val kotlinTargets: List<JKFieldAccessExpression> = javaTargets.flatMap { target ->
+            val javaFqName = target.fieldAccessFqName() ?: return true
+            val kotlinFqNames = targetMappings[javaFqName] ?: return true
+            kotlinFqNames.map { JKFieldAccessExpression(symbolProvider.provideFieldSymbol(it)) }
+        }
+        arguments = kotlinTargets.distinctBy { it.identifier.fqName }.map { JKAnnotationParameterImpl(it) }
+        return true
     }
 
     private fun JKAnnotation.tryConvertRepeatableAnnotation(): Boolean {
@@ -109,8 +100,8 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
                 "PACKAGE" to listOf("FILE"),
                 "PARAMETER" to listOf("VALUE_PARAMETER"),
                 "TYPE_PARAMETER" to listOf("TYPE_PARAMETER"),
-                "TYPE" to listOf("ANNOTATION_CLASS", "CLASS"),
-                "TYPE_USE" to listOf("TYPE_USE")
+                "TYPE" to listOf("CLASS"),
+                "TYPE_USE" to listOf("CLASS", "TYPE", "TYPE_PARAMETER")
             ).map { (java, kotlin) ->
                 "java.lang.annotation.ElementType.$java" to kotlin.map { "kotlin.annotation.AnnotationTarget.$it" }
             }.toMap()
