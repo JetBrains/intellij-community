@@ -57,12 +57,12 @@ data class RecentProjectItem(
       val exitCode = Messages.showYesNoDialog(
         IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)),
         IdeBundle.message("dialog.title.reopen.project"),
-        CommonBundle.getOkButtonText(),
         IdeBundle.message("button.remove.from.list"),
+        CommonBundle.getCancelButtonText(),
         Messages.getErrorIcon()
       )
 
-      if (exitCode == Messages.NO) {
+      if (exitCode == Messages.YES) {
         RecentProjectsManager.getInstance().removePath(projectPath)
       }
 
