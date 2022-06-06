@@ -527,8 +527,7 @@ public class WSLDistribution implements AbstractWslDistribution {
       return FileUtil.toSystemIndependentName(windowsPath.substring(index));
     }
 
-    //noinspection deprecation
-    if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
+    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return getMntRoot() + convertWindowsPath(windowsPath);
     }
     return null;
