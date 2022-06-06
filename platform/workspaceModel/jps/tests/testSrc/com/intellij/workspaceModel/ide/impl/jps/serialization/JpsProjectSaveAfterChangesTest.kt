@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
+import org.junit.Assert
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -75,12 +76,16 @@ class JpsProjectSaveAfterChangesTest {
 
 
   @Test
-  fun `add library`() {
+  fun `add library and check vfu index not empty`() {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, configLocation ->
-      val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
-        LibraryRootTypeId.COMPILED)
+      val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"), LibraryRootTypeId.COMPILED)
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
+      builder.entities(LibraryEntity::class.java).forEach { libraryEntity ->
+        val virtualFileUrl = libraryEntity.roots.first().url
+        val entitiesByUrl = builder.getMutableVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
+        Assert.assertTrue(entitiesByUrl.toList().isNotEmpty())
+      }
     }
   }
 
