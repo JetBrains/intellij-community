@@ -512,7 +512,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes!!))
     val root = Path.of(mainModuleTestsOutput)
     val testClasses = Files.walk(root).use { stream ->
-      stream.filter { pattern.matcher(FileUtilRt.toSystemIndependentName(root.relativize(it).toString())).matches() }.toList()
+      stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter { pattern.matcher(it).matches() }.toList()
     }
 
     if (testClasses.isEmpty()) {
@@ -520,8 +520,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     var noTestsInAllClasses = true
-    for (path in testClasses) {
-      val qName = FileUtilRt.getNameWithoutExtension(root.relativize(path).toString()).replace('/', '.')
+    for (testClass in testClasses) {
+      val qName = FileUtilRt.getNameWithoutExtension(testClass).replace('/', '.')
       val files = testClasspath.map { Path.of(it) }
       try {
         var noTests = true
