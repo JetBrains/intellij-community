@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.RecentlyClonedProjectsState
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
@@ -123,11 +124,25 @@ class RootItem(private val collectors: List<() -> List<RecentProjectTreeItem>>) 
 
 object ProjectCollectors {
   @JvmField
-  val recentProjectsCollector: () -> List<RecentProjectTreeItem> = { RecentProjectListActionProvider.getInstance().collectProjects() }
+  val recentProjectsCollector: () -> List<RecentProjectTreeItem> = {
+    RecentProjectListActionProvider.getInstance().collectProjects()
+  }
 
   @JvmField
-  val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = { CloneableProjectsService.getInstance().collectCloneableProjects() }
+  val recentProjectsWithoutOpenedCollector: () -> List<RecentProjectTreeItem> = {
+    RecentProjectListActionProvider.getInstance().collectProjects(false)
+  }
 
   @JvmField
-  val all = listOf(cloneableProjectsCollector, recentProjectsCollector)
+  val clonedProjectsCollector: () -> List<RecentProjectTreeItem> = {
+    RecentlyClonedProjectsState.instance.collectRecentlyClonedProjects()
+  }
+
+  @JvmField
+  val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = {
+    CloneableProjectsService.getInstance().collectCloneableProjects()
+  }
+
+  @JvmField
+  val all = listOf(cloneableProjectsCollector, clonedProjectsCollector, recentProjectsCollector)
 }

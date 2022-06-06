@@ -32,6 +32,7 @@ internal object RecentProjectPanelComponentFactory {
       subscribe(CloneableProjectsService.TOPIC, object : CloneProjectListener {
         override fun onCloneAdded(progressIndicator: ProgressIndicatorEx, taskInfo: TaskInfo) = filteringTree.updateTree()
         override fun onCloneRemoved() = filteringTree.updateTree()
+        override fun onCloneSuccess() = filteringTree.updateTree()
         override fun onCloneFailed() = filteringTree.updateTree()
         override fun onCloneCanceled() = filteringTree.updateTree()
       })
