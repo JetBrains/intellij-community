@@ -66,7 +66,7 @@ class RecentProjectFilteringTree(
       addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(this) }
       addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(tree) }
 
-      val mouseListener = ProjectActionMouseListener(this, projectActionButtonViewModel)
+      val mouseListener = ProjectActionMouseListener(this, projectActionButtonViewModel, filePathChecker::isValid)
       addMouseListener(mouseListener)
       addMouseMotionListener(mouseListener)
       addTreeWillExpandListener(ToggleStateListener())
@@ -176,7 +176,8 @@ class RecentProjectFilteringTree(
 
   private class ProjectActionMouseListener(
     private val tree: Tree,
-    private val projectActionButtonViewModel: ProjectActionButtonViewModel
+    private val projectActionButtonViewModel: ProjectActionButtonViewModel,
+    private val isProjectPathValid: (String) -> Boolean,
   ) : PopupHandler() {
 
     override fun mouseMoved(mouseEvent: MouseEvent) {
@@ -206,7 +207,22 @@ class RecentProjectFilteringTree(
       if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
         if (intersectWithActionIcon(point)) {
           when (item) {
-            is CloneableProjectItem -> cancelCloneProject(item.cloneableProject)
+            is CloneableProjectItem -> {
+              if (item.cloneableProject.cloneStatus == CloneStatus.SUCCESS) {
+                invokePopup(mouseEvent.component, point.x, point.y)
+              }
+              else {
+                cancelCloneProject(item.cloneableProject)
+              }
+            }
+            is RecentProjectItem -> {
+              if (isProjectPathValid(item.projectPath)) {
+                invokePopup(mouseEvent.component, point.x, point.y)
+              }
+              else {
+                item.removeItem(createActionEvent(tree, mouseEvent))
+              }
+            }
             else -> invokePopup(mouseEvent.component, point.x, point.y)
           }
         }
@@ -353,7 +369,10 @@ class RecentProjectFilteringTree(
           isEnabled = isPathValid
         }
         projectActions.apply {
-          icon = IconUtil.toSize(buttonViewModel.selectIcon(row, AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover),
+          val actionIcon = if (isPathValid) AllIcons.Ide.Notification.Gear else AllIcons.Welcome.Project.Remove
+          val hoveredActionIcon = if (isPathValid) AllIcons.Ide.Notification.GearHover else AllIcons.Welcome.Project.RemoveHover
+
+          icon = IconUtil.toSize(buttonViewModel.selectIcon(row, actionIcon, hoveredActionIcon),
                                  ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
                                  ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
           isVisible = isSelected
