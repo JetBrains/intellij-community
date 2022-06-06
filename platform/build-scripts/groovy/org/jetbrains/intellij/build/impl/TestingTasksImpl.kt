@@ -512,7 +512,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val pattern = Pattern.compile(FileUtil.convertAntToRegexp(options.batchTestIncludes!!))
     val root = Path.of(mainModuleTestsOutput)
     val testClasses = Files.walk(root).use { stream ->
-      stream.filter { pattern.matcher(root.relativize(it).toString()).matches() }.toList()
+      stream.filter { pattern.matcher(FileUtilRt.toSystemIndependentName(root.relativize(it).toString())).matches() }.toList()
     }
 
     if (testClasses.isEmpty()) {
