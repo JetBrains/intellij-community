@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.conversions
 
@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 
 private const val FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface"
 
-internal class FunctionalInterfacesConverter(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+internal class FunctionalInterfacesConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (!context.functionalInterfaceConversionEnabled) return recurse(element)
         if (element !is JKClass) return recurse(element)

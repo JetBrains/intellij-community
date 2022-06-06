@@ -28,7 +28,7 @@ object ConversionsRunner {
         TryStatementConversion(context),
         EnumFieldAccessConversion(context),
         SynchronizedStatementConversion(context),
-        NullabilityAnnotationsConverter(context),
+        NullabilityAnnotationsConversion(context),
         DefaultArgumentsConversion(context),
         ConstructorConversion(context),
         MoveConstructorsAfterFieldsConversion(context),
@@ -65,7 +65,7 @@ object ConversionsRunner {
         PrimitiveTypeCastsConversion(context),
         LiteralConversion(context),
         RemoveRedundantQualifiersForCallsConversion(context),
-        FunctionalInterfacesConverter(context),
+        FunctionalInterfacesConversion(context),
 
         FilterImportsConversion(context),
         AddElementsInfoConversion(context)
