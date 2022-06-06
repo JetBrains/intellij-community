@@ -40,7 +40,9 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
     override fun getModelProvider(): ProjectImportModelProvider? = IdeaKpmProjectProvider
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(
-        IdeaKpmProject::class.java, Extras::class.java, Unit::class.java
+        IdeaKpmProject::class.java,  // representative of kotlin-gradle-plugin-idea
+        Extras::class.java, // representative of kotlin-tooling-core
+        Unit::class.java // representative of kotlin-stdlib
     )
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
@@ -86,7 +88,7 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         }
 
         internal fun ProjectResolverContext.getIdeaKpmProject(gradleModule: IdeaModule): IdeaKpmProject? {
-            return this.getExtraProject(gradleModule, IdeaKpmProject::class.java)
+            return this.getExtraProject(gradleModule, IdeaKpmProjectContainer::class.java)?.instanceOrNull
         }
 
         private fun suggestNativeDebug(gradleModule: IdeaModule, resolverCtx: ProjectResolverContext) {

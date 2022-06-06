@@ -21,6 +21,13 @@
             interface="org.jetbrains.kotlin.idea.gradle.configuration.kpm.ContentRootsCreator"
             dynamic="true"/>
 
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kpm.extrasSerialization"
+            interface="org.jetbrains.kotlin.idea.gradle.configuration.kpm.ExtrasSerializationService"
+            dynamic="true"
+    />
+
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

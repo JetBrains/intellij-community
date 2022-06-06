@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.gradle.GradleBuild
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmProject
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmProjectContainer
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 
 object IdeaKpmProjectProvider : ProjectImportModelProvider {
@@ -19,8 +19,8 @@ object IdeaKpmProjectProvider : ProjectImportModelProvider {
         projectModel: Model,
         modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
     ) {
-        controller.findModel(projectModel, IdeaKpmProject::class.java)?.apply {
-            modelConsumer.consume(this, IdeaKpmProject::class.java)
-        }
+        val container = controller.findModel(projectModel, IdeaKpmProjectContainer::class.java) ?: return
+        modelConsumer.consume(container, IdeaKpmProjectContainer::class.java)
     }
 }
+

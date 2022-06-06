@@ -43,7 +43,7 @@ class KotlinBasicFragmentDataInitializer : ModuleDataInitializer {
                     else -> platform
                 }
 
-                fragment.platforms.mapNotNullTo(platformDetails) { it.platformDetails }
+                platforms.addAll(fragment.platforms)
                 refinesFragmentIds.addAll(refinesFragmentsIds)
                 fragmentDependencies.addAll(fragment.dependencies)
                 languageSettings = fragment.languageSettings

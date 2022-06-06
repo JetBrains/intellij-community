@@ -173,6 +173,7 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-scripting-jvm",
     "kotlinc.kotlin-gradle-statistics",
     "kotlin-gradle-plugin-idea",
+    "kotlin-gradle-plugin-idea-proto",
     "kotlin-tooling-core"
   )
 

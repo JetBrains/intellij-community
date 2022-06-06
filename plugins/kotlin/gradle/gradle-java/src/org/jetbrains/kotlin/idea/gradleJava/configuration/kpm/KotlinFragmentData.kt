@@ -9,14 +9,14 @@ import com.intellij.openapi.externalSystem.model.project.AbstractNamedData
 import com.intellij.serialization.PropertyMapping
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmDependency
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmLanguageSettings
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmPlatformDetails
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class KotlinFragmentData @PropertyMapping("externalName") constructor(externalName: String) :
     AbstractNamedData(GradleConstants.SYSTEM_ID, externalName) {
     var platform: KotlinPlatform = KotlinPlatform.COMMON
-    val platformDetails: MutableSet<IdeaKpmPlatformDetails> = hashSetOf()
+    val platforms: MutableSet<IdeaKpmPlatform> = hashSetOf()
     val refinesFragmentIds: MutableSet<String> = hashSetOf()
     val fragmentDependencies: MutableSet<IdeaKpmDependency> = hashSetOf()
     var languageSettings: IdeaKpmLanguageSettings? = null

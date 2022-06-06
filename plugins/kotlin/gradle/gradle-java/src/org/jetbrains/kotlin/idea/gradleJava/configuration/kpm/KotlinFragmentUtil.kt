@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.kpm
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmContentRoot
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragment
 import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragmentCoordinates
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
@@ -32,6 +33,7 @@ fun IdeaKpmFragment.computeResourceType(): ExternalSystemSourceType =
     if (isTestFragment) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
 
 val IdeaKpmFragment.sourceDirs: Collection<File>
-    get() = sourceDirectories.map { it.file }
+    get() = contentRoots.filter { it.type == IdeaKpmContentRoot.SOURCES_TYPE }.map { it.file }
+
 val IdeaKpmFragment.resourceDirs: Collection<File>
-    get() = resourceDirectories.map { it.file }
+    get() = contentRoots.filter { it.type == IdeaKpmContentRoot.RESOURCES_TYPE }.map { it.file }
