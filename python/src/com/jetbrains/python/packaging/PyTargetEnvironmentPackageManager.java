@@ -68,9 +68,6 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
 
   protected PyTargetEnvironmentPackageManager(@NotNull final Sdk sdk) {
     super(sdk);
-    subscribeToLocalChanges();
-    Disposable parentDisposable = sdk instanceof Disposable ? (Disposable)sdk : PyPackageManagers.getInstance();
-    Disposer.register(parentDisposable, this);
   }
 
   @Override
@@ -187,7 +184,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
-    if (mySdk instanceof PyLazySdk) {
+    if (getSdk() instanceof PyLazySdk) {
       return List.of();
     }
 
@@ -195,7 +192,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     final String output;
     try {
-      LOG.debug("Collecting installed packages for the SDK " + mySdk.getName(), new Throwable());
+      LOG.debug("Collecting installed packages for the SDK " + getSdk().getName(), new Throwable());
       PythonScriptExecution pythonExecution =
         PythonScripts.prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareRequest);
       pythonExecution.addParameter("list");
@@ -338,7 +335,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
         // TODO [targets] Execute process on non-local target using sudo
         LOG.warn("Sudo flag is ignored");
       }
-      else if (PySdkExtKt.adminPermissionsNeeded(mySdk)) {
+      else if (PySdkExtKt.adminPermissionsNeeded(getSdk())) {
         // This is hack to process sudo flag in the local environment
         GeneralCommandLine localCommandLine = ((LocalTargetEnvironment)targetEnvironment).createGeneralCommandLine(targetedCommandLine);
         return executeOnLocalMachineWithSudo(localCommandLine);
@@ -364,7 +361,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
   private HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() throws ExecutionException {
     String homePath = getSdk().getHomePath();
     if (homePath == null) {
-      throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.find.python.interpreter", mySdk.getName()));
+      throw new ExecutionException(PySdkBundle.message("python.sdk.packaging.cannot.find.python.interpreter", getSdk().getName()));
     }
     HelpersAwareTargetEnvironmentRequest request = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(getSdk(),
                                                                                                                          ProjectManager.getInstance()

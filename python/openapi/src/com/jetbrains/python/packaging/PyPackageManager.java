@@ -30,6 +30,25 @@ public abstract class PyPackageManager implements Disposable {
     return PyPackageManagers.getInstance().forSdk(sdk);
   }
 
+  @NotNull
+  private final Sdk mySdk;
+
+  protected PyPackageManager(@NotNull Sdk sdk) {
+    mySdk = sdk;
+  }
+
+  /**
+   * @return if manager must be subscribed to SDK path changes
+   */
+  protected boolean shouldSubscribeToLocalChanges() {
+    return true;
+  }
+
+  @NotNull
+  protected final Sdk getSdk() {
+    return mySdk;
+  }
+
   public abstract void installManagement() throws ExecutionException;
 
   public abstract boolean hasManagement() throws ExecutionException;

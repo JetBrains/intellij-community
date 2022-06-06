@@ -24,17 +24,9 @@ import com.jetbrains.python.sdk.pythonSdk
 /**
  * @author vlan
  */
-class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
+class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
   @Volatile
   private var packages: List<PyPackage>? = null
-
-  init {
-    val parentDisposable = sdk as? Disposable ?: PyPackageManagers.getInstance()
-    Disposer.register(parentDisposable, this)
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(sdk, this, Runnable {
-      PythonSdkType.getInstance().setupSdkPaths(sdk)
-    })
-  }
 
   override fun installManagement() {}
 

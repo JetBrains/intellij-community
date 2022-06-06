@@ -511,8 +511,8 @@ public final class PyPackageUtil {
   /**
    * Execute the given executable on a pooled thread whenever there is a VFS event happening under some of the roots of the SDK.
    *
-   * @param sdk              SDK those roots need to be watched
-   * @param parentDisposable disposable for the registered event listeners
+   * @param sdk              SDK those roots need to be watched. It must be disposed not later than "parentDisposable"
+   * @param parentDisposable disposable for the registered event listeners. It must not outlive sdk
    * @param runnable         executable that's going to be executed
    */
   public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk,
