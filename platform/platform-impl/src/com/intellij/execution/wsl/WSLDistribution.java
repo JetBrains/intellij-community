@@ -506,8 +506,7 @@ public class WSLDistribution implements AbstractWslDistribution {
                                          ", but context distribution is " + myDescriptor.getMsId());
     }
 
-    //noinspection deprecation
-    if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
+    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return getMntRoot() + convertWindowsPath(windowsPath);
     }
     return null;
