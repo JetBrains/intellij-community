@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -21,8 +20,8 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -99,8 +98,9 @@ public class NewObjectEqualityInspection extends BaseInspection {
       catch (AnalysisCanceledException e) {
         return expression;
       }
-      int start = flow.getEndOffset(initializer) + 1;
-      if (ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, start, expression, variable, Collections.emptySet())) {
+      int initializerEnd = flow.getEndOffset(initializer);
+      int start = initializerEnd + 1;
+      if (ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, start, expression, variable, Set.of(initializerEnd))) {
         return expression;
       }
       return initializer;

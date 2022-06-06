@@ -4,6 +4,17 @@ import java.util.*;
 
 public class ControlFlow
 {
+  void nonLeak(Object obj) {
+    while (true) {
+      Object obj2 = new Object();
+      if (obj == <warning descr="New object is compared using '=='">obj2</warning>) {
+        System.out.println("equal");
+      } else {
+        if (Math.random() > 0.5) return;
+      }
+    }
+  }
+
   void test() {
     while (true) {
       Object obj = new Object();

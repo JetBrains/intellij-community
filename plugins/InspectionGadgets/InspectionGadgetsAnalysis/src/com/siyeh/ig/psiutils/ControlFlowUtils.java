@@ -880,7 +880,7 @@ public final class ControlFlowUtils {
           if (to == statementStart && (from < statementStart || from >= statementEnd)) {
             return true;
           }
-          if (!referenced.get(to)) {
+          if (!referenced.get(to) && !excluded.contains(to)) {
             referenced.set(to);
             changed = true;
           }
