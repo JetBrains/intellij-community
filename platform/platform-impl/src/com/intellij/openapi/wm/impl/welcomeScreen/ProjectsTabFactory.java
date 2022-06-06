@@ -120,7 +120,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
     }
 
     private static @NotNull PanelState getCurrentState() {
-      List<RecentProjectTreeItem> recentProjects = RecentProjectListActionProvider.getInstance().collectProjects();
+      List<RecentProjectTreeItem> recentProjects = RecentProjectListActionProvider.getInstance().collectProjects(true);
       List<CloneableProjectItem> cloneableProjects = CloneableProjectsService.getInstance().collectCloneableProjects();
 
       return !recentProjects.isEmpty() || !cloneableProjects.isEmpty() ? PanelState.NOT_EMPTY : PanelState.EMPTY;
