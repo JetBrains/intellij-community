@@ -39,16 +39,10 @@ internal class SearchEverywhereMlSearchState(
   }
 
   @Synchronized
-  fun getMLWeight(elementId: Int?,
-                  element: Any,
-                  contributor: SearchEverywhereContributor<*>,
-                  context: SearchEverywhereMLContextInfo,
-                  priority: Int): Double {
-    val features = ArrayList<EventPair<*>>()
-    features.addAll(context.features)
-    features.addAll(getElementFeatures(elementId, element, contributor, priority).features)
-    features.addAll(searchStateFeatures)
-    return model.predict(features.associate { it.field.name to it.data })
+  fun getMLWeight(context: SearchEverywhereMLContextInfo,
+                  elementFeatures: List<EventPair<*>>): Double {
+    val features = (context.features + elementFeatures + searchStateFeatures).associate { it.field.name to it.data }
+    return model.predict(features)
   }
 }
 
