@@ -112,16 +112,16 @@ class KotlinRejectersFeedbackDialog(
 
   private fun createReasonDisablingKotlinList(): String {
     val resultReasonsList = mutableListOf<String>()
-    if (checkBoxSlowsDownIDEProperty.get()) {
+    if (checkBoxUsuallyDeactivatePluginsProperty.get()) {
       resultReasonsList.add(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.1.label"))
     }
-    if (checkBoxBreaksCodeAnalysisProperty.get()) {
+    if (checkBoxSlowsDownIDEProperty.get()) {
       resultReasonsList.add(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.2.label"))
     }
-    if (checkBoxMakeNoiseNotificationProperty.get()) {
+    if (checkBoxBreaksCodeAnalysisProperty.get()) {
       resultReasonsList.add(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.3.label"))
     }
-    if (checkBoxUsuallyDeactivatePluginsProperty.get()) {
+    if (checkBoxMakeNoiseNotificationProperty.get()) {
       resultReasonsList.add(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.zendesk.reason.4.label"))
     }
     if (checkBoxOtherProperty.get()) {
