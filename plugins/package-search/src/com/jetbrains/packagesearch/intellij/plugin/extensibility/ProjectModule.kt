@@ -50,6 +50,22 @@ data class ProjectModule @JvmOverloads constructor(
         navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?
     ) : this(name, nativeModule, parent, buildFile, buildSystemType, moduleType)
 
+    @Suppress("UNUSED_PARAMETER")
+    @Deprecated(
+        "Use main constructor",
+        ReplaceWith("ProjectModule(name, nativeModule, parent, buildFile, buildSystemType, moduleType)")
+    )
+    constructor(
+        name: String,
+        nativeModule: Module,
+        parent: ProjectModule,
+        buildFile: VirtualFile,
+        buildSystemType: BuildSystemType,
+        moduleType: ProjectModuleType,
+        navigatableDependency: (groupId: String, artifactId: String, version: PackageVersion) -> Navigatable?,
+        availableScopes: List<String>
+    ) : this(name, nativeModule, parent, buildFile, buildSystemType, moduleType, availableScopes)
+
     fun getBuildFileNavigatableAtOffset(offset: Int): Navigatable? =
         PsiManager.getInstance(nativeModule.project).findFile(buildFile)?.let { psiFile ->
             PsiUtil.getElementAtOffset(psiFile, offset).takeIf { it != buildFile } as? Navigatable
