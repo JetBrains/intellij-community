@@ -499,7 +499,10 @@
         "hoveredBackground": "#FFFFFFED"
       },
       "FileHistory.Commit.selectedBranchBackground": "#1c2433",
-      "MarkerPopup.borderInsets": "6,8,6,10"
+      "MarkerPopup": {
+        "borderInsets": "6,8,6,10",
+        "borderColor": "Grey4"
+      }
     },
 
     "EditorPane.splitBorder": "Grey3",
