@@ -37,6 +37,8 @@
     <lang.findUsagesProvider language="MyMermaid"
                              implementationClass="com.github.firsttimeinforever.mermaid.lang.MermaidFindUsagesProvider"/>
 
+    <lang.refactoringSupport language="MyMermaid"
+                             implementationClass="com.github.firsttimeinforever.mermaid.lang.psi.MermaidRefactoringSupportProvider"/>
 
   </extensions>
 </idea-plugin>
