@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
@@ -95,7 +96,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     if (copiedFileSpecs.isNotEmpty()) {
       val addCommand = git.add()
       for (fileSpec in copiedFileSpecs) {
-        addCommand.addFilepattern(fileSpec)
+        val filePattern = PathUtil.toSystemIndependentName(fileSpec)
+        addCommand.addFilepattern(filePattern)
       }
       addCommand.call()
       commit("Copy existing configs")
