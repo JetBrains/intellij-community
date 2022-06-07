@@ -250,14 +250,14 @@ public class MavenProjectResolver {
                         });
   }
 
-  public MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
-                                                                           @NotNull Collection<MavenProject> projects,
-                                                                           @Nullable Collection<MavenArtifact> artifacts,
-                                                                           boolean downloadSources,
-                                                                           boolean downloadDocs,
-                                                                           @NotNull MavenEmbeddersManager embeddersManager,
-                                                                           @NotNull MavenConsole console,
-                                                                           @NotNull MavenProgressIndicator process)
+  public @NotNull MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
+                                                                                    @NotNull Collection<MavenProject> projects,
+                                                                                    @Nullable Collection<MavenArtifact> artifacts,
+                                                                                    boolean downloadSources,
+                                                                                    boolean downloadDocs,
+                                                                                    @NotNull MavenEmbeddersManager embeddersManager,
+                                                                                    @NotNull MavenConsole console,
+                                                                                    @NotNull MavenProgressIndicator process)
     throws MavenProcessCanceledException {
     MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(projects);
     MavenArtifactDownloader.DownloadResult result = new MavenArtifactDownloader.DownloadResult();
