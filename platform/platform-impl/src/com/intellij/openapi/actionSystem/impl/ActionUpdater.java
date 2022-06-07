@@ -309,6 +309,7 @@ final class ActionUpdater {
         : ClientSessionsManager.getProjectSession(myProject, clientId)
       : ClientSessionsManager.getAppSession(clientId));
 
+
     ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
 
