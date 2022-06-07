@@ -8,10 +8,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
-            serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
-
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
             serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFE10Impl"/>
@@ -225,6 +221,9 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportImpl"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
+                    serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
 
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProviderImpl"/>
 
