@@ -45,7 +45,10 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
@@ -68,7 +71,9 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -78,7 +83,7 @@ import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
-import com.intellij.util.ui.GridBagConstraintBuilder;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
@@ -405,11 +410,14 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myReplacePanel.setVisible(myReplace);
 
     final GridBagLayout centerPanelLayout = new GridBagLayout();
-    final var centerConstraint = new GridBagConstraintBuilder();
+    final var centerConstraint = new GridBag()
+      .setDefaultFill(GridBagConstraints.BOTH)
+      .setDefaultWeightX(1.0)
+      .setDefaultWeightY(1.0);
     final JPanel centerPanel = new JPanel(centerPanelLayout);
-    centerPanel.add(searchPanel, centerConstraint.newLine().fillXY().growXY().get());
-    centerPanel.add(myReplacePanel, centerConstraint.newLine().fillXY().growXY().get());
-    centerPanel.add(myScopePanel, centerConstraint.newLine().fillX().growX().insets(8, DEFAULT_HGAP, 8, DEFAULT_HGAP).get());
+    centerPanel.add(searchPanel, centerConstraint.nextLine());
+    centerPanel.add(myReplacePanel, centerConstraint.nextLine());
+    centerPanel.add(myScopePanel, centerConstraint.nextLine().weighty(0.0).insets(8, DEFAULT_HGAP, 8, DEFAULT_HGAP));
 
     myExistingTemplatesComponent = new ExistingTemplatesComponent(getProject());
     myExistingTemplatesComponent.onConfigurationSelected(configuration -> {
@@ -550,7 +558,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     // Search editor panel, 1st splitter element
     final var searchEditorPanel = new JPanel(new GridBagLayout());
-    final var searchConstraint = new GridBagConstraintBuilder();
 
     // Search panel options
     myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
@@ -590,20 +597,26 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     mySearchWrapper = new JPanel(new BorderLayout()); // needed for border
     mySearchWrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
 
-    searchEditorPanel.add(mySearchCriteriaEdit, searchConstraint.width(5).fillXY().growXY().get());
-    searchEditorPanel.add(searchTargetLabel, searchConstraint.newLine().noFill().noGrow().width(1).insets(10, DEFAULT_HGAP, 10, 0).get());
-    searchEditorPanel.add(myTargetComboBox, searchConstraint.get());
-    searchEditorPanel.add(myInjected, searchConstraint.get());
-    searchEditorPanel.add(myMatchCase, searchConstraint.insets(10, DEFAULT_HGAP, 10, DEFAULT_HGAP).get());
+    final var searchConstraint = new GridBag().setDefaultInsets(10, DEFAULT_HGAP, 10, 0);
+    searchEditorPanel.add(mySearchCriteriaEdit, searchConstraint
+      .nextLine().fillCell().coverLine()
+      .weightx(1.0).weighty(1.0)
+      .emptyInsets());
+    searchEditorPanel.add(searchTargetLabel, searchConstraint.nextLine());
+    searchEditorPanel.add(myTargetComboBox, searchConstraint);
+    searchEditorPanel.add(myInjected, searchConstraint);
+    searchEditorPanel.add(myMatchCase, searchConstraint.anchor(GridBagConstraints.WEST).insetRight(DEFAULT_HGAP));
 
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
     myComponentsWithEditorBackground.add(myFilterPanel.getTable());
 
     final JPanel searchPanel = new JPanel(new GridBagLayout());
-    final var northConstraint = new GridBagConstraintBuilder();
-    searchPanel.add(searchTemplateLabel, northConstraint.insets(6, DEFAULT_HGAP, 6, 0).get());
-    searchPanel.add(myOptionsToolbar.getComponent(), northConstraint.growX().anchorEnd().insets(6, 0, 6, DEFAULT_HGAP).get());
-    searchPanel.add(mySearchWrapper, northConstraint.newLine().fillXY().growXY().width(2).insets(0, 0, 0, 0).get());
+    final var northConstraint = new GridBag()
+      .setDefaultWeightX(1.0)
+      .setDefaultInsets(6, 0, 6, 0);
+    searchPanel.add(searchTemplateLabel, northConstraint.nextLine().weightx(0.0).insetLeft(DEFAULT_HGAP));
+    searchPanel.add(myOptionsToolbar.getComponent(), northConstraint.anchor(GridBagConstraints.EAST).insetRight(DEFAULT_HGAP));
+    searchPanel.add(mySearchWrapper, northConstraint.nextLine().coverLine().fillCell().emptyInsets().weighty(1.0));
     return searchPanel;
   }
 
@@ -630,18 +643,19 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     myReplaceCriteriaEdit = createEditor(true);
     myReplaceWrapper = new JPanel(new GridBagLayout());
-    final var wrapperConstraint = new GridBagConstraintBuilder();
     myComponentsWithEditorBackground.add(myReplaceWrapper);
 
-    myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.width(4).fillXY().growXY().get());
-    myReplaceWrapper.add(myShortenFqn, wrapperConstraint.newLine().width(1).noFill().noGrow().insets(10, 10, 10, 0).get());
-    myReplaceWrapper.add(myStaticImport, wrapperConstraint.get());
-    myReplaceWrapper.add(myReformat, wrapperConstraint.get());
+    final var wrapperConstraint = new GridBag().setDefaultInsets(10, 10, 10, 0);
+    myReplaceWrapper.add(myReplaceCriteriaEdit, wrapperConstraint.nextLine().emptyInsets().fillCell().coverLine().weightx(1.0).weighty(1.0));
+    myReplaceWrapper.add(myShortenFqn, wrapperConstraint.nextLine());
+    myReplaceWrapper.add(myStaticImport, wrapperConstraint);
+    myReplaceWrapper.add(myReformat, wrapperConstraint.weightx(1.0).anchor(GridBagConstraints.WEST));
 
     final JPanel replacePanel = new JPanel(new GridBagLayout());
-    final var replaceConstraint = new GridBagConstraintBuilder();
-    replacePanel.add(replacementTemplateLabel, replaceConstraint.fillX().growX().insets(16, DEFAULT_HGAP, 14, 0).get());
-    replacePanel.add(myReplaceWrapper, replaceConstraint.newLine().fillXY().growXY().noInsets().get());
+    final var replaceConstraint = new GridBag()
+      .setDefaultWeightX(1.0);
+    replacePanel.add(replacementTemplateLabel, replaceConstraint.nextLine().anchor(GridBagConstraints.WEST).insets(16, DEFAULT_HGAP, 14, 0));
+    replacePanel.add(myReplaceWrapper, replaceConstraint.nextLine().fillCell().weighty(1.0));
     return replacePanel;
   }
 
