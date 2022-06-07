@@ -203,6 +203,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   private static void resolveElementRecursively(@NotNull InspectionToolResultExporter presentation, @NotNull RefEntity refElement) {
     presentation.suppressProblem(refElement);
+    if (refElement instanceof RefElement) ((RefElement)refElement).initializeIfNeeded();
     List<RefEntity> children = refElement.getChildren();
     for (RefEntity child : children) {
       resolveElementRecursively(presentation, child);
