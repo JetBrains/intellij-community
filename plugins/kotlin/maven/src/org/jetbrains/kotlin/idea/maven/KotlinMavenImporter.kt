@@ -8,6 +8,9 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -69,6 +72,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         const val KOTLIN_PLUGIN_SOURCE_DIRS_CONFIG = "sourceDirs"
 
         private val NOTIFICATION_KEY = Key<Boolean>("NOTIFICATION_KEY")
+        private val KOTLIN_JPS_VERSION_ACCUMULATOR = Key<IdeKotlinVersion>("KOTLIN_JPS_VERSION_ACCUMULATOR")
     }
 
     override fun preProcess(
@@ -79,6 +83,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     ) {
         KotlinJpsPluginSettings.getInstance(module.project)?.dropExplicitVersion()
         module.project.putUserData(NOTIFICATION_KEY, null)
+        module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
     }
 
     override fun process(
@@ -101,23 +106,10 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         ) {
             return
         }
-
-        postTasks.add { project: Project, _: MavenEmbeddersManager, _: MavenConsole, mavenProgressIndicator: MavenProgressIndicator ->
-            val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return@add
-            val compilerVersion = mavenPlugin.compilerVersion
-            val jpsPluginVersion = KotlinJpsPluginSettings.getInstance(project)?.settings?.version ?: return@add
-            val rawVersion = maxOf(IdeKotlinVersion.opt(jpsPluginVersion) ?: compilerVersion, compilerVersion).rawVersion
-            val success = KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(
-                project,
-                rawVersion,
-                mavenProgressIndicator.indicator,
-                showNotification = project.getUserData(NOTIFICATION_KEY) != true,
-            )
-
-            if (!success) {
-                project.putUserData(NOTIFICATION_KEY, true)
-            }
-        }
+        val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
+        val currentVersion = mavenPlugin.compilerVersion
+        val accumulatorVersion = module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)
+        module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, maxOf(accumulatorVersion ?: currentVersion, currentVersion))
     }
 
     override fun postProcess(
@@ -127,6 +119,26 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
         super.postProcess(module, mavenProject, changes, modifiableModelsProvider)
+        module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)?.let { version ->
+            val message = KotlinMavenBundle.message("checking.kotlin.jps.availability.in.maven.repos")
+            ProgressManager.getInstance().run(
+                object : Task.Backgroundable(module.project, message, true) {
+                    override fun run(indicator: ProgressIndicator) {
+                        val success = KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(
+                            module.project,
+                            version.rawVersion,
+                            indicator,
+                            showNotification = project.getUserData(NOTIFICATION_KEY) != true,
+                        )
+
+                        if (!success) {
+                            project.putUserData(NOTIFICATION_KEY, true)
+                        }
+                    }
+                }
+            )
+            module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
+        }
 
         if (changes.dependencies) {
             scheduleDownloadStdlibSources(mavenProject, module)
