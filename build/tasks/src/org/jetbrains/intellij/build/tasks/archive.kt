@@ -3,7 +3,9 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.util.PathUtilRt
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.io.IOUtils
@@ -100,7 +102,7 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
         dirCandidates.add(file)
       }
       else if (attributes.isSymbolicLink) {
-        val entry = ZipArchiveEntry(prefix + startDir.relativize(file))
+        val entry = ZipArchiveEntryAssertName(prefix + FileUtilRt.toSystemIndependentName(startDir.relativize(file).toString()))
         entry.method = ZipEntry.STORED
         entry.lastModifiedTime = zeroTime
         entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS).get("mode") as Int
@@ -118,7 +120,7 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
           continue
         }
 
-        val entry = ZipArchiveEntry(prefix + relativeFile)
+        val entry = ZipArchiveEntryAssertName(prefix + FileUtilRt.toSystemIndependentName(relativeFile.toString()))
         entry.size = attributes.size()
         entryCustomizer(entry, file, relativeFile)
         writeFileEntry(file, entry, this)
@@ -134,7 +136,7 @@ fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String) {
 private val zeroTime = FileTime.fromMillis(0)
 
 fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: Int = -1) {
-  val entry = ZipArchiveEntry(name)
+  val entry = ZipArchiveEntryAssertName(name)
   if (unixMode != -1) {
     entry.unixMode = unixMode
   }
@@ -142,12 +144,45 @@ fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: Int = -1) {
 }
 
 fun ZipArchiveOutputStream.entry(name: String, data: ByteArray) {
-  val entry = ZipArchiveEntry(name)
+  val entry = ZipArchiveEntryAssertName(name)
   entry.size = data.size.toLong()
   entry.lastModifiedTime = zeroTime
   putArchiveEntry(entry)
   write(data)
   closeArchiveEntry()
+}
+
+fun assertRelativePathIsCorrectForPackaging(relativeName: String) {
+  if (relativeName.isEmpty()) {
+    throw IllegalArgumentException("relativeName must not be empty")
+  }
+
+  if (relativeName.startsWith("/")) {
+    throw IllegalArgumentException("relativeName must not be an absolute path: $relativeName")
+  }
+
+  if (relativeName.contains('\\')) {
+    throw IllegalArgumentException("relativeName must not contain backslash '\\': $relativeName")
+  }
+
+  for (component in relativeName.split('/')) {
+    if (!component.all { it.code in 32..127 }) {
+      throw IllegalArgumentException("relativeName must contain only ASCII (32 <= c <= 127) chars: $relativeName")
+    }
+
+    if (component.endsWith('.')) {
+      throw IllegalArgumentException("path component '$component' must not end with dot (.), it fails under Windows: $relativeName")
+    }
+
+    if (component.endsWith(' ')) {
+      throw IllegalArgumentException("path component '$component' must not end with space, it fails under Windows: $relativeName")
+    }
+
+    // WINDOWS is most restrictive
+    if (!PathUtilRt.isValidFileName(component, PathUtilRt.Platform.WINDOWS, true, null)) {
+      throw IllegalArgumentException("path component '$component' is not valid for Windows: $relativeName")
+    }
+  }
 }
 
 private fun writeFileEntry(file: Path, entry: ZipArchiveEntry, out: ZipArchiveOutputStream) {

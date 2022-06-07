@@ -5,6 +5,7 @@ import com.intellij.diagnostic.telemetry.createTask
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -439,7 +440,7 @@ private fun buildMacZip(targetFile: Path,
           val fileFilter: (Path, Path) -> Boolean = { sourceFile, relativeFile ->
             val path = relativeFile.toString()
             if (path.endsWith(".txt") && !path.contains('/')) {
-              zipOutStream.entry("$zipRoot/Resources/$relativeFile", sourceFile)
+              zipOutStream.entry("$zipRoot/Resources/${FileUtilRt.toSystemIndependentName(path)}", sourceFile)
               false
             }
             else {
@@ -451,7 +452,7 @@ private fun buildMacZip(targetFile: Path,
           zipOutStream.dir(macDist, "$zipRoot/", fileFilter = fileFilter, entryCustomizer = entryCustomizer)
 
           for ((file, relativePath) in extraFiles) {
-            zipOutStream.entry("$zipRoot/$relativePath${if (relativePath.isEmpty()) "" else "/"}${file.fileName}", file)
+            zipOutStream.entry("$zipRoot/${FileUtilRt.toSystemIndependentName(relativePath)}${if (relativePath.isEmpty()) "" else "/"}${file.fileName}", file)
           }
         }
       }
