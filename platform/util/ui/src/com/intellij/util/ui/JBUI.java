@@ -1164,7 +1164,7 @@ public final class JBUI {
       }
 
       /**
-       * Border color for tooltips except information/question/error tooltips (see HintUtil#HINT_BORDER_COLOR_KEY)
+       * Border color for tooltips except information/question/error tooltips (see {@link com.intellij.codeInsight.hint.HintUtil#HINT_BORDER_COLOR_KEY})
        */
       public static @NotNull Color borderColor() {
         return JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
