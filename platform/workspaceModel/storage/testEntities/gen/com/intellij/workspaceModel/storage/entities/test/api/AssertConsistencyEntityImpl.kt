@@ -135,6 +135,7 @@ class AssertConsistencyEntityData : WorkspaceEntityData<AssertConsistencyEntity>
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

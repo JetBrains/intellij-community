@@ -185,6 +185,7 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

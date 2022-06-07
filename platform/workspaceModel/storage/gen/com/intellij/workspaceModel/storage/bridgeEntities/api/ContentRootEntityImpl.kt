@@ -360,6 +360,7 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

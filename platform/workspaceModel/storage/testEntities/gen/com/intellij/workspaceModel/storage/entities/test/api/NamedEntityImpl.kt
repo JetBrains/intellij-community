@@ -219,6 +219,7 @@ class NamedEntityData : WorkspaceEntityData.WithCalculablePersistentId<NamedEnti
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

@@ -143,6 +143,7 @@ class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

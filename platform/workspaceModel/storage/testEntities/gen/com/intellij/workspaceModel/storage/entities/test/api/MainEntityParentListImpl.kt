@@ -207,6 +207,7 @@ class MainEntityParentListData : WorkspaceEntityData<MainEntityParentList>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

@@ -198,6 +198,7 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

@@ -143,6 +143,7 @@ class AttachedEntityToParentData : WorkspaceEntityData<AttachedEntityToParent>()
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

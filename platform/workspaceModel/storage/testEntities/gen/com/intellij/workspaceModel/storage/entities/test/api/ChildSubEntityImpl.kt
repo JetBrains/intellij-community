@@ -248,6 +248,7 @@ class ChildSubEntityData : WorkspaceEntityData<ChildSubEntity>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

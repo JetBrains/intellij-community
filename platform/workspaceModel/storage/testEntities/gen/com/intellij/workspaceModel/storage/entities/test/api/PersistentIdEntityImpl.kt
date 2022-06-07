@@ -143,6 +143,7 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 
@@ -156,8 +157,10 @@ class PersistentIdEntityData : WorkspaceEntityData.WithCalculablePersistentId<Pe
     }
 
     override fun persistentId(): PersistentEntityId<*> {
+        
       return LinkedListEntityId(data)
-    } 
+    
+    }
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return PersistentIdEntity::class.java

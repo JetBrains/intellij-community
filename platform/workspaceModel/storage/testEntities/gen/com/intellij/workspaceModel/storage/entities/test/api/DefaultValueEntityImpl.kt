@@ -161,6 +161,7 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

@@ -355,6 +355,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

@@ -225,6 +225,7 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

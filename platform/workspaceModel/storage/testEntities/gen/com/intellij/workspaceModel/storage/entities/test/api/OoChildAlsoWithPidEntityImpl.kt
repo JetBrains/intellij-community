@@ -209,6 +209,7 @@ class OoChildAlsoWithPidEntityData : WorkspaceEntityData.WithCalculablePersisten
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

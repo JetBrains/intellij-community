@@ -143,6 +143,7 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 
@@ -156,8 +157,10 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     }
 
     override fun persistentId(): PersistentEntityId<*> {
+        
       return OnePersistentId(myName)
-    } 
+    
+    }
 
     override fun getEntityInterface(): Class<out WorkspaceEntity> {
         return OneEntityWithPersistentId::class.java

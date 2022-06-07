@@ -207,6 +207,7 @@ class ChildNullableEntityData : WorkspaceEntityData<ChildNullableEntity>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

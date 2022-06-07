@@ -323,6 +323,7 @@ class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

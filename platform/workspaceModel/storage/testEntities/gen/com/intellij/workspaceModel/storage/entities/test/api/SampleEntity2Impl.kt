@@ -164,6 +164,7 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

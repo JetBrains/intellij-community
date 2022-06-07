@@ -225,6 +225,7 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

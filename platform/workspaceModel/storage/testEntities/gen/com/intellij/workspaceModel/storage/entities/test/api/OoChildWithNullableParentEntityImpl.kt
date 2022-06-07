@@ -181,6 +181,7 @@ class OoChildWithNullableParentEntityData : WorkspaceEntityData<OoChildWithNulla
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

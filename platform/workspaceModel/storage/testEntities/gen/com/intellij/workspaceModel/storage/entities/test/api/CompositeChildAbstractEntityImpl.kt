@@ -308,6 +308,7 @@ class CompositeChildAbstractEntityData : WorkspaceEntityData<CompositeChildAbstr
           modifiable.id = createEntityId()
           modifiable.entitySource = this.entitySource
         }
+        modifiable.changedProperty.clear()
         return modifiable
     }
 

@@ -64,6 +64,7 @@ fun DefType.implWsDataClassCode(simpleTypes: List<DefType>): String {
         line("  modifiable.id = createEntityId()")
         line("  modifiable.entitySource = this.entitySource")
         line("}")
+        line("modifiable.changedProperty.clear()")
         line("return modifiable")
       }
 
