@@ -314,6 +314,7 @@ final class ActionUpdater {
     ComponentManager disposableParent = Objects.requireNonNull(
       myProject != null ? ClientSessionsManager.getProjectSession(myProject, clientId) : ClientSessionsManager.getAppSession(clientId));
 
+
     ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
 
