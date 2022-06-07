@@ -44,7 +44,7 @@ public abstract class LanguageLevelCombo extends ComboBoxWithSeparators<Language
       .filter(level -> level.compareTo(highestWithPreview) <= 0 && (level.isPreview() || !ArrayUtil.contains(level, LTS)))
       .forEach(level -> addItem(new Entry(level)));
 
-    addItem(new Separator(""));
+    addItem(new Separator(JavaUiBundle.message("language.level.combo.experimental.versions")));
     for (LanguageLevel level : LanguageLevel.values()) {
       if (level.compareTo(highestWithPreview) > 0) {
         addItem(new Entry(level));
