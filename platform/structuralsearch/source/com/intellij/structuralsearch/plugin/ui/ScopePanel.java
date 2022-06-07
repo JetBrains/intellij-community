@@ -34,7 +34,7 @@ import com.intellij.structuralsearch.Scopes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.GridBagConstraintBuilder;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,11 +109,11 @@ public class ScopePanel extends JPanel {
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
     final GridBagLayout layout = new GridBagLayout();
-    final GridBagConstraintBuilder constraint = new GridBagConstraintBuilder();
+    final GridBag constraint = new GridBag();
     setLayout(layout);
 
-    add(myToolbar, constraint.get());
-    add(myScopeDetailsPanel, constraint.insets(0, UIUtil.DEFAULT_HGAP, 0, 0).growX().fillX().get());
+    add(myToolbar, constraint.nextLine());
+    add(myScopeDetailsPanel, constraint.insetLeft(UIUtil.DEFAULT_HGAP).weightx(1.0).fillCellHorizontally());
   }
 
   private void selectNamedScope(String selectedScope) {
