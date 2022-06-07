@@ -22,7 +22,6 @@ import org.junit.runner.RunWith
 class AHeavyInspectionsPerformanceTest : UsefulTestCase() {
     private val listOfFiles = arrayOf(
         "libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/NewMultiplatformIT.kt",
-        "idea/idea-analysis/src/org/jetbrains/kotlin/idea/util/PsiPrecedences.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtElement.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtImportInfo.kt"
