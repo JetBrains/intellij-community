@@ -132,7 +132,6 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
 
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
     res.addAll(group.getChildren(initEvent).asList())
-    group.getChildren(initEvent).forEach { res.add(it) }
     res.addSeparator(IdeBundle.message("project.widget.recent.projects"))
     RecentProjectListActionProvider.getInstance().getActions().take(MAX_RECENT_COUNT).forEach { res.add(it) }
 
