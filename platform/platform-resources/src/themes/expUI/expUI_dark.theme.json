@@ -28,7 +28,7 @@
     "Blue3": "#35538F",
     "Blue4": "#375FAD",
     "Blue5": "#366ACE",
-    "Blue6": "#3573F0",
+    "Blue6": "#3574F0",
     "Blue7": "#467FF2",
     "Blue8": "#548AF7",
     "Blue9": "#6B9BFA",
@@ -114,7 +114,9 @@
       "focusColor": "Blue6",
 
       "separatorColor": "Grey3",
-      "separatorForeground": "Grey7"
+      "separatorForeground": "Grey7",
+
+      "modifiedItemForeground": "Blue9"
     },
 
     "ActionButton": {
@@ -186,7 +188,8 @@
         "changedValueForeground": "Blue8",
         "modifyingValueForeground": "Blue8",
         "errorMessageForeground": "Red6",
-        "exceptionForeground": "Red6"
+        "exceptionForeground": "Red6",
+        "typeForeground": "Grey7"
       },
       "EvaluateExpression.background": "Grey3"
     },
@@ -234,11 +237,11 @@
     "Label.errorForeground": "Red6",
 
     "Link": {
-      "activeForeground": "Blue8",
-      "hoverForeground": "Blue8",
-      "pressedForeground": "Blue8",
-      "visitedForeground": "Blue8",
-      "secondaryForeground": "Blue8"
+      "activeForeground": "Blue9",
+      "hoverForeground": "Blue9",
+      "pressedForeground": "Blue9",
+      "visitedForeground": "Blue9",
+      "secondaryForeground": "Blue9"
     },
 
     "List": {
@@ -391,13 +394,17 @@
 
     "TabbedPane": {
       "tabHeight": 40,
+      "tabInsets": "0,12,0,12",
       "tabSelectionArc": 4,
       "hoverColor": "Grey4",
       "contentAreaColor": "Grey1",
       "focusColor": "Blue2"
     },
 
-    "Table.gridColor": "Grey1",
+    "Table": {
+      "gridColor": "Grey1",
+      "stripeColor": "Grey2"
+    },
 
     "TableHeader": {
       "bottomSeparatorColor": "Grey1",

@@ -25,7 +25,7 @@
     "Blue3": "#2E55A3",
     "Blue4": "#315FBD",
     "Blue5": "#3369D6",
-    "Blue6": "#3573F0",
+    "Blue6": "#3574F0",
     "Blue7": "#407BF2",
     "Blue8": "#588CF3",
     "Blue9": "#709CF5",
@@ -118,7 +118,9 @@
       "focusColor": "Blue6",
 
       "separatorColor": "Grey11",
-      "separatorForeground": "Grey7"
+      "separatorForeground": "Grey7",
+
+      "modifiedItemForeground": "Blue5"
     },
 
     "ActionButton": {
@@ -200,7 +202,8 @@
         "changedValueForeground": "Blue5",
         "modifyingValueForeground": "Blue5",
         "errorMessageForeground": "errorForeground",
-        "exceptionForeground": "errorForeground"
+        "exceptionForeground": "errorForeground",
+        "typeForeground": "Grey7"
       },
       "EvaluateExpression.background": "Grey13"
     },
@@ -418,14 +421,17 @@
 
     "TabbedPane": {
       "tabHeight": 40,
-      "tabInsets": "0,8,0,8",
+      "tabInsets": "0,12,0,12",
       "tabSelectionArc": 4,
       "hoverColor": "Grey11",
       "contentAreaColor": "Grey11",
       "focusColor": "Blue13"
     },
 
-    "Table.gridColor": "Grey11",
+    "Table": {
+      "gridColor": "Grey11",
+      "stripeColor": "Grey12"
+    },
 
     "TableHeader.bottomSeparatorColor": "Grey11",
 
