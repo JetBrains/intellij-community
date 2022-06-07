@@ -24,8 +24,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.DescriptionEditorPane;
 import com.intellij.profile.codeInspection.ui.DescriptionEditorPaneKt;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
-import com.intellij.util.ui.GridBagConstraintBuilder;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI.PanelFactory;
 import com.intellij.util.ui.UIUtil;
@@ -58,10 +59,16 @@ public class IntentionDescriptionPanel {
 
   public IntentionDescriptionPanel() {
     myPanel = new JPanel(new GridBagLayout());
-    final var constraint = new GridBagConstraintBuilder();
+    final var constraint = new GridBag()
+      .setDefaultInsets(UIUtil.LARGE_VGAP, 0, 0, 0)
+      .setDefaultFill(GridBagConstraints.BOTH)
+      .setDefaultWeightY(0.5)
+      .setDefaultWeightX(1.0);
 
     myDescriptionBrowser = new DescriptionEditorPane();
-    myPanel.add(myDescriptionBrowser, constraint.growXY().fillXY().get());
+    final var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
+    descriptionScrollPane.setBorder(null);
+    myPanel.add(descriptionScrollPane, constraint.nextLine().weighty(1.0).insetTop(0));
 
     myBeforePanel = new JPanel();
     myPanel.add(PanelFactory.panel(myBeforePanel)
@@ -70,7 +77,7 @@ public class IntentionDescriptionPanel {
                   .resizeX(true)
                   .resizeY(true)
                   .createPanel(),
-                constraint.newLine().insets(UIUtil.LARGE_VGAP, 0, 0, 0).get()
+                constraint.nextLine()
     );
 
     myAfterPanel = new JPanel();
@@ -80,7 +87,7 @@ public class IntentionDescriptionPanel {
                   .resizeX(true)
                   .resizeY(true)
                   .createPanel(),
-                constraint.newLine().get()
+                constraint.nextLine()
     );
 
     myPoweredByPanel = new JPanel(new BorderLayout());
@@ -88,7 +95,7 @@ public class IntentionDescriptionPanel {
       .withLabel(CodeInsightBundle.message("powered.by"))
       .resizeX(true)
       .createPanel();
-    myPanel.add(myPoweredByWrapper, constraint.newLine().growX().fillXY().get());
+    myPanel.add(myPoweredByWrapper, constraint.nextLine().weighty(0.0));
 
     myDescriptionBrowser.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
