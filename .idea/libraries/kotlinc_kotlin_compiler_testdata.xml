@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-testdata" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-testdata-for-ide:1.7.20-dev-1577" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-testdata-for-ide:1.7.20-dev-1882" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-testdata-for-ide/1.7.20-dev-1577/kotlin-compiler-testdata-for-ide-1.7.20-dev-1577.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-testdata-for-ide/1.7.20-dev-1882/kotlin-compiler-testdata-for-ide-1.7.20-dev-1882.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
