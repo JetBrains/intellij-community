@@ -38,8 +38,11 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -358,14 +361,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Nullable
-  public String getCannotPreviewMessage(@Nullable final List<? extends UsageInfo> infos) {
+  public String getCannotPreviewMessage(@NotNull final List<? extends UsageInfo> infos) {
     return cannotPreviewMessage(infos);
   }
 
   @Nullable
+  @Contract("null -> !null")
   private @NlsContexts.StatusText
   static String cannotPreviewMessage(@Nullable List<? extends UsageInfo> infos) {
-    if (infos == null || infos.isEmpty()) {
+    if (ContainerUtil.isEmpty(infos)) {
       return UsageViewBundle.message("select.the.usage.to.preview");
     }
     PsiFile psiFile = null;
@@ -384,8 +388,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Override
-  public void updateLayoutLater(@Nullable List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  @RequiresEdt
+  public void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     UsageViewImpl usageViewImpl = ObjectUtils.tryCast(usageView, UsageViewImpl.class);
     if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() &&
         usageViewImpl != null &&
@@ -397,12 +401,12 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       add(myCommonUsagePatternsComponent);
     }
     else {
-      previewUsages(infos);
+      updateLayoutLater(infos);
     }
   }
 
-  private static boolean isOnlyGroupNodesSelected(@Nullable List<? extends UsageInfo> infos, @NotNull UsageViewImpl usageView) {
-    return (infos == null || infos.isEmpty()) && usageView.isGroupNodeSelected();
+  private static boolean isOnlyGroupNodesSelected(@NotNull List<? extends UsageInfo> infos, @NotNull UsageViewImpl usageView) {
+    return infos.isEmpty() && usageView.isGroupNodeSelected();
   }
 
   @Override
