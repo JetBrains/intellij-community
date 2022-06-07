@@ -519,20 +519,16 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
         val mutablePreviousSet = HashSet(prev)
         for (item in dependencies) {
             when (item) {
-                is ModuleDependencyItem.Exportable ->  {
-                    when (item) {
-                        is ModuleDependencyItem.Exportable.ModuleDependency ->  {
-                            val removedItem_item_module = mutablePreviousSet.remove(item.module)
-                            if (!removedItem_item_module) {
-                                index.index(this, item.module)
-                            }
-                        }
-                        is ModuleDependencyItem.Exportable.LibraryDependency ->  {
-                            val removedItem_item_library = mutablePreviousSet.remove(item.library)
-                            if (!removedItem_item_library) {
-                                index.index(this, item.library)
-                            }
-                        }
+                is ModuleDependencyItem.Exportable.ModuleDependency -> {
+                    val removedItem_item_module = mutablePreviousSet.remove(item.module)
+                    if (!removedItem_item_module) {
+                        index.index(this, item.module)
+                    }
+                }
+                is ModuleDependencyItem.Exportable.LibraryDependency -> {
+                    val removedItem_item_library = mutablePreviousSet.remove(item.library)
+                    if (!removedItem_item_library) {
+                        index.index(this, item.library)
                     }
                 }
             }
