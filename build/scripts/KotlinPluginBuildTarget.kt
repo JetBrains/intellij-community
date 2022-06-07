@@ -8,6 +8,14 @@ object KotlinPluginBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    KotlinPluginBuilder(communityHome, communityHome, IdeaCommunityProperties(communityHome)).build()
+    KotlinPluginBuilder(communityHome, communityHome, KotlinIdeaProperties(communityHome)).build()
+  }
+}
+
+class KotlinIdeaProperties(home: String) : IdeaCommunityProperties(home) {
+  init {
+    // Only build the Kotlin plugin, nothing else.
+    productLayout.bundledPluginModules = emptyList()
+    productLayout.allNonTrivialPlugins = listOf(KotlinPluginBuilder.kotlinPlugin())
   }
 }
