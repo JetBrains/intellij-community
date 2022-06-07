@@ -391,11 +391,11 @@ private class StackedCompositeBindingContextTrace(
         filtered
     }
 
-    val parentDiagnosticsNoSuppressionApartElement: Collection<Diagnostic> = run {
-        val all = parentContext.diagnostics.noSuppression()
-        val filtered = all.filter { it.psiElement == element && selfDiagnosticToHold(it) } + all.filter { it.psiElement.parentsWithSelf.none { e -> e == element } }
-        filtered
-    }
+    val parentDiagnosticsNoSuppressionApartElement: Collection<Diagnostic> =
+        (resolveContext.diagnostics.noSuppression() + parentContext.diagnostics.noSuppression()).filterApartElement()
+
+    private fun Collection<Diagnostic>.filterApartElement() =
+        toSet().filter { it.psiElement == element && selfDiagnosticToHold(it) } + filter { it.psiElement.parentsWithSelf.none { e -> e == element } }
 
     inner class StackedCompositeBindingContext : BindingContext {
         var cachedDiagnostics: Diagnostics? = null
