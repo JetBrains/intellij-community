@@ -3,7 +3,6 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -18,10 +17,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT;
+
 /**
  * @author peter
  */
-public class TestDataProvider implements DataProvider, DataContext {
+public class TestDataProvider implements DataProvider {
   private final Project myProject;
   private final boolean myWithRules;
   private final TestDataProvider myDelegateWithoutRules;
@@ -67,7 +68,7 @@ public class TestDataProvider implements DataProvider, DataContext {
       return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
     }
     else {
-      Editor editor = getData(CommonDataKeys.EDITOR);
+      Editor editor = CommonDataKeys.EDITOR.getData(this);
       if (editor != null) {
         Object managerData = manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
         if (managerData != null) {
