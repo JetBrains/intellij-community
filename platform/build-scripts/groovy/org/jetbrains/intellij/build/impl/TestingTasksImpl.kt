@@ -21,6 +21,9 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
+import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.java.ModulePathSplitter
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
@@ -279,19 +282,34 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               envVariables: Map<String, String> = emptyMap(),
                               remoteDebugging: Boolean,
                               context: CompilationContext) {
-    val testClasspath = JpsJavaExtensionService.dependencies(context.findRequiredModule(mainModule)).recursively()
+    val mainJpsModule = context.findRequiredModule(mainModule)
+    val testRoots = JpsJavaExtensionService.dependencies(mainJpsModule).recursively()
       // if project requires different SDKs they all shouldn't be added to test classpath
       .withoutSdk()
       .includedIn(JpsJavaClasspathKind.runtime(true))
       .classes()
       .roots
-      .mapNotNull {
-        if (it.exists()) it.absolutePath else null
-      }
+
+    val testClasspath: List<String>
+    val modulePath : List<String>?
+    
+    val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
+    val toStringConverter: (File) -> String? = { if (it.exists()) it.absolutePath else null }
+    if (moduleInfoFile != null) {
+      val outputDir = ModuleBuildTarget(mainJpsModule, JavaModuleBuildTargetType.TEST).outputDir
+      val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), HashSet(testRoots))
+      modulePath = pair.first.path.mapNotNull(toStringConverter)
+      testClasspath = pair.second.mapNotNull(toStringConverter)
+    }
+    else {
+      modulePath = null
+      testClasspath = testRoots.mapNotNull(toStringConverter)
+    }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
-    Files.writeString(classpathFile, testClasspath.joinToString(separator = "\n"))
+    //required to collect tests both on classpath and module path
+    Files.writeString(classpathFile, testRoots.mapNotNull(toStringConverter).joinToString(separator = "\n"))
     val allSystemProperties = LinkedHashMap<String, String>(systemProperties)
     allSystemProperties.putIfAbsent("classpath.file", classpathFile.toString())
     testPatterns?.let { allSystemProperties.putIfAbsent("intellij.build.test.patterns", it) }
@@ -327,6 +345,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                     jvmArgs = allJvmArgs,
                     envVariables = envVariables,
                     bootstrapClasspath = bootstrapClasspath,
+                    modulePath = modulePath,
                     testClasspath = testClasspath)
     notifySnapshotBuilt(allJvmArgs)
   }
@@ -531,12 +550,12 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         val testAnnotation = loader.loadClass("org.junit.Test") as Class<Annotation>
         for (m in aClass.declaredMethods) {
           if (Modifier.isPublic(m.modifiers) && m.isAnnotationPresent(testAnnotation)) {
-            val exitCode = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, m.name)
+            val exitCode = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath, qName, m.name)
             noTests = noTests && exitCode == NO_TESTS_ERROR
           }
         }
         if (noTests) {
-          val exitCode3 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, testClasspath, qName, null)
+          val exitCode3 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath, qName, null)
           noTests = exitCode3 == NO_TESTS_ERROR
         }
         noTestsInAllClasses = noTestsInAllClasses && java.lang.Boolean.TRUE == noTests
@@ -555,6 +574,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               jvmArgs: List<String>,
                               envVariables: Map<String, String>,
                               bootstrapClasspath: List<String>,
+                              modulePath : List<String>?,
                               testClasspath: List<String>) {
     if (isRunningInBatchMode) {
       spanBuilder("run tests in batch mode")
@@ -569,6 +589,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                         jvmArgs = jvmArgs,
                         envVariables = envVariables,
                         bootstrapClasspath = bootstrapClasspath,
+                        modulePath = modulePath,
                         testClasspath = testClasspath,
                         suiteName = null,
                         methodName = null)
@@ -578,6 +599,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                         jvmArgs = jvmArgs,
                         envVariables = envVariables,
                         bootstrapClasspath = bootstrapClasspath,
+                        modulePath = modulePath,
                         testClasspath = testClasspath,
                         suiteName = options.bootstrapSuite,
                         methodName = null)
@@ -592,6 +614,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                               jvmArgs: List<String>,
                               envVariables: Map<String, String>,
                               bootstrapClasspath: List<String>,
+                              modulePath: List<String>?,
                               testClasspath: List<String>,
                               suiteName: String?,
                               methodName: String?): Int {
@@ -607,6 +630,10 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       classpath.addAll(testClasspath)
     }
     args.add(classpath.joinToString(separator = File.pathSeparator))
+    if (modulePath != null) {
+      args.add("--module-path")
+      args.add(modulePath.joinToString(separator = File.pathSeparator))
+    }
     args.addAll(jvmArgs)
     args.add("-Dintellij.build.test.runner=junit5")
     for ((k, v) in systemProperties) {
