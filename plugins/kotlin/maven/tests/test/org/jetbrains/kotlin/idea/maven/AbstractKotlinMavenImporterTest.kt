@@ -2099,8 +2099,9 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             val kotlinMainPluginVersion = "1.5.10"
             val kotlinMavenPluginVersion1 = "1.6.21"
             val kotlinMavenPluginVersion2 = "1.5.31"
-            val mainPom = createProjectPom(
-                """
+            val notifications = catchNotifications(myProject) {
+                val mainPom = createProjectPom(
+                    """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1.0.0</version>
@@ -2123,11 +2124,11 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         </plugins>
                     </build>
                 """
-            )
+                )
 
-            val module1 = createModulePom(
-                "module1",
-                """
+                val module1 = createModulePom(
+                    "module1",
+                    """
                     <parent>
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
@@ -2148,11 +2149,11 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         </plugins>
                     </build>
                 """
-            )
+                )
 
-            val module2 = createModulePom(
-                "module2",
-                """
+                val module2 = createModulePom(
+                    "module2",
+                    """
                     <parent>
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
@@ -2173,13 +2174,14 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         </plugins>
                     </build>
                 """
-            )
+                )
 
-            importProjects(mainPom, module1, module2)
+                importProjects(mainPom, module1, module2)
+            }
 
             assertModules("project", "module1", "module2")
             assertImporterStatePresent()
-
+            assertEquals(1, notifications.count { it.title == "Kotlin JPS plugin artifacts were not found" })
             // The highest of available versions should be picked
             // TODO: should be reverted after KTI-724
             assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))

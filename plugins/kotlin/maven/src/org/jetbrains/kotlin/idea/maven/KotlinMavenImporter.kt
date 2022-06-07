@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jdom.Text
@@ -66,6 +67,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         const val KOTLIN_PLUGIN_ARTIFACT_ID = "kotlin-maven-plugin"
 
         const val KOTLIN_PLUGIN_SOURCE_DIRS_CONFIG = "sourceDirs"
+
+        private val NOTIFICATION_KEY = Key<Boolean>("NOTIFICATION_KEY")
     }
 
     override fun preProcess(
@@ -75,6 +78,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
         KotlinJpsPluginSettings.getInstance(module.project)?.dropExplicitVersion()
+        module.project.putUserData(NOTIFICATION_KEY, null)
     }
 
     override fun process(
@@ -103,7 +107,16 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             val compilerVersion = mavenPlugin.compilerVersion
             val jpsPluginVersion = KotlinJpsPluginSettings.getInstance(project)?.settings?.version ?: return@add
             val rawVersion = maxOf(IdeKotlinVersion.opt(jpsPluginVersion) ?: compilerVersion, compilerVersion).rawVersion
-            KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(project, rawVersion, mavenProgressIndicator.indicator)
+            val success = KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(
+                project,
+                rawVersion,
+                mavenProgressIndicator.indicator,
+                showNotification = project.getUserData(NOTIFICATION_KEY) != true,
+            )
+
+            if (!success) {
+                project.putUserData(NOTIFICATION_KEY, true)
+            }
         }
     }
 

@@ -128,27 +128,30 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             project: Project,
             rawVersion: String,
             progressIndicator: ProgressIndicator = ProgressManager.getInstance().progressIndicator,
-        ) {
-            val instance = getInstance(project) ?: return
+            showNotification: Boolean = true,
+        ): Boolean {
+            val instance = getInstance(project) ?: return true
             if (rawVersion == rawBundledVersion) {
                 instance.setVersion(rawVersion)
-                return
+                return true
             }
 
             val error = checkJpsVersion(rawVersion)
             if (error != null) {
                 instance.dropExplicitVersion()
-                showNotificationUnsupportedJpsPluginVersion(
-                    project,
-                    KotlinBasePluginBundle.message("notification.title.unsupported.kotlin.jps.plugin.version"),
-                    KotlinBasePluginBundle.message(
-                        "notification.content.bundled.version.0.will.be.used.reason.1",
-                        rawBundledVersion,
-                        error
-                    ),
-                )
+                if (showNotification) {
+                    showNotificationUnsupportedJpsPluginVersion(
+                        project,
+                        KotlinBasePluginBundle.message("notification.title.unsupported.kotlin.jps.plugin.version"),
+                        KotlinBasePluginBundle.message(
+                            "notification.content.bundled.version.0.will.be.used.reason.1",
+                            rawBundledVersion,
+                            error
+                        ),
+                    )
+                }
 
-                return
+                return false
             }
 
             val ok = KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
@@ -156,15 +159,17 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 jpsVersion = rawVersion,
                 indicator = progressIndicator,
                 onError = {
-                    showNotificationUnsupportedJpsPluginVersion(
-                        project,
-                        KotlinBasePluginBundle.message("notification.title.jps.artifacts.were.not.found"),
-                        KotlinBasePluginBundle.message(
-                            "notification.content.bundled.version.0.will.be.used.reason.1",
-                            rawBundledVersion,
-                            it
-                        ),
-                    )
+                    if (showNotification) {
+                        showNotificationUnsupportedJpsPluginVersion(
+                            project,
+                            KotlinBasePluginBundle.message("notification.title.jps.artifacts.were.not.found"),
+                            KotlinBasePluginBundle.message(
+                                "notification.content.bundled.version.0.will.be.used.reason.1",
+                                rawBundledVersion,
+                                it
+                            ),
+                        )
+                    }
                 },
             )
 
@@ -173,6 +178,8 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             } else {
                 instance.dropExplicitVersion()
             }
+
+            return ok
         }
     }
 }
