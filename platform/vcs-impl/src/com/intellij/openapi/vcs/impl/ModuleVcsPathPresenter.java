@@ -8,10 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +65,12 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
 
         Module fromModule = fileIndex.getModuleForFile(fromParent, hideExcludedFiles);
         Module toModule = fileIndex.getModuleForFile(toParent, hideExcludedFiles);
-        if (fromModule == null || toModule == null || fromModule.equals(toModule)) return null;
+        if (fromModule == null) return null;
+
+        if (toModule == null || fromModule.equals(toModule)) {
+          String relativePath = RelativePathCalculator.computeRelativePath(toPath.getPath(), fromPath.getPath(), true);
+          if (relativePath != null) return FileUtilRt.toSystemDependentName(relativePath); //NON-NLS
+        }
 
         VirtualFile fromContentRoot = fileIndex.getContentRootForFile(fromParent, hideExcludedFiles);
         if (fromContentRoot == null) return null;

@@ -4,7 +4,9 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 
@@ -19,12 +21,15 @@ public final class RelativePathCalculator {
     return s1.equals(s2);
   }
 
-  public static @NlsSafe @NotNull String computeRelativePath(@NotNull String base, @NotNull String shifted) {
+  @Contract("_, _, false -> !null")
+  public static @NlsSafe @SystemIndependent String computeRelativePath(@NotNull @SystemIndependent String base,
+                                                                       @NotNull @SystemIndependent String shifted,
+                                                                       boolean relativePathsOnly) {
     if (stringEqual(shifted, base)) {
       return ".";
     }
-    String[] baseParts = split(base);
-    String[] shiftedParts = split(shifted);
+    String[] baseParts = base.split("/");
+    String[] shiftedParts = shifted.split("/");
 
     int cnt = 0;
     while (true) {
@@ -43,7 +48,7 @@ public final class RelativePathCalculator {
     int stepsDown = shiftedParts.length - cnt - 1;
 
     if (stepsDown > MAX_STEPS_DOWN) {
-      return shifted;
+      return relativePathsOnly ? null : shifted;
     }
 
     StringBuilder sb = new StringBuilder();
