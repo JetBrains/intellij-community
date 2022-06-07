@@ -100,7 +100,7 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
             val resolutionFacade = annotationEntry.getResolutionFacade()
             val annotationContext = annotationEntry.analyze(resolutionFacade)
             val annotationFqName = annotationContext[BindingContext.ANNOTATION, annotationEntry]?.fqName
-            if (annotationFqName !in OptInNames.USE_EXPERIMENTAL_FQ_NAMES) return@annotationEntryVisitor
+            if (annotationFqName !in OPT_IN_FQ_NAMES) return@annotationEntryVisitor
 
             val resolvedMarkers = mutableListOf<ResolvedMarker>()
             for (arg in annotationEntryArguments) {
@@ -154,7 +154,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
     private val foundMarkers = mutableSetOf<FqName>()
 
     // A checker instance for setter call detection
-    private val readWriteAccessChecker = ReadWriteAccessChecker.getInstance()
+    private val readWriteAccessChecker = ReadWriteAccessChecker.getInstance(resolutionFacade.project)
 
     /**
      * Check if a specific experimental marker is not used in the scope of a specific `@OptIn` annotation.
