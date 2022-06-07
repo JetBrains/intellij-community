@@ -14,26 +14,21 @@ import org.jetbrains.kotlin.utils.ifEmpty
 
 class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element is JKAnnotationList) {
-            for (annotation in element.annotations) {
-                if (annotation.classSymbol.fqName == "java.lang.SuppressWarnings") {
-                    element.annotations -= annotation
-                } else {
-                    annotation.tryToConvert()
+        if (element !is JKAnnotationList) return recurse(element)
+        element.annotations.forEach {
+            when (it.classSymbol.fqName) {
+                DEPRECATED_ANNOTATION.asString() -> it.convertDeprecatedAnnotation()
+                TARGET_ANNOTATION.asString() -> it.convertTargetAnnotation()
+                RETENTION_ANNOTATION.asString() -> it.convertRetentionAnnotation()
+                REPEATABLE_ANNOTATION.asString() -> it.convertRepeatableAnnotation()
+                "java.lang.SuppressWarnings" -> {
+                    if (!it.convertSuppressAnnotation()) {
+                        element.annotations -= it
+                    }
                 }
             }
         }
-
         return recurse(element)
-    }
-
-    private fun JKAnnotation.tryToConvert() {
-        when(classSymbol.fqName) {
-            DEPRECATED_ANNOTATION.asString() -> convertDeprecatedAnnotation()
-            TARGET_ANNOTATION.asString() -> convertTargetAnnotation()
-            RETENTION_ANNOTATION.asString() -> convertRetentionAnnotation()
-            REPEATABLE_ANNOTATION.asString() -> convertRepeatableAnnotation()
-        }
     }
 
     private fun JKAnnotation.convertDeprecatedAnnotation() {
@@ -43,11 +38,7 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
 
     private fun JKAnnotation.convertTargetAnnotation() {
         classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.Target")
-        val argument = arguments.singleOrNull() ?: return
-        val javaTargets: List<JKAnnotationMemberValue> = when (val value = argument.value) {
-            is JKKtAnnotationArrayInitializerExpression -> value.initializers
-            else -> listOf(value)
-        }
+        val javaTargets: List<JKAnnotationMemberValue> = arguments.singleOrNull()?.values() ?: return
         val kotlinTargets: List<JKFieldAccessExpression> = javaTargets.flatMap { target ->
             val javaFqName = target.fieldAccessFqName() ?: return
             val kotlinFqNames = targetMappings[javaFqName] ?: return
@@ -80,6 +71,23 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
         classSymbol = symbolProvider.provideClassSymbol(jvmRepeatable)
     }
 
+    private fun JKAnnotation.convertSuppressAnnotation(): Boolean {
+        val javaDiagnosticNames = arguments.singleOrNull()?.values() ?: return false
+        val commonDiagnosticNames = javaDiagnosticNames.filter {
+            it.safeAs<JKLiteralExpression>()?.literal?.trim('"') in commonDiagnosticNames
+        }
+        if (commonDiagnosticNames.isEmpty()) return false
+        classSymbol = symbolProvider.provideClassSymbol("kotlin.Suppress")
+        arguments = commonDiagnosticNames.map { JKAnnotationParameterImpl(it.copyTreeAndDetach()) }
+        return true
+    }
+
+    private fun JKAnnotationParameter.values(): List<JKAnnotationMemberValue> =
+        when (val value = value) {
+            is JKKtAnnotationArrayInitializerExpression -> value.initializers
+            else -> listOf(value)
+        }
+
     private fun JKAnnotationMemberValue.fieldAccessFqName(): String? =
         (safeAs<JKQualifiedExpression>()?.selector ?: this)
             .safeAs<JKFieldAccessExpression>()
@@ -87,6 +95,13 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
             ?.fqName
 
     companion object {
+        private val commonDiagnosticNames: Set<String> =
+            setOf(
+                "deprecation",
+                "unused",
+                "SpellCheckingInspection"
+            )
+
         private val targetMappings: Map<String, List<String>> =
             listOf(
                 "ANNOTATION_TYPE" to listOf("ANNOTATION_CLASS"),
