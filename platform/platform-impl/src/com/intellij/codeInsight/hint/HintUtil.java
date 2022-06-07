@@ -48,6 +48,9 @@ public final class HintUtil {
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
   public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT", new JBColor(0xb5d0fb, 0x376c89));
   public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", ERROR_COLOR);
+  /**
+   * Border color for tooltips with {@link #INFORMATION_COLOR_KEY}, {@link #QUESTION_COLOR_KEY} and {@link #ERROR_COLOR_KEY}
+   */
   public static final ColorKey HINT_BORDER_COLOR_KEY = ColorKey.createColorKey("HINT_BORDER", new JBColor(0xC9CCD6, 0x5A5D63));
 
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();

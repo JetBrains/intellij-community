@@ -1163,6 +1163,9 @@ public final class JBUI {
         return JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
       }
 
+      /**
+       * Border color for tooltips except information/question/error tooltips (see HintUtil#HINT_BORDER_COLOR_KEY)
+       */
       public static @NotNull Color borderColor() {
         return JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
       }
