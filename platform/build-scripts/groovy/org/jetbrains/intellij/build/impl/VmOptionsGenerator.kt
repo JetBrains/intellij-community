@@ -26,7 +26,7 @@ object VmOptionsGenerator {
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",
-    "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend", // temporary workaround for crashes in G1 on M1
+    "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend", // temporary workaround for crashes in G1 on M1 (JBR-4509)
     "-Dkotlinx.coroutines.debug=off")
 
   private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
