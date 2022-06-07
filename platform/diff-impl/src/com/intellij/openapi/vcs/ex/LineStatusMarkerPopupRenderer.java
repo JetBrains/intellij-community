@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -252,7 +253,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   public class ShowLineStatusRangeDiffAction extends RangeMarkerAction implements LightEditCompatible {
     public ShowLineStatusRangeDiffAction(@NotNull Editor editor, @NotNull Range range) {
-      super(editor, range, IdeActions.ACTION_SHOW_DIFF_COMMON);
+      super(editor, range, "Vcs.ShowDiffChangedLines");
+      setShortcutSet(new CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Vcs.ShowDiffChangedLines"),
+                                              KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_DIFF_COMMON)));
     }
 
     @Override

@@ -39,7 +39,7 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     if (tracker == null || !tracker.isValid() || !tracker.isAvailableAt(editor) || !isEnabled(tracker, editor)) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
@@ -63,7 +63,7 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
     Integer selectedOffset = e.getData(SELECTED_OFFSET_KEY);
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     assert tracker != null;
 
     Range range = null;
