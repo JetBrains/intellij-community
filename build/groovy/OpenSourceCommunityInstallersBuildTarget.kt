@@ -10,12 +10,15 @@ object OpenSourceCommunityInstallersBuildTarget {
     val options = BuildOptions().apply {
       // we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
       buildNumber = null
+
+      // do not bother external users about clean/incremental
+      // just remove out/ directory for clean build
+      incrementalCompilation = true
+      useCompiledClassesFromProjectOutput = false
     }
 
     val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(javaClass), options)
     BuildTasks.create(context).compileProjectAndTests(listOf("intellij.platform.jps.build"))
-    // required because buildDistributions will trigger compilation of production modules
-    context.options.incrementalCompilation = true
     buildDistributions(context)
     spanBuilder("Build standalone JPS").useWithScope {
       val jpsArtifactDir = context.paths.artifactDir.resolve("jps")
