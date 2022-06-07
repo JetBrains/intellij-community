@@ -16,6 +16,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
 
   @Override
   public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
-    PsiElement element = infos == null ? null : getElementToSliceOn(infos);
+    PsiElement element = ContainerUtil.isEmpty(infos) ? null : getElementToSliceOn(infos);
     if (myBrowser instanceof Disposable) {
       Disposer.dispose((Disposable)myBrowser);
       myBrowser = null;

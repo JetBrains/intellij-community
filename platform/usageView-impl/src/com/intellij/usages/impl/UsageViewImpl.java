@@ -1544,7 +1544,7 @@ public class UsageViewImpl implements UsageViewEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCurrentUsageContextPanel != null) {
       try {
-        myCurrentUsageContextPanel.updateLayout(getSelectedUsageInfos(), this);
+        myCurrentUsageContextPanel.updateLayout(ContainerUtil.notNullize(getSelectedUsageInfos()), this);
       }
       catch (IndexNotReadyException ignore) {
       }

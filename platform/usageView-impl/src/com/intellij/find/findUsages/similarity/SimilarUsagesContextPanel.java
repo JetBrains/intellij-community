@@ -25,6 +25,7 @@ import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ public class SimilarUsagesContextPanel extends UsageContextPanelBase {
     }
     JBPanelWithEmptyText mainPanel = new JBPanelWithEmptyText();
     add(mainPanel);
-    if (infos == null || infos.size() == 0) return;
+    if (ContainerUtil.isEmpty(infos)) return;
     UsageInfo info = infos.get(0);
     Ref<PsiElement> psiElementRef = new Ref<>();
     ReadAction.nonBlocking(new RunnableCallable(() -> psiElementRef.set(info.getElement()))).finishOnUiThread(
