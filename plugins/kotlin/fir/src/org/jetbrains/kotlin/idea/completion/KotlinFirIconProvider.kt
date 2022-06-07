@@ -38,7 +38,7 @@ internal object KotlinFirIconProvider {
 
             return when (symbol.classKind) {
                 KtClassKind.CLASS -> if (isAbstract) KotlinIcons.ABSTRACT_CLASS else KotlinIcons.CLASS
-                KtClassKind.ENUM_CLASS, KtClassKind.ENUM_ENTRY -> KotlinIcons.ENUM
+                KtClassKind.ENUM_CLASS -> KotlinIcons.ENUM
                 KtClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
                 KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
                 KtClassKind.INTERFACE -> KotlinIcons.INTERFACE

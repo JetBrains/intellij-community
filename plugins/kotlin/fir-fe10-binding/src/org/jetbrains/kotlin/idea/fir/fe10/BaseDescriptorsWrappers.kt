@@ -69,7 +69,6 @@ private fun KtClassKind.toDescriptorKlassKind(): ClassKind =
     when (this) {
         KtClassKind.CLASS -> ClassKind.CLASS
         KtClassKind.ENUM_CLASS -> ClassKind.ENUM_CLASS
-        KtClassKind.ENUM_ENTRY -> ClassKind.ENUM_ENTRY
         KtClassKind.ANNOTATION_CLASS -> ClassKind.ANNOTATION_CLASS
         KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.ANONYMOUS_OBJECT -> ClassKind.OBJECT
         KtClassKind.INTERFACE -> ClassKind.INTERFACE

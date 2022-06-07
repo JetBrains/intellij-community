@@ -96,7 +96,6 @@ internal class FirAnnotationCompletionContributor(
         is KtNamedClassOrObjectSymbol -> when (classifierSymbol.classKind) {
             KtClassKind.ANNOTATION_CLASS -> true
             KtClassKind.ENUM_CLASS -> false
-            KtClassKind.ENUM_ENTRY -> false
             KtClassKind.ANONYMOUS_OBJECT -> false
             KtClassKind.CLASS, KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT, KtClassKind.INTERFACE -> {
                 // TODO show class if nested classifier is annotation class
