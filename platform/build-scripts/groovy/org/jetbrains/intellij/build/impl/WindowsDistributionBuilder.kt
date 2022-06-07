@@ -278,12 +278,10 @@ internal class WindowsDistributionBuilder(
       val inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/WinLauncher.exe"
       val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
       val classpath = ArrayList<String>()
-      classpath.add("$communityHome/build/lib/launcher-generator.jar")
-      listOf("Guava", "commons-imaging").forEach {
-        for (file in context.project.libraryCollection.findLibrary(it)!!.getPaths(JpsOrderRootType.COMPILED)) {
-          classpath.add(file.toString())
-        }
-      }
+
+      val generatorClasspath = context.getModuleRuntimeClasspath(module = context.findRequiredModule("intellij.tools.launcherGenerator"),
+                                                                 forTests = false)
+      classpath.addAll(generatorClasspath)
 
       sequenceOf(context.findApplicationInfoModule(), context.findRequiredModule("intellij.platform.icons"))
         .flatMap { it.sourceRoots }
@@ -295,7 +293,6 @@ internal class WindowsDistributionBuilder(
         classpath.add(p.toString())
       }
       classpath.add(icoFilesDirectory.toString())
-      classpath.add(context.getModuleOutputDir(context.findRequiredModule("intellij.platform.util.jdom")).toString())
 
       runJava(
         context = context,
