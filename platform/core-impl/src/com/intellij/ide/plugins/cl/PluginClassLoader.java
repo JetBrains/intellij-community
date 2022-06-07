@@ -374,7 +374,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
                                                (className.startsWith("kotlin.reflect.") &&
-                                                className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
+                                                className.indexOf('.', 15 /* "kotlin.reflect.".length */) < 0) ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
