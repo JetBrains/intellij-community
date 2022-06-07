@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.createTask
 import com.intellij.diagnostic.telemetry.use
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
@@ -422,7 +423,7 @@ private fun buildMacZip(targetFile: Path,
       val entryCustomizer: EntryCustomizer = { entry, file, relativeFile ->
         when {
           patterns.any { it.matches(relativeFile) } -> entry.unixMode = executableFileUnixMode
-          PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions(file) -> {
+          SystemInfo.isUnix && PosixFilePermission.OWNER_EXECUTE in Files.getPosixFilePermissions (file) -> {
             errorsConsumer("Executable permissions of $relativeFile won't be set in $targetFile. " +
                            "Please make sure that executable file patterns are updated.")
           }
