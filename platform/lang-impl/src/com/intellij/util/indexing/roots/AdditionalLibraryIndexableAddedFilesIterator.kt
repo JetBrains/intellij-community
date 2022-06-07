@@ -11,9 +11,16 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import org.jetbrains.annotations.Nls
 
 internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibraryName: @Nls String?,
-                                                            val rootsToIndex: Collection<VirtualFile>,
+                                                            private val rootsToIndex: Collection<VirtualFile>,
                                                             val libraryNameForDebug: String) : IndexableFilesIterator {
-  override fun getDebugName(): String = "Additional library change reindexing iterator for ${presentableLibraryName ?: "unknown"} library; $libraryNameForDebug"
+  override fun getDebugName(): String = "${libDebugDescription()} ${rootsDebugDescription()} roots"
+
+  private fun libDebugDescription() = "Additional library change reindexing iterator for ${presentableLibraryName ?: libraryNameForDebug} library"
+  private fun rootsDebugDescription(): String {
+    if (rootsToIndex.isEmpty()) return "empty"
+    if (rootsToIndex.size > 5) return "${rootsToIndex.size}"
+    return rootsToIndex.joinToString()
+  }
 
   override fun getIndexingProgressText(): String = presentableLibraryName?.let {
     IndexingBundle.message("progress.text.additional.library.indexing.added.files", it)
