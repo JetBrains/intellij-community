@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.types.DefinitelyNotNullType
 
 class KotlinChangeSignatureConflictSearcher(
     private val originalInfo: ChangeInfo,
@@ -234,7 +235,10 @@ class KotlinChangeSignatureConflictSearcher(
             val psiFactory = KtPsiFactory(callable.project)
             val tempFile = (callable.containingFile as KtFile).createTempCopy()
             val functionWithReceiver = tempFile.findElementAt(callable.textOffset)?.getNonStrictParentOfType<KtNamedFunction>() ?: return
-            val receiverTypeRef = psiFactory.createType(newReceiverInfo.currentTypeInfo.render())
+            val receiverTypeText = newReceiverInfo.currentTypeInfo.let {
+                if (it.type is DefinitelyNotNullType) "(${it.render()})" else it.render()
+            }
+            val receiverTypeRef = psiFactory.createType(receiverTypeText)
             functionWithReceiver.setReceiverTypeReference(receiverTypeRef)
             val newContext = functionWithReceiver.bodyExpression!!.analyze(BodyResolveMode.FULL)
 

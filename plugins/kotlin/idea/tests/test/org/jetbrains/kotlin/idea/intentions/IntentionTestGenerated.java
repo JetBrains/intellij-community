@@ -6819,6 +6819,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertParameterToReceiver/companionAsReceiver.kt");
         }
 
+        @TestMetadata("definitelyNotNullType.kt")
+        public void testDefinitelyNotNullType() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/definitelyNotNullType.kt");
+        }
+
         @TestMetadata("explicitThis.kt")
         public void testExplicitThis() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/explicitThis.kt");
