@@ -176,7 +176,7 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
           }
           expectedExecutables
             .filter { OWNER_EXECUTE !in PosixFilePermissionsUtil.fromUnixMode(it.mode) }
-            .map { "${it.name}: mode is ${it.mode}" }
+            .map { "${it.name}: mode is 0${Integer.toOctalString(it.mode)}" }
         }
     }
     else {
@@ -196,10 +196,10 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
         }
         expectedExecutables
           .filter { entry -> OWNER_EXECUTE !in PosixFilePermissionsUtil.fromUnixMode(entry.unixMode) }
-          .map { "${it.name}: mode is ${it.unixMode}" }
+          .map { "${it.name}: mode is 0${Integer.toOctalString(it.unixMode)}" }
       }
     }
-    if (!entries.isEmpty()) {
+    if (entries.isNotEmpty()) {
       context.messages.error("Missing executable permissions in $distribution for:\n" + entries.joinToString(separator = "\n"))
     }
   }
