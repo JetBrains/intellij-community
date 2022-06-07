@@ -19,7 +19,7 @@
   <projectListeners>
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
-      topic="com.intellij.openapi.roots.ModuleRootListener"/>
+      topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>

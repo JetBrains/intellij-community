@@ -22,8 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -36,6 +34,12 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -59,6 +63,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public final class PyInterpreterInspection extends PyInspection {
 
@@ -307,12 +312,7 @@ public final class PyInterpreterInspection extends PyInspection {
       return envRoot == null ? null : PathUtil.getFileName(envRoot.getPath());
     }
 
-    private static class CacheCleaner implements ModuleRootListener, ProjectJdkTable.Listener {
-      @Override
-      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
-        invalidate();
-      }
-
+    private static class CacheCleaner implements WorkspaceModelChangeListener, ProjectJdkTable.Listener {
       @Override
       public void jdkAdded(@NotNull Sdk jdk) {
         invalidate();
@@ -328,7 +328,46 @@ public final class PyInterpreterInspection extends PyInspection {
         invalidate();
       }
 
-      private void invalidate() {
+      /**
+       * Invalidates the cache for the modules that were changed in any way. Especially interesting are
+       * content roots changes and current Python interpreter changes.
+       */
+      @Override
+      public void beforeChanged(@NotNull VersionedStorageChange event) {
+        var iterator = event.getAllChanges().iterator();
+        while (iterator.hasNext()) {
+          EntityChange<?> change = iterator.next();
+
+          @Nullable Module module = null;
+          if (change instanceof EntityChange.Replaced) {
+            var oldEntity = ((EntityChange.Replaced<?>)change).getOldEntity();
+            if (oldEntity instanceof ModuleEntity) {
+              ModuleEntity newEntity = (ModuleEntity)((EntityChange.Replaced<?>)change).getNewEntity();
+              var oldSdks = ((ModuleEntity)oldEntity).getDependencies().stream()
+                .filter(d -> d instanceof ModuleDependencyItem.SdkDependency)
+                .collect(Collectors.toSet());
+              var newSdks = newEntity.getDependencies().stream()
+                .filter(d -> d instanceof ModuleDependencyItem.SdkDependency)
+                .collect(Collectors.toSet());
+              if (!oldSdks.equals(newSdks)) {
+                module = ModuleEntityUtils.findModule(newEntity, event.getStorageBefore());
+              }
+            }
+          }
+          else if (change instanceof EntityChange.Removed) {
+            var entity = ((EntityChange.Removed<?>)change).getEntity();
+            if (entity instanceof ModuleEntity) {
+              module = ModuleEntityUtils.findModule((ModuleEntity)entity, event.getStorageBefore());
+            }
+          }
+
+          if (module != null) {
+            DETECTED_ASSOCIATED_ENVS_CACHE.synchronous().invalidate(module);
+          }
+        }
+      }
+
+      private static void invalidate() {
         DETECTED_ASSOCIATED_ENVS_CACHE.synchronous().invalidateAll();
       }
     }
