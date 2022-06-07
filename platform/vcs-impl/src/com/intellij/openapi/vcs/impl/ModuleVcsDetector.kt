@@ -136,27 +136,28 @@ internal class ModuleVcsDetector(private val project: Project) {
         when (change) {
           is EntityChange.Removed<ContentRootEntity> -> {
             removedUrls.add(change.entity.url)
-            addedUrls.remove(change.entity.url)
           }
           is EntityChange.Added<ContentRootEntity> -> {
             addedUrls.add(change.entity.url)
-            removedUrls.remove(change.entity.url)
           }
           is EntityChange.Replaced<ContentRootEntity> -> {
             if (change.oldEntity.url != change.newEntity.url) {
               removedUrls.add(change.oldEntity.url)
-              addedUrls.remove(change.oldEntity.url)
-
               addedUrls.add(change.newEntity.url)
-              removedUrls.remove(change.newEntity.url)
             }
           }
         }
       }
 
       val fileManager = VirtualFileManager.getInstance()
-      val removed = removedUrls.mapNotNull { fileManager.findFileByUrl(it.url) }.filter { it.isDirectory }
-      val added = addedUrls.mapNotNull { fileManager.findFileByUrl(it.url) }.filter { it.isDirectory }
+      val removed = removedUrls
+        .filter { !addedUrls.contains(it) } // do not process 'modifications' of any kind
+        .mapNotNull { fileManager.findFileByUrl(it.url) }
+        .filter { it.isDirectory }
+      val added = addedUrls
+        .filter { !removedUrls.contains(it) } // do not process 'modifications' of any kind
+        .mapNotNull { fileManager.findFileByUrl(it.url) }
+        .filter { it.isDirectory }
 
       if (added.isNotEmpty() && vcsManager.haveDefaultMapping() == null) {
         synchronized(dirtyContentRoots) {
