@@ -163,6 +163,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
 
   override fun mouseClicked(event: EditorMouseEvent) {
     if (event.isUnexpected) return
+    event.editor.project?.let { if (it != project) return }
     val manager = BookmarksManager.getInstance(project) ?: return
     val bookmark = createBookmark(event.editor, event.logicalPosition.line) ?: return
     manager.getType(bookmark)?.let { manager.remove(bookmark) } ?: manager.add(bookmark, BookmarkType.DEFAULT)
