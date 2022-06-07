@@ -311,9 +311,8 @@ final class ActionUpdater {
   @NotNull
   private CancellablePromise<List<AnAction>> doExpandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     ClientId clientId = ClientId.getCurrent();
-    ComponentManager disposableParent =
-      myProject != null ? ClientSessionsManager.getProjectSession(myProject, clientId) : ClientSessionsManager.getAppSession(clientId);
-    LOG.assertTrue(disposableParent != null);
+    ComponentManager disposableParent = Objects.requireNonNull(
+      myProject != null ? ClientSessionsManager.getProjectSession(myProject, clientId) : ClientSessionsManager.getAppSession(clientId));
 
     ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
