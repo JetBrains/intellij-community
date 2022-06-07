@@ -120,6 +120,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 
   @Override
+  public String toString() {
+    return getDelegate().toString();
+  }
+
+  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isDisposed()) {
       throw new IllegalStateException("Must not dispose default project");
