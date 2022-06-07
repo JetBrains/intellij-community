@@ -64,7 +64,12 @@ public class AssociationsGroup extends ActionGroup {
         e.getPresentation().setEnabled(isEnabled(e));
     }
 
-    private static boolean isEnabled(@Nullable AnActionEvent e) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static boolean isEnabled(@Nullable AnActionEvent e) {
         if (e == null) return false;
         final PsiFile psiFile = getPsiFile(e);
         if (psiFile == null) return false;
