@@ -11,13 +11,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,39 +129,19 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     return myOrigin;
   }
 
-  private class MyDataContext extends UserDataHolderBase implements DataContext {
-    private final DataContext myDelegate;
+  private class MyDataContext extends DataContextWrapper {
 
     MyDataContext(DataContext delegate) {
-      myDelegate = delegate;
+      super(delegate);
     }
 
     @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-      if (myDelegate instanceof UserDataHolder) {
-        return ((UserDataHolder)myDelegate).getUserData(key);
-      }
-      return super.getUserData(key);
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      if (myDelegate instanceof UserDataHolder) {
-        ((UserDataHolder)myDelegate).putUserData(key, value);
-      }
-      else {
-        super.putUserData(key, value);
-      }
-    }
-
-    @Nullable
-    @Override
-    public synchronized Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getRawCustomData(@NotNull String dataId) {
       if (Location.DATA_KEY.is(dataId)) {
         PsiElement element = myElement.getElement();
         return element != null && element.isValid() ? new PsiLocation<>(element) : null;
       }
-      return myDelegate.getData(dataId);
+      return null;
     }
   }
 }
