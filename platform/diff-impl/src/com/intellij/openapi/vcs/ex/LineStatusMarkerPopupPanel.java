@@ -207,13 +207,6 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
     });
 
-    DataManager.registerDataProvider(field, data -> {
-      if (CommonDataKeys.HOST_EDITOR.is(data)) {
-        return field.getEditor();
-      }
-      return null;
-    });
-
     return field;
   }
 
