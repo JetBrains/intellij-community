@@ -87,7 +87,7 @@ private fun checkFileExists(path: String?,
       installationArchives.none { archiveContainsEntry(it.first, joinPaths(it.second, pathFromProductJson)) }) {
     throw RuntimeException("Incorrect path to $description '$path' in $relativePathToProductJson/product-info.json: " +
                            "the specified file doesn't exist in directories $installationDirectories " +
-                           "and archives ${installationArchives.map { "$it.first/$it.second" }}")
+                           "and archives ${installationArchives.map { "${it.first}/${it.second}" }}")
   }
 }
 
