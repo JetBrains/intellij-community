@@ -291,7 +291,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     private fun getActionEvent(action: AnAction): TestActionEvent {
         val context = TestDataProvider(project)
-        return TestActionEvent(context, action)
+        return TestActionEvent(context::getData, action)
     }
 
     protected fun doTestScratchText(): String {
