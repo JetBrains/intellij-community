@@ -700,7 +700,9 @@ public class VfsUtilCore {
   }
 
   /**
-   * This comparator performs root traversal to avoid calling {@link VirtualFile#getPath()} which creates too many string objects
+   * Compares 2 virtual files by paths.
+   * <p/>
+   * This comparator performs root traversal to avoid calling {@link VirtualFile#getPath()} which creates too many string objects.
    */
   public static int compare(@Nullable VirtualFile v1, @Nullable VirtualFile v2) {
     if (!Objects.equals(v1, v2)) {
