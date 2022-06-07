@@ -68,7 +68,6 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private final int myDataKeysCount;
 
   PreCachedDataContext(@Nullable Component component) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myComponentRef = new ComponentRef(component);
     myMissedKeysIfFrozen = null;
     myUserData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
@@ -79,6 +78,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       return;
     }
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       int count = ActivityTracker.getInstance().getCount();
       if (ourPrevMapEventCount != count) {
