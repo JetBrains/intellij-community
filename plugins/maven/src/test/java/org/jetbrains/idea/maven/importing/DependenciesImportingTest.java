@@ -2545,7 +2545,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>" +
                           "<packaging>pom</packaging>" +
-                          "" +
+
                           "  <build>" +
                           "    <plugins>" +
                           "      <plugin>" +
