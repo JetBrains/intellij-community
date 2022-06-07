@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
-import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_6
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -19,7 +19,7 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
                 if (annotation.classSymbol.fqName == "java.lang.SuppressWarnings") {
                     element.annotations -= annotation
                 } else {
-                    processAnnotation(annotation)
+                    annotation.tryToConvert()
                 }
             }
         }
@@ -27,59 +27,47 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
         return recurse(element)
     }
 
-    private fun processAnnotation(annotation: JKAnnotation) {
-        with(annotation) {
-            tryConvertDeprecatedAnnotation() || tryConvertTargetAnnotation() || tryConvertRepeatableAnnotation()
+    private fun JKAnnotation.tryToConvert() {
+        when(classSymbol.fqName) {
+            DEPRECATED_ANNOTATION.asString() -> convertDeprecatedAnnotation()
+            TARGET_ANNOTATION.asString() -> convertTargetAnnotation()
+            REPEATABLE_ANNOTATION.asString() -> convertRepeatableAnnotation()
         }
     }
 
-    private fun JKAnnotation.tryConvertDeprecatedAnnotation(): Boolean {
-        if (classSymbol.fqName == "java.lang.Deprecated") {
-            classSymbol = symbolProvider.provideClassSymbol("kotlin.Deprecated")
-            arguments = listOf(JKAnnotationParameterImpl(JKLiteralExpression("\"\"", JKLiteralExpression.LiteralType.STRING)))
-            return true
-        }
-
-        return false
+    private fun JKAnnotation.convertDeprecatedAnnotation() {
+        classSymbol = symbolProvider.provideClassSymbol("kotlin.Deprecated")
+        arguments = listOf(JKAnnotationParameterImpl(JKLiteralExpression("\"\"", JKLiteralExpression.LiteralType.STRING)))
     }
 
-    private fun JKAnnotation.tryConvertTargetAnnotation(): Boolean {
-        if (classSymbol.fqName != JvmAnnotationNames.TARGET_ANNOTATION.asString()) {
-            return false
-        }
+    private fun JKAnnotation.convertTargetAnnotation() {
         classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.Target")
-        val argument = arguments.singleOrNull() ?: return true
+        val argument = arguments.singleOrNull() ?: return
         val javaTargets: List<JKAnnotationMemberValue> = when (val value = argument.value) {
             is JKKtAnnotationArrayInitializerExpression -> value.initializers
             else -> listOf(value)
         }
         val kotlinTargets: List<JKFieldAccessExpression> = javaTargets.flatMap { target ->
-            val javaFqName = target.fieldAccessFqName() ?: return true
-            val kotlinFqNames = targetMappings[javaFqName] ?: return true
+            val javaFqName = target.fieldAccessFqName() ?: return
+            val kotlinFqNames = targetMappings[javaFqName] ?: return
             kotlinFqNames.map { JKFieldAccessExpression(symbolProvider.provideFieldSymbol(it)) }
         }
         arguments = kotlinTargets.distinctBy { it.identifier.fqName }.map { JKAnnotationParameterImpl(it) }
-        return true
     }
 
-    private fun JKAnnotation.tryConvertRepeatableAnnotation(): Boolean {
-        if (classSymbol.fqName == JvmAnnotationNames.REPEATABLE_ANNOTATION.asString() && moduleApiVersion >= ApiVersion.KOTLIN_1_6) {
-            val jvmRepeatable = "kotlin.jvm.JvmRepeatable"
-            KotlinTopLevelTypeAliasFqNameIndex
-                .get(
-                    jvmRepeatable,
-                     context.project,
-                     context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
-                         ?: ProjectScope.getLibrariesScope(context.project)
-                ).ifEmpty {
-                return false
+    private fun JKAnnotation.convertRepeatableAnnotation() {
+        if (moduleApiVersion < KOTLIN_1_6) return
+        val jvmRepeatable = "kotlin.jvm.JvmRepeatable"
+        KotlinTopLevelTypeAliasFqNameIndex
+            .get(
+                jvmRepeatable,
+                context.project,
+                context.converter.targetModule?.let { GlobalSearchScope.moduleWithLibrariesScope(it) }
+                    ?: ProjectScope.getLibrariesScope(context.project)
+            ).ifEmpty {
+                return
             }
-
-            classSymbol = symbolProvider.provideClassSymbol(jvmRepeatable)
-            return true
-        }
-
-        return false
+        classSymbol = symbolProvider.provideClassSymbol(jvmRepeatable)
     }
 
     private fun JKAnnotationMemberValue.fieldAccessFqName(): String? =
@@ -88,9 +76,8 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
             ?.identifier
             ?.fqName
 
-
     companion object {
-        private val targetMappings =
+        private val targetMappings: Map<String, List<String>> =
             listOf(
                 "ANNOTATION_TYPE" to listOf("ANNOTATION_CLASS"),
                 "CONSTRUCTOR" to listOf("CONSTRUCTOR"),
