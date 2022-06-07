@@ -93,6 +93,7 @@ data class IDERunContext(
     deleteSavedAppStateOnMac()
     val paths = testContext.paths
     val logsDir = paths.logsDir.createDirectories()
+    paths.snapshotsDir.createDirectories()
     val jvmCrashLogDirectory = logsDir.resolve("jvm-crash").createDirectories()
     val heapDumpOnOomDirectory = logsDir.resolve("heap-dump").createDirectories()
     val disabledPlugins = paths.configDir.resolve("disabled_plugins.txt")
