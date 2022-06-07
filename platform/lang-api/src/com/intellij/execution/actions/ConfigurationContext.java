@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +28,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance(ConfigurationContext.class);
   public static final Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
 
-  private final Location<PsiElement> myLocation;
+  private final Location<? extends PsiElement> myLocation;
   private final Editor myEditor;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized;
@@ -149,34 +149,31 @@ public class ConfigurationContext {
     myModule = ModuleUtilCore.findModuleForPsiElement(element);
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
-    myDataContext = this::getDefaultData;
+    myDataContext = getDefaultDataContext();
     myEditor = null;
     myPlace = null;
   }
 
-  private ConfigurationContext(@NotNull Location location) {
-    //noinspection unchecked
+  private ConfigurationContext(@NotNull Location<? extends PsiElement> location) {
     myLocation = location;
     myModule = location.getModule();
     myEditor = null;
     myRuntimeConfiguration = null;
-    myDataContext = this::getDefaultData;
+    myDataContext = getDefaultDataContext();
     myPlace = null;
   }
 
-  private Object getDefaultData(String dataId) {
+  private @Nullable Object getDefaultData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return myLocation.getProject();
     if (PlatformCoreDataKeys.MODULE.is(dataId)) return myModule;
     if (Location.DATA_KEY.is(dataId)) return myLocation;
+    if (CommonDataKeys.EDITOR.is(dataId)) return myEditor;
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return myLocation.getPsiElement();
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) return ContainerUtil.ar(myLocation.getPsiElement());
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return PsiUtilCore.getVirtualFile(myLocation.getPsiElement());
-    if (CommonDataKeys.EDITOR.is(dataId)) return myEditor; 
     return null;
   }
 
-  public DataContext getDefaultDataContext() {
-    return this::getDefaultData; 
+  public @NotNull DataContext getDefaultDataContext() {
+    return IdeUiService.getInstance().createCustomizedDataContext(DataContext.EMPTY_CONTEXT, this::getDefaultData);
   }
   
   public boolean containsMultipleSelection() {
