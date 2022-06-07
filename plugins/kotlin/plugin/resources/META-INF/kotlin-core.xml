@@ -50,9 +50,6 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
 
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
-            serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner" preload="true"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupService"/>
@@ -509,6 +506,9 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportImpl"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
+                    serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
 
     <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesProvider"/>
 
