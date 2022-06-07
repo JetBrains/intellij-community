@@ -316,7 +316,9 @@ data class IDETestContext(
       launchName = launchName,
       expectedKill = expectedKill,
       collectNativeThreads = collectNativeThreads
-    ).runIDE()
+    )
+      .addVMOptionsPatch(patchVMOptions)
+      .runIDE()
 
     if (isReportPublishingEnabled) publishers.forEach {
       it.publish(ideRunResult)
@@ -487,7 +489,7 @@ data class IDETestContext(
                       artifactName: String = source.fileName.toString()) = ciServer.publishArtifact(source, artifactPath, artifactName)
 
   fun withReportPublishing(isEnabled: Boolean): IDETestContext {
-    isReportPublishingEnabled = isEnabled;
-    return this;
+    isReportPublishingEnabled = isEnabled
+    return this
   }
 }
