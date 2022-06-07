@@ -10,7 +10,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.BuildUtils.assertUnixLineEndings
 import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProductPrefix
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -122,14 +121,13 @@ class LinuxDistributionBuilder(private val context: BuildContext,
   private fun generateReadme(unixDistPath: Path) {
     val fullName = context.applicationInfo.productName
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
-    assertUnixLineEndings(sourceFile)
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
     substituteTemplatePlaceholders(sourceFile, targetFile, "@@", listOf(
       Pair("product_full", fullName),
       Pair("product", context.productProperties.baseFileName),
       Pair("product_vendor", context.applicationInfo.shortCompanyName),
       Pair("system_selector", context.systemSelector)
-    ))
+    ), convertToUnixLineEndings = true)
   }
 
   override fun generateExecutableFilesPatterns(includeJre: Boolean): List<String> {
@@ -430,32 +428,25 @@ private fun copyScript(sourceFile: Path,
                        classPath: String,
                        scriptName: String,
                        context: BuildContext) {
-  val sourceFileLf = Files.createTempFile(context.paths.tempDir, sourceFile.fileName.toString(), "")
-  try {
-    // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
-    // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
-    Files.writeString(sourceFileLf, Files.readString(sourceFile).replace("\r", ""))
-
-    substituteTemplatePlaceholders(
-      inputFile = sourceFileLf,
-      outputFile = targetFile,
-      placeholder = "__",
-      values = listOf(
-        Pair("product_full", context.applicationInfo.productName),
-        Pair("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
-        Pair("product_vendor", context.applicationInfo.shortCompanyName),
-        Pair("product_code", context.applicationInfo.productCode),
-        Pair("vm_options", vmOptionsFileName),
-        Pair("system_selector", context.systemSelector),
-        Pair("ide_jvm_args", additionalJvmArgs),
-        Pair("ide_default_xmx", defaultXmxParameter.trim()),
-        Pair("class_path", classPath),
-        Pair("script_name", scriptName),
-      ),
-      mustUseAllPlaceholders = false
-    )
-  }
-  finally {
-    Files.delete(sourceFileLf)
-  }
+  // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
+  // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
+  substituteTemplatePlaceholders(
+    inputFile = sourceFile,
+    outputFile = targetFile,
+    placeholder = "__",
+    values = listOf(
+      Pair("product_full", context.applicationInfo.productName),
+      Pair("product_uc", context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)),
+      Pair("product_vendor", context.applicationInfo.shortCompanyName),
+      Pair("product_code", context.applicationInfo.productCode),
+      Pair("vm_options", vmOptionsFileName),
+      Pair("system_selector", context.systemSelector),
+      Pair("ide_jvm_args", additionalJvmArgs),
+      Pair("ide_default_xmx", defaultXmxParameter.trim()),
+      Pair("class_path", classPath),
+      Pair("script_name", scriptName),
+    ),
+    mustUseAllPlaceholders = false,
+    convertToUnixLineEndings = true,
+  )
 }

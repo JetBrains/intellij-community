@@ -145,8 +145,13 @@ fun substituteTemplatePlaceholders(inputFile: Path,
                                    outputFile: Path,
                                    placeholder: String,
                                    values: List<Pair<String, String>>,
-                                   mustUseAllPlaceholders: Boolean = true) {
+                                   mustUseAllPlaceholders: Boolean = true,
+                                   convertToUnixLineEndings: Boolean = false) {
   var result = Files.readString(inputFile)
+
+  if (convertToUnixLineEndings) {
+    result = result.replace("\r", "")
+  }
 
   val missingPlaceholders = mutableListOf<String>()
   for ((name, value) in values) {

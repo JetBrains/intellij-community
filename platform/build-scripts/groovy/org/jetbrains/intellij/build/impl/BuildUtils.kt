@@ -19,28 +19,6 @@ object BuildUtils {
   }
 
   @JvmStatic
-  fun replaceAll(file: Path?, marker: String, vararg replacements: String) {
-    var text = Files.readString(file)
-    var i = 0
-    while (i < replacements.size) {
-      text = text.replace(marker + replacements[i] + marker, replacements[i + 1])
-      i += 2
-    }
-    Files.writeString(file, text)
-  }
-
-  @JvmStatic
-  fun replaceAll(text: String, marker: String, vararg replacements: String): String {
-    var result = text
-    var i = 0
-    while (i < replacements.size) {
-      result = result.replace(marker + replacements[i] + marker, replacements[i + 1])
-      i += 2
-    }
-    return result
-  }
-
-  @JvmStatic
   @JvmOverloads
   fun copyAndPatchFile(sourcePath: Path,
                        targetPath: Path,
@@ -53,11 +31,6 @@ object BuildUtils {
       content = StringUtilRt.convertLineSeparators(content, lineSeparator)
     }
     Files.writeString(targetPath, content)
-  }
-
-  @JvmStatic
-  fun assertUnixLineEndings(file: Path) {
-    check(!Files.readString(file).contains('\r')) { "Text file must not contain \r (CR or CRLF) line endings: $file" }
   }
 
   //if the build script is running under Ant or AntBuilder it may replace the standard System.out
