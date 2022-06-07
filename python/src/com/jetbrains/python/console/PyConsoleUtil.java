@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -230,27 +231,12 @@ public final class PyConsoleUtil {
     return new ScrollToTheEndToolbarAction(editor);
   }
 
-  private static class ConsoleDataContext implements DataContext {
-    private final DataContext myOriginalDataContext;
-    private final PythonConsoleView myConsoleView;
-
-    ConsoleDataContext(DataContext dataContext, PythonConsoleView consoleView) {
-      myOriginalDataContext = dataContext;
-      myConsoleView = consoleView;
-    }
-
-    @Nullable
-    @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.EDITOR.is(dataId)) {
-        return myConsoleView.getEditor();
-      }
-      return myOriginalDataContext.getData(dataId);
-    }
-  }
-
-  private static AnActionEvent createActionEvent(@NotNull AnActionEvent e, PythonConsoleView consoleView) {
-    return e.withDataContext(new ConsoleDataContext(e.getDataContext(), consoleView));
+  private static @NotNull AnActionEvent createActionEvent(@NotNull AnActionEvent e, @NotNull PythonConsoleView consoleView) {
+    DataContext dataContext = SimpleDataContext.builder()
+      .setParent(e.getDataContext())
+      .add(CommonDataKeys.EDITOR, consoleView.getEditor())
+      .build();
+    return e.withDataContext(dataContext);
   }
 
   public static AnAction createPrintAction(PythonConsoleView consoleView) {
