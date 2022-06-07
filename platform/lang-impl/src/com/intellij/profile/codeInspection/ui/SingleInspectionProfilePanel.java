@@ -1117,7 +1117,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     northPanel.add(myProfileFilter, constraint.next().weightx(0.5).fillCellHorizontally().anchor(GridBagConstraints.BASELINE_TRAILING));
     northPanel.add(createTreeToolbarPanel().getComponent(), constraint.next().weightx(1.0).anchor(GridBagConstraints.WEST));
 
-    JBSplitter mainSplitter = new JBSplitter(false, DIVIDER_PROPORTION_DEFAULT, 0.01f, 0.99f);
+    JBSplitter mainSplitter = new JBSplitter(false, DIVIDER_PROPORTION_DEFAULT, 0.35f, 0.65f);
     mainSplitter.setSplitterProportionKey("SingleInspectionProfilePanel.VERTICAL_DIVIDER_PROPORTION");
     mainSplitter.setFirstComponent(tree);
     mainSplitter.setSecondComponent(rightSplitter);
