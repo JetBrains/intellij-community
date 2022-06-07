@@ -2,7 +2,7 @@
 
 class A<T> {
   int x() {
-    return new A<Integer>.<caret>y();
+    return new A<>.<caret>y();
   }
 
   static int y() {
