@@ -710,6 +710,7 @@ class DistributionJARsBuilder {
       val buildKeymapPluginsTask = buildKeymapPlugins(autoUploadingDir, context).fork()
       val moduleOutputPatcher = ModuleOutputPatcher()
       val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-" + context.applicationInfo.productCode)
+      NioFiles.deleteRecursively(stageDir)
       val dirToJar = ConcurrentLinkedQueue<Map.Entry<String, Path>>()
       val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
         "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"

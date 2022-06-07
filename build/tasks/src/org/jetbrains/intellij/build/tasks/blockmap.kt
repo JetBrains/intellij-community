@@ -6,6 +6,7 @@ import com.intellij.diagnostic.telemetry.use
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import io.opentelemetry.api.common.AttributeKey
+import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.compressDir
 import org.jetbrains.intellij.build.io.writeNewZip
@@ -65,7 +66,7 @@ internal fun buildBlockMap(file: Path, json: JSON) {
 
   val hashFile = fileParent.resolve("$fileName.hash.json")
   Files.newInputStream(file).use { input ->
-    Files.newOutputStream(hashFile).use { output ->
+    Files.newOutputStream(hashFile, *W_CREATE_NEW.toTypedArray()).use { output ->
       json.write(FileHash(input, algorithm), output)
     }
   }
