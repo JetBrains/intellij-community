@@ -142,9 +142,15 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
       return null;
     }
     String configName = JavaExecutionUtil.getPresentableClassName(mainClassName);
-    if (configName != null &&
-        RunManager.getInstance(getProject()).findConfigurationByTypeAndName(getType(), configName) != null) {
-      return mainClassName;
+    if (configName != null) {
+      RunnerAndConfigurationSettings configuration = RunManager.getInstance(getProject()).findConfigurationByTypeAndName(getType(), configName);
+      if (configuration != null) {
+        RunConfiguration thatConfig = configuration.getConfiguration();
+        if (thatConfig instanceof ApplicationConfiguration && 
+            !Objects.equals(((ApplicationConfiguration)thatConfig).getMainClassName(), mainClassName)) {
+          return mainClassName;
+        }
+      }
     }
     return configName;
   }
