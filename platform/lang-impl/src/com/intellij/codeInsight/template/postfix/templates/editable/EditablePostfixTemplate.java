@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -28,6 +28,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Base class for editable templates.
+ * Template data is backed by live template.
+ * It supports selecting the expression a template is applied to.
+ *
+ * @see EditablePostfixTemplateWithMultipleExpressions
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/advanced-postfix-templates.html">Advanced Postfix Templates (IntelliJ Platform Docs)</a>
+ */
 public abstract class EditablePostfixTemplate extends PostfixTemplate {
   @NotNull private final TemplateImpl myLiveTemplate;
 
@@ -123,11 +131,11 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   }
 
   /**
+   * Default implementation delegates to {@link #getElementToRemove(PsiElement)} and takes the text range of the resulting element.
+   * Override it if it's desired to remove only a part of {@code PsiElement}'s range.
+   *
    * @param element element to which the template was applied
    * @return a range to remove before inserting the template
-   *
-   * Default implementation delegates to getElementToRemove and takes the range of the resulting element.
-   * You may override it if it's desired to remove only a part of PsiElement range
    */
   @NotNull
   protected TextRange getRangeToRemove(@NotNull PsiElement element) {
