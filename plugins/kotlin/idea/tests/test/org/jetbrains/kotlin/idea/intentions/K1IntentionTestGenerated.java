@@ -6813,6 +6813,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertParameterToReceiver/companionAsReceiver.kt");
         }
 
+        @TestMetadata("definitelyNotNullType.kt")
+        public void testDefinitelyNotNullType() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/definitelyNotNullType.kt");
+        }
+
         @TestMetadata("explicitThis.kt")
         public void testExplicitThis() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/explicitThis.kt");
@@ -7469,6 +7474,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("callVariableAsFunction.kt")
         public void testCallVariableAsFunction() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/callVariableAsFunction.kt");
+        }
+
+        @TestMetadata("definitelyNotNullType.kt")
+        public void testDefinitelyNotNullType() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/definitelyNotNullType.kt");
         }
 
         @TestMetadata("explicitThisForExtension.kt")

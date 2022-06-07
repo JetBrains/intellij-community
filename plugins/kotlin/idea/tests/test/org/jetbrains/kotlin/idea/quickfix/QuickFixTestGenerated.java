@@ -11120,6 +11120,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeAbstractSuperclass.kt");
             }
 
+            @TestMetadata("changeParameterTypeDefinitelyNotNull.kt")
+            public void testChangeParameterTypeDefinitelyNotNull() throws Exception {
+                runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeDefinitelyNotNull.kt");
+            }
+
             @TestMetadata("changeParameterTypeInTrait.kt")
             public void testChangeParameterTypeInTrait() throws Exception {
                 runTest("testData/quickfix/override/nothingToOverride/changeParameterTypeInTrait.kt");
