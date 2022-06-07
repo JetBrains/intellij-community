@@ -12,14 +12,6 @@ public final class RelativePathCalculator {
   private static final int MAX_STEPS_UP = 3; // max depth of ../../../../../../ chain
   private static final int MAX_STEPS_DOWN = 4; // max depth of ./very/deep/path/to/shifted/directory/
 
-  private final String myShifted;
-  private final String myBase;
-
-  public RelativePathCalculator(@NotNull String base, @NotNull String shifted) {
-    myShifted = shifted;
-    myBase = base;
-  }
-
   private static boolean stringEqual(@NotNull String s1, @NotNull String s2) {
     if (!SystemInfo.isFileSystemCaseSensitive) {
       return s1.equalsIgnoreCase(s2);
@@ -27,12 +19,12 @@ public final class RelativePathCalculator {
     return s1.equals(s2);
   }
 
-  public @NlsSafe @NotNull String execute() {
-    if (stringEqual(myShifted, myBase)) {
+  public static @NlsSafe @NotNull String computeRelativePath(@NotNull String base, @NotNull String shifted) {
+    if (stringEqual(shifted, base)) {
       return ".";
     }
-    final String[] baseParts = split(myBase);
-    final String[] shiftedParts = split(myShifted);
+    String[] baseParts = split(base);
+    String[] shiftedParts = split(shifted);
 
     int cnt = 0;
     while (true) {
@@ -51,7 +43,7 @@ public final class RelativePathCalculator {
     int stepsDown = shiftedParts.length - cnt - 1;
 
     if (stepsDown > MAX_STEPS_DOWN) {
-      return myShifted;
+      return shifted;
     }
 
     StringBuilder sb = new StringBuilder();

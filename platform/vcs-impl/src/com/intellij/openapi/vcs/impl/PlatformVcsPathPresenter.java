@@ -28,7 +28,7 @@ public class PlatformVcsPathPresenter extends VcsPathPresenter {
   }
 
   public static @NlsSafe @NotNull String getPresentableRelativePath(@NotNull FilePath path, @NotNull FilePath originalPath) {
-    RelativePathCalculator calculator = new RelativePathCalculator(path.getPath(), originalPath.getPath());
-    return calculator.execute().replace("/", File.separator);
+    String relativePath = RelativePathCalculator.computeRelativePath(path.getPath(), originalPath.getPath());
+    return relativePath.replace("/", File.separator);
   }
 }
