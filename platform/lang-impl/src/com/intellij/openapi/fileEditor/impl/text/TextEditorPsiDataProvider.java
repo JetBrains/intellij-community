@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.EditorDataProvider;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -149,6 +150,9 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       if (psiFile == null) return null;
       InjectedCaret injectedCaret = querySlowInjectedCaret(e, caret);
       return injectedCaret == null ? null : getLanguageAtCurrentPositionInEditor(injectedCaret, psiFile);
+    }
+    if (MODULE.is(dataId)) {
+      return project == null ? null : ModuleUtilCore.findModuleForFile(file, project);
     }
     if (LANGUAGE.is(dataId)) {
       PsiFile psiFile = getPsiFile(e, file);
