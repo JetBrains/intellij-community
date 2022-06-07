@@ -118,9 +118,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       }
       builder.append("while(true)");
       final boolean methodMayCompleteNormally = ControlFlowUtils.methodMayCompleteNormally(method);
-      final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(body);
-      final boolean isReturnAtTheEndOfWhileLoop = lastStatement instanceof PsiReturnStatement || methodMayCompleteNormally;
-      replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, isReturnAtTheEndOfWhileLoop, builder);
+      replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, methodMayCompleteNormally, builder);
       if (methodMayCompleteNormally) {
         builder.insert(builder.length() - 1, "return;");
       }
@@ -448,10 +446,6 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         return;
       }
       final PsiReferenceExpression methodExpression = tailCall.getMethodExpression();
-      final JavaResolveResult resolveResult = tailCall.resolveMethodGenerics();
-      if (!resolveResult.isValidResult() || !containingMethod.equals(resolveResult.getElement())) {
-        return;
-      }
       final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       if (qualifier != null && !(qualifier instanceof PsiThisExpression) && MethodUtils.isOverridden(containingMethod)) {
         return;
@@ -471,12 +465,12 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     else if (element instanceof PsiExpressionStatement &&
              (ControlFlowUtils.blockCompletesWithStatement(Objects.requireNonNull(method.getBody()), (PsiStatement)element) ||
               isBeforeVoidReturn(element, method))) {
-      final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(((PsiExpressionStatement)element).getExpression());
+      final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
       tailCall = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
     }
     if (tailCall == null) return null;
-    final PsiMethod resolvedMethod = tailCall.resolveMethod();
-    return method.equals(resolvedMethod) ? tailCall : null;
+    final JavaResolveResult resolveResult = tailCall.resolveMethodGenerics();
+    return resolveResult.isValidResult() && method.equals(resolveResult.getElement()) ? tailCall : null;
   }
 
   private static boolean isBeforeVoidReturn(PsiElement element, PsiMethod method) {
