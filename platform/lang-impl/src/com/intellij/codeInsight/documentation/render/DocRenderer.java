@@ -656,6 +656,11 @@ final class DocRenderer implements CustomFoldRegionRenderer {
     }
 
     @Override
+    public Icon getLoadingImageIcon() {
+      return AllIcons.Process.Step_passive;
+    }
+
+    @Override
     public int getResizeWeight(int axis) {
       return 1;
     }
