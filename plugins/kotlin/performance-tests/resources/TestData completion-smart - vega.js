@@ -5,10 +5,8 @@
   "$schema": "https://vega.github.io/schema/vega/v4.3.0.json",
   "description": "TestData completion-smart",
   "title": "TestData completion-smart",
-  "width": 800,
-  "height": 500,
   "padding": 5,
-  "autosize": {"type": "pad", "resize": true},
+  "autosize": {"type": "fit", "contains": "padding"},
   "signals": [
     {
       "name": "clear",
