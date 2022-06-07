@@ -49,7 +49,7 @@ class KotlinUsageTypeProviderFirImpl : KotlinUsageTypeProvider() {
 
         return analyzeWithReadAction(refExpr) {
             when (val targetElement = reference.resolveToSymbol()) {
-                is KtClassLikeSymbol ->
+                is KtClassifierSymbol ->
                     when (targetElement) {
                         is KtEnumEntrySymbol -> getVariableUsageType(refExpr)
                         is KtClassOrObjectSymbol -> when {

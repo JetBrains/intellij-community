@@ -3,3 +3,4 @@
 fun <<caret>T> T.foo(t: T, list: List<T>): T {
     return t
 }
+// FIR_COMPARISON
