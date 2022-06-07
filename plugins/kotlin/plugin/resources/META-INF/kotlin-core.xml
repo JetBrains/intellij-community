@@ -51,9 +51,6 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
 
     <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
-            serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
-    <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.KotlinPluginKindProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.fir.FirKotlinPluginKindProvider"/>
     <applicationService
@@ -482,6 +479,9 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportImpl"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
+                    serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
 
     <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesProvider"/>
 
