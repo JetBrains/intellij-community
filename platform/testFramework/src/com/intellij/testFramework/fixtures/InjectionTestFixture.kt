@@ -152,8 +152,6 @@ fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, var
 
       val reference = references.find { referenceClass.isInstance(it) }
       assertNotNull("There should be reference of type ${referenceClass} in element", reference)
-
-      assertEquals("Reference text must be equal to", refText, reference!!.absoluteRange.substring(documentText))
     }
   }
 }
