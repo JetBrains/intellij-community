@@ -31,6 +31,7 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
         when(classSymbol.fqName) {
             DEPRECATED_ANNOTATION.asString() -> convertDeprecatedAnnotation()
             TARGET_ANNOTATION.asString() -> convertTargetAnnotation()
+            RETENTION_ANNOTATION.asString() -> convertRetentionAnnotation()
             REPEATABLE_ANNOTATION.asString() -> convertRepeatableAnnotation()
         }
     }
@@ -53,6 +54,15 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
             kotlinFqNames.map { JKFieldAccessExpression(symbolProvider.provideFieldSymbol(it)) }
         }
         arguments = kotlinTargets.distinctBy { it.identifier.fqName }.map { JKAnnotationParameterImpl(it) }
+    }
+
+    private fun JKAnnotation.convertRetentionAnnotation() {
+        classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.Retention")
+        val javaRetention = arguments.singleOrNull()?.value ?: return
+        val javaFqName = javaRetention.fieldAccessFqName() ?: return
+        val kotlinFqName = retentionMappings[javaFqName] ?: return
+        val kotlinRetention = JKAnnotationParameterImpl(JKFieldAccessExpression(symbolProvider.provideFieldSymbol(kotlinFqName)))
+        arguments = listOf(kotlinRetention)
     }
 
     private fun JKAnnotation.convertRepeatableAnnotation() {
@@ -89,8 +99,17 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
                 "TYPE_PARAMETER" to listOf("TYPE_PARAMETER"),
                 "TYPE" to listOf("CLASS"),
                 "TYPE_USE" to listOf("CLASS", "TYPE", "TYPE_PARAMETER")
-            ).map { (java, kotlin) ->
+            ).associate { (java, kotlin) ->
                 "java.lang.annotation.ElementType.$java" to kotlin.map { "kotlin.annotation.AnnotationTarget.$it" }
-            }.toMap()
+            }
+
+        private val retentionMappings: Map<String, String> =
+            listOf(
+                "SOURCE" to "SOURCE",
+                "CLASS" to "BINARY",
+                "RUNTIME" to "RUNTIME",
+            ).associate { (java, kotlin) ->
+                "java.lang.annotation.RetentionPolicy.$java" to "kotlin.annotation.AnnotationRetention.$kotlin"
+            }
     }
 }

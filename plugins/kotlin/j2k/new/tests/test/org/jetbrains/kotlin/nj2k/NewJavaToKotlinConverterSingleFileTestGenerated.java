@@ -151,6 +151,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/annotations/repeatableAnnotationOneSixWithAlias.java");
         }
 
+        @TestMetadata("retention.java")
+        public void testRetention() throws Exception {
+            runTest("testData/newJ2k/annotations/retention.java");
+        }
+
         @TestMetadata("serialVersionUID.java")
         public void testSerialVersionUID() throws Exception {
             runTest("testData/newJ2k/annotations/serialVersionUID.java");
