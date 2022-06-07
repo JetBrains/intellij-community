@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.notification.Notification
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -3373,68 +3374,95 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class JvmTarget6 : AbstractKotlinMavenImporterTest() {
+    class JvmTarget6IsImportedAsIs : AbstractKotlinMavenImporterTest() {
         @Test
-        fun testJvmFacetConfiguration() {
-            val notificationText = doTest()
-            assertEquals(
-                "Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. " +
-                "It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.",
-                notificationText,
+        fun testJvmTargetIsImportedAsIs() {
+            // If version isn't specified then we will fall back to bundled frontend which is already downloaded => Unbundled JPS can be used
+            val (facet, notifications) = doJvmTarget6Test(version = null)
+            Assert.assertEquals("JVM 1.6", facet.targetPlatform!!.oldFashionedDescription)
+            Assert.assertEquals("1.6", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assert.assertEquals("", notifications.asText)
+        }
+    }
+
+    class JvmTarget6IsImported8 : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testJvmTarget6IsImported8() {
+            // Some version which cannot be downloaded (because it was never published) => explicit
+            // JPS version during import will be dropped => we will fall back to the bundled JPS =>
+            // we have to load 1.6 jvmTarget as 1.8 KTIJ-21515
+            val (facet, notifications) = doJvmTarget6Test("1.5.135")
+
+            Assert.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
+            Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
+
+            Assert.assertEquals(
+                "Title: 'Unsupported JVM target 1.6'\n" +
+                        "Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. " +
+                        "It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'\n" +
+                        "-----\n" +
+                        "Title: 'Kotlin JPS plugin artifacts were not found'\n" +
+                        "Content: 'The bundled version (${KotlinJpsPluginSettings.rawBundledVersion}) of the Kotlin JPS plugin will be used<br>The reason: " +
+                        "Failed to download Maven artifact (org.jetbrains.kotlin:kotlin-jps-plugin:1.5.135). " +
+                        "Searched the artifact in the following repos:\n" +
+                        "https://repo.maven.apache.org/maven2\n" +
+                        "https://repo1.maven.org/maven2\n" +
+                        "https://repository.jboss.org/nexus/content/repositories/public/'",
+                notifications.asText,
             )
         }
+    }
 
-        private fun doTest(): String? = catchNotificationText(myProject) {
-            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+    protected fun doJvmTarget6Test(version: String?): Pair<KotlinFacetSettings, List<Notification>> {
+        createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
+        val notifications = catchNotifications(myProject) {
             importProject(
                 """
-            <groupId>test</groupId>
-            <artifactId>project</artifactId>
-            <version>1.0.0</version>
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1.0.0</version>
 
-            <dependencies>
-                <dependency>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                    <version>$kotlinVersion</version>
-                </dependency>
-            </dependencies>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.jetbrains.kotlin</groupId>
+                            <artifactId>kotlin-stdlib</artifactId>
+                            <version>$kotlinVersion</version>
+                        </dependency>
+                    </dependencies>
 
-            <build>
-                <sourceDirectory>src/main/kotlin</sourceDirectory>
+                    <build>
+                        <sourceDirectory>src/main/kotlin</sourceDirectory>
 
-                <plugins>
-                    <plugin>
-                        <groupId>org.jetbrains.kotlin</groupId>
-                        <artifactId>kotlin-maven-plugin</artifactId>
+                        <plugins>
+                            <plugin>
+                                <groupId>org.jetbrains.kotlin</groupId>
+                                <artifactId>kotlin-maven-plugin</artifactId>
+                                ${version?.let { "<version>$it</version>" }}
 
-                        <executions>
-                            <execution>
-                                <id>compile</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <jvmTarget>1.6</jvmTarget>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-            """
+                                <executions>
+                                    <execution>
+                                        <id>compile</id>
+                                        <phase>compile</phase>
+                                        <goals>
+                                            <goal>compile</goal>
+                                        </goals>
+                                    </execution>
+                                </executions>
+                                <configuration>
+                                    <jvmTarget>1.6</jvmTarget>
+                                </configuration>
+                            </plugin>
+                        </plugins>
+                    </build>
+                """
             )
-
-            assertModules("project")
-            assertImporterStatePresent()
-
-            with(facetSettings) {
-                Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
-                Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
-            }
         }
+
+        assertModules("project")
+        assertImporterStatePresent()
+
+        return facetSettings to notifications
     }
 
     class CompilerPlugins : AbstractKotlinMavenImporterTest() {

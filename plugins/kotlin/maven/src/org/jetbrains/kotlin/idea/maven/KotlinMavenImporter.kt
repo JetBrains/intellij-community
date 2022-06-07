@@ -231,7 +231,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     private fun getCompilerArgumentsByConfigurationElement(
         mavenProject: MavenProject,
         configuration: Element?,
-        platform: TargetPlatform
+        platform: TargetPlatform,
+        project: Project
     ): ImportedArguments {
         val arguments = platform.createArguments()
         var jvmTarget6IsUsed = false
@@ -249,16 +250,19 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
                 arguments.jdkHome = configuration?.getChild("jdkHome")?.text
                 arguments.javaParameters = configuration?.getChild("javaParameters")?.text?.toBoolean() ?: false
 
-                check(PluginManagerCore.getBuildNumber().baselineVersion in setOf(221, 213, 212)) {
-                    "This commit should be present only in 221, 213, 212 platforms"
+                check(PluginManagerCore.getBuildNumber().baselineVersion in setOf(222, 221, 213, 212)) {
+                    "This commit should be present only in 222, 221, 213, 212 platforms"
                 }
 
                 val jvmTarget = configuration?.getChild("jvmTarget")?.text ?: mavenProject.properties["kotlin.compiler.jvmTarget"]?.toString()
-                if (jvmTarget == JvmTarget.JVM_1_6.description) {
-                    // Load JVM target 1.6 in Maven projects as 1.8, for IDEA platforms <= 221.
+                if (jvmTarget == JvmTarget.JVM_1_6.description &&
+                    KotlinJpsPluginSettings.getInstance(project)?.settings?.version?.isBlank() != false
+                ) {
+                    // Load JVM target 1.6 in Maven projects as 1.8, for IDEA platforms <= 222.
                     // The reason is that JVM target 1.6 is no longer supported by the latest Kotlin compiler, yet we'd like JPS projects imported from
                     // Maven to be compilable by IDEA, to avoid breaking local development.
-                    // (Since IDEA 222, JPS plugin is unbundled from the Kotlin IDEA plugin, so this change is not needed there.)
+                    // (Since IDEA 222, JPS plugin is unbundled from the Kotlin IDEA plugin, so this change is not needed there in case
+                    // when explicit version is specified in kotlinc.xml)
                     arguments.jvmTarget = JvmTarget.JVM_1_8.description
                     jvmTarget6IsUsed = true
                 } else {
@@ -350,10 +354,10 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         val facetSettings = kotlinFacet.configuration.settings
         val configuredPlatform = kotlinFacet.configuration.settings.targetPlatform!!
         val configuration = mavenPlugin.configurationElement
-        val sharedArguments = getCompilerArgumentsByConfigurationElement(mavenProject, configuration, configuredPlatform)
+        val sharedArguments = getCompilerArgumentsByConfigurationElement(mavenProject, configuration, configuredPlatform, module.project)
         val executionArguments = mavenPlugin.executions
             ?.firstOrNull { it.goals.any { s -> s in compilationGoals } }
-            ?.configurationElement?.let { getCompilerArgumentsByConfigurationElement(mavenProject, it, configuredPlatform) }
+            ?.configurationElement?.let { getCompilerArgumentsByConfigurationElement(mavenProject, it, configuredPlatform, module.project) }
         parseCompilerArgumentsToFacet(sharedArguments.args, emptyList(), kotlinFacet, modifiableModelsProvider)
         if (executionArguments != null) {
             parseCompilerArgumentsToFacet(executionArguments.args, emptyList(), kotlinFacet, modifiableModelsProvider)
