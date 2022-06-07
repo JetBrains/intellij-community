@@ -32,4 +32,18 @@ public abstract class CustomizedDataContext implements DataContext {
     Object data = DataManager.getInstance().getCustomizedData(dataId, getParent(), this::getCustomData);
     return data == EXPLICIT_NULL ? null : data;
   }
+
+  public static @NotNull CustomizedDataContext create(@NotNull DataContext parent, @NotNull DataProvider provider) {
+    return new CustomizedDataContext() {
+      @Override
+      public @NotNull DataContext getParent() {
+        return parent;
+      }
+
+      @Override
+      public @Nullable Object getRawCustomData(@NotNull String dataId) {
+        return provider.getData(dataId);
+      }
+    };
+  }
 }

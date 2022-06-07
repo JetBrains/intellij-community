@@ -163,20 +163,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     if (PROJECT.getData(original) == editor.getProject()) {
       return original;
     }
-    return new CustomizedDataContext() {
-      @Override
-      public @NotNull DataContext getParent() {
-        return original;
-      }
-
-      @Override
-      public @Nullable Object getRawCustomData(@NotNull String dataId) {
-        if (PROJECT.is(dataId)) {
-          return editor.getProject();
-        }
-        return null;
-      }
-    };
+    return CustomizedDataContext.create(original, dataId -> PROJECT.is(dataId) ? editor.getProject() : null);
   }
 
   public synchronized void clearDynamicHandlersCache() {
