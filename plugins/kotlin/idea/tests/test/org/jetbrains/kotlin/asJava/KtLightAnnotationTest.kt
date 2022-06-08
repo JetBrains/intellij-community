@@ -14,7 +14,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightPsiArrayInitializerMemberValue
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
@@ -29,7 +29,7 @@ import org.junit.runner.RunWith
 class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinJdkAndLibraryProjectDescriptor(KotlinArtifacts.kotlinStdlib)
+        KotlinJdkAndLibraryProjectDescriptor(TestKotlinArtifacts.kotlinStdlib)
 
     fun testIsHiddenByDeprecated() {
         myFixture.configureByText(

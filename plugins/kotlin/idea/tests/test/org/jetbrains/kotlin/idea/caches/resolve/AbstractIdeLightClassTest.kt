@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -70,9 +71,9 @@ abstract class AbstractIdeCompiledLightClassTest : KotlinDaemonAnalyzerTestCase(
         val testDataDir = TestMetadataUtil.getTestData(this::class.java)
         val testFile = listOf(File(testDataDir, "$testName.kt"), File(testDataDir, "$testName.kts")).first { it.exists() }
 
-        val extraClasspath = mutableListOf(KotlinArtifacts.jetbrainsAnnotations, KotlinArtifacts.kotlinStdlibJdk8)
+        val extraClasspath = mutableListOf(TestKotlinArtifacts.jetbrainsAnnotations, TestKotlinArtifacts.kotlinStdlibJdk8)
         if (testFile.extension == "kts") {
-            extraClasspath += KotlinArtifacts.kotlinScriptRuntime
+            extraClasspath += TestKotlinArtifacts.kotlinScriptRuntime
         }
 
         val extraOptions = KotlinTestUtils.parseDirectives(testFile.readText())[

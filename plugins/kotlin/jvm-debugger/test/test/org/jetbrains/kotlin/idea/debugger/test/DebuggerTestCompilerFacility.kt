@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
@@ -39,7 +39,7 @@ class DebuggerTestCompilerFacility(
     private val jvmTarget: JvmTarget,
     private val useIrBackend: Boolean
 ) {
-    private val kotlinStdlibPath = KotlinArtifacts.kotlinStdlib.absolutePath
+    private val kotlinStdlibPath = TestKotlinArtifacts.kotlinStdlib.absolutePath
 
     private val mainFiles: TestFilesByLanguageAndPlatform
     private val libraryFiles: TestFilesByLanguageAndPlatform

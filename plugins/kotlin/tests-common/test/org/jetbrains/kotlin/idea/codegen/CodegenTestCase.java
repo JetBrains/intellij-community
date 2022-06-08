@@ -11,12 +11,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.codegen.ClassFileFactory;
 import org.jetbrains.kotlin.codegen.GeneratedClassLoader;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
 import org.jetbrains.kotlin.idea.TestHelperGeneratorKt;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
 import org.jetbrains.kotlin.idea.test.*;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.test.TargetBackend;
@@ -47,7 +47,7 @@ public abstract class CodegenTestCase extends KotlinBaseTest<KotlinBaseTest.Test
                 configurationKind,
                 TestJdkKind.MOCK_JDK,
                 getBackend(),
-                Collections.singletonList(KotlinArtifacts.getJetbrainsAnnotations()),
+                Collections.singletonList(TestKotlinArtifacts.getJetbrainsAnnotations()),
                 ArraysKt.filterNotNull(javaSourceRoots),
                 Collections.emptyList()
         );

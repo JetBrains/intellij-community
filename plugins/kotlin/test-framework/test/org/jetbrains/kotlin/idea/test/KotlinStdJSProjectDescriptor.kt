@@ -8,15 +8,15 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 
 object KotlinStdJSProjectDescriptor : KotlinLightProjectDescriptor() {
     override fun getSdk(): Sdk? = null
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
         ConfigLibraryUtil.addLibrary(model, "kotlin-stdlib-js", KotlinJavaScriptLibraryKind) {
-            addRoot(VfsUtil.getUrlForLibraryRoot(KotlinArtifacts.kotlinStdlibJs), OrderRootType.CLASSES)
-            addRoot(VfsUtil.getUrlForLibraryRoot(KotlinArtifacts.kotlinStdlibSources), OrderRootType.SOURCES)
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlibJs), OrderRootType.CLASSES)
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinStdlibSources), OrderRootType.SOURCES)
         }
     }
 }

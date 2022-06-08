@@ -22,7 +22,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
@@ -110,8 +110,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             listOf(baseDir),
             target = outputDir,
             classpath = listOf(
-                KotlinArtifacts.kotlinScriptRuntime,
-                KotlinArtifacts.jetbrainsAnnotations
+                TestKotlinArtifacts.kotlinScriptRuntime,
+                TestKotlinArtifacts.jetbrainsAnnotations
             )
         ).compile()
 
@@ -340,10 +340,10 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         private val INSTANCE_WITH_KOTLIN_TEST = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
             arrayListOf(
-              KotlinArtifacts.kotlinStdlib,
-              KotlinArtifacts.kotlinTest
+              TestKotlinArtifacts.kotlinStdlib,
+              TestKotlinArtifacts.kotlinTest
             ),
-            arrayListOf(KotlinArtifacts.kotlinStdlibSources)
+            arrayListOf(TestKotlinArtifacts.kotlinStdlibSources)
         ) {
             override fun getSdk() = PluginTestCaseBase.fullJdk()
         }
@@ -354,10 +354,10 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         private val INSTANCE_WITH_SCRIPT_RUNTIME = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
             arrayListOf(
-              KotlinArtifacts.kotlinStdlib,
-              KotlinArtifacts.kotlinScriptRuntime
+              TestKotlinArtifacts.kotlinStdlib,
+              TestKotlinArtifacts.kotlinScriptRuntime
             ),
-            arrayListOf(KotlinArtifacts.kotlinStdlibSources)
+            arrayListOf(TestKotlinArtifacts.kotlinStdlibSources)
         ) {
             override fun getSdk() = PluginTestCaseBase.fullJdk()
         }

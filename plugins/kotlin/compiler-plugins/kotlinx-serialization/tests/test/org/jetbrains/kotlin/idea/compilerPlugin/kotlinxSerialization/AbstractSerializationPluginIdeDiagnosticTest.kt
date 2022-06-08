@@ -4,19 +4,19 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.checkers.AbstractKotlinHighlightVisitorTest
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 
 abstract class AbstractSerializationPluginIdeDiagnosticTest : AbstractKotlinHighlightVisitorTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinJdkAndLibraryProjectDescriptor(
             libraryFiles = listOf(
-                KotlinArtifacts.kotlinStdlib,
+                TestKotlinArtifacts.kotlinStdlib,
                 getSerializationCoreLibraryJar()!!,
                 getSerializationJsonLibraryJar()!!
             ),
             librarySourceFiles = listOf(
-                KotlinArtifacts.kotlinStdlibSources
+                TestKotlinArtifacts.kotlinStdlibSources
             )
         )
     }

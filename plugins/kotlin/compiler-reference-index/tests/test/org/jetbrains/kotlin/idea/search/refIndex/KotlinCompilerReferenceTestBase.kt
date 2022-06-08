@@ -10,14 +10,14 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
-        moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.kotlinStdlib.path)
+        moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
     }
 
     override fun setUp() {
