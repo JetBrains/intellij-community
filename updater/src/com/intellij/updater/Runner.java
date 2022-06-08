@@ -621,7 +621,7 @@ public class Runner {
     String path = url.getPath();
 
     int start = path.indexOf("file:/");
-    int end = path.indexOf("!/");
+    int end = path.lastIndexOf("!/");
     if (start == -1 || end == -1) throw new IllegalArgumentException("Unknown protocol: " + url);
 
     String jarFileUrl = path.substring(start, end);
