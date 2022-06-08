@@ -25,7 +25,7 @@ fun generateKotlincLibraries(
         kotlincForIdeWithStandardNaming("kotlinc.analysis-project-structure", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.symbol-light-classes", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincArtifactsCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", kotlincArtifactsCoordinates).takeUnless { isCommunity }
+        if (!isCommunity) kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", kotlincArtifactsCoordinates)
