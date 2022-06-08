@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -64,7 +64,8 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
         fun isApplicableTo(element: KtTypeArgumentList, approximateFlexible: Boolean): Boolean {
             val callExpression = element.parent as? KtCallExpression ?: return false
             val typeArguments = callExpression.typeArguments
-            if (typeArguments.isEmpty() || typeArguments.any { it.typeReference?.annotationEntries?.isNotEmpty() == true }) return false
+            if (typeArguments.isEmpty()) return false
+            if (typeArguments.any { it.typeReference?.isAnnotatedDeep() == true }) return false
 
             val resolutionFacade = callExpression.getResolutionFacade()
             val bindingContext = resolutionFacade.analyze(callExpression, BodyResolveMode.PARTIAL_WITH_CFA)

@@ -15882,6 +15882,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeExplicitType/hasAnnotation.kt");
         }
 
+        @TestMetadata("hasAnnotationOnTypeArgument.kt")
+        public void testHasAnnotationOnTypeArgument() throws Exception {
+            runTest("testData/intentions/removeExplicitType/hasAnnotationOnTypeArgument.kt");
+        }
+
+        @TestMetadata("hasAnnotationOnTypeArgument2.kt")
+        public void testHasAnnotationOnTypeArgument2() throws Exception {
+            runTest("testData/intentions/removeExplicitType/hasAnnotationOnTypeArgument2.kt");
+        }
+
+        @TestMetadata("hasAnnotationOnTypeArgument3.kt")
+        public void testHasAnnotationOnTypeArgument3() throws Exception {
+            runTest("testData/intentions/removeExplicitType/hasAnnotationOnTypeArgument3.kt");
+        }
+
         @TestMetadata("lambdaExpressionBody.kt")
         public void testLambdaExpressionBody() throws Exception {
             runTest("testData/intentions/removeExplicitType/lambdaExpressionBody.kt");
@@ -16018,6 +16033,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("hasAnnotation.kt")
         public void testHasAnnotation() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/hasAnnotation.kt");
+        }
+
+        @TestMetadata("hasAnnotationOnNestedTypeArgument.kt")
+        public void testHasAnnotationOnNestedTypeArgument() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/hasAnnotationOnNestedTypeArgument.kt");
         }
 
         @TestMetadata("inapplicableTypeThatIsAFunItCannotBeInferred.kt")

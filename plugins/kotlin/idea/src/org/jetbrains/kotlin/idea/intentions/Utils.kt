@@ -423,3 +423,18 @@ private val rangeTypes = setOf(
 fun ClassDescriptor.isRange(): Boolean {
     return rangeTypes.any { this.fqNameUnsafe.asString() == it }
 }
+
+fun KtTypeReference.isAnnotatedDeep(): Boolean {
+    fun List<KtTypeReference>.areAnnotatedDeep(): Boolean {
+        for (type in this) {
+            if (type.annotationEntries.isNotEmpty()) return true
+            if (type.typeArguments().mapNotNull { it.typeReference }.areAnnotatedDeep()) return true
+        }
+        return false
+    }
+    return listOf(this).areAnnotatedDeep()
+}
+
+fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {
+    return (this?.typeElement as? KtUserType)?.typeArguments.orEmpty()
+}
