@@ -32,10 +32,17 @@ class WorkspaceModelTopics : Disposable {
     @Topic.ProjectLevel
     private val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
 
+    @Topic.ProjectLevel
+    private val MODULE_BRIDGE_INITIALIZER = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+
+    @Topic.ProjectLevel
+    private val PROJECT_LIBS_INITIALIZER = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
+
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
+  private val allEventsForModuleBridge = ContainerUtil.createConcurrentList<EventsDispatcher>()
   private val allEvents = ContainerUtil.createConcurrentList<EventsDispatcher>()
   private var sendToQueue = true
   var modulesAreLoaded = false
@@ -68,11 +75,35 @@ class WorkspaceModelTopics : Disposable {
     }
   }
 
+  /**
+   * For internal use only
+   */
+  fun subscribeProjectLibsInitializer(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
+    connection.subscribe(PROJECT_LIBS_INITIALIZER, listener)
+  }
+
+  /**
+   * Internal use only
+   */
+  fun subscribeModuleBridgeInitializer(connection: MessageBusConnection, listener: WorkspaceModelChangeListener) {
+    if (!sendToQueue) {
+      connection.subscribe(MODULE_BRIDGE_INITIALIZER, listener)
+    }
+    else {
+      val queue = EventsDispatcher(listener)
+      allEventsForModuleBridge += queue
+      connection.subscribe(MODULE_BRIDGE_INITIALIZER, queue)
+    }
+  }
+
+  fun syncProjectLibs(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(PROJECT_LIBS_INITIALIZER)
+  fun syncModuleBridge(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(MODULE_BRIDGE_INITIALIZER)
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   fun notifyModulesAreLoaded() {
     val activity = StartUpMeasurer.startActivity("postponed events sending", ActivityCategory.DEFAULT)
     sendToQueue = false
+
     if (allEvents.isNotEmpty() && allEvents.any { it.events.isNotEmpty() }) {
       val activityInQueue = activity.startChild("events sending (in queue)")
       val application = ApplicationManager.getApplication()
@@ -95,6 +126,30 @@ class WorkspaceModelTopics : Disposable {
       allEvents.forEach { queue -> queue.collectToQueue = false }
     }
     allEvents.clear()
+
+    if (allEventsForModuleBridge.isNotEmpty() && allEventsForModuleBridge.any { it.events.isNotEmpty() }) {
+      val activityInQueue = activity.startChild("events sending (in queue first)")
+      val application = ApplicationManager.getApplication()
+      application.invokeAndWait {
+        application.runWriteAction {
+          val innerActivity = activityInQueue.endAndStart("events sending first")
+          allEventsForModuleBridge.forEach { queue ->
+            queue.collectToQueue = false
+            queue.events.forEach { (isBefore, event) ->
+              if (isBefore) queue.originalListener.beforeChanged(event)
+              else queue.originalListener.changed(event)
+            }
+            queue.events.clear()
+          }
+          innerActivity.end()
+        }
+      }
+    }
+    else {
+      allEventsForModuleBridge.forEach { queue -> queue.collectToQueue = false }
+    }
+    allEventsForModuleBridge.clear()
+
     modulesAreLoaded = true
     activity.end()
   }

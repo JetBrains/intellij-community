@@ -104,12 +104,19 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
   private fun onBeforeChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+    /**
+     * Order of events: initialize project libraries, initialize module bridge + module friends, all other listeners
+     */
+    WorkspaceModelTopics.getInstance(project).syncProjectLibs(project.messageBus).beforeChanged(change)
+    WorkspaceModelTopics.getInstance(project).syncModuleBridge(project.messageBus).beforeChanged(change)
     WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).beforeChanged(change)
   }
 
   private fun onChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (project.isDisposed) return
+    WorkspaceModelTopics.getInstance(project).syncProjectLibs(project.messageBus).changed(change)
+    WorkspaceModelTopics.getInstance(project).syncModuleBridge(project.messageBus).changed(change)
     WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).changed(change)
   }
 
