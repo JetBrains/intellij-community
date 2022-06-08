@@ -17,7 +17,7 @@ fun generateKotlincLibraries(
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.incremental-compilation-impl-tests", kotlincArtifactsCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", kotlincArtifactsCoordinates).takeUnless { isCommunity }
+        if (!isCommunity) kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-build-common-tests", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-cli", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-compiler-tests", kotlincArtifactsCoordinates)
