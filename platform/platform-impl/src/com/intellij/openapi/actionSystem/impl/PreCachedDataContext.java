@@ -96,7 +96,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       else {
         DataKey<?>[] keys = DataKey.allKeys();
         myDataKeysCount = updateDataKeyIndices(keys);
-        myCachedData = preGetAllData(components, initial, myDataManager, keys);
+        myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
         ourInstances.add(this);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -138,11 +138,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   @NotNull PreCachedDataContext prependProvider(@NotNull DataProvider dataProvider) {
     DataKey<?>[] keys = DataKey.allKeys();
-    ProviderData cachedData = new ProviderData();
     Component component = SoftReference.dereference(myComponentRef.ref);
     int dataKeysCount = updateDataKeyIndices(keys);
-    doPreGetAllData(dataProvider, cachedData, component, myDataManager, keys, myCachedData.getHead());
-    FList<ProviderData> newCachedData = myCachedData.prepend(cachedData);
+    ProviderData cachedData = cacheProviderData(dataProvider, component, myDataManager, keys);
+    FList<ProviderData> newCachedData = cachedData == null ? myCachedData : myCachedData.prepend(cachedData);
     AtomicReference<KeyFMap> userData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
     return this instanceof InjectedDataContext
            ? new InjectedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, dataKeysCount)
@@ -282,21 +281,18 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return ourDataKeysIndices.size();
   }
 
-  private static @NotNull FList<ProviderData> preGetAllData(@NotNull List<Component> components,
-                                                            @NotNull FList<ProviderData> initial,
-                                                            @NotNull DataManagerImpl dataManager,
-                                                            DataKey<?> @NotNull [] keys) {
+  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull List<Component> components,
+                                                                  @NotNull FList<ProviderData> initial,
+                                                                  @NotNull DataManagerImpl dataManager,
+                                                                  DataKey<?> @NotNull [] keys) {
     FList<ProviderData> result = initial;
-
     long start = System.currentTimeMillis();
     for (Component comp : components) {
       DataProvider dataProvider = getDataProviderEx(comp);
       if (dataProvider == null && hideEditor(comp)) dataProvider = dataId -> null;
       if (dataProvider == null) continue;
-      ProviderData cachedData = new ProviderData();
-      doPreGetAllData(dataProvider, cachedData, comp, dataManager, keys, result.getHead());
-      if (cachedData.isEmpty()) continue;
-      result = result.prepend(cachedData);
+      ProviderData cachedData = cacheProviderData(dataProvider, comp, dataManager, keys);
+      result = cachedData == null ? result : result.prepend(cachedData);
       ourPrevMaps.put(comp, result);
     }
     long time = System.currentTimeMillis() - start;
@@ -306,34 +302,25 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return result;
   }
 
-  private static void doPreGetAllData(@NotNull DataProvider dataProvider,
-                                      @NotNull ProviderData cachedData,
-                                      @Nullable Component c,
-                                      @NotNull DataManagerImpl dataManager,
-                                      DataKey<?> @NotNull [] keys,
-                                      @Nullable Map<String, Object> parentMap) {
+  private static @Nullable ProviderData cacheProviderData(@NotNull DataProvider dataProvider,
+                                                          @Nullable Component c,
+                                                          @NotNull DataManagerImpl dataManager,
+                                                          DataKey<?> @NotNull [] keys) {
+    ProviderData cachedData = null;
     boolean hideEditor = hideEditor(c);
     for (DataKey<?> key : keys) {
       if (key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
           key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
-          key == PlatformDataKeys.MODALITY_STATE ||
-          key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS) {
+          key == PlatformDataKeys.MODALITY_STATE) {
         continue;
       }
       Object data = hideEditor && (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR || key == InjectedDataKeys.EDITOR) ?
                     EXPLICIT_NULL : dataManager.getDataFromProviderAndRules(key.getName(), GetDataRuleType.FAST, dataProvider);
       if (data == null) continue;
+      if (cachedData == null) cachedData = new ProviderData();
       cachedData.put(key.getName(), data);
     }
-    String slowProvidersKeyName = PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getName();
-    Object slowProviders = dataManager.getDataFromProviderAndRules(slowProvidersKeyName, GetDataRuleType.FAST, dataProvider);
-    Object parentProviders = parentMap == null ? null : parentMap.get(slowProvidersKeyName);
-    if (slowProviders != null && parentProviders != null) {
-      cachedData.put(slowProvidersKeyName, ContainerUtil.concat((Iterable<?>)slowProviders, (Iterable<?>)parentProviders));
-    }
-    else if (slowProviders != null || parentProviders != null) {
-      cachedData.put(slowProvidersKeyName, Objects.requireNonNullElse(slowProviders, parentProviders));
-    }
+    return cachedData;
   }
 
   private static boolean hideEditor(@Nullable Component component) {
