@@ -392,7 +392,10 @@ private class StackedCompositeBindingContextTrace(
         (resolveContext.diagnostics.noSuppression() + parentContext.diagnostics.noSuppression()).filterApartElement()
 
     private fun Collection<Diagnostic>.filterApartElement() =
-        toSet().let { filter { it.psiElement == element && selfDiagnosticToHold(it) } + filter { it.psiElement.parentsWithSelf.none { e -> e == element } } }
+        toSet().let { s ->
+            s.filter { it.psiElement == element && selfDiagnosticToHold(it) } +
+                    s.filter { it.psiElement.parentsWithSelf.none { e -> e == element } }
+        }
 
     inner class StackedCompositeBindingContext : BindingContext {
         var cachedDiagnostics: Diagnostics? = null
