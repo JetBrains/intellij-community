@@ -5,6 +5,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
@@ -46,6 +47,11 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     boolean selected = UISettings.getInstance().getPresentationMode();
     e.getPresentation().setText(selected ? ActionsBundle.message("action.TogglePresentationMode.exit")
                                          : ActionsBundle.message("action.TogglePresentationMode.enter"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
