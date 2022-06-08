@@ -284,7 +284,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     getComponent().addActionListener(listener);
   }
 
-  interface JreComboBoxItem {
+  public interface JreComboBoxItem {
     void render(SimpleColoredComponent component, boolean selected);
 
     String getPresentableText();
