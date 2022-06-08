@@ -13,18 +13,23 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.PathUtil
 import com.intellij.util.Time.*
+import org.jetbrains.annotations.ApiStatus
 
-internal class SearchEverywhereFileFeaturesProvider
+@ApiStatus.Internal
+@IntellijInternalApi
+class SearchEverywhereFileFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
   companion object {
+    val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", "file_type")
+    val IS_FAVORITE_DATA_KEY = EventFields.Boolean("isFavorite")
+    val IS_OPENED_DATA_KEY = EventFields.Boolean("isOpened")
+
     internal val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
-    internal val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", "file_type")
-    internal val IS_FAVORITE_DATA_KEY = EventFields.Boolean("isFavorite")
-    internal val IS_OPENED_DATA_KEY = EventFields.Boolean("isOpened")
     internal val RECENT_INDEX_DATA_KEY = EventFields.Int("recentFilesIndex")
     internal val PREDICTION_SCORE_DATA_KEY = EventFields.Double("predictionScore")
     internal val IS_EXACT_MATCH_DATA_KEY = EventFields.Boolean("isExactMatch")
