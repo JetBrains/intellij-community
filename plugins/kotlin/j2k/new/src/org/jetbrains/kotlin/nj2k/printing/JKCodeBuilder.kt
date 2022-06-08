@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.JKContextType
+import org.jetbrains.kotlin.nj2k.types.isAnnotationMethod
 import org.jetbrains.kotlin.nj2k.types.isInterface
 import org.jetbrains.kotlin.nj2k.types.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -482,6 +483,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitCallExpressionRaw(callExpression: JKCallExpression) {
             printer.renderSymbol(callExpression.identifier, callExpression)
+            if (callExpression.identifier.isAnnotationMethod()) return
             callExpression.typeArgumentList.accept(this)
             printer.par {
                 callExpression.arguments.accept(this)

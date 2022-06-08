@@ -3735,6 +3735,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationReceiver.java")
+        public void testAnnotationReceiver() throws Exception {
+            runTest("testData/newJ2k/methodCallExpression/annotationReceiver.java");
+        }
+
+        @TestMetadata("annotationReceiver2.java")
+        public void testAnnotationReceiver2() throws Exception {
+            runTest("testData/newJ2k/methodCallExpression/annotationReceiver2.java");
+        }
+
+        @TestMetadata("annotationReceiver3.java")
+        public void testAnnotationReceiver3() throws Exception {
+            runTest("testData/newJ2k/methodCallExpression/annotationReceiver3.java");
+        }
+
         @TestMetadata("callWithKeywords.java")
         public void testCallWithKeywords() throws Exception {
             runTest("testData/newJ2k/methodCallExpression/callWithKeywords.java");
