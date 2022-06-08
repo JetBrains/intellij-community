@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.LEAKING_THIS
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
@@ -30,6 +31,8 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         // for different class internal elements, like KtProperty and KtClassInitializer.
         // It can affect performance, so yet we want to avoid this.
         val context = klass.safeAnalyzeWithContentNonSourceRootCode()
+        if (context == BindingContext.EMPTY) return@classVisitor
+
         klass.forEachDescendantOfType(fun(expression: KtExpression) {
             val leakingThisDescriptor = context[LEAKING_THIS, expression] ?: return
             if (leakingThisDescriptor.classOrObject != klass) return

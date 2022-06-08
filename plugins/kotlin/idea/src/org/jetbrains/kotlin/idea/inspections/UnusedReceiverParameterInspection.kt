@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.isMainFunction
@@ -64,7 +64,8 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                     callableDeclaration.isOverridable()
                 ) return
 
-                val context = callableDeclaration.analyzeWithContent()
+                val context = callableDeclaration.safeAnalyzeWithContentNonSourceRootCode()
+                if (context == BindingContext.EMPTY) return
                 val receiverType = context[BindingContext.TYPE, receiverTypeReference] ?: return
                 val receiverTypeDeclaration = receiverType.constructor.declarationDescriptor
                 if (DescriptorUtils.isCompanionObject(receiverTypeDeclaration)) return

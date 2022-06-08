@@ -9,9 +9,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.references.fe10.base.KtFe10ReferenceResolutionHelper
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -40,16 +41,17 @@ class KtFe10ReferenceResolutionHelperImpl : KtFe10ReferenceResolutionHelper {
     override fun isInProjectOrLibSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean =
         ProjectRootsUtil.isInProjectOrLibSource(element, includeScriptsOutsideSourceRoots)
 
-    override fun partialAnalyze(element: KtElement): BindingContext = element.analyze(BodyResolveMode.PARTIAL)
+    override fun partialAnalyze(element: KtElement): BindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
 
     override fun resolveImportReference(file: KtFile, fqName: FqName): Collection<DeclarationDescriptor> =
         file.resolveImportReference(fqName)
 
     override fun resolveKDocLink(element: KDocName): Collection<DeclarationDescriptor> {
-        val declaration = element.getContainingDoc().getOwner() ?: return arrayListOf()
+        val declaration = element.getContainingDoc().owner ?: return emptyList()
         val resolutionFacade = element.getResolutionFacade()
-        val correctContext = resolutionFacade.analyze(declaration, BodyResolveMode.PARTIAL)
-        val declarationDescriptor = correctContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration] ?: return arrayListOf()
+        val correctContext = declaration.safeAnalyze(resolutionFacade, BodyResolveMode.PARTIAL)
+        if (correctContext == BindingContext.EMPTY) return emptyList()
+        val declarationDescriptor = correctContext[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration] ?: return emptyList()
 
         val kdocLink = element.getStrictParentOfType<KDocLink>()!!
         return org.jetbrains.kotlin.idea.kdoc.resolveKDocLink(
