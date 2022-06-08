@@ -38,6 +38,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.jetbrains.python.PyPsiBundle;
@@ -338,31 +339,19 @@ public final class PyInterpreterInspection extends PyInspection {
         while (iterator.hasNext()) {
           EntityChange<?> change = iterator.next();
 
-          @Nullable Module module = null;
+          @Nullable WorkspaceEntity entity = null;
           if (change instanceof EntityChange.Replaced) {
-            var oldEntity = ((EntityChange.Replaced<?>)change).getOldEntity();
-            if (oldEntity instanceof ModuleEntity) {
-              ModuleEntity newEntity = (ModuleEntity)((EntityChange.Replaced<?>)change).getNewEntity();
-              var oldSdks = ((ModuleEntity)oldEntity).getDependencies().stream()
-                .filter(d -> d instanceof ModuleDependencyItem.SdkDependency)
-                .collect(Collectors.toSet());
-              var newSdks = newEntity.getDependencies().stream()
-                .filter(d -> d instanceof ModuleDependencyItem.SdkDependency)
-                .collect(Collectors.toSet());
-              if (!oldSdks.equals(newSdks)) {
-                module = ModuleEntityUtils.findModule(newEntity, event.getStorageBefore());
-              }
-            }
+            entity = ((EntityChange.Replaced<?>)change).getOldEntity();
           }
           else if (change instanceof EntityChange.Removed) {
-            var entity = ((EntityChange.Removed<?>)change).getEntity();
-            if (entity instanceof ModuleEntity) {
-              module = ModuleEntityUtils.findModule((ModuleEntity)entity, event.getStorageBefore());
-            }
+            entity = ((EntityChange.Removed<?>)change).getEntity();
           }
 
-          if (module != null) {
-            DETECTED_ASSOCIATED_ENVS_CACHE.synchronous().invalidate(module);
+          if (entity instanceof ModuleEntity) {
+            var module = ModuleEntityUtils.findModule((ModuleEntity)entity, event.getStorageBefore());
+            if (module != null) {
+              DETECTED_ASSOCIATED_ENVS_CACHE.synchronous().invalidate(module);
+            }
           }
         }
       }
