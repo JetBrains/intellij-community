@@ -597,7 +597,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   @Nullable
   private Navigatable getNavigatable(Object object) {
-    return CommonDataKeys.NAVIGATABLE.getData(getDataProvider(() -> JBIterable.of(object)));
+    return (Navigatable)getSlowData(CommonDataKeys.NAVIGATABLE.getName(), myProject, JBIterable.of(object));
   }
 
   private void ctrlClick(final int index) {
@@ -707,30 +707,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return !myProject.isDisposed() ? myProject : null;
-    }
-    return getData(dataId, () -> getSelection());
-  }
-
-  @Nullable
-  private Object getData(@NotNull String dataId, Supplier<? extends JBIterable<?>> selection) {
-    DataProvider dataProvider = getDataProviderInner(selection);
-    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
-      Object data = modelExtension.getData(dataId, dataProvider);
-      if (data != null) return data;
-    }
-    return dataProvider.getData(dataId);
-  }
-
-  @NotNull
-  private DataProvider getDataProvider(Supplier<? extends JBIterable<?>> selection) {
-    return d -> getData(d, selection);
-  }
-
-  @NotNull
-  private DataProvider getDataProviderInner(Supplier<? extends JBIterable<?>> selection) {
-    return d -> getDataImpl(d, this, selection);
+    return getDataImpl(dataId, this, () -> getSelection());
   }
 
   @NotNull
@@ -741,53 +718,24 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return JBIterable.of(size > 0 ? myModel.getElement(size - 1) : null);
   }
 
-  Object getDataImpl(String dataId, @NotNull JComponent source, @NotNull Supplier<? extends JBIterable<?>> selection) {
+  @Nullable Object getDataImpl(@NotNull String dataId, @NotNull JComponent source, @NotNull Supplier<? extends JBIterable<?>> selection) {
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) {
+      return source;
+    }
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
-    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-      Module module = selection.get().filter(Module.class).first();
-      if (module != null && !module.isDisposed()) return module;
-      PsiElement element = selection.get().filter(PsiElement.class).first();
-      if (element != null) {
-        return ModuleUtilCore.findModuleForPsiElement(element);
-      }
-      return null;
+    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+      JBIterable<?> finalSelection = selection.get();
+      return Collections.<DataProvider>singletonList(o -> getSlowData(o, myProject, finalSelection));
     }
-    if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-      PsiDirectory directory = selection.get().filter(PsiDirectory.class).first();
-      if (directory != null) {
-        VirtualFile dir = directory.getVirtualFile();
-        if (ProjectRootsUtil.isModuleContentRoot(dir, myProject)) {
-          return ModuleUtilCore.findModuleForPsiElement(directory);
-        }
-      }
-      return null;
+    if (LangDataKeys.IDE_VIEW.is(dataId)) {
+      return myIdeView;
     }
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      PsiElement element = selection.get().filter(PsiElement.class).first();
-      return element != null && element.isValid() ? element : null;
-    }
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      List<PsiElement> result = selection.get().filter(PsiElement.class)
-        .filter(e -> e != null && e.isValid()).toList();
-      return result.isEmpty() ? null : result.toArray(PsiElement.EMPTY_ARRAY);
-    }
-
-    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      Set<VirtualFile> files = selection.get().filter(PsiElement.class)
-        .filter(e -> e != null && e.isValid())
-        .filterMap(e -> PsiUtilCore.getVirtualFile(e)).toSet();
-      return !files.isEmpty() ? VfsUtilCore.toVirtualFileArray(files) : null;
-    }
-
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      List<Navigatable> elements = selection.get().filter(Navigatable.class).toList();
-      return elements.isEmpty() ? null : elements.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-    }
-
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) {
-      return this;
+    // fast data without selection, allows to override cut/copy/paste providers
+    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
+      Object data = modelExtension.getData(dataId, o -> null);
+      if (data != null) return data;
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return getCopyPasteDelegator(source).getCutProvider();
@@ -798,14 +746,65 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return getCopyPasteDelegator(source).getPasteProvider();
     }
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project, @NotNull JBIterable<?> selection) {
+    DataProvider provider = o -> getSlowDataImpl(o, project, selection);
+    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
+      Object data = modelExtension.getData(dataId, provider);
+      if (data != null) return data;
+    }
+    return provider.getData(dataId);
+  }
+
+  private static @Nullable Object getSlowDataImpl(@NotNull String dataId, @NotNull Project project, @NotNull JBIterable<?> selection) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return !project.isDisposed() ? project : null;
+    }
+    if (PlatformCoreDataKeys.MODULE.is(dataId)) {
+      Module module = selection.filter(Module.class).first();
+      if (module != null && !module.isDisposed()) return module;
+      PsiElement element = selection.filter(PsiElement.class).first();
+      if (element != null) {
+        return ModuleUtilCore.findModuleForPsiElement(element);
+      }
+      return null;
+    }
+    if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
+      PsiDirectory directory = selection.filter(PsiDirectory.class).first();
+      if (directory != null) {
+        VirtualFile dir = directory.getVirtualFile();
+        if (ProjectRootsUtil.isModuleContentRoot(dir, project)) {
+          return ModuleUtilCore.findModuleForPsiElement(directory);
+        }
+      }
+      return null;
+    }
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      PsiElement element = selection.filter(PsiElement.class).first();
+      return element != null && element.isValid() ? element : null;
+    }
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      List<PsiElement> result = selection.filter(PsiElement.class)
+        .filter(e -> e != null && e.isValid()).toList();
+      return result.isEmpty() ? null : result.toArray(PsiElement.EMPTY_ARRAY);
+    }
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      Set<VirtualFile> files = selection.filter(PsiElement.class)
+        .filter(e -> e != null && e.isValid())
+        .filterMap(e -> PsiUtilCore.getVirtualFile(e)).toSet();
+      return !files.isEmpty() ? VfsUtilCore.toVirtualFileArray(files) : null;
+    }
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      List<Navigatable> elements = selection.filter(Navigatable.class).toList();
+      return elements.isEmpty() ? null : elements.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return selection.get().filter(Module.class).isNotEmpty() ? ModuleDeleteProvider.getInstance() : new DeleteHandler.DefaultDeleteProvider();
+      return selection.filter(Module.class).isNotEmpty()
+             ? ModuleDeleteProvider.getInstance()
+             : new DeleteHandler.DefaultDeleteProvider();
     }
-
-    if (LangDataKeys.IDE_VIEW.is(dataId)) {
-      return myIdeView;
-    }
-
     return null;
   }
 
