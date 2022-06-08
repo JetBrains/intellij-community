@@ -211,7 +211,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       val parameter = PyCallableParameterImpl.nonPsi(
         parameterName,
         getTypeForParameter(cls, field, dataclassType, context),
-        getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context)
+        getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context),
+        field
       )
 
       return Triple(parameterName, fieldStub?.kwOnly() == true, parameter)
