@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
@@ -49,6 +49,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -221,6 +222,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     myNameField.setEnabled(myMethod.canChangeName());
     if (myMethod.canChangeName()) {
       myNameField.addDocumentListener(mySignatureUpdater);
+      Disposer.register(myDisposable, () -> myNameField.removeDocumentListener(mySignatureUpdater));
       myNameField.setPreferredWidth(200);
     }
     myNamePanel.add(nameLabel, BorderLayout.NORTH);
@@ -250,6 +252,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
         myReturnTypeField.setPreferredWidth(200);
         myReturnTypeField.addDocumentListener(mySignatureUpdater);
+        Disposer.register(myDisposable, () -> myReturnTypeField.removeDocumentListener(mySignatureUpdater));
       }
       else {
         myReturnTypeField.setEnabled(false);
@@ -459,7 +462,9 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersList.getTable())
         .addExtraAction(myPropagateParamChangesButton)
         .createPanel();
-      myParametersList.getTable().getModel().addTableModelListener(mySignatureUpdater);
+      TableModel tableModel = myParametersList.getTable().getModel();
+      tableModel.addTableModelListener(mySignatureUpdater);
+      Disposer.register(myDisposable, () -> tableModel.removeTableModelListener(mySignatureUpdater));
       return buttonsPanel;
     }
     else {
@@ -472,6 +477,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       myPropagateParamChangesButton.setVisible(false);
 
       myParametersTableModel.addTableModelListener(mySignatureUpdater);
+      Disposer.register(myDisposable, () -> myParametersTableModel.removeTableModelListener(mySignatureUpdater));
 
       customizeParametersTable(myParametersTable);
       return buttonsPanel;
