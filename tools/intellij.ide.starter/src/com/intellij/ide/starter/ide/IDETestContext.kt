@@ -315,10 +315,9 @@ data class IDETestContext(
       useStartupScript = useStartupScript,
       launchName = launchName,
       expectedKill = expectedKill,
-      collectNativeThreads = collectNativeThreads
-    )
-      .addVMOptionsPatch(patchVMOptions)
-      .runIDE()
+      collectNativeThreads = collectNativeThreads,
+      patchVMOptions = patchVMOptions
+    ).runIDE()
 
     if (isReportPublishingEnabled) publishers.forEach {
       it.publish(ideRunResult)

@@ -6,12 +6,11 @@ import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.InstalledIDE
 import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.models.IDEStartResult
+import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.report.publisher.ReportPublisher
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.tests.examples.data.TestCases
-import com.intellij.ide.starter.tests.examples.junit4.initStarterRule
-import org.junit.Rule
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.kodein.di.direct
@@ -37,6 +36,7 @@ class ReportPublisherTest {
     val publishers: List<ReportPublisher> = di.direct.instance()
     val publisherSpy = spy(publishers[0])
     val commandChain = CommandChain()
+    val patchVMOptions: VMOptions.() -> VMOptions = { this }
 
     val ideTestContext = IDETestContext(
       ideDataPaths,
@@ -44,7 +44,7 @@ class ReportPublisherTest {
       TestCases.IJ.GradleJitPackSimple,
       "Test method",
       null,
-      patchVMOptions = { this },
+      patchVMOptions = patchVMOptions,
       NoCIServer,
       publishers = listOf(publisherSpy),
       isReportPublishingEnabled = true
@@ -55,11 +55,13 @@ class ReportPublisherTest {
     val spyTestContext = spy(ideTestContext)
 
     //WHEN
-    doReturn(spyIdeRunContext).`when`(spyTestContext).runContext(commands = commandChain)
+    doReturn(spyIdeRunContext).`when`(spyTestContext).runContext(commands = commandChain, patchVMOptions = patchVMOptions)
     doReturn(ideStartResult).`when`(spyIdeRunContext).runIDE()
 
-    spyTestContext.runIDE (commands = commandChain)
     //THEN
+    spyTestContext.runIDE (commands = commandChain, patchVMOptions = patchVMOptions)
+
+    //ASSERT
     verify(publisherSpy, times(1)).publish(ideStartResult)
   }
 
