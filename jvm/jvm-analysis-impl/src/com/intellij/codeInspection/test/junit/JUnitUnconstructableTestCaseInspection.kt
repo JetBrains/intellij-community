@@ -9,7 +9,7 @@ import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.UClass
 
-class JUnitUnconstructableTestCaseInspection : AbstractBaseUastLocalInspectionTool() {
+class JUnitUnconstructableTestCaseInspection : AbstractBaseUastLocalInspectionTool(UClass::class.java) {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val javaClass = aClass.javaPsi
     val anchor = aClass.uastAnchor?.sourcePsi ?: return emptyArray()
