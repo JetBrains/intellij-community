@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.util.io.exists
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -24,6 +26,9 @@ import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactD
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.EventQueue
 import java.io.File
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Paths
 
 object KotlinArtifactsDownloader {
     fun getUnpackedKotlinDistPath(version: String): File =
@@ -150,6 +155,30 @@ object KotlinArtifactsDownloader {
             JarRepositoryManager.loadDependenciesSync(project, prop, false, false, null, repos, indicator)
 
         return downloadedArtifacts.map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl) }
+    }
+
+    fun downloadArtifact(libraryFileName: String, artifactId: String, extension: String = "jar"): File {
+        val version = KotlinMavenUtils.findLibraryVersion(libraryFileName) ?: error("Can't get '$libraryFileName' version")
+
+        // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
+        KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version)?.let {
+            return it.toFile()
+        }
+
+        val jar = Paths.get(PathManager.getCommunityHomePath()).resolve("out").resolve("$artifactId-$version.$extension").also {
+            Files.createDirectories(it.parent)
+        }
+
+        if (!jar.exists()) {
+            val stream = URL(
+                "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
+                        "org/jetbrains/kotlin/$artifactId/$version/$artifactId-$version.$extension"
+            ).openStream()
+            Files.copy(stream, jar)
+            check(jar.exists()) { "$jar should be downloaded" }
+        }
+
+        return jar.toFile()
     }
 
     private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =
