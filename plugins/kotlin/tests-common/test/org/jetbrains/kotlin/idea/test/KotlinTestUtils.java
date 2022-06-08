@@ -45,8 +45,8 @@ import org.jetbrains.kotlin.cli.jvm.config.JvmContentRootsKt;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.checkers.CompilerTestLanguageVersionSettings;
 import org.jetbrains.kotlin.idea.test.util.JetTestUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
@@ -619,7 +619,7 @@ public class KotlinTestUtils {
             absoluteTestDataFilePath = testDataFilePath;
         } else {
             if ("true".equals(System.getProperty("kombo.compiler.tests.mode", "false"))) {
-                absoluteTestDataFilePath = new File(AdditionalKotlinArtifacts.jpsPluginTestData(testDataFilePath)).getAbsolutePath();
+                absoluteTestDataFilePath = new File(TestKotlinArtifacts.jpsPluginTestData(testDataFilePath)).getAbsolutePath();
             } else {
                 File testRoot = TestMetadataUtil.getTestRoot(testCase.getClass());
                 if (testRoot == null) {

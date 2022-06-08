@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.testGenerator.generator.methods
 
 import com.intellij.openapi.util.io.systemIndependentPath
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.Code
 import org.jetbrains.kotlin.testGenerator.generator.TestMethod
@@ -33,8 +33,8 @@ class TestCaseMethod(
         appendAnnotation(TAnnotation<TestMetadata>(localPath))
         appendBlock("public void $methodName() throws Exception") {
             if (isCompilerTestData) {
-                val path = contentRootPath.substringAfter(AdditionalKotlinArtifacts.compilerTestDataDir.name + "/")
-                append("runTest(${AdditionalKotlinArtifacts::compilerTestData.name}(\"$path\"));")
+                val path = contentRootPath.substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
+                append("runTest(${TestKotlinArtifacts::compilerTestData.name}(\"$path\"));")
             } else {
                 append("runTest(\"$contentRootPath\");")
             }

@@ -17,10 +17,10 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.artifacts.KotlinLibraryData
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import java.io.File
 import kotlin.test.assertNotNull
@@ -36,7 +36,7 @@ object ConfigLibraryUtil {
 
     private val ATTACHABLE_LIBRARIES = mapOf(
         "JUnit" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
-        "JUnit3" to AdditionalKotlinArtifacts.junit3,
+        "JUnit3" to TestKotlinArtifacts.junit3,
         "JUnit4" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
         "TestNG" to File(PathUtil.getJarPathForClass(org.testng.annotations.Test::class.java))
     )
@@ -54,7 +54,7 @@ object ConfigLibraryUtil {
 
     fun configureKotlinStdlibCommon(module: Module) {
         addLibrary(module, LIB_NAME_KOTLIN_STDLIB_COMMON, KotlinCommonLibraryKind) {
-            addRoot(AdditionalKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
+            addRoot(TestKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
         }
     }
 

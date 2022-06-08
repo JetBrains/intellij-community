@@ -7,16 +7,16 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 
 class KotlinJdkAndMultiplatformStdlibDescriptor private constructor(private val withSources: Boolean) : KotlinLightProjectDescriptor() {
     override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
         ConfigLibraryUtil.addLibrary(model, STDLIB_COMMON_LIB_NAME) {
-            addRoot(AdditionalKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
-            addRoot(AdditionalKotlinArtifacts.kotlinStdlibCommonSources, OrderRootType.SOURCES)
+            addRoot(TestKotlinArtifacts.kotlinStdlibCommon, OrderRootType.CLASSES)
+            addRoot(TestKotlinArtifacts.kotlinStdlibCommonSources, OrderRootType.SOURCES)
         }
 
         ConfigLibraryUtil.addLibrary(model, STDLIB_LIB_NAME) {

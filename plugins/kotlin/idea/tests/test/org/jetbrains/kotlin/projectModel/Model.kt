@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.projectModel
 
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -113,7 +113,7 @@ sealed class Stdlib(
 
     object CommonStdlib : Stdlib(
         "stdlib-common",
-        AdditionalKotlinArtifacts.kotlinStdlibCommon,
+        TestKotlinArtifacts.kotlinStdlibCommon,
         CommonPlatforms.defaultCommonPlatform,
         KotlinCommonLibraryKind
     )

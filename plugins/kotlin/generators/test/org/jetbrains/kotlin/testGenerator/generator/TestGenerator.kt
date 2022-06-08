@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.testGenerator.generator
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.junit.runner.RunWith
@@ -94,7 +94,7 @@ object TestGenerator {
         }
 
         if (group.isCompilerTestData) {
-            imports += "static ${AdditionalKotlinArtifacts::class.java.canonicalName}.${AdditionalKotlinArtifacts::compilerTestData.name}"
+            imports += "static ${TestKotlinArtifacts::class.java.canonicalName}.${TestKotlinArtifacts::compilerTestData.name}"
         }
 
         return imports

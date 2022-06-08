@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.generator
 
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
@@ -13,7 +13,6 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.util.*
 import javax.lang.model.element.Modifier
-import kotlin.collections.ArrayList
 
 fun File.toRelativeStringSystemIndependent(base: File): String {
     val path = this.toRelativeString(base)
@@ -121,12 +120,12 @@ class SuiteElement private constructor(
             if (group.isCompilerTestData) {
                 result += SetUpMethod(
                     listOf(
-                        "${AdditionalKotlinArtifacts::compilerTestData.name}(\"${
+                        "${TestKotlinArtifacts::compilerTestData.name}(\"${
                             File(
                                 group.testDataRoot,
                                 model.path
                             ).toRelativeStringSystemIndependent(group.moduleRoot)
-                                .substringAfter(AdditionalKotlinArtifacts.compilerTestDataDir.name + "/")
+                                .substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
                         }\");"
                     )
                 )

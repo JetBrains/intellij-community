@@ -6,26 +6,22 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.stubs.createFacet
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.load.java.ReportLevel
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.test.TestRoot
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/highlighterJsr305/project")
 @RunWith(JUnit38ClassRunner::class)
 class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val foreignAnnotationsJar = AdditionalKotlinArtifacts.jsr305
+        val foreignAnnotationsJar = TestKotlinArtifacts.jsr305
         check(foreignAnnotationsJar.exists()) { "${foreignAnnotationsJar.path} does not exist" }
         val libraryJar = KotlinCompilerStandalone(
             listOf(IDEA_TEST_DATA_DIR.resolve("highlighterJsr305/library")),
