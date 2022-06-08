@@ -12,6 +12,7 @@ The following problems are reported by this inspection:
   </li>
   <li>Tests that are annotated by both `@Test`, `@ParameterizedTest` or `@RepeatedTest`.</li>
   <li><code>setup()</code> or <code>tearDown()</code></li> methods that are not public, whose return type is not void or take arguments.
+  <li><code>suit()</code> methods that are private, take arguments or are not static.
   <li>
     Methods annotated by <code>@BeforeClass</code>, <code>@AfterClass</code>, <code>@BeforeAll</code> or <code>@AfterAll</code> that are
     not public, not static, whose return type is not void or do not have a valid parameter list.

@@ -3,8 +3,8 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger
 
-class JUnitMalformedMemberInspectionMerger : InspectionElementsMerger() {
-  override fun getMergedToolName(): String = "JUnitMalformedMember"
+class JUnitMalformedDeclarationInspectionMerger : InspectionElementsMerger() {
+  override fun getMergedToolName(): String = "JUnitMalformedDeclaration"
 
   override fun getSourceToolNames(): Array<String> = arrayOf(
     "JUnitRule",
