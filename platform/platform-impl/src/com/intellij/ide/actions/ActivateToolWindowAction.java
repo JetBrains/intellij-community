@@ -73,7 +73,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
       return;
     }
 
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId);
+    ToolWindow toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW);
     if (toolWindow == null) {
       presentation.setEnabledAndVisible(hasEmptyState(project));
     }

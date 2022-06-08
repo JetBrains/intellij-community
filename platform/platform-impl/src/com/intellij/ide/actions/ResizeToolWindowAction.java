@@ -114,6 +114,11 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Nullable
   private ToolWindow getToolWindow(@NotNull Project project) {
     if (myToolWindow != null) {

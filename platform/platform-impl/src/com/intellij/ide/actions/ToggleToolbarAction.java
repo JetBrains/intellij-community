@@ -149,6 +149,11 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     e.getPresentation().setVisible(hasToolbars);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   public static boolean hasVisibleToolwindowToolbars(@NotNull ToolWindow toolWindow) {
     Iterator<ActionToolbar> iterator = iterateToolbars(Collections.singletonList(toolWindow.getContentManager().getComponent())).iterator();
     return iterator.hasNext() && iterator.next().getComponent().isVisible();

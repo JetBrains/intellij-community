@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
@@ -31,6 +28,11 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
     }
     Content content = getContextContent(e, toolWindow);
     update(e, toolWindow, content);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   public abstract void update(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content);
