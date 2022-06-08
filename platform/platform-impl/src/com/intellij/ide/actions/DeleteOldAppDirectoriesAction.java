@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.OldDirectoryCleaner;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -18,5 +19,10 @@ public final class DeleteOldAppDirectoriesAction extends DumbAwareAction {
         new OldDirectoryCleaner(0).seekAndDestroy(e.getProject(), indicator);
       }
     }.queue();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

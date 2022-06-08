@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -22,6 +23,11 @@ public class JetBrainsTvAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     boolean enabled = myUrl != null;
     e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

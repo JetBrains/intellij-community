@@ -9,6 +9,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -40,6 +41,11 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     boolean enabled = SystemInfo.isUnix &&
                       (!ExternalUpdateManager.isRoaming() || ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX);
     event.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
