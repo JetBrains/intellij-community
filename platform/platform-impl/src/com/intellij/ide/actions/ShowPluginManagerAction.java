@@ -8,6 +8,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.UIComponentVirtualFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -34,6 +35,11 @@ public class ShowPluginManagerAction extends AnAction implements DumbAware {
       ProjectUtil.currentOrDefaultProject(project),
       PluginManagerConfigurable.class
     );
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static void showPluginsInEditor(@NotNull Project project) {
