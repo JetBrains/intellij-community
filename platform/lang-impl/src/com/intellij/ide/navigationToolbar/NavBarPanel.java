@@ -712,15 +712,16 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   @NotNull
   JBIterable<?> getSelection() {
-    Object value = myModel.getSelectedValue();
-    if (value != null) return JBIterable.of(value);
     int size = myModel.size();
-    return JBIterable.of(size > 0 ? myModel.getElement(size - 1) : null);
+    if (size == 0) return JBIterable.empty();
+    int index = myModel.getSelectedIndex();
+    int adjusted = index >= 0 && index < size ? index : size - 1;
+    return JBIterable.of(myModel.getRaw(adjusted)).filterMap(myModel::unwrapRaw);
   }
 
   @Nullable Object getDataImpl(@NotNull String dataId, @NotNull JComponent source, @NotNull Supplier<? extends JBIterable<?>> selection) {
     if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) {
-      return source;
+      return this; // see NavBarActions#update
     }
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
@@ -732,7 +733,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;
     }
-    // fast data without selection, allows to override cut/copy/paste providers
+    // fast extension data without selection (allows to override cut/copy/paste providers)
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       Object data = modelExtension.getData(dataId, o -> null);
       if (data != null) return data;
@@ -751,6 +752,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project, @NotNull JBIterable<?> selection) {
     DataProvider provider = o -> getSlowDataImpl(o, project, selection);
+    // slow extension data with selection
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       Object data = modelExtension.getData(dataId, provider);
       if (data != null) return data;
