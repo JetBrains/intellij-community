@@ -121,7 +121,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public String toString() {
-    return getDelegate().toString();
+    return "Project" + (isDisposed() ? " (Disposed)" : "") + DefaultProjectImpl.TEMPLATE_PROJECT_NAME;
   }
 
   @Override
