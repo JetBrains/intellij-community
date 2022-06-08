@@ -62,7 +62,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected final Path myFile;
   private final Version myVersion;
   private final boolean myDoCaching;
-  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(true);
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
   private volatile boolean myDirtyStatusUpdateInProgress;
 
