@@ -33,7 +33,7 @@ class WorkspaceModuleImporter(
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
-  private val importFoldersByMavenIdCache: MutableMap<String, WorkspaceFolderImporter.MavenImportFolderHolder>
+  private val importFoldersByMavenIdCache: MutableMap<String, WorkspaceFolderImporter.CachedProjectFolders>
 ) {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
@@ -67,7 +67,7 @@ class WorkspaceModuleImporter(
 
   private fun configureModuleEntity(importData: MavenModuleImportData,
                                     moduleEntity: ModuleEntity,
-                                    importFoldersByMavenIdCache: MutableMap<String, WorkspaceFolderImporter.MavenImportFolderHolder>) {
+                                    importFoldersByMavenIdCache: MutableMap<String, WorkspaceFolderImporter.CachedProjectFolders>) {
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, importFoldersByMavenIdCache)
 
     val importFolderHolder = folderImporter.createContentRoots(moduleEntity, importData)
@@ -192,7 +192,7 @@ class WorkspaceModuleImporter(
 
   private fun importJavaSettings(moduleEntity: ModuleEntity,
                                  importData: MavenModuleImportData,
-                                 importFolderHolder: WorkspaceFolderImporter.MavenImportFolderHolder) {
+                                 importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
     val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
     val inheritCompilerOutput: Boolean
     val compilerOutputUrl: VirtualFileUrl?
@@ -223,7 +223,7 @@ class WorkspaceModuleImporter(
 
   private fun importJavaSettingsMain(moduleEntity: ModuleEntity,
                                      importData: MavenModuleImportData,
-                                     importFolderHolder: WorkspaceFolderImporter.MavenImportFolderHolder) {
+                                     importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
     val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
     val inheritCompilerOutput: Boolean
     val compilerOutputUrl: VirtualFileUrl?
@@ -241,7 +241,7 @@ class WorkspaceModuleImporter(
 
   private fun importJavaSettingsTest(moduleEntity: ModuleEntity,
                                      importData: MavenModuleImportData,
-                                     importFolderHolder: WorkspaceFolderImporter.MavenImportFolderHolder) {
+                                     importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
     val languageLevel = MavenModelUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
     val inheritCompilerOutput: Boolean
     val compilerOutputUrlForTests: VirtualFileUrl?
