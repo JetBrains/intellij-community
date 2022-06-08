@@ -787,9 +787,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     }
 
     private fun stdlibCommon(): LibraryEx = projectLibrary(
-      "kotlin-stdlib-common",
-      AdditionalKotlinArtifacts.kotlinStdlibCommon.jarRoot,
-      kind = KotlinCommonLibraryKind
+        "kotlin-stdlib-common",
+        AdditionalKotlinArtifacts.kotlinStdlibCommon.jarRoot,
+        kind = KotlinCommonLibraryKind
     )
 
     private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", KotlinArtifacts.kotlinStdlib.jarRoot)
