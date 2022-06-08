@@ -157,7 +157,7 @@ private fun stringMetricRegexp(metric: StringMetrics): String =
         StringMetrics.JS_TARGET_MODE -> "^((both|browser|nodejs|none)_?)+$"
         StringMetrics.JVM_DEFAULTS -> "^((disable|enable|compatibility|all|all-compatibility)_?)+$"
         StringMetrics.PROJECT_PATH -> "([0-9A-Fa-f]{40,64})|undefined"
-        StringMetrics.OS_TYPE -> "(Windows|Windows |Mac|Linux|FreeBSD|Solaris|Other)\\d*"
+        StringMetrics.OS_TYPE -> "(Windows|Windows |Mac|Linux|FreeBSD|Solaris|Other|Mac OS X)\\d*"
         StringMetrics.IDES_INSTALLED -> "^((AS|OC|CL|IU|IC|WC)_?)+$"
         StringMetrics.MPP_PLATFORMS -> "^((common|metadata|jvm|js|arm32|arm64|mips32|mipsel32|x64|android|androidApp|androidNativeArm|androidNativeArm32|android_arm32|androidNativeArm64|android_arm64|androidNative|androidNativeX86|androidNativeX64|iosArm|iosArm32|ios_arm32|iosArm64|ios_arm64|ios|ios_x64|iosSim|iosX64|watchos|watchosArm32|watchosArm64|watchosX86|tvos|tvosArm64|tvosX64|linux|linuxArm32Hfp|linux_arm32_hfp|linuxMips32|linux_mips32|linuxMipsel32|linux_mipsel32|linuxX64|linux_x64|macos|osx|macosX64|macos_x64|mingw|mingwX64|mingw_x64|mingwX86|mingw_X86|wasm32|wasm)_?)+$"
         StringMetrics.JS_COMPILER_MODE -> "^((ir|legacy|both|UNKNOWN)_?)+$"
