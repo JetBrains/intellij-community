@@ -108,18 +108,6 @@ object GHUIUtil {
     return datePrefix + prettyDate
   }
 
-  fun createNoteWithAction(action: () -> Unit): SimpleColoredComponent {
-    return SimpleColoredComponent().apply {
-      isFocusable = true
-      isOpaque = false
-
-      LinkMouseListenerBase.installSingleTagOn(this)
-      registerKeyboardAction({ action() },
-                             KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                             JComponent.WHEN_FOCUSED)
-    }
-  }
-
   fun <T> showChooserPopup(@NlsContexts.PopupTitle popupTitle: String, parentComponent: JComponent,
                            cellRenderer: SelectionListCellRenderer<T>,
                            currentList: List<T>,
