@@ -36,14 +36,13 @@ import java.util.*;
 public class JUnit5Runner {
   public static void main(String[] args) throws ClassNotFoundException {
     try {
-      Class<?> aClass = Class.forName(args[0], true, JUnit5Runner.class.getClassLoader());
       Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
       DiscoverySelector selector;
       if (args.length == 1) {
-        selector = DiscoverySelectors.selectClass(aClass);
+        selector = DiscoverySelectors.selectClass(args[0]);
       }
       else {
-        selector = DiscoverySelectors.selectMethod(aClass, args[1]);
+        selector = DiscoverySelectors.selectMethod(args[0], args[1]);
       }
       TCExecutionListener listener = new TCExecutionListener();
       launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), listener);
