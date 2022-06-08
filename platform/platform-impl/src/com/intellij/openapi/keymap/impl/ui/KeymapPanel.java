@@ -58,8 +58,10 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAllToolbarsImmediately;
 
@@ -595,7 +597,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     DefaultActionGroup group = createEditActionGroup(actionId, selectedKeymap);
     if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {
       ActionManager.getInstance()
-        .createActionPopupMenu(ActionPlaces.UNKNOWN, group)
+        .createActionPopupMenu("popup@Keymap.ActionsTree.Menu", group)
         .getComponent()
         .show(e.getComponent(), ((MouseEvent)e).getX(), ((MouseEvent)e).getY());
     }
