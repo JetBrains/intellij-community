@@ -56,7 +56,9 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
     myPresentation.isEnabledAndVisible = true
   }
 
-  fun syncIcon() {
+  fun updatePresentation() {
+    updateToolTipText()
+
     myPresentation.icon = toolWindow.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(myPresentation)
   }

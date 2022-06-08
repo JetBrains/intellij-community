@@ -117,11 +117,11 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
       }
 
       override fun updatePresentation() {
-        squareStripeButton.syncIcon()
+        squareStripeButton.updatePresentation()
       }
 
       override fun updateIcon(icon: Icon?) {
-        squareStripeButton.syncIcon()
+        squareStripeButton.updatePresentation()
       }
 
       override fun remove() {
