@@ -2,14 +2,11 @@
 package com.intellij.execution.codeInspection
 
 import com.intellij.codeInsight.TestFrameworks
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.execution.ExecutorRegistry
-import com.intellij.execution.ProgramRunnerUtil
-import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.TestStateStorage
+import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -70,7 +67,7 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
   private class TestInfoCache(
     var record: TestStateStorage.Record,
     var pointer: SmartPsiElementPointer<PsiElement>? = null
-  ): TestFailedLineManager.TestInfo {
+  ) : TestFailedLineManager.TestInfo {
     override fun getErrorMessage(): String = record.errorMessage
 
     override fun getTopStackTraceLine(): String = record.topStacktraceLine
@@ -93,21 +90,22 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     return info
   }
 
-  override fun getRunQuickFix(element: PsiElement): LocalQuickFix = RunActionFix(element)
+  override fun getRunQuickFix(element: PsiElement): LocalQuickFix? {
+    val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID) ?: return null
+    val configuration = ConfigurationContext(element).configuration ?: return null
+    return RunActionFix(executor, configuration)
+  }
 
-  override fun getDebugQuickFix(element: PsiElement, topStacktraceLine: String): LocalQuickFix =
-    DebugActionFix(element, topStacktraceLine)
+  override fun getDebugQuickFix(element: PsiElement, topStacktraceLine: String): LocalQuickFix? {
+    val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultDebugExecutor.EXECUTOR_ID) ?: return null
+    val configuration = ConfigurationContext(element).configuration ?: return null
+    return DebugActionFix(topStacktraceLine, executor, configuration)
+  }
 
-  private open class RunActionFix(element: PsiElement, executorId: String = DefaultRunExecutor.EXECUTOR_ID) : LocalQuickFix, Iconable {
-    @SafeFieldForPreview
-    private val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: throw IllegalStateException(
-      "Could not create action because executor $executorId was not found.")
-
-    @SafeFieldForPreview
-    private val configuration: RunnerAndConfigurationSettings = ConfigurationContext(element).configuration ?: throw IllegalStateException(
-      "Could not create action because configuration context was not found for element ${element.text}."
-    )
-
+  private open class RunActionFix(
+    @FileModifier.SafeFieldForPreview private val executor: Executor,
+    @FileModifier.SafeFieldForPreview private val configuration: RunnerAndConfigurationSettings
+  ) : LocalQuickFix, Iconable {
     override fun getFamilyName(): @Nls(capitalization = Nls.Capitalization.Sentence) String =
       UIUtil.removeMnemonic(executor.getStartActionText(ProgramRunnerUtil.shortenName(configuration.name, 0)))
 
@@ -119,9 +117,10 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
   }
 
   private class DebugActionFix(
-    element: PsiElement,
-    private val topStacktraceLine: String
-  ) : RunActionFix(element, DefaultDebugExecutor.EXECUTOR_ID) {
+    private val topStacktraceLine: String,
+    executor: Executor,
+    settings: RunnerAndConfigurationSettings
+  ) : RunActionFix(executor, settings) {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val line = StackTraceLine(project, topStacktraceLine)
       line.getMethodLocation(project)?.let { location ->
