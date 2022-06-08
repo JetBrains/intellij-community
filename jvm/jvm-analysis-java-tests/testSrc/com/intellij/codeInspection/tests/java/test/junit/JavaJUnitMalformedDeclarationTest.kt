@@ -491,7 +491,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
         void beforeEach(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
 
         @org.junit.jupiter.api.Test
-        void <warning descr="Method 'nonRepeated' annotated with '@Test' is malformed">nonRepeated</warning>(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
+        void <warning descr="Method 'nonRepeated' annotated with '@Test' should not declare parameter 'repetitionInfo'">nonRepeated</warning>(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
       }      
     """.trimIndent())
   }
@@ -499,7 +499,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class WithBeforeEach {
         @org.junit.jupiter.api.BeforeAll
-        void <warning descr="Method 'beforeAllWithRepetitionInfo' annotated with '@BeforeAll' is malformed">beforeAllWithRepetitionInfo</warning>(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
+        void <warning descr="Method 'beforeAllWithRepetitionInfo' annotated with '@BeforeAll' should be static and not declare parameter 'repetitionInfo'">beforeAllWithRepetitionInfo</warning>(org.junit.jupiter.api.RepetitionInfo repetitionInfo) { }
       }
     """.trimIndent())
   }
@@ -520,7 +520,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class MainTest {
         @org.junit.Before
-        String <warning descr="Method 'before' annotated with '@Before' is malformed">before</warning>(int i) { return ""; }
+        String <warning descr="Method 'before' annotated with '@Before' should be public, of type 'void' and not declare parameter 'i'">before</warning>(int i) { return ""; }
       }
     """.trimIndent())
   }
@@ -528,7 +528,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
-        String <warning descr="Method 'beforeEach' annotated with '@BeforeEach' is malformed">beforeEach</warning>(int i) { return ""; }
+        String <warning descr="Method 'beforeEach' annotated with '@BeforeEach' should be of type 'void' and not declare parameter 'i'">beforeEach</warning>(int i) { return ""; }
       }
     """.trimIndent())
   }
@@ -597,7 +597,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class MainTest {
         @org.junit.jupiter.api.BeforeAll
-        String <warning descr="Method 'beforeAll' annotated with '@BeforeAll' is malformed">beforeAll</warning>(int i) { return ""; }
+        String <warning descr="Method 'beforeAll' annotated with '@BeforeAll' should be static, of type 'void' and not declare parameter 'i'">beforeAll</warning>(int i) { return ""; }
       }
     """.trimIndent())
   }
@@ -626,35 +626,35 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
   fun `test malformed dataPoint non-static highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoint public Object <warning descr="Field 'f1' annotated with '@DataPoint' is malformed">f1</warning>;
+        @org.junit.experimental.theories.DataPoint public Object <warning descr="Field 'f1' annotated with '@DataPoint' should be static">f1</warning>;
       }
     """.trimIndent())
   }
   fun `test malformed dataPoint non-public highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoint static Object <warning descr="Field 'f1' annotated with '@DataPoint' is malformed">f1</warning>;
+        @org.junit.experimental.theories.DataPoint static Object <warning descr="Field 'f1' annotated with '@DataPoint' should be public">f1</warning>;
       }
     """.trimIndent())
   }
   fun `test malformed dataPoint field highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoint Object <warning descr="Field 'f1' annotated with '@DataPoint' is malformed">f1</warning>;
+        @org.junit.experimental.theories.DataPoint Object <warning descr="Field 'f1' annotated with '@DataPoint' should be static and public">f1</warning>;
       }
     """.trimIndent())
   }
   fun `test malformed datapoint method highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoint Object <warning descr="Method 'f1' annotated with '@DataPoint' is malformed">f1</warning>() { return null; }
+        @org.junit.experimental.theories.DataPoint Object <warning descr="Method 'f1' annotated with '@DataPoint' should be static and public">f1</warning>() { return null; }
       }
     """.trimIndent())
   }
   fun `test malformed datapoints method highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Test {
-        @org.junit.experimental.theories.DataPoints Object <warning descr="Method 'f1' annotated with '@DataPoints' is malformed">f1</warning>() { return null; }
+        @org.junit.experimental.theories.DataPoints Object <warning descr="Method 'f1' annotated with '@DataPoints' should be static and public">f1</warning>() { return null; }
       }
     """.trimIndent())
   }
@@ -683,7 +683,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class C extends junit.framework.TestCase {
-        private void <warning descr="Method 'setUp' is malformed">setUp</warning>(int i) { }
+        private void <warning descr="Method 'setUp' should be a non-private, no-arg and be of type void">setUp</warning>(int i) { }
       }  
     """.trimIndent())
   }
@@ -713,10 +713,10 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
 
       class RuleTest {
         @org.junit.Rule
-        private SomeTestRule <warning descr="Field 'x' annotated with '@Rule' is malformed">x</warning>;
+        private SomeTestRule <warning descr="Field 'x' annotated with '@Rule' should be public">x</warning>;
 
         @org.junit.Rule
-        public static SomeTestRule <warning descr="Field 'y' annotated with '@Rule' is malformed">y</warning>;
+        public static SomeTestRule <warning descr="Field 'y' annotated with '@Rule' should be non-static">y</warning>;
       }
     """.trimIndent())
   }
@@ -724,7 +724,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class RuleTest {
         @org.junit.Rule
-        public int <warning descr="Field 'x' annotated with '@Rule' is malformed">x</warning>;
+        public int <warning descr="Field 'x' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">x</warning>;
       }
     """.trimIndent())
   }
@@ -741,7 +741,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
 
       class RuleTest {        
         @org.junit.Rule
-        public static SomeTestRule <warning descr="Method 'y' annotated with '@Rule' is malformed">y</warning>() { 
+        public static SomeTestRule <warning descr="Method 'y' annotated with '@Rule' should be non-static">y</warning>() { 
           return new SomeTestRule();  
         };        
       }
@@ -760,16 +760,16 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
 
       class ClassRuleTest {
         @org.junit.ClassRule
-        static SomeTestRule <warning descr="Field 'x' annotated with '@ClassRule' is malformed">x</warning> = new SomeTestRule();
+        static SomeTestRule <warning descr="Field 'x' annotated with '@ClassRule' should be public">x</warning> = new SomeTestRule();
 
         @org.junit.ClassRule
-        public SomeTestRule <warning descr="Field 'y' annotated with '@ClassRule' is malformed">y</warning> = new SomeTestRule();
+        public SomeTestRule <warning descr="Field 'y' annotated with '@ClassRule' should be static">y</warning> = new SomeTestRule();
 
         @org.junit.ClassRule
-        private SomeTestRule <warning descr="Field 'z' annotated with '@ClassRule' is malformed">z</warning> = new SomeTestRule();
+        private SomeTestRule <warning descr="Field 'z' annotated with '@ClassRule' should be static and public">z</warning> = new SomeTestRule();
 
         @org.junit.ClassRule
-        public static int <warning descr="Field 't' annotated with '@ClassRule' is malformed">t</warning> = 0;
+        public static int <warning descr="Field 't' annotated with '@ClassRule' should be of type 'org.junit.rules.TestRule'">t</warning> = 0;
       }
     """.trimIndent())
   }
@@ -897,10 +897,10 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
   fun `test malformed test for JUnit 3 highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class JUnit3TestMethodIsPublicVoidNoArg extends junit.framework.TestCase {
-        void <warning descr="Method 'testOne' is malformed">testOne</warning>() { }
-        public int <warning descr="Method 'testTwo' is malformed">testTwo</warning>() { return 2; }
-        public static void <warning descr="Method 'testThree' is malformed">testThree</warning>() { }
-        public void <warning descr="Method 'testFour' is malformed">testFour</warning>(int i) { }
+        void <warning descr="Method 'testOne' should be a public, no-arg and be of type void">testOne</warning>() { }
+        public int <warning descr="Method 'testTwo' should be a public, no-arg and be of type void">testTwo</warning>() { return 2; }
+        public static void <warning descr="Method 'testThree' should be a public, no-arg and be of type void">testThree</warning>() { }
+        public void <warning descr="Method 'testFour' should be a public, no-arg and be of type void">testFour</warning>(int i) { }
         public void testFive() { }
         void testSix(int i) { } //ignore when method doesn't look like test anymore
       }
@@ -913,10 +913,10 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
     """.trimIndent())
     myFixture.testHighlighting(ULanguage.JAVA, """
       class JUnit4TestMethodIsPublicVoidNoArg {
-        @org.junit.Test void <warning descr="Method 'testOne' annotated with '@Test' is malformed">testOne</warning>() {}
-        @org.junit.Test public int <warning descr="Method 'testTwo' annotated with '@Test' is malformed">testTwo</warning>() { return 2; }
-        @org.junit.Test public static void <warning descr="Method 'testThree' annotated with '@Test' is malformed">testThree</warning>() {}
-        @org.junit.Test public void <warning descr="Method 'testFour' annotated with '@Test' is malformed">testFour</warning>(int i) {}
+        @org.junit.Test void <warning descr="Method 'testOne' annotated with '@Test' should be public">testOne</warning>() {}
+        @org.junit.Test public int <warning descr="Method 'testTwo' annotated with '@Test' should be of type 'void'">testTwo</warning>() { return 2; }
+        @org.junit.Test public static void <warning descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</warning>() {}
+        @org.junit.Test public void <warning descr="Method 'testFour' annotated with '@Test' should not declare parameter 'i'">testFour</warning>(int i) {}
         @org.junit.Test public void testFive() {}
         @org.junit.Test public void testMock(@mockit.Mocked String s) {}
       }
@@ -926,7 +926,7 @@ class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runner.Runner.class)
       class JUnit4RunWith {
-          @org.junit.Test public int <warning descr="Method 'testMe' annotated with '@Test' is malformed">testMe</warning>(int i) { return -1; }
+          @org.junit.Test public int <warning descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</warning>(int i) { return -1; }
       }
     """.trimIndent())
   }
