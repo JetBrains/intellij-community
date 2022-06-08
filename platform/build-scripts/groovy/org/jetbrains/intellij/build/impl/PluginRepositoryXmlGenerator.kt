@@ -25,10 +25,10 @@ internal fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepository
 
 private fun writePluginsXml(target: Path, categories: Map<String, List<Plugin>>) {
   Files.newBufferedWriter(target).use { out ->
-    out.write("""<?xml version="1.0" encoding="UTF-8"?>\n""")
-    out.write("""<plugin-repository>\n""")
+    out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+    out.write("<plugin-repository>\n")
     for (it in categories.keys) {
-      out.write("""  <category name="$it">\n""")
+      out.write("  <category name=\"$it\">\n")
       for (p in categories.get(it)!!.sortedWith { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.id, o2.id) }) {
         out.write("""
           <idea-plugin size="${p.size}">
