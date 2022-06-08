@@ -1505,6 +1505,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   final class PositionMarker extends RangeMarkerImpl {
     private PositionMarker(int offset) {
       super(myEditor.getDocument(), offset, offset, false, true);
+      if (offset < 0) {
+        throw new IllegalArgumentException("invalid offset: "+offset+"; document length="+myEditor.getDocument().getTextLength());
+      }
       myCaretModel.myPositionMarkerTree.addInterval(this, offset, offset, false, false, false, 0);
     }
 

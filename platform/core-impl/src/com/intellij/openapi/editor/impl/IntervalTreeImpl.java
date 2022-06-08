@@ -784,8 +784,11 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   @NotNull
   public IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
                                                       boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+    if (start < 0 || start > end) {
+      throw new IllegalArgumentException("invalid offsets: start="+start+"; end="+end);
+    }
+    l.writeLock().lock();
     try {
-      l.writeLock().lock();
       if (firingBeforeRemove) {
         throw new IncorrectOperationException("Must not add rangemarker from within beforeRemoved listener");
       }
