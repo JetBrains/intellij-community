@@ -700,11 +700,11 @@ public class VfsUtilCore {
   }
 
   /**
-   * Compares 2 virtual files by paths.
-   * <p/>
-   * This comparator performs root traversal to avoid calling {@link VirtualFile#getPath()} which creates too many string objects.
+   * Compares the virtual files by paths.
+   * This method is equivalent to {@code v1.getPath().compareTo(v2.getPath())} but more efficient, because
+   * it performs root traversal to avoid calling {@link VirtualFile#getPath()} which creates too many string objects.
    */
-  public static int compare(@Nullable VirtualFile v1, @Nullable VirtualFile v2) {
+  public static int compareByPath(@Nullable VirtualFile v1, @Nullable VirtualFile v2) {
     if (!Objects.equals(v1, v2)) {
       if (v1 == null) {
         return -1;
@@ -786,10 +786,10 @@ public class VfsUtilCore {
   @ApiStatus.Experimental
   public static boolean isAncestorOrSelf(@NotNull @SystemIndependent String ancestorPath, @NotNull VirtualFile file) {
     ancestorPath = FileUtil.toCanonicalPath(ancestorPath);
-    List<VirtualFile> hierarchy = getHierarchy(file);
     if (ancestorPath.isEmpty()) {
       return true;
     }
+    List<VirtualFile> hierarchy = getHierarchy(file);
     int i = 0;
     boolean result = false;
     int j;

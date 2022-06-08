@@ -530,7 +530,7 @@ public class RefManagerImpl extends RefManager {
     ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
-      int v21 = VfsUtilCore.compare(v1, v2);
+      int v21 = VfsUtilCore.compareByPath(v1, v2);
       if (v21 != 0) {
         return v21;
       }
