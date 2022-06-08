@@ -45,6 +45,7 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
   protected void addTestFromJson(String filePath, String... extensions) throws IOException {
     JsonFactory factory = JsonFactory.builder().build();
     JsonParser parser = factory.createParser(new File(filePath));
+    parser.enable(JsonParser.Feature.ALLOW_COMMENTS);
     if (parser.nextToken() != JsonToken.START_OBJECT) {
       throw new IOException("Unexpected JSON format");
     }
