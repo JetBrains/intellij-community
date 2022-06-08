@@ -78,6 +78,7 @@ private class JUnitMalformedSignatureVisitor(
     checkRepeatedTestNonPositive(node)
     checkIllegalCombinedAnnotations(node)
     dataPoint.report(holder, node)
+    checkSuite(node)
     checkedMalformedSetupTeardown(node)
     beforeAfterProblem.report(holder, node)
     beforeAfterEachProblem.report(holder, node)
@@ -234,6 +235,10 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
+  private fun UMethod.isNoArg(): Boolean = uastParameters.isEmpty() || uastParameters.all { param ->
+    param.javaPsi?.castSafelyTo<PsiParameter>()?.let { AnnotationUtil.isAnnotated(it, ignorableAnnotations, 0) } == true
+  }
+
   private fun checkJUnit3Test(method: UMethod) {
     val sourcePsi = method.sourcePsi ?: return
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
@@ -242,26 +247,37 @@ private class JUnitMalformedSignatureVisitor(
     if (!TestUtils.isJUnit3TestMethod(javaMethod.javaPsi)) return
     val containingClass = method.javaPsi.containingClass ?: return
     if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return
-    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.void.descriptor", "public")
+    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.void.descriptor", "public", "non-static")
     if (PsiType.VOID != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic || !method.isNoArg()) {
       return holder.registerUProblem(method, message, MethodSignatureQuickfix(method.name, false, newVisibility = JvmModifier.PUBLIC))
     }
   }
 
-  private fun UMethod.isNoArg(): Boolean = uastParameters.isEmpty() || uastParameters.all { param ->
-    param.javaPsi?.castSafelyTo<PsiParameter>()?.let { AnnotationUtil.isAnnotated(it, ignorableAnnotations, 0) } == true
-  }
-
   private fun checkedMalformedSetupTeardown(method: UMethod) {
-    val sourcePsi = method.sourcePsi ?: return
     if ("setUp" != method.name && "tearDown" != method.name) return
     if (!InheritanceUtil.isInheritor(method.javaPsi.containingClass, JUNIT_FRAMEWORK_TEST_CASE)) return
+    val sourcePsi = method.sourcePsi ?: return
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
     val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull() ?: return
     if (PsiType.VOID != method.returnType || method.visibility == UastVisibility.PRIVATE || javaMethod.isStatic || !method.isNoArg()) {
-      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.void.descriptor", "non-private")
+      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.void.descriptor", "non-private", "non-static")
       val quickFix = MethodSignatureQuickfix(
         method.name, newVisibility = JvmModifier.PUBLIC, makeStatic = false, shouldBeVoidType = true, inCorrectParams = emptyMap()
+      )
+      return holder.registerUProblem(method, message, quickFix)
+    }
+  }
+
+  private fun checkSuite(method: UMethod) {
+    if ("suite" != method.name) return
+    if (!InheritanceUtil.isInheritor(method.javaPsi.containingClass, JUNIT_FRAMEWORK_TEST_CASE)) return
+    val sourcePsi = method.sourcePsi ?: return
+    val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
+    val javaMethod = alternatives.firstOrNull { it.isStatic } ?: alternatives.firstOrNull() ?: return
+    if (method.visibility == UastVisibility.PRIVATE || !javaMethod.isStatic || !method.isNoArg()) {
+      val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.method.no.arg.descriptor", "non-private", "static")
+      val quickFix = MethodSignatureQuickfix(
+        method.name, newVisibility = JvmModifier.PUBLIC, makeStatic = true, shouldBeVoidType = false, inCorrectParams = emptyMap()
       )
       return holder.registerUProblem(method, message, quickFix)
     }
@@ -951,7 +967,7 @@ private class JUnitMalformedSignatureVisitor(
       val containingFile = descriptor.psiElement.containingFile ?: return
       val javaDeclaration = getUParentForIdentifier(descriptor.psiElement)?.castSafelyTo<UMethod>()?.javaPsi ?: return
       val declPtr = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(javaDeclaration)
-      if (shouldBeVoidType != null) {
+      if (shouldBeVoidType == true) {
         declPtr.element?.castSafelyTo<JvmMethod>()?.let { jvmMethod ->
           createChangeTypeActions(jvmMethod, typeRequest(JvmPrimitiveTypeKind.VOID.name, emptyList())).forEach {
             it.invoke(project, null, containingFile)

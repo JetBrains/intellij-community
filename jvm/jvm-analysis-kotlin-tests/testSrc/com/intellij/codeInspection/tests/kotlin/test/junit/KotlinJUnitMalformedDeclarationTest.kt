@@ -876,7 +876,7 @@ class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() 
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       class C : junit.framework.TestCase() {
-        private fun <warning descr="Method 'setUp' should be a non-private, no-arg and be of type void">setUp</warning>(i: Int) { System.out.println(i) }
+        private fun <warning descr="Method 'setUp' should be a non-private, non-static, have no parameters and be of type void">setUp</warning>(i: Int) { System.out.println(i) }
       }  
     """.trimIndent())
   }
@@ -1015,13 +1015,13 @@ class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() 
     myFixture.testHighlighting(ULanguage.KOTLIN, """
       public class JUnit3TestMethodIsPublicVoidNoArg : junit.framework.TestCase() {
         fun testOne() { }
-        public fun <warning descr="Method 'testTwo' should be a public, no-arg and be of type void">testTwo</warning>(): Int { return 2 }
-        public fun <warning descr="Method 'testFour' should be a public, no-arg and be of type void">testFour</warning>(i: Int) { println(i) }
+        public fun <warning descr="Method 'testTwo' should be a public, non-static, have no parameters and be of type void">testTwo</warning>(): Int { return 2 }
+        public fun <warning descr="Method 'testFour' should be a public, non-static, have no parameters and be of type void">testFour</warning>(i: Int) { println(i) }
         public fun testFive() { }
         private fun testSix(i: Int) { println(i) } //ignore when method doesn't look like test anymore
         companion object {
           @JvmStatic
-          public fun <warning descr="Method 'testThree' should be a public, no-arg and be of type void">testThree</warning>() { }
+          public fun <warning descr="Method 'testThree' should be a public, non-static, have no parameters and be of type void">testThree</warning>() { }
         }
       }
     """.trimIndent())
@@ -1052,5 +1052,38 @@ class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() 
           @org.junit.Test public fun <warning descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</warning>(i: Int): Int { return -1 }
       }
     """.trimIndent())
+  }
+
+  /* Malformed suite */
+  fun `test malformed suite no highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class Junit3Suite : junit.framework.TestCase() {          
+          companion object {
+              @JvmStatic  
+              fun suite() = junit.framework.TestSuite()
+          }
+      }
+    """.trimIndent())
+  }
+  fun `test malformed suite highlighting`() {
+    myFixture.testHighlighting(ULanguage.KOTLIN, """
+      class Junit3Suite : junit.framework.TestCase() {          
+          fun <warning descr="Method 'suite' should be a non-private, static and have no parameters">suite</warning>() = junit.framework.TestSuite()
+      }
+    """.trimIndent())
+  }
+  fun `test malformed suite quickfix`() {
+    myFixture.testQuickFix(ULanguage.KOTLIN, """
+      class Junit3Suite : junit.framework.TestCase() {          
+          fun sui<caret>te() = junit.framework.TestSuite()
+      }
+    """.trimIndent(), """
+      class Junit3Suite : junit.framework.TestCase() {
+          companion object {
+              @JvmStatic
+              fun suite() = junit.framework.TestSuite()
+          }
+      }
+    """.trimIndent(), "Fix 'suite' method signature")
   }
 }

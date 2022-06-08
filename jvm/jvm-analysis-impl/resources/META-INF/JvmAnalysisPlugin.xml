@@ -39,12 +39,12 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.unconstructable.test.case.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitUnconstructableTestCaseInspection"/>
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnitMalformedMember"
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnitMalformedDeclaration"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit.malformed.declaration.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitMalformedDeclarationInspection"/>
-    <inspectionElementsMerger implementation="com.intellij.codeInspection.test.junit.JUnitMalformedMemberInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.test.junit.JUnitMalformedDeclarationInspectionMerger"/>
 
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="UnstableApiUsage"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
