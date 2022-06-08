@@ -13,7 +13,8 @@ repositories {
   mavenCentral()
 }
 
-// Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
+// Configure Gradle IntelliJ Plugin
+// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
   version.set("${context.getBomProperty("intellij.version")}")
   type.set("IC") // Target IDE Platform
