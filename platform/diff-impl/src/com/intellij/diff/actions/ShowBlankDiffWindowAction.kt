@@ -471,7 +471,7 @@ private fun createBlankNotificationProvider(viewer: DiffViewer?, content: Docume
   }
   if (BlankDiffWindowUtil.getRecentFiles().isNotEmpty()) {
     panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.recent")) {
-      val menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, SwitchToRecentEditorActionGroup())
+      val menu = ActionManager.getInstance().createActionPopupMenu("popup@BlankDiffWindow.Recent.Menu", SwitchToRecentEditorActionGroup())
       menu.setTargetComponent(editor.component)
       val event = IdeEventQueue.getInstance().trueCurrentEvent
       if (event is MouseEvent) {
