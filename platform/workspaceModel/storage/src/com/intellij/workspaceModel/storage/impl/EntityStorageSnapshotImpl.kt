@@ -238,11 +238,13 @@ internal class MutableEntityStorageImpl(
           LOG.error("Persistent id expected for entity: $copiedData")
         }
       }
-      updateEntitySource(entityId, originalEntityData, copiedData)
 
       if (!modifiableEntity.changedProperty.contains("entitySource") || modifiableEntity.changedProperty.size > 1) {
         // Add an entry to changelog
         addReplaceEvent(this, entityId, beforeChildren, beforeParents, copiedData, originalEntityData, originalParents)
+      }
+      if (modifiableEntity.changedProperty.contains("entitySource")) {
+        updateEntitySource(entityId, originalEntityData, copiedData)
       }
 
       val updatedEntity = copiedData.createEntity(this)
@@ -259,12 +261,15 @@ internal class MutableEntityStorageImpl(
   private fun <T : WorkspaceEntity> updateEntitySource(entityId: EntityId, originalEntityData: WorkspaceEntityData<T>,
                                                        copiedEntityData: WorkspaceEntityData<T>) {
     val newSource = copiedEntityData.entitySource
-    val originalSource = originalEntityData.entitySource
-    if (originalSource == newSource) return
-
+    val originalSource = this.getOriginalSourceFromChangelog(entityId) ?: originalEntityData.entitySource
+    if (originalSource == newSource) {
       this.changeLog.addChangeSourceEvent(entityId, copiedEntityData, originalSource)
-      indexes.entitySourceIndex.index(entityId, newSource)
-      newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
+      return
+    }
+
+    this.changeLog.addChangeSourceEvent(entityId, copiedEntityData, originalSource)
+    indexes.entitySourceIndex.index(entityId, newSource)
+    newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
   }
 
   override fun removeEntity(e: WorkspaceEntity) {

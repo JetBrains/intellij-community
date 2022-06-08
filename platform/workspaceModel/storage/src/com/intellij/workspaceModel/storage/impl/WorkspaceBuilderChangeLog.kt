@@ -216,12 +216,12 @@ internal fun MutableEntityStorageImpl.getOriginalParents(id: ChildEntityId): Map
   } ?: this.refs.getParentRefsOfChild(id)
 }
 
-internal fun MutableEntityStorageImpl.getOriginalSource(id: EntityId): EntitySource {
+internal fun MutableEntityStorageImpl.getOriginalSourceFromChangelog(id: EntityId): EntitySource? {
   return this.changeLog.changeLog[id]?.let {
     when (it) {
       is ChangeEntry.ChangeEntitySource -> it.originalSource
       is ChangeEntry.ReplaceAndChangeSource -> it.sourceChange.originalSource
-      else -> this.entityDataByIdOrDie(id).entitySource
+      else -> null
     }
-  } ?: this.entityDataByIdOrDie(id).entitySource
+  }
 }
