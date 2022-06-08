@@ -1,60 +1,67 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.testFramework.impl
+package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.fixtures.impl.BaseFixture
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.XmlSerializer
-import org.jetbrains.plugins.gradle.testFramework.*
+import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
+import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import java.nio.file.Path
 import java.util.*
 
 internal class FileTestFixtureImpl(
-  private val root: VirtualFile,
+  private val relativePath: String,
   private val configure: FileTestFixture.Builder.() -> Unit
-) : BaseFixture(), FileTestFixture {
+) : FileTestFixture {
 
   private var isInitialized: Boolean = false
   private var isSuppressedErrors: Boolean = false
   private lateinit var errors: MutableList<Throwable>
   private lateinit var snapshots: MutableMap<Path, Optional<String>>
 
+  private lateinit var testRootDisposable: Disposable
+  private lateinit var fixtureRoot: VirtualFile
   private lateinit var fixtureStateFile: VirtualFile
 
-  override fun isModified(): Boolean {
-    return snapshots.isNotEmpty()
-  }
+  override val root: VirtualFile get() = fixtureRoot
 
   override fun setUp() {
     isInitialized = false
-
-    super.setUp()
-
-    refreshFixtureRoot()
-
     isSuppressedErrors = false
     errors = ArrayList()
     snapshots = HashMap()
 
+    testRootDisposable = Disposer.newDisposable()
+
+    fixtureRoot = createFixtureRoot(relativePath)
     fixtureStateFile = createFixtureStateFile()
 
-    repairFixtureCaches()
-    dumpFixtureState()
-
-    configureFixtureCaches()
-    refreshFixtureRoot()
-
     installFixtureFilesWatcher()
+
+    withSuppressedErrors {
+      repairFixtureCaches()
+      dumpFixtureState()
+    }
+
+    withSuppressedErrors {
+      configureFixtureCaches()
+      refreshFixtureRoot()
+    }
 
     isInitialized = true
     dumpFixtureState()
@@ -62,11 +69,21 @@ internal class FileTestFixtureImpl(
 
   override fun tearDown() {
     RunAll(
-      ThrowableRunnable { refreshFixtureRoot() },
-      ThrowableRunnable { rollbackAllFiles() },
-      ThrowableRunnable { throwIfNotEmpty(errors) },
-      ThrowableRunnable { super.tearDown() }
+      ThrowableRunnable { rollbackAll() },
+      ThrowableRunnable { throwIfNotEmpty(getErrors()) },
+      ThrowableRunnable { Disposer.dispose(testRootDisposable) }
     ).run()
+  }
+
+  private fun createFixtureRoot(relativePath: String): VirtualFile {
+    val fileSystem = LocalFileSystem.getInstance()
+    val systemPath = Path.of(PathManager.getSystemPath()).getAbsoluteNioPath("..")
+    val systemDirectory = fileSystem.findOrCreateDirectory(systemPath)
+    val fixtureRoot = "testData/$relativePath"
+    VfsRootAccess.allowRootAccess(testRootDisposable, systemDirectory.path + "/$fixtureRoot")
+    return runWriteActionAndGet {
+      systemDirectory.findOrCreateDirectory(fixtureRoot)
+    }
   }
 
   private fun createFixtureStateFile(): VirtualFile {
@@ -148,6 +165,19 @@ internal class FileTestFixtureImpl(
     }
   }
 
+  override fun isModified(): Boolean {
+    return snapshots.isNotEmpty()
+  }
+
+  override fun hasErrors(): Boolean {
+    return getErrors().isNotEmpty()
+  }
+
+  private fun getErrors(): List<Throwable> {
+    refreshFixtureRoot()
+    return errors
+  }
+
   private fun refreshFixtureRoot() {
     runWriteActionAndWait {
       root.refresh(false, true)
@@ -168,7 +198,7 @@ internal class FileTestFixtureImpl(
     dumpFixtureState()
   }
 
-  private fun rollbackAllFiles() {
+  override fun rollbackAll() {
     for (path in snapshots.keys.toSet()) {
       rollback(path)
     }

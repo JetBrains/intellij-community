@@ -42,7 +42,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectW
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.useKotlinDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.version
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureFactory
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.jetbrains.plugins.gradle.util.waitForProjectReload

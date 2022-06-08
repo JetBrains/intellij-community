@@ -75,6 +75,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_ARTIFACTS_REPOSITORIES_IVY_ARTIFACT_REPOSITORY = "org.gradle.api.artifacts.repositories.IvyArtifactRepository";
   @NonNls public static final String GRADLE_API_ARTIFACTS_REPOSITORIES_FLAT_DIRECTORY_ARTIFACT_REPOSITORY = "org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository";
   @NonNls public static final String GRADLE_API_ARTIFACTS_MAVEN_MAVEN_DEPLOYER = "org.gradle.api.artifacts.maven.MavenDeployer";
+  @NonNls public static final String GRADLE_API_ARTIFACTS_MUTABLE_VERSION_CONSTRAINT = "org.gradle.api.artifacts.MutableVersionConstraint";
   @NonNls public static final String GRADLE_API_PLUGINS_MAVEN_REPOSITORY_HANDLER_CONVENTION = "org.gradle.api.plugins.MavenRepositoryHandlerConvention";
   @NonNls public static final String GRADLE_API_INITIALIZATION_SETTINGS = "org.gradle.api.initialization.Settings";
   @NonNls public static final String GRADLE_API_EXTRA_PROPERTIES_EXTENSION = "org.gradle.api.plugins.ExtraPropertiesExtension";

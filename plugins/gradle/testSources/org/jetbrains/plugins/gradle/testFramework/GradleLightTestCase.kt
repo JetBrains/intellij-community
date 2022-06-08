@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.openapi.externalSystem.util.findOrCreateFile
 import com.intellij.openapi.externalSystem.util.runWriteAction
 import com.intellij.openapi.externalSystem.util.text
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
@@ -11,6 +13,8 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
@@ -29,7 +33,13 @@ abstract class GradleLightTestCase : UsefulTestCase() {
 
   private lateinit var fixture: GradleTestFixture
 
-  val projectFixture: IdeaProjectTestFixture get() = fixture
+  val projectFixture: IdeaProjectTestFixture
+    get() = object : IdeaProjectTestFixture {
+      override fun getProject(): Project = fixture.project
+      override fun getModule(): Module = fixture.module
+      override fun setUp() {}
+      override fun tearDown() {}
+    }
 
   open fun createGradleTestFixture(gradleVersion: GradleVersion): GradleTestFixture =
     createEmptyGradleTestFixture(gradleVersion)
@@ -57,9 +67,9 @@ abstract class GradleLightTestCase : UsefulTestCase() {
   }
 
   fun findOrCreateFile(relativePath: String, text: String): VirtualFile {
-    fixture.snapshot(relativePath)
+    fixture.fileFixture.snapshot(relativePath)
     return runWriteAction {
-      fixture.projectRoot.findOrCreateFile(relativePath)
+      fixture.fileFixture.root.findOrCreateFile(relativePath)
         .also { it.text = text }
     }
   }

@@ -24,9 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.replaceService
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import java.awt.Component
-import java.io.File.separator
 import com.intellij.openapi.externalSystem.util.use as utilUse
 
 interface ExternalSystemSetupProjectTestCase {
@@ -66,6 +64,13 @@ interface ExternalSystemSetupProjectTestCase {
     return detectOpenedProject {
       ImportModuleAction().perform(selectedFile = projectFile)
     }
+  }
+
+  private fun detectOpenedProject(action: () -> Unit): Project {
+    val projectManager = ProjectManager.getInstance()
+    val openProjects = projectManager.openProjects.toSet()
+    action()
+    return projectManager.openProjects.first { it !in openProjects }
   }
 
   fun assertModules(project: Project, vararg projectInfo: ProjectInfo) {
@@ -130,18 +135,9 @@ interface ExternalSystemSetupProjectTestCase {
 
   companion object {
     fun openProjectFrom(projectFile: VirtualFile): Project {
-      return detectOpenedProject {
-        invokeAndWaitIfNeeded {
-          ProjectUtil.openOrImport(projectFile.toNioPath())
-        }
+      return invokeAndWaitIfNeeded {
+        ProjectUtil.openOrImport(projectFile.toNioPath())
       }
-    }
-
-    private fun detectOpenedProject(action: () -> Unit): Project {
-      val projectManager = ProjectManager.getInstance()
-      val openProjects = projectManager.openProjects.toSet()
-      action()
-      return projectManager.openProjects.first { it !in openProjects }
     }
   }
 }

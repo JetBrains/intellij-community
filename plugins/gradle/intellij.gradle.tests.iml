@@ -28,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.boot" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
   </component>
 </module>

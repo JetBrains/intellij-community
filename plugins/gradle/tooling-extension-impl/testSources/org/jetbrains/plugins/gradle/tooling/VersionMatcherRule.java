@@ -26,13 +26,14 @@ import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
-/**
-* @author Vladislav.Soroka
-*/
 public class VersionMatcherRule extends TestWatcher {
 
   /**
-   * !When adding new versions here change also list in Idea_Tests_BuildToolsTests in Intellij Teamcity configuration
+   * Note: When adding new versions here change also lists:<br/>
+   * - Idea_Tests_BuildToolsTests<br/>
+   * - Intellij Teamcity configuration<br/>
+   * - {@link ALL_GRADLE_VERSIONS}<br/>
+   * - {@link BASE_GRADLE_VERSION}<br/>
    */
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
     {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
@@ -41,7 +42,8 @@ public class VersionMatcherRule extends TestWatcher {
     {"6.0"}, /* {"6.0.1"},  {"6.1"}, {"6.2"}, {"6.3"}, {"6.4"}, {"6.8.3"}, */ {"6.9"},
     {"7.0.2"}, /* {"7.1"}, {"7.2"}, */ {"7.4"}
   };
-  public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
+  public static final String ALL_GRADLE_VERSIONS = "3.0, 3.5, 4.0, 4.10.3, 5.0, 5.6.2, 6.0, 6.9, 7.0.2, 7.4";
+  public static final String BASE_GRADLE_VERSION = "7.4";
 
   @Nullable
   private CustomMatcher<String> myMatcher;

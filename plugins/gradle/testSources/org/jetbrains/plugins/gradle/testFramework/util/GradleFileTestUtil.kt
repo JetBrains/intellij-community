@@ -11,7 +11,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.testFramework.FileTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 
 
 fun GradleImportingTestCase.importProject(configure: TestGradleBuildScriptBuilder.() -> Unit) =
