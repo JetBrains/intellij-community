@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
@@ -30,6 +31,8 @@ internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAct
     event.presentation.isEnabled = event.project != null && !isControlTabDisabled(event)
     event.presentation.isVisible = forward == null
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return

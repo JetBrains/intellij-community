@@ -83,6 +83,11 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   protected boolean isActionEnabled(final Project project, final AnActionEvent event) {
     return getFilesToClose(event).size() > 0;
   }
