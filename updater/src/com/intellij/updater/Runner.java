@@ -312,13 +312,12 @@ public class Runner {
       LOG.info("Packing JAR file: " + spec.getPatchFile());
       ui.startProcess("Packing JAR file '" + spec.getPatchFile() + "'...");
 
-      try (ZipOutputWrapper out = new ZipOutputWrapper(new FileOutputStream(spec.getPatchFile()));
-           ZipInputStream in = new ZipInputStream(new FileInputStream(spec.getJarFile()))) {
+      try (ZipOutputWrapper out = new ZipOutputWrapper(Files.newOutputStream(Paths.get(spec.getPatchFile())));
+           ZipInputStream in = new ZipInputStream(Files.newInputStream(Paths.get(spec.getJarFile())))) {
         ZipEntry e;
         while ((e = in.getNextEntry()) != null) {
           out.zipEntry(e, in);
         }
-
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
@@ -370,7 +369,7 @@ public class Runner {
         ui.setProgressIndeterminate();
         try (ZipFile zipFile = new ZipFile(patch);
              InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
-             OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile))) {
+             OutputStream out = new BufferedOutputStream(Files.newOutputStream(patchFile.toPath()))) {
           Utils.copyStream(in, out);
         }
 
@@ -468,7 +467,7 @@ public class Runner {
           patchFiles.add(patchFile);
           try (ZipFile zipFile = new ZipFile(patches[i]);
                InputStream in = Utils.getEntryInputStream(zipFile, PATCH_FILE_NAME);
-               OutputStream out = new BufferedOutputStream(new FileOutputStream(patchFile))) {
+               OutputStream out = new BufferedOutputStream(Files.newOutputStream(patchFile.toPath()))) {
             Utils.copyStream(in, out);
           }
           ui.checkCancelled();

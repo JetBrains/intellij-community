@@ -14,15 +14,15 @@ interface TestingTasks {
   }
 
   /**
-   * @param defaultMainModule    main module to be used instead of [TestingOptions.mainModule] if it isn't specified
-   * @param rootExcludeCondition if not `null` tests from modules which sources are fit this predicate will be skipped
+   * @param defaultMainModule    the main module to be used if [TestingOptions.mainModule] is not specified
+   * @param rootExcludeCondition if not `null`, tests from modules which sources are fit this predicate will be skipped
    */
   fun runTests(additionalJvmOptions: List<String> = emptyList(),
                defaultMainModule: String? = null,
                rootExcludeCondition: ((Path) -> Boolean)? = null)
 
   /**
-   * Run all tests annotated with [SkipInHeadlessEnvironment]
+   * Run all tests annotated with [com.intellij.testFramework.SkipInHeadlessEnvironment]
    */
   fun runTestsSkippedInHeadlessEnvironment()
 
