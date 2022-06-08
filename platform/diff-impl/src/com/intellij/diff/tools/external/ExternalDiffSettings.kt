@@ -100,33 +100,21 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
     @JvmStatic
     fun findDefaultDiffTool(): ExternalTool? {
       val diffToolName = instance.defaultToolConfiguration.diffToolName
-
-      if (diffToolName == ExternalToolConfiguration.BUILTIN_TOOL) return null
-      val diffTools = instance.externalTools[ExternalToolGroup.DIFF_TOOL] ?: return null
-
-      return findTool(diffTools, diffToolName)
+      return findTool(diffToolName, ExternalToolGroup.DIFF_TOOL)
     }
 
     @JvmStatic
     fun findDiffTool(fileType: FileType): ExternalTool? {
       val diffToolName = findToolConfiguration(fileType)?.diffToolName
                          ?: instance.defaultToolConfiguration.diffToolName
-
-      if (diffToolName == ExternalToolConfiguration.BUILTIN_TOOL) return null
-      val diffTools = instance.externalTools[ExternalToolGroup.DIFF_TOOL] ?: return null
-
-      return findTool(diffTools, diffToolName)
+      return findTool(diffToolName, ExternalToolGroup.DIFF_TOOL)
     }
 
     @JvmStatic
     fun findMergeTool(fileType: FileType): ExternalTool? {
       val mergeToolName = findToolConfiguration(fileType)?.mergeToolName
                           ?: instance.defaultToolConfiguration.mergeToolName
-
-      if (mergeToolName == ExternalToolConfiguration.BUILTIN_TOOL) return null
-      val mergeTools = instance.externalTools[ExternalToolGroup.MERGE_TOOL] ?: return null
-
-      return findTool(mergeTools, mergeToolName)
+      return findTool(mergeToolName, ExternalToolGroup.MERGE_TOOL)
     }
 
     @JvmStatic
@@ -139,7 +127,11 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
       return instance.defaultToolConfiguration.mergeToolName != ExternalToolConfiguration.BUILTIN_TOOL
     }
 
-    private fun findTool(tools: List<ExternalTool>, toolName: String): ExternalTool? = tools.find { it.name == toolName }
+    private fun findTool(toolName: String, group: ExternalToolGroup): ExternalTool? {
+      if (toolName == ExternalToolConfiguration.BUILTIN_TOOL) return null
+      val tools = instance.externalTools[group] ?: return null
+      return tools.find { it.name == toolName }
+    }
 
     private fun findToolConfiguration(fileType: FileType): ExternalToolConfiguration? = instance.externalToolsConfiguration.find {
       fileTypeManager.findFileTypeByName(it.fileTypeName) == fileType
