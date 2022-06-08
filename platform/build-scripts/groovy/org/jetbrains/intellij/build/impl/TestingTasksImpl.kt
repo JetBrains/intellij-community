@@ -604,10 +604,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val args = ArrayList<String>()
 
     val classpath = ArrayList<String>(bootstrapClasspath)
-    for (libName in listOf("JUnit5", "JUnit5Launcher", "JUnit5Vintage", "JUnit5Jupiter")) {
-      for (library in context.projectModel.project.libraryCollection.findLibrary(libName)!!.getFiles(JpsOrderRootType.COMPILED)) {
-        classpath += library.absolutePath
-      }
+    if (modulePath == null) {
+      appendJUnitStarter(classpath)
     }
     if (!isBootstrapSuiteDefault || isRunningInBatchMode || suiteName == null) {
       classpath += testClasspath
@@ -617,7 +615,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     if (modulePath != null) {
       args += "--module-path"
-      args += modulePath.joinToString(separator = File.pathSeparator)
+      val mp = ArrayList<String>(modulePath)
+      appendJUnitStarter(mp)
+      args += mp.joinToString(separator = File.pathSeparator)
     }
 
     args += jvmArgs
@@ -651,6 +651,14 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       context.messages.error("Tests failed with exit code ${exitCode}")
     }
     return exitCode
+  }
+
+  private fun appendJUnitStarter(path: MutableList<String>) {
+    for (libName in listOf("JUnit5", "JUnit5Launcher", "JUnit5Vintage", "JUnit5Jupiter")) {
+      for (library in context.projectModel.project.libraryCollection.findLibrary(libName)!!.getFiles(JpsOrderRootType.COMPILED)) {
+        path.add(library.absolutePath)
+      }
+    }
   }
 
   private val isBootstrapSuiteDefault: Boolean
