@@ -15,6 +15,7 @@ import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner {
   private final EventDispatcher<ContentChangedListener> myDispatcher = EventDispatcher.create(ContentChangedListener.class);
@@ -93,7 +94,9 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   public void removeContent(Transferable t) {
     ClientCopyPasteManager.getCurrentInstance().removeContent(t);
   }
-
+  boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
+    return ClientCopyPasteManager.getCurrentInstance().removeIf(predicate);
+  }
   public void moveContentToStackTop(Transferable t) {
     ClientCopyPasteManager.getCurrentInstance().moveContentToStackTop(t);
   }

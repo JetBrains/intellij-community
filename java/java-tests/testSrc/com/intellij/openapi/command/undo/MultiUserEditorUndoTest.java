@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.util.function.Predicate;
 
 public class MultiUserEditorUndoTest extends EditorUndoTestCase {
   private Disposable myDisposable;
@@ -319,6 +320,11 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     @Override
     public void setContents(@NotNull Transferable content) {
 
+    }
+
+    @Override
+    public boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
+      return false;
     }
 
     @Nullable

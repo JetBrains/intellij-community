@@ -67,6 +67,9 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
                                    @NotNull FileViewProvider cachedViewProvider) {
     assert !isDisposed : "already disposed";
     if (!project.isInitialized()) return;
+    if (documentManager.myProject != project) {
+      throw new IllegalArgumentException("Wrong project: "+project+"; expected: "+documentManager.myProject);
+    }
 
     assert cachedViewProvider.isEventSystemEnabled() : "Asynchronous commit is only supported for physical PSI" +
                                                        ", document=" + document +

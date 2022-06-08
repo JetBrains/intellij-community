@@ -55,7 +55,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private final Map<Document, List<Runnable>> myActionsAfterCommit = CollectionFactory.createConcurrentWeakMap();
 
-  protected final Project myProject;
+  final Project myProject;
   private final PsiManager myPsiManager;
   private final DocumentCommitProcessor myDocumentCommitProcessor;
 
@@ -1172,4 +1172,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     FileViewProvider viewProvider = getCachedViewProvider(document);
     return "cachedProvider: " + viewProvider + "; isEventSystemEnabled: " + isEventSystemEnabled(document) + "; isCommitted:"+isCommitted(document)+"; myIsCommitInProgress:"+isCommitInProgress()+"; isInUncommittedSet:"+isInUncommittedSet(document);
   }
+
+  /**
+   * Try to find the project the {@code virtualFile} belongs to (from the directory structure the file located in) and make sure it's the same as {@link #myProject}
+   */
+  @ApiStatus.Internal
+  public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {}
 }

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.util.function.Predicate;
 
 /**
  * A per-client service managing clipboard.
@@ -34,4 +35,6 @@ public interface ClientCopyPasteManager extends ClipboardOwner {
   void removeContent(Transferable t);
 
   void moveContentToStackTop(Transferable t);
+
+  boolean removeIf(@NotNull Predicate<? super Transferable> predicate);
 }

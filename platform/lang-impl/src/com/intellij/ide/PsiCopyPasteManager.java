@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Comparing;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +111,7 @@ public final class PsiCopyPasteManager {
     myCopyPasteManager.setContents(new StringSelection(""));
   }
 
-  public void setElements(PsiElement[] elements, boolean copied) {
+  public void setElements(PsiElement @NotNull [] elements, boolean copied) {
     myRecentData = new MyData(elements, copied);
     myCopyPasteManager.setContents(new MyTransferable(myRecentData));
   }
@@ -148,10 +150,10 @@ public final class PsiCopyPasteManager {
 
   public static class MyData {
     private final Project myProject;
-    private final List<SmartPsiElementPointer> myPointers = new ArrayList<>();
+    private final List<SmartPsiElementPointer<?>> myPointers = new ArrayList<>();
     private final boolean myIsCopied;
 
-    public MyData(PsiElement[] elements, boolean copied) {
+    public MyData(PsiElement @NotNull [] elements, boolean copied) {
       myProject = elements.length == 0 ? null : elements[0].getProject();
       for (PsiElement element : elements) {
         myPointers.add(SmartPointerManager.createPointer(element));
@@ -162,7 +164,7 @@ public final class PsiCopyPasteManager {
     public PsiElement[] getElements() {
       return ReadAction.compute(() -> {
         List<PsiElement> result = new ArrayList<>();
-        for (SmartPsiElementPointer pointer : myPointers) {
+        for (SmartPsiElementPointer<?> pointer : myPointers) {
           PsiElement element = pointer.getElement();
           if (element != null) {
             result.add(element);
@@ -177,12 +179,26 @@ public final class PsiCopyPasteManager {
     }
 
     public boolean isValid() {
-      return myPointers.size() > 0 && myPointers.get(0).getElement() != null;
+      if (myPointers.isEmpty()) {
+        return false;
+      }
+      SmartPsiElementPointer<?> pointer = myPointers.get(0);
+      VirtualFile virtualFile = pointer.getVirtualFile();
+      Project expectedProject = virtualFile == null ? null : ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+      if (expectedProject != null && expectedProject != myProject) {
+        // files must have moved between projects, everything is invalid, and pointer.getElement() would likely crash
+        return false;
+      }
+      return pointer.getElement() != null;
     }
 
     @Nullable
     public Project getProject() {
       return myProject;
+    }
+
+    void fileMovedOutsideProject(@NotNull VirtualFile file) {
+      myPointers.removeIf(pointer -> file.equals(pointer.getVirtualFile()));
     }
   }
 
@@ -196,13 +212,14 @@ public final class PsiCopyPasteManager {
       LinuxDragAndDropSupport.uriListFlavor, LinuxDragAndDropSupport.gnomeFileListFlavor, LinuxDragAndDropSupport.kdeCutMarkFlavor
     };
 
+    @NotNull
     private final MyData myDataProxy;
 
-    public MyTransferable(MyData data) {
+    MyTransferable(@NotNull MyData data) {
       myDataProxy = data;
     }
 
-    public MyTransferable(PsiElement[] selectedValues) {
+    public MyTransferable(PsiElement @NotNull [] selectedValues) {
       this(new PsiCopyPasteManager.MyData(selectedValues, true));
     }
 
@@ -328,5 +345,13 @@ public final class PsiCopyPasteManager {
       manager.clear();
       event.consume();
     }
+  }
+
+  @ApiStatus.Internal
+  public void fileMovedOutsideProject(@NotNull VirtualFile file) {
+    if (myRecentData != null) {
+      myRecentData.fileMovedOutsideProject(file);
+    }
+    myCopyPasteManager.removeIf(transferable -> transferable instanceof MyTransferable && !((MyTransferable)transferable).myDataProxy.isValid());
   }
 }

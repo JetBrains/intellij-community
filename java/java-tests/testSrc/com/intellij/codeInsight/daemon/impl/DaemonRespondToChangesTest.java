@@ -1536,7 +1536,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
       PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
       OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
-        VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
+        VirtualFile alienFile = alienRoot.createChildData(this, "AlienFile.java");
         setFileText(alienFile, "class Alien { }");
         return new OpenFileDescriptor(alienProject, alienFile);
       });
