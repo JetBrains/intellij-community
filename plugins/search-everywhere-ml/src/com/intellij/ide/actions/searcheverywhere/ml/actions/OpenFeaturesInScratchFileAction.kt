@@ -4,11 +4,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereFoundElementInfoWithMl
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereTabWithMl
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.ML_FEATURES_KEY
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.ML_WEIGHT_KEY
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
@@ -59,25 +58,25 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     val searchSession = mlSessionService.getCurrentSession()!!
     val state = searchSession.getCurrentSearchState()
 
-    val features = searchEverywhereUI.foundElementsInfo.map { info ->
-      val rankingWeight = info.priority
-      val contributor = info.contributor.searchProviderId
-      val elementName = StringUtil.notNullize(info.element.toString(), "undefined")
-      val mlWeight = info.getUserData(ML_WEIGHT_KEY)
-      val mlFeatures: Map<String, Any> = info.getUserData(ML_FEATURES_KEY)
-                                           ?.associate { it.field.name to it.data as Any }
-                                         ?: emptyMap()
+    val features = searchEverywhereUI.foundElementsInfo
+      .map { SearchEverywhereFoundElementInfoWithMl.from(it) }
+      .map { info ->
+        val rankingWeight = info.priority
+        val contributor = info.contributor.searchProviderId
+        val elementName = StringUtil.notNullize(info.element.toString(), "undefined")
+        val mlWeight = info.mlWeight
+        val mlFeatures: Map<String, Any> = info.mlFeatures.associate { it.field.name to it.data as Any }
 
-      val elementId = searchSession.itemIdProvider.getId(info.element)
-      return@map ElementFeatures(
-        elementId,
-        elementName,
-        mlWeight,
-        rankingWeight,
-        contributor,
-        mlFeatures.toSortedMap()
-      )
-    }
+        val elementId = searchSession.itemIdProvider.getId(info.element)
+        return@map ElementFeatures(
+          elementId,
+          elementName,
+          mlWeight,
+          rankingWeight,
+          contributor,
+          mlFeatures.toSortedMap()
+        )
+      }
 
     val contributors = searchEverywhereUI.foundElementsInfo.map { info -> info.contributor }.toHashSet()
     val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()

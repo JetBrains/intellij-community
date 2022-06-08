@@ -40,7 +40,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
                       keysTyped: Int,
                       backspacesTyped: Int,
                       searchQuery: String,
-                      previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                      previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
@@ -68,7 +68,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 
   fun onItemSelected(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
                      indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
       if (project != null) {
@@ -94,7 +94,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 
   fun onSearchFinished(project: Project?,
                        experimentStrategy: SearchEverywhereMlExperiment,
-                       elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                       elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
       logger.onSearchFinished(

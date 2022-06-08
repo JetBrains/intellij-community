@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
@@ -38,7 +37,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
                      closePopup: Boolean,
                      timeToFirstResult: Int,
                      mixedListInfo: SearchEverywhereMixedListInfo,
-                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val data = arrayListOf<EventPair<*>>(
       CLOSE_POPUP_KEY.with(closePopup),
@@ -58,7 +57,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
                        cache: SearchEverywhereMlSearchState,
                        timeToFirstResult: Int,
                        mixedListInfo: SearchEverywhereMixedListInfo,
-                       elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                       elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     val experimentFromRegistry = Registry.intValue("search.everywhere.ml.experiment.group") >= 0
     val additional = listOf(
       CLOSE_POPUP_KEY.with(true),
@@ -77,7 +76,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
                         cache: SearchEverywhereMlSearchState,
                         timeToFirstResult: Int,
                         mixedListInfo: SearchEverywhereMixedListInfo,
-                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                        elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     reportElements(
       project, SEARCH_RESTARTED, seSessionId, searchIndex, cache.experimentGroup, cache.orderByMl,
       elementIdProvider, context, cache, timeToFirstResult, emptyList(),
@@ -96,7 +95,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
                              selectedElements: IntArray,
                              selectedItems: List<Any>,
                              mixedListInfo: SearchEverywhereMixedListInfo,
-                             elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                             elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
     if (!isLoggingEnabled()) return
 
     val elements = elementsProvider.invoke()
@@ -142,7 +141,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
   private fun isLoggingEnabled() = !Registry.`is`("search.everywhere.force.disable.logging.ml")
 
   private fun getElementsData(selectedElements: IntArray,
-                              elements: List<SearchEverywhereFoundElementInfo>,
+                              elements: List<SearchEverywhereFoundElementInfoWithMl>,
                               elementIdProvider: SearchEverywhereMlItemIdProvider,
                               selectedItems: List<Any>,
                               project: Project?): List<EventPair<*>>? {
@@ -153,7 +152,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
   }
 
   private fun getSelectedElementsData(selectedElements: IntArray,
-                                      elements: List<SearchEverywhereFoundElementInfo>,
+                                      elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                       elementIdProvider: SearchEverywhereMlItemIdProvider,
                                       selectedItems: List<Any>): List<EventPair<*>> {
     val data = ArrayList<EventPair<*>>()
@@ -179,7 +178,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
    * Gets features of the collected elements.
    * May return null if the project gets disposed.
    */
-  private fun getCollectedElementsData(elements: List<SearchEverywhereFoundElementInfo>,
+  private fun getCollectedElementsData(elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                        project: Project?,
                                        elementIdProvider: SearchEverywhereMlItemIdProvider): ArrayList<EventPair<*>>? {
     val data = ArrayList<EventPair<*>>()
@@ -203,7 +202,7 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
 
   private fun isSelectionConsistent(selectedIndices: IntArray,
                                     selectedElements: List<Any>,
-                                    elements: List<SearchEverywhereFoundElementInfo>): Boolean {
+                                    elements: List<SearchEverywhereFoundElementInfoWithMl>): Boolean {
     if (selectedIndices.size != selectedElements.size) return false
 
     for (i in selectedIndices.indices) {
@@ -216,15 +215,14 @@ internal class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() 
   }
 
   private fun addElementFeatures(elementId: Int?,
-                                 elementInfo: SearchEverywhereFoundElementInfo,
+                                 elementInfo: SearchEverywhereFoundElementInfoWithMl,
                                  result: MutableList<EventPair<*>>,
                                  actionManager: ActionManager) {
-    val mlFeatures = elementInfo.getUserData(SearchEverywhereMlSessionService.ML_FEATURES_KEY) ?: emptyList()
-    if (mlFeatures.isNotEmpty()) {
-      result.add(FEATURES_DATA_KEY.with(ObjectEventData(mlFeatures)))
+    if (elementInfo.mlFeatures.isNotEmpty()) {
+      result.add(FEATURES_DATA_KEY.with(ObjectEventData(elementInfo.mlFeatures)))
     }
 
-    val mlWeight = elementInfo.getUserData(SearchEverywhereMlSessionService.ML_WEIGHT_KEY) ?: -1.0
+    val mlWeight = elementInfo.mlWeight ?: -1.0
     if (mlWeight >= 0.0) {
       result.add(ML_WEIGHT_KEY.with(roundDouble(mlWeight)))
     }

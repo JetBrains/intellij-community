@@ -3,21 +3,13 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings
-import com.intellij.ide.util.gotoByName.GotoActionModel
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   companion object {
-    val ML_FEATURES_KEY = Key.create<List<EventPair<*>>>("se-ml-features")
-    val ML_WEIGHT_KEY = Key.create<Double>("se-ml-weight")
-
-    private const val MAX_ELEMENT_WEIGHT = 10_000
-
     internal const val RECORDER_CODE = "MLSE"
 
     fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlSessionService::class.java).takeIf { it.isEnabled() }
@@ -59,7 +51,7 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
   override fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
                                       element: Any,
                                       priority: Int): SearchEverywhereFoundElementInfo {
-    val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfo(element, priority, contributor)
+    val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfoWithMl.withoutMl(element, priority, contributor)
 
     if (!isEnabled()) return foundElementInfoWithoutMl
 
@@ -70,23 +62,7 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     val mlFeatures = state.getElementFeatures(elementId, element, contributor, priority).features
     val mlWeight = if (shouldOrderByMl()) state.getMLWeight(session.cachedContextInfo, mlFeatures) else null
 
-    val foundElementInfo = if (mlWeight != null) {
-      val priorityWithMl = getPriorityWithMl(element, mlWeight, priority)
-      SearchEverywhereFoundElementInfo(element, priorityWithMl, contributor)
-    }
-    else {
-      foundElementInfoWithoutMl
-    }
-
-    foundElementInfo.putUserData(ML_FEATURES_KEY, mlFeatures)
-    foundElementInfo.putUserData(ML_WEIGHT_KEY, mlWeight)
-
-    return foundElementInfo
-  }
-
-  private fun getPriorityWithMl(element: Any, mlWeight: Double, priority: Int): Int {
-    val weight = if (element is GotoActionModel.MatchedValue && element.type == GotoActionModel.MatchedValueType.ABBREVIATION) 1.0 else mlWeight
-    return (weight * MAX_ELEMENT_WEIGHT).toInt() * 100_000 + priority
+    return SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlFeatures)
   }
 
   override fun onSearchRestart(project: Project?,
@@ -100,7 +76,7 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
     val orderByMl = shouldOrderByMlInTab(tabId)
     getCurrentSession()?.onSearchRestart(
-      project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, previousElementsProvider
+      project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider)
     )
   }
 
@@ -120,11 +96,11 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
   override fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, elementsProvider)
+    getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, mapElementsProvider(elementsProvider))
   }
 
   override fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchFinished(project, experiment, elementsProvider)
+    getCurrentSession()?.onSearchFinished(project, experiment, mapElementsProvider(elementsProvider))
   }
 
   override fun notifySearchResultsUpdated() {
@@ -133,5 +109,12 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
 
   override fun onDialogClose() {
     activeSession.updateAndGet { null }
+  }
+
+  private fun mapElementsProvider(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>): () -> List<SearchEverywhereFoundElementInfoWithMl> {
+    return { ->
+      elementsProvider.invoke()
+        .map { SearchEverywhereFoundElementInfoWithMl.from(it) }
+    }
   }
 }
