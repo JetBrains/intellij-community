@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.plugin.artifacts
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifact
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
 import java.io.File
 
@@ -58,7 +58,11 @@ object AdditionalKotlinArtifacts {
 
     @JvmStatic
     val jsIrRuntimeDir: File by lazy {
-        downloadArtifact(libraryFileName = "kotlinc_kotlin_jps_plugin_tests.xml", artifactId = "js-ir-runtime-for-ide", extension = "klib")
+        downloadArtifactForIdeFromSources(
+            libraryFileName = "kotlinc_kotlin_jps_plugin_tests.xml",
+            artifactId = "js-ir-runtime-for-ide",
+            extension = "klib"
+        )
     }
 
     @JvmStatic
@@ -67,7 +71,7 @@ object AdditionalKotlinArtifacts {
     }
 
     private fun downloadAndUnpack(libraryFileName: String, artifactId: String, dirName: String): File {
-        val jar = downloadArtifact(libraryFileName, artifactId)
+        val jar = downloadArtifactForIdeFromSources(libraryFileName, artifactId)
         return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
 }

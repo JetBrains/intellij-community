@@ -157,7 +157,11 @@ object KotlinArtifactsDownloader {
         return downloadedArtifacts.map { File(it.file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project)).presentableUrl) }
     }
 
-    fun downloadArtifact(libraryFileName: String, artifactId: String, extension: String = "jar"): File {
+    fun downloadArtifactForIdeFromSources(libraryFileName: String, artifactId: String, extension: String = "jar"): File {
+        check(isRunningFromSources) {
+            "${::downloadArtifactForIdeFromSources.name} must be called only for IDE running from sources or tests. " +
+                    "Use ${::downloadMavenArtifacts.name} when run in production"
+        }
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName) ?: error("Can't get '$libraryFileName' version")
 
         // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
