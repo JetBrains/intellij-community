@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.preview;
 
@@ -13,6 +13,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
@@ -70,17 +71,26 @@ public final class ImagePreviewComponent extends JPanel implements PreviewHintCo
       return false;
     }
     ImagePreviewComponent otherPreview = (ImagePreviewComponent)other;
-    if (myImage.getWidth() == otherPreview.myImage.getWidth() && myImage.getHeight() == otherPreview.myImage.getHeight()) {
-      for (int x = 0; x < myImage.getWidth(); x++) {
-        for (int y = 0; y < myImage.getHeight(); y++) {
-          if (myImage.getRGB(x, y) != otherPreview.myImage.getRGB(x, y)) {
-            return false;
-          }
+
+    BufferedImage image1 = myImage instanceof JBHiDPIScaledImage
+                           ? (BufferedImage)((JBHiDPIScaledImage)myImage).getDelegate()
+                           : myImage;
+    BufferedImage image2 = otherPreview.myImage instanceof JBHiDPIScaledImage
+                           ? (BufferedImage)((JBHiDPIScaledImage)otherPreview.myImage).getDelegate()
+                           : otherPreview.myImage;
+
+    if (image1 == null || image2 == null) return false;
+    if (image1.getWidth() != image2.getWidth() || image1.getHeight() != image2.getHeight()) return false;
+
+    for (int x = 0; x < image1.getWidth(); x++) {
+      for (int y = 0; y < image1.getHeight(); y++) {
+        if (image1.getRGB(x, y) != image2.getRGB(x, y)) {
+          return false;
         }
       }
-      return true;
     }
-    return false;
+
+    return true;
   }
 
   @NotNull
