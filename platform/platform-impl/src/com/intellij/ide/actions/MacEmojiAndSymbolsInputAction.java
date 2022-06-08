@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -18,6 +19,11 @@ final class MacEmojiAndSymbolsInputAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(SystemInfo.isMac);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

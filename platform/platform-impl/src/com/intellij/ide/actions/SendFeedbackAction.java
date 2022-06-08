@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.FeedbackDescriptionProvider;
 import com.intellij.ide.feedback.FeedbackForm;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -41,6 +42,11 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     else {
       e.getPresentation().setEnabledAndVisible(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static String getFeedbackHost(String feedbackUrl, String companyName) {
