@@ -22,6 +22,9 @@ class JavaAutoModuleFilterScope extends DelegatingGlobalSearchScope {
     VirtualFile root = file;
     if (!file.isDirectory()) {
       root = file.getParent().getParent();
+      if (root == null) {
+        return false;
+      }
       Project project = getProject();
       if (project == null) {
         return false;
