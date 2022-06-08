@@ -34,6 +34,7 @@ internal object CodeFenceLanguageAliases {
     Entry("Kotlin", "kotlin", setOf("kt", "kts")),
     Entry("HCL-Terraform", "terraform", setOf("hcl-terraform", "tf")),
     Entry("C#", "csharp", setOf("cs", "c#")),
+    Entry("F#", "fsharp", setOf("fs", "f#")),
     Entry("Shell Script", "shell", setOf("shell script", "bash", "zsh", "sh"))
   )
 
