@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -516,7 +517,7 @@ object CodeWithMeClientDownloader {
     val (executable, fullLauncherCmd) = findLauncherUnderCwmGuestRoot(guestRoot)
     val guestHome = findCwmGuestHome(guestRoot)
 
-    val linkTarget = if (SystemInfo.isMac) jdkRoot / "jbr" else detectTrueJdkRoot(jdkRoot)
+    val linkTarget = if (SystemInfo.isMac) detectMacOsJbrDirectory(jdkRoot) else detectTrueJdkRoot(jdkRoot)
     createSymlink(guestHome / "jbr", linkTarget)
 
     // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
@@ -625,8 +626,15 @@ object CodeWithMeClientDownloader {
     return processLifetimeDef.lifetime
   }
 
+  private fun detectMacOsJbrDirectory(root: Path): Path {
+    val jbrDirectory = root.listDirectoryEntries().find { it.nameWithoutExtension.startsWith("jbr") }
+
+    LOG.debug { "JBR directory: $jbrDirectory" }
+    return jbrDirectory ?: error("Unable to find target content directory starts with 'jbr' inside MacOS package: '$root'")
+  }
+
   fun createSymlinkToJdkFromGuest(guestRoot: Path, jdkRoot: Path) {
-    val linkTarget = if (SystemInfo.isMac) jdkRoot / "jbr" else detectTrueJdkRoot(jdkRoot)
+    val linkTarget = if (SystemInfo.isMac) detectMacOsJbrDirectory(jdkRoot) else detectTrueJdkRoot(jdkRoot)
     val guestHome = findCwmGuestHome(guestRoot)
     createSymlink(guestHome / "jbr", linkTarget)
   }
