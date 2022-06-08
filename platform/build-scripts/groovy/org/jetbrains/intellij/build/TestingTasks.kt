@@ -18,7 +18,7 @@ interface TestingTasks {
    * @param rootExcludeCondition if not `null` tests from modules which sources are fit this predicate will be skipped
    */
   fun runTests(additionalJvmOptions: List<String> = emptyList(),
-               defaultMainModule: String?,
+               defaultMainModule: String? = null,
                rootExcludeCondition: ((Path) -> Boolean)? = null)
 
   /**

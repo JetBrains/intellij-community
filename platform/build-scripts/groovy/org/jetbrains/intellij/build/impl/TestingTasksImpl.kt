@@ -64,7 +64,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       return
     }
 
-    checkOptions()
+    val mainModule = options.mainModule ?: defaultMainModule!!
+    checkOptions(mainModule)
+
     val compilationTasks = create(context)
     options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
       compilationTasks.buildProjectArtifacts(it)
@@ -81,23 +83,20 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                                       listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
       compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
     }
-    else if (options.mainModule != null) {
-      compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOf(options.mainModule, "intellij.platform.buildScripts"))
-    }
     else {
-      compilationTasks.compileAllModulesAndTests()
+      compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOf(mainModule, "intellij.platform.buildScripts"))
     }
 
     val remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
     if (remoteDebugJvmOptions != null) {
-      debugTests(remoteDebugJvmOptions, additionalJvmOptions, defaultMainModule, rootExcludeCondition, context)
+      debugTests(remoteDebugJvmOptions, additionalJvmOptions, mainModule, rootExcludeCondition, context)
     }
     else {
       val additionalSystemProperties = LinkedHashMap<String, String>()
       val effectiveAdditionalJvmOptions = additionalJvmOptions.toMutableList()
       loadTestDiscovery(effectiveAdditionalJvmOptions, additionalSystemProperties)
       if (runConfigurations == null) {
-        runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties, context)
+        runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, mainModule, rootExcludeCondition, additionalSystemProperties, context)
       }
       else {
         runTestsFromRunConfigurations(effectiveAdditionalJvmOptions, runConfigurations, additionalSystemProperties, context)
@@ -108,7 +107,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
   }
 
-  private fun checkOptions() {
+  private fun checkOptions(mainModule: String?) {
     if (options.testConfigurations != null) {
       val testConfigurationsOptionName = "intellij.build.test.configurations"
       if (options.testPatterns != null) {
@@ -117,7 +116,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       if (options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
         warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.groups")
       }
-      if (options.mainModule != null) {
+      if (mainModule != null) {
         warnOptionIgnored(testConfigurationsOptionName, "intellij.build.test.main.module")
       }
     }
@@ -486,7 +485,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     for (it in testsSkippedInHeadlessEnvironment) {
       options.batchTestIncludes = it.getFirst()
       options.mainModule = it.getSecond()
-      runTests(additionalJvmOptions = emptyList(), defaultMainModule = null, rootExcludeCondition = null)
+      runTests()
     }
   }
 
