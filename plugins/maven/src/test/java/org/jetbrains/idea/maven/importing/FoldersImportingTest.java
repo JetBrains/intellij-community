@@ -1138,18 +1138,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     String targetUrl = new Path(targetPath).toUrl().getUrl();
 
     assertContentRoots("project", getProjectPath());
-
-    //ContentEntry targetEntry = null;
-    //for (ContentEntry each : getContentRoots("project")) {
-    //  if (each.getUrl().equals(targetUrl)) {
-    //    targetEntry = each;
-    //    break;
-    //  }
-    //}
-    //ExcludeFolder[] excludedFolders = targetEntry.getExcludeFolders();
-    //assertEquals(1, excludedFolders.length);
-    //assertEquals(targetUrl, excludedFolders[0].getUrl());
-    //
     assertModuleOutput("project",
                        getParentPath() + "/target/classes",
                        getParentPath() + "/target/test-classes");
