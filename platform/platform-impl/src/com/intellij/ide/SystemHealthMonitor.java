@@ -44,6 +44,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -265,11 +266,13 @@ final class SystemHealthMonitor extends PreloadingActivity {
       return;
     }
 
+    Path dir;
     FileStore store;
     try {
-      store = Files.getFileStore(Path.of(PathManager.getSystemPath()));
+      dir = Path.of(PathManager.getSystemPath());
+      store = Files.getFileStore(dir);
     }
-    catch (IOException e) {
+    catch (IOException | InvalidPathException e) {
       LOG.error(e);
       return;
     }
@@ -285,7 +288,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
       public void run() {
         Future<Long> future = freeSpaceCalculator;
         if (future == null) {
-          freeSpaceCalculator = future = ProcessIOExecutorService.INSTANCE.submit(store::getUsableSpace);
+          freeSpaceCalculator = future = ProcessIOExecutorService.INSTANCE.submit(
+            () -> Files.exists(dir) ? store.getUsableSpace() : MAX_WRITE_SPEED_IN_BPS * 60);  // retry in a minute
         }
         if (!future.isDone()) {
           restart(1);
