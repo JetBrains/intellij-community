@@ -4,13 +4,17 @@ package org.jetbrains.idea.maven.importing.tree;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.IOException;
 
-public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTestCase {
+public class MavenProjectLegacyTreeImporterTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
+    // test for workspace 'tree' importer are moved to the corresponding test classes (FoldersImportingTest, DependenciesImportingTest etc)
+    Assume.assumeFalse(MavenProjectImporter.isImportToWorkspaceModelEnabled());
+
     super.setUp();
     MavenProjectsManager.getInstance(myProject).getImportingSettings().setImportToTreeStructure(true);
   }
@@ -110,7 +114,7 @@ public class MavenProjectTreeImporterTest extends MavenMultiVersionImportingTest
   }
 
   @Test
-  public void testMultiplyContentRootsWithGeneratedSources() throws IOException {
+  public void testMultipleContentRootsWithGeneratedSources() throws IOException {
     createProjectSubFile("target/generated-sources/src1/com/GenA.java", "package com; class GenA {}");
     createProjectSubFile("src/main/java/com/A.java", "package com; class A {}");
     importProject("<groupId>test</groupId>" +

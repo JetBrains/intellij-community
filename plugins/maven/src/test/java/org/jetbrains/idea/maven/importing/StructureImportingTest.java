@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -1126,6 +1127,32 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("project")));
     assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
     assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m2"))));
+  }
+
+  @Test
+  public void testReleaseCompilerPropertyInPerSourceTypeModules() {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.release>8</maven.compiler.release>" +
+                  "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
+                  "</properties>" +
+                  "" +
+                  " <build>\n" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <version>3.10.0</version>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>"
+    );
+
+    assertModules("project", "project.main", "project.test");
   }
 
   @Test

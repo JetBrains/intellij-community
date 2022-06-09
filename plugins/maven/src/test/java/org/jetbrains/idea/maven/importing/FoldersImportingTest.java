@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -766,8 +767,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testAddingExistingGeneratedSourcesForTreeImport() throws Exception {
-    if (!MavenProjectImporter.isImportToWorkspaceModelEnabled()) return;
+  public void testAddingExistingGeneratedSourcesInPerSourceTypeModules() throws Exception {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled());
 
     createStdProjectFolders();
 
@@ -838,6 +839,53 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       }
       assertContentRootExcludes("project.test", test);
     }
+  }
+
+  @Test
+  public void testContentRootOutsideOfModuleDirInPerSourceTypeImport() throws Exception {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled());
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+                    "<parent>" +
+                    "  <groupId>test</groupId>" +
+                    "  <artifactId>project</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>" +
+
+                    "<build>" +
+                    "  <sourceDirectory>../custom-sources</sourceDirectory>" +
+                    "</build>");
+
+    createProjectSubFile("custom-sources/com/CustomSource.java", "package com; class CustomSource {}");
+    createProjectSubFile("m1/src/main/resources/test.txt", "resource");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.source>8</maven.compiler.source>" +
+                  "  <maven.compiler.target>8</maven.compiler.target>" +
+                  "  <maven.compiler.testSource>11</maven.compiler.testSource>" +
+                  "  <maven.compiler.testTarget>11</maven.compiler.testTarget>" +
+                  "</properties>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "</modules>");
+
+    assertModules("project",
+                  mn("project", "m1"),
+                  mn("project", "m1.main"),
+                  mn("project", "m1.test"));
+
+    assertContentRoots(mn("project", "m1.main"),
+                       getProjectPath() + "/m1/src/main/resources",
+                       getProjectPath() + "/custom-sources");
   }
 
   @Test
