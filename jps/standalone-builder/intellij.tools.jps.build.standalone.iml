@@ -13,7 +13,6 @@
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" exported="" />
-    <orderEntry type="library" scope="PROVIDED" name="gant-groovy" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
   </component>
 </module>

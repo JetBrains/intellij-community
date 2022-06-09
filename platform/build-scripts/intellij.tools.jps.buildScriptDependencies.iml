@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tools.jps.antTasks" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.statistics.config" scope="RUNTIME" />
-    <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-ant" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-json" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.codehaus.groovy:groovy-nio" type="repository">
@@ -34,7 +33,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="RUNTIME" name="gant-groovy" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="gson" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="decentxml" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib-jdk8" level="project" />

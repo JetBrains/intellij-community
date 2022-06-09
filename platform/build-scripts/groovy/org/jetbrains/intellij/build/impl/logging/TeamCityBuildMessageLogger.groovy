@@ -19,7 +19,7 @@ final class TeamCityBuildMessageLogger extends BuildMessageLogger {
     }
   }
   private static final String ANT_OUTPUT_PREFIX = "###<<<>>>###:" //copied from jetbrains.buildServer.agent.ant.ServiceMessageBuildProgressLogger
-  private static final PrintStream out = BuildUtils.INSTANCE.realSystemOut
+  private static final PrintStream out = System.out
   private final ConcurrentLinkedDeque<LogMessage> delayedBlockStartMessages = new ConcurrentLinkedDeque<>()
 
   TeamCityBuildMessageLogger() {

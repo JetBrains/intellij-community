@@ -33,25 +33,6 @@ object BuildUtils {
     Files.writeString(targetPath, content)
   }
 
-  //if the build script is running under Ant or AntBuilder it may replace the standard System.out
-  @JvmStatic
-  val realSystemOut: PrintStream // No longer works in recent Ant 1.9.x and 1.10
-    get() {
-      try {
-        val aClass = BuildUtils::class.java.classLoader.loadClass("org.jetbrains.jps.gant.GantWithClasspathTask")
-        val result = aClass.getDeclaredField("out")
-        result.isAccessible = true
-        val out = result.get(null)
-        if (out != null) {
-          return out as PrintStream
-        }
-      }
-      catch (ignored: Throwable) {
-      }
-
-      return System.out
-    }
-
   @JvmStatic
   fun propertiesToJvmArgs(properties: Map<String, Any>): List<String> {
     val result = ArrayList<String>(properties.size)

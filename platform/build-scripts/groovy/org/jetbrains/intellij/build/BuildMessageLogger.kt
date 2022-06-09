@@ -38,8 +38,6 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
   companion object {
     @JvmField
     val FACTORY: () -> BuildMessageLogger = ::ConsoleBuildMessageLogger
-
-    private val out = BuildUtils.realSystemOut
   }
 
   override fun processMessage(message: LogMessage) {
@@ -52,6 +50,6 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
   override fun shouldBePrinted(kind: LogMessage.Kind) = kind != LogMessage.Kind.DEBUG
 
   override fun printLine(line: String) {
-    out.println(line)
+    System.out.println(line)
   }
 }

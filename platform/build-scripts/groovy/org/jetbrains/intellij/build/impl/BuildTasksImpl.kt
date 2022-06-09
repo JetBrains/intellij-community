@@ -459,7 +459,7 @@ private fun buildSourcesArchive(projectStructureMapping: ProjectStructureMapping
 
 fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean, context: BuildContext) {
   context.executeStep(spanBuilder("build module sources archives")
-                        .setAttribute("path", context.paths.buildOutputDir.relativize(targetFile).toString())
+                        .setAttribute("path", context.paths.buildOutputDir.toString())
                         .setAttribute(AttributeKey.stringArrayKey("modules"), java.util.List.copyOf(modules)),
                       BuildOptions.SOURCES_ARCHIVE_STEP) {
     Files.createDirectories(targetFile.parent)
