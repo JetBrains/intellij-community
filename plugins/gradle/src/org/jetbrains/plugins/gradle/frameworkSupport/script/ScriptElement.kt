@@ -9,6 +9,7 @@ sealed class ScriptElement {
     data class AssignElement(val name: String, val value: Expression) : Statement()
     data class PlusAssignElement(val name: String, val value: Expression) : Statement()
     sealed class Expression : Statement() {
+      data class IntElement(val value: Int) : Expression()
       data class StringElement(val value: String) : Expression()
       data class ListElement(val elements: List<Expression>) : Expression()
       data class CodeElement(val text: List<String>) : Expression()

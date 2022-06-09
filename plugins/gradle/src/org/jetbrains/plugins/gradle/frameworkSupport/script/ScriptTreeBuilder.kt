@@ -38,6 +38,7 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
   }
 
   override fun newLine() = process { super.newLine() }
+  override fun int(value: Int) = process { super.int(value) }
   override fun string(value: String) = process { super.string(value) }
   override fun list(elements: List<Expression>) = process(elements) { super.list(elements) }
   override fun code(text: List<String>) = process { super.code(text) }

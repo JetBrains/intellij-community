@@ -12,6 +12,7 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
   override fun newLine() = NewLineElement
   override fun ScriptElement?.ln() = if (this == null || this is BlockElement && isEmpty()) null else newLine()
 
+  override fun int(value: Int) = IntElement(value)
   override fun string(value: String) = StringElement(value)
 
   override fun list(elements: List<Expression>) = ListElement(elements)
@@ -23,6 +24,7 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
 
   override fun assign(name: String, value: Expression) = AssignElement(name, value)
   override fun assign(name: String, value: String) = assign(name, string(value))
+  override fun assign(name: String, value: Int) = assign(name, int(value))
 
   override fun assignIfNotNull(name: String, expression: Expression?) = expression?.let { assign(name, it) }
   override fun assignIfNotNull(name: String, value: String?) = value?.let { assign(name, it) }

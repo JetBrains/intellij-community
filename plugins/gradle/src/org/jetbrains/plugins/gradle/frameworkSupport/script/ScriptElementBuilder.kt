@@ -11,6 +11,7 @@ interface ScriptElementBuilder {
   fun newLine(): NewLineElement
   fun ScriptElement?.ln(): NewLineElement?
 
+  fun int(value: Int): IntElement
   fun string(value: String): StringElement
 
   fun list(elements: List<Expression>) : ListElement
@@ -22,6 +23,7 @@ interface ScriptElementBuilder {
 
   fun assign(name: String, value: Expression): AssignElement
   fun assign(name: String, value: String): AssignElement
+  fun assign(name: String, value: Int): AssignElement
 
   fun assignIfNotNull(name: String, expression: Expression?): AssignElement?
   fun assignIfNotNull(name: String, value: String?): AssignElement?
