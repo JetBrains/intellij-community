@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -15,6 +15,7 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
+import com.intellij.util.indexing.diagnostic.ScanningType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public final class FileBasedIndexProjectHandler {
                                           @NotNull Project project,
                                           long refreshedFilesCalcDuration) {
       ProjectIndexingHistoryImpl projectIndexingHistory =
-        new ProjectIndexingHistoryImpl(project, "On refresh of " + files.size() + " files", false);
+        new ProjectIndexingHistoryImpl(project, "On refresh of " + files.size() + " files", ScanningType.REFRESH, false);
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
       ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateStarted(project);
 

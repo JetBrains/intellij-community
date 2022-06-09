@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -36,6 +36,7 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
+import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
@@ -85,6 +86,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
   private final @NonNls String myIndexingReason;
+  private final @NotNull ScanningType myScanningType;
   private final PushedFilePropertiesUpdater myPusher;
   private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
 
@@ -92,11 +94,13 @@ public class UnindexedFilesUpdater extends DumbModeTask {
                                boolean startSuspended,
                                boolean onProjectOpen,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
-                               @Nullable @NonNls String indexingReason) {
+                               @Nullable @NonNls String indexingReason,
+                               @NotNull ScanningType scanningType) {
     myProject = project;
     myStartSuspended = startSuspended;
     myOnProjectOpen = onProjectOpen;
     myIndexingReason = indexingReason;
+    myScanningType = scanningType;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
 
@@ -156,7 +160,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       myStartSuspended,
       false,
       mergeIterators(myPredefinedIndexableFilesIterators, ((UnindexedFilesUpdater)taskFromQueue).myPredefinedIndexableFilesIterators),
-      reason
+      reason,
+      ScanningType.Companion.merge(oldTask.myScanningType, oldTask.myScanningType)
     );
   }
 
@@ -177,17 +182,18 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
     // file based index extensions for all project files until at least one of UnindexedFilesUpdater-s finishes without cancellation.
     // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false, false, null, null);
+    this(project, false, false, null, null, ScanningType.FULL);
   }
 
   public UnindexedFilesUpdater(@NotNull Project project, @Nullable @NonNls String indexingReason) {
-    this(project, false, false, null, indexingReason);
+    this(project, false, false, null, indexingReason, ScanningType.FULL);
   }
 
   public UnindexedFilesUpdater(@NotNull Project project,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable @NonNls String indexingReason) {
-    this(project, false, false, predefinedIndexableFilesIterators, indexingReason);
+    this(project, false, false, predefinedIndexableFilesIterators, indexingReason,
+         predefinedIndexableFilesIterators == null ? ScanningType.FULL : ScanningType.PARTIAL);
   }
 
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory, @NotNull ProgressIndicator indicator) {
@@ -572,7 +578,8 @@ public class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   protected @NotNull ProjectIndexingHistoryImpl performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
-    ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, myIndexingReason, isFullIndexUpdate());
+    ProjectIndexingHistoryImpl projectIndexingHistory =
+      new ProjectIndexingHistoryImpl(myProject, myIndexingReason, myScanningType, isFullIndexUpdate());
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
@@ -642,17 +649,21 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     return SystemProperties.getBooleanProperty("ij.indexes.skip.initial.refresh", false);
   }
 
-  public static void scanAndIndexProjectAfterOpen(@NotNull Project project, boolean startSuspended, @Nullable @NonNls String indexingReason) {
+  public static void scanAndIndexProjectAfterOpen(@NotNull Project project,
+                                                  boolean startSuspended,
+                                                  @Nullable @NonNls String indexingReason) {
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance());
       for (IndexableFilesIterator iterator : iterators) {
-        new UnindexedFilesUpdater(project, startSuspended, true, Collections.singletonList(iterator), indexingReason).queue(project);
+        new UnindexedFilesUpdater(project, startSuspended, true, Collections.singletonList(iterator), indexingReason,
+                                  ScanningType.FULL_ON_PROJECT_OPEN).queue(project);
       }
       project.putUserData(CONTENT_SCANNED, true);
     }
     else {
-      new UnindexedFilesUpdater(project, startSuspended, true, null, indexingReason).queue(project);
+      new UnindexedFilesUpdater(project, startSuspended, true, null, indexingReason, ScanningType.FULL_ON_PROJECT_OPEN).
+        queue(project);
     }
   }
 }

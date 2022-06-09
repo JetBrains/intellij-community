@@ -24,6 +24,7 @@ interface ProjectIndexingHistoryListener {
 interface ProjectIndexingHistory {
   val project: Project
   val indexingReason: String?
+  val scanningType: ScanningType
   val indexingSessionId: Long
   val times: IndexingTimes
   val scanningStatistics: List<JsonScanningStatistics>
@@ -31,6 +32,26 @@ interface ProjectIndexingHistory {
   val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
   val visibleTimeToAllThreadsTimeRatio: Double
+}
+
+enum class ScanningType {
+  FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL,
+  PARTIAL_FORCED, PARTIAL,
+  REFRESH;
+
+  companion object {
+    fun merge(first: ScanningType, second: ScanningType): ScanningType = returnFirstFound(first, second,
+                                                                                          FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL,
+                                                                                          PARTIAL_FORCED, PARTIAL,
+                                                                                          REFRESH)
+
+    private fun returnFirstFound(first: ScanningType, second: ScanningType, vararg types: ScanningType): ScanningType {
+      for (type in types) {
+        if (first == type || second == type) return type
+      }
+      throw IllegalStateException("Unexpected ScanningType $first $second")
+    }
+  }
 }
 
 interface StatsPerFileType {
