@@ -20,4 +20,6 @@ public interface SimilarUsage {
   @NotNull Bag getFeatures();
 
   @NotNull ClusteringSearchSession getClusteringSession();
+
+  boolean isValid();
 }

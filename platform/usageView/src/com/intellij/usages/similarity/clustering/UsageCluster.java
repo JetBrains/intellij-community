@@ -52,7 +52,7 @@ public class UsageCluster {
   @RequiresReadLock
   @RequiresBackgroundThread
   public @NotNull Set<SimilarUsage> getOnlySelectedUsages(Set<Usage> selectedUsages) {
-    return getUsages().stream().filter(e -> selectedUsages.contains(e)).collect(Collectors.toSet());
+    return getUsages().stream().filter(e -> e.isValid() && selectedUsages.contains(e)).collect(Collectors.toSet());
   }
 
   public boolean equals(Object o) {

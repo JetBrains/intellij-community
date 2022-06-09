@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -175,16 +176,15 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     });
     SimilarUsage usage = ContainerUtil.getFirstItem(usageFilteredByGroup);
     if (usage instanceof UsageInfo2UsageAdapter) {
-      final UsageInfo2UsageAdapter usageInfoAdapter = (UsageInfo2UsageAdapter)usage;
-      UsageCodeSnippetComponent summaryRendererComponent =
-        UsageCodeSnippetComponent.createUsageCodeSnippet(usageInfoAdapter.getUsageInfo());
+      final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+      final PsiElement element = Objects.requireNonNull(usageInfo.getElement());
+      UsageCodeSnippetComponent summaryRendererComponent = new UsageCodeSnippetComponent(element);
       if (!isDisposed) {
         Disposer.register(this, summaryRendererComponent);
       }
-      final JPanel headerPanel =
-        createHeaderPanel(usageInfoAdapter.getUsageInfo(), summaryRendererComponent.getEditor().getBackgroundColor());
+      final JPanel headerPanel = createHeaderPanel(usageInfo, summaryRendererComponent.getEditor().getBackgroundColor());
       if (usageFilteredByGroup.size() > 1) {
-        headerPanel.add(createOpenSimilarUsagesActionLink(usageInfoAdapter.getUsageInfo(), usageFilteredByGroup));
+        headerPanel.add(createOpenSimilarUsagesActionLink(usageInfo, usageFilteredByGroup));
       }
       summaryPanel.add(headerPanel);
       summaryPanel.add(summaryRendererComponent);
