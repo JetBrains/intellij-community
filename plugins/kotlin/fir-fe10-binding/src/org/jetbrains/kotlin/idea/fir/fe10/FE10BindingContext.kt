@@ -14,12 +14,12 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.idea.fir.analysis.project.structure.FE10ApiUsage
 import org.jetbrains.kotlin.idea.fir.analysis.project.structure.moduleInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -177,7 +177,7 @@ private class KtSymbolBasedModuleDescriptorImpl(
         assert(context.ktAnalysisSessionFacade.analysisSession.token.isValid())
     }
 
-    @OptIn(FE10ApiUsage::class)
+    @OptIn(Frontend10ApiUsage::class)
     override fun getName(): Name = module.moduleInfo.name
 
     override fun getOriginal(): DeclarationDescriptor = this

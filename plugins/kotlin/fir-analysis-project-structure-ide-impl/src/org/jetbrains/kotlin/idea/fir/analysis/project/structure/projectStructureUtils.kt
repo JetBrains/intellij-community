@@ -4,14 +4,11 @@ package org.jetbrains.kotlin.idea.fir.analysis.project.structure
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 
-
-@RequiresOptIn("Transitional API for access FE1.0 compiler-relate stuff which will be removed soon")
-annotation class FE10ApiUsage
-
-@FE10ApiUsage
+@Frontend10ApiUsage
 val KtModule.moduleInfo: IdeaModuleInfo
     get() {
         require(this is KtModuleByModuleInfoBase)
