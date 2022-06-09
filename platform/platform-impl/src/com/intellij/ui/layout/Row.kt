@@ -128,6 +128,8 @@ inline fun <reified T : Any> InnerCell.buttonGroup(binding: PropertyBinding<T>, 
   }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(prop.toBinding(), init)
 }
