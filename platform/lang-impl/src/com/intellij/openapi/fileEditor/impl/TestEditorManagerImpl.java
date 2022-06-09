@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientProjectSession;
+import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -33,8 +36,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -100,6 +105,17 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @NotNull
   private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull FileEditorNavigatable openFileDescriptor) {
     VirtualFile file = openFileDescriptor.getFile();
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return Pair.createNonNull(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+      }
+
+      List<FileEditorWithProvider> result = clientManager.openFile(file, false);
+      FileEditor[] fileEditors = result.stream().map(FileEditorWithProvider::getFileEditor).toArray(FileEditor[]::new);
+      FileEditorProvider[] providers = result.stream().map(FileEditorWithProvider::getProvider).toArray(FileEditorProvider[]::new);
+      return Pair.createNonNull(fileEditors, providers);
+    }
     boolean isNewEditor = !myVirtualFile2Editor.containsKey(file);
 
     // for non-text editors. uml, etc
@@ -223,7 +239,22 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public VirtualFile getCurrentFile() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return null;
+      }
+      return clientManager.getSelectedFile();
+    }
     return myActiveFile;
+  }
+
+  @Nullable
+  private ClientFileEditorManager getClientFileEditorManager() {
+    ClientId clientId = ClientId.getCurrent();
+    LOG.assertTrue(!ClientId.isLocal(clientId), "Trying to get ClientFileEditorManager for local ClientId");
+    ClientProjectSession session = ClientSessionsManager.getProjectSession(myProject, clientId);
+    return session == null ? null : session.getService(ClientFileEditorManager.class);
   }
 
   @Override
@@ -350,6 +381,10 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public FileEditor getSelectedEditor(@NotNull VirtualFile file) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      return clientManager == null ? null : clientManager.getSelectedEditor();
+    }
     final Editor editor = getEditor(file);
     if (editor != null) {
       return TextEditorProvider.getInstance().getTextEditor(editor);
@@ -364,8 +399,36 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
+  public FileEditor @NotNull [] getSelectedEditorWithRemotes() {
+    List<FileEditor> result = new ArrayList<>();
+    Collections.addAll(result, getSelectedEditors());
+    for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
+      result.addAll(m.getSelectedEditors());
+    }
+    return result.toArray(FileEditor.EMPTY_ARRAY);
+  }
+
+  @Override
   public boolean isFileOpen(@NotNull VirtualFile file) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) return false;
+      return clientManager.isFileOpen(file);
+    }
     return getEditor(file) != null;
+  }
+
+  @Override
+  public boolean isFileOpenWithRemotes(@NotNull VirtualFile file) {
+    if (isFileOpen(file)) {
+      return true;
+    }
+    for (ClientFileEditorManager m: getAllClientFileEditorManagers()) {
+      if (m.isFileOpen(file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -377,7 +440,23 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
-    return getEditors(file);
+    List<FileEditor> result = new ArrayList<>();
+    ContainerUtil.addAll(result, getEditors(file));
+    for (ClientFileEditorManager clientManager : getAllClientFileEditorManagers()) {
+      result.addAll(clientManager.getEditors(file));
+    }
+
+    return result.toArray(FileEditor.EMPTY_ARRAY);
+  }
+
+  @Override
+  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
+    List<VirtualFile> result = new ArrayList<>();
+    Collections.addAll(result, getOpenFiles());
+    for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
+      result.addAll(m.getAllFiles());
+    }
+    return result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override
@@ -418,17 +497,47 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public VirtualFile @NotNull [] getSelectedFiles() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      return clientManager.getSelectedFiles().toArray(VirtualFile.EMPTY_ARRAY);
+    }
     return myActiveFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{myActiveFile};
   }
 
   @Override
   public FileEditor @NotNull [] getSelectedEditors() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      return clientManager == null ? FileEditor.EMPTY_ARRAY : clientManager.getSelectedEditors().toArray(FileEditor.EMPTY_ARRAY);
+    }
     return myActiveFile == null ? FileEditor.EMPTY_ARRAY : getEditors(myActiveFile);
   }
 
   @Override
   public Editor getSelectedTextEditor() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return null;
+      }
+      FileEditor selectedEditor = clientManager.getSelectedEditor();
+      return selectedEditor instanceof TextEditor ? ((TextEditor)selectedEditor).getEditor() : null;
+    }
     return myActiveFile != null ? getEditor(myActiveFile) : null;
+  }
+
+  @Override
+  public Editor @NotNull [] getSelectedTextEditorWithRemotes() {
+    List<Editor> result = new ArrayList<>();
+    for(FileEditor e: getSelectedEditorWithRemotes()) {
+      if (e instanceof TextEditor) {
+        result.add(((TextEditor)e).getEditor());
+      }
+    }
+    return result.toArray(Editor.EMPTY_ARRAY);
   }
 
   @Override
@@ -438,6 +547,13 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public VirtualFile @NotNull [] getOpenFiles() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      return clientManager.getAllFiles().toArray(VirtualFile.EMPTY_ARRAY);
+    }
     return VfsUtilCore.toVirtualFileArray(myVirtualFile2Editor.keySet());
   }
 
@@ -447,13 +563,19 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public FileEditor @NotNull [] getAllEditors() {
-    FileEditor[] result = new FileEditor[myVirtualFile2Editor.size()];
-    int i = 0;
+    List<FileEditor> result = new ArrayList<>();
     for (Map.Entry<VirtualFile, Editor> entry : myVirtualFile2Editor.entrySet()) {
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(entry.getValue());
-      result[i++] = textEditor;
+      result.add(textEditor);
     }
-    return result;
+    for (ClientFileEditorManager clientManager : getAllClientFileEditorManagers()) {
+      result.addAll(clientManager.getAllEditors());
+    }
+    return result.toArray(FileEditor.EMPTY_ARRAY);
+  }
+
+  private List<ClientFileEditorManager> getAllClientFileEditorManagers() {
+    return myProject.getServices(ClientFileEditorManager.class, false);
   }
 
 
@@ -524,6 +646,13 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+      }
+      return EditorComposite.retrofit(clientManager.getComposite(file));
+    }
     Pair<FileEditor, FileEditorProvider> editorAndProvider = myTestEditorSplitter.getEditorAndProvider(file);
 
     FileEditor[] fileEditor = FileEditor.EMPTY_ARRAY;
@@ -560,6 +689,13 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if(clientManager != null) {
+        clientManager.setSelectedEditor(file, fileEditorProviderId);
+      }
+      return;
+    }
     if (myVirtualFile2Editor.containsKey(file)) {
       modifyTabWell(() -> {
         myActiveFile = file;

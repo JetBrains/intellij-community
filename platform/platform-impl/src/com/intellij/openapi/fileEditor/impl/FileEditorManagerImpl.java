@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
@@ -16,6 +17,8 @@ import com.intellij.lang.LangBundle;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.client.ClientProjectSession;
+import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -106,6 +109,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_NEW_WINDOW;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
@@ -665,6 +669,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public VirtualFile getCurrentFile() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return null;
+      }
+      return clientManager.getSelectedFile();
+    }
     return getActiveSplittersSync().getCurrentFile();
   }
 
@@ -676,13 +687,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public EditorWindow getCurrentWindow() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return null;
+    if (!ApplicationManager.getApplication().isDispatchThread() || !ClientId.isCurrentlyUnderLocalId()) return null;
     return getActiveSplittersSync().getCurrentWindow();
   }
 
   @Override
   public void setCurrentWindow(EditorWindow window) {
-    getActiveSplittersSync().setCurrentWindow(window, true);
+    if (ClientId.isCurrentlyUnderLocalId()) {
+      getActiveSplittersSync().setCurrentWindow(window, true);
+    }
   }
 
   public void closeFile(@NotNull VirtualFile file, @NotNull EditorWindow window, boolean transferFocus) {
@@ -711,11 +724,47 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   public void closeFile(@NotNull VirtualFile file, boolean moveFocus, boolean closeAllCopies) {
     assertDispatchThread();
+    if (!closeAllCopies) {
+      if (ClientId.isCurrentlyUnderLocalId()) {
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          ourOpenFilesSetModificationCount.incrementAndGet();
+          runChange(splitters -> splitters.closeFile(file, moveFocus), getActiveSplittersSync());
+        }, "", null);
+      } else {
+        ClientFileEditorManager clientManager = getClientFileEditorManager();
+        if (clientManager != null) {
+          clientManager.closeFile(file, false);
+        }
+      }
+    }
+    else {
+      try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          ourOpenFilesSetModificationCount.incrementAndGet();
+          runChange(splitters -> splitters.closeFile(file, moveFocus), null);
+        }, "", null);
+      }
+      for (ClientFileEditorManager manager: getAllClientFileEditorManagers()) {
+        manager.closeFile(file, true);
+      }
+    }
+  }
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      ourOpenFilesSetModificationCount.incrementAndGet();
-      runChange(splitters -> splitters.closeFile(file, moveFocus), closeAllCopies ? null : getActiveSplittersSync());
-    }, "", null);
+  private List<ClientFileEditorManager> getAllClientFileEditorManagers() {
+    return myProject.getServices(ClientFileEditorManager.class, false);
+  }
+
+  @Override
+  public boolean isFileOpenWithRemotes(@NotNull VirtualFile file) {
+      if (isFileOpen(file)) {
+        return true;
+      }
+      for (ClientFileEditorManager m: getAllClientFileEditorManagers()) {
+        if (m.isFileOpen(file)) {
+          return true;
+        }
+      }
+      return false;
   }
 
   //-------------------------------------- Open File ----------------------------------------
@@ -908,6 +957,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withRequestFocus(focusEditor));
   }
 
+  @Nullable
+  private ClientFileEditorManager getClientFileEditorManager() {
+    ClientId clientId = ClientId.getCurrent();
+    LOG.assertTrue(!ClientId.isLocal(clientId), "Trying to get ClientFileEditorManager for local ClientId");
+    ClientProjectSession session = ClientSessionsManager.getProjectSession(myProject, clientId);
+    return session == null ? null : session.getService(ClientFileEditorManager.class);
+  }
+
   /**
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
@@ -917,6 +974,18 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                                                                 @NotNull FileEditorOpenOptions options) {
     assert ApplicationManager.getApplication().isDispatchThread() ||
            !ApplicationManager.getApplication().isReadAccessAllowed() : "must not attempt opening files under read action";
+
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return Pair.createNonNull(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+      }
+
+      List<FileEditorWithProvider> result = clientManager.openFile(_file, false);
+      FileEditor[] fileEditors = result.stream().map(FileEditorWithProvider::getFileEditor).toArray(FileEditor[]::new);
+      FileEditorProvider[] providers = result.stream().map(FileEditorWithProvider::getProvider).toArray(FileEditorProvider[]::new);
+      return Pair.createNonNull(fileEditors, providers);
+    }
 
     VirtualFile file = getOriginalFile(_file);
     Ref<EditorComposite> compositeRef = new Ref<>();
@@ -1117,6 +1186,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Contract("_, _ -> new")
   protected @Nullable EditorComposite createCompositeInstance(@NotNull VirtualFile file,
                                                               @NotNull List<FileEditorWithProvider> editorsWithProviders) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      return clientManager == null ? null : clientManager.createComposite(file, editorsWithProviders);
+    }
     // the only place this class in created, won't be needed when we get rid of EditorWithProviderComposite usages
     //noinspection deprecation
     return new EditorWithProviderComposite(file, editorsWithProviders, this);
@@ -1168,6 +1241,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if(clientManager != null) {
+        clientManager.setSelectedEditor(file, fileEditorProviderId);
+      }
+      return;
+    }
     EditorComposite composite = getComposite(file);
     if (composite == null) return;
 
@@ -1315,11 +1395,41 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   @Override
+  public FileEditor @NotNull [] getSelectedEditorWithRemotes() {
+    List<FileEditor> result = new ArrayList<>();
+    Collections.addAll(result, getSelectedEditors());
+    for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
+      result.addAll(m.getSelectedEditors());
+    }
+    return result.toArray(FileEditor.EMPTY_ARRAY);
+  }
+
+  @Override
+  public Editor @NotNull [] getSelectedTextEditorWithRemotes() {
+    List<Editor> result = new ArrayList<>();
+    for(FileEditor e: getSelectedEditorWithRemotes()) {
+      if (e instanceof TextEditor) {
+        result.add(((TextEditor)e).getEditor());
+      }
+    }
+    return result.toArray(Editor.EMPTY_ARRAY);
+  }
+
+  @Override
   public Editor getSelectedTextEditor() {
     return getSelectedTextEditor(false);
   }
 
   public Editor getSelectedTextEditor(boolean lockfree) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return null;
+      }
+      FileEditor selectedEditor = clientManager.getSelectedEditor();
+      return selectedEditor instanceof TextEditor ? ((TextEditor)selectedEditor).getEditor() : null;
+    }
+
     if (!lockfree) {
       assertDispatchThread();
     }
@@ -1337,6 +1447,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public boolean isFileOpen(@NotNull VirtualFile file) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) return false;
+      return clientManager.isFileOpen(file);
+    }
     for (EditorComposite editor : myOpenedComposites) {
       if (editor.getFile().equals(file)) {
         return true;
@@ -1347,11 +1462,28 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public VirtualFile @NotNull [] getOpenFiles() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      return clientManager.getAllFiles().toArray(VirtualFile.EMPTY_ARRAY);
+    }
     Set<VirtualFile> files = new LinkedHashSet<>();
     for (EditorComposite composite : myOpenedComposites) {
       files.add(composite.getFile());
     }
     return VfsUtilCore.toVirtualFileArray(files);
+  }
+
+  @Override
+  public VirtualFile @NotNull [] getOpenFilesWithRemotes() {
+    List<VirtualFile> result = new ArrayList<>();
+    Collections.addAll(result, getOpenFiles());
+    for (ClientFileEditorManager m : getAllClientFileEditorManagers()) {
+      result.addAll(m.getAllFiles());
+    }
+    return result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override
@@ -1361,6 +1493,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public VirtualFile @NotNull [] getSelectedFiles() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager == null) {
+        return VirtualFile.EMPTY_ARRAY;
+      }
+      return clientManager.getSelectedFiles().toArray(VirtualFile.EMPTY_ARRAY);
+    }
+
     Set<VirtualFile> selectedFiles = new LinkedHashSet<>();
     EditorsSplitters activeSplitters = getSplitters();
     ContainerUtil.addAll(selectedFiles, activeSplitters.getSelectedFiles());
@@ -1374,6 +1514,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public FileEditor @NotNull [] getSelectedEditors() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      return clientManager == null ? FileEditor.EMPTY_ARRAY : clientManager.getSelectedEditors().toArray(FileEditor.EMPTY_ARRAY);
+    }
+
     Set<FileEditor> selectedEditors = new SmartHashSet<>();
     for (EditorsSplitters splitters : getAllSplitters()) {
       splitters.addSelectedEditorsTo(selectedEditors);
@@ -1388,6 +1533,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   public @Nullable FileEditor getSelectedEditor() {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      return clientManager == null ? null : clientManager.getSelectedEditor();
+    }
+
     EditorWindow window = getSplitters().getCurrentWindow();
     if (window != null) {
       EditorComposite selected = window.getSelectedComposite();
@@ -1427,14 +1577,24 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
     List<FileEditor> result = new ArrayList<>();
     // reuse getAllComposites(file)? Are there cases some composites are not accessible via splitters?
-    myOpenedComposites.forEach(composite -> {
-      if (composite.getFile().equals(file)) ContainerUtil.addAll(result, composite.getAllEditors());
-    });
+    for (EditorComposite composite : myOpenedComposites) {
+      if (composite.getFile().equals(file)) {
+        result.addAll(composite.getAllEditors());
+      }
+    }
+    for (ClientFileEditorManager clientManager : getAllClientFileEditorManagers()) {
+      result.addAll(clientManager.getEditors(file));
+    }
+
     return result.toArray(FileEditor.EMPTY_ARRAY);
   }
 
   public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      return clientManager == null ? null : clientManager.getComposite(file);
+    }
     VirtualFile originalFile = getOriginalFile(file);
 
     EditorWindow editorWindow = getSplitters().getCurrentWindow();
@@ -1455,6 +1615,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   public @NotNull List<EditorComposite> getAllComposites(@NotNull VirtualFile file) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      return clientManager == null ? new ArrayList<>() : clientManager.getAllComposites(file);
+    }
     List<EditorComposite> result = new ArrayList<>();
     Set<EditorsSplitters> all = getAllSplitters();
     for (EditorsSplitters each : all) {
@@ -1466,7 +1630,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public FileEditor @NotNull [] getAllEditors() {
     List<FileEditor> result = new ArrayList<>();
-    myOpenedComposites.forEach(composite -> ContainerUtil.addAll(result, composite.getAllEditors()));
+    for (EditorComposite composite : myOpenedComposites) {
+      result.addAll(composite.getAllEditors());
+    }
+    for (ClientFileEditorManager clientManager : getAllClientFileEditorManagers()) {
+      result.addAll(clientManager.getAllEditors());
+    }
     return result.toArray(FileEditor.EMPTY_ARRAY);
   }
 
@@ -1580,6 +1749,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Nullable
   public EditorComposite getComposite(@NotNull FileEditor editor) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      return clientManager == null ? null : clientManager.getComposite(editor);
+    }
     for (EditorsSplitters splitters : getAllSplitters()) {
       List<EditorComposite> editorsComposites = splitters.getAllComposites();
       for (int i = editorsComposites.size() - 1; i >= 0; i--) {
@@ -1640,6 +1813,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   protected void disposeComposite(@NotNull EditorComposite composite) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      ClientFileEditorManager clientManager = getClientFileEditorManager();
+      if (clientManager != null) {
+        clientManager.removeComposite(composite);
+      }
+      return;
+    }
+
     myOpenedComposites.remove(composite);
 
     if (getAllEditors().length == 0) {
