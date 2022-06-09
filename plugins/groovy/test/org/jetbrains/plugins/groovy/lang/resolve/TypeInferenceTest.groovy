@@ -257,7 +257,7 @@ map = new X()
 map['i'] += 2
 ''') as GroovyFile
     GrAssignmentExpression assignment = file.topStatements[2] as GrAssignmentExpression
-    assertType("X", assignment.type)
+    assertType("java.util.Date", assignment.type)
   }
 
   void testAllTypeParamsAreSubstituted() {
