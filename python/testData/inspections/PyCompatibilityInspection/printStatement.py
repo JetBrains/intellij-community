@@ -1,1 +1,1 @@
-<warning descr="Python versions 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11 do not support this syntax. The print statement has been replaced with a print() function">print "One value"</warning>
+<warning descr="Python versions 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12 do not support this syntax. The print statement has been replaced with a print() function">print "One value"</warning>
