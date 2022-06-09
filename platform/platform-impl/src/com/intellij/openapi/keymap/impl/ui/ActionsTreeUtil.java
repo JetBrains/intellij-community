@@ -722,6 +722,11 @@ public final class ActionsTreeUtil {
   }
 
   @Nls
+  public static String getExperimentalToolbarWithoutRunWidget(){
+    return KeyMapBundle.message("experimental.toolbar.without.run.widget.title");
+  }
+
+  @Nls
   public static String getEditorPopup() {
     return KeyMapBundle.message("editor.popup.menu.title");
   }
