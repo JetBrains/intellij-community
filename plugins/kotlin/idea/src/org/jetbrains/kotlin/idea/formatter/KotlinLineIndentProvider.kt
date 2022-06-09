@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter
 
@@ -31,6 +31,21 @@ class KotlinLineIndentProvider : KotlinLangLineIndentProvider() {
 
         override val continuationIndentForExpressionBodies: Boolean
             get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_FOR_EXPRESSION_BODIES
+
+        override val alignMultilineParameters: Boolean
+            get() = settings.kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS
+
+        override val alignMultilineParametersInCalls: Boolean
+            get() = settings.kotlinCommonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS
+
+        override val continuationIndentInArgumentLists: Boolean
+            get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_ARGUMENT_LISTS
+
+        override val continuationIndentInParameterLists: Boolean
+            get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_PARAMETER_LISTS
+
+        override val continuationIndentInIfCondition: Boolean
+            get() = settings.kotlinCustomSettings.CONTINUATION_INDENT_IN_IF_CONDITIONS
     }
 
     companion object {

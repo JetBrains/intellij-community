@@ -1,7 +1,7 @@
 fun test() {
     testVeryLong(12,
-    <caret>)
+                 <caret>)
 }
 
 // SET_FALSE: ALIGN_MULTILINE_PARAMETERS_IN_CALLS
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
+// IGNORE_FORMATTER

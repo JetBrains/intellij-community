@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter.lineIndent
 
@@ -109,7 +109,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 }
             }
 
-            before.isAt(LeftParenthesis) && after.isAt(RightParenthesis) ->
+            after.isAt(RightParenthesis) ->
                 factory.createIndentCalculatorForParenthesis(before, currentPosition, after, offset, settings)?.let { return it }
         }
 
@@ -225,7 +225,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 return createIndentCalculator(defaultIndent, 0)
             }
 
-            if (after.after().afterOptionalMix(*WHITE_SPACE_OR_COMMENT_BIT_SET).isAt(Comma)) {
+            if (after.afterIgnoringWhiteSpaceOrComment().isAt(Comma)) {
                 return createIndentCalculator(createAlignMultilineIndent(leftBrace), leftBrace.startOffset)
             }
 
@@ -242,46 +242,80 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         }
 
         private fun IndentCalculatorFactory.createIndentCalculatorForParenthesis(
-            leftParenthesis: SemanticEditorPosition,
+            before: SemanticEditorPosition,
             currentPosition: SemanticEditorPosition,
             rightParenthesis: SemanticEditorPosition,
             offset: Int,
             settings: KotlinIndentationAdjuster,
         ): IndentCalculator? {
-            assert(leftParenthesis.isAt(LeftParenthesis))
             assert(rightParenthesis.isAt(RightParenthesis))
+
+            val leftParenthesis = currentPosition.findLeftParenthesisBackwardsSkippingNested(LeftParenthesis, RightParenthesis)
+            if (!leftParenthesis.isAt(LeftParenthesis)) return null
 
             // case only for caret before [RightParenthesis]
             if (!currentPosition.hasLineBreaksAfter(offset)) {
-                val indentForParentheses by lazy {
-                    if (settings.alignWhenMultilineFunctionParentheses) createAlignMultilineIndent(leftParenthesis) else Indent.getNoneIndent()
+                fun createIndent(
+                    isParameterList: Boolean,
+                    baseLineOffset: Int,
+                ): IndentCalculator {
+                    val indent = if (before.isAt(Comma)) {
+                        when {
+                            isParameterList && settings.alignMultilineParameters ||
+                                    !isParameterList && settings.alignMultilineParametersInCalls -> {
+                                val firstElement = leftParenthesis.afterIgnoringWhiteSpaceOrComment()
+                                return createIndentCalculator(createAlignMultilineIndent(firstElement), firstElement.startOffset)
+                            }
+
+                            isParameterList && settings.continuationIndentInParameterLists ||
+                                    !isParameterList && settings.continuationIndentInArgumentLists -> Indent.getContinuationIndent()
+
+                            else -> Indent.getNormalIndent()
+                        }
+                    } else {
+                        if (settings.alignWhenMultilineFunctionParentheses)
+                            createAlignMultilineIndent(leftParenthesis)
+                        else
+                            Indent.getNoneIndent()
+                    }
+
+                    return createIndentCalculator(indent, baseLineOffset)
                 }
 
                 findFunctionKeywordBeforeIdentifier(leftParenthesis.beforeIgnoringWhiteSpaceOrComment())?.let {
-                    return createIndentCalculator(indentForParentheses, it.startOffset)
+                    return createIndent(isParameterList = true, it.startOffset)
                 }
 
                 // NB: this covered [KtTokens.CONSTRUCTOR_KEYWORD], [KtTokens.SET_KEYWORD], [KtTokens.GET_KEYWORD], [KtTokens.INIT_KEYWORD] as well
                 if (isSimilarToFunctionInvocation(leftParenthesis)) {
-                    return createIndentCalculator(indentForParentheses, leftParenthesis.startOffset)
+                    return createIndent(isParameterList = false, leftParenthesis.startOffset)
                 }
 
                 if (isDestructuringDeclaration(leftParenthesis, rightParenthesis)) {
-                    return createIndentCalculator(Indent.getNoneIndent(), leftParenthesis.startOffset)
+                    return createIndentCalculator(
+                        if (before.isAt(Comma)) Indent.getNormalIndent() else Indent.getNoneIndent(),
+                        leftParenthesis.startOffset
+                    )
                 }
 
                 leftParenthesis.beforeIgnoringWhiteSpaceOrComment().let { keyword ->
-                    if (keyword.isControlFlowKeyword()) {
-                        return createIndentCalculator(Indent.getNoneIndent(), keyword.startOffset)
+                    val indent = when {
+                        keyword.isAt(IfKeyword) && !before.isAt(LeftParenthesis) ->
+                            if (settings.continuationIndentInIfCondition) Indent.getContinuationIndent() else Indent.getNormalIndent()
+
+                        keyword.isControlFlowKeyword() -> Indent.getNoneIndent()
+                        else -> null
                     }
+
+                    indent?.let { return createIndentCalculator(it, keyword.startOffset) }
                 }
 
-                val indentForBinaryExpression = if (settings.alignWhenMultilineBinaryExpression)
-                    createAlignMultilineIndent(leftParenthesis)
-                else
-                    Indent.getContinuationIndent()
-
-                return createIndentCalculator(indentForBinaryExpression, leftParenthesis.startOffset)
+                return if (settings.alignWhenMultilineBinaryExpression) {
+                    val anchor = if (before.isAt(LeftParenthesis)) leftParenthesis else leftParenthesis.afterIgnoringWhiteSpaceOrComment()
+                    createIndentCalculator(createAlignMultilineIndent(anchor), anchor.startOffset)
+                } else {
+                    createIndentCalculator(Indent.getContinuationIndent(), leftParenthesis.startOffset)
+                }
             }
 
             return null
@@ -510,10 +544,12 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                         if (--whileKeywordLevel == 0) return true
                         moveBefore()
                     }
+
                     isAt(WhileKeyword) -> {
                         ++whileKeywordLevel
                         moveBefore()
                     }
+
                     isAt(BlockClosingBrace) -> moveBeforeParentheses(BlockOpeningBrace, BlockClosingBrace)
                     else -> moveBefore()
                 }
@@ -573,12 +609,21 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         private fun SemanticEditorPosition.moveBeforeWhileThisIsWhiteSpaceOrComment() =
             moveBeforeOptionalMix(*WHITE_SPACE_OR_COMMENT_BIT_SET)
 
+        private fun SemanticEditorPosition.moveAfterWhileThisIsWhiteSpaceOrComment() =
+            moveAfterOptionalMix(*WHITE_SPACE_OR_COMMENT_BIT_SET)
+
         private fun SemanticEditorPosition.moveBeforeIgnoringWhiteSpaceOrComment() {
             moveBefore()
             moveBeforeWhileThisIsWhiteSpaceOrComment()
         }
 
+        private fun SemanticEditorPosition.moveAfterIgnoringWhiteSpaceOrComment() {
+            moveAfter()
+            moveAfterWhileThisIsWhiteSpaceOrComment()
+        }
+
         private fun SemanticEditorPosition.beforeIgnoringWhiteSpaceOrComment() = copyAnd { it.moveBeforeIgnoringWhiteSpaceOrComment() }
+        private fun SemanticEditorPosition.afterIgnoringWhiteSpaceOrComment() = copyAnd { it.moveAfterIgnoringWhiteSpaceOrComment() }
         private fun SemanticEditorPosition.moveBeforeWhileThisIsWhiteSpaceOnSameLineOrBlockComment(): Boolean {
             while (!isAtEnd) {
                 if (isAt(Whitespace) && isAtMultiline) return false

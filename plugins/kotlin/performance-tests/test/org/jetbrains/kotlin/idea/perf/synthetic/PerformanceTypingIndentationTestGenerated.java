@@ -844,9 +844,19 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIf.after.kt");
             }
 
+            @TestMetadata("InBinaryExpressionUnfinishedInIfInv.after.kt")
+            public void testInBinaryExpressionUnfinishedInIfInv() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIfInv.after.kt");
+            }
+
             @TestMetadata("InBinaryExpressionsBeforeCloseParenthesis.after.kt")
             public void testInBinaryExpressionsBeforeCloseParenthesis() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesis.after.kt");
+            }
+
+            @TestMetadata("InBinaryExpressionsBeforeCloseParenthesisInv.after.kt")
+            public void testInBinaryExpressionsBeforeCloseParenthesisInv() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesisInv.after.kt");
             }
 
             @TestMetadata("InExpressionsParentheses.after.kt")
@@ -1971,16 +1981,6 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinished.after.inv.kt");
             }
 
-            @TestMetadata("InBinaryExpressionUnfinishedInIf.after.inv.kt")
-            public void testInBinaryExpressionUnfinishedInIf() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIf.after.inv.kt");
-            }
-
-            @TestMetadata("InBinaryExpressionsBeforeCloseParenthesis.after.inv.kt")
-            public void testInBinaryExpressionsBeforeCloseParenthesis() throws Exception {
-                runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesis.after.inv.kt");
-            }
-
             @TestMetadata("InExpressionsParenthesesBeforeOperand.after.inv.kt")
             public void testInExpressionsParenthesesBeforeOperand() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InExpressionsParenthesesBeforeOperand.after.inv.kt");
@@ -2137,9 +2137,19 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/InEnumInitializerListNotEmpty.after.inv.kt");
             }
 
+            @TestMetadata("NotFirstParameter.after.inv.kt")
+            public void testNotFirstParameter() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/NotFirstParameter.after.inv.kt");
+            }
+
             @TestMetadata("SettingAlignMultilineParametersInCalls.after.inv.kt")
             public void testSettingAlignMultilineParametersInCalls() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/SettingAlignMultilineParametersInCalls.after.inv.kt");
+            }
+
+            @TestMetadata("SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.inv.kt")
+            public void testSmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.inv.kt");
             }
         }
     }

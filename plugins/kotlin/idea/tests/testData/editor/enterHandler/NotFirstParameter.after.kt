@@ -1,6 +1,6 @@
 fun testParam(a : String, b : Int,
-<caret>) {
+    <caret>) {
 }
 
 // SET_FALSE: ALIGN_MULTILINE_PARAMETERS
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
+// IGNORE_FORMATTER
