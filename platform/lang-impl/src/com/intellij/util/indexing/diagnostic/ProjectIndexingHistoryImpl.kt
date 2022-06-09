@@ -19,6 +19,7 @@ import kotlin.reflect.KMutableProperty1
 @ApiStatus.Internal
 data class ProjectIndexingHistoryImpl(override val project: Project,
                                       override val indexingReason: String?,
+                                      override val scanningType: ScanningType,
                                       private val wasFullRescanning: Boolean) : ProjectIndexingHistory {
   private companion object {
     val indexingSessionIdSequencer = AtomicLong()
