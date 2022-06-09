@@ -191,12 +191,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     for (ContentEntry e : getContentRoots(moduleName)) {
       actual.add(e.getUrl());
     }
-
-    for (int i = 0; i < expectedRoots.length; i++) {
-      expectedRoots[i] = VfsUtilCore.pathToUrl(expectedRoots[i]);
-    }
-
-    assertUnorderedPathsAreEqual(actual, Arrays.asList(expectedRoots));
+    assertUnorderedPathsAreEqual(actual, ContainerUtil.map(expectedRoots, root -> VfsUtilCore.pathToUrl(root)));
   }
 
   protected void assertGeneratedSources(String moduleName, String... expectedSources) {
@@ -298,7 +293,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
     }
     else {
-      assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
+      assertSameElements("Unexpected list of folders in content root " + e.getUrl(),
+                         actual, Arrays.asList(expected));
     }
   }
 
@@ -488,10 +484,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   private ContentEntry getContentRoot(String moduleName, String path) {
-    for (ContentEntry e : getContentRoots(moduleName)) {
+    ContentEntry[] roots = getContentRoots(moduleName);
+    for (ContentEntry e : roots) {
       if (e.getUrl().equals(VfsUtilCore.pathToUrl(path))) return e;
     }
-    throw new AssertionError("content root not found");
+    throw new AssertionError("content root not found in module " + moduleName + ":" +
+                             "\nExpected root: " + path +
+                             "\nExisting roots:" +
+                             "\n" + StringUtil.join(roots, it -> " * " + it.getUrl(), "\n"));
   }
 
   public ContentEntry[] getContentRoots(String moduleName) {

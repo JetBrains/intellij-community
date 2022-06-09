@@ -790,33 +790,54 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project", "project.main", "project.test");
 
     assertContentRoots("project", getProjectPath());
-    assertContentRoots("project.main",
-                       getProjectPath() + "/src/main",
-                       getProjectPath() + "/target/generated-sources");
-    assertContentRoots("project.test",
-                       getProjectPath() + "/src/test",
-                       getProjectPath() + "/target/generated-test-sources");
-
-    assertExcludes("project", "target");
-    assertContentRootExcludes("project.main", getProjectPath() + "/src/main");
-    assertContentRootExcludes("project.main", getProjectPath() + "/target/generated-sources");
-    assertContentRootExcludes("project.test", getProjectPath() + "/src/test");
-    assertContentRootExcludes("project.test", getProjectPath() + "/target/generated-test-sources");
-
     assertSources("project");
     assertResources("project");
     assertTestSources("project");
     assertTestResources("project");
+    assertExcludes("project", "target");
 
-    assertContentRootSources("project.main", getProjectPath() + "/src/main", "java");
-    assertContentRootSources("project.main", getProjectPath() + "/target/generated-sources", "src1", "src2");
-    assertContentRootTestSources("project.main", getProjectPath() + "/src/main");
-    assertContentRootTestSources("project.main", getProjectPath() + "/target/generated-sources");
+    String mainResources = getProjectPath() + "/src/main/resources";
+    var mainSources = new String[]{
+      getProjectPath() + "/src/main/java",
+      mainResources,
+      getProjectPath() + "/target/generated-sources/src1",
+      getProjectPath() + "/target/generated-sources/src2"
+    };
+    String testResources = getProjectPath() + "/src/test/resources";
+    var testSources = new String[]{
+      getProjectPath() + "/src/test/java",
+      testResources,
+      getProjectPath() + "/target/generated-test-sources/test1",
+      getProjectPath() + "/target/generated-test-sources/test2"
+    };
 
-    assertContentRootSources("project.test", getProjectPath() + "/src/test");
-    assertContentRootSources("project.test", getProjectPath() + "/target/generated-test-sources");
-    assertContentRootTestSources("project.test", getProjectPath() + "/src/test", "java");
-    assertContentRootTestSources("project.test", getProjectPath() + "/target/generated-test-sources", "test1", "test2");
+    assertContentRoots("project.main", mainSources);
+    assertContentRoots("project.test", testSources);
+
+    for (String main : mainSources) {
+      if (main.equals(mainResources)) {
+        assertContentRootResources("project.main", main, "");
+      }
+      else {
+        assertContentRootSources("project.main", main, "");
+      }
+      assertContentRootTestSources("project.main", main);
+      assertContentRootTestResources("project.main", main);
+      assertContentRootExcludes("project.main", main);
+    }
+
+    for (String test : testSources) {
+      assertContentRootResources("project.test", test);
+      assertContentRootSources("project.test", test);
+
+      if (test.equals(testResources)) {
+        assertContentRootTestResources("project.test", test, "");
+      }
+      else {
+        assertContentRootTestSources("project.test", test, "");
+      }
+      assertContentRootExcludes("project.test", test);
+    }
   }
 
   @Test

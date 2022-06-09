@@ -24,7 +24,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.io.File
-import java.nio.file.Path
 
 class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
@@ -55,12 +54,10 @@ class WorkspaceFolderImporter(
 
   private fun addContentRoot(importData: MavenModuleImportData,
                              allFolders: MutableList<ContentRootCollector.Folder>) {
-    allFolders.add(ContentRootCollector.ContentRootFolder(
-      when (importData.moduleData.type) {
-        MavenModuleType.MAIN -> Path.of(importData.mavenProject.directory, "src", "main").toString()
-        MavenModuleType.TEST -> Path.of(importData.mavenProject.directory, "src", "test").toString()
-        else -> Path.of(importData.mavenProject.directory).toString()
-      }))
+    when (importData.moduleData.type) {
+      MavenModuleType.MAIN, MavenModuleType.TEST -> return
+      else -> allFolders.add(ContentRootCollector.ContentRootFolder(importData.mavenProject.directory))
+    }
   }
 
   private fun addSourceFolders(importData: MavenModuleImportData,
