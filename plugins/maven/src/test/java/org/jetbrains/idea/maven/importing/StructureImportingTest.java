@@ -1495,4 +1495,242 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     doImportProjects(Collections.singletonList(myProjectPom), true, disabledProfiles);
     assertModules("project-two");
   }
+
+  @Test
+  public void testOverrideLanguageLevelFromParentPom() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version>3.6.0</version>" +
+                     "      <configuration>" +
+                     "       <source>7</source>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>"
+    );
+
+    createModulePom("m1",
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<parent>" +
+                    "  <groupId>test</groupId>" +
+                    "  <artifactId>project</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>" +
+
+                    "<build>" +
+                    "  <plugins>" +
+                    "    <plugin>" +
+                    "      <groupId>org.apache.maven.plugins</groupId>" +
+                    "      <artifactId>maven-compiler-plugin</artifactId>" +
+                    "      <configuration>" +
+                    "        <release>11</release>" +
+                    "      </configuration>" +
+                    "    </plugin>" +
+                    "  </plugins>" +
+                    "</build>");
+
+    importProject();
+
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))));
+    assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
+  }
+
+  @Test
+  public void testReleaseHasPriorityInParentPom() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version>3.6.0</version>" +
+                     "      <configuration>" +
+                     "       <release>9</release>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>"
+    );
+
+    createModulePom("m1",
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<parent>" +
+                    "  <groupId>test</groupId>" +
+                    "  <artifactId>project</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>" +
+
+                    "<build>" +
+                    "  <plugins>" +
+                    "    <plugin>" +
+                    "      <groupId>org.apache.maven.plugins</groupId>" +
+                    "      <artifactId>maven-compiler-plugin</artifactId>" +
+                    "      <configuration>" +
+                    "        <source>11</source>" +
+                    "      </configuration>" +
+                    "    </plugin>" +
+                    "  </plugins>" +
+                    "</build>");
+
+    importProject();
+
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))));
+    assertEquals(LanguageLevel.JDK_1_9.toJavaVersion().toString(),
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
+  }
+
+  @Test
+  public void testReleasePropertyNotSupport() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "       <release>9</release>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>"
+    );
+
+    createModulePom("m1",
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+
+                    "<parent>" +
+                    "  <groupId>test</groupId>" +
+                    "  <artifactId>project</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>" +
+
+                    "<build>" +
+                    "  <plugins>" +
+                    "    <plugin>" +
+                    "      <groupId>org.apache.maven.plugins</groupId>" +
+                    "      <artifactId>maven-compiler-plugin</artifactId>" +
+                    "      <configuration>" +
+                    "        <source>11</source>" +
+                    "        <target>11</target>" +
+                    "      </configuration>" +
+                    "    </plugin>" +
+                    "  </plugins>" +
+                    "</build>");
+
+    importProject();
+
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))));
+    assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
+  }
+
+  @Test
+  public void testCompilerPluginExecutionBlockProperty() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>target-jdk8</id>" +
+                     "    <activation><jdk>[1.8,)</jdk></activation>" +
+                     "    <build>" +
+                     "      <plugins>" +
+                     "        <plugin>" +
+                     "          <groupId>org.apache.maven.plugins</groupId>" +
+                     "          <artifactId>maven-compiler-plugin</artifactId>" +
+                     "          <executions>" +
+                     "            <execution>" +
+                     "              <id>compile-jdk8</id>" +
+                     "              <goals>" +
+                     "                <goal>compile</goal>" +
+                     "              </goals>" +
+                     "              <configuration>" +
+                     "                <source>1.8</source>" +
+                     "                <target>1.8</target>" +
+                     "              </configuration>" +
+                     "            </execution>" +
+                     "          </executions>" +
+                     "        </plugin>" +
+                     "      </plugins>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>target-jdk11</id>" +
+                     "    <activation><jdk>[11,)</jdk></activation>" +
+                     "    <build>" +
+                     "      <plugins>" +
+                     "        <plugin>" +
+                     "          <groupId>org.apache.maven.plugins</groupId>" +
+                     "          <artifactId>maven-compiler-plugin</artifactId>" +
+                     "          <executions>" +
+                     "            <execution>" +
+                     "              <id>compile-jdk11</id>" +
+                     "              <goals>" +
+                     "                <goal>compile</goal>" +
+                     "              </goals>" +
+                     "              <configuration>" +
+                     "                <source>11</source>" +
+                     "                <target>11</target>" +
+                     "              </configuration>" +
+                     "            </execution>" +
+                     "          </executions>" +
+                     "        </plugin>" +
+                     "      </plugins>" +
+                     "    </build>" +
+                     "  </profile>" +
+                     "</profiles>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <version>3.8.1</version>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>"
+    );
+
+
+    importProject();
+
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
+    assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("project")));
+  }
 }
