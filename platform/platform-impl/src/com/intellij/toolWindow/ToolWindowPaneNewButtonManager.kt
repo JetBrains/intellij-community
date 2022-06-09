@@ -122,8 +122,8 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
     val squareStripeButton = SquareStripeButton(toolWindow)
     val manager = object : StripeButtonManager {
-      override val id: String
-        get() = toolWindow.id
+      override val id: String = toolWindow.id
+      override val toolWindow: ToolWindowImpl = toolWindow
 
       override val windowDescriptor: WindowInfo
         get() = toolWindow.windowInfo

@@ -11,7 +11,6 @@ import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.Rectangle
-import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Boolean) : ToolWindowToolbar() {
@@ -22,8 +21,6 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
       get() = true
 
     override fun getButtonFor(toolWindowId: String) = toolBar.getButtonFor(toolWindowId)
-
-    override fun getToolWindowFor(component: JComponent) = (component as SquareStripeButton).toolWindow
 
     override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
       toolBar.tryDroppingOnGap(data, gap, dropRectangle) {
@@ -64,7 +61,7 @@ internal class ToolWindowLeftToolbar(paneId: String, private val isPrimary: Bool
   }
 
   override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
-    if (!isVisible) {
+    if (!isShowing) {
       return null
     }
 

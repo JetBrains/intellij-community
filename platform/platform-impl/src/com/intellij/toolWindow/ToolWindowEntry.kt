@@ -12,6 +12,7 @@ import javax.swing.JComponent
 
 internal interface StripeButtonManager {
   val id: String
+  val toolWindow: ToolWindowImpl
   val windowDescriptor: WindowInfo
 
   fun updateState(toolWindow: ToolWindowImpl)

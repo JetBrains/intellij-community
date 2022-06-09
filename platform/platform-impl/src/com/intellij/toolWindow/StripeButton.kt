@@ -42,6 +42,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   private var mnemonic = 0
   private var pressedWhenSelected = false
   private var dragPane: JLayeredPane? = null
+  private var dragButton: StripeButtonManager? = null
   private var dragButtonImage: JLabel? = null
   private var pressedPoint: Point? = null
   private var lastStripe: AbstractDroppableStripe? = null
@@ -162,6 +163,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
         return
       }
       dragPane = findLayeredPane(e) ?: return
+      dragButton = (parent as Stripe).getButtonFor(toolWindow.id)
       val image = ToolWindowDragHelper.createThumbnailDragImage(this)
       val dragButtonImage = object : JLabel(IconUtil.createImageIcon((image as Image))) {
         override fun toString() = "Image for: " + this@StripeButton
@@ -203,7 +205,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
       if (lastStripe != null && lastStripe !== stripe) {
         lastStripe!!.resetDrop()
       }
-      stripe.processDropButton(this, dragButtonImage!!, devicePoint)
+      stripe.processDropButton(dragButton!!, dragButtonImage!!, devicePoint)
     }
     lastStripe = stripe
   }
@@ -302,6 +304,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     }
     dragPane!!.remove(dragButtonImage)
     dragButtonImage = null
+    dragButton = null
     toolWindow.toolWindowManager.getToolWindowPane(toolWindow).buttonManager.stopDrag()
     dragPane!!.repaint()
     isVisible = true

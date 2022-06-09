@@ -174,8 +174,8 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
     button.updatePresentation()
     val stripe = getStripeFor(info.anchor)
     val manager = object : StripeButtonManager {
-      override val id: String
-        get() = toolWindow.id
+      override val id: String = toolWindow.id
+      override val toolWindow = toolWindow
 
       override val windowDescriptor: WindowInfo
         get() = toolWindow.windowInfo

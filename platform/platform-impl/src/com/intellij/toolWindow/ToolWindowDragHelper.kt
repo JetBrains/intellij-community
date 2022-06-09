@@ -42,7 +42,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private var toolWindowRef: WeakReference<ToolWindowImpl?>? = null
   private var initialAnchor: ToolWindowAnchor? = null
-  private var initialButton: Component? = null
+  private var initialStripeButton: StripeButtonManager? = null
   private val initialOffset = Point()
   private val floatingWindowSize = Dimension()
   private var lastStripe: AbstractDroppableStripe? = null
@@ -96,36 +96,31 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   override fun processMousePressed(event: MouseEvent) {
     val relativePoint = RelativePoint(event)
     val toolWindow = getToolWindowAtPoint(relativePoint) ?: return
-    val component = getComponentFromDragSourcePane(relativePoint)
+    val clickedComponent = getComponentFromDragSourcePane(relativePoint)
     val decorator = if (toolWindow.isVisible) toolWindow.decorator else null
 
     toolWindowRef = WeakReference(toolWindow)
     initialAnchor = toolWindow.anchor
 
-    if (isNewUi) {
-      component?.let {
-        val parent = it.parent
-        if (it.isShowing && parent is AbstractDroppableStripe) {
-          lastStripe = parent
-          initialButton = it
+    getSourceStripe(toolWindow.anchor).let {
+      lastStripe = it
+      // The returned button might not be showing if stripes are hidden. This is not supported for new UI
+      initialStripeButton = if (it.isShowing || !it.isNewStripes) it.getButtonFor(toolWindow.id) else null
+      floatingWindowSize.size = toolWindow.windowInfo.floatingBounds?.size
+                                ?: if (isNewUi) JBUI.size(500, 400) else getDefaultFloatingToolWindowSize(toolWindow)
+    }
+
+    val dragImageComponent = initialStripeButton?.getComponent() ?: clickedComponent
+    val dragOutImage = if (decorator != null && !decorator.bounds.isEmpty) createThumbnailDragImage(decorator) else null
+    val dragImage = dragImageComponent?.let(::createStripeButtonDragImage) ?: dragOutImage
+
+    if (clickedComponent is StripeButton || clickedComponent is SquareStripeButton) {
+      initialOffset.location = relativePoint.getPoint(clickedComponent).also {
+        if (clickedComponent is SquareStripeButton) {
+          it.x -= clickedComponent.insets.left + SquareStripeButtonLook.ICON_PADDING.left
+          it.y -= clickedComponent.insets.top + SquareStripeButtonLook.ICON_PADDING.top
         }
       }
-      floatingWindowSize.size = toolWindow.windowInfo.floatingBounds?.size ?: JBUI.size(500, 400)
-    }
-    else {
-      getSourceStripe(toolWindow.anchor).let {
-        lastStripe = it
-        initialButton = if (!it.isNewStripes && it.isShowing) it.getButtonFor(toolWindow.id)?.getComponent() else component
-        floatingWindowSize.size = toolWindow.windowInfo.floatingBounds?.size
-                                  ?: getDefaultFloatingToolWindowBounds(toolWindow).size
-      }
-    }
-
-    val dragOutImage = if (decorator != null && !decorator.bounds.isEmpty) createThumbnailDragImage(decorator) else null
-    val dragImage = initialButton?.let(::createStripeButtonDragImage) ?: dragOutImage
-
-    if (component is StripeButton || component is SquareStripeButton) {
-      initialOffset.location = relativePoint.getPoint(component)
     }
     else if (dragImage != null) {
       initialOffset.location = Point(dragImage.getWidth(dragSourcePane) / 4, dragImage.getHeight(dragSourcePane) / 4)
@@ -178,7 +173,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun startDrag(event: MouseEvent) {
     relocate(event)
-    initialButton?.isVisible = false
+    initialStripeButton?.getComponent()?.isVisible = false
     dragImageDialog?.isVisible = true
     addDropTargetHighlighter(dragSourcePane)
     dragSourcePane.buttonManager.startDrag()
@@ -240,7 +235,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     lastStripe = targetStripe
     setDragOut(isDragOut(eventDevicePoint))
 
-    if (targetStripe != null && initialButton != null) {
+    val initialStripeButton = this.initialStripeButton
+    if (targetStripe != null && initialStripeButton != null) {
       addDropTargetHighlighter(toolWindow.toolWindowManager.getToolWindowPane(targetStripe.paneId))
 
       //if (myLastStripe != stripe) {//attempt to rotate thumb image on fly to show actual button view if user drops it right here
@@ -259,7 +255,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       //  dialog.updateIcon(image)
       //  stripe.remove(button)
       //}
-      targetStripe.processDropButton(initialButton as JComponent, dialog.contentPane as JComponent, eventDevicePoint)
+      targetStripe.processDropButton(initialStripeButton, dialog.contentPane as JComponent, eventDevicePoint)
 
       if (lastDropTargetPaneId != targetStripe.paneId) {
         lastDropTargetPaneId = targetStripe.paneId
@@ -372,6 +368,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     getStripeButtonForToolWindow(window)?.isVisible = true
     dragSourcePane.buttonManager.stopDrag()
     lastDropTargetPane?.let { removeDropTargetHighlighter(it) }
+    dropTargetHighlightComponent.bounds = Rectangle(0, 0, 0, 0)
 
     @Suppress("SSBasedInspection")
     dragImageDialog?.dispose()
@@ -382,7 +379,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     lastStripe = null
     lastDropTargetPaneId = null
     lastDropTargetPane = null
-    initialButton = null
+    initialStripeButton = null
   }
 
   private fun addDropTargetHighlighter(pane: ToolWindowPane) {
@@ -479,10 +476,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
    *
    * The default size is the same as its drop target size as measured on the source pane (the tool window always belongs to the source pane)
    */
-  private fun getDefaultFloatingToolWindowBounds(toolWindow: ToolWindowImpl): Rectangle {
+  private fun getDefaultFloatingToolWindowSize(toolWindow: ToolWindowImpl): Dimension {
     return getAdjustedPaneContentsScreenBounds(dragSourcePane, toolWindow.anchor,
                                                (dragSourcePane.rootPane.height * toolWindow.windowInfo.weight).toInt(),
-                                               (dragSourcePane.rootPane.width * toolWindow.windowInfo.weight).toInt())
+                                               (dragSourcePane.rootPane.width * toolWindow.windowInfo.weight).toInt()).size
   }
 
   /**

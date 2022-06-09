@@ -9,16 +9,11 @@ import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.util.ui.JBUI
 import java.awt.Point
 import java.awt.Rectangle
-import javax.swing.JComponent
 
 internal class ToolWindowRightToolbar(paneId: String) : ToolWindowToolbar() {
   private val rightStripe = object : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
-    override val isNewStripes: Boolean
-      get() = true
-    override val anchor: ToolWindowAnchor
-      get() = ToolWindowAnchor.RIGHT
-
-    override fun getToolWindowFor(component: JComponent) = (component as SquareStripeButton).toolWindow
+    override val isNewStripes = true
+    override val anchor = ToolWindowAnchor.RIGHT
 
     override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
       tryDroppingOnGap(data, gap, dropRectangle) { layoutDragButton(data, gap) }
@@ -41,7 +36,7 @@ internal class ToolWindowRightToolbar(paneId: String) : ToolWindowToolbar() {
   }
 
   override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
-    if (!isVisible) {
+    if (!isShowing) {
       return null
     }
 
