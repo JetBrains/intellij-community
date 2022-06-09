@@ -18,14 +18,11 @@ import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache.LibraryDependencies
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.*
-import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDependenciesCache {

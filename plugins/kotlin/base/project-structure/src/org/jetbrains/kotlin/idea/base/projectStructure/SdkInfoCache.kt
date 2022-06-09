@@ -1,6 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.caches.project
+package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.concurrentMapOf
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -35,7 +34,7 @@ interface SdkInfoCache {
     }
 }
 
-class SdkInfoCacheImpl(private val project: Project) : SdkInfoCache {
+internal class SdkInfoCacheImpl(private val project: Project) : SdkInfoCache {
     @JvmInline
     value class SdkDependency(val sdk: SdkInfo?)
 
@@ -130,7 +129,7 @@ class SdkInfoCacheImpl(private val project: Project) : SdkInfoCache {
 
             visitedModuleInfos.removeAll(it)
         }
-        // mark all visited modules (apart of found path) as dead ends
+        // mark all visited modules (apart from found path) as dead ends
         visitedModuleInfos.forEach { info -> cache[info] = noSdkDependency }
     }
 

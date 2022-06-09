@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirModuleSessi
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionProviderStorage
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.idea.fir.analysis.project.structure.getMainKtSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
 import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureReader

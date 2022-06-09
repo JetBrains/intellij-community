@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.frontend.di.configureModule
 import org.jetbrains.kotlin.frontend.di.configureStandardResolveComponents
 import org.jetbrains.kotlin.frontend.java.di.configureJavaSpecificComponents
 import org.jetbrains.kotlin.frontend.java.di.initializeJavaSpecificComponents
+import org.jetbrains.kotlin.idea.base.projectStructure.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.CompositeAnalyzerServices
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
-import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.caches
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.KotlinStdlibCache
+import org.jetbrains.kotlin.idea.base.projectStructure.KotlinStdlibCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.core.util.runInReadActionWithWriteActionPriority

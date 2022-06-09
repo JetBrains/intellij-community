@@ -15,7 +15,7 @@ import com.intellij.testFramework.PsiTestUtil
 import junit.framework.Assert
 import org.jetbrains.kotlin.analysis.providers.createModuleWithoutDependenciesOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
-import org.jetbrains.kotlin.idea.fir.analysis.project.structure.getMainKtSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile

@@ -3,23 +3,20 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
-import com.intellij.util.io.KeyDescriptor
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.projectStructure.fileTypes.KlibMetaFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.fileTypes.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.idea.klib.KlibLoadingMetadataCache
-import org.jetbrains.kotlin.idea.base.projectStructure.fileTypes.KlibMetaFileType
 import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
 import org.jetbrains.kotlin.metadata.js.JsProtoBuf
 import org.jetbrains.kotlin.name.ClassId
@@ -31,54 +28,9 @@ import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragmen
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import org.jetbrains.kotlin.utils.JsMetadataVersion
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.lang.manifest.ManifestFileType
 import java.io.ByteArrayInputStream
 import java.io.DataInput
 import java.io.DataOutput
-import java.util.*
-import java.util.jar.Manifest
-
-private val FQNAME_KEY_DESCRIPTOR: KeyDescriptor<FqName> = object : KeyDescriptor<FqName> {
-    override fun save(output: DataOutput, value: FqName) = IOUtil.writeUTF(output, value.asString())
-
-    override fun read(input: DataInput) = FqName(IOUtil.readUTF(input))
-
-    override fun getHashCode(value: FqName) = value.asString().hashCode()
-
-    override fun isEqual(val1: FqName?, val2: FqName?) = val1 == val2
-}
-
-abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExtension<FqName>() {
-    val KEY: ID<FqName, Void> = ID.create(classOfIndex.canonicalName)
-
-    protected val LOG = Logger.getInstance(classOfIndex)
-
-    override fun getName() = KEY
-
-    override fun dependsOnFileContent() = true
-
-    override fun getKeyDescriptor() = FQNAME_KEY_DESCRIPTOR
-
-    protected fun indexer(f: (FileContent) -> FqName?): DataIndexer<FqName, Void, FileContent> =
-        DataIndexer {
-            try {
-                val fqName = f(it)
-                if (fqName != null) {
-                    Collections.singletonMap<FqName, Void>(fqName, null)
-                } else {
-                    emptyMap()
-                }
-            } catch (e: ProcessCanceledException) {
-                throw e
-            } catch (e: Throwable) {
-                LOG.warn("Error while indexing file ${it.fileName}: ${e.message}")
-                emptyMap()
-            }
-        }
-}
-
-fun FileBasedIndexExtension<FqName, Void>.hasSomethingInPackage(fqName: FqName, scope: GlobalSearchScope): Boolean =
-    !FileBasedIndex.getInstance().processValues(name, fqName, null, { _, _ -> false }, scope)
 
 object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() {
     private val LOG = logger<KotlinPartialPackageNamesIndex>()
@@ -101,7 +53,7 @@ object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>()
 
     override fun dependsOnFileContent() = true
 
-    override fun getKeyDescriptor() = FQNAME_KEY_DESCRIPTOR
+    override fun getKeyDescriptor() = FqNameKeyDescriptor
 
     override fun getValueExternalizer(): DataExternalizer<Name?> = NullableNameExternalizer
 
@@ -138,22 +90,6 @@ object KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>()
             LOG.warn("Error `(${e.javaClass.simpleName}: ${e.message})` while indexing file ${fileContent.fileName} using $name index. Probably the file is broken.")
             emptyMap()
         }
-    }
-}
-
-object KotlinClassFileIndex : KotlinFileIndexBase<KotlinClassFileIndex>(KotlinClassFileIndex::class.java) {
-
-    override fun getIndexer() = INDEXER
-
-    override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
-
-    override fun getVersion() = VERSION
-
-    private const val VERSION = 3
-
-    private val INDEXER = indexer { fileContent ->
-        val headerInfo = ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)
-        if (headerInfo != null && headerInfo.metadataVersion.isCompatible()) headerInfo.classId.asSingleFqName() else null
     }
 }
 
@@ -229,36 +165,6 @@ object KotlinBuiltInsMetadataIndex : KotlinFileIndexBase<KotlinBuiltInsMetadataI
             fileContent.fileName.endsWith(JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION)) {
             val builtins = BuiltInDefinitionFile.read(fileContent.content, fileContent.file.parent)
             (builtins as? BuiltInDefinitionFile)?.packageFqName
-        } else null
-    }
-}
-
-object KotlinStdlibIndex : KotlinFileIndexBase<KotlinStdlibIndex>(KotlinStdlibIndex::class.java) {
-    private const val LIBRARY_NAME_MANIFEST_ATTRIBUTE = "Implementation-Title"
-    private const val STDLIB_TAG_MANIFEST_ATTRIBUTE = "Kotlin-Runtime-Component"
-    val KOTLIN_STDLIB_NAME = FqName("kotlin-stdlib")
-    val KOTLIN_STDLIB_COMMON_NAME = FqName("kotlin-stdlib-common")
-
-    val STANDARD_LIBRARY_DEPENDENCY_NAMES = setOf(
-        KOTLIN_STDLIB_COMMON_NAME,
-    )
-
-    override fun getIndexer() = INDEXER
-
-    override fun getInputFilter() = FileBasedIndex.InputFilter { file -> file.fileType is ManifestFileType }
-
-    override fun getVersion() = VERSION
-
-    private val VERSION = 1
-
-    // TODO: refactor [KotlinFileIndexBase] and get rid of FqName here, it's never a proper fully qualified name, just a String wrapper
-    private val INDEXER = indexer { fileContent ->
-        if (fileContent.fileType is ManifestFileType) {
-            val manifest = Manifest(ByteArrayInputStream(fileContent.content))
-            val attributes = manifest.mainAttributes
-            attributes.getValue(STDLIB_TAG_MANIFEST_ATTRIBUTE) ?: return@indexer null
-            val libraryName = attributes.getValue(LIBRARY_NAME_MANIFEST_ATTRIBUTE) ?: return@indexer null
-            FqName(libraryName)
         } else null
     }
 }

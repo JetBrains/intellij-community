@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.caches.project
+package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -17,11 +17,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.configuration.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.name.FqName
@@ -51,7 +49,7 @@ interface KotlinStdlibCache {
     }
 }
 
-class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
+internal class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
     companion object {
         private const val KOTLIN_JAVA_RUNTIME_NAME = "KotlinJavaRuntime"
     }

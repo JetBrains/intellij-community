@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.fir.analysis.project.structure
+package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModific
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo

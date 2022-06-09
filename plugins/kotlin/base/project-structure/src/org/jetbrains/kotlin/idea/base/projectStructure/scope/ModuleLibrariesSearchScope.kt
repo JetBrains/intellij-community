@@ -1,6 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.fir.analysis.project.structure
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.projectStructure.scope
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.JdkOrderEntry
@@ -10,7 +9,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-
 
 internal class ModuleLibrariesSearchScope(module: Module) : GlobalSearchScope(module.project) {
     private val projectFileIndex = ProjectRootManager.getInstance(module.project).fileIndex

@@ -45,7 +45,6 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.analysis-api-providers-ide-impl",
     "kotlin.fir.fir-low-level-api-ide-impl",
-    "kotlin.fir.analysis-project-structure-ide-impl",
   )
 
   @SuppressWarnings('SpellCheckingInspection')

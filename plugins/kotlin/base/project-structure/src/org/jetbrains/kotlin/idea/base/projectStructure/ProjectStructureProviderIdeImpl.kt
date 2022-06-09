@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.fir.analysis.project.structure
+package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -10,12 +10,9 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.firstOrNull
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
-import org.jetbrains.kotlin.idea.caches.project.*
 
 @OptIn(Frontend10ApiUsage::class)
 internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
@@ -30,7 +27,6 @@ internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
     // TODO maybe introduce some cache?
     fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule =
         createKtModuleByModuleInfo(moduleInfo)
-
 
     private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule = when (moduleInfo) {
         is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo, this)
@@ -51,7 +47,7 @@ internal class ProjectStructureProviderIdeImpl : ProjectStructureProvider() {
     }
 
     companion object {
-        fun getInstance(project: Project):ProjectStructureProviderIdeImpl {
+        fun getInstance(project: Project): ProjectStructureProviderIdeImpl {
             return project.getService(ProjectStructureProvider::class.java) as ProjectStructureProviderIdeImpl
         }
     }

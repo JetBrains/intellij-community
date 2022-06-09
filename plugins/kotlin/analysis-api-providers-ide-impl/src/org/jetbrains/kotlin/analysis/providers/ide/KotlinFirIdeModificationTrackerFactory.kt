@@ -10,8 +10,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.providers.ide.trackers.KotlinFirModificationTrackerService
+import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
-import org.jetbrains.kotlin.idea.fir.analysis.project.structure.ideaModule
 
 internal class KotlinFirIdeModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory() {
     override fun createProjectWideOutOfBlockModificationTracker(): ModificationTracker =

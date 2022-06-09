@@ -18,16 +18,36 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
+
+@Frontend10ApiUsage
+val KtModule.moduleInfo: IdeaModuleInfo
+    get() {
+        require(this is KtModuleByModuleInfoBase)
+        return ideaModuleInfo
+    }
+
+
+val KtSourceModule.ideaModule: Module
+    get() {
+        require(this is KtSourceModuleByModuleInfo)
+        return ideaModule
+    }
+
+fun Module.getMainKtSourceModule(): KtSourceModule? {
+    val moduleInfo = productionSourceInfo ?: return null
+    return ProjectStructureProviderIdeImpl.getInstance(project).getKtModuleByModuleInfo(moduleInfo) as KtSourceModule
+}
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
     get() = when {
@@ -107,4 +127,14 @@ fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
             false
         }
     }
+}
+
+fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
+    val project = (this as? IdeaModuleInfo)?.project ?: return null
+    return SdkInfoCache.getInstance(project).findOrGetCachedSdk(this)
+}
+
+fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
+    val project = project ?: return null
+    return KotlinStdlibCache.getInstance(project).findStdlibInModuleDependencies(this)
 }

@@ -67,6 +67,12 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings"/>
 
     <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleScopeProviderIdeImpl"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
 
