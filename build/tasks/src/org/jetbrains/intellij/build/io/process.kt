@@ -52,7 +52,7 @@ fun runJava(mainClass: String,
 
         fun javaRunFailed(reason: String) {
           Span.current().setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
-          val message = "$reason\nCannot execute $mainClass (args=$args, vmOptions=$jvmArgsWithJson)"
+          val message = "$reason\nCannot execute $mainClass (pid=${process.pid()} args=$args, vmOptions=$jvmArgsWithJson)"
           span.setStatus(StatusCode.ERROR, message)
           onError?.invoke()
           throw RuntimeException(message)
@@ -118,7 +118,7 @@ internal fun runJavaWithOutputToFile(mainClass: String,
           .start()
 
         fun javaRunFailed(reason: String) {
-          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (published to TeamCity build artifacts) (args=$args, vmOptions=$jvmArgs): $reason"
+          val message = "Cannot execute $mainClass, see details in ${outputFile.fileName} (published to TeamCity build artifacts) (pid=${process.pid()}, args=$args, vmOptions=$jvmArgs): $reason"
           span.setStatus(StatusCode.ERROR, message)
           if (Files.exists(outputFile)) {
             span.setAttribute("processOutput", Files.readString(outputFile))
