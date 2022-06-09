@@ -15,21 +15,16 @@ object TestKotlinArtifacts {
         return KotlinMavenUtils.findArtifactOrFail(groupId, artifactId, version).toFile()
     }
 
-    val kotlinStdlibCommon: File by lazy {
-        getLibraryFile(KOTLIN_MAVEN_GROUP_ID, "kotlin-stdlib-common", "kotlin_stdlib_jdk8.xml")
-    }
+    private fun getJar(artifactId: String) =
+        downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId)
+    private fun getSourcesJar(artifactId: String) =
+        downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId, suffix = "-sources.jar")
 
-    val kotlinStdlibCommonSources: File by lazy {
-        getLibraryFile(KOTLIN_MAVEN_GROUP_ID, "kotlin-stdlib-common", "kotlin_stdlib_jdk8.xml")
-    }
+    val kotlinStdlibCommon: File by lazy { getJar("kotlin-stdlib-common") }
+    val kotlinStdlibCommonSources: File by lazy { getSourcesJar("kotlin-stdlib-common") }
 
-    val jsr305: File by lazy {
-        getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml")
-    }
-
-    val junit3: File by lazy {
-        getLibraryFile("junit", "junit", "JUnit3.xml")
-    }
+    val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
+    val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
 
     @JvmStatic
     val compilerTestDataDir: File by lazy {
