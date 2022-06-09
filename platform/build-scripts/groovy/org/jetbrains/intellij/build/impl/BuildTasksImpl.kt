@@ -16,6 +16,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
+import kotlinx.collections.immutable.toImmutableSet
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
@@ -792,12 +793,13 @@ private fun checkProductLayout(context: BuildContext) {
     messages.error("productProperties.productLayout.mainJarName is not specified")
   }
 
-  val nonTrivialPlugins = layout.pluginLayouts
-  checkPluginDuplicates(nonTrivialPlugins, messages)
-  checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", nonTrivialPlugins, context)
-  checkPluginModules(layout.getPluginModulesToPublish(), "productProperties.productLayout.pluginModulesToPublish", nonTrivialPlugins,
+  val pluginLayouts = layout.pluginLayouts
+  checkScrambleClasspathPlugins(pluginLayouts, context)
+  checkPluginDuplicates(pluginLayouts, context)
+  checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", pluginLayouts, context)
+  checkPluginModules(layout.getPluginModulesToPublish(), "productProperties.productLayout.pluginModulesToPublish", pluginLayouts,
                      context)
-  checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", nonTrivialPlugins,
+  checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", pluginLayouts,
                      context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
     messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
@@ -806,7 +808,7 @@ private fun checkProductLayout(context: BuildContext) {
   }
   if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
     checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore",
-                       nonTrivialPlugins,
+                       pluginLayouts,
                        context)
   }
   if (!context.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
@@ -828,7 +830,7 @@ private fun checkProductLayout(context: BuildContext) {
   checkModules(layout.mainModules, "productProperties.productLayout.mainModules", context)
   checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar,
                         "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar", context)
-  for (plugin in nonTrivialPlugins) {
+  for (plugin in pluginLayouts) {
     checkBaseLayout(plugin as BaseLayout, "\'${plugin.mainModule}\' plugin", context)
   }
 }
@@ -862,11 +864,26 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description", context)
 }
 
-private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>, messages: BuildMessages) {
-  val pluginsGroupedByMainModule = nonTrivialPlugins.groupBy { it.mainModule }.values
+private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>, context: BuildContext) {
+  val pluginsGroupedByMainModule = nonTrivialPlugins.groupBy { it.mainModule to it.bundlingRestrictions }.values
   for (duplicatedPlugins in pluginsGroupedByMainModule) {
     if (duplicatedPlugins.size > 1) {
-      messages.warning("Duplicated plugin description in productLayout.pluginLayouts: ${duplicatedPlugins.first().mainModule}")
+      context.messages.error("Duplicated plugin description in productLayout.pluginLayouts: main module ${duplicatedPlugins.first().mainModule}")
+    }
+  }
+
+  // indexing-shared-ultimate has a separate layout for bundled & public plugins
+  val duplicateDirectoryNameExceptions = setOf("indexing-shared-ultimate")
+
+  val pluginsGroupedByDirectoryName = nonTrivialPlugins.groupBy { getActualPluginDirectoryName(it, context) to it.bundlingRestrictions }.values
+  for (duplicatedPlugins in pluginsGroupedByDirectoryName) {
+    val pluginDirectoryName = getActualPluginDirectoryName(duplicatedPlugins.first(), context)
+    if (duplicateDirectoryNameExceptions.contains(pluginDirectoryName)) {
+      continue
+    }
+
+    if (duplicatedPlugins.size > 1) {
+      context.messages.error("Duplicated plugin description in productLayout.pluginLayouts: directory name $pluginDirectoryName")
     }
   }
 }
@@ -884,6 +901,20 @@ private fun checkArtifacts(names: Collection<String>, fieldName: String, context
   val unknownArtifacts = names - JpsArtifactService.getInstance().getArtifacts(context.project).map { it.name }.toSet()
   if (!unknownArtifacts.isEmpty()) {
     context.messages.error("The following artifacts from $fieldName aren\'t found in the project: $unknownArtifacts")
+  }
+}
+
+private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>, context: BuildContext) {
+  val pluginDirectories = pluginLayoutList.map { getActualPluginDirectoryName(it, context) }.toImmutableSet()
+
+  for (pluginLayout in pluginLayoutList) {
+    for ((pluginDirectoryName, _) in pluginLayout.scrambleClasspathPlugins) {
+      if (!pluginDirectories.contains(pluginDirectoryName)) {
+        context.messages.error(
+          "Layout of plugin '${pluginLayout.mainModule}' declares an unresolved plugin directory name in pluginLayout.scrambleClasspathPlugins: $pluginDirectoryName"
+        )
+      }
+    }
   }
 }
 
