@@ -151,28 +151,27 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private @NotNull JPanel createSummaryComponent(@Nullable ClusteringSearchSession session,
-                                                 @NotNull List<UsageCluster> topClusters) {
+                                                 @NotNull Collection<UsageCluster> topClusters) {
     JPanel summaryPanel = new JPanel(new VerticalLayout(0));
     if (session == null) return summaryPanel;
     myAlreadyRenderedSnippets = 0;
     topClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
-      renderCluster(summaryPanel, cluster);
+      renderCluster(summaryPanel, cluster.getUsages());
     });
     final JScrollBar verticalScrollBar = myScrollPane.getVerticalScrollBar();
     BoundedRangeModelThresholdListener.Companion.install(verticalScrollBar, () -> {
       topClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
-        renderCluster(summaryPanel, cluster);
+        renderCluster(summaryPanel, cluster.getUsages());
       });
       return Unit.INSTANCE;
     });
     return summaryPanel;
   }
 
-  private void renderCluster(@NotNull JPanel summaryPanel,
-                             @NotNull UsageCluster cluster) {
+  private void renderCluster(@NotNull JPanel summaryPanel, @NotNull Collection<SimilarUsage> selectedUsages) {
     final Set<SimilarUsage> usageFilteredByGroup = new HashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
-      usageFilteredByGroup.addAll(cluster.getOnlySelectedUsages(myUsageView.getSelectedUsages()));
+      usageFilteredByGroup.addAll(selectedUsages);
     });
     SimilarUsage usage = ContainerUtil.getFirstItem(usageFilteredByGroup);
     if (usage instanceof UsageInfo2UsageAdapter) {
@@ -194,7 +193,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private void addMostCommonUsagesForSelectedGroups(@NotNull final Set<Usage> selectedUsages) {
-    Ref<List<UsageCluster>> sortedClusters = new Ref<>();
+    Ref<Collection<UsageCluster>> sortedClusters = new Ref<>();
     Task.Backgroundable loadMostCommonUsagePatternsTask =
       new Task.Backgroundable(myProject, UsageViewBundle.message(
         "similar.usages.loading.most.common.usage.patterns.progress.title")) {
@@ -211,11 +210,11 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         public void run(@NotNull ProgressIndicator indicator) {
           ClusteringSearchSession session = getSession();
           if (session != null) {
-            final List<UsageCluster> groups = new ArrayList<>();
+            final List<UsageCluster> clusters = new ArrayList<>();
             ApplicationManager.getApplication().runReadAction(() -> {
-              groups.addAll(session.getClustersForSelectedUsages(indicator, selectedUsages));
+              clusters.addAll(session.getClustersForSelectedUsages(indicator, selectedUsages));
             });
-            sortedClusters.set(groups);
+            sortedClusters.set(clusters);
           }
         }
       };

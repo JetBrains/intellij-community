@@ -70,9 +70,10 @@ public class ClusteringSearchSession {
   public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator, Set<Usage> selectedUsages) {
     //create new ArrayList from clusters to avoid a comparator contract violation during search
     return new ArrayList<>(getClusters()).stream()
+      .map(cluster -> new UsageCluster(cluster.getId(), cluster.getOnlySelectedUsages(selectedUsages)))
       .sorted((o1, o2) -> {
         indicator.checkCanceled();
-        return Integer.compare(o2.getOnlySelectedUsages(selectedUsages).size(), o1.getOnlySelectedUsages(selectedUsages).size());
+        return Integer.compare(o2.getUsages().size(), o1.getUsages().size());
       }).collect(Collectors.toList());
   }
 
@@ -108,7 +109,7 @@ public class ClusteringSearchSession {
     return similarity1 < similarity2 && !MathUtil.equals(similarity1, similarity2, PRECISION);
   }
 
-  private static double findMinimalSimilarity(@NotNull UsageCluster usageCluster, Bag newUsageFeatures, double threshold) {
+  private static double findMinimalSimilarity(@NotNull UsageCluster usageCluster, @NotNull Bag newUsageFeatures, double threshold) {
     double min = MAXIMUM_SIMILARITY;
     for (SimilarUsage usage : usageCluster.getUsages()) {
       final double similarity = jaccardSimilarity(usage.getFeatures(), newUsageFeatures);
