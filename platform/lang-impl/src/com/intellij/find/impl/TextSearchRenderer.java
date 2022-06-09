@@ -37,6 +37,8 @@ class TextSearchRenderer extends JPanel implements ListCellRenderer<UsageInfo2Us
       }
 
       myUsageRenderer.setIcon(AllIcons.Nodes.TextArea);
+      //noinspection UseDPIAwareInsets
+      myUsageRenderer.setIpad(new Insets(0, 0, 0, getIpad().right));
       setBorder(null);
     }
 
