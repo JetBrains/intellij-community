@@ -44,7 +44,6 @@ open class IdeaCommunityProperties(private val communityHome: Path) : BaseIdeaPr
 
     mavenArtifacts.forIdeModules = true
     mavenArtifacts.additionalModules = listOf(
-      "intellij.tools.jps.buildScriptDependencies",
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
