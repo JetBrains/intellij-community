@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.testFramework.RunAll
@@ -16,7 +16,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROVIDER_PROPERTY
 
 @CompileStatic
-class GradleManagedPropertyTest extends GradleHighlightingHeavyTestCase implements TypingTest {
+class GradleManagedPropertyTest extends GradleHighlightingTestCase implements TypingTest {
 
   protected List<String> getParentCalls() {
     return []

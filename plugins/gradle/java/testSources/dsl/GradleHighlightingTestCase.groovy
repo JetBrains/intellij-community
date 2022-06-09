@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.util.ResolveTest
 import java.nio.file.Paths
 
 @CompileStatic
-abstract class GradleHighlightingHeavyTestCase extends GradleImportingTestCase implements ResolveTest {
+abstract class GradleHighlightingTestCase extends GradleImportingTestCase implements ResolveTest {
 
   @NotNull
   JavaCodeInsightTestFixture fixture
@@ -133,14 +133,6 @@ abstract class GradleHighlightingHeavyTestCase extends GradleImportingTestCase i
 
   protected final boolean isGradleAtLeast(@NotNull String version) {
     GradleVersion.version(gradleVersion) >= GradleVersion.version(version)
-  }
-
-  protected void setterMethodTest(String name, String originalName, String containingClass) {
-    def result = elementUnderCaret(GrMethodCall).advancedResolve()
-    def method = assertInstanceOf(result.element, PsiMethod)
-    methodTest(method, name, containingClass)
-    def original = assertInstanceOf(method.navigationElement, PsiMethod)
-    methodTest(original, originalName, containingClass)
   }
 }
 

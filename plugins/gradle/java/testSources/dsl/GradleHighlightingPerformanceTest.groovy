@@ -9,7 +9,7 @@ import com.intellij.util.ThrowableRunnable
 import org.junit.Test
 import org.junit.runners.Parameterized
 
-class GradleHighlightingPerformanceTest extends GradleHighlightingHeavyTestCase {
+class GradleHighlightingPerformanceTest extends GradleHighlightingTestCase {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")

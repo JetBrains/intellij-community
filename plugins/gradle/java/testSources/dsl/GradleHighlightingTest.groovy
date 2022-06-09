@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspec
 import org.junit.Test
 import org.junit.runners.Parameterized
 
-class GradleHighlightingTest extends GradleHighlightingHeavyTestCase {
+class GradleHighlightingTest extends GradleHighlightingTestCase {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
