@@ -85,11 +85,20 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private DefaultFrameHeader myHeader;
 
   public FlatWelcomeFrame() {
+    this(USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : null);
+  }
+
+  public FlatWelcomeFrame(AbstractWelcomeScreen screen) {
     SplashManager.hideBeforeShow(this);
 
     JRootPane rootPane = getRootPane();
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
-    myScreen = USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
+    if (screen != null) {
+      myScreen = screen;
+    }
+    else {
+      myScreen = new FlatWelcomeScreen();
+    }
 
     myContent = new Wrapper();
     setContentPane(myContent);
@@ -169,6 +178,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
   protected void setupCloseAction() {
     WelcomeFrame.setupCloseAction(this);
+  }
+
+  public @NotNull AbstractWelcomeScreen getScreen() {
+    return myScreen;
   }
 
   private void updateComponentsAndResize() {

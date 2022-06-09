@@ -3,7 +3,12 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Interface represents a factory class to create welcome screen tab, see {@link WelcomeScreenTab}
@@ -14,9 +19,21 @@ public interface WelcomeTabFactory {
   ExtensionPointName<WelcomeTabFactory> WELCOME_TAB_FACTORY_EP = new ExtensionPointName<>("com.intellij.welcomeTabFactory");
 
   /**
+   * @deprecated use createWelcomeTabs instead
+   */
+  @Deprecated
+  default WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) { return null; }
+
+  /**
    * Executed in EDT.
    */
-  @NotNull WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable);
+  default @NotNull List<WelcomeScreenTab> createWelcomeTabs(@NotNull WelcomeScreen ws, @NotNull Disposable parentDisposable) {
+    WelcomeScreenTab wsTab = createWelcomeTab(parentDisposable);
+    if (wsTab != null) {
+      return new SmartList<>(wsTab);
+    }
+    return new ArrayList<>();
+  }
 
   /**
    * @return true if the factory if applicable for the IDE, false otherwise
