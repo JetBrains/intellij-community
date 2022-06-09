@@ -127,7 +127,7 @@ final class PersistentFSRecordAccessor {
   }
 
   @Nullable
-  private String getName(int fileId) throws IOException {
+  private CharSequence getName(int fileId) throws IOException {
     return myFSConnection.getNames().valueOf(myFSConnection.getRecords().getNameId(fileId));
   }
 

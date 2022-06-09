@@ -579,7 +579,7 @@ public final class FSRecords {
     });
   }
 
-  public static boolean processAllNames(@NotNull Processor<? super String> processor) {
+  public static boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
     return readAndHandleErrors(() -> ourConnection.getNames().processAllDataObjects(processor));
   }
 
@@ -608,7 +608,7 @@ public final class FSRecords {
     }
   }
 
-  public static String getNameByNameId(int nameId) {
+  public static CharSequence getNameByNameId(int nameId) {
     try {
       return doGetNameByNameId(nameId);
     }
@@ -618,7 +618,7 @@ public final class FSRecords {
     }
   }
 
-  private static String doGetNameByNameId(int nameId) throws IOException {
+  private static CharSequence doGetNameByNameId(int nameId) throws IOException {
     assert nameId >= 0 : nameId;
     return nameId == 0 ? "" : ourConnection.getNames().valueOf(nameId);
   }

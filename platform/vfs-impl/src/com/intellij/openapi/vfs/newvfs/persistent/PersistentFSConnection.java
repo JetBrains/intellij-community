@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.PersistentCharSequenceEnumerator;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -47,7 +47,7 @@ final class PersistentFSConnection {
   private final PersistentFSRecordsStorage myRecords;
   @Nullable
   private final ContentHashEnumerator myContentHashesEnumerator;
-  private final PersistentStringEnumerator myNames;
+  private final PersistentCharSequenceEnumerator myNames;
   private final @NotNull SimpleStringPersistentEnumerator myEnumeratedAttributes;
 
   private final AtomicInteger myLocalModificationCount;
@@ -63,7 +63,7 @@ final class PersistentFSConnection {
 
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
                          @NotNull PersistentFSRecordsStorage records,
-                         @NotNull PersistentStringEnumerator names,
+                         @NotNull PersistentCharSequenceEnumerator names,
                          @NotNull Storage attributes,
                          @NotNull RefCountingContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
@@ -125,7 +125,7 @@ final class PersistentFSConnection {
   }
 
   @NotNull("Vfs must be initialized")
-  PersistentStringEnumerator getNames() {
+  PersistentCharSequenceEnumerator getNames() {
     return myNames;
   }
 
@@ -245,7 +245,7 @@ final class PersistentFSConnection {
   }
 
   static void closeStorages(@Nullable PersistentFSRecordsStorage records,
-                            @Nullable PersistentStringEnumerator names,
+                            @Nullable PersistentCharSequenceEnumerator names,
                             @Nullable Storage attributes,
                             @Nullable ContentHashEnumerator contentHashesEnumerator,
                             @Nullable RefCountingContentStorage contents) throws IOException {

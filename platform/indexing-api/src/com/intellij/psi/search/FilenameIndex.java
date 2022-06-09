@@ -42,6 +42,12 @@ public final class FilenameIndex {
   }
 
   public static void processAllFileNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    processAllFileNameCharSequences((CharSequence s) -> {
+      return processor.process(s.toString());
+    }, scope, filter);
+  }
+
+  private static void processAllFileNameCharSequences(@NotNull Processor<? super CharSequence> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
   }
 

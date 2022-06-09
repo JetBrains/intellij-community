@@ -71,7 +71,7 @@ public final class FileBasedIndexScanUtil {
     if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
       ensureUpToDate(indexId);
       //noinspection unchecked
-      return FSRecords.processAllNames((Processor<String>)processor);
+      return FSRecords.processAllNames((Processor<CharSequence>)processor);
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();

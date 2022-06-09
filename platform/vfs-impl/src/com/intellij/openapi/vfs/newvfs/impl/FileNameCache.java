@@ -65,7 +65,7 @@ public final class FileNameCache {
   }
 
   @NotNull
-  private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(String name, int id, int stripe) {
+  private static IntObjectLRUMap.MapEntry<CharSequence> cacheData(CharSequence name, int id, int stripe) {
     if (name == null) {
       FSRecords.handleError(new RuntimeException("VFS name enumerator corrupted"));
     }
@@ -100,7 +100,7 @@ public final class FileNameCache {
 
   @FunctionalInterface
   public interface NameComputer {
-    String compute(int id) throws IOException;
+    CharSequence compute(int id) throws IOException;
   }
 
   @NotNull

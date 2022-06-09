@@ -58,7 +58,7 @@ final class PersistentFSConnector {
     RefCountingContentStorage contents = null;
     PersistentFSRecordsStorage records = null;
     ContentHashEnumerator contentHashesEnumerator = null;
-    PersistentStringEnumerator names = null;
+    PersistentCharSequenceEnumerator names = null;
     boolean markDirty = false;
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
@@ -92,7 +92,7 @@ final class PersistentFSConnector {
           LOG.info("Existing name enumerator files: " + nameEnumeratorFiles);
         }
       }
-      names = new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
+      names = new PersistentCharSequenceEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
 
       attributes = new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
         @Override
