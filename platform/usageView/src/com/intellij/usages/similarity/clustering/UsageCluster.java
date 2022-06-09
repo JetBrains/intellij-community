@@ -18,21 +18,14 @@ import java.util.stream.Collectors;
  */
 public class UsageCluster {
 
-  private final int myIndex;
   private final Set<SimilarUsage> myUsages;
 
-  public UsageCluster(int index) {
-    this.myIndex = index;
+  public UsageCluster() {
     this.myUsages = new CopyOnWriteArraySet<>();
   }
 
-  public UsageCluster(int index, Set<SimilarUsage> usages) {
-    this.myIndex = index;
+  public UsageCluster(Set<SimilarUsage> usages) {
     this.myUsages = usages;
-  }
-
-  public int getId() {
-    return myIndex;
   }
 
   public void addUsage(@NotNull SimilarUsage usage) {
@@ -55,18 +48,10 @@ public class UsageCluster {
     return getUsages().stream().filter(e -> e.isValid() && selectedUsages.contains(e)).collect(Collectors.toSet());
   }
 
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof UsageCluster)) return false;
-
-    return myIndex == ((UsageCluster)o).myIndex;
-  }
-
   @Override
   public String toString() {
-    return "{" +
-           "id=" + myIndex + "\n" +
-           ", myUsages=" + myUsages.stream().map(usage -> usage.toString()).collect(Collectors.joining(",\n")) +
+    return "{\n" +
+           myUsages.stream().map(usage -> usage.toString()).collect(Collectors.joining(",\n")) +
            "}\n";
   }
 }

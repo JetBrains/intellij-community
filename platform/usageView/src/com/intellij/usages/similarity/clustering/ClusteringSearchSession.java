@@ -70,7 +70,7 @@ public class ClusteringSearchSession {
   public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator, Set<Usage> selectedUsages) {
     //create new ArrayList from clusters to avoid a comparator contract violation during search
     return new ArrayList<>(getClusters()).stream()
-      .map(cluster -> new UsageCluster(cluster.getId(), cluster.getOnlySelectedUsages(selectedUsages)))
+      .map(cluster -> new UsageCluster(cluster.getOnlySelectedUsages(selectedUsages)))
       .sorted((o1, o2) -> {
         indicator.checkCanceled();
         return Integer.compare(o2.getUsages().size(), o1.getUsages().size());
@@ -78,7 +78,7 @@ public class ClusteringSearchSession {
   }
 
   private @NotNull UsageCluster createNewCluster() {
-    final UsageCluster newCluster = new UsageCluster(myClusters.size());
+    final UsageCluster newCluster = new UsageCluster();
     myClusters.add(newCluster);
     return newCluster;
   }
