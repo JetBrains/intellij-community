@@ -138,9 +138,7 @@ public final class DirectBufferWrapper {
     StorageLockContext context = myFile.getStorageLockContext();
     context.checkReadAccess();
 
-    ByteBuffer buf = myBuffer.duplicate();
-    buf.position(page_offset);
-    buf.get(dst, o, page_len);
+    ByteBufferUtil.copyMemory(myBuffer, page_offset, dst, o, page_len);
   }
 
   public void putFromArray(byte[] src, int o, int page_offset, int page_len) throws IOException, IllegalArgumentException {
