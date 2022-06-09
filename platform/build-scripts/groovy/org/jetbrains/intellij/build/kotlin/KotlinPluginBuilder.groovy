@@ -50,11 +50,7 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> FIR_IDE_LIBRARIES = List.of(
-    "kotlinc.analysis-api-providers",
-    "kotlinc.analysis-project-structure",
-    "kotlinc.high-level-api",
     "kotlinc.high-level-api-fir",
-    "kotlinc.high-level-api-impl-base",
     "kotlinc.kotlin-compiler-fir",
     "kotlinc.low-level-api-fir",
     "kotlinc.symbol-light-classes",
@@ -162,6 +158,11 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
+    "kotlinc.analysis-api-providers",
+    "kotlinc.analysis-project-structure",
+    "kotlinc.high-level-api",
+    "kotlinc.high-level-api-fe10",
+    "kotlinc.high-level-api-impl-base",
     "kotlinc.kotlin-script-runtime",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",

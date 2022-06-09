@@ -831,6 +831,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.analysis-project-structure"),
     jetbrainsLibrary("kotlinc.android-extensions-compiler-plugin"),
     jetbrainsLibrary("kotlinc.high-level-api"),
+    jetbrainsLibrary("kotlinc.high-level-api-fe10"),
     jetbrainsLibrary("kotlinc.high-level-api-fir"),
     jetbrainsLibrary("kotlinc.high-level-api-fir-tests"),
     jetbrainsLibrary("kotlinc.high-level-api-impl-base"),

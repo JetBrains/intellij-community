@@ -23,6 +23,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fir", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.high-level-api-fe10", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.high-level-api-impl-base-tests", kotlincCoordinates)

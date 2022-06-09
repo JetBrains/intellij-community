@@ -105,6 +105,11 @@
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-jvm" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.analysis-project-structure" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.analysis-api-providers" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.high-level-api-impl-base" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.high-level-api-fe10" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.allopen-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.noarg-compiler-plugin" level="project" />
