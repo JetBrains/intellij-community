@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -23,9 +24,7 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesB
     val sourceSetDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
         ?: return
 
-    val dependencies = mppModel.targets
-        .flatMap { target -> target.compilations }
-        .filter { compilation -> compilation.dependsOnSourceSet(mppModel, sourceSet) }
+    val dependencies = mppModel.getCompilations(sourceSet)
         .map { compilation -> compilation.dependencies.mapNotNull(mppModel.dependencyMap::get).toSet() }
         .reduceOrNull { acc, dependencies -> acc.intersect(dependencies) }.orEmpty()
 
