@@ -34,12 +34,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.ComponentsKt;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.*;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
@@ -64,6 +60,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
@@ -554,7 +551,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     myCommentArea.setEditable(canReport);
-    myCommentArea.putClientProperty("StatusVisibleFunction", canReport ? null : (BooleanFunction<JBTextArea>) c -> false);
+    myCommentArea.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, canReport ? null : (Predicate<JBTextArea>)c -> false);
     myAttachmentsList.setEditable(canReport);
   }
 

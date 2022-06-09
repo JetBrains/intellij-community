@@ -222,8 +222,7 @@ class KotlinRejectersFeedbackDialog(
                 checkBoxOtherProperty.set(false)
               }
             }
-            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              Predicate<JBTextField> { textField -> textField.text.isEmpty() })
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, Predicate<JBTextField> { it.text.isEmpty() })
           }
       }.bottomGap(BottomGap.MEDIUM)
 
@@ -299,8 +298,7 @@ class KotlinRejectersFeedbackDialog(
           .bindText(textFieldEmailProperty).columns(textFieldEmailColumnSize).enableIf(radioEmailProperty)
           .applyToComponent {
             emptyText.text = KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.textfield.email.placeholder")
-            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                              Predicate<JBTextField> { textField -> textField.text.isEmpty() })
+            putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, Predicate<JBTextField> { it.text.isEmpty() })
           }.errorOnApply(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.checkbox.email.required")) {
             radioEmailProperty.get() && it.text.isBlank()
           }.errorOnApply(KotlinRejectersFeedbackBundle.message("dialog.kotlin.feedback.checkbox.email.invalid")) {

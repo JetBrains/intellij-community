@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
@@ -46,17 +44,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
   public JBTextArea(Document doc, @NlsContexts.DetailedDescription String text, int rows, int columns) {
     super(doc, text, rows, columns);
 
-    myEmptyText = new TextComponentEmptyText(this) {
-      @Override
-      protected boolean isStatusVisible() {
-        Object function = getClientProperty(STATUS_VISIBLE_FUNCTION);
-        if (function instanceof BooleanFunction) {
-          //noinspection unchecked
-          return ((BooleanFunction<JTextComponent>)function).fun(JBTextArea.this);
-        }
-        return super.isStatusVisible();
-      }
-
+    myEmptyText = new TextComponentEmptyText(this, true) {
       @Override
       protected Rectangle getTextComponentBound() {
         Insets insets = ObjectUtils.notNull(getInsets(), JBInsets.emptyInsets());

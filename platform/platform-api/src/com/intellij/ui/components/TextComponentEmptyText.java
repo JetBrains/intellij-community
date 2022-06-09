@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -11,16 +12,20 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.function.Predicate;
 
 public class TextComponentEmptyText extends StatusText {
+  /** Expecting an instance of {@link Predicate}&lt;{@link JTextComponent}&gt;. */
   public static final String STATUS_VISIBLE_FUNCTION = "StatusVisibleFunction";
 
   private final JTextComponent myOwner;
+  private final boolean myDynamicStatus;
   private String myStatusTriggerText = "";
 
-  TextComponentEmptyText(JTextComponent owner) {
+  TextComponentEmptyText(JTextComponent owner, boolean dynamicStatus) {
     super(owner);
     myOwner = owner;
+    myDynamicStatus = dynamicStatus;
     clear();
     myOwner.addFocusListener(new FocusListener() {
       @Override
@@ -52,7 +57,18 @@ public class TextComponentEmptyText extends StatusText {
   }
 
   @Override
+  @SuppressWarnings({"deprecation", "unchecked"})
   protected boolean isStatusVisible() {
+    if (myDynamicStatus) {
+      Object function = myOwner.getClientProperty(STATUS_VISIBLE_FUNCTION);
+      if (function instanceof Predicate) {
+        return ((Predicate<JTextComponent>)function).test(myOwner);
+      }
+      if (function instanceof BooleanFunction) {
+        return ((BooleanFunction<JTextComponent>)function).fun(myOwner);
+      }
+    }
+
     return myOwner.getText().equals(myStatusTriggerText) && !myOwner.isFocusOwner();
   }
 
