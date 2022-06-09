@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
+import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -123,6 +124,7 @@ class RecentProjectFilteringTree(
         border = JBUI.Borders.empty()
         emptyText.text = IdeBundle.message("welcome.screen.search.projects.empty.text")
         accessibleContext.accessibleName = IdeBundle.message("welcome.screen.search.projects.empty.text")
+        FragmentedSettingsUtil.setupPlaceholderVisibility(this)
 
         addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(tree) }
         addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.ALT_DOWN_MASK)) { removeItem(tree) }
