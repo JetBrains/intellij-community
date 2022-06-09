@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -176,7 +176,7 @@ private class MyComponentStore(testAppConfigPath: Path) : ChildlessComponentStor
     override fun expandMacro(collapsedPath: String): Path = if (collapsedPath[0] == '$') super.expandMacro(collapsedPath) else macros.get(0).value.resolve(collapsedPath)
   }
 
-  override val storageManager = MyStorageManager()
+  override val storageManager: StateStorageManagerImpl = MyStorageManager()
 
   init {
     setPath(testAppConfigPath)

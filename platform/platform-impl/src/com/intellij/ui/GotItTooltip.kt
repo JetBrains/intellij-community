@@ -663,7 +663,7 @@ private class LimitedWidthLabel (htmlBuilder: HtmlBuilder, limit: Int) : JLabel(
   }
 
   companion object {
-    val editorKit = GotItEditorKit()
+    private val editorKit = GotItEditorKit()
 
     private fun createHTMLView(component: JComponent, html: String): View {
       val document = editorKit.createDocument(component.font, component.foreground ?: UIUtil.getLabelForeground())

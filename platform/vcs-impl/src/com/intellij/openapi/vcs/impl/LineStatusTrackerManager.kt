@@ -1372,7 +1372,7 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
            oldInfo.charset != newInfo.charset
   }
 
-  override fun loadContent(project: Project, info: ContentInfo): BaseRevisionContent? {
+  override fun loadContent(project: Project, info: ContentInfo): TrackerContent? {
     info as BaseRevisionContentInfo
     val lastUpToDateContent = info.baseContent.loadContent() ?: return null
     val correctedText = StringUtil.convertLineSeparators(lastUpToDateContent)
