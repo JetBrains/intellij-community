@@ -34,7 +34,7 @@ import org.junit.Test;
 
 import java.io.File;
 
-public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase {
+public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testUpdatingExternallyCreatedFolders() {
     importProject("<groupId>test</groupId>" +
