@@ -93,7 +93,7 @@ public final class FileBasedIndexProjectHandler {
                                           @NotNull Project project,
                                           long refreshedFilesCalcDuration) {
       ProjectIndexingHistoryImpl projectIndexingHistory =
-        new ProjectIndexingHistoryImpl(project, "On refresh of " + files.size() + " files", ScanningType.REFRESH, false);
+        new ProjectIndexingHistoryImpl(project, "On refresh of " + files.size() + " files", ScanningType.REFRESH);
       IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
       ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateStarted(project);
 

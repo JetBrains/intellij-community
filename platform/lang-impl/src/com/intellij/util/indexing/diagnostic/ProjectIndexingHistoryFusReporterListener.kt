@@ -50,8 +50,7 @@ class ProjectIndexingHistoryFusReporterListener : ProjectIndexingHistoryListener
     ProjectIndexingHistoryFusReporter.reportIndexingFinished(
       projectIndexingHistory.project,
       projectIndexingHistory.indexingSessionId,
-      projectIndexingHistory.times.wasFullRescanning,
-      projectIndexingHistory.scanningType,
+      projectIndexingHistory.times.scanningType,
       projectIndexingHistory.times.totalUpdatingTime.toMillis(),
       projectIndexingHistory.times.indexingDuration.toMillis(),
       scanningTime,
@@ -139,7 +138,6 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
   fun reportIndexingFinished(
     project: Project,
     indexingSessionId: Long,
-    wasFullIndexing: Boolean,
     scanningType: ScanningType,
     totalTime: Long,
     indexingTime: Long,
@@ -156,7 +154,7 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
     indexingFinished.log(
       project,
       this.indexingSessionId.with(indexingSessionId),
-      this.isFullRescanning.with(wasFullIndexing),
+      this.isFullRescanning.with(scanningType.isFull),
       this.scanningType.with(scanningType),
       this.totalTime.with(totalTime),
       this.indexingTime.with(indexingTime),
