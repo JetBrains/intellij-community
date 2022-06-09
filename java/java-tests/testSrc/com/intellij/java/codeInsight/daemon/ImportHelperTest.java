@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonListeners;
+import com.intellij.codeInsight.daemon.impl.DaemonRespondToChangesTest;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
@@ -33,6 +34,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -81,6 +83,8 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   private PsiJavaFile configureByText(String text) {
     configureFromFileText("dummy.java", text);
     assertTrue(getFile() instanceof PsiJavaFile);
+    DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)getEditor());
+    UIUtil.markAsFocused(getEditor().getContentComponent(), true); // to make ShowIntentionPass call its collectInformation()
     return (PsiJavaFile)getFile();
   }
 
@@ -279,6 +283,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportAfterUncomment() {
+    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject())));
     @Language("JAVA")
     @NonNls String text = "class S { /*ArrayList l; HashMap h; <caret>*/ }";
     configureByText(text);

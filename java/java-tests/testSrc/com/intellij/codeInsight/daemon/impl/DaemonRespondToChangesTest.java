@@ -1403,7 +1403,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
   }
 
-  private static void makeWholeEditorWindowVisible(@NotNull EditorImpl editor) {
+  public static void makeWholeEditorWindowVisible(@NotNull EditorImpl editor) {
     editor.getScrollPane().getViewport().setSize(1000, editor.getPreferredHeight());
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
