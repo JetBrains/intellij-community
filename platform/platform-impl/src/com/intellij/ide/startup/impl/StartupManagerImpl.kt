@@ -61,7 +61,7 @@ private val tracer by lazy { TraceManager.getTracer("startupManager") }
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5 seconds delay after project opening.
  */
-private val BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName<StartupActivity>("com.intellij.backgroundPostStartupActivity")
+private val BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName<StartupActivity.Background>("com.intellij.backgroundPostStartupActivity")
 private val EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100)
 private const val DUMB_AWARE_PASSED = 1
 private const val ALL_PASSED = 2
@@ -420,9 +420,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
       val startTimeNano = System.nanoTime()
       // read action - dynamic plugin loading executed as a write action
-      val activities = ReadAction.compute<List<StartupActivity>, RuntimeException> {
-        BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity> {
-          override fun extensionAdded(extension: StartupActivity, pluginDescriptor: PluginDescriptor) {
+      val activities = ReadAction.compute<List<StartupActivity.Background>, RuntimeException> {
+        BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity.Background?> {
+          override fun extensionAdded(extension: StartupActivity.Background, pluginDescriptor: PluginDescriptor) {
             AppExecutorUtil.getAppScheduledExecutorService().execute { runBackgroundPostStartupActivities(listOf(extension)) }
           }
         }, project)
@@ -440,7 +440,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     scheduledFuture = null
   }
 
-  private fun runBackgroundPostStartupActivities(activities: List<StartupActivity>) {
+  private fun runBackgroundPostStartupActivities(activities: List<StartupActivity.Background>) {
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) {
       for (activity in activities) {
         ProgressManager.checkCanceled()

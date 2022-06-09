@@ -13,7 +13,7 @@
     <!-- only bundled plugin can define startupActivity -->
     <extensionPoint name="startupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
     <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>
-    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>
+    <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity$Background" dynamic="true"/>
     <extensionPoint name="requiredForSmartModeStartupActivity" interface="com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode" dynamic="true"/>
 
     <extensionPoint name="fileTypeDetector" interface="com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector" dynamic="true"/>
