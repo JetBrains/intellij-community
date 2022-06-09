@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.RecentlyClonedProjectsState
@@ -43,7 +44,8 @@ sealed interface RecentProjectTreeItem {
 data class RecentProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
-  @NlsSafe val displayName: String
+  @NlsSafe val displayName: String,
+  val projectGroup: ProjectGroup?
 ) : RecentProjectTreeItem {
   override fun displayName(): String = displayName
 
@@ -81,6 +83,10 @@ data class RecentProjectItem(
       .withRunConfigurators()
 
     RecentProjectsManagerBase.instanceEx.openProject(file, options)
+
+    for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
+      extension.logRecentProjectOpened(projectGroup)
+    }
   }
 
   fun searchName(): String {
