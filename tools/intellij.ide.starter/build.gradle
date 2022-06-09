@@ -75,7 +75,6 @@ compileKotlin {
       "-version",
       "-Xstrict-java-nullability-assertions",
       "-Xjvm-default=enable",
-      "-Xuse-old-backend",
       "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
       "-Xopt-in=kotlin.time.ExperimentalTime"
     ]
@@ -92,7 +91,6 @@ compileTestKotlin {
       "-version",
       "-Xstrict-java-nullability-assertions",
       "-Xjvm-default=enable",
-      "-Xuse-old-backend",
       "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
       "-Xopt-in=kotlin.time.ExperimentalTime"
     ]
