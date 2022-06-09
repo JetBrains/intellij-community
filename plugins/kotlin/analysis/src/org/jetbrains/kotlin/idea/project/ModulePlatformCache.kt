@@ -7,12 +7,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import org.jetbrains.kotlin.idea.caches.project.LibraryInfoCache.Companion.fineGrainedCacheInvalidation
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.orDefault
@@ -23,8 +26,21 @@ class ModulePlatformCache(private val project: Project): Disposable {
     @Volatile
     private var allModulesSupportJvm: Boolean? = null
 
+    init {
+        // drop entire cache when it is low free memory
+        LowMemoryWatcher.register(this::clear, this)
+        if (fineGrainedCacheInvalidation) {
+            val busConnection = project.messageBus.connect(this)
+            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))
+        }
+    }
+
     override fun dispose() {
         allModulesSupportJvm = null
+        clear()
+    }
+
+    private fun clear() {
         synchronized(cache) {
             cache.clear()
         }

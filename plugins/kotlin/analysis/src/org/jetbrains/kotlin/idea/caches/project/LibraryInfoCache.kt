@@ -11,6 +11,7 @@ import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -24,24 +25,27 @@ import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class LibraryInfoCache(private val project: Project): Disposable {
-    private val cache: MutableMap<Library, List<LibraryInfo>> = hashMapOf()
 
     private val libraryInfoCache: MutableMap<Library, List<LibraryInfo>>
-        get() = if (fineGrainedCacheInvalidation) cache else project.oldLibraryInfoCache
+        get() = if (fineGrainedCacheInvalidation) hashMapOf() else project.libraryInfoCache
 
     private val lock = Any()
 
     init {
         // drop entire cache when it is low free memory
-        LowMemoryWatcher.register(this::clean, this)
+        LowMemoryWatcher.register(this::clear, this)
+        if (fineGrainedCacheInvalidation) {
+            val busConnection = project.messageBus.connect(this)
+            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, ModelChangeListener(project))
+        }
     }
 
     fun createLibraryInfo(library: Library): List<LibraryInfo> {
         library.safeAs<LibraryEx>()?.takeIf { it.isDisposed }?.let {
             synchronized(lock) {
-                libraryInfoCache.remove(library)
+                libraryInfoCache.remove(it)
             }
-            throw AlreadyDisposedException("${library.name} is already disposed")
+            throw AlreadyDisposedException("${it.name} is already disposed")
         }
 
         // fast check
@@ -69,10 +73,10 @@ class LibraryInfoCache(private val project: Project): Disposable {
     }
 
     override fun dispose() {
-        clean()
+        clear()
     }
 
-    private fun clean() {
+    private fun clear() {
         synchronized(lock) {
             libraryInfoCache.clear()
         }
@@ -111,5 +115,5 @@ class LibraryInfoCache(private val project: Project): Disposable {
     }
 }
 
-private val Project.oldLibraryInfoCache: MutableMap<Library, List<LibraryInfo>>
+private val Project.libraryInfoCache: MutableMap<Library, List<LibraryInfo>>
     get() = cacheInvalidatingOnRootModifications { hashMapOf() }

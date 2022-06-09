@@ -49,9 +49,9 @@
   </extensions>
 
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.caches.project.LibraryInfoCache$ModelChangeListener"
-              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
-    <listener class="org.jetbrains.kotlin.idea.project.ModulePlatformCache$ModelChangeListener"
-              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+<!--    <listener class="org.jetbrains.kotlin.idea.caches.project.LibraryInfoCache$ModelChangeListener"-->
+<!--              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>-->
+<!--    <listener class="org.jetbrains.kotlin.idea.project.ModulePlatformCache$ModelChangeListener"-->
+<!--              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>-->
   </projectListeners>
 </idea-plugin>
