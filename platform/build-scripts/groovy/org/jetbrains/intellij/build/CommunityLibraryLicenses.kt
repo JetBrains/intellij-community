@@ -304,7 +304,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "FreeMarker", attachedTo = "intellij.java.coverage", version = "2.3.30",
                    url = "https://freemarker.apache.org", licenseUrl = "https://freemarker.apache.org/docs/app_license.html").apache(),
     LibraryLicense(name = "gauge-java", libraryName = "com.thoughtworks.gauge:gauge-java",
-                   url = "https:/github.com/getgauge/gauge-java/",
+                   url = "https://github.com/getgauge/gauge-java/",
                    licenseUrl = "https://raw.githubusercontent.com/getgauge/gauge-java/master/LICENSE.txt").apache(),
     LibraryLicense(name = "Gherkin", libraryName = "gherkin",
                    licenseUrl = "https://github.com/cucumber/cucumber/blob/master/gherkin/LICENSE",
