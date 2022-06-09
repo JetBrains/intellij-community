@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
@@ -300,7 +300,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {
               downloader.install();
-              PluginEnabler.HEADLESS.enablePlugins(List.of(descriptor));
+              PluginEnabler.HEADLESS.enable(List.of(descriptor));
               PluginManagerMain.notifyPluginsUpdated(myProject);
             }
           }

@@ -511,7 +511,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   public static void adjustEmptyText(@NotNull JBTextField textEditor,
-                                     @NotNull Predicate<? super JBTextField> function,
+                                     @NotNull Predicate<JBTextField> function,
                                      @NotNull @NlsContexts.StatusText String leftText,
                                      @NotNull @NlsContexts.StatusText String rightText) {
     textEditor.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, function);

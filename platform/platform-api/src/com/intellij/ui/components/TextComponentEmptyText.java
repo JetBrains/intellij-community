@@ -44,8 +44,7 @@ public class TextComponentEmptyText extends StatusText {
     myStatusTriggerText = defaultText;
   }
 
-  @NotNull
-  public String getStatusTriggerText() {
+  public @NotNull String getStatusTriggerText() {
     return myStatusTriggerText;
   }
 
@@ -87,9 +86,8 @@ public class TextComponentEmptyText extends StatusText {
                          b.height - top - bottom);
   }
 
-  @NotNull
   @Override
-  protected Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
+  protected @NotNull Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
     Dimension size = component.getPreferredSize();
     return component == getComponent()
            ? new Rectangle(bounds.x, bounds.y, size.width, bounds.height)

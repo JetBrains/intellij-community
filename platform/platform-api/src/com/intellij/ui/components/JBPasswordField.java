@@ -23,9 +23,8 @@ public class JBPasswordField extends JPasswordField implements ComponentWithEmpt
     myEmptyText.paintStatusText(g);
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 

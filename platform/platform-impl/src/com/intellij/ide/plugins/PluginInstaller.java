@@ -342,7 +342,7 @@ public final class PluginInstaller {
       IdeaPluginDescriptor toDisable = pair.getSecond();
       if (toDisable != null) {
         // TODO[yole] unload and check for restart
-        pluginEnabler.disablePlugins(Set.of(toDisable));
+        pluginEnabler.disable(Set.of(toDisable));
       }
 
       Set<PluginInstallCallbackData> installedDependencies = operation.getInstalledDependentPlugins();

@@ -910,7 +910,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     if (!requiredPlugins.isEmpty()) {
-      enablePlugins(requiredPlugins);
+      enable(requiredPlugins);
     }
   }
 

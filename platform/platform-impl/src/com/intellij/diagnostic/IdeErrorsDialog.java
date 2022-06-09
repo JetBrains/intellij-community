@@ -87,19 +87,19 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private final List<MessageCluster> myMessageClusters = new ArrayList<>();  // exceptions with the same stacktrace
   private int myIndex;
   private int myLastIndex = -1;
-  private Long myDevelopersTimestamp;
+  private Long myDevListTimestamp;
 
   private JLabel myCountLabel;
   private JTextComponent myInfoLabel;
   private JLabel myDetailsLabel;
   private JTextComponent myForeignPluginWarningLabel;
   private JBTextArea myCommentArea;
-  private AttachmentsList myAttachmentsList;
+  private AttachmentList myAttachmentList;
   private JTextArea myAttachmentArea;
   private JPanel myAssigneePanel;
   private PrivacyNoticeComponent myPrivacyNotice;
   private ComboBox<Developer> myAssigneeCombo;
-  private JTextComponent myCredentialsLabel;
+  private JTextComponent myCredentialLabel;
 
   IdeErrorsDialog(@NotNull MessagePool messagePool, @Nullable Project project, @Nullable LogMessage defaultMessage) {
     super(project, true);
@@ -163,7 +163,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void setDevelopers(@Nullable DeveloperList developers) {
     if (developers != null) {
       myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers.getDevelopers()));
-      myDevelopersTimestamp = developers.getTimestamp();
+      myDevListTimestamp = developers.getTimestamp();
     }
   }
 
@@ -232,9 +232,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
-    myAttachmentsList = new AttachmentsList();
-    myAttachmentsList.addListSelectionListener(e -> {
-      int index = myAttachmentsList.getSelectedIndex();
+    myAttachmentList = new AttachmentList();
+    myAttachmentList.addListSelectionListener(e -> {
+      int index = myAttachmentList.getSelectedIndex();
       if (index < 0) {
         myAttachmentArea.setText("");
         myAttachmentArea.setEditable(false);
@@ -250,7 +250,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
       myAttachmentArea.setCaretPosition(0);
     });
-    myAttachmentsList.setCheckBoxListListener((index, value) -> {
+    myAttachmentList.setCheckBoxListListener((index, value) -> {
       if (index > 0) {
         selectedMessage().getAllAttachments().get(index - 1).setIncluded(value);
       }
@@ -261,7 +261,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myAttachmentArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (myAttachmentsList.getSelectedIndex() == 0) {
+        if (myAttachmentList.getSelectedIndex() == 0) {
           String detailsText = myAttachmentArea.getText();
           MessageCluster cluster = selectedCluster();
           cluster.detailsText = detailsText;
@@ -287,7 +287,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     //noinspection HardCodedStringLiteral,DialogTitleCapitalization
-    myCredentialsLabel = ComponentsKt.htmlComponent("height sample", null, null, null, false, e -> {
+    myCredentialLabel = ComponentsKt.htmlComponent("height sample", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         ErrorReportSubmitter submitter = selectedCluster().submitter;
         if (submitter != null) {
@@ -297,8 +297,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
     if (myAssigneeVisible) {
-      int topOffset = (myAssigneePanel.getPreferredSize().height - myCredentialsLabel.getPreferredSize().height) / 2;
-      myCredentialsLabel.setBorder(JBUI.Borders.emptyTop(topOffset));
+      int topOffset = (myAssigneePanel.getPreferredSize().height - myCredentialLabel.getPreferredSize().height) / 2;
+      myCredentialLabel.setBorder(JBUI.Borders.emptyTop(topOffset));
     }
 
     myPrivacyNotice = new PrivacyNoticeComponent(DiagnosticBundle.message("error.dialog.notice.label"), DiagnosticBundle.message("error.dialog.notice.label.expanded"));
@@ -309,12 +309,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     JPanel attachmentsPanel = new JPanel(new BorderLayout(JBUIScale.scale(5), 0));
     attachmentsPanel.setBorder(JBUI.Borders.emptyTop(5));
-    attachmentsPanel.add(scrollPane(myAttachmentsList, 150, 350), BorderLayout.WEST);
+    attachmentsPanel.add(scrollPane(myAttachmentList, 150, 350), BorderLayout.WEST);
     attachmentsPanel.add(scrollPane(myAttachmentArea, 500, 350), BorderLayout.CENTER);
 
     JPanel accountRow = new JPanel(new GridBagLayout());
     accountRow.setBorder(JBUI.Borders.empty(6, 0));
-    accountRow.add(myCredentialsLabel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
+    accountRow.add(myCredentialLabel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     if (myAssigneeVisible)
       accountRow.add(myAssigneePanel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBInsets.emptyInsets(), 0, 0));
     JPanel bottomRow = new JPanel(new BorderLayout());
@@ -415,7 +415,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     setDefaultReportActionTooltip(submitter != null ? null : DiagnosticBundle.message("error.report.impossible.tooltip"));
   }
 
-  private void setDefaultReportActionText(@NlsContexts.Button @NotNull String text) {
+  private void setDefaultReportActionText(@NlsContexts.Button String text) {
     Action action = getOKAction();
     if (action instanceof CompositeAction) {
       ((CompositeAction)action).setDefaultReportActionText(text);
@@ -435,7 +435,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void updateLabels(@NotNull MessageCluster cluster) {
+  private void updateLabels(MessageCluster cluster) {
     AbstractMessage message = cluster.first;
 
     myCountLabel.setText(DiagnosticBundle.message("error.list.message.index.count", myIndex + 1, myMessageClusters.size()));
@@ -540,19 +540,19 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (myLastIndex != myIndex) {
       myCommentArea.setText(message.getAdditionalInfo());
 
-      myAttachmentsList.clear();
-      myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
+      myAttachmentList.clear();
+      myAttachmentList.addItem(STACKTRACE_ATTACHMENT, true);
       for (Attachment attachment : message.getAllAttachments()) {
-        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
+        myAttachmentList.addItem(attachment.getName(), attachment.isIncluded());
       }
-      myAttachmentsList.setSelectedIndex(0);
+      myAttachmentList.setSelectedIndex(0);
 
       myLastIndex = myIndex;
     }
 
     myCommentArea.setEditable(canReport);
     myCommentArea.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, canReport ? null : (Predicate<JBTextArea>)c -> false);
-    myAttachmentsList.setEditable(canReport);
+    myAttachmentList.setEditable(canReport);
   }
 
   private void updateAssigneePanel(MessageCluster cluster) {
@@ -591,16 +591,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void updateCredentialsPanel(@Nullable ErrorReportSubmitter submitter) {
     String account = submitter != null ? submitter.getReporterAccount() : null;
     if (account != null) {
-      myCredentialsLabel.setVisible(true);
+      myCredentialLabel.setVisible(true);
       if (!account.isEmpty()) {
-        myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.named", account));
+        myCredentialLabel.setText(DiagnosticBundle.message("error.dialog.submit.named", account));
       }
       else {
-        myCredentialsLabel.setText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
+        myCredentialLabel.setText(DiagnosticBundle.message("error.dialog.submit.anonymous"));
       }
     }
     else {
-      myCredentialsLabel.setVisible(false);
+      myCredentialLabel.setVisible(false);
     }
   }
 
@@ -610,7 +610,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     AbstractMessage message = cluster.first;
 
     message.setAssigneeVisible(myAssigneeVisible);
-    message.setDevelopersTimestamp(myDevelopersTimestamp);
+    message.setDevListTimestamp(myDevListTimestamp);
     message.setSubmitting(true);
 
     String notice = submitter.getPrivacyNoticeText();
@@ -626,7 +626,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     Container parentComponent = getRootPane();
     if (dialogClosed) {
-      IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)parentComponent);
+      IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, parentComponent);
       parentComponent = requireNonNullElse(frame != null ? frame.getComponent() : WindowManager.getInstance().findVisibleFrame(), parentComponent);
     }
 
@@ -647,8 +647,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  public static void confirmDisablePlugins(@Nullable Project project,
-                                           @NotNull List<? extends IdeaPluginDescriptor> pluginsToDisable) {
+  public static void confirmDisablePlugins(@Nullable Project project, @NotNull List<IdeaPluginDescriptor> pluginsToDisable) {
     if (pluginsToDisable.isEmpty()) {
       return;
     }
@@ -698,14 +697,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     if (doDisable) {
-      PluginEnabler.HEADLESS.disablePlugins(pluginsToDisable);
+      PluginEnabler.HEADLESS.disable(pluginsToDisable);
       if (doRestart) {
         ApplicationManager.getApplication().restart();
       }
     }
   }
 
-  private static boolean morePluginsAffected(@NotNull Set<PluginId> pluginIdsToDisable) {
+  private static boolean morePluginsAffected(Set<PluginId> pluginIdsToDisable) {
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
     for (IdeaPluginDescriptor rootDescriptor : PluginManagerCore.getPlugins()) {
       if (!rootDescriptor.isEnabled() || pluginIdsToDisable.contains(rootDescriptor.getPluginId())) {
@@ -806,7 +805,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private static class AttachmentsList extends CheckBoxList<String> {
+  private static class AttachmentList extends CheckBoxList<String> {
     private boolean myEditable = true;
 
     private void addItem(@NlsContexts.Checkbox String item, boolean selected) {
@@ -916,7 +915,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   /** @deprecated use {@link PluginUtil#findPluginId} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable PluginId findPluginId(@NotNull Throwable t) {
     return PluginUtil.getInstance().findPluginId(t);
   }
@@ -977,11 +976,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private static final class CompositeAction extends AbstractAction implements OptionAction {
-
     private final Action myMainAction;
-    private final List<? extends Action> myAdditionalActions;
+    private final List<Action> myAdditionalActions;
 
-    private CompositeAction(@NotNull Action mainAction, @NotNull List<? extends Action> additionalActions) {
+    private CompositeAction(Action mainAction, List<Action> additionalActions) {
       super((String)mainAction.getValue(Action.NAME));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
       myMainAction = mainAction;
@@ -1031,11 +1029,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private final class DefaultReportAction extends AbstractAction {
-
-    private DefaultReportAction() {
-      super();
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
       if (isEnabled()) {
@@ -1054,7 +1047,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private final class ReportAllAction extends AbstractAction {
-
     private ReportAllAction() {
       super(DiagnosticBundle.message("error.report.all.action"));
     }
@@ -1073,7 +1065,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private final class ReportAndClearAllAction extends AbstractAction {
-
     private ReportAndClearAllAction() {
       super(DiagnosticBundle.message("error.report.and.clear.all.action"));
     }
@@ -1109,22 +1100,21 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private enum ReportAction {
-
     DEFAULT(dialog -> dialog.new DefaultReportAction()),
     REPORT_ALL(dialog -> dialog.new ReportAllAction()),
     REPORT_AND_CLEAR_ALL(dialog -> dialog.new ReportAndClearAllAction());
 
-    private final Function<? super IdeErrorsDialog, ? extends Action> myActionProducer;
+    private final Function<IdeErrorsDialog, Action> myActionProducer;
 
-    ReportAction(Function<? super IdeErrorsDialog, ? extends Action> actionProducer) {
+    ReportAction(Function<IdeErrorsDialog, Action> actionProducer) {
       myActionProducer = actionProducer;
     }
 
-    private @NotNull Action getAction(@NotNull IdeErrorsDialog dialog) {
+    private Action getAction(IdeErrorsDialog dialog) {
       return myActionProducer.fun(dialog);
     }
 
-    private static @NotNull ReportAction findOrDefault(@Nullable String name) {
+    private static ReportAction findOrDefault(@Nullable String name) {
       if (name != null) {
         for (ReportAction value : values()) {
           if (value.name().equals(name)) {
@@ -1135,7 +1125,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return getDefaultAction();
     }
 
-    @NotNull
     private static ReportAction getDefaultAction() {
       return ApplicationManager.getApplication().isInternal() ? DEFAULT : REPORT_AND_CLEAR_ALL;
     }

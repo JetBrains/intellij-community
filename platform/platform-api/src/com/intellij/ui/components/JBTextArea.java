@@ -16,9 +16,6 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
-
-  //private final DefaultBoundedRangeModel visibility;
-
   private final TextComponentEmptyText myEmptyText;
 
   public JBTextArea() {
@@ -91,15 +88,16 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
     }
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   @Override
+  @SuppressWarnings("DuplicatedCode")
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
+
     if (!myEmptyText.getStatusTriggerText().isEmpty() && myEmptyText.isStatusVisible()) {
       g.setColor(getBackground());
 
@@ -110,6 +108,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
 
       g.setColor(getForeground());
     }
+
     myEmptyText.paintStatusText(g);
   }
 }

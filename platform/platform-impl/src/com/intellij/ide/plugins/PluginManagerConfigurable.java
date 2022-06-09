@@ -1481,7 +1481,7 @@ public final class PluginManagerConfigurable
     ShowSettingsUtil.getInstance().editConfigurable(project,
                                                     configurable,
                                                     () -> {
-                                                      configurable.myPluginModel.enablePlugins(descriptors);
+                                                      configurable.myPluginModel.enable(descriptors);
                                                       configurable.select(descriptors);
                                                     });
   }
