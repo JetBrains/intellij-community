@@ -56,6 +56,8 @@ class RecentProjectManagerState : BaseState() {
 
   var lastProjectLocation by string()
 
+  var lastOpenedProject by string()
+
   fun validateRecentProjects(modCounter: AtomicLong) {
     val limit = AdvancedSettings.getInt("ide.max.recent.projects")
     if (additionalInfo.size <= limit) {
