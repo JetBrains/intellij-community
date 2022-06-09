@@ -59,7 +59,7 @@ object TestKotlinArtifacts {
         downloadArtifactForIdeFromSources(
             libraryFileName = "kotlinc_kotlin_jps_plugin_tests.xml",
             artifactId = "js-ir-runtime-for-ide",
-            extension = "klib"
+            suffix = ".klib"
         )
     }
 
