@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.entities.test.addChildWithOptionalPar
 import com.intellij.workspaceModel.storage.entities.test.addParentEntity
 import com.intellij.workspaceModel.storage.entities.test.addSourceEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -21,6 +22,11 @@ class WorkspaceBuilderChangeLogTest {
   fun setUp() {
     builder = createEmptyBuilder()
     another = createEmptyBuilder()
+  }
+
+  @After
+  fun tearDown() {
+    builder.assertConsistency()
   }
 
   @Test

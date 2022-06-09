@@ -262,10 +262,6 @@ internal class MutableEntityStorageImpl(
                                                        copiedEntityData: WorkspaceEntityData<T>) {
     val newSource = copiedEntityData.entitySource
     val originalSource = this.getOriginalSourceFromChangelog(entityId) ?: originalEntityData.entitySource
-    if (originalSource == newSource) {
-      this.changeLog.addChangeSourceEvent(entityId, copiedEntityData, originalSource)
-      return
-    }
 
     this.changeLog.addChangeSourceEvent(entityId, copiedEntityData, originalSource)
     indexes.entitySourceIndex.index(entityId, newSource)
