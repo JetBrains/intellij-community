@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,8 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +98,11 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     if (virtualFile == null) return null;
 
     return PsiManager.getInstance(project).findFile(virtualFile);
+  }
+
+  @Override
+  public Collection<? extends FileType> getAcceptedFileTypes() {
+    return Collections.singleton(GradleFileType.INSTANCE);
   }
 
   private static String getLocalFilePath(@NotNull Project project, @NotNull String sourceFilePath) {
