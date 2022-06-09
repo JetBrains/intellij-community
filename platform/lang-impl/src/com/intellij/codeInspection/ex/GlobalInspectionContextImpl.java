@@ -839,14 +839,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  public @NotNull <T extends InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
-                                                                                       @NotNull PsiFile file,
-                                                                                       boolean includeDoNotShow,
-                                                                                       @NotNull Predicate<? super T> filter) {
+  public @NotNull <T extends @NotNull InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
+                                                                                                @NotNull PsiFile file,
+                                                                                                boolean includeDoNotShow,
+                                                                                                @NotNull Predicate<? super T> filter) {
     return ContainerUtil.mapNotNull(localTools, tool -> {
+      InspectionToolWrapper<?, ?> enabledTool = tool.getEnabledTool(file, includeDoNotShow);
+      if (enabledTool == null) return null;
       //noinspection unchecked
-      T unwrapped = (T)tool.getEnabledTool(file, includeDoNotShow);
-      if (unwrapped == null) return null;
+      T unwrapped = (T)enabledTool;
       return filter.test(unwrapped) ? unwrapped : null;
     });
   }
