@@ -621,7 +621,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
   protected @NotNull ProjectIndexingHistoryImpl performScanningAndIndexing(@NotNull ProgressIndicator indicator) {
     ProjectIndexingHistoryImpl projectIndexingHistory =
-      new ProjectIndexingHistoryImpl(myProject, myIndexingReason, myScanningType, isFullIndexUpdate());
+      new ProjectIndexingHistoryImpl(myProject, myIndexingReason, myScanningType);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);

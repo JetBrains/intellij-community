@@ -12,7 +12,7 @@ class ProjectIndexingHistoryImplTest {
 
   @Test
   fun `test observation missed the start of suspension (IDEA-281514)`() {
-    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.PARTIAL, true)
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     val time = Instant.now()
     history.stopSuspendingStages(time)
     history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(1))
@@ -27,7 +27,7 @@ class ProjectIndexingHistoryImplTest {
 
   @Test
   fun `test there may be actions after suspension`() {
-    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.PARTIAL, true)
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     val time = Instant.now()
     history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time)
     history.suspendStages(time.plusNanos(1))
@@ -42,7 +42,7 @@ class ProjectIndexingHistoryImplTest {
 
   @Test
   fun `test there may be actions after suspension 2`() {
-    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.PARTIAL, true)
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     val time = Instant.now()
     history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time)
     history.suspendStages(time.plusNanos(1))
@@ -58,7 +58,7 @@ class ProjectIndexingHistoryImplTest {
 
   @Test
   fun `test there may be actions after suspension 3`() {
-    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.PARTIAL, true)
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     val time = Instant.now()
     history.suspendStages(time)
     history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(1))
@@ -74,7 +74,7 @@ class ProjectIndexingHistoryImplTest {
 
   @Test
   fun `test there may be actions after suspension 4`() {
-    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.PARTIAL, true)
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     val time = Instant.now()
     history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time)
     history.stopSuspendingStages(time.plusNanos(1))
@@ -89,7 +89,7 @@ class ProjectIndexingHistoryImplTest {
 
   @Test
   fun `test there may be actions after suspension 5`() {
-    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.PARTIAL, true)
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     val time = Instant.now()
     history.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, time.plusNanos(1))
     history.stopSuspendingStages(time.plusNanos(2))
@@ -106,7 +106,7 @@ class ProjectIndexingHistoryImplTest {
 
   @Test
   fun `test basic workflow`() {
-    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.PARTIAL, true)
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     val instant = Instant.now()
     history.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties, instant)
     history.stopStage(ProjectIndexingHistoryImpl.Stage.PushProperties, instant.plusNanos(1))
@@ -122,7 +122,7 @@ class ProjectIndexingHistoryImplTest {
 
   @Test
   fun `test stage with suspension inside`() {
-    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.PARTIAL, true)
+    val history = ProjectIndexingHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     val instant = Instant.now()
     history.startStage(ProjectIndexingHistoryImpl.Stage.PushProperties, instant)
     history.suspendStages(instant.plusNanos(1))

@@ -172,7 +172,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
               .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])),
-                          indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL, false))
+                          indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL))
           }
         }
         catch (ProcessCanceledException e) {

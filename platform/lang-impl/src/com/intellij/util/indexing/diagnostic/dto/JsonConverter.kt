@@ -84,7 +84,7 @@ fun IndexingFileSetStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatis
 fun IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
     indexingReason = indexingReason,
-    wasFullRescanning = wasFullRescanning,
+    scanningType = scanningType,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),

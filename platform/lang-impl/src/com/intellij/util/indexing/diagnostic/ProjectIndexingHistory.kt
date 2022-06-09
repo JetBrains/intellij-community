@@ -24,7 +24,6 @@ interface ProjectIndexingHistoryListener {
 interface ProjectIndexingHistory {
   val project: Project
   val indexingReason: String?
-  val scanningType: ScanningType
   val indexingSessionId: Long
   val times: IndexingTimes
   val scanningStatistics: List<JsonScanningStatistics>
@@ -34,10 +33,10 @@ interface ProjectIndexingHistory {
   val visibleTimeToAllThreadsTimeRatio: Double
 }
 
-enum class ScanningType {
-  FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL,
-  PARTIAL_FORCED, PARTIAL,
-  REFRESH;
+enum class ScanningType(val isFull: Boolean) {
+  FULL_FORCED(true), FULL_ON_PROJECT_OPEN(true), FULL(true),
+  PARTIAL_FORCED(false), PARTIAL(false),
+  REFRESH(false);
 
   companion object {
     fun merge(first: ScanningType, second: ScanningType): ScanningType = returnFirstFound(first, second,
@@ -79,7 +78,7 @@ interface StatsPerIndexer {
 
 interface IndexingTimes {
   val indexingReason: String?
-  val wasFullRescanning: Boolean
+  val scanningType: ScanningType
   val updatingStart: ZonedDateTime
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime

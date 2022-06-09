@@ -14,6 +14,7 @@ import com.intellij.util.indexing.diagnostic.JsonSharedIndexDiagnosticEvent
 import com.intellij.util.indexing.diagnostic.dto.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import java.util.*
 
 fun createAggregateHtml(
   projectName: String,
@@ -95,7 +96,7 @@ fun createAggregateHtml(
                 td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
 
                 //Indexing type section
-                td(if (diagnostic.indexingTimes.wasFullRescanning) "Full" else "Partial")
+                td(diagnostic.indexingTimes.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' '))
               }
             }
           }
@@ -378,7 +379,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               if (times.indexingReason != null) {
                 tr { td("Reason"); td(times.indexingReason) }
               }
-              tr { td("Full or partial"); td(if (times.wasFullRescanning) "full" else "partial") }
+              tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
