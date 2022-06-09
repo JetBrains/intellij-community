@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
@@ -110,6 +111,7 @@ class RecentProjectFilteringTree(
 
   override fun rebuildTree() {
     expandGroups()
+    setSelectionOnLastOpenedProject()
   }
 
   override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply = object : FilteringSpeedSearch(searchTextField) {}
@@ -165,6 +167,23 @@ class RecentProjectFilteringTree(
         else
           tree.collapsePath(treePath)
       }
+    }
+  }
+
+  private fun setSelectionOnLastOpenedProject() {
+    val recentProjectsManager = RecentProjectsManagerBase.instanceEx
+    val projectPath = recentProjectsManager.getLastOpenedProject() ?: return
+
+    val node = TreeUtil.findNode(root, Condition {
+      when (val item = TreeUtil.getUserObject(RecentProjectTreeItem::class.java, it)) {
+        is RecentProjectItem -> item.projectPath == projectPath
+        is CloneableProjectItem -> item.projectPath == projectPath
+        else -> false
+      }
+    })
+
+    if (node != null) {
+      TreeUtil.selectNode(tree, node)
     }
   }
 

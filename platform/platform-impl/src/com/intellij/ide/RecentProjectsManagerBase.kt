@@ -347,6 +347,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
+  fun setLastOpenedProject(path: String) {
+    state.lastOpenedProject = path
+  }
+
+  fun getLastOpenedProject(): String? {
+    return state.lastOpenedProject
+  }
+
   init {
     Toolkit.getDefaultToolkit().addAWTEventListener(
       { e ->
@@ -377,6 +385,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       if (path != null) {
         cloneService.removeClonedProject(path)
         manager.markPathRecent(path, project)
+        manager.setLastOpenedProject(path)
       }
       manager.updateLastProjectPath()
       updateSystemDockMenu()
