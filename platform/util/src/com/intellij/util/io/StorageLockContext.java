@@ -19,6 +19,7 @@ public final class StorageLockContext {
   private final FilePageCache myFilePageCache;
   private final boolean myUseReadWriteLock;
   private final boolean myCacheChannels;
+  private final ThreadLocal<Boolean> myUnsafeAccess = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   private StorageLockContext(@NotNull FilePageCache filePageCache,
                              boolean useReadWriteLock,
@@ -51,6 +52,14 @@ public final class StorageLockContext {
   }
   public Lock writeLock() {
     return myLock.writeLock();
+  }
+
+  public void unsafeAccessStarted() {
+    myUnsafeAccess.set(Boolean.TRUE);
+  }
+
+  public void unsafeAccessFinished() {
+    myUnsafeAccess.set(Boolean.FALSE);
   }
 
   public void lockRead() {
@@ -86,7 +95,7 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   public void checkWriteAccess() {
-    if (IndexDebugProperties.DEBUG) {
+    if (IndexDebugProperties.DEBUG && !myUnsafeAccess.get().booleanValue()) {
       if (myLock.writeLock().isHeldByCurrentThread()) return;
       throw new IllegalStateException("Must hold StorageLock write lock to access PagedFileStorage");
     }
@@ -94,10 +103,9 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   public void checkReadAccess() {
-    if (IndexDebugProperties.DEBUG) {
+    if (IndexDebugProperties.DEBUG && !myUnsafeAccess.get().booleanValue()) {
       if (myLock.getReadHoldCount() > 0 || myLock.writeLock().isHeldByCurrentThread()) return;
-      throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage");
-    }
+      throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage"); }
   }
 
   void assertUnderSegmentAllocationLock() {

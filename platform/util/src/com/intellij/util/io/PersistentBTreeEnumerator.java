@@ -714,6 +714,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return super.valueOf(idx);
   }
 
+  @Override
+  protected boolean shouldLockOnValueOf() {
+    return !myExternalKeysNoMapping;
+  }
+
   private int nextDuplicatedValueRecord() {
     assert !myInlineKeysNoMapping;
     if (myDuplicatedValuesPageStart == -1 || myDuplicatedValuesPageOffset == INTERNAL_PAGE_SIZE) {

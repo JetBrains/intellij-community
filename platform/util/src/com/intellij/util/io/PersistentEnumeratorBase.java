@@ -438,15 +438,28 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   private Data findValueFor(int idx) throws IOException {
-    lockStorageRead();
+    boolean shouldLock = shouldLockOnValueOf();
+    if (shouldLock) {
+      lockStorageRead();
+    }
+    else {
+      myStorage.getStorageLockContext().unsafeAccessStarted();
+    }
     try {
       int addr = indexToAddr(idx);
       return myKeyStorage.read(addr);
     }
     finally {
-      unlockStorageRead();
+      if (shouldLock) {
+        unlockStorageRead();
+      }
+      else {
+        myStorage.getStorageLockContext().unsafeAccessFinished();
+      }
     }
   }
+
+  protected abstract boolean shouldLockOnValueOf();
 
   int reEnumerate(Data key) throws IOException {
     if (!canReEnumerate()) throw new IncorrectOperationException();
