@@ -2,6 +2,7 @@
 package com.intellij.ui
 
 import com.fasterxml.jackson.jr.ob.JSON
+import com.intellij.ide.ui.IconMapperBean
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.UISettings
@@ -9,7 +10,6 @@ import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.registry.Registry
-import java.io.IOException
 import java.util.*
 import javax.swing.UIManager.LookAndFeelInfo
 
@@ -17,7 +17,7 @@ import javax.swing.UIManager.LookAndFeelInfo
  * @author Konstantin Bulenkov
  */
 class ExperimentalUIImpl : ExperimentalUI() {
-  override fun loadIconMappings() = loadIconMappingsImpl()
+  override fun getIconMappings() = loadIconMappingsImpl()
 
   override fun onExpUIEnabled() {
     setRegistryKeyIfNecessary("ide.experimental.ui", true)
@@ -68,15 +68,28 @@ class ExperimentalUIImpl : ExperimentalUI() {
 
   companion object {
     @JvmStatic
-    fun loadIconMappingsImpl(): Map<String, String> {
-      val json = JSON.builder().enable().enable(JSON.Feature.READ_ONLY).build()
-      try {
-        val fin = Objects.requireNonNull(ExperimentalUIImpl::class.java.getResource("ExpUIIconMapping.json")).openStream()
-        return mutableMapOf<String, String>().apply { readDataFromJson(json.mapFrom(fin), "", this) }
+    fun loadIconMappingsImpl(): Map<ClassLoader, Map<String, String>> {
+      val result = HashMap<ClassLoader, Map<String, String>>()
+      IconMapperBean.EP_NAME.extensions.filterNotNull().forEach {
+        val mappingFile = it.mappingFile
+        val classLoader = it.pluginClassLoader
+        if (classLoader != null) {
+          val json = JSON.builder().enable().enable(JSON.Feature.READ_ONLY).build()
+          try {
+            val fin = Objects.requireNonNull(classLoader.getResource(mappingFile)).openStream()
+            var map = result[classLoader]
+            if (map == null) {
+              map = mutableMapOf()
+              result[classLoader] = map
+            }
+            readDataFromJson(json.mapFrom(fin), "", map as MutableMap)
+          }
+          catch (ignore: Exception) {
+            System.err.println("Can't find $mappingFile")
+          }
+        }
       }
-      catch (ignore: IOException) {
-      }
-      return emptyMap()
+      return result
     }
 
     @Suppress("UNCHECKED_CAST")
