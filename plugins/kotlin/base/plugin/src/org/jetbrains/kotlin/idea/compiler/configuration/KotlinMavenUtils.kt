@@ -69,8 +69,8 @@ object KotlinMavenUtils {
      * Returns the single non-classified binary artifact with given coordinates, or `null` if the artifact file is not found.
      * This function works both in production and when the IntelliJ IDEA is run from sources (for instance, in tests).
      */
-    fun findArtifact(groupId: String, artifactId: String, version: String): Path? {
-        return KotlinMavenArtifactFinder.instance.findArtifact(groupId, artifactId, version)
+    fun findArtifact(groupId: String, artifactId: String, version: String, extension: String = "jar"): Path? {
+        return KotlinMavenArtifactFinder.instance.findArtifact(groupId, artifactId, version, extension)
     }
 }
 
@@ -85,12 +85,12 @@ private abstract class KotlinMavenArtifactFinder {
 
     protected abstract val repositories: Sequence<Path>
 
-    fun findArtifact(groupId: String, artifactId: String, version: String): Path? {
+    fun findArtifact(groupId: String, artifactId: String, version: String, extension: String): Path? {
         for (repository in repositories) {
             val artifact = repository.resolve(groupId.replace(".", "/"))
                 .resolve(artifactId)
                 .resolve(version)
-                .resolve("$artifactId-$version.jar")
+                .resolve("$artifactId-$version.$extension")
                 .takeIf { it.isRegularFile() }
 
             if (artifact != null) {
