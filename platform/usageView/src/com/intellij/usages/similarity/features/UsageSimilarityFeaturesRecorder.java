@@ -44,16 +44,11 @@ public class UsageSimilarityFeaturesRecorder {
     }
     PsiElement parent = element.getParent();
     PsiElement grandParent;
-    PsiElement grandGrandParent;
     if (parent != null) {
       grandParent = parent.getParent();
+      myFeatures.add("P:" + tokenFeature + " " + PsiUtilCore.getElementType(parent) + " " + getChildNumber(parent, element));
       if (grandParent != null) {
-        myFeatures.add("P:" + tokenFeature + " " + PsiUtilCore.getElementType(parent) + " " + getChildNumber(parent, element));
-        grandGrandParent = grandParent.getParent();
-        if (grandGrandParent != null) {
-          myFeatures.add(
-            "GP:" + tokenFeature + " " + PsiUtilCore.getElementType(grandParent) + " " + getChildNumber(grandParent, parent));
-        }
+        myFeatures.add("GP:" + tokenFeature + " " + PsiUtilCore.getElementType(grandParent) + " " + getChildNumber(grandParent, parent));
       }
     }
   }
