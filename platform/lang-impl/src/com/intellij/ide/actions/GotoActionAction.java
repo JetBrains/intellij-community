@@ -29,6 +29,11 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     showInSearchEverywherePopup(tabID, e, false, true);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   /** @deprecated please use {@link #openOptionOrPerformAction(Object, String, Project, Component, int)} instead */
   @Deprecated(forRemoval = true)
   public static void openOptionOrPerformAction(@NotNull Object element,

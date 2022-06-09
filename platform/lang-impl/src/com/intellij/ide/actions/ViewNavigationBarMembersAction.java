@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -20,5 +21,10 @@ public class ViewNavigationBarMembersAction extends ToggleAction implements Dumb
     uiSettings.setShowMembersInNavigationBar(state);
     uiSettings.fireUISettingsChanged();
     EditorSettingsExternalizable.getInstance().resetDefaultBreadcrumbVisibility();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

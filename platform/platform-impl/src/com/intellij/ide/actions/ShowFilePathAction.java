@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,6 +45,11 @@ public class ShowFilePathAction extends DumbAwareAction {
       e.getPresentation().setEnabled(file != null);
       e.getPresentation().setText(ActionsBundle.messagePointer(file != null && file.isDirectory() ? "action.ShowFilePath.directory" : "action.ShowFilePath.file"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

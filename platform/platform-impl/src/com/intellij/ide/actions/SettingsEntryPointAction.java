@@ -67,6 +67,11 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     presentation.setIcon(getActionIcon());
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static AnAction @NotNull [] getTemplateActions() {
     ActionGroup templateGroup = (ActionGroup)ActionManager.getInstance().getAction("SettingsEntryPointGroup");
     return templateGroup == null ? EMPTY_ARRAY : templateGroup.getChildren(null);
