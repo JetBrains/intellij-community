@@ -169,6 +169,23 @@ public class WhileCanBeForeach {
       }
     }
   }
+
+  void iteratorNextNotAlwaysCalled() {
+    List<Integer> list = Arrays.asList(1, 2, 3);
+    Iterator<Integer> it = list.iterator();
+    while (it.hasNext()) {
+      boolean someCondition = new Random().nextBoolean();
+      System.out.println(someCondition ? 0 : it.next());
+    }
+  }
+
+  void iteratorNextNotAlwaysCalled2(List<Integer> list) {
+    Iterator<Integer> it = list.iterator();
+    Random random = new Random();
+    while (it.hasNext()) {
+        System.out.println(random.nextBoolean() && it.next() > 1);
+      }
+  }
 }
 class Base implements Iterable<String> {
   @Override
