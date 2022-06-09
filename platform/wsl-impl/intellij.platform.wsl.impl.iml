@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module-library">
       <library name="io.ktor.network.jvm" type="repository">
-        <properties maven-id="io.ktor:ktor-network-jvm:2.0.0-eap-302">
+        <properties maven-id="io.ktor:ktor-network-jvm:2.0.2">
           <exclude>
             <dependency maven-id="org.jetbrains:annotations" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
@@ -27,9 +27,9 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.0.0-eap-302/ktor-network-jvm-2.0.0-eap-302.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.0.0-eap-302/ktor-utils-jvm-2.0.0-eap-302.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.0.0-eap-302/ktor-io-jvm-2.0.0-eap-302.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.0.2/ktor-network-jvm-2.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.0.2/ktor-utils-jvm-2.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.0.2/ktor-io-jvm-2.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
