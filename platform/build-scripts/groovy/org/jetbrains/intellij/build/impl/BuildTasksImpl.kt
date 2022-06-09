@@ -571,8 +571,9 @@ private fun buildAdditionalArtifacts(projectStructureMapping: ProjectStructureMa
 private fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val distState = DistributionBuilderState(pluginsToPublish, context)
   val compilationTasks = CompilationTasks.create(context)
-  compilationTasks.compileModules(distState.getModulesForPluginsToPublish() + listOf("intellij.idea.community.build.tasks",
-                                                                                     "intellij.platform.images.build"))
+  compilationTasks.compileModules(
+    distState.getModulesForPluginsToPublish() +
+    listOf("intellij.idea.community.build.tasks", "intellij.platform.images.build", "intellij.tools.launcherGenerator"))
 
   // we need this to ensure that all libraries which may be used in the distribution are resolved,
   // even if product modules don't depend on them (e.g. JUnit5)
