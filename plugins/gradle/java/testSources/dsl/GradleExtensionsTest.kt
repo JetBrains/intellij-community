@@ -5,9 +5,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleGroovyProperty
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -15,53 +12,43 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
 import org.junit.jupiter.params.ParameterizedTest
 import com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
 import com.intellij.testFramework.assertInstanceOf
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
+import org.jetbrains.plugins.gradle.testFramework.builders.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.builders.SingleGradleBuildFileFixtureBuilder
 import org.junit.jupiter.api.Assertions.assertTrue
 
 class GradleExtensionsTest : GradleCodeInsightTestCase() {
 
-  override fun createGradleTestFixture(gradleVersion: GradleVersion): GradleCodeInsightTestFixture {
-    val projectName = "property-project"
-    return GradleTestFixtureFactory.getFixtureFactory()
-      .createGradleCodeInsightTestFixture(projectName, gradleVersion) {
-        withSettingsFile {
-          setProjectName(projectName)
-        }
-        withBuildFile(gradleVersion) {
-          withPrefix {
-            call("ext") {
-              assign("prop", 1)
-            }
-          }
-        }
-      }
-  }
-
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test project level extension property`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "ext") {
-      val ref = elementUnderCaret(GrReferenceExpression::class.java)
-      assertInstanceOf<GroovyProperty>(ref.resolve())
-      assertTrue(ref.type!!.equalsToText(getExtraPropertiesExtensionFqn()))
+    test(gradleVersion, FIXTURE_BUILDER) {
+      testBuildscript("ext") {
+        val ref = elementUnderCaret(GrReferenceExpression::class.java)
+        assertInstanceOf<GroovyProperty>(ref.resolve())
+        assertTrue(ref.type!!.equalsToText(getExtraPropertiesExtensionFqn()))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test project level extension call type`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "ext {}") {
-      val call = elementUnderCaret(GrMethodCallExpression::class.java)
-      assertInstanceOf<GrMethod>(call.resolveMethod())
-      assertTrue(call.type!!.equalsToText(getExtraPropertiesExtensionFqn()))
+    test(gradleVersion, FIXTURE_BUILDER) {
+      testBuildscript("ext {}") {
+        val call = elementUnderCaret(GrMethodCallExpression::class.java)
+        assertInstanceOf<GrMethod>(call.resolveMethod())
+        assertTrue(call.type!!.equalsToText(getExtraPropertiesExtensionFqn()))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test project level extension closure delegate type`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "ext { <caret> }") {
-      closureDelegateTest(getExtraPropertiesExtensionFqn(), 1)
+    test(gradleVersion, FIXTURE_BUILDER) {
+      testBuildscript("ext { <caret> }") {
+        closureDelegateTest(getExtraPropertiesExtensionFqn(), 1)
+      }
     }
   }
 
@@ -71,8 +58,21 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
       "project.<caret>prop"
   """)
   fun `test property reference`(gradleVersion: GradleVersion, expression: String) {
-    testBuildscript(gradleVersion, expression) {
-      referenceExpressionTest(GradleGroovyProperty::class.java, JAVA_LANG_INTEGER)
+    test(gradleVersion, FIXTURE_BUILDER) {
+      testBuildscript(expression) {
+        referenceExpressionTest(GradleGroovyProperty::class.java, JAVA_LANG_INTEGER)
+      }
     }
+  }
+
+  companion object {
+    val FIXTURE_BUILDER: GradleTestFixtureBuilder =
+      SingleGradleBuildFileFixtureBuilder.create("GradleExtensionsTest") {
+        withPrefix {
+          call("ext") {
+            assign("prop", 1)
+          }
+        }
+      }
   }
 }

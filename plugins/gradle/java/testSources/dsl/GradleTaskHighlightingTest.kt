@@ -7,7 +7,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleDisablerTestUtils
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
+import org.jetbrains.plugins.gradle.testFramework.builders.EmptyGradleTestFixtureBuilder.Companion.EMPTY_PROJECT
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
@@ -15,14 +15,11 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTaskHighlightingTest : GradleCodeInsightTestCase() {
 
-  override fun createGradleTestFixture(gradleVersion: GradleVersion): GradleCodeInsightTestFixture =
-    createEmptyGradleCodeInsightTestFixture(gradleVersion)
-
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test task declaration`(gradleVersion: GradleVersion) {
     Disposer.newDisposable().use { parentDisposable ->
-      test(gradleVersion) {
+      test(gradleVersion, EMPTY_PROJECT) {
         GradleDisablerTestUtils.enableAllDisableableInspections(parentDisposable)
         codeInsightFixture.enableInspections(
           GrUnresolvedAccessInspection::class.java,
@@ -62,7 +59,7 @@ class GradleTaskHighlightingTest : GradleCodeInsightTestCase() {
   @AllGradleVersionsSource
   fun `task declaration invalid`(gradleVersion: GradleVersion) {
     Disposer.newDisposable().use { parentDisposable ->
-      test(gradleVersion) {
+      test(gradleVersion, EMPTY_PROJECT) {
         GradleDisablerTestUtils.enableAllDisableableInspections(parentDisposable)
         codeInsightFixture.enableInspections(
           GrUnresolvedAccessInspection::class.java,

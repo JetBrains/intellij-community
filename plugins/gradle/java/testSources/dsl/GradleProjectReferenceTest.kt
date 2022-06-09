@@ -7,100 +7,81 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleSubprojectSymbol
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.jetbrains.plugins.gradle.testFramework.builders.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.builders.SingleGradleSettingsFileFixtureBuilder
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleProjectReferenceTest : GradleCodeInsightTestCase() {
 
-  override fun createGradleTestFixture(gradleVersion: GradleVersion): GradleCodeInsightTestFixture {
-    val projectName = "GradleProjectReferenceTest"
-    return GradleTestFixtureFactory.getFixtureFactory()
-      .createGradleCodeInsightTestFixture(projectName, gradleVersion) {
-        withSettingsFile {
-          setProjectName(projectName)
-          include("child")
-          include("child:foo")
-          include("child:foo:bar")
-          include("child:foo:baz")
-          include("child:bar")
-          include("child:bar:foo")
-        }
-      }
-  }
-
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test rename child`(gradleVersion: GradleVersion) {
-    testRename(gradleVersion, """
-      // :child:foo:bar
-      project(':child')
-      project(':child:foo')
-      project(':<caret>child:foo:bar')
-      project(':child:foo:baz')
-      project(':child:bar')
-      project(':child:bar:foo')
-      // :child:foo:bar
-      // :child:foox:bar
-      // :childx:foo:bar
-      println ":child:foo:bar"
-      println ":child:foox:bar"
-      println ":xchild:foox:bar"
-    """, """
-      // :xxx:foo:bar
-      project(':xxx')
-      project(':xxx:foo')
-      project(':<caret>xxx:foo:bar')
-      project(':xxx:foo:baz')
-      project(':xxx:bar')
-      project(':xxx:bar:foo')
-      // :xxx:foo:bar
-      // :xxx:foox:bar
-      // :xxxx:foo:bar
-      println ":xxx:foo:bar"
-      println ":xxx:foox:bar"
-      println ":xchild:foox:bar"
-    """)
+    test(gradleVersion, FIXTURE_BUILDER) {
+      testRename("""
+        // :child:foo:bar
+        project(':child')
+        project(':child:foo')
+        project(':<caret>child:foo:bar')
+        project(':child:foo:baz')
+        project(':child:bar')
+        project(':child:bar:foo')
+        // :child:foo:bar
+        // :child:foox:bar
+        // :childx:foo:bar
+        println ":child:foo:bar"
+        println ":child:foox:bar"
+        println ":xchild:foox:bar"
+      """, """
+        // :xxx:foo:bar
+        project(':xxx')
+        project(':xxx:foo')
+        project(':<caret>xxx:foo:bar')
+        project(':xxx:foo:baz')
+        project(':xxx:bar')
+        project(':xxx:bar:foo')
+        // :xxx:foo:bar
+        // :xxx:foox:bar
+        // :xxxx:foo:bar
+        println ":xxx:foo:bar"
+        println ":xxx:foox:bar"
+        println ":xchild:foox:bar"
+      """)
+    }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test rename grand child`(gradleVersion: GradleVersion) {
-    testRename(gradleVersion, """
-      // :child:foo:bar
-      project(':child')
-      project(':child:<caret>foo')
-      project(':child:foo:bar')
-      project(':child:foo:baz')
-      project(':child:bar')
-      project(':child:bar:foo')
-      // :child:foo:bar
-      // :child:foox:bar
-      // :childx:foo:bar
-      println ":child:foo:bar"
-      println ":child:foox:bar"
-      println ":xchild:foo:bar"
-    """, """
-      // :child:xxx:bar
-      project(':child')
-      project(':child:<caret>xxx')
-      project(':child:xxx:bar')
-      project(':child:xxx:baz')
-      project(':child:bar')
-      project(':child:bar:foo')
-      // :child:xxx:bar
-      // :child:xxxx:bar
-      // :childx:foo:bar
-      println ":child:xxx:bar"
-      println ":child:xxxx:bar"
-      println ":xchild:foo:bar"
-    """)
-  }
-
-  private fun testRename(gradleVersion: GradleVersion, before: String, after: String) {
-    test(gradleVersion) {
-      testRename(before, after)
+    test(gradleVersion, FIXTURE_BUILDER) {
+      testRename("""
+        // :child:foo:bar
+        project(':child')
+        project(':child:<caret>foo')
+        project(':child:foo:bar')
+        project(':child:foo:baz')
+        project(':child:bar')
+        project(':child:bar:foo')
+        // :child:foo:bar
+        // :child:foox:bar
+        // :childx:foo:bar
+        println ":child:foo:bar"
+        println ":child:foox:bar"
+        println ":xchild:foo:bar"
+      """, """
+        // :child:xxx:bar
+        project(':child')
+        project(':child:<caret>xxx')
+        project(':child:xxx:bar')
+        project(':child:xxx:baz')
+        project(':child:bar')
+        project(':child:bar:foo')
+        // :child:xxx:bar
+        // :child:xxxx:bar
+        // :childx:foo:bar
+        println ":child:xxx:bar"
+        println ":child:xxxx:bar"
+        println ":xchild:foo:bar"
+      """)
     }
   }
 
@@ -112,5 +93,17 @@ class GradleProjectReferenceTest : GradleCodeInsightTestCase() {
       fixture.renameTarget(symbol, "xxx")
       fixture.checkResult(after)
     }
+  }
+
+  companion object {
+    private val FIXTURE_BUILDER: GradleTestFixtureBuilder =
+      SingleGradleSettingsFileFixtureBuilder.create("GradleProjectReferenceTest") {
+        include("child")
+        include("child:foo")
+        include("child:foo:bar")
+        include("child:foo:baz")
+        include("child:bar")
+        include("child:bar:foo")
+      }
   }
 }

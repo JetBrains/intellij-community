@@ -6,26 +6,28 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASKS_JAVADOC_JAVADOC
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.builders.PluginGradleTestFixtureBuilder.Companion.JAVA_PROJECT
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleActionTest : GradleCodeInsightTestCase() {
 
-  override fun createGradleTestFixture(gradleVersion: GradleVersion) =
-    createGradleCodeInsightTestFixture(gradleVersion, "java")
-
   @ParameterizedTest
   @BaseGradleVersionSource
   fun `test domain collection forEach`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "tasks.withType(Javadoc).configureEach { <caret> }") {
-      closureDelegateTest(GRADLE_API_TASKS_JAVADOC_JAVADOC, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("tasks.withType(Javadoc).configureEach { <caret> }") {
+        closureDelegateTest(GRADLE_API_TASKS_JAVADOC_JAVADOC, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
   fun `test nested version block`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { implementation('group:artifact') { version { <caret> } }") {
-      closureDelegateTest(GRADLE_API_ARTIFACTS_MUTABLE_VERSION_CONSTRAINT, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { implementation('group:artifact') { version { <caret> } }") {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_MUTABLE_VERSION_CONSTRAINT, 1)
+      }
     }
   }
 }

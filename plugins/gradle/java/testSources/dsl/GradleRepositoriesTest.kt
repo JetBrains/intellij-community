@@ -5,67 +5,78 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
+import org.jetbrains.plugins.gradle.testFramework.builders.EmptyGradleTestFixtureBuilder.Companion.EMPTY_PROJECT
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleRepositoriesTest : GradleCodeInsightTestCase() {
 
-  override fun createGradleTestFixture(gradleVersion: GradleVersion): GradleCodeInsightTestFixture =
-    createEmptyGradleCodeInsightTestFixture(gradleVersion)
-
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test repositories closure delegate`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "repositories { <caret> }") {
-      closureDelegateTest(GRADLE_API_REPOSITORY_HANDLER, 1)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "repositories { <caret> }") {
+        closureDelegateTest(GRADLE_API_REPOSITORY_HANDLER, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test maven repository closure delegate`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "repositories { maven { <caret> } }") {
-      closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY, 1)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "repositories { maven { <caret> } }") {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test ivy repository closure delegate`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "repositories { ivy { <caret> } }") {
-      closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_IVY_ARTIFACT_REPOSITORY, 1)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "repositories { ivy { <caret> } }") {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_IVY_ARTIFACT_REPOSITORY, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test flat repository closure delegate`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "repositories { flatDir { <caret> } }") {
-      closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_FLAT_DIRECTORY_ARTIFACT_REPOSITORY, 1)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "repositories { flatDir { <caret> } }") {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_REPOSITORIES_FLAT_DIRECTORY_ARTIFACT_REPOSITORY, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test maven repository method setter`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "repositories { maven { <caret>url(42) } }") {
-      setterMethodTest("url", "setUrl", GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "repositories { maven { <caret>url(42) } }") {
+        setterMethodTest("url", "setUrl", GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test ivy repository method setter`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "repositories { ivy { <caret>url('') } }") {
-      setterMethodTest("url", "setUrl", GRADLE_API_ARTIFACTS_REPOSITORIES_IVY_ARTIFACT_REPOSITORY)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "repositories { ivy { <caret>url('') } }") {
+        setterMethodTest("url", "setUrl", GRADLE_API_ARTIFACTS_REPOSITORIES_IVY_ARTIFACT_REPOSITORY)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test flat repository method setter`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "repositories { flatDir { <caret>name('') } }") {
-      setterMethodTest("name", "setName", GRADLE_API_ARTIFACTS_REPOSITORIES_ARTIFACT_REPOSITORY)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "repositories { flatDir { <caret>name('') } }") {
+        setterMethodTest("name", "setName", GRADLE_API_ARTIFACTS_REPOSITORIES_ARTIFACT_REPOSITORY)
+      }
     }
   }
 }

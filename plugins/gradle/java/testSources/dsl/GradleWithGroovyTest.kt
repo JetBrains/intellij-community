@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DOMAIN_OBJECT_COLLECTION
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.builders.PluginGradleTestFixtureBuilder.Companion.GROOVY_PROJECT
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -20,49 +21,52 @@ import org.junit.jupiter.params.ParameterizedTest
 @CompileStatic
 class GradleWithGroovyTest : GradleCodeInsightTestCase() {
 
-  override fun createGradleTestFixture(gradleVersion: GradleVersion) =
-    createGradleCodeInsightTestFixture(gradleVersion, "groovy")
-
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test Project#allprojects call`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "<caret>allprojects {}") {
-      val call = elementUnderCaret(GrMethodCall::class.java)
-      val element = assertOneElement(call.multiResolve(false)).element
-      val method = assertInstanceOf<PsiMethod>(element)
-      assertEquals(GRADLE_API_PROJECT, method.containingClass!!.qualifiedName)
-      assertTrue(method.parameterList.parameters.first().type.equalsToText(GROOVY_LANG_CLOSURE))
+    test(gradleVersion, GROOVY_PROJECT) {
+      testBuildscript(decorator, "<caret>allprojects {}") {
+        val call = elementUnderCaret(GrMethodCall::class.java)
+        val element = assertOneElement(call.multiResolve(false)).element
+        val method = assertInstanceOf<PsiMethod>(element)
+        assertEquals(GRADLE_API_PROJECT, method.containingClass!!.qualifiedName)
+        assertTrue(method.parameterList.parameters.first().type.equalsToText(GROOVY_LANG_CLOSURE))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test DomainObjectCollection#all call`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "<caret>configurations.all {}") {
-      val call = elementUnderCaret(GrMethodCall::class.java)
-      val element = assertOneElement(call.multiResolve(false)).element
-      val method = assertInstanceOf<PsiMethod>(element)
-      assertEquals(GRADLE_API_DOMAIN_OBJECT_COLLECTION, method.containingClass!!.qualifiedName)
-      assertTrue(method.parameterList.parameters.first().type.equalsToText(GROOVY_LANG_CLOSURE))
+    test(gradleVersion, GROOVY_PROJECT) {
+      testBuildscript(decorator, "<caret>configurations.all {}") {
+        val call = elementUnderCaret(GrMethodCall::class.java)
+        val element = assertOneElement(call.multiResolve(false)).element
+        val method = assertInstanceOf<PsiMethod>(element)
+        assertEquals(GRADLE_API_DOMAIN_OBJECT_COLLECTION, method.containingClass!!.qualifiedName)
+        assertTrue(method.parameterList.parameters.first().type.equalsToText(GROOVY_LANG_CLOSURE))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
   fun `test DomainObjectCollection#withType call`(gradleVersion: GradleVersion, decorator: String) {
-    testBuildscript(gradleVersion, decorator, "<caret>plugins.withType(JavaPlugin) {}") {
-      val call = elementUnderCaret(GrMethodCall::class.java)
-      val element = assertOneElement(call.multiResolve(false)).element
-      val method = assertInstanceOf<PsiMethod>(element)
-      assertEquals(GRADLE_API_DOMAIN_OBJECT_COLLECTION, method.containingClass!!.qualifiedName)
-      assertTrue(method.parameterList.parameters.last().type.equalsToText(GROOVY_LANG_CLOSURE))
+    test(gradleVersion, GROOVY_PROJECT) {
+      testBuildscript(decorator, "<caret>plugins.withType(JavaPlugin) {}") {
+        val call = elementUnderCaret(GrMethodCall::class.java)
+        val element = assertOneElement(call.multiResolve(false)).element
+        val method = assertInstanceOf<PsiMethod>(element)
+        assertEquals(GRADLE_API_DOMAIN_OBJECT_COLLECTION, method.containingClass!!.qualifiedName)
+        assertTrue(method.parameterList.parameters.last().type.equalsToText(GROOVY_LANG_CLOSURE))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test DGM#collect`(gradleVersion: GradleVersion) {
-    test(gradleVersion) {
+    test(gradleVersion, GROOVY_PROJECT) {
       codeInsightFixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
       testHighlighting("['a', 'b'].collect { it.toUpperCase() }")
     }

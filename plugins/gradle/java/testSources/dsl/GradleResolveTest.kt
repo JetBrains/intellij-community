@@ -4,43 +4,44 @@ package org.jetbrains.plugins.gradle.dsl
 import com.intellij.psi.PsiMethod
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_DATE
 import com.intellij.testFramework.assertInstanceOf
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.builders.EmptyGradleTestFixtureBuilder.Companion.EMPTY_PROJECT
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleResolveTest: GradleCodeInsightTestCase() {
 
-  override fun createGradleTestFixture(gradleVersion: GradleVersion): GradleCodeInsightTestFixture =
-    createEmptyGradleCodeInsightTestFixture(gradleVersion)
-
   @ParameterizedTest
   @BaseGradleVersionSource
   fun `test resolve date constructor`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "<caret>new Date()") {
-      val expression = elementUnderCaret(GrNewExpression::class.java)
-      val results = expression.multiResolve(false)
-      assertEquals(1,results.size )
-      val method = assertInstanceOf<PsiMethod>(results[0].element)
-      assertTrue(method.isConstructor)
-      assertEquals(JAVA_UTIL_DATE, method.containingClass!!.qualifiedName)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript("<caret>new Date()") {
+        val expression = elementUnderCaret(GrNewExpression::class.java)
+        val results = expression.multiResolve(false)
+        assertEquals(1, results.size)
+        val method = assertInstanceOf<PsiMethod>(results[0].element)
+        assertTrue(method.isConstructor)
+        assertEquals(JAVA_UTIL_DATE, method.containingClass!!.qualifiedName)
+      }
     }
   }
 
   @ParameterizedTest
   @BaseGradleVersionSource
   fun `test resolve date constructor 2`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "<caret>new Date(1l)") {
-      val expression = elementUnderCaret(GrNewExpression::class.java)
-      val results = expression.multiResolve(false)
-      assertEquals(1,results.size )
-      val method = assertInstanceOf<PsiMethod>(results[0].element)
-      assertTrue(method.isConstructor)
-      assertEquals(JAVA_UTIL_DATE, method.containingClass!!.qualifiedName)
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript("<caret>new Date(1l)") {
+        val expression = elementUnderCaret(GrNewExpression::class.java)
+        val results = expression.multiResolve(false)
+        assertEquals(1, results.size)
+        val method = assertInstanceOf<PsiMethod>(results[0].element)
+        assertTrue(method.isConstructor)
+        assertEquals(JAVA_UTIL_DATE, method.containingClass!!.qualifiedName)
+      }
     }
   }
 }

@@ -4,24 +4,9 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.testFramework.runInEdtAndWait
-import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleCodeInsightTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.groovy.util.ExpressionTest
 
 abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), ExpressionTest {
-
-  fun testBuildscript(gradleVersion: GradleVersion, expression: String, test: () -> Unit) {
-    test(gradleVersion) {
-      testBuildscript(expression, test)
-    }
-  }
-
-  fun testBuildscript(gradleVersion: GradleVersion, decorator: String, expression: String, test: () -> Unit) {
-    test(gradleVersion) {
-      testBuildscript(decorator, expression, test)
-    }
-  }
 
   fun testBuildscript(decorator: String, expression: String, test: () -> Unit) {
     if (decorator.isEmpty()) {
@@ -36,12 +21,6 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     updateProjectFile(expression)
     runReadAction {
       test()
-    }
-  }
-
-  fun testHighlighting(gradleVersion: GradleVersion, expression: String) {
-    test(gradleVersion) {
-      testHighlighting(gradleVersion, expression)
     }
   }
 
@@ -96,19 +75,5 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
       subprojects, 
       configure(project(':'))
     """
-
-    @JvmStatic
-    fun createEmptyGradleCodeInsightTestFixture(gradleVersion: GradleVersion): GradleCodeInsightTestFixture {
-      val fixture = createEmptyGradleTestFixture(gradleVersion)
-      val fixtureFactory = GradleTestFixtureFactory.getFixtureFactory()
-      return fixtureFactory.createGradleCodeInsightTestFixture(fixture)
-    }
-
-    @JvmStatic
-    fun createGradleCodeInsightTestFixture(gradleVersion: GradleVersion, pluginName: String): GradleCodeInsightTestFixture {
-      val fixture = createGradleTestFixture(gradleVersion, pluginName)
-      val fixtureFactory = GradleTestFixtureFactory.getFixtureFactory()
-      return fixtureFactory.createGradleCodeInsightTestFixture(fixture)
-    }
   }
 }

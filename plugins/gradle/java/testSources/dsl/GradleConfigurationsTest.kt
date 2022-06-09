@@ -6,6 +6,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_CONFIGURATION_CONTAINER
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.builders.EmptyGradleTestFixtureBuilder.Companion.EMPTY_PROJECT
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.junit.jupiter.api.Assertions.*
@@ -13,90 +14,105 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class GradleConfigurationsTest : GradleCodeInsightTestCase() {
 
-  override fun createGradleTestFixture(gradleVersion: GradleVersion) =
-    createEmptyGradleCodeInsightTestFixture(gradleVersion)
-
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configurations closure delegate`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { <caret> }") {
-      closureDelegateTest(GRADLE_API_CONFIGURATION_CONTAINER, 1)
+  fun `test configurations closure delegate`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { <caret> }") {
+        closureDelegateTest(GRADLE_API_CONFIGURATION_CONTAINER, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configuration via unqualified property reference`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { <caret>foo }") {
-      val ref = elementUnderCaret(GrReferenceExpression::class.java)
-      assertNotNull(ref.resolve())
-      assertTrue(ref.type!!.equalsToText(GRADLE_API_CONFIGURATION))
+  fun `test configuration via unqualified property reference`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { <caret>foo }") {
+        val ref = elementUnderCaret(GrReferenceExpression::class.java)
+        assertNotNull(ref.resolve())
+        assertTrue(ref.type!!.equalsToText(GRADLE_API_CONFIGURATION))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configuration via unqualified method call`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { <caret>foo {} }") {
-      val call = elementUnderCaret(GrMethodCall::class.java)
-      assertNotNull(call.resolveMethod())
-      assertTrue(call.type!!.equalsToText(GRADLE_API_CONFIGURATION))
+  fun `test configuration via unqualified method call`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { <caret>foo {} }") {
+        val call = elementUnderCaret(GrMethodCall::class.java)
+        assertNotNull(call.resolveMethod())
+        assertTrue(call.type!!.equalsToText(GRADLE_API_CONFIGURATION))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configuration closure delegate in unqualified method call`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { foo { <caret> } }") {
-      closureDelegateTest(GRADLE_API_CONFIGURATION, 1)
+  fun `test configuration closure delegate in unqualified method call`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { foo { <caret> } }") {
+        closureDelegateTest(GRADLE_API_CONFIGURATION, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configuration member via unqualified method call closure delegate`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { foo { <caret>extendsFrom() } }") {
-      val call = elementUnderCaret(GrMethodCall::class.java)
-      val method = requireNotNull(call.resolveMethod())
-      assertEquals(GRADLE_API_CONFIGURATION, method.containingClass!!.qualifiedName)
+  fun `test configuration member via unqualified method call closure delegate`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { foo { <caret>extendsFrom() } }") {
+        val call = elementUnderCaret(GrMethodCall::class.java)
+        val method = requireNotNull(call.resolveMethod())
+        assertEquals(GRADLE_API_CONFIGURATION, method.containingClass!!.qualifiedName)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configuration via qualified property reference`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { foo }; configurations.<caret>foo") {
-      val ref = elementUnderCaret(GrReferenceExpression::class.java)
-      assertNotNull(ref.resolve())
-      assertTrue(ref.type!!.equalsToText(GRADLE_API_CONFIGURATION))
+  fun `test configuration via qualified property reference`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { foo }; configurations.<caret>foo") {
+        val ref = elementUnderCaret(GrReferenceExpression::class.java)
+        assertNotNull(ref.resolve())
+        assertTrue(ref.type!!.equalsToText(GRADLE_API_CONFIGURATION))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configuration via qualified method call`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { foo }; configurations.<caret>foo {}") {
-      val call = elementUnderCaret(GrMethodCall::class.java)
-      assertNotNull(call.resolveMethod())
-      assertTrue(call.type!!.equalsToText(GRADLE_API_CONFIGURATION))
+  fun `test configuration via qualified method call`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { foo }; configurations.<caret>foo {}") {
+        val call = elementUnderCaret(GrMethodCall::class.java)
+        assertNotNull(call.resolveMethod())
+        assertTrue(call.type!!.equalsToText(GRADLE_API_CONFIGURATION))
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configuration closure delegate in qualified method call`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { foo }; configurations.foo { <caret> }") {
-      closureDelegateTest(GRADLE_API_CONFIGURATION, 1)
+  fun `test configuration closure delegate in qualified method call`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { foo }; configurations.foo { <caret> }") {
+        closureDelegateTest(GRADLE_API_CONFIGURATION, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource("$DECORATORS, buildscript")
-  fun `test configuration member via qualified method call closure delegate`(version: GradleVersion, decorator: String) {
-    testBuildscript(version, decorator, "configurations { foo }; configurations.foo { <caret>extendsFrom() }") {
-      val call = elementUnderCaret(GrMethodCall::class.java)
-      val method = requireNotNull(call.resolveMethod())
-      assertEquals(GRADLE_API_CONFIGURATION, method.containingClass!!.qualifiedName)
+  fun `test configuration member via qualified method call closure delegate`(gradleVersion: GradleVersion, decorator: String) {
+    test(gradleVersion, EMPTY_PROJECT) {
+      testBuildscript(decorator, "configurations { foo }; configurations.foo { <caret>extendsFrom() }") {
+        val call = elementUnderCaret(GrMethodCall::class.java)
+        val method = requireNotNull(call.resolveMethod())
+        assertEquals(GRADLE_API_CONFIGURATION, method.containingClass!!.qualifiedName)
+      }
     }
   }
 }

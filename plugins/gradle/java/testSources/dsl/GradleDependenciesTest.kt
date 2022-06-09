@@ -7,17 +7,17 @@ import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
+import org.jetbrains.plugins.gradle.testFramework.builders.PluginGradleTestFixtureBuilder.Companion.JAVA_PROJECT
 
 class GradleDependenciesTest : GradleCodeInsightTestCase() {
-
-  override fun createGradleTestFixture(gradleVersion: GradleVersion) =
-    createGradleCodeInsightTestFixture(gradleVersion, "java")
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test dependencies delegate`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { <caret> }") {
-      closureDelegateTest(GRADLE_API_DEPENDENCY_HANDLER, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { <caret> }") {
+        closureDelegateTest(GRADLE_API_DEPENDENCY_HANDLER, 1)
+      }
     }
   }
 
@@ -37,8 +37,10 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
     "dependencies.archives(':42') { <caret> }"
   """)
   fun `test add external module dependency delegate`(gradleVersion: GradleVersion, expression: String) {
-    testBuildscript(gradleVersion, expression) {
-      closureDelegateTest(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript(expression) {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY, 1)
+      }
     }
   }
 
@@ -54,8 +56,10 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
     "dependencies.archives(fileTree('libs')) { <caret> }"
   """)
   fun `test add self resolving dependency delegate`(gradleVersion: GradleVersion, expression: String) {
-    testBuildscript(gradleVersion, expression) {
-      closureDelegateTest(GRADLE_API_ARTIFACTS_SELF_RESOLVING_DEPENDENCY, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript(expression) {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_SELF_RESOLVING_DEPENDENCY, 1)
+      }
     }
   }
 
@@ -67,96 +71,120 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
       "dependencies.archives(project(':')) { <caret> }"
   """)
   fun `test add project dependency delegate`(gradleVersion: GradleVersion, expression: String) {
-    testBuildscript(gradleVersion, expression) {
-      closureDelegateTest(GRADLE_API_ARTIFACTS_PROJECT_DEPENDENCY, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript(expression) {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_PROJECT_DEPENDENCY, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test add delegate method setter`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { add('archives', 'notation') { <caret>transitive(false) } }") {
-      setterMethodTest("transitive", "setTransitive", GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { add('archives', 'notation') { <caret>transitive(false) } }") {
+        setterMethodTest("transitive", "setTransitive", GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test module delegate`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { module(':') {<caret>} }") {
-      closureDelegateTest(GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { module(':') {<caret>} }") {
+        closureDelegateTest(GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test module delegate method setter`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { module(':') { <caret>changing(true) } }") {
-      setterMethodTest("changing", "setChanging", GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { module(':') { <caret>changing(true) } }") {
+        setterMethodTest("changing", "setChanging", GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test components delegate`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { components {<caret>} }") {
-      closureDelegateTest(GRADLE_API_COMPONENT_METADATA_HANDLER, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { components {<caret>} }") {
+        closureDelegateTest(GRADLE_API_COMPONENT_METADATA_HANDLER, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test modules delegate`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { modules {<caret>} }") {
-      closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { modules {<caret>} }") {
+        closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test modules module delegate`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { modules { module(':') { <caret> } } }") {
-      closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS, 1)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { modules { module(':') { <caret> } } }") {
+        closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS, 1)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test classpath configuration`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { <caret>classpath('hi') }") {
-      resolveTest<Nothing>(null)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { <caret>classpath('hi') }") {
+        resolveTest<Nothing>(null)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test archives configuration`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies { <caret>archives('hi') }") {
-      methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies { <caret>archives('hi') }") {
+        methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test archives configuration via property`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "dependencies.<caret>archives('hi')") {
-      methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("dependencies.<caret>archives('hi')") {
+        methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test buildscript classpath configuration`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "buildscript { dependencies { <caret>classpath('hi') } }") {
-      methodTest(resolveTest(PsiMethod::class.java), "classpath", GRADLE_API_DEPENDENCY_HANDLER)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("buildscript { dependencies { <caret>classpath('hi') } }") {
+        methodTest(resolveTest(PsiMethod::class.java), "classpath", GRADLE_API_DEPENDENCY_HANDLER)
+      }
     }
   }
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test buildscript archives configuration`(gradleVersion: GradleVersion) {
-    testBuildscript(gradleVersion, "buildscript { dependencies { <caret>archives('hi') } }") {
-      resolveTest<Nothing>(null)
+    test(gradleVersion, JAVA_PROJECT) {
+      testBuildscript("buildscript { dependencies { <caret>archives('hi') } }") {
+        resolveTest<Nothing>(null)
+      }
     }
   }
 }

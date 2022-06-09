@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.builders.GradleTestFixtureBuilder
 import org.junit.jupiter.api.AfterAll
 
 abstract class GradleBaseTestCase : ExternalSystemTestCase() {
@@ -14,12 +15,10 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
       "Gradle fixture isn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
 
-  abstract fun createGradleTestFixture(gradleVersion: GradleVersion): GradleTestFixture
-
-  fun test(gradleVersion: GradleVersion, action: () -> Unit) {
-    fixture = createGradleTestFixture(gradleVersion, ::createGradleTestFixture)
+  open fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
+    fixture = createGradleTestFixture(gradleVersion, fixtureBuilder)
     try {
-      action()
+      test()
     }
     finally {
       gradleFixture.fileFixture.rollbackAll()
@@ -41,12 +40,9 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
       }
     }
 
-    private fun createGradleTestFixture(
-      gradleVersion: GradleVersion,
-      createFixture: (GradleVersion) -> GradleTestFixture
-    ): GradleTestFixture {
+    private fun createGradleTestFixture(gradleVersion: GradleVersion, builder: GradleTestFixtureBuilder): GradleTestFixture {
       return fixtures.getOrPut(gradleVersion.version) {
-        val fixture = createFixture(gradleVersion)
+        val fixture = builder.createFixture(gradleVersion)
         fixture.setUp()
         fixture
       }
