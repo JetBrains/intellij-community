@@ -55,7 +55,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   private Map<Path, Long> myProfile;
   protected InspectionProblemConsumer myProblemConsumer;
 
-  public GlobalInspectionContextEx(@NotNull Project project) {super(project);}
+  public GlobalInspectionContextEx(@NotNull Project project) { super(project); }
 
   public void launchInspectionsOffline(@NotNull AnalysisScope scope,
                                        @NotNull Path outputPath,
@@ -238,10 +238,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     // export global inspections
     if (!globalToolsWithProblems.isEmpty()) {
       XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
-      ContainerUtil.splitListToChunks(globalToolsWithProblems, MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES).forEach(inspections ->
-                                                                                                      exportResults(inspectionsResults,
-                                                                                                                    inspections, outputDir,
-                                                                                                                    xmlOutputFactory));
+      ContainerUtil.splitListToChunks(globalToolsWithProblems, MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES)
+        .forEach(inspections -> exportResults(inspectionsResults, inspections, outputDir, xmlOutputFactory));
     }
   }
 

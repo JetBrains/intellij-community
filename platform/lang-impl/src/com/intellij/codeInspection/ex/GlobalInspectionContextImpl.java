@@ -158,8 +158,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       //noinspection deprecation
       toolWindow = toolWindowManager.getToolWindow(ToolWindowId.INSPECTION);
     }
-    if (toolWindow != null)
-      toolWindow.activate(null);
+    if (toolWindow != null) toolWindow.activate(null);
   }
 
   public void addView(@NotNull InspectionResultsView view) {
@@ -178,7 +177,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     RefElement refElement = getRefManager().getReference(element);
     if (refElement == null) return;
     Tools tools = getTools().get(tool.getShortName());
-    if (tools != null){
+    if (tools != null) {
       for (ScopeToolState state : tools.getTools()) {
         InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
         InspectionToolResultExporter presentation = getPresentationOrNull(toolWrapper);
@@ -420,7 +419,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         future.get(30, TimeUnit.SECONDS);
       }
       catch (Exception e) {
-        LOG.error("Thread dump: \n"+ThreadDumper.dumpThreadsToString(), e);
+        LOG.error("Thread dump: \n" + ThreadDumper.dumpThreadsToString(), e);
       }
     }
 
@@ -431,7 +430,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
       ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
       tool.inspectionFinished(inspectionManager, this, problemDescriptionProcessor);
-
     }
 
     addProblemsToView(globalSimpleTools);
@@ -887,7 +885,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return name2Inspection;
   }
 
-  private static final TripleFunction<LocalInspectionTool,PsiElement,GlobalInspectionContext,RefElement> CONVERT =
+  private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext, RefElement> CONVERT =
     (tool, elt, context) -> {
       PsiNamedElement problemElement = PsiTreeUtil.getNonStrictParentOfType(elt, PsiFile.class);
 
@@ -1056,6 +1054,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ((RefManagerImpl)getRefManager()).runInsideInspectionReadAction(() -> {
       scope.accept(new PsiElementVisitor() {
         private int myCount;
+
         @Override
         public void visitFile(@NotNull PsiFile file) {
           if (LOG.isDebugEnabled()) {
@@ -1209,7 +1208,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return myPresentationMap.computeIfAbsent(toolWrapper, __ -> {
       String presentationClass = toolWrapper.myEP == null ? null : toolWrapper.myEP.presentation;
       if (StringUtil.isEmpty(presentationClass)) {
-        if (myProblemConsumer !=  null) {
+        if (myProblemConsumer != null) {
           return new DelegatedInspectionToolPresentation(toolWrapper, this, myProblemConsumer);
         }
         presentationClass = DefaultInspectionToolPresentation.class.getName();
