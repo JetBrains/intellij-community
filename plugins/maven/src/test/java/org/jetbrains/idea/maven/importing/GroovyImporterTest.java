@@ -2,11 +2,11 @@
 
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -741,10 +741,5 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
     assertTestResources("project", "src/test/resources");
 
     assertExcludes("project", "target");
-  }
-
-  @Test
-  public void testGrEclipseMavenPlugin() {
-
   }
 }

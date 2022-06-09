@@ -80,13 +80,18 @@ class WorkspaceFolderImporter(
                                allFolders: MutableList<ContentRootCollector.Folder>): CachedProjectFolders {
     val cachedFolders = importFoldersByMavenIdCache.getOrPut(importData.mavenProject.mavenId.key) { collectMavenFolders(importData) }
 
-    fun isSourceFolder(it: ContentRootCollector.Folder, forTests: Boolean) =
-      (it as? ContentRootCollector.UserOrGeneratedSourceFolder)?.type?.isForTests == forTests
+    fun includeIf(it: ContentRootCollector.Folder, forTests: Boolean) =
+      when (it) {
+        is ContentRootCollector.UserOrGeneratedSourceFolder -> it.type.isForTests == forTests
+        else -> true
+      }
+
+    fun exceptSources(it: ContentRootCollector.Folder) = it !is ContentRootCollector.UserOrGeneratedSourceFolder
 
     allFolders.addAll(when (importData.moduleData.type) {
-                        MavenModuleType.MAIN -> cachedFolders.folders.filter { isSourceFolder(it, false) }
-                        MavenModuleType.TEST -> cachedFolders.folders.filter { isSourceFolder(it, true) }
-                        MavenModuleType.AGGREGATOR_MAIN_TEST -> emptyList()
+                        MavenModuleType.MAIN -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
+                        MavenModuleType.TEST -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
+                        MavenModuleType.AGGREGATOR_MAIN_TEST -> cachedFolders.folders.filter { exceptSources(it) }
                         else -> cachedFolders.folders
                       })
     return cachedFolders
@@ -145,7 +150,7 @@ class WorkspaceFolderImporter(
     for (each in importData.mavenProject.suitableImporters) {
       val excludes = mutableListOf<String>()
       each.collectExcludedFolders(importData.mavenProject, excludes)
-      excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderWithNoGeneratedSubfolders(it)) }
+      excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventGeneratedSubfolders(toAbsolutePath(it))) }
     }
 
     val generatedSourceFolders = GeneratedFoldersCollector(folders, JavaSourceRootType.SOURCE)

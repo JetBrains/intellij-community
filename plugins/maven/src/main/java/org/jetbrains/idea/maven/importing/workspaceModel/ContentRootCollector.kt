@@ -49,8 +49,8 @@ object ContentRootCollector {
           // don't add generated folder when there are sub source folder
           nearestRoot.folders.removeLast()
         }
-        else if (prev is ExcludedFolderWithNoGeneratedSubfolders && curr is BaseGeneratedSourceFolder) {
-          // don't add generated folders under corresponding exclude folders
+        else if (prev is ExcludedFolderAndPreventGeneratedSubfolders && curr is UserOrGeneratedSourceFolder) {
+          // don't add source folders under corresponding exclude folders
           return@forEach
         }
         else if (prev.rank == curr.rank) {
@@ -61,6 +61,27 @@ object ContentRootCollector {
 
       // 3. REGISTER FOLDER UNDER THE ROOT
       nearestRoot.folders.add(curr)
+    }
+
+    // 4. Now, we need a second pass over the merged folders, to remove nested exclude folders.
+    //    Couldn't do it during the first pass, since exclude folders have different properties (preventing subfolders),
+    //    which need to be taken into account during the first pass.
+    val rootIterator = result.iterator()
+    while (rootIterator.hasNext()) {
+      val root = rootIterator.next()
+
+      val folderIterator = root.folders.iterator()
+      var prev: Folder? = null
+      while (folderIterator.hasNext()) {
+        val curr = folderIterator.next()
+        if (prev is BaseExcludedFolder && curr is BaseExcludedFolder
+            && FileUtil.isAncestor(prev.path, curr.path, false)) {
+          folderIterator.remove()
+        }
+        else {
+          prev = curr
+        }
+      }
     }
 
     return result
@@ -74,7 +95,7 @@ object ContentRootCollector {
     }
 
     override fun toString(): String {
-      return "${javaClass.simpleName}(path='$path')"
+      return path
     }
   }
 
@@ -95,7 +116,7 @@ object ContentRootCollector {
       }
 
     override fun toString(): String {
-      return "${javaClass.simpleName}(path='$path', rootType='$type')"
+      return "$path rootType='$type'"
     }
   }
 
@@ -105,7 +126,7 @@ object ContentRootCollector {
 
   class ContentRootFolder(path: String) : Folder(path, 0)
   class SourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 1)
-  class ExcludedFolderWithNoGeneratedSubfolders(path: String) : BaseExcludedFolder(path, 2)
+  class ExcludedFolderAndPreventGeneratedSubfolders(path: String) : BaseExcludedFolder(path, 2)
   class ExplicitGeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : BaseGeneratedSourceFolder(path, type, 3)
   class OptionalGeneratedSourceFolder(path: String, type: JpsModuleSourceRootType<*>) : BaseGeneratedSourceFolder(path, type, 4)
   class ExcludedFolder(path: String) : BaseExcludedFolder(path, 5)
@@ -114,7 +135,7 @@ object ContentRootCollector {
     val folders = mutableListOf<Folder>()
 
     override fun toString(): String {
-      return "ContentRootDataHolder(contentRoot='$path')"
+      return path
     }
   }
 }
