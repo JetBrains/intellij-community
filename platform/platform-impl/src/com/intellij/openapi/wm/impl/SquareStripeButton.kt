@@ -96,6 +96,7 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
       .setInitialDelay(0)
       .setHideDelay(0)
       .installOn(this)
+    HelpTooltip.setMasterPopupOpenCondition(this) { !(parent as AbstractDroppableStripe).isDroppingButton() }
   }
 
   override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
