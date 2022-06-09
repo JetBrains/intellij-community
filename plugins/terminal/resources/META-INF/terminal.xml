@@ -31,6 +31,7 @@
     <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
+    <iconMapper mappingFile="TerminalIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
