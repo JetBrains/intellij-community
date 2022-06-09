@@ -17,7 +17,7 @@ import com.intellij.psi.PsiElement
 import org.eclipse.aether.version.Version
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
-import org.jetbrains.kotlin.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors

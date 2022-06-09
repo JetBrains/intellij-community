@@ -27,8 +27,8 @@ import com.intellij.util.Query
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.base.util.invalidateProjectRoots
-import org.jetbrains.kotlin.base.util.isAndroidModule
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType

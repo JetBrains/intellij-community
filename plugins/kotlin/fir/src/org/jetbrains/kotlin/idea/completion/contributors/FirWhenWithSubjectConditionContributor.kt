@@ -25,17 +25,15 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
-import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.shortenReferencesForFirCompletion
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.base.util.letIf
+import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(

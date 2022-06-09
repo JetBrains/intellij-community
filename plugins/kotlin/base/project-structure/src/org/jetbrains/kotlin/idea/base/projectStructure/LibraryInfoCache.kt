@@ -13,8 +13,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
-import org.jetbrains.kotlin.base.util.caching.FineGrainedEntityCache
-import org.jetbrains.kotlin.base.util.caching.WorkspaceEntityChangeListener
+import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform

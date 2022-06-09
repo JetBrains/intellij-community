@@ -8,7 +8,7 @@ import com.intellij.execution.actions.MultipleRunLocationsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.kotlin.base.util.isAndroidModule
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.implementingModules

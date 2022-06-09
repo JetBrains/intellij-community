@@ -3,7 +3,7 @@
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.project.ModulePlatformCache
 import org.jetbrains.kotlin.platform.jvm.isJvm

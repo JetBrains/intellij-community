@@ -8,8 +8,8 @@ import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.base.util.getOutsiderFileOrigin
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo

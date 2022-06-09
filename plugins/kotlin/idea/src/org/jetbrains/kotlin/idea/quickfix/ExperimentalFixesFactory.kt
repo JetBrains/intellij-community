@@ -7,7 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.module.Module
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName

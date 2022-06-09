@@ -13,11 +13,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil
 import com.intellij.refactoring.util.RefactoringMessageUtil
-import com.intellij.util.CommonJavaRefactoringUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
@@ -28,7 +26,7 @@ import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.refactoring.isInjectedFragment
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective

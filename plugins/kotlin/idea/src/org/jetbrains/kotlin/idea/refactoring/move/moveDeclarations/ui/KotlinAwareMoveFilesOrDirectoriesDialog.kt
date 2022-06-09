@@ -29,7 +29,7 @@ import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.JBLabelDecorator
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.base.util.onTextChange
+import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.refactoring.isInKotlinAwareSourceRoot

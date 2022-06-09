@@ -19,8 +19,8 @@ import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker

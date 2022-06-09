@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isCompatibleWith
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind

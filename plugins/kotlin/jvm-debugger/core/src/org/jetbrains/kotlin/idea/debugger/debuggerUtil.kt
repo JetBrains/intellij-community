@@ -10,7 +10,7 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
-import org.jetbrains.kotlin.base.util.KOTLIN_FILE_EXTENSIONS
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME

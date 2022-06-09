@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.psi.KtFile
 
 class DecompileKotlinToJavaAction : AnAction(KotlinJvmDecompilerBundle.message("action.decompile.java.name")) {

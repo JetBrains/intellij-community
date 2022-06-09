@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.configuration.loader
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.base.util.getOutsiderFileOrigin
+import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition

@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.kpm.idea.*
-import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.configuration.multiplatform.KotlinMultiplatformNativeDebugSuggester
 import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSetInMppBuildIssue
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData

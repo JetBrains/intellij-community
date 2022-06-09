@@ -13,7 +13,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.ide.konan.KotlinNativeRunConfigurationProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.facet.externalSystemNativeMainRunTasks
-import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType

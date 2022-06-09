@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle

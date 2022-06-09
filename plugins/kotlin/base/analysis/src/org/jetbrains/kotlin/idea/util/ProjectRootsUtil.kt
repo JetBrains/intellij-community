@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import org.jetbrains.kotlin.base.util.module as newModule
+import org.jetbrains.kotlin.idea.base.util.module as newModule
 
 fun VirtualFile.getSourceRoot(project: Project): VirtualFile? = ProjectRootManager.getInstance(project).fileIndex.getSourceRootForFile(this)
 
@@ -32,8 +32,8 @@ val Module.sourceRoots: Array<VirtualFile>
     }
 
 @Deprecated(
-    "Use org.jetbrains.kotlin.base.util.module instead.",
-    ReplaceWith("module", "org.jetbrains.kotlin.base.util.module")
+    "Use org.jetbrains.kotlin.idea.base.util.module instead.",
+    ReplaceWith("module", "org.jetbrains.kotlin.idea.base.util.module")
 )
 val PsiElement.module: Module?
     get() = newModule

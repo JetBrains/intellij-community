@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.base.util.module
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions

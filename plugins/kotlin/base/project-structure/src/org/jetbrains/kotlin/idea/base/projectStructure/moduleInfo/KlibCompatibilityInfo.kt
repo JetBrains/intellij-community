@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.backend.common.serialization.metadata.metadataVersion
-import org.jetbrains.kotlin.base.util.asKotlinLogger
+import org.jetbrains.kotlin.idea.base.util.asKotlinLogger
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.platform.TargetPlatform

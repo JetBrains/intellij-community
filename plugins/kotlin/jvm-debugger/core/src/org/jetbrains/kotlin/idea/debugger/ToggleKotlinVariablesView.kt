@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import org.jetbrains.kotlin.base.util.KOTLIN_FILE_EXTENSIONS
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 
 class ToggleKotlinVariablesState {
     companion object {

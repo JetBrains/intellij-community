@@ -25,12 +25,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.SLRUMap
 import com.intellij.util.lang.UrlClassLoader
-import org.jetbrains.kotlin.base.util.CheckCanceledLock
-import org.jetbrains.kotlin.base.util.writeWithCheckCanceled
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
+import org.jetbrains.kotlin.idea.base.util.writeWithCheckCanceled
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode

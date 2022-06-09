@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInContext
@@ -21,14 +21,11 @@ import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpressi
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
-import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.CallResolver
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall

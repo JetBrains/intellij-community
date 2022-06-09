@@ -11,8 +11,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import org.jetbrains.kotlin.base.util.caching.FineGrainedEntityCache
-import org.jetbrains.kotlin.base.util.caching.WorkspaceEntityChangeListener
+import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider

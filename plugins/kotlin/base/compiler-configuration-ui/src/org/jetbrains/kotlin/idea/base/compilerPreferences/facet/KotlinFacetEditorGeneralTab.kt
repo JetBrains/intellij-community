@@ -12,8 +12,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.ThreeStateCheckBox
-import org.jetbrains.kotlin.base.util.invalidateProjectRoots
-import org.jetbrains.kotlin.base.util.onTextChange
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle

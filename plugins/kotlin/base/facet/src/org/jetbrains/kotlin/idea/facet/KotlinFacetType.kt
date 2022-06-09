@@ -8,7 +8,7 @@ import com.intellij.facet.FacetTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.kotlin.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.KotlinIcons
 import javax.swing.Icon
 

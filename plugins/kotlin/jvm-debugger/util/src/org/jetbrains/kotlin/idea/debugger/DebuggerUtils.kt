@@ -12,7 +12,7 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
-import org.jetbrains.kotlin.base.util.KOTLIN_FILE_EXTENSIONS
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil.findFilesWithExactPackage

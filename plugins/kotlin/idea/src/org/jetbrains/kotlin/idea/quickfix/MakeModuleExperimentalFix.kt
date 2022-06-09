@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.diagnostics.Diagnostic
