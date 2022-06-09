@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
-import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.MathUtil;
@@ -54,10 +53,9 @@ public class ClusteringSearchSession {
    * This method is designed to use from {@link com.intellij.usages.UsageContextPanel#updateLayout(List)}
    */
   public @Nullable UsageCluster findCluster(@Nullable UsageInfo usageInfo) {
-    final List<UsageCluster> clustersSnapshot = new ArrayList<>(myClusters);
-    for (UsageCluster cluster : clustersSnapshot) {
-      for (SimilarUsage usage : cluster.getUsages()) {
-        if (usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(usageInfo)) {
+    synchronized (myClusters) {
+      for (UsageCluster cluster : myClusters) {
+        if (cluster.contains(usageInfo)) {
           return cluster;
         }
       }

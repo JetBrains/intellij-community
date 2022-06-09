@@ -1,15 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.similarity.clustering;
 
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 /**
@@ -21,7 +25,7 @@ public class UsageCluster {
   private final Set<SimilarUsage> myUsages;
 
   public UsageCluster() {
-    this.myUsages = new CopyOnWriteArraySet<>();
+    this.myUsages = Collections.synchronizedSet(new LinkedHashSet<>());
   }
 
   public UsageCluster(Set<SimilarUsage> usages) {
@@ -32,8 +36,19 @@ public class UsageCluster {
     myUsages.add(usage);
   }
 
-  public @NotNull Set<SimilarUsage> getUsages() {
+  public Set<SimilarUsage> getUsages() {
     return myUsages;
+  }
+
+  public boolean contains(@Nullable UsageInfo usageInfo) {
+    synchronized (myUsages) {
+      for (SimilarUsage usage : myUsages) {
+        if (usage instanceof UsageInfo2UsageAdapter && ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(usageInfo)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -45,13 +60,17 @@ public class UsageCluster {
   @RequiresReadLock
   @RequiresBackgroundThread
   public @NotNull Set<SimilarUsage> getOnlySelectedUsages(Set<Usage> selectedUsages) {
-    return getUsages().stream().filter(e -> e.isValid() && selectedUsages.contains(e)).collect(Collectors.toSet());
+    synchronized (myUsages) {
+      return myUsages.stream().filter(e -> e.isValid() && selectedUsages.contains(e)).collect(Collectors.toSet());
+    }
   }
 
   @Override
   public String toString() {
-    return "{\n" +
-           myUsages.stream().map(usage -> usage.toString()).collect(Collectors.joining(",\n")) +
-           "}\n";
+    synchronized (myUsages) {
+      return "{\n" +
+             myUsages.stream().map(usage -> usage.toString()).collect(Collectors.joining(",\n")) +
+             "}\n";
+    }
   }
 }
