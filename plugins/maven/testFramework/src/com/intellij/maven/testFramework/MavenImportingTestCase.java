@@ -120,6 +120,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     );
   }
 
+  public boolean supportsSeveralProjectsInSameFolders() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(); // TODO should be supported!
+  }
+
   public boolean supportModuleGroups() {
     return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
            && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);

@@ -1247,6 +1247,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testCustomPomFileNameCustomContentRoots() throws Exception {
+    Assume.assumeTrue(supportsSeveralProjectsInSameFolders());
+
     createProjectSubFile("m1/pom.xml", createPomXml(
       "<artifactId>m1-pom</artifactId>" +
       "<version>1</version>" +
@@ -1294,6 +1296,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testContentRootOutsideOfModuleDir() throws Exception {
+    Assume.assumeTrue(supportsSeveralProjectsInSameFolders());
+
     createProjectSubFile("m1/pom.xml", createPomXml(
       "<artifactId>m1-pom</artifactId>" +
       "<version>1</version>" +
