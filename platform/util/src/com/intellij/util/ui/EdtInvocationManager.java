@@ -35,8 +35,9 @@ public abstract class EdtInvocationManager {
 
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
-   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
+   * Do not use outside tests because this method is messing with the EDT event queue which can be dangerous
    * @see UIUtil#pump()
+   * @see com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
