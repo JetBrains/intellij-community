@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +29,8 @@ import java.awt.*;
 /**
  * @author tav
  */
-public class GrayFilterConfig extends AnAction implements DumbAware {
+class GrayFilterConfig extends AnAction implements DumbAware {
+
   private static final String BRIGHTNESS = "brightness";
   private static final String CONTRAST = "contrast";
   private static final String ALPHA = "alpha";
@@ -44,6 +46,11 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     data[0][1] = String.valueOf(getGrayFilterProperty(BRIGHTNESS));
     data[1][1] = String.valueOf(getGrayFilterProperty(CONTRAST));
     data[2][1] = String.valueOf(getGrayFilterProperty(ALPHA));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
