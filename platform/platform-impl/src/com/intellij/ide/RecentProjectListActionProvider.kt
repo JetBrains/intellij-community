@@ -32,12 +32,14 @@ open class RecentProjectListActionProvider {
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
     val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
     groups.forEach { projectGroup ->
-      val children = projectGroup.projects.map { recentProject -> createRecentProject(recentProject, duplicates) }
+      val children = projectGroup.projects.map { recentProject ->
+        createRecentProject(recentProject, duplicates, projectGroup)
+      }
       allRecentProjectPaths.removeAll(projectGroup.projects.toSet())
       recentProjects.add(ProjectsGroupItem(projectGroup, children))
     }
 
-    allRecentProjectPaths.forEach { recentProject -> recentProjects.add(createRecentProject(recentProject, duplicates)) }
+    allRecentProjectPaths.forEach { recentProject -> recentProjects.add(createRecentProject(recentProject, duplicates, null)) }
 
     return recentProjects
   }
@@ -114,10 +116,14 @@ open class RecentProjectListActionProvider {
     return ReopenProjectAction(path, projectName, displayName)
   }
 
-  private fun createRecentProject(path: String, duplicates: Set<String>): RecentProjectItem {
+  private fun createRecentProject(path: String, duplicates: Set<String>, projectGroup: ProjectGroup?): RecentProjectItem {
     val reopenProjectAction = createOpenAction(path, duplicates)
-    return RecentProjectItem(reopenProjectAction.projectPath, reopenProjectAction.projectName,
-                             reopenProjectAction.projectNameToDisplay ?: "")
+    return RecentProjectItem(
+      reopenProjectAction.projectPath,
+      reopenProjectAction.projectName,
+      reopenProjectAction.projectNameToDisplay ?: "",
+      projectGroup
+    )
   }
 
   /**

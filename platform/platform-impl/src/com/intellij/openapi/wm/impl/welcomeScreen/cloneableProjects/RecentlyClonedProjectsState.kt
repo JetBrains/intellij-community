@@ -33,8 +33,9 @@ class RecentlyClonedProjectsState : BaseState(), PersistentStateComponent<Recent
     return state.recentlyClonedProjectsPaths.map { projectPath ->
       val projectName = recentProjectManager.getProjectName(projectPath)
       val displayName = recentProjectManager.getDisplayName(projectPath) ?: projectName
+      val projectGroup = recentProjectManager.findGroup(projectPath)
 
-      RecentProjectItem(projectPath, projectName, displayName)
+      RecentProjectItem(projectPath, projectName, displayName, projectGroup)
     }
   }
 
