@@ -23,6 +23,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +34,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.find.findUsages.similarity.MostCommonUsagePatternsComponent.findClusteringSessionInUsageView;
 
@@ -87,11 +90,12 @@ public class SimilarUsagesContextPanel extends UsageContextPanelBase {
         mySimilarUsagesComponent = new SimilarUsagesComponent(info, this);
         mainPanel.add(mySimilarUsagesComponent);
         mySimilarUsagesComponent.renderOriginalUsage();
-        mySimilarUsagesComponent.renderSimilarUsages(cluster.getUsages());
+        final Set<SimilarUsage> usagesSnapshot = new HashSet<>(cluster.getUsages());
+        mySimilarUsagesComponent.renderSimilarUsages(usagesSnapshot);
         myScrollPane = ScrollPaneFactory.createScrollPane(mainPanel);
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         BoundedRangeModelThresholdListener.install(myScrollPane.getVerticalScrollBar(), () -> {
-          mySimilarUsagesComponent.renderSimilarUsages(cluster.getUsages());
+          mySimilarUsagesComponent.renderSimilarUsages(usagesSnapshot);
           return Unit.INSTANCE;
         });
         add(myScrollPane, BorderLayout.CENTER);

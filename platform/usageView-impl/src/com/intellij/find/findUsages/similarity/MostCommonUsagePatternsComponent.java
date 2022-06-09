@@ -152,24 +152,23 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private @NotNull JPanel createSummaryComponent(@Nullable ClusteringSearchSession session,
-                                                 @NotNull Collection<UsageCluster> topClusters) {
+                                                 @NotNull Collection<UsageCluster> clusterToShow) {
     JPanel summaryPanel = new JPanel(new VerticalLayout(0));
     if (session == null) return summaryPanel;
-    myAlreadyRenderedSnippets = 0;
-    topClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
-      renderCluster(summaryPanel, cluster.getUsages());
+    clusterToShow.stream().limit(CLUSTER_LIMIT).forEach(cluster -> {
+      renderClusterDescription(summaryPanel, cluster.getUsages());
     });
     final JScrollBar verticalScrollBar = myScrollPane.getVerticalScrollBar();
     BoundedRangeModelThresholdListener.install(verticalScrollBar, () -> {
-      topClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
-        renderCluster(summaryPanel, cluster.getUsages());
+      clusterToShow.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
+        renderClusterDescription(summaryPanel, cluster.getUsages());
       });
       return Unit.INSTANCE;
     });
     return summaryPanel;
   }
 
-  private void renderCluster(@NotNull JPanel summaryPanel, @NotNull Collection<SimilarUsage> selectedUsages) {
+  private void renderClusterDescription(@NotNull JPanel summaryPanel, @NotNull Collection<SimilarUsage> selectedUsages) {
     final Set<SimilarUsage> usageFilteredByGroup = new HashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       usageFilteredByGroup.addAll(selectedUsages);
