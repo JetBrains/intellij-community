@@ -52,4 +52,8 @@ public class AssociateFileTypeAction extends AnAction {
     presentation.setEnabled(haveSmthToDo);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

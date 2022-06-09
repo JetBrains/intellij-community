@@ -17,6 +17,11 @@ public class InteractiveSplitAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     EditorWindow editorWindow = e.getData(EditorWindow.DATA_KEY);
     // When invoked from editor VF in context can be different from actual editor VF, e.g. for diff in editor tab

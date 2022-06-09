@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -29,5 +30,10 @@ public class SynchronizeAction extends AnAction implements DumbAware {
     FileDocumentManager.getInstance().saveAllDocuments();
     SaveAndSyncHandler.getInstance().refreshOpenFiles();
     VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

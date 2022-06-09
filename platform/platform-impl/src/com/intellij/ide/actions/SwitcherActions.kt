@@ -55,6 +55,10 @@ internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : Du
     event.presentation.isEnabledAndVisible = event.project != null
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected } ?: run {

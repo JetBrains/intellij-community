@@ -4,10 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -47,5 +44,10 @@ public class RecentProjectsGroup extends ActionGroup implements DumbAware {
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(RecentProjectListActionProvider.getInstance().getActions(true).size() > 0);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
