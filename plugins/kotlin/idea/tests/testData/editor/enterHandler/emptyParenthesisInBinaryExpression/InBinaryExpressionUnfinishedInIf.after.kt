@@ -1,6 +1,7 @@
 fun test() {
     if (true &&
-            <caret>)
+        <caret>)
 }
 
-// SET_TRUE: CONTINUATION_INDENT_IN_IF_CONDITIONS
+// SET_FALSE: CONTINUATION_INDENT_IN_IF_CONDITIONS
+// IGNORE_FORMATTER

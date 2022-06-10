@@ -844,19 +844,9 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIf.after.kt");
             }
 
-            @TestMetadata("InBinaryExpressionUnfinishedInIfInv.after.kt")
-            public void testInBinaryExpressionUnfinishedInIfInv() throws Exception {
-                runTest("testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIfInv.after.kt");
-            }
-
             @TestMetadata("InBinaryExpressionsBeforeCloseParenthesis.after.kt")
             public void testInBinaryExpressionsBeforeCloseParenthesis() throws Exception {
                 runTest("testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesis.after.kt");
-            }
-
-            @TestMetadata("InBinaryExpressionsBeforeCloseParenthesisInv.after.kt")
-            public void testInBinaryExpressionsBeforeCloseParenthesisInv() throws Exception {
-                runTest("testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesisInv.after.kt");
             }
 
             @TestMetadata("InExpressionsParentheses.after.kt")
@@ -1979,6 +1969,16 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @TestMetadata("InBinaryExpressionUnfinished.after.inv.kt")
             public void testInBinaryExpressionUnfinished() throws Exception {
                 runTest("testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinished.after.inv.kt");
+            }
+
+            @TestMetadata("InBinaryExpressionUnfinishedInIf.after.inv.kt")
+            public void testInBinaryExpressionUnfinishedInIf() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionUnfinishedInIf.after.inv.kt");
+            }
+
+            @TestMetadata("InBinaryExpressionsBeforeCloseParenthesis.after.inv.kt")
+            public void testInBinaryExpressionsBeforeCloseParenthesis() throws Exception {
+                runTest("testData/editor/enterHandler/emptyParenthesisInBinaryExpression/InBinaryExpressionsBeforeCloseParenthesis.after.inv.kt");
             }
 
             @TestMetadata("InExpressionsParenthesesBeforeOperand.after.inv.kt")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.formatter
 
 import com.intellij.injected.editor.EditorWindow
@@ -62,7 +62,8 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
                 doNewlineTest(
                     originalFile.path, afterFilePath,
                     withoutCustomLineIndentProvider = withoutCustomLineIndentProvider,
-                    ignoreFormatter = ignoreFormatter
+                    ignoreFormatter = ignoreFormatter,
+                    isInvertedTest = inverted,
                 )
             }
         )
@@ -72,10 +73,11 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         beforeFilePath: String,
         afterFilePath: String,
         withoutCustomLineIndentProvider: Boolean,
-        ignoreFormatter: Boolean
+        ignoreFormatter: Boolean,
+        isInvertedTest: Boolean,
     ) {
         KotlinLineIndentProvider.useFormatter = true
-        typeAndCheck(beforeFilePath, afterFilePath, "with FormatterBasedLineIndentProvider", ignoreFormatter)
+        typeAndCheck(beforeFilePath, afterFilePath, "with FormatterBasedLineIndentProvider", ignoreFormatter, isInvertedTest)
         KotlinLineIndentProvider.useFormatter = false
 
         if (!withoutCustomLineIndentProvider) {
@@ -100,7 +102,13 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         )
     }
 
-    private fun typeAndCheck(beforeFilePath: String, afterFilePath: String, errorMessage: String, invertResult: Boolean = false) {
+    private fun typeAndCheck(
+        beforeFilePath: String,
+        afterFilePath: String,
+        errorMessage: String,
+        invertResult: Boolean = false,
+        isInvertedTest: Boolean = false,
+    ) {
         configureByFile(beforeFilePath)
         executeAction(IdeActions.ACTION_EDITOR_ENTER)
         val editor = editor.safeAs<EditorWindow>()?.delegate ?: editor
@@ -114,7 +122,7 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         }
 
         if (invertResult)
-            Assert.assertTrue("Remove // IGNORE_FORMATTER", result.isFailure)
+            Assert.assertTrue("Remove // IGNORE_FORMATTER", isInvertedTest || result.isFailure)
         else
             result.getOrThrow()
     }
