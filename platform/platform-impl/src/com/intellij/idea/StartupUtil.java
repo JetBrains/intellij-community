@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
-import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
@@ -879,8 +878,7 @@ public final class StartupUtil {
     log.info("PID: " + ProcessHandle.current().pid());
 
     if (SystemInfoRt.isXWindow) {
-      String wmName = X11UiUtil.getWmName();
-      log.info("WM detected: " + wmName + ", desktop: " + Objects.requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "-"));
+      log.info("desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
     }
 
     List<String> jvmOptions = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -952,19 +950,9 @@ public final class StartupUtil {
     //noinspection ResultOfMethodCallIgnored
     IdeEventQueue.getInstance();
 
-    if (!isHeadless) {
-      if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
-        activity = activity.endAndStart("repaint manager set");
-        RepaintManager.setCurrentManager(new AssertiveRepaintManager());
-      }
-
-      if (SystemInfoRt.isXWindow) {
-        activity = activity.endAndStart("linux wm set");
-        String wmName = X11UiUtil.getWmName();
-        if (wmName != null) {
-          X11UiUtil.patchDetectedWm(wmName);
-        }
-      }
+    if (!isHeadless && "true".equals(System.getProperty("idea.check.swing.threading"))) {
+      activity = activity.endAndStart("repaint manager set");
+      RepaintManager.setCurrentManager(new AssertiveRepaintManager());
     }
 
     // do not crash AWT on exceptions
