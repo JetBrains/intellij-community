@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
@@ -296,7 +295,7 @@ public abstract class KtParsingTestCase extends KtPlatformLiteFixture {
     public static void ensureParsed(PsiFile file) {
         file.accept(new PsiElementVisitor() {
             @Override
-            public void visitElement(PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
                 element.acceptChildren(this);
             }
         });

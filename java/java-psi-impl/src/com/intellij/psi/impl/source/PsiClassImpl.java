@@ -37,11 +37,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
   private volatile String myCachedName;
 
-  public PsiClassImpl(PsiClassStub stub) {
+  public PsiClassImpl(PsiClassStub<?> stub) {
     this(stub, JavaStubElementTypes.CLASS);
   }
 
-  protected PsiClassImpl(PsiClassStub stub, IStubElementType type) {
+  protected PsiClassImpl(PsiClassStub<?> stub, IStubElementType<?,?> type) {
     super(stub, type);
     addTrace(null);
   }
@@ -51,7 +51,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     addTrace(null);
   }
 
-  private void addTrace(@Nullable PsiClassStub stub) {
+  private void addTrace(@Nullable PsiClassStub<?> stub) {
     if (ourTraceStubAstBinding) {
       String creationTrace = "Creation thread: " + Thread.currentThread() + "\n" + DebugUtil.currentStackTrace();
       if (stub != null) {
@@ -110,7 +110,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiElement getScope() {
-    PsiClassStub stub = getStub();
+    PsiClassStub<?> stub = getStub();
     if (stub != null) {
       return stub.getParentStub().getPsi();
     }
@@ -132,7 +132,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   public String getName() {
     String name = myCachedName;
     if (name != null) return name;
-    PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub == null) {
       PsiIdentifier identifier = getNameIdentifier();
       name = identifier == null ? null : identifier.getText();
@@ -146,7 +146,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public String getQualifiedName() {
-    PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getQualifiedName();
     }
@@ -171,8 +171,8 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    PsiModifierList modlist = getModifierList();
-    return modlist != null && modlist.hasModifierProperty(name);
+    PsiModifierList modList = getModifierList();
+    return modList != null && modList.hasModifierProperty(name);
   }
 
   @Override
@@ -223,9 +223,9 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Override
   @Nullable
   public PsiClass getContainingClass() {
-    PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
-      StubElement parent = stub.getParentStub();
+      StubElement<?> parent = stub.getParentStub();
       return parent instanceof PsiClassStub ? ((PsiClassStub<?>)parent).getPsi() : null;
     }
 
@@ -417,7 +417,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean isInterface() {
-    PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isInterface();
     }
@@ -428,7 +428,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean isAnnotationType() {
-    PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isAnnotationType();
     }
@@ -438,7 +438,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean isEnum() {
-    PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isEnum();
     }
@@ -449,7 +449,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public boolean isRecord() {
-    PsiClassStub stub = getGreenStub();
+    PsiClassStub<?> stub = getGreenStub();
     if (stub != null) {
       return stub.isRecord();
     }
