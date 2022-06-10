@@ -64,7 +64,7 @@ internal class DocumentationUI(
     }, { icons[it] })
     scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
-    linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, browser::navigateByLink)
+    linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
 
     browser.ui = this
     Disposer.register(this, browser)
@@ -226,6 +226,15 @@ internal class DocumentationUI(
       is UIState.RestoreFromSnapshot -> {
         uiState.snapshot.invoke()
       }
+    }
+  }
+
+  private fun linkActivated(href: String) {
+    if (href.startsWith("#")) {
+      UIUtil.scrollToReference(editorPane, href.removePrefix("#"))
+    }
+    else {
+      browser.navigateByLink(href)
     }
   }
 
