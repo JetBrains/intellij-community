@@ -1557,7 +1557,7 @@
       <add-to-group group-id="DebugReloadGroup" anchor="last"/>
     </action>
 
-    <group id="TouchBar">
+    <group id="TouchBar" searchable="false">
       <group id="TouchBarEditorSearch">
         <action id="EditorSearchSession.ToggleMatchCase" class="com.intellij.find.editorHeaderActions.ToggleMatchCase"/>
         <action id="EditorSearchSession.ToggleWholeWordsOnlyAction" class="com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction"/>
@@ -1625,6 +1625,8 @@
           <separator text="type.small"/>
         </group>
       </group>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true">
