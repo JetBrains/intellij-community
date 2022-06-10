@@ -13,13 +13,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runAll
 import com.intellij.util.throwIfNotEmpty
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
+import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
 import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
 import java.nio.file.Path
 import java.util.*
@@ -59,8 +57,10 @@ internal class FileTestFixtureImpl(
     }
 
     withSuppressedErrors {
-      configureFixtureCaches()
-      refreshFixtureRoot()
+      runCatching { configureFixtureCaches() }
+        .onFailureCatching { invalidateFixtureCaches() }
+        .getOrThrow()
+      root.refreshAndWait()
     }
 
     isInitialized = true
@@ -68,11 +68,11 @@ internal class FileTestFixtureImpl(
   }
 
   override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { rollbackAll() },
-      ThrowableRunnable { throwIfNotEmpty(getErrors()) },
-      ThrowableRunnable { Disposer.dispose(testRootDisposable) }
-    ).run()
+    runAll(
+      { rollbackAll() },
+      { throwIfNotEmpty(getErrors()) },
+      { Disposer.dispose(testRootDisposable) }
+    )
   }
 
   private fun createFixtureRoot(relativePath: String): VirtualFile {
@@ -174,17 +174,8 @@ internal class FileTestFixtureImpl(
   }
 
   private fun getErrors(): List<Throwable> {
-    refreshFixtureRoot()
+    root.refreshAndWait()
     return errors
-  }
-
-  private fun refreshFixtureRoot() {
-    runWriteActionAndWait {
-      root.refresh(false, true)
-    }
-    runInEdtAndWait {
-      UIUtil.dispatchAllInvocationEvents()
-    }
   }
 
   override fun snapshot(relativePath: String) {

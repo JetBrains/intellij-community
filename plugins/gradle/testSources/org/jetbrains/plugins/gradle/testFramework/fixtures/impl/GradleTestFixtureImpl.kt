@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase.Companion.openProjectFrom
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
@@ -17,18 +16,15 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
+import com.intellij.testFramework.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.ThrowableRunnable
-import com.intellij.util.ui.UIUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.generateWrapper
-import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
+import org.jetbrains.plugins.gradle.testFramework.util.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import java.util.concurrent.TimeUnit
@@ -72,17 +68,18 @@ internal class GradleTestFixtureImpl private constructor(
     installTaskExecutionWatcher()
     installProjectReloadWatcher()
 
-    _project = openProjectFrom(fileFixture.root)
+    _project = openProject(fileFixture.root)
   }
 
   override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { projectOperations.waitForOperation() },
-      ThrowableRunnable { project.forceCloseProject(save = false) },
-      ThrowableRunnable { Disposer.dispose(testDisposable) },
-      ThrowableRunnable { fileFixture.tearDown() },
-      ThrowableRunnable { sdkFixture.tearDown() },
-    ).run()
+    runAll(
+      { fileFixture.root.refreshAndWait() },
+      { projectOperations.waitForOperation() },
+      { project.closeProject() },
+      { Disposer.dispose(testDisposable) },
+      { fileFixture.tearDown() },
+      { sdkFixture.tearDown() }
+    )
   }
 
   private fun installTaskExecutionWatcher() {
@@ -125,12 +122,7 @@ internal class GradleTestFixtureImpl private constructor(
           ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
         )
       }
-      runWriteActionAndWait {
-        fileFixture.root.refresh(false, true)
-      }
-      runInEdtAndWait {
-        UIUtil.dispatchAllInvocationEvents()
-      }
+      fileFixture.root.refreshAndWait()
     }
   }
 
@@ -147,9 +139,11 @@ internal class GradleTestFixtureImpl private constructor(
     }
 
     private fun createProjectCaches(projectRoot: VirtualFile) {
-      waitForProjectReload {
-        openProjectFrom(projectRoot)
-      }.forceCloseProject(save = true)
+      val project = openProjectAndWait(projectRoot)
+      runAll(
+        { projectRoot.refreshAndWait() },
+        { project.closeProject(save = true) }
+      )
     }
   }
 }
