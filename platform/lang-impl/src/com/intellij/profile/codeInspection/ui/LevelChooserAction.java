@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,6 +120,8 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return createComboBoxButton(presentation);
+    final ComboBoxButton button = createComboBoxButton(presentation);
+    button.setMinimumSize(new Dimension(100, 0));
+    return button;
   }
 }
