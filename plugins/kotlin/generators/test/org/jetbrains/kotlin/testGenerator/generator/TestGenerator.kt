@@ -22,15 +22,15 @@ object TestGenerator {
         RunWith::class
     )
 
-    fun write(workspace: TWorkspace) {
+    fun write(workspace: TWorkspace, isUpToDateCheck: Boolean = false) {
         for (group in workspace.groups) {
             for (suite in group.suites) {
-                write(suite, group)
+                write(suite, group, isUpToDateCheck)
             }
         }
     }
 
-    private fun write(suite: TSuite, group: TGroup) {
+    private fun write(suite: TSuite, group: TGroup, isUpToDateCheck: Boolean) {
         val packageName = suite.generatedClassName.substringBeforeLast('.')
         val rootModelName = suite.generatedClassName.substringAfterLast('.')
 
@@ -63,13 +63,15 @@ object TestGenerator {
 
         val filePath = suite.generatedClassName.replace('.', '/') + ".java"
         val file = File(group.testSourcesRoot, filePath)
-        write(file, postProcessContent(content))
+        write(file, postProcessContent(content), isUpToDateCheck)
     }
 
-    private fun write(file: File, content: String) {
+    private fun write(file: File, content: String, isUpToDateCheck: Boolean) {
         val oldContent = file.takeIf { it.isFile }?.readText() ?: ""
 
         if (normalizeContent(content) != normalizeContent(oldContent)) {
+            if (isUpToDateCheck) error("'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration")
+
             file.writeText(content)
             val path = file.toRelativeStringSystemIndependent(KotlinRoot.DIR)
             println("Updated $path")
