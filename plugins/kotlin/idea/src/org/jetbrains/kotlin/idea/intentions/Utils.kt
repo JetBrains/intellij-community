@@ -425,14 +425,9 @@ fun ClassDescriptor.isRange(): Boolean {
 }
 
 fun KtTypeReference.isAnnotatedDeep(): Boolean {
-    fun List<KtTypeReference>.areAnnotatedDeep(): Boolean {
-        for (type in this) {
-            if (type.annotationEntries.isNotEmpty()) return true
-            if (type.typeArguments().mapNotNull { it.typeReference }.areAnnotatedDeep()) return true
-        }
-        return false
-    }
-    return listOf(this).areAnnotatedDeep()
+    if (annotationEntries.isNotEmpty()) return true
+    if (typeArguments().any { it.typeReference?.isAnnotatedDeep() == true }) return true
+    return false
 }
 
 fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {
