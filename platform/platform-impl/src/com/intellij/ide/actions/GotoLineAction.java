@@ -52,4 +52,9 @@ public class GotoLineAction extends AnAction implements DumbAware, LightEditComp
     Editor editor = event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     presentation.setEnabledAndVisible(editor != null);
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

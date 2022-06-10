@@ -204,5 +204,10 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       }
       super.update(e);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 }
