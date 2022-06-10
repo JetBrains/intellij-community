@@ -74,8 +74,8 @@ internal fun createKotlinCompilation(
     dependencyClasspath: Iterable<String> = emptyList(),
     cachedArgsInfo: CachedArgsInfo<*> = createCachedArgsInfo(),
     kotlinTaskProperties: KotlinTaskProperties = createKotlinTaskProperties(),
-    nativeExtensions: KotlinNativeCompilationExtensions? = null
-
+    nativeExtensions: KotlinNativeCompilationExtensions? = null,
+    associateCompilations: Set<KotlinCompilationCoordinates> = emptySet()
 ): KotlinCompilationImpl {
     return KotlinCompilationImpl(
         name = name,
@@ -87,7 +87,8 @@ internal fun createKotlinCompilation(
         dependencyClasspath = dependencyClasspath.toList().toTypedArray(),
         cachedArgsInfo = cachedArgsInfo,
         kotlinTaskProperties = kotlinTaskProperties,
-        nativeExtensions = nativeExtensions
+        nativeExtensions = nativeExtensions,
+        associateCompilations = associateCompilations
     )
 }
 
