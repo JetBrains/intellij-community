@@ -189,6 +189,8 @@ private constructor(disposable: Disposable,
       }
 
       private fun loadDetails(startIdx: Int, endIdx: Int) {
+        if (startIdx < 0 || endIdx < 0) return
+
         for (i in startIdx..endIdx) {
           val account = listModel.getElementAt(i)
           resultsMap[account]?.cancel(true)
