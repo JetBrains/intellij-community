@@ -87,22 +87,21 @@ public abstract class ExperimentalUI {
   }
 
   private IconPathPatcher createPathPatcher() {
-    Map<ClassLoader, Map<String, String>> paths = getIconMappings();
+    Map<String, String> paths = loadIconMappings();
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
-        Map<String, String> mappings = paths.get(classLoader);
-        return mappings != null ? mappings.get(Strings.trimStart(path, "/")) : null;
+        return paths.get(Strings.trimStart(path, "/"));
       }
 
       @Override
       public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
-        return originalClassLoader;
+        return getClass().getClassLoader();
       }
     };
   }
 
-  public abstract Map<ClassLoader, Map<String, String>> getIconMappings();
+  public abstract Map<String, String> loadIconMappings();
 
   public abstract void onExpUIEnabled();
   public abstract void onExpUIDisabled();
