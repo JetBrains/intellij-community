@@ -127,7 +127,7 @@ class JavaJUnitUnconstructableInspectionTest : JUnitUnconstructableTestCaseInspe
       import java.util.Arrays;
       import junit.framework.TestCase;
       import org.junit.runner.RunWith;
-      import org.junit.runner.Parameterized;
+      import org.junit.runners.Parameterized;
       import org.junit.Test;
 
       @RunWith(Parameterized.class)
