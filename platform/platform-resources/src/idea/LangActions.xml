@@ -945,6 +945,8 @@
               icon="AllIcons.Ide.LocalScope"/>
       <action id="ProjectView.FileNesting"
               class="com.intellij.ide.projectView.impl.ConfigureFilesNestingAction"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="StructureViewPopupMenu">
