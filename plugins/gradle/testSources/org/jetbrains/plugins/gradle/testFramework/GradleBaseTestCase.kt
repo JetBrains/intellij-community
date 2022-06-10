@@ -28,16 +28,21 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
   }
 
   companion object {
+    private val initializedFixtures = LinkedHashSet<FixtureId>()
     private val fixtures = LinkedHashMap<FixtureId, GradleTestFixture>()
 
     private fun getOrCreateGradleTestFixture(gradleVersion: GradleVersion, builder: GradleTestFixtureBuilder): GradleTestFixture {
       val fixtureId = builder.getFixtureId(gradleVersion)
+      if (fixtureId !in initializedFixtures) {
+        destroyAllGradleFixtures()
+      }
       if (fixtureId !in fixtures) {
         val fixture = builder.createFixture(gradleVersion)
         runCatching { fixture.setUp() }
           .onFailureCatching { fixture.tearDown() }
           .getOrThrow()
         fixtures[fixtureId] = fixture
+        initializedFixtures.add(fixtureId)
       }
       return fixtures[fixtureId]!!
     }
@@ -51,6 +56,7 @@ abstract class GradleBaseTestCase : ExternalSystemTestCase() {
     private fun rollbackOrDestroyGradleTestFixture(fixture: GradleTestFixture) {
       fixture.fileFixture.rollbackAll()
       if (fixture.fileFixture.hasErrors()) {
+        initializedFixtures.remove(fixture.getFixtureId())
         destroyGradleFixture(fixture)
       }
     }
