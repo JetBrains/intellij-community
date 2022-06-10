@@ -41,9 +41,18 @@
       "dependencyAnalyzer.svg": "actions/dependencyAnalyzer.svg",
       "gradleLoadChanges.svg": "icons/gradleLoadChanges.svg",
       "gradleNavigate.svg": "icons/gradleNavigate.svg",
+      "mavenChildrenProjects.svg": "images/childrenProjects.svg",
+      "mavenLoadChanges.svg": "images/mavenLoadChanges.svg",
+      "mavenModule.svg": "images/modulesClosed.svg",
+      "mavenParentProjects.svg": "images/parentProjects.svg",
+      "mavenPlugin.svg": "images/mavenPlugin.svg",
+      "mavenPluginGoal.svg": "images/pluginGoal.svg",
+      "mavenProfiles.svg": "images/profilesClosed.svg",
+      "mavenProject.svg": "images/mavenProject.svg",
       "task.svg": "icons/task.svg",
       "taskGroup.svg": "nodes/configFolder.svg",
-      "toggleOfflineMode.svg": "actions/offlineMode.svg"
+      "toggleOfflineMode.svg": "actions/offlineMode.svg",
+      "updateFolders.svg": "images/updateFolders.svg"
     },
     "editor": {
       "inlayGlobe.svg": "actions/inlayGlobe.svg",
@@ -525,6 +534,7 @@
       "gradle.svg": "icons/toolWindowGradle.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
       "learn.svg": "img/featureTrainerToolWindow.svg",
+      "maven.svg": "images/toolWindowMaven.svg",
       "messages.svg": "toolwindows/toolWindowMessages.svg",
       "notifications.svg": "toolwindows/notifications.svg",
       "problems.svg": [
@@ -537,6 +547,7 @@
       "run.svg": "toolwindows/toolWindowRun.svg",
       "services.svg": "toolwindows/toolWindowServices.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
+      "terminal.svg": "icons/OpenTerminal_13x13.svg",
       "todo.svg": "toolwindows/toolWindowTodo.svg",
       "vcs.svg": [
         "toolwindows/toolWindowChanges.svg",
