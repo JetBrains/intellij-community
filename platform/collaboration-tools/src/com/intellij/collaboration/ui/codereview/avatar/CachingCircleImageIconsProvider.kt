@@ -31,14 +31,20 @@ abstract class CachingCircleImageIconsProvider<T : Any>(private val defaultIcon:
     }
   }
 
-  private fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int): CompletableFuture<Image?> =
-    loadImageAsync(key).thenApplyAsync({ image ->
-                                         image?.let {
-                                           val hidpiImage = ensureHiDPI(image, scaleCtx)
-                                           val scaleImage = scaleImage(hidpiImage, width, height)
-                                           createCircleImage(toBufferedImage(scaleImage))
-                                         }
-                                       }, avatarResizeExecutor)
+  private fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int): CompletableFuture<Image?> {
+    return try {
+      loadImageAsync(key).thenApplyAsync({ image ->
+                                           image?.let {
+                                             val hidpiImage = ensureHiDPI(image, scaleCtx)
+                                             val scaleImage = scaleImage(hidpiImage, width, height)
+                                             createCircleImage(toBufferedImage(scaleImage))
+                                           }
+                                         }, avatarResizeExecutor)
+    }
+    catch (e: Throwable) {
+      CompletableFuture.failedFuture(e)
+    }
+  }
 
   protected abstract fun loadImageAsync(key: T): CompletableFuture<Image?>
 
