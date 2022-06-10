@@ -4,6 +4,22 @@ package com.intellij.psi;
 import com.intellij.psi.javadoc.*;
 
 public abstract class JavaElementVisitor extends PsiElementVisitor {
+  public void visitAnnotation(PsiAnnotation annotation) {
+    visitElement(annotation);
+  }
+
+  public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
+    visitElement(initializer);
+  }
+
+  public void visitAnnotationMethod(PsiAnnotationMethod method) {
+    visitMethod(method);
+  }
+
+  public void visitAnnotationParameterList(PsiAnnotationParameterList list) {
+    visitElement(list);
+  }
+
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
     visitClass(aClass);
   }
@@ -36,8 +52,16 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitYieldStatement(PsiYieldStatement statement) {
-    visitStatement(statement);
+  public void visitCallExpression(PsiCallExpression callExpression) {
+    visitExpression(callExpression);
+  }
+
+  public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
+    visitElement(list);
+  }
+
+  public void visitCatchSection(PsiCatchSection section) {
+    visitElement(section);
   }
 
   public void visitClass(PsiClass aClass) {
@@ -56,6 +80,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(block);
   }
 
+  public void visitCodeFragment(JavaCodeFragment codeFragment) {
+    visitFile(codeFragment);
+  }
+
   public void visitConditionalExpression(PsiConditionalExpression expression) {
     visitExpression(expression);
   }
@@ -66,6 +94,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitDeclarationStatement(PsiDeclarationStatement statement) {
     visitStatement(statement);
+  }
+
+  public void visitDefaultCaseLabelElement(PsiDefaultCaseLabelElement element) {
+    visitElement(element);
   }
 
   public void visitDocComment(PsiDocComment comment) {
@@ -80,12 +112,24 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(value);
   }
 
+  public void visitDocToken(PsiDocToken token) {
+    visitElement(token);
+  }
+
   public void visitDoWhileStatement(PsiDoWhileStatement statement) {
     visitStatement(statement);
   }
 
   public void visitEmptyStatement(PsiEmptyStatement statement) {
     visitStatement(statement);
+  }
+
+  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    visitField(enumConstant);
+  }
+
+  public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
+    visitAnonymousClass(enumConstantInitializer);
   }
 
   public void visitExpression(PsiExpression expression) {
@@ -108,12 +152,16 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitVariable(field);
   }
 
+  public void visitForeachStatement(PsiForeachStatement statement) {
+    visitStatement(statement);
+  }
+
   public void visitForStatement(PsiForStatement statement) {
     visitStatement(statement);
   }
 
-  public void visitForeachStatement(PsiForeachStatement statement) {
-    visitStatement(statement);
+  public void visitGuardedPattern(PsiGuardedPattern pattern) {
+    visitPattern(pattern);
   }
 
   public void visitIdentifier(PsiIdentifier identifier) {
@@ -124,12 +172,20 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
+  public void visitImplicitVariable(ImplicitVariable variable) {
+    visitLocalVariable(variable);
+  }
+
   public void visitImportList(PsiImportList list) {
     visitElement(list);
   }
 
   public void visitImportStatement(PsiImportStatement statement) {
     visitElement(statement);
+  }
+
+  public void visitImportStaticReferenceElement(PsiImportStaticReferenceElement reference) {
+    visitElement(reference);
   }
 
   public void visitImportStaticStatement(PsiImportStaticStatement statement) {
@@ -144,6 +200,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitExpression(expression);
   }
 
+  public void visitJavaFile(PsiJavaFile file){
+    visitFile(file);
+  }
+
   public void visitJavaToken(PsiJavaToken token){
     visitElement(token);
   }
@@ -155,6 +215,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitLabeledStatement(PsiLabeledStatement statement) {
     visitStatement(statement);
   }
+
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+     visitExpression(expression);
+   }
 
   public void visitLiteralExpression(PsiLiteralExpression expression) {
     visitExpression(expression);
@@ -172,12 +236,28 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitCallExpression(expression);
   }
 
-  public void visitCallExpression(PsiCallExpression callExpression) {
-    visitExpression(callExpression);
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    visitReferenceExpression(expression);
   }
 
   public void visitModifierList(PsiModifierList list) {
     visitElement(list);
+  }
+
+  public void visitModule(PsiJavaModule module) {
+    visitElement(module);
+  }
+
+  public void visitModuleReferenceElement(PsiJavaModuleReferenceElement refElement) {
+    visitElement(refElement);
+  }
+
+  public void visitModuleStatement(PsiStatement statement) {
+    visitStatement(statement);
+  }
+
+  public void visitNameValuePair(PsiNameValuePair pair) {
+    visitElement(pair);
   }
 
   public void visitNewExpression(PsiNewExpression expression) {
@@ -188,6 +268,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(aPackage);
   }
 
+  public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+    visitModuleStatement(statement);
+  }
+
   public void visitPackageStatement(PsiPackageStatement statement) {
     visitElement(statement);
   }
@@ -196,30 +280,29 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitVariable(parameter);
   }
 
-  public void visitRecordComponent(PsiRecordComponent recordComponent) {
-    visitVariable(recordComponent);
-  }
-
-  public void visitReceiverParameter(PsiReceiverParameter parameter) {
-    visitVariable(parameter);
-  }
-
   public void visitParameterList(PsiParameterList list) {
     visitElement(list);
-  }
-
-
-  public void visitRecordHeader(PsiRecordHeader recordHeader) {
-    visitElement(recordHeader);
   }
 
   public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
     visitExpression(expression);
   }
 
-  public void visitUnaryExpression(PsiUnaryExpression expression) {
-    visitExpression(expression);
+  public void visitParenthesizedPattern(PsiParenthesizedPattern pattern) {
+    visitPattern(pattern);
   }
+
+  public void visitPattern(PsiPattern pattern) {
+    visitElement(pattern);
+  }
+
+  public void visitPatternVariable(PsiPatternVariable variable) {
+    visitParameter(variable);
+  }
+
+  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+     visitExpression(expression);
+   }
 
   public void visitPostfixExpression(PsiPostfixExpression expression) {
     visitUnaryExpression(expression);
@@ -229,11 +312,23 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitUnaryExpression(expression);
   }
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-    visitElement(reference);
+  public void visitProvidesStatement(PsiProvidesStatement statement) {
+    visitModuleStatement(statement);
   }
 
-  public void visitImportStaticReferenceElement(PsiImportStaticReferenceElement reference) {
+  public void visitReceiverParameter(PsiReceiverParameter parameter) {
+    visitVariable(parameter);
+  }
+
+  public void visitRecordComponent(PsiRecordComponent recordComponent) {
+    visitVariable(recordComponent);
+  }
+
+  public void visitRecordHeader(PsiRecordHeader recordHeader) {
+    visitElement(recordHeader);
+  }
+
+  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     visitElement(reference);
   }
 
@@ -248,10 +343,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
    */
   public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-    visitReferenceExpression(expression);
-  }
-
   public void visitReferenceList(PsiReferenceList list) {
     visitElement(list);
   }
@@ -260,14 +351,46 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(list);
   }
 
-  public void visitTypeParameterList(PsiTypeParameterList list) {
-    visitElement(list);
+  public void visitRequiresStatement(PsiRequiresStatement statement) {
+    visitModuleStatement(statement);
+  }
+
+  public void visitResourceExpression(PsiResourceExpression expression) {
+    visitElement(expression);
+  }
+
+  public void visitResourceList(PsiResourceList resourceList) {
+    visitElement(resourceList);
+  }
+
+  public void visitResourceVariable(PsiResourceVariable variable) {
+    visitLocalVariable(variable);
   }
 
   public void visitReturnStatement(PsiReturnStatement statement) {
     visitStatement(statement);
   }
 
+  public void visitSnippetAttribute(PsiSnippetAttribute attribute) {
+    visitElement(attribute);
+  }
+
+  public void visitSnippetAttributeList(PsiSnippetAttributeList attributeList) {
+    visitElement(attributeList);
+  }
+
+  public void visitSnippetDocTagBody(PsiSnippetDocTagBody body) {
+    visitElement(body);
+  }
+
+  public void visitSnippetDocTagValue(PsiSnippetDocTagValue value) {
+    visitElement(value);
+  }
+
+  public void visitSnippetTag(PsiSnippetDocTag snippetDocTag) {
+    visitInlineDocTag(snippetDocTag);
+  }
+  
   public void visitStatement(PsiStatement statement) {
     visitElement(statement);
   }
@@ -276,11 +399,15 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
-    visitStatement(statement);
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    visitExpression(expression);
   }
 
   public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    visitStatement(statement);
+  }
+
+  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
     visitStatement(statement);
   }
 
@@ -304,28 +431,32 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitCatchSection(PsiCatchSection section) {
-    visitElement(section);
-  }
-
-  public void visitResourceList(PsiResourceList resourceList) {
-    visitElement(resourceList);
-  }
-
-  public void visitResourceVariable(PsiResourceVariable variable) {
-    visitLocalVariable(variable);
-  }
-
-  public void visitResourceExpression(PsiResourceExpression expression) {
-    visitElement(expression);
+  public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    visitExpression(expression);
   }
 
   public void visitTypeElement(PsiTypeElement type) {
     visitElement(type);
   }
 
-  public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+  public void visitTypeParameter(PsiTypeParameter classParameter) {
+    visitClass(classParameter);
+  }
+
+  public void visitTypeParameterList(PsiTypeParameterList list) {
+    visitElement(list);
+  }
+
+  public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
+    visitPattern(pattern);
+  }
+
+  public void visitUnaryExpression(PsiUnaryExpression expression) {
     visitExpression(expression);
+  }
+
+  public void visitUsesStatement(PsiUsesStatement statement) {
+    visitModuleStatement(statement);
   }
 
   public void visitVariable(PsiVariable variable) {
@@ -336,139 +467,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitJavaFile(PsiJavaFile file){
-    visitFile(file);
-  }
-
-  public void visitImplicitVariable(ImplicitVariable variable) {
-    visitLocalVariable(variable);
-  }
-
-  public void visitDocToken(PsiDocToken token) {
-    visitElement(token);
-  }
-
-  public void visitTypeParameter(PsiTypeParameter classParameter) {
-    visitClass(classParameter);
-  }
-
-  public void visitAnnotation(PsiAnnotation annotation) {
-    visitElement(annotation);
-  }
-
-  public void visitAnnotationParameterList(PsiAnnotationParameterList list) {
-    visitElement(list);
-  }
-
-  public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
-    visitElement(initializer);
-  }
-
-  public void visitNameValuePair(PsiNameValuePair pair) {
-    visitElement(pair);
-  }
-
-  public void visitAnnotationMethod(PsiAnnotationMethod method) {
-    visitMethod(method);
-  }
-
-  public void visitEnumConstant(PsiEnumConstant enumConstant) {
-    visitField(enumConstant);
-  }
-
-  public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
-    visitAnonymousClass(enumConstantInitializer);
-  }
-
-  public void visitCodeFragment(JavaCodeFragment codeFragment) {
-    visitFile(codeFragment);
-  }
-
-  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
-    visitExpression(expression);
-  }
-
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
-    visitExpression(expression);
-  }
-
-  public void visitSwitchExpression(PsiSwitchExpression expression) {
-    visitExpression(expression);
-  }
-
-  public void visitModule(PsiJavaModule module) {
-    visitElement(module);
-  }
-
-  public void visitModuleReferenceElement(PsiJavaModuleReferenceElement refElement) {
-    visitElement(refElement);
-  }
-
-  public void visitModuleStatement(PsiStatement statement) {
+  public void visitYieldStatement(PsiYieldStatement statement) {
     visitStatement(statement);
-  }
-
-  public void visitRequiresStatement(PsiRequiresStatement statement) {
-    visitModuleStatement(statement);
-  }
-
-  public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
-    visitModuleStatement(statement);
-  }
-
-  public void visitUsesStatement(PsiUsesStatement statement) {
-    visitModuleStatement(statement);
-  }
-
-  public void visitProvidesStatement(PsiProvidesStatement statement) {
-    visitModuleStatement(statement);
-  }
-
-  public void visitPattern(PsiPattern pattern) {
-    visitElement(pattern);
-  }
-
-  public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
-    visitPattern(pattern);
-  }
-
-  public void visitParenthesizedPattern(PsiParenthesizedPattern pattern) {
-    visitPattern(pattern);
-  }
-
-  public void visitGuardedPattern(PsiGuardedPattern pattern) {
-    visitPattern(pattern);
-  }
-
-  public void visitDefaultCaseLabelElement(PsiDefaultCaseLabelElement element) {
-    visitElement(element);
-  }
-
-  public void visitCaseLabelElementList(PsiCaseLabelElementList list) {
-    visitElement(list);
-  }
-
-  public void visitPatternVariable(PsiPatternVariable variable) {
-    visitParameter(variable);
-  }
-
-  public void visitSnippetTag(PsiSnippetDocTag snippetDocTag) {
-    visitInlineDocTag(snippetDocTag);
-  }
-
-  public void visitSnippetDocTagValue(PsiSnippetDocTagValue value) {
-    visitElement(value);
-  }
-
-  public void visitSnippetDocTagBody(PsiSnippetDocTagBody body) {
-    visitElement(body);
-  }
-
-  public void visitSnippetAttribute(PsiSnippetAttribute attribute) {
-    visitElement(attribute);
-  }
-
-  public void visitSnippetAttributeList(PsiSnippetAttributeList attributeList) {
-    visitElement(attributeList);
   }
 }
