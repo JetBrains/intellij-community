@@ -193,5 +193,10 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
       }
       super.update(e);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 }
