@@ -6,7 +6,10 @@ import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.execution.*
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.ProgramRunnerUtil
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.TestStateStorage
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -91,21 +94,23 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
   }
 
   override fun getRunQuickFix(element: PsiElement): LocalQuickFix? {
-    val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID) ?: return null
     val configuration = ConfigurationContext(element).configuration ?: return null
-    return RunActionFix(executor, configuration)
+    return RunActionFix(DefaultRunExecutor.EXECUTOR_ID, configuration)
   }
 
   override fun getDebugQuickFix(element: PsiElement, topStacktraceLine: String): LocalQuickFix? {
-    val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultDebugExecutor.EXECUTOR_ID) ?: return null
     val configuration = ConfigurationContext(element).configuration ?: return null
-    return DebugActionFix(topStacktraceLine, executor, configuration)
+    return DebugActionFix(topStacktraceLine, DefaultDebugExecutor.EXECUTOR_ID, configuration)
   }
 
   private open class RunActionFix(
-    @FileModifier.SafeFieldForPreview private val executor: Executor,
-    @FileModifier.SafeFieldForPreview private val configuration: RunnerAndConfigurationSettings
+    executorId: String, @FileModifier.SafeFieldForPreview private val configuration: RunnerAndConfigurationSettings
   ) : LocalQuickFix, Iconable {
+    @FileModifier.SafeFieldForPreview
+    private val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: throw IllegalStateException(
+      "Could not create action because executor $executorId was not found"
+    )
+
     override fun getFamilyName(): @Nls(capitalization = Nls.Capitalization.Sentence) String =
       UIUtil.removeMnemonic(executor.getStartActionText(ProgramRunnerUtil.shortenName(configuration.name, 0)))
 
@@ -117,10 +122,8 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
   }
 
   private class DebugActionFix(
-    private val topStacktraceLine: String,
-    executor: Executor,
-    settings: RunnerAndConfigurationSettings
-  ) : RunActionFix(executor, settings) {
+    private val topStacktraceLine: String, executorId: String, settings: RunnerAndConfigurationSettings
+  ) : RunActionFix(executorId, settings) {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val line = StackTraceLine(project, topStacktraceLine)
       line.getMethodLocation(project)?.let { location ->
