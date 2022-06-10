@@ -283,6 +283,8 @@
                 class="com.intellij.ide.bookmark.actions.GroupLineBookmarksToggleAction"/>
         <action id="BookmarksView.RewriteBookmarkType"
                 class="com.intellij.ide.bookmark.actions.RewriteBookmarkTypeToggleAction"/>
+        <action id="BookmarksView.AskBeforeDeletingLists"
+                class="com.intellij.ide.bookmark.actions.AskBeforeDeletingListsToggleAction"/>
         <separator/>
         <action id="BookmarksView.OpenInPreviewTab"
                 class="com.intellij.ide.bookmark.actions.OpenInPreviewTabToggleAction"/>
