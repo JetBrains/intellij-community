@@ -512,6 +512,9 @@ public final class ExternalSystemApiUtil {
     }
     else if (unwrapped.getClass() == ExternalSystemException.class) {
       String originalReason = ((ExternalSystemException)unwrapped).getOriginalReason();
+      if (originalReason.isBlank()) {
+        return stacktraceAsString(unwrapped);
+      }
       return ExternalSystemBundle.message("external.system.api.error.message.prefix", originalReason);
     }
     else {
