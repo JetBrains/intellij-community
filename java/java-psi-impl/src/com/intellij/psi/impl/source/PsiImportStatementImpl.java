@@ -27,11 +27,11 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
   public static final ArrayFactory<PsiImportStatementImpl> ARRAY_FACTORY =
     count -> count == 0 ? EMPTY_ARRAY : new PsiImportStatementImpl[count];
 
-  public PsiImportStatementImpl(final PsiImportStatementStub stub) {
+  public PsiImportStatementImpl(PsiImportStatementStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_STATEMENT);
   }
 
-  public PsiImportStatementImpl(final ASTNode node) {
+  public PsiImportStatementImpl(ASTNode node) {
     super(node);
   }
 
@@ -41,7 +41,7 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
     if (stub != null) {
       return stub.getImportReferenceText();
     }
-    final PsiJavaCodeReferenceElement reference = getImportReference();
+    PsiJavaCodeReferenceElement reference = getImportReference();
     return reference == null ? null : reference.getCanonicalText();
   }
 

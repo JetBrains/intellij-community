@@ -62,7 +62,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
 
   @Override
   public int getParametersCount() {
-    final PsiParameterListStub stub = getGreenStub();
+    PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
       int count = 0;
       for (StubElement<?> child : stub.getChildrenStubs()) {
@@ -82,7 +82,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
     if (index < 0) {
       throw new IllegalArgumentException("index is negative: " + index);
     }
-    final PsiParameterListStub stub = getGreenStub();
+    PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
       int count = 0;
       for (StubElement<?> child : stub.getChildrenStubs()) {
@@ -106,7 +106,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
 
   @Override
   public boolean isEmpty() {
-    final PsiParameterListStub stub = getGreenStub();
+    PsiParameterListStub stub = getGreenStub();
     if (stub != null) {
       for (StubElement<?> child : stub.getChildrenStubs()) {
         if (child.getStubType() == JavaStubElementTypes.PARAMETER) {

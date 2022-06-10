@@ -18,11 +18,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitializerStub> implements PsiClassInitializer {
-  public PsiClassInitializerImpl(final PsiClassInitializerStub stub) {
+  public PsiClassInitializerImpl(PsiClassInitializerStub stub) {
     super(stub, JavaStubElementTypes.CLASS_INITIALIZER);
   }
 
-  public PsiClassInitializerImpl(final ASTNode node) {
+  public PsiClassInitializerImpl(ASTNode node) {
     super(node);
   }
 
@@ -34,7 +34,7 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
 
   @Override
   public PsiElement getContext() {
-    final PsiClass cc = getContainingClass();
+    PsiClass cc = getContainingClass();
     return cc != null ? cc : super.getContext();
   }
 

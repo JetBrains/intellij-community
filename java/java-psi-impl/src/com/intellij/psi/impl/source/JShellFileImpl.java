@@ -41,7 +41,7 @@ public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile
 
   @Override
   public Collection<PsiElement> getExecutableSnippets() {
-    final List<PsiElement> result = new SmartList<>();
+    List<PsiElement> result = new SmartList<>();
     collectExecutableSnippets(this, result);
     return result;
   }

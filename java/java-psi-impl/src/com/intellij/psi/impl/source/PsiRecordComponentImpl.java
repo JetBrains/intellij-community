@@ -54,7 +54,7 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
 
   @Override
   public @NotNull PsiModifierList getModifierList() {
-    final PsiModifierList modifierList = getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    PsiModifierList modifierList = getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
     assert modifierList != null : this;
     return modifierList;
   }
@@ -116,7 +116,7 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
 
   @Override
   public @NotNull String getName() {
-    final PsiRecordComponentStub stub = getGreenStub();
+    PsiRecordComponentStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }

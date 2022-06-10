@@ -111,7 +111,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   }
 
   @Override
-  public @NotNull PsiClassType setLanguageLevel(final @NotNull LanguageLevel languageLevel) {
+  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
     return new PsiClassReferenceType(getReference(), languageLevel, getAnnotationProvider());
   }
@@ -160,7 +160,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
     @Override
     public PsiClass getElement() {
-      final PsiElement element = myDelegate.getElement();
+      PsiElement element = myDelegate.getElement();
       return element instanceof PsiClass ? (PsiClass)element : null;
     }
   }
@@ -174,7 +174,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       }
       throw new PsiInvalidElementAccessException(reference, myReference.toString() + "; augmenters=" + PsiAugmentProvider.EP_NAME.getExtensionList());
     }
-    final JavaResolveResult result = reference.advancedResolve(false);
+    JavaResolveResult result = reference.advancedResolve(false);
     return result.getElement() == null ? ClassResolveResult.EMPTY : new DelegatingClassResolveResult(result);
   }
 
@@ -186,8 +186,8 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       PsiClass aClass = (PsiClass)resolved;
       if (!PsiUtil.typeParametersIterable(aClass).iterator().hasNext()) return this;
       PsiManager manager = reference.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
-      final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+      PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
       return new PsiImmediateClassType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotationProvider());
     }
     String qualifiedName = reference.getQualifiedName();
