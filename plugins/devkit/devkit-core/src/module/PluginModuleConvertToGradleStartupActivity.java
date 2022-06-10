@@ -74,6 +74,7 @@ final class PluginModuleConvertToGradleStartupActivity implements StartupActivit
                                  "#adding-gradle-support-to-an-existing-devkit-based-intellij-platform-plugin")))
       .addAction(NotificationAction.createSimpleExpiring(DevKitBundle.message("convert.devkit.to.gradle.notification.do.not.show.again"), () -> propertiesComponent.setValue(DO_NOT_SHOW_AGAIN_SETTING, true)))
       .setIcon(AllIcons.Nodes.Plugin)
+      .setSuggestionType(true)
       .notify(project));
   }
 
