@@ -6,7 +6,7 @@ import org.jetbrains.idea.devkit.inspections.LeakableMapKeyInspectionTestBase;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/leakableMapKey")
-public class LeakableMapKeyInspectionTest extends LeakableMapKeyInspectionTestBase {
+public class KotlinLeakableMapKeyInspectionTest extends LeakableMapKeyInspectionTestBase {
 
   @Override
   protected String getBasePath() {
