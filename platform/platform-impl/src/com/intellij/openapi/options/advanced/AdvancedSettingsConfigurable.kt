@@ -13,6 +13,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
@@ -296,6 +297,9 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   override fun getHelpTopic(): String = "Advanced_settings"
 
   override fun enableSearch(option: String?): Runnable {
+    if (option != null && StringUtil.startsWithIgnoreCase(displayName, option)) {
+      return Runnable { applyFilter("", false) }
+    }
     return Runnable { applyFilter(option, false) }
   }
 }
