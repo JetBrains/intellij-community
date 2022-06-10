@@ -30,29 +30,6 @@ class UiDslBindingsTest : BasePlatformTestCase() {
     assertTrue(booleanValue)
   }
 
-  fun testRadioButtonCellWithIntBinding() {
-    intValue = 2
-    val dialogPanel = panel {
-      row {
-        cell {
-          buttonGroup(::intValue) {
-            radioButton("Foo", 0)
-            radioButton("Bar", 1)
-            radioButton("Baz", 2)
-          }
-        }
-      }
-    }
-
-    dialogPanel.reset()
-    val radioButtons = dialogPanel.components.filterIsInstance<JRadioButton>()
-    assertTrue(radioButtons[2].isSelected)
-    radioButtons[1].isSelected = true
-    assertFalse(radioButtons[2].isSelected)
-    dialogPanel.apply()
-    assertEquals(1, intValue)
-  }
-
   fun testApplyIfEnabled() {
     lateinit var textField: JTextField
     stringValue = ""
