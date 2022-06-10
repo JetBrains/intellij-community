@@ -173,7 +173,7 @@ public final class StartupUtil {
     CompletableFuture<Object/*LookAndFeel*/> initUiFuture = scheduleInitUi(busyThread, isHeadless);
 
     // A splash instance must not be created before base LaF is created.
-    // It is important on Linux, where GTK LaF must be initialized (to properly setup scale factor).
+    // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
     // https://youtrack.jetbrains.com/issue/IDEA-286544
     CompletableFuture<Runnable> splashTaskFuture = isHeadless || Main.isLightEdit() ? null : initUiFuture.thenApplyAsync(__ -> {
       return prepareSplash(args);
@@ -582,9 +582,9 @@ public final class StartupUtil {
 
   private static void loadSystemFontsAndDnDCursors() {
     Activity activity = StartUpMeasurer.startActivity("system fonts loading");
-    // this forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
+    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
     new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
-    // this caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
+    // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
     GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
 
     // preload cursors used by drag-n-drop AWT subsystem
@@ -853,6 +853,7 @@ public final class StartupUtil {
     if (System.getProperty("pty4j.preferred.native.folder") == null) {
       System.setProperty("pty4j.preferred.native.folder", Path.of(PathManager.getLibPath(), "pty4j-native").toAbsolutePath().toString());
     }
+
     subActivity.end();
   }
 
@@ -943,7 +944,7 @@ public final class StartupUtil {
     PluginManagerCore.scheduleDescriptorLoading();
   }
 
-  // must be called from EDT
+  // the method must be called on EDT
   private static void patchSystem(boolean isHeadless) {
     Activity activity = StartUpMeasurer.startActivity("event queue replacing");
     // replace system event queue
