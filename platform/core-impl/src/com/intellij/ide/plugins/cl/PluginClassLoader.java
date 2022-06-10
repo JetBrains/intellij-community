@@ -73,7 +73,10 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
       "kotlin.coroutines.intrinsics.CoroutineSingletons",
       "kotlin.coroutines.AbstractCoroutineContextElement",
-      "kotlin.coroutines.AbstractCoroutineContextKey"
+      "kotlin.coroutines.AbstractCoroutineContextKey",
+      "kotlin.coroutines.jvm.internal.ContinuationImpl", // IDEA-295189
+      "kotlin.coroutines.jvm.internal.BaseContinuationImpl", // IDEA-295189
+      "kotlin.coroutines.jvm.internal.CoroutineStackFrame" // IDEA-295189
     ));
     String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
     if (classes != null) {
