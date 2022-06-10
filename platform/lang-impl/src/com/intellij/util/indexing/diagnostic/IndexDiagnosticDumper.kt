@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.streams.asSequence
 
@@ -51,9 +52,9 @@ class IndexDiagnosticDumper : Disposable {
         SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 300)
 
     @JvmStatic
-    private val indexingDiagnosticsSizeLimitOfFilesInMBPerProject: Int
+    private val indexingDiagnosticsSizeLimitOfFilesInMiBPerProject: Int
       get() =
-        SystemProperties.getIntProperty("intellij.indexes.diagnostics.size.limit.of.files.MB.per.project", 10)
+        SystemProperties.getIntProperty("intellij.indexes.diagnostics.size.limit.of.files.MiB.per.project", 10)
 
     @JvmStatic
     val shouldDumpPathsOfIndexedFiles: Boolean
@@ -218,13 +219,13 @@ class IndexDiagnosticDumper : Disposable {
   private fun deleteOutdatedDiagnostics(existingDiagnostics: List<ExistingDiagnostic>): List<ExistingDiagnostic> {
     val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }
 
-    var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMBPerProject * 1000000.toLong()
+    var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()
     val numberLimit: Int
     if (sizeLimit > 0) {
       var number = 0
       for (diagnostic in existingDiagnostics) {
-        sizeLimit -= diagnostic.jsonFile.toFile().length()
-        sizeLimit -= diagnostic.htmlFile.toFile().length()
+        sizeLimit -= max(0, diagnostic.jsonFile.sizeOrNull())
+        sizeLimit -= max(0, diagnostic.htmlFile.sizeOrNull())
         if (sizeLimit <= 0) {
           break
         }
