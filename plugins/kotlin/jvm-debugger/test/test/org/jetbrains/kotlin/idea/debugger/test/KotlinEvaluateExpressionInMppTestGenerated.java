@@ -1646,14 +1646,14 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             runTest("testData/evaluation/multiplatform/evaluateWithIntermediateJvm.kt");
         }
 
-        @TestMetadata("typealiasFromCommonCode.kt")
-        public void testTypealiasFromCommonCode() throws Exception {
-            runTest("testData/evaluation/multiplatform/typealiasFromCommonCode.kt");
-        }
-
         @TestMetadata("functionBreakpointInCommonCode.kt")
         public void testFunctionBreakpointInCommonCode() throws Exception {
             runTest("testData/evaluation/multiplatform/functionBreakpointInCommonCode.kt");
+        }
+
+        @TestMetadata("typealiasFromCommonCode.kt")
+        public void testTypealiasFromCommonCode() throws Exception {
+            runTest("testData/evaluation/multiplatform/typealiasFromCommonCode.kt");
         }
     }
 }
