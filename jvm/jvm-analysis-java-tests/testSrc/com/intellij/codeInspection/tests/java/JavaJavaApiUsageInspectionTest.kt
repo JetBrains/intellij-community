@@ -25,7 +25,7 @@ import com.intellij.testFramework.PsiTestUtil
 class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
   override fun getBasePath(): String = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(languageLevel) {
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(sdkLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       val dataDir = "$testDataPath/codeInspection/apiUsage"
