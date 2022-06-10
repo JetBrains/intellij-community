@@ -23,6 +23,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspection.test.failed.line.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestFailedLineInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="SuperTearDownInFinally"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit3.super.teardown.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit3SuperTearDownInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
