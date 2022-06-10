@@ -37,7 +37,7 @@
       <synonym key="action.Vcs.VcsClone.text.synonym1"/>
       <synonym key="action.Vcs.VcsClone.text.synonym2"/>
     </action>
-    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
+    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" searchable="false"/>
     <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
       <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
