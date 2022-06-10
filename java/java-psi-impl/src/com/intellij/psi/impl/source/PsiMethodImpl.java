@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 
 public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod, Queryable {
   private SoftReference<PsiType> myCachedType;
+  private volatile String myCachedName;
 
   public PsiMethodImpl(PsiMethodStub stub) {
     this(stub, JavaStubElementTypes.METHOD);
@@ -60,6 +61,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   protected void dropCached() {
     myCachedType = null;
+    myCachedName = null;
   }
 
   @Override
@@ -120,16 +122,18 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @Override
   @NotNull
   public String getName() {
-    String name;
-    PsiMethodStub stub = getGreenStub();
-    if (stub != null) {
-      name = stub.getName();
+    String name = myCachedName;
+    if (name == null) {
+      PsiMethodStub stub = getGreenStub();
+      if (stub != null) {
+        name = stub.getName();
+      }
+      else {
+        PsiIdentifier nameIdentifier = getNameIdentifier();
+        name = nameIdentifier == null ? null : nameIdentifier.getText();
+      }
     }
-    else {
-      PsiIdentifier nameIdentifier = getNameIdentifier();
-      name = nameIdentifier == null ? null : nameIdentifier.getText();
-    }
-
+    myCachedName = name;
     return name != null ? name : "<unnamed>";
   }
 

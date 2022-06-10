@@ -33,12 +33,13 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   private static final Logger LOG = Logger.getInstance(PsiParameterImpl.class);
 
   private volatile Reference<PsiType> myCachedType;
+  private volatile String myCachedName;
 
   public PsiParameterImpl(@NotNull PsiParameterStub stub) {
     this(stub, JavaStubElementTypes.PARAMETER);
   }
 
-  protected PsiParameterImpl(@NotNull PsiParameterStub stub, @NotNull IStubElementType type) {
+  protected PsiParameterImpl(@NotNull PsiParameterStub stub, @NotNull IStubElementType<?,?> type) {
     super(stub, type);
   }
 
@@ -46,7 +47,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     super(node);
   }
 
-  public static PsiType getLambdaParameterType(PsiParameter param) {
+  private static PsiType getLambdaParameterType(@NotNull PsiParameter param) {
     PsiElement paramParent = param.getParent();
     if (paramParent instanceof PsiParameterList) {
       int parameterIndex = ((PsiParameterList)paramParent).getParameterIndex(param);
@@ -79,13 +80,18 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   @Override
   public void subtreeChanged() {
     super.subtreeChanged();
+    dropCaches();
+  }
+
+  private void dropCaches() {
     myCachedType = null;
+    myCachedName = null;
   }
 
   @Override
   protected Object clone() {
     PsiParameterImpl clone = (PsiParameterImpl)super.clone();
-    clone.myCachedType = null;
+    clone.dropCaches();
 
     return clone;
   }
@@ -93,12 +99,18 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   @Override
   @NotNull
   public final String getName() {
-    PsiParameterStub stub = getGreenStub();
-    if (stub != null) {
-      return stub.getName();
+    String name = myCachedName;
+    if (name == null) {
+      PsiParameterStub stub = getGreenStub();
+      if (stub == null) {
+        name = getNameIdentifier().getText();
+      }
+      else {
+        name = stub.getName();
+      }
     }
-
-    return getNameIdentifier().getText();
+    myCachedName = name;
+    return name;
   }
 
   @Override
@@ -227,18 +239,18 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     PsiElement[] children = parent.getChildren();
     //noinspection ConstantConditions
     if (children != null) {
-      ext:
       for (int i = 0; i < children.length; i++) {
         if (children[i].equals(this)) {
           for (int j = i + 1; j < children.length; j++) {
             if (children[j] instanceof PsiCodeBlock) return children[j];
           }
-          break ext;
+          break;
         }
       }
     }
 
     LOG.error("Code block not found among parameter' (" + this + ") parent' (" + parent + ") children: " + Arrays.asList(children));
+    //noinspection ConstantConditions
     return null;
   }
 
