@@ -2,7 +2,7 @@ class Test {
     var a: Boolean
         get() = false
         set(
-        <caret>
+            <caret>
            )
 }
 

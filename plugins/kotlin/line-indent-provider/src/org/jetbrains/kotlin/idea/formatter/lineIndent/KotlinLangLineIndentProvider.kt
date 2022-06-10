@@ -253,72 +253,70 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             val leftParenthesis = currentPosition.findLeftParenthesisBackwardsSkippingNested(LeftParenthesis, RightParenthesis)
             if (!leftParenthesis.isAt(LeftParenthesis)) return null
 
-            // case only for caret before [RightParenthesis]
-            if (!currentPosition.hasLineBreaksAfter(offset)) {
-                fun createIndent(
-                    isParameterList: Boolean,
-                    baseLineOffset: Int,
-                ): IndentCalculator {
-                    val indent = if (before.isAt(Comma)) {
-                        when {
-                            isParameterList && settings.alignMultilineParameters ||
-                                    !isParameterList && settings.alignMultilineParametersInCalls -> {
-                                val firstElement = leftParenthesis.afterIgnoringWhiteSpaceOrComment()
-                                return createIndentCalculator(createAlignMultilineIndent(firstElement), firstElement.startOffset)
-                            }
-
-                            isParameterList && settings.continuationIndentInParameterLists ||
-                                    !isParameterList && settings.continuationIndentInArgumentLists -> Indent.getContinuationIndent()
-
-                            else -> Indent.getNormalIndent()
+            val hasLineBreaksAfter = currentPosition.hasLineBreaksAfter(offset)
+            fun createIndent(
+                isParameterList: Boolean,
+                baseLineOffset: Int,
+            ): IndentCalculator {
+                val indent = if (before.isAt(Comma) || hasLineBreaksAfter) {
+                    val firstElement = leftParenthesis.afterIgnoringWhiteSpaceOrComment()
+                    when {
+                        !firstElement.isAt(RightParenthesis) && (
+                                isParameterList && settings.alignMultilineParameters ||
+                                        !isParameterList && settings.alignMultilineParametersInCalls
+                                ) -> {
+                            return createIndentCalculator(createAlignMultilineIndent(firstElement), firstElement.startOffset)
                         }
-                    } else {
-                        if (settings.alignWhenMultilineFunctionParentheses)
-                            createAlignMultilineIndent(leftParenthesis)
-                        else
-                            Indent.getNoneIndent()
+
+                        isParameterList && settings.continuationIndentInParameterLists ||
+                                !isParameterList && settings.continuationIndentInArgumentLists -> Indent.getContinuationIndent()
+
+                        else -> Indent.getNormalIndent()
                     }
-
-                    return createIndentCalculator(indent, baseLineOffset)
-                }
-
-                findFunctionKeywordBeforeIdentifier(leftParenthesis.beforeIgnoringWhiteSpaceOrComment())?.let {
-                    return createIndent(isParameterList = true, it.startOffset)
-                }
-
-                // NB: this covered [KtTokens.CONSTRUCTOR_KEYWORD], [KtTokens.SET_KEYWORD], [KtTokens.GET_KEYWORD], [KtTokens.INIT_KEYWORD] as well
-                if (isSimilarToFunctionInvocation(leftParenthesis)) {
-                    return createIndent(isParameterList = false, leftParenthesis.startOffset)
-                }
-
-                if (isDestructuringDeclaration(leftParenthesis, rightParenthesis)) {
-                    return createIndentCalculator(
-                        if (before.isAt(Comma)) Indent.getNormalIndent() else Indent.getNoneIndent(),
-                        leftParenthesis.startOffset
-                    )
-                }
-
-                leftParenthesis.beforeIgnoringWhiteSpaceOrComment().let { keyword ->
-                    val indent = when {
-                        keyword.isAt(IfKeyword) && !before.isAt(LeftParenthesis) ->
-                            if (settings.continuationIndentInIfCondition) Indent.getContinuationIndent() else Indent.getNormalIndent()
-
-                        keyword.isControlFlowKeyword() -> Indent.getNoneIndent()
-                        else -> null
-                    }
-
-                    indent?.let { return createIndentCalculator(it, keyword.startOffset) }
-                }
-
-                return if (settings.alignWhenMultilineBinaryExpression) {
-                    val anchor = if (before.isAt(LeftParenthesis)) leftParenthesis else leftParenthesis.afterIgnoringWhiteSpaceOrComment()
-                    createIndentCalculator(createAlignMultilineIndent(anchor), anchor.startOffset)
                 } else {
-                    createIndentCalculator(Indent.getContinuationIndent(), leftParenthesis.startOffset)
+                    if (settings.alignWhenMultilineFunctionParentheses)
+                        createAlignMultilineIndent(leftParenthesis)
+                    else
+                        Indent.getNoneIndent()
                 }
+
+                return createIndentCalculator(indent, baseLineOffset)
             }
 
-            return null
+            findFunctionKeywordBeforeIdentifier(leftParenthesis.beforeIgnoringWhiteSpaceOrComment())?.let {
+                return createIndent(isParameterList = true, it.startOffset)
+            }
+
+            // NB: this covered [KtTokens.CONSTRUCTOR_KEYWORD], [KtTokens.SET_KEYWORD], [KtTokens.GET_KEYWORD], [KtTokens.INIT_KEYWORD] as well
+            if (isSimilarToFunctionInvocation(leftParenthesis)) {
+                return createIndent(isParameterList = false, leftParenthesis.startOffset)
+            }
+
+            if (isDestructuringDeclaration(leftParenthesis, rightParenthesis)) {
+                return createIndentCalculator(
+                    if (before.isAt(Comma) || hasLineBreaksAfter) Indent.getNormalIndent() else Indent.getNoneIndent(),
+                    leftParenthesis.startOffset
+                )
+            }
+
+            leftParenthesis.beforeIgnoringWhiteSpaceOrComment().let { keyword ->
+                val indent = when {
+                    keyword.isAt(IfKeyword) && !before.isAt(LeftParenthesis) ->
+                        if (settings.continuationIndentInIfCondition) Indent.getContinuationIndent() else Indent.getNormalIndent()
+
+                    keyword.isControlFlowKeyword() -> if (hasLineBreaksAfter) Indent.getNormalIndent() else Indent.getNoneIndent()
+                    else -> null
+                }
+
+                indent?.let { return createIndentCalculator(it, keyword.startOffset) }
+            }
+
+            return if (settings.alignWhenMultilineBinaryExpression && !hasLineBreaksAfter) {
+                val anchor = if (before.isAt(LeftParenthesis)) leftParenthesis else leftParenthesis.afterIgnoringWhiteSpaceOrComment()
+                createIndentCalculator(createAlignMultilineIndent(anchor), anchor.startOffset)
+            } else {
+                createIndentCalculator(Indent.getContinuationIndent(), leftParenthesis.startOffset)
+            }
         }
 
         /**
