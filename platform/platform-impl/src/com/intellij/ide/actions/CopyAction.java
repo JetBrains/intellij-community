@@ -9,6 +9,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BiConsumer;
+
 public class CopyAction extends AnAction implements DumbAware, LightEditCompatible {
 
   public CopyAction() {
@@ -32,42 +34,31 @@ public class CopyAction extends AnAction implements DumbAware, LightEditCompatib
 
   @Override
   public void update(@NotNull AnActionEvent event) {
+    updateFromProvider(event, PlatformDataKeys.COPY_PROVIDER, (provider, presentation) -> {
+      presentation.setEnabled(provider.isCopyEnabled(event.getDataContext()));
+      boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
+      presentation.setVisible(!isEditorPopup || provider.isCopyVisible(event.getDataContext()));
+    });
+  }
+
+  static <T> void updateFromProvider(@NotNull AnActionEvent event,
+                                             DataKey<T> key,
+                                             BiConsumer<T, Presentation> presentationUpdater) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    CopyProvider provider = PlatformDataKeys.COPY_PROVIDER.getData(dataContext);
+    T provider = key.getData(dataContext);
     if (provider == null) {
       presentation.setEnabled(false);
       presentation.setVisible(true);
       return;
     }
-    boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
     if (provider instanceof UpdateInBackground && ((UpdateInBackground)provider).isUpdateInBackground() ||
         EDT.isCurrentThreadEdt()) {
-      ProviderState providerState = ProviderState.create(dataContext, isEditorPopup, provider);
-      presentation.setEnabled(providerState.isCopyEnabled);
-      presentation.setVisible(providerState.isVisible);
+      presentationUpdater.accept(provider, presentation);
     }
     else {
-      ProviderState providerState = Utils.getOrCreateUpdateSession(event).computeOnEdt(
-        "ProviderState#create", () -> ProviderState.create(dataContext, isEditorPopup, provider));
-      presentation.setEnabled(providerState.isCopyEnabled);
-      presentation.setVisible(providerState.isVisible);
-    }
-  }
-
-  private static class ProviderState {
-    final boolean isCopyEnabled;
-    final boolean isVisible;
-
-    ProviderState(boolean enabled, boolean visible) {
-      isCopyEnabled = enabled;
-      isVisible = visible;
-    }
-
-    static @NotNull ProviderState create(@NotNull DataContext dataContext, boolean isEditorPopup, @NotNull CopyProvider provider) {
-      boolean isCopyEnabled = provider.isCopyEnabled(dataContext);
-      boolean isVisible = !isEditorPopup || provider.isCopyVisible(dataContext);
-      return new ProviderState(isCopyEnabled, isVisible);
+      Utils.getOrCreateUpdateSession(event).computeOnEdt(
+        "ProviderState#create", () -> {presentationUpdater.accept(provider, presentation); return presentation;});
     }
   }
 }

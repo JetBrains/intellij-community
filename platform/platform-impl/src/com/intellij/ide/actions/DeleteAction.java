@@ -65,34 +65,40 @@ public class DeleteAction extends AnAction implements DumbAware, LightEditCompat
       return;
     }
 
-    DataContext dataContext = e.getDataContext();
-    DeleteProvider provider = getDeleteProvider(dataContext);
-    if (e.getInputEvent() instanceof KeyEvent) {
-      KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
-      Object component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      if (component instanceof JTextComponent) provider = null; // Do not override text deletion
-      if (keyEvent.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
-        // Do not override text deletion in speed search
-        if (component instanceof JComponent) {
-          SpeedSearchSupply searchSupply = SpeedSearchSupply.getSupply((JComponent)component);
-          if (searchSupply != null) provider = null;
-        }
+    CopyAction.updateFromProvider(e, PlatformDataKeys.DELETE_ELEMENT_PROVIDER, (provider, p) -> {
+      DataContext dataContext = e.getDataContext();
+      if (e.getInputEvent() instanceof KeyEvent) {
+        KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
+        Object component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+        if (component instanceof JTextComponent) provider = null; // Do not override text deletion
+        if (keyEvent.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+          // Do not override text deletion in speed search
+          if (component instanceof JComponent) {
+            SpeedSearchSupply searchSupply = SpeedSearchSupply.getSupply((JComponent)component);
+            if (searchSupply != null) provider = null;
+          }
 
-        String activeSpeedSearchFilter = SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.getData(dataContext);
-        if (!StringUtil.isEmpty(activeSpeedSearchFilter)) {
-          provider = null;
+          String activeSpeedSearchFilter = SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.getData(dataContext);
+          if (!StringUtil.isEmpty(activeSpeedSearchFilter)) {
+            provider = null;
+          }
         }
       }
-    }
-    if (provider instanceof TitledHandler) {
-      presentation.setText(((TitledHandler)provider).getActionTitle());
-    }
-    boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      presentation.setVisible(canDelete);
-    }
-    else {
-      presentation.setEnabled(canDelete);
-    }
+      if (provider instanceof TitledHandler) {
+        presentation.setText(((TitledHandler)provider).getActionTitle());
+      }
+      boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
+      if (ActionPlaces.isPopupPlace(e.getPlace())) {
+        presentation.setVisible(canDelete);
+      }
+      else {
+        presentation.setEnabled(canDelete);
+      }
+    });
+   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }
