@@ -46,6 +46,13 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
         else
             buildSerializedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper, logger)
 
+        val associateCompilations = origin.associateCompilations.mapNotNull { associateCompilation ->
+            KotlinCompilationCoordinatesImpl(
+                targetName = associateCompilation.target?.targetName ?: return@mapNotNull null,
+                compilationName = associateCompilation.compilationName
+            )
+        }
+
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
             name = compilationName,
@@ -57,7 +64,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             dependencyClasspath = emptyArray(),
             cachedArgsInfo = cachedArgsInfo,
             kotlinTaskProperties = kotlinTaskProperties,
-            nativeExtensions = nativeExtensions
+            nativeExtensions = nativeExtensions,
+            associateCompilations = associateCompilations.toSet()
         )
     }
 

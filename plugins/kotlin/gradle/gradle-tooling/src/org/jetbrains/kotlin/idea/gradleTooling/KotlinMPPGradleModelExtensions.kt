@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationCoordinates
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 
 fun KotlinMPPGradleModel.getCompilations(sourceSet: KotlinSourceSet): Set<KotlinCompilation> {
@@ -17,4 +18,9 @@ fun KotlinMPPGradleModel.compilationDependsOnSourceSet(
     return compilation.declaredSourceSets.any { sourceSetInCompilation ->
         sourceSetInCompilation == sourceSet || sourceSetInCompilation.isDependsOn(this, sourceSet)
     }
+}
+
+fun KotlinMPPGradleModel.findCompilation(coordinates: KotlinCompilationCoordinates): KotlinCompilation? {
+    return targets.find { target -> target.name == coordinates.targetName }
+        ?.compilations?.find { compilation -> compilation.name == coordinates.compilationName }
 }
