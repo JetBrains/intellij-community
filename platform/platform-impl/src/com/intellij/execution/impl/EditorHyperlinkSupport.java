@@ -241,15 +241,15 @@ public class EditorHyperlinkSupport {
           if (highlightAttributes != null) {
             ex.setTextAttributes(highlightAttributes);
           }
-          associateHyperlink(ex, hyperlinkInfo, followedHyperlinkAttributes);
         });
+    associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
     return highlighter;
   }
 
   private static void associateHyperlink(@NotNull RangeHighlighter highlighter,
                                         @NotNull HyperlinkInfo hyperlinkInfo,
                                         @Nullable TextAttributes followedHyperlinkAttributes) {
-    highlighter.putUserData(HYPERLINK, new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes));
+    ((RangeHighlighterEx)highlighter).putUserDataAndFireChanged(HYPERLINK, new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes));
   }
 
   @Nullable
