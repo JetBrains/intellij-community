@@ -75,14 +75,21 @@ fun <T : UElement> UElement.getParentOfType(
 }
 
 @JvmOverloads
-fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? =
-  this?.withContainingElements?.take(searchLimit)?.mapNotNull {
-    when (it) {
-      is UCallExpression -> it
-      is UQualifiedReferenceExpression -> it.selector as? UCallExpression
-      else -> null
+fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? {
+  if (this == null) return null
+  var u: UElement? = this;
+  for (i in 1..searchLimit) {
+    if (u == null) break
+    if (u is UCallExpression) return u
+
+    if (u is UQualifiedReferenceExpression) {
+      val selector = u.selector
+      if (selector is UCallExpression) return selector
     }
-  }?.firstOrNull()
+    u = u.uastParent
+  }
+  return null
+}
 
 fun UElement.getContainingUFile(): UFile? = getParentOfType(UFile::class.java, false)
 

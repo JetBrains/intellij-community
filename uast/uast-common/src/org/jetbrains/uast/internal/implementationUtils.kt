@@ -29,6 +29,15 @@ fun <U : UElement> Array<out Class<out UElement>>.accommodate(vararg makers: UEl
     .distinct()
     .mapNotNull { it.make.invoke() }
 }
+fun <U : UElement> Class<out UElement>.accommodate(a1: UElementAlternative<out U>, a2: UElementAlternative<out U>): U? {
+  return if (this.isAssignableFrom(a1.uType)) {
+    a1.make.invoke()
+  }
+  else if (this.isAssignableFrom(a2.uType)) {
+    a2.make.invoke()
+  }
+  else null
+}
 
 inline fun <reified U : UElement> alternative(noinline make: () -> U?) = UElementAlternative(U::class.java, make)
 

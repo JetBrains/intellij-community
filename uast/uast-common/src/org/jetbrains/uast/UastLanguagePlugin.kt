@@ -116,8 +116,10 @@ interface UastLanguagePlugin {
 
 
   @JvmDefault
-  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
-    sequenceOf(convertElementWithParent(element, requiredTypes)).filterNotNull()
+  fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> {
+    val result = convertElementWithParent(element, requiredTypes)
+    return if (result == null) emptySequence() else sequenceOf(result)
+  }
 
   @JvmDefault
   val analysisPlugin: UastAnalysisPlugin?
