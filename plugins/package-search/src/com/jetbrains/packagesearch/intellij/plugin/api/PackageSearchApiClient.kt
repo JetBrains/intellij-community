@@ -1,14 +1,14 @@
 package com.jetbrains.packagesearch.intellij.plugin.api
 
-import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
-import com.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.http.requestString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.apache.commons.httpclient.util.URIUtil
+import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
+import org.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal object ServerURLs {
 

@@ -2,13 +2,13 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformTarget
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformType
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformTarget
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage.ApiPlatform.PlatformType
 import javax.swing.BoxLayout
 
 internal class PackageKotlinPlatformsPanel : HtmlEditorPane() {

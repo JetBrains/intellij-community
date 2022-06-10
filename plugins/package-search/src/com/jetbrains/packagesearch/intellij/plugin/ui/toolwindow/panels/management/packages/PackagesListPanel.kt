@@ -10,8 +10,8 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
-import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.data.PackageUpgradeCandidates
 import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds

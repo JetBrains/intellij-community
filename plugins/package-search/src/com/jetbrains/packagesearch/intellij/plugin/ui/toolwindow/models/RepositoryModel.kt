@@ -1,8 +1,8 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
+import org.jetbrains.packagesearch.api.v2.ApiRepository
 
 internal data class RepositoryModel(
     val id: String?,

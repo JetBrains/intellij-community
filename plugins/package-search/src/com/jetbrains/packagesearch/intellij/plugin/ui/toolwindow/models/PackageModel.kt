@@ -1,7 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
@@ -12,6 +11,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal sealed class PackageModel(
     val groupId: String,

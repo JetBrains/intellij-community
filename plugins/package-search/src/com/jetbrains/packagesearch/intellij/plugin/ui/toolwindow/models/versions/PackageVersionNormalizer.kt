@@ -8,8 +8,6 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.io.readText
-import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependency
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
@@ -27,6 +25,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.nio.file.Files
 import kotlin.io.path.writeText
 

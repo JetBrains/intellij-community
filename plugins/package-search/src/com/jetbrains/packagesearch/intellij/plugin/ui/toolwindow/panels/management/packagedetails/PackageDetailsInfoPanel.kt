@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
@@ -22,6 +21,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent

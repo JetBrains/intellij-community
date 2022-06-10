@@ -7,7 +7,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelForEach
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -16,6 +15,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import org.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 internal inline fun <reified T : PackageModel> CoroutineScope.computeActionsAsync(
     project: Project,

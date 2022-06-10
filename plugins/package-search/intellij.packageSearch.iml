@@ -12,7 +12,7 @@
           <option name="apiVersion" value="1.5" />
           <option name="pluginClasspaths">
             <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$USER_HOME$/AppData/Local/JetBrains/IntelliJIdea2022.1/kotlin-dist-for-ide/1.6.10-release-971/lib/kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
         </compilerArguments>
@@ -61,22 +61,22 @@
     <orderEntry type="module-library">
       <library name="package-search-version-utils">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/package-version-utils-1.0.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/pkgs-version-utils-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/src/package-version-utils-1.0.0-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/src/pkgs-version-utils-1.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="package-search-api-models">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/api-models-2.2.3.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/pkgs-api-models-2.2.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/src/api-models-2.2.3-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/src/pkgs-api-models-2.2.8-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

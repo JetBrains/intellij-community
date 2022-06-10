@@ -2,7 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.VersionNameComparator
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
+import org.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import kotlin.math.sign
 
 /**

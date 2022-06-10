@@ -1,13 +1,13 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.util.text.VersionComparatorUtil
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
-import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import org.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 
 @Serializable
 sealed class PackageVersion : Comparable<PackageVersion> {

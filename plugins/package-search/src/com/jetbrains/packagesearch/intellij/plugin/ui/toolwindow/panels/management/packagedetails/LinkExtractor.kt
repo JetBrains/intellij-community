@@ -1,6 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
-import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
+import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 
 internal class LinkExtractor(private val standardV2Package: ApiStandardPackage) {
 

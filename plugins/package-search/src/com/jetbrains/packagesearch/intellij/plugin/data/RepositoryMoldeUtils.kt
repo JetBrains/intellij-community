@@ -1,12 +1,12 @@
 package com.jetbrains.packagesearch.intellij.plugin.data
 
-import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryUsageInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
+import org.jetbrains.packagesearch.api.v2.ApiRepository
 import java.net.URI
 
 internal fun allKnownRepositoryModels(
