@@ -187,7 +187,7 @@ public final class ActionsTreeUtil {
 
   @NlsActions.ActionText
   private static String getName(AnAction action) {
-    final String name = action.getTemplatePresentation().getText();
+    final String name = action.getTemplateText();
     if (name != null && !name.isEmpty()) {
       return name;
     }
@@ -287,10 +287,10 @@ public final class ActionsTreeUtil {
           }
           else if (actionUrl.getActionType() == ActionUrl.DELETED && children.size() > actionUrl.getAbsolutePosition()) {
             AnAction anAction = children.get(actionUrl.getAbsolutePosition());
-            if (anAction.getTemplatePresentation().getText() == null
-                ? (componentAction.getTemplatePresentation().getText() != null &&
-                   componentAction.getTemplatePresentation().getText().length() > 0)
-                : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
+            if (anAction.getTemplateText() == null
+                ? (componentAction.getTemplateText() != null &&
+                   componentAction.getTemplateText().length() > 0)
+                : !anAction.getTemplateText().equals(componentAction.getTemplateText())) {
               continue;
             }
             children.remove(actionUrl.getAbsolutePosition());
@@ -491,7 +491,7 @@ public final class ActionsTreeUtil {
     if (action == null) {
       return id;
     }
-    String text = action.getTemplatePresentation().getText();
+    String text = action.getTemplateText();
     return text != null ? text : id;
   }
 
@@ -591,7 +591,7 @@ public final class ActionsTreeUtil {
 
       final String insensitiveFilter = StringUtil.toLowerCase(filter);
       ArrayList<String> options = new ArrayList<>();
-      options.add(action.getTemplatePresentation().getText());
+      options.add(action.getTemplateText());
       options.add(action.getTemplatePresentation().getDescription());
       for (Supplier<String> synonym : action.getSynonyms()) {
         options.add(synonym.get());
