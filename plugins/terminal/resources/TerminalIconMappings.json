@@ -1,9 +1,0 @@
-{
-  "icons": {
-    "expui": {
-      "toolwindow": {
-        "terminal.svg": "icons/OpenTerminal_13x13.svg"
-      }
-    }
-  }
-}
