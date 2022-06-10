@@ -3,7 +3,7 @@
 # exit on error
 set -e
 
-PROG_DIR=$(dirname "$0")
+PROG_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 function die() {
   echo "$*" > /dev/stderr
