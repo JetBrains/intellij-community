@@ -134,6 +134,8 @@ inline fun <reified T : Any> RowBuilder.buttonGroup(prop: KMutableProperty0<T>, 
   buttonGroup(prop.toBinding(), init)
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
 inline fun <reified T : Any> RowBuilder.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: RowBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), init)
 }
