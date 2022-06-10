@@ -22,7 +22,7 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
   @AllGradleVersionsSource
   fun `test project level extension property`(gradleVersion: GradleVersion) {
     test(gradleVersion, FIXTURE_BUILDER) {
-      testBuildscript("ext") {
+      testBuildscript("<caret>ext") {
         val ref = elementUnderCaret(GrReferenceExpression::class.java)
         assertInstanceOf<GroovyProperty>(ref.resolve())
         assertTrue(ref.type!!.equalsToText(getExtraPropertiesExtensionFqn()))
@@ -34,7 +34,7 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
   @AllGradleVersionsSource
   fun `test project level extension call type`(gradleVersion: GradleVersion) {
     test(gradleVersion, FIXTURE_BUILDER) {
-      testBuildscript("ext {}") {
+      testBuildscript("<caret>ext {}") {
         val call = elementUnderCaret(GrMethodCallExpression::class.java)
         assertInstanceOf<GrMethod>(call.resolveMethod())
         assertTrue(call.type!!.equalsToText(getExtraPropertiesExtensionFqn()))

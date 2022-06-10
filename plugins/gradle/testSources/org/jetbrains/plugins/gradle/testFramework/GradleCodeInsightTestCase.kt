@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.groovy.util.ExpressionTest
+import org.junit.jupiter.api.Assertions.assertTrue
 
 abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), ExpressionTest {
 
@@ -18,6 +19,7 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
   }
 
   fun testBuildscript(expression: String, test: () -> Unit) {
+    assertTrue("<caret>" in expression, "Please define caret position in build script.")
     updateProjectFile(expression)
     runReadAction {
       test()
