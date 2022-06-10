@@ -156,7 +156,8 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun processMethodOverriding(method: UMethod, overriddenMethods: Array<PsiMethod>) {
       val overrideAnnotation = method.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)
-      if (overrideAnnotation == null && method.sourcePsi?.language != Language.findLanguageByID("kotlin")) return
+      val hasOverrideModifier = overrideModifierLanguages.any { method.sourcePsi?.language != Language.findLanguageByID(it) }
+      if (overrideAnnotation == null && !hasOverrideModifier) return
       val sourcePsi = method.sourcePsi ?: return
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
       val languageLevel = getEffectiveLanguageLevel(module)
@@ -248,6 +249,8 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   companion object {
+    private val overrideModifierLanguages = listOf("kotlin", "scala")
+
     private val logger = logger<JavaApiUsageInspection>()
 
     private var effectiveLanguageLevel: LanguageLevel? = null
