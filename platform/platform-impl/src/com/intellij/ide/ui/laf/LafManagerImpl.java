@@ -1189,8 +1189,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           }
         });
         if (IdeaPopupMenuUI.isUnderPopup(contents) && IdeaPopupMenuUI.isRoundBorder()) {
-          window.setBackground(Gray.TRANSPARENT);
-          window.setOpacity(1);
+          if (SystemInfoRt.isMac) {
+            rootPane.putClientProperty("RoundedCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
+
+            JComponent contentPane = (JComponent)((RootPaneContainer)window).getContentPane();
+            contentPane.setOpaque(true);
+            contentPane.setBackground(contents.getBackground());
+          }
         }
       }
       return popup;

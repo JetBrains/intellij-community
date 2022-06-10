@@ -21,8 +21,7 @@ import java.awt.event.MouseEvent;
  * @author Alexander Lobas
  */
 public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
-  private static final JBValue CORNER_RADIUS_X = new JBValue.UIInteger("PopupMenu.borderCornerRadiusX", 8);
-  private static final JBValue CORNER_RADIUS_Y = new JBValue.UIInteger("PopupMenu.borderCornerRadiusY", 8);
+  public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("PopupMenu.borderCornerRadius", 8);
 
   public IdeaPopupMenuUI() {
   }
@@ -43,7 +42,7 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundSelectionEnabled(Component c) {
-    return isPartOfPopupMenu(c) && Registry.is("popup.menu.roundSelection.enabled", true) && ExperimentalUI.isNewUI();
+    return isPartOfPopupMenu(c) && ((Registry.is("popup.menu.roundSelection.enabled", true) && ExperimentalUI.isNewUI()) || isRoundBorder());
   }
 
   public static boolean isPartOfPopupMenu(Component c) {
@@ -63,34 +62,25 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
 
   @Override
   public void paint(final Graphics g, final JComponent jcomponent) {
-    if (!isUnderPopup(jcomponent)) {
+    if (!isUnderPopup(jcomponent) || isRoundBorder()) {
       super.paint(g, jcomponent);
       return;
     }
 
     UISettings.setupAntialiasing(g);
-    Rectangle rectangle = popupMenu.getBounds();
-    int cornerRadiusX = CORNER_RADIUS_X.get();
-    int cornerRadiusY = CORNER_RADIUS_Y.get();
+
+    Rectangle bounds = popupMenu.getBounds();
+    JBColor borderColor = JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51));
+    int delta = SystemInfoRt.isMac ? 0 : 1;
 
     g.setColor(popupMenu.getBackground());
-    JBColor borderColor = JBColor.namedColor("Menu.borderColor", new JBColor(Gray.xCD, Gray.x51));
-    if (isRoundBorder()) {
-      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.fillRoundRect(0, 0, rectangle.width - 1, rectangle.height - 1, cornerRadiusX, cornerRadiusY);
-      g.setColor(borderColor);
-      g.drawRoundRect(0, 0, rectangle.width - 1, rectangle.height - 1, cornerRadiusX, cornerRadiusY);
-    }
-    else {
-      int delta = SystemInfoRt.isMac ? 0 : 1;
-      g.fillRect(0, 0, rectangle.width - delta, rectangle.height - delta);
-      g.setColor(borderColor);
-      g.drawRect(0, 0, rectangle.width - delta, rectangle.height - delta);
-    }
+    g.fillRect(0, 0, bounds.width - delta, bounds.height - delta);
+    g.setColor(borderColor);
+    g.drawRect(0, 0, bounds.width - delta, bounds.height - delta);
   }
 
   public static boolean isRoundBorder() {
-    return Registry.is("popup.menu.roundBorder.enabled", false);
+    return SystemInfoRt.isMac && Registry.is("popup.menu.roundBorder.enabled", false);
   }
 
   public static boolean hideEmptyIcon(Component c) {
