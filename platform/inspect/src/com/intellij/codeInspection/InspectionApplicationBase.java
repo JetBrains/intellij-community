@@ -247,7 +247,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     AtomicReference<Project> projectRef = new AtomicReference<>();
     ProgressManager.getInstance().runProcess(
       () -> projectRef.set(ProjectUtil.openOrImport(projectPath)),
-      createProcessIndicator()
+      createProgressIndicator()
     );
     Project project = projectRef.get();
     if (project == null) {
@@ -523,7 +523,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     runAnalysisAfterShelvingSync(
       project,
       ChangeListManager.getInstance(project).getAffectedFiles(),
-      createProcessIndicator(),
+      createProgressIndicator(),
       () -> {
         syncProject(project, changes);
 
@@ -673,10 +673,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       if (!myErrorCodeRequired) {
         closeProject(project);
       }
-    }, createProcessIndicator());
+    }, createProgressIndicator());
   }
 
-  private @NotNull ProgressIndicatorBase createProcessIndicator() {
+  private @NotNull ProgressIndicatorBase createProgressIndicator() {
     return new InspectionProgressIndicator();
   }
 
