@@ -105,7 +105,9 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return createComboBoxButton(presentation);
+    final ComboBoxButton button = createComboBoxButton(presentation);
+    button.setMinimumSize(new Dimension(100, 0));
+    return button;
   }
 }
 
