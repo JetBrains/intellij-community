@@ -108,6 +108,5 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" />
     <orderEntry type="module" module-name="kotlin.features-trainer" />
     <orderEntry type="module" module-name="kotlin.features-trainer.tests" />
-    <orderEntry type="module" module-name="kotlin.generators" />
   </component>
 </module>
