@@ -156,6 +156,7 @@ public class EditorGutterLayout {
 
       areaGap(4).showIf(this::isLineNumbersShown),
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth).showIf(this::isLineNumbersShown),
+      areaGap(12).showIf(() -> myEditorGutter.isLineNumbersShown() && !myEditorGutter.isLineMarkersShown()),
       area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth),
       area(ADDITIONAL_LINE_NUMBERS_AREA, () -> 4).showIf(() -> myEditorGutter.isLineNumbersShown() && myEditorGutter.isLineMarkersShown()),
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
