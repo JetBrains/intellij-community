@@ -1,9 +1,9 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
 import com.intellij.codeInspection.tests.ULanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitUnconstructableTestCaseTestBase
+import com.intellij.codeInspection.tests.test.junit.JUnitUnconstructableTestCaseInspectionTestBase
 
-class JavaJUnitUnconstructableInspectionTest : JUnitUnconstructableTestCaseTestBase() {
+class JavaJUnitUnconstructableInspectionTest : JUnitUnconstructableTestCaseInspectionTestBase() {
   fun testPlain() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       class Plain { }

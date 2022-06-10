@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
 import com.intellij.codeInspection.tests.ULanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMalformedDeclarationTestBase
+import com.intellij.codeInspection.tests.test.junit.JUnitMalformedDeclarationInspectionTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -10,7 +10,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
 import java.io.File
 
-class KotlinJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
+class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationInspectionTestBase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(sdkLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)

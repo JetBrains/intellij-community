@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
-abstract class JUnitMalformedDeclarationTestBase : UastInspectionTestBase() {
+abstract class JUnitMalformedDeclarationInspectionTestBase : UastInspectionTestBase() {
   override val inspection = JUnitMalformedDeclarationInspection()
 
   protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {

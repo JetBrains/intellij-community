@@ -1,9 +1,9 @@
 package com.intellij.codeInspection.tests.java.test.junit
 
 import com.intellij.codeInspection.tests.ULanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMalformedDeclarationTestBase
+import com.intellij.codeInspection.tests.test.junit.JUnitMalformedDeclarationInspectionTestBase
 
-class JavaJUnitMalformedDeclarationTest : JUnitMalformedDeclarationTestBase() {
+class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationInspectionTestBase() {
   /* Malformed extensions */
   fun `test malformed extension no highlighting`() {
     myFixture.testHighlighting(ULanguage.JAVA, """

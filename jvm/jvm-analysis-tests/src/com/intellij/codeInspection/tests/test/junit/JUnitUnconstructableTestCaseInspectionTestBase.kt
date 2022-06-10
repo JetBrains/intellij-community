@@ -3,7 +3,7 @@ package com.intellij.codeInspection.tests.test.junit
 import com.intellij.codeInspection.test.junit.JUnitUnconstructableTestCaseInspection
 import com.intellij.codeInspection.tests.UastInspectionTestBase
 
-abstract class JUnitUnconstructableTestCaseTestBase : UastInspectionTestBase() {
+abstract class JUnitUnconstructableTestCaseInspectionTestBase : UastInspectionTestBase() {
   override val inspection = JUnitUnconstructableTestCaseInspection()
 
   override fun setUp() {
