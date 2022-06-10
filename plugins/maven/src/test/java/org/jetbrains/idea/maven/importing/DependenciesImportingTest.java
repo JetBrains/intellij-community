@@ -2646,7 +2646,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
 
     assertModuleModuleDeps("m1", "m2");
     assertModuleLibDeps("m1", "Maven: ATTACHED-JAR: test:m2:1");
-    assertModuleLibDep("m1", "Maven: ATTACHED-JAR: test:m2:1", "jar://" + jarPath + "!/");
+    assertModuleLibDep("m1", "Maven: ATTACHED-JAR: test:m2:1", "jar://" + FileUtil.toSystemIndependentName(jarPath) + "!/");
     assertModuleLibDeps("m2");
   }
 }
