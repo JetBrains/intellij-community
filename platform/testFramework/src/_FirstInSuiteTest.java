@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class _FirstInSuiteTest extends TestCase {
 
     StringBuilder builder = new StringBuilder("The following test classes were not loaded:\n");
     for (Throwable each : problems) {
-      builder.append(each).append("\n");
+      builder.append(ExceptionUtil.getThrowableText(each)).append("\n");
       each.printStackTrace(System.out);
     }
 
