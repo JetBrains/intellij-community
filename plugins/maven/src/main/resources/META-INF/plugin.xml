@@ -328,6 +328,7 @@
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.idea.maven.MavenCommandLineInspectionProjectConfigurator"/>
 
     <externalSystem.dependencyModifier implementation="org.jetbrains.idea.maven.dsl.MavenDependencyModificator"/>
+    <iconMapper mappingFile="MavenIconMappings.json"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
