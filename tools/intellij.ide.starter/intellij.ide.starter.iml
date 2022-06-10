@@ -98,7 +98,7 @@
     <orderEntry type="library" scope="TEST" name="java-diff-utils" level="project" />
     <orderEntry type="module-library">
       <library name="qodana-sarif" type="repository">
-       <properties include-transitive-deps="false" maven-id="com.jetbrains.qodana:qodana-sarif:0.1.95" />
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.qodana:qodana-sarif:0.1.95" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/0.1.95/qodana-sarif-0.1.95.jar!/" />
         </CLASSES>
