@@ -1067,7 +1067,7 @@
       <reference ref="CallHierarchy.BaseOnThisMethod"/>
     </group>
 
-    <group>
+    <group id="HierarchyPopupMenu.Common" searchable="false">
       <add-to-group group-id="TypeHierarchyPopupMenu"/>
       <add-to-group group-id="MethodHierarchyPopupMenu"/>
       <add-to-group group-id="CallHierarchyPopupMenu"/>

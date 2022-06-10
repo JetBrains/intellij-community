@@ -437,7 +437,7 @@
       <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
       <add-to-group group-id="Diff.Binary.Settings" anchor="last"/>
     </action>
-    <group>
+    <group id="Vcs.Diff.EditorTabs.Group" searchable="false">
       <action id="Vcs.Diff.ShowDiffInNewWindow"
               icon="AllIcons.Actions.MoveToWindow"
               class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
@@ -493,7 +493,7 @@
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 
-    <group>
+    <group id="VcsActions.KeymapGroup" searchable="false">
       <reference ref="Vcs.ToggleAmendCommitMode"/>
       <reference ref="CheckinProject"/>
       <reference ref="CheckinFiles"/>
@@ -566,7 +566,7 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
-    <group>
+    <group id="Diff.CompareWith.KeymapGroup" searchable="false">
       <reference ref="Compare.SameVersion"/>
       <reference ref="Compare.LastVersion"/>
       <reference ref="Compare.Specified"/>

@@ -262,7 +262,7 @@
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="before" relative-to-action="LoadUnloadModules"/>
     </action>
 
-    <group>
+    <group id="Java.ImportFrom.Group" searchable="false">
       <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction"/>
       <action id="ExtractModuleFromPackage" class="com.intellij.ide.projectView.actions.ExtractModuleFromPackageAction" internal="true"/>
       <action id="ImportModuleFromImlFile" class="com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction"/>
