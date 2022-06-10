@@ -693,7 +693,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public void setEditorAttributesKey(@NotNull String shortName, @Nullable String keyName, String scopeName, @Nullable Project project) {
-    getTools(shortName, project).setEditorAttributesKey(keyName, scopeName);
+    final ToolsImpl tools = getTools(shortName, project);
+    if (tools.isForcedEditorAttributesKey(keyName, scopeName)) return;
+    tools.setEditorAttributesKey(keyName, scopeName);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
   

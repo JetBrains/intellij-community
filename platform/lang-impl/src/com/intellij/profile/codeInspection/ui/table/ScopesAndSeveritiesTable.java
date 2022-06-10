@@ -244,7 +244,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
     TextAttributesKey previousValue = null;
     final SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(project);
     for (final ScopeToolState scopeToolState : scopeToolStates) {
-      TextAttributesKey key = scopeToolState.getEditorAttributesKey();
+      TextAttributesKey key = scopeToolState.getForcedEditorAttributesKey();
+      if (key == null) key = scopeToolState.getEditorAttributesKey();
       if (key == null) {
         final var severity = scopeToolState.getLevel().getSeverity();
         key = severity.equals(HighlightSeverity.INFORMATION) ? INFORMATION_FAKE_KEY
