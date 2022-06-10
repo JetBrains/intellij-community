@@ -39,16 +39,17 @@ public class CutAction extends DumbAwareAction implements LightEditCompatible {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
-    CutProvider provider = getAvailableCutProvider(event);
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    presentation.setEnabled(project != null && project.isOpen() && provider != null && provider.isCutEnabled(dataContext));
-    if (event.getPlace().equals(ActionPlaces.EDITOR_POPUP) && provider != null) {
-      presentation.setVisible(provider.isCutVisible(dataContext));
-    }
-    else {
-      presentation.setVisible(true);
-    }
+    CopyAction.updateFromProvider(event, PlatformDataKeys.CUT_PROVIDER, (provider, presentation) -> {
+      DataContext dataContext = event.getDataContext();
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      boolean notDumbAware = project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider);
+      presentation.setEnabled(!notDumbAware && project != null && project.isOpen() && provider != null && provider.isCutEnabled(dataContext));
+      if (event.getPlace().equals(ActionPlaces.EDITOR_POPUP) && provider != null) {
+        presentation.setVisible(provider.isCutVisible(dataContext));
+      }
+      else {
+        presentation.setVisible(true);
+      }
+    });
   }
 }
