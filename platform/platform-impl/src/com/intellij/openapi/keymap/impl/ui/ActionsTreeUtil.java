@@ -237,13 +237,16 @@ public final class ActionsTreeUtil {
         continue;
       }
       if (action instanceof ActionGroup) {
-        Group subGroup = createGroup((ActionGroup)action, getName(action), null, null, forceAsPopup, filtered, normalizeSeparators);
-        if (!forceAsPopup && !((ActionGroup)action).isPopup()) {
-          group.addAll(subGroup);
+        ActionGroup childGroup = (ActionGroup)action;
+        Group subGroup = createGroup(childGroup, getName(action), null, null, forceAsPopup, filtered, normalizeSeparators);
+        if (forceAsPopup || childGroup.isPopup() || StringUtil.isNotEmpty(childGroup.getTemplateText())) {
+          if (subGroup.getSize() > 0 ||
+              filtered == null || filtered.value(childGroup)) {
+            group.addGroup(subGroup);
+          }
         }
-        else if (subGroup.getSize() > 0 ||
-                 filtered == null || filtered.value(action)) {
-          group.addGroup(subGroup);
+        else {
+          group.addAll(subGroup);
         }
       }
       else if (action instanceof Separator) {
