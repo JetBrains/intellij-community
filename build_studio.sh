@@ -47,9 +47,9 @@ declare -ar BUILD_PROPERTIES=(
   "-Dintellij.build.incremental.compilation=${INCREMENTAL}"
 )
 
-"${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "${BUILD_PROPERTIES[@]}" intellij.idea.community.build AndroidStudioBuildTarget
+"${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "${BUILD_PROPERTIES[@]}" "${PROG_DIR}" intellij.idea.community.build AndroidStudioBuildTarget
 
-"${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "-Dintellij.build.output.root=${OUT}/updater" intellij.idea.community.build FullUpdaterBuildTarget
+"${PROG_DIR}/platform/jps-bootstrap/jps-bootstrap.sh" "-Dintellij.build.output.root=${OUT}/updater" "${PROG_DIR}" intellij.idea.community.build FullUpdaterBuildTarget
 
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
