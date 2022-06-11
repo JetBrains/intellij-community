@@ -498,7 +498,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
     WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath);
     if (wslPath != null) {
-      if (wslPath.getDistributionId().equals(myDescriptor.getMsId())) {
+      if (wslPath.getDistributionId().equalsIgnoreCase(myDescriptor.getMsId())) {
         return wslPath.getLinuxPath();
       }
       throw new IllegalArgumentException("Trying to get WSL path from a different WSL distribution. Requested path (" + windowsPath + ")" +
