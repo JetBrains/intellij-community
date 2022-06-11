@@ -8,17 +8,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface JvmElementVisitor<T> {
 
+  T visitClass(@NotNull JvmClass clazz);
+
   T visitElement(@NotNull JvmElement element);
 
-  T visitMember(@NotNull JvmMember member);
-
   T visitField(@NotNull JvmField field);
+
+  T visitMember(@NotNull JvmMember member);
 
   T visitMethod(@NotNull JvmMethod method);
 
   T visitParameter(@NotNull JvmParameter parameter);
-
-  T visitClass(@NotNull JvmClass clazz);
 
   T visitTypeParameter(@NotNull JvmTypeParameter typeParameter);
 }
