@@ -13,12 +13,14 @@ from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
     MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, NUMPY_NUMERIC_TYPES
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
+from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_pandas_container, is_string, pandas_to_str, \
     should_evaluate_full_value, should_evaluate_shape
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
     get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
+from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 
 try:
     import types
@@ -26,11 +28,6 @@ try:
     frame_type = types.FrameType
 except:
     frame_type = None
-
-
-class ExceptionOnEvaluate:
-    def __init__(self, result):
-        self.result = result
 
 
 _IS_JYTHON = sys.platform.startswith("java")
@@ -226,7 +223,7 @@ get_type = _TYPE_RESOLVE_HANDLER.get_type
 _str_from_providers = _TYPE_RESOLVE_HANDLER.str_from_providers
 
 
-def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
+def frame_vars_to_struct(frame_f_locals, hidden_ns=None, user_type_renderers={}):
     """Returns frame variables as the list of `DebugValue` structures
     """
     values = []
@@ -251,11 +248,11 @@ def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
                     return_values.append(value)
             else:
                 if hidden_ns is not None and k in hidden_ns:
-                    value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val)
+                    value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val, user_type_renderers=user_type_renderers)
                     value.isIPythonHidden = True
                     values.append(value)
                 else:
-                    value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val)
+                    value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val, user_type_renderers=user_type_renderers)
                     values.append(value)
         except Exception:
             traceback.print_exc()
@@ -265,7 +262,36 @@ def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
     return return_values + values
 
 
-def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True):
+def _get_default_var_string_representation(v, _type, typeName, format):
+    try:
+        str_from_provider = _str_from_providers(v, _type, typeName)
+        if str_from_provider is not None:
+            value = str_from_provider
+        elif hasattr(v, '__class__'):
+            if v.__class__ == frame_type:
+                value = pydevd_resolver.frameResolver.get_frame_name(v)
+
+            elif v.__class__ in (list, tuple):
+                if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
+                    value = '%s' % take_first_n_coll_elements(
+                        v, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+                    value = value.rstrip(')]}') + '...'
+                else:
+                    value = '%s' % str(v)
+            else:
+                value = format % v
+        else:
+            value = str(v)
+    except:
+        try:
+            value = repr(v)
+        except:
+            value = 'Unable to get repr for %s' % v.__class__
+
+    return value
+
+
+def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True, user_type_renderers=None):
     """ single variable or dictionary to Thrift struct representation """
 
     debug_value = DebugValue()
@@ -283,33 +309,21 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
 
     _type, typeName, resolver = get_type(v)
     type_qualifier = getattr(_type, "__module__", "")
+
+    type_renderer = None
+    if user_type_renderers is not None:
+        type_renderer = try_get_type_renderer_for_var(v, user_type_renderers)
+
+    var_custom_string_repr = None
+    value = None
     if not evaluate_full_value:
         value = DEFAULT_VALUES_DICT[LOAD_VALUES_POLICY]
-    else:
-        try:
-            str_from_provider = _str_from_providers(v, _type, typeName)
-            if str_from_provider is not None:
-                value = str_from_provider
-            elif hasattr(v, '__class__'):
-                if v.__class__ == frame_type:
-                    value = pydevd_resolver.frameResolver.get_frame_name(v)
+    elif type_renderer is not None:
+        var_custom_string_repr = type_renderer.evaluate_var_string_repr(v)
+        value = var_custom_string_repr
 
-                elif v.__class__ in (list, tuple):
-                    if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
-                        value = '%s' % take_first_n_coll_elements(
-                            v, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
-                        value = value.rstrip(')]}') + '...'
-                    else:
-                        value = '%s' % str(v)
-                else:
-                    value = format % v
-            else:
-                value = str(v)
-        except:
-            try:
-                value = repr(v)
-            except:
-                value = 'Unable to get repr for %s' % v.__class__
+    if value is None:
+        value = _get_default_var_string_representation(v, _type, typeName, format)
 
     debug_value.name = name
     debug_value.type = typeName
@@ -333,7 +347,7 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     except TypeError:  # in java, unicode is a function
         pass
 
-    if is_pandas_container(type_qualifier, typeName, v):
+    if is_pandas_container(type_qualifier, typeName, v) and var_custom_string_repr is None:
         value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     debug_value.value = value
 
@@ -353,6 +367,9 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
             debug_value.isContainer = True
         else:
             pass
+
+    if type_renderer is not None:
+        debug_value.typeRendererId = type_renderer.to_type
 
     return debug_value
 

@@ -2,7 +2,9 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.NonExtendable
 interface ExternalSystemProjectTrackerSettings {
 
   var autoReloadType: AutoReloadType

@@ -29,8 +29,6 @@ import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.importing.MavenModelUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 
-import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.TEST_SUFIX;
-
 /**
  * @author Sergey Evdokimov
  */
@@ -43,7 +41,7 @@ public class MavenCompilerConfigurer extends MavenModuleConfigurer {
     CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
     if (!Boolean.TRUE.equals(module.getUserData(IGNORE_MAVEN_COMPILER_TARGET_KEY))) {
       LanguageLevel level;
-      if (module.getName().endsWith(TEST_SUFIX)) {
+      if (MavenModelUtil.isTestModule(module.getName())) {
         level = MavenModelUtil.getTargetTestLanguageLevel(mavenProject);
         if (level == null) {
           level = MavenModelUtil.getTargetLanguageLevel(mavenProject);

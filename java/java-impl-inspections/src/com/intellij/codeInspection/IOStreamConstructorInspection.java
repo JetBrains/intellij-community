@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -21,6 +22,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +46,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
         StreamType streamType = constructorModel.myStreamType;
         PsiType expectedType = ExpectedTypeUtils.findExpectedType(newExpression, false);
         if (expectedType == null) return;
+        if (isFileNotFoundHandled(newExpression)) return;
         boolean canUseBaseType = TypeConversionUtil.isAssignable(expectedType, streamType.baseType(newExpression));
         if (!canUseBaseType) return;
         boolean isInfoLevel = PsiUtil.isLanguageLevel10OrHigher(holder.getFile());
@@ -53,6 +56,17 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
         holder.registerProblem(newExpression, JavaBundle.message(streamType.myErrorText), highlightType, fix);
       }
     };
+  }
+
+  private static boolean isFileNotFoundHandled(@NotNull PsiExpression context) {
+    PsiClassType fileNotFoundType = TypeUtils.getType("java.io.FileNotFoundException", context);
+    ExceptionUtil.HandlePlace place = ExceptionUtil.getHandlePlace(context, fileNotFoundType, null);
+    ExceptionUtil.HandlePlace.TryCatch fileNotFoundCatch = ObjectUtils.tryCast(place, ExceptionUtil.HandlePlace.TryCatch.class);
+    if (fileNotFoundCatch == null) return false;
+    PsiParameter catchParameter = fileNotFoundCatch.getParameter();
+    if (catchParameter == null) return false;
+    PsiClassType ioException = TypeUtils.getType("java.io.IOException", context);
+    return !TypeConversionUtil.isAssignable(catchParameter.getType(), ioException);
   }
 
   private static @Nullable PsiExpression getOnlyArgument(@NotNull PsiCallExpression expression) {

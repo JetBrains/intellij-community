@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PluginException;
@@ -36,6 +36,24 @@ public abstract class FileBasedIndex {
    */
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
+
+  /**
+   * @return the file which the current thread is writing evaluated values of indexes right now,
+   * or {@code null} if current thread isn't writing index values.
+   */
+  @Nullable
+  public abstract IndexWritingFile getFileWritingCurrentlyIndexes();
+
+  public static class IndexWritingFile {
+    public final int fileId;
+    @Nullable
+    public final String filePath;
+
+    public IndexWritingFile(int id, @Nullable String path) {
+      fileId = id;
+      filePath = path;
+    }
+  }
 
   @ApiStatus.Internal
   public void registerProjectFileSets(@NotNull Project project) {

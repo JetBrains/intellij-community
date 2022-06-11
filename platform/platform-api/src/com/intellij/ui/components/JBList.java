@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -111,8 +110,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   public void repaint(long tm, int x, int y, int width, int height) {
     if (width > 0 && height > 0) {
       ListUI ui = getUI();
-      // do not paint a line background if layout orientation is not vertical
-      if (ui instanceof WideSelectionListUI && JList.VERTICAL == getLayoutOrientation()) {
+      // do not paint a line background if the layout orientation is not vertical
+      if (ui instanceof WideSelectionListUI && getLayoutOrientation() == JList.VERTICAL) {
         x = 0;
         width = getWidth();
       }
@@ -225,7 +224,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     for (int index : getSelectedIndices()) {
       E value = getModel().getElementAt(index);
       String text = itemToText(index, value);
-      ContainerUtil.addIfNotNull(selected, text);
+      if (text != null) selected.add(text);
     }
 
     if (selected.size() > 0) {

@@ -18,6 +18,6 @@ package com.intellij.debugger.engine;
 /**
  * @deprecated use {@link DebugProcessListener}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class DebugProcessAdapter implements DebugProcessListener {
 }

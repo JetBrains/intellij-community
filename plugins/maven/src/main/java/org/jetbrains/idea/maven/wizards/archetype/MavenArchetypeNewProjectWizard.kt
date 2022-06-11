@@ -5,11 +5,16 @@ import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_A
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -28,6 +33,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.collectionModel
 import com.intellij.openapi.ui.naturalSorted
+import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
@@ -41,6 +47,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil.putIfNotNull
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.update.UiNotifyConnector
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.MavenArchetypeManager
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
@@ -64,6 +71,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
   override fun createStep(context: WizardContext) =
     RootNewProjectWizardStep(context).chain(::CommentStep, ::NewProjectWizardBaseStep, ::GitNewProjectWizardStep, ::Step)
+      .chain(::AssetsStep)
 
   private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
     override fun getComment(name: String): String {
@@ -116,6 +124,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .applyToComponent { setSwingPopup(false) }
             .bindItem(catalogItemProperty)
             .columns(COLUMNS_MEDIUM)
+            .gap(RightGap.SMALL)
           link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.button")) {
             manageCatalogs()
           }
@@ -132,6 +141,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .horizontalAlign(HorizontalAlign.FILL)
             .resizableColumn()
             .validationOnApply { validateArchetypeId() }
+            .gap(RightGap.SMALL)
           button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
             addArchetype()
           }
@@ -159,7 +169,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           }.resizableRow()
         }.resizableRow()
       }
-      reloadCatalogs()
+      UiNotifyConnector.doWhenFirstShown(catalogComboBox) { reloadCatalogs() }
     }
 
     override fun setupAdvancedSettingsUI(builder: Panel) {
@@ -169,8 +179,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           textField()
             .bindText(versionProperty)
             .columns(COLUMNS_MEDIUM)
-            .validationOnInput { validateVersion() }
-            .validationOnApply { validateVersion() }
+            .textValidation(CHECK_NON_EMPTY)
         }.bottomGap(BottomGap.SMALL)
       }
     }
@@ -445,4 +454,13 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   }
 
   class Builder : GeneratorNewProjectWizardBuilderAdapter(MavenArchetypeNewProjectWizard())
+
+  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
+      if (gitData?.git == true) {
+        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
+      }
+    }
+  }
 }

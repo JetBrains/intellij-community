@@ -65,7 +65,7 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
    * @see #init(Component)
    * @deprecated do not use this object as a tree watcher
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public MnemonicHelper() {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }

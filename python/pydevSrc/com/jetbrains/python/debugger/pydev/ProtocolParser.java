@@ -275,14 +275,16 @@ public final class ProtocolParser {
     final String isReturnedValue = readString(reader, "isRetVal", "");
     final String isIPythonHidden = readString(reader, "isIPythonHidden", "");
     final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
+    String typeRendererId = readString(reader, "typeRendererId", "");
     String shape = readString(reader, "shape", "");
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
       value = value.substring(type.length() + 2);
     }
     if (shape.isEmpty()) shape = null;
+    if (typeRendererId.isEmpty()) typeRendererId = null;
     return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
-                            "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), frameAccessor);
+                            "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
   }
 
   public static ArrayChunk parseArrayValues(final String text, final PyFrameAccessor frameAccessor) throws PyDebuggerException {
@@ -301,7 +303,7 @@ public final class ProtocolParser {
       result.setType(readString(reader, "type", null));
       result.setMax(readString(reader, "max", null));
       result.setMin(readString(reader, "min", null));
-      result.setValue(new PyDebugValue(slice, null, null, null, false, null, false, false, false, frameAccessor));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, null, false, false, false, null, frameAccessor));
       reader.moveUp();
     }
     if ("headerdata".equals(reader.peekNextChild())) {

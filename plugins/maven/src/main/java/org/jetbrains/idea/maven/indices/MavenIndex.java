@@ -656,7 +656,7 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   /**
-   * @deprecated use {@link MavenIndexUtils#normalizePathOrUrl(java.lang.String)}
+   * @deprecated use {@link MavenIndexUtils#normalizePathOrUrl(String)}
    */
   @Deprecated(forRemoval = true)
   @NotNull

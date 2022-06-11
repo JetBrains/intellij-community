@@ -44,7 +44,7 @@ internal class SemanticInlayModel(private val combinedDiffViewerContext: UserDat
   private val semanticInlays = hashMapOf<Int, SemanticInlay>()
 
   private data class FragmentId(val changeIndex: Int, val title: @NlsSafe String)
-  private val semanticFragmentsBlocks = hashMapOf<FragmentId, CombinedDiffBlock>()
+  private val semanticFragmentsBlocks = hashMapOf<FragmentId, CombinedDiffBlock<*>>()
 
   private val combinedDiffProcessor = viewer.context.getUserData(COMBINED_DIFF_PROCESSOR)!!
 
@@ -158,17 +158,17 @@ internal class SemanticInlayModel(private val combinedDiffViewerContext: UserDat
       semanticFragmentsBlocks[fragmentId]?.let(Disposer::dispose)
     }
     else {
-      val parentBlock = combinedDiffViewer.getAllBlocks().find { it.content.viewer == viewer } ?: return
+      val parentBlock = combinedDiffViewer.getBlock(viewer) ?: return
       val semanticFragmentDiffData =
-        NewChildDiffRequestData(parentBlock.content.path, parentBlock.content.fileStatus, //TODO should be different?
-                                position = InsertPosition(parentBlock.content.path, parentBlock.content.fileStatus, false))
+        NewChildDiffRequestData(parentBlock.id, //TODO should be different?
+                                position = InsertPosition(parentBlock.id, false))
       val fragmentDiffRequestProducer = FragmentDiffRequestProducer(title, info, viewer, changeIndex, changeFragment, fragmentSide)
       val semanticFragmentBlock = combinedDiffProcessor.addChildRequest(semanticFragmentDiffData, fragmentDiffRequestProducer) ?: return
       Disposer.register(semanticFragmentBlock, Disposable {
         semanticFragmentsBlocks.remove(fragmentId)
       })
       semanticFragmentsBlocks[fragmentId] = semanticFragmentBlock
-      combinedDiffViewer.selectDiffBlock(semanticFragmentBlock, ScrollPolicy.DIFF_BLOCK) {}
+      combinedDiffViewer.selectDiffBlock(semanticFragmentBlock, ScrollPolicy.DIFF_BLOCK)
     }
   }
 
@@ -201,8 +201,9 @@ internal class SemanticInlayModel(private val combinedDiffViewerContext: UserDat
     val combinedDiffViewer = getCombinedDiffViewer() ?: return empty()
     fun findContentBaseViewer(pathToFind: String) =
       combinedDiffViewer.getAllBlocks()
-        .map { it.content }
-        .find { it.path.path.contains(pathToFind) }?.let { it.path to it.viewer }
+        .map(CombinedDiffBlock<*>::id)
+        .filterIsInstance<CombinedPathBlockId>()
+        .find { it.path.path.contains(pathToFind) }?.let { it.path to combinedDiffViewer.getViewer(it) }
 
     val sideToFind = fragmentSide.other()
     val pathToFind = info.path(sideToFind)

@@ -1258,7 +1258,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private void applyCreateEventsInDirectory(@NotNull VirtualDirectoryImpl parent, @NotNull Collection<VFileCreateEvent> createEvents) {
+  private void applyCreateEventsInDirectory(@NotNull VirtualDirectoryImpl parent, @NotNull Collection<? extends VFileCreateEvent> createEvents) {
     int parentId = getFileId(parent);
     NewVirtualFile vf = findFileById(parentId);
     if (!(vf instanceof VirtualDirectoryImpl)) return;
@@ -1284,7 +1284,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     saveScannedChildrenRecursively(createEvents, delegate, parent.isCaseSensitive());
   }
 
-  private static void saveScannedChildrenRecursively(@NotNull Collection<VFileCreateEvent> createEvents,
+  private static void saveScannedChildrenRecursively(@NotNull Collection<? extends VFileCreateEvent> createEvents,
                                                      @NotNull NewVirtualFileSystem delegate,
                                                      boolean isCaseSensitive) {
     for (VFileCreateEvent createEvent : createEvents) {
@@ -1344,6 +1344,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     CharSequence rootName;
     String rootPath;
+    FileAttributes attributes;
     if (fs instanceof ArchiveFileSystem) {
       ArchiveFileSystem afs = (ArchiveFileSystem)fs;
       VirtualFile localFile = afs.findLocalByRootPath(path);
@@ -1351,12 +1352,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       rootName = localFile.getNameSequence();
       rootPath = afs.getRootPathByLocal(localFile);
       rootUrl = UriUtil.trimTrailingSlashes(VirtualFileManager.constructUrl(fs.getProtocol(), rootPath));
+      attributes = afs.getArchiveRootAttributes(new StubVirtualFile(fs) {
+        @Override public @NotNull String getPath() { return rootPath; }
+        @Override public @Nullable VirtualFile getParent() { return null; }
+      });
     }
     else {
       rootName = rootPath = path;
+      attributes = loadAttributes(fs, rootPath);
     }
 
-    FileAttributes attributes = loadAttributes(fs, rootPath);
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }

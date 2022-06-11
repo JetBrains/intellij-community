@@ -10,7 +10,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
@@ -117,30 +116,37 @@ public final class Utils {
   }
 
   @ApiStatus.Internal
-  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
-                                                                          @NotNull ActionGroup group,
+  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(@NotNull ActionGroup group,
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false)
+    return new ActionUpdater(presentationFactory, context, place, false, false)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
 
   @ApiStatus.Internal
-  public static List<AnAction> expandActionGroupWithTimeout(boolean isInModalContext,
-                                                            @NotNull ActionGroup group,
+  public static List<AnAction> expandActionGroupWithTimeout(@NotNull ActionGroup group,
                                                             @NotNull PresentationFactory presentationFactory,
                                                             @NotNull DataContext context,
                                                             @NotNull String place,
                                                             int timeoutMs) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false)
+    return new ActionUpdater(presentationFactory, context, place, false, false)
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
   }
 
   private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
 
+  /** @deprecated Use {@link #expandActionGroup(ActionGroup, PresentationFactory, DataContext, String)} */
+  @Deprecated(forRemoval = true)
   public static @NotNull List<AnAction> expandActionGroup(boolean isInModalContext,
                                                           @NotNull ActionGroup group,
+                                                          @NotNull PresentationFactory presentationFactory,
+                                                          @NotNull DataContext context,
+                                                          @NotNull String place) {
+    return expandActionGroup(group, presentationFactory, context, place);
+  }
+
+  public static @NotNull List<AnAction> expandActionGroup(@NotNull ActionGroup group,
                                                           @NotNull PresentationFactory presentationFactory,
                                                           @NotNull DataContext context,
                                                           @NotNull String place) {
@@ -148,15 +154,14 @@ public final class Utils {
                           JBPopupFactory.getInstance().guessBestPopupLocation(context);
     Runnable removeIcon = addLoadingIcon(point, place);
     return computeWithRetries(
-      () -> expandActionGroupImpl(isInModalContext, group, presentationFactory,
+      () -> expandActionGroupImpl(group, presentationFactory,
                                   context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
       null, removeIcon);
   }
 
   private static int ourExpandActionGroupImplEDTLoopLevel;
 
-  private static @NotNull List<AnAction> expandActionGroupImpl(boolean isInModalContext,
-                                                               @NotNull ActionGroup group,
+  private static @NotNull List<AnAction> expandActionGroupImpl(@NotNull ActionGroup group,
                                                                @NotNull PresentationFactory presentationFactory,
                                                                @NotNull DataContext context,
                                                                @NotNull String place,
@@ -167,7 +172,7 @@ public final class Utils {
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
-      isInModalContext, presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
+      presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
     ActionGroupExpander expander = ActionGroupExpander.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
@@ -288,8 +293,7 @@ public final class Utils {
     }
     Runnable removeIcon = addLoadingIcon(progressPoint, place);
     List<AnAction> list = computeWithRetries(
-      () -> expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory,
-                                  context, place, true, removeIcon, component),
+      () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
       expire, removeIcon);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
@@ -485,7 +489,7 @@ public final class Utils {
     UpdateSession updater = e.getUpdateSession();
     if (updater == null) {
       ActionUpdater actionUpdater = new ActionUpdater(
-        LaterInvocator.isInModalContext(), new PresentationFactory(), e.getDataContext(),
+        new PresentationFactory(), e.getDataContext(),
         e.getPlace(), e.isFromContextMenu(), e.isFromActionToolbar());
       updater = actionUpdater.asUpdateSession();
     }
@@ -518,7 +522,7 @@ public final class Utils {
     // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
     ActionUpdater actionUpdater = new ActionUpdater(
-      LaterInvocator.isInModalContext(), factory, dataContext,
+      factory, dataContext,
       place, false, false, event -> {
         AnActionEvent transformed = actionProcessor.createEvent(
           inputEvent, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager());

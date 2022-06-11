@@ -11,26 +11,32 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TreeSpeedSearch
+import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.isEmpty
 import com.intellij.util.ui.tree.TreeUtil
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.stream.Stream
 import javax.swing.JTree
+import javax.swing.tree.TreePath
 
 class SavedPatchesTree(project: Project,
                        private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
-                       parentDisposable: Disposable) : ChangesTree(project, false, false) {
+                       parentDisposable: Disposable) : ChangesTree(project, false, false, false) {
+  internal val speedSearch: SpeedSearchSupply
+
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, false)
     setCellRenderer(MyTreeRenderer(nodeRenderer))
@@ -38,6 +44,7 @@ class SavedPatchesTree(project: Project,
     isKeepTreeState = true
     isScrollToSelection = false
     setEmptyText(VcsBundle.message("saved.patch.empty.text"))
+    speedSearch = MySpeedSearch(this)
 
     doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
@@ -79,12 +86,9 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun getData(dataId: String): Any? {
-    val provider = savedPatchesProviders.find { it.dataKey.`is`(dataId) }
-    if (provider != null) {
-      return StreamEx.of(selectedPatchObjects().map(SavedPatchesProvider.PatchObject<*>::data))
-        .filterIsInstance(provider.dataClass)
-        .toList()
-    }
+    val selectedObjects = selectedPatchObjects()
+    val data = savedPatchesProviders.firstNotNullOfOrNull { provider -> provider.getData(dataId, selectedObjects) }
+    if (data != null) return data
     if (CommonDataKeys.PROJECT.`is`(dataId)) return myProject
     return super.getData(dataId)
   }
@@ -95,8 +99,8 @@ class SavedPatchesTree(project: Project,
 
   override fun getToggleClickCount(): Int = 2
 
-  class TagWithCounterChangesBrowserNode(text: @Nls String, private val sortWeight: Int? = null) :
-    TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, true) {
+  class TagWithCounterChangesBrowserNode(text: @Nls String, expandByDefault: Boolean = true, private val sortWeight: Int? = null) :
+    TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault) {
     private val stashCount = ClearableLazyValue.create {
       VcsTreeModelData.children(this).userObjects(SavedPatchesProvider.PatchObject::class.java).size
     }
@@ -132,7 +136,18 @@ class SavedPatchesTree(project: Project,
                                               row: Int,
                                               hasFocus: Boolean): Component {
       val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-      painter = customizePainter(tree as ChangesTree, value as ChangesBrowserNode<*>, row, selected)
+      val node = value as ChangesBrowserNode<*>
+      painter = customizePainter(tree as ChangesTree, node, row, selected)
+      val speedSearch = SpeedSearchSupply.getSupply(tree)
+      if (speedSearch != null) {
+        val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*>
+        if (patchObject != null) {
+          val text = textRenderer.getCharSequence(false).toString()
+          if (speedSearch.matchingFragments(text) == null && speedSearch.matches(patchObject)) {
+            SpeedSearchUtil.applySpeedSearchHighlighting(textRenderer, listOf(TextRange.allOf(text)), selected)
+          }
+        }
+      }
       return rendererComponent
     }
 
@@ -146,6 +161,26 @@ class SavedPatchesTree(project: Project,
 
       val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*> ?: return null
       return patchObject.createPainter(tree, this, row, selected)
+    }
+  }
+
+  private class MySpeedSearch(tree: JTree) :
+    TreeSpeedSearch(tree, ChangesBrowserNode.TO_TEXT_CONVERTER, true) {
+    override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
+      val isMatching = super.isMatchingElement(element, pattern)
+      if (isMatching) return true
+      val node = (element as? TreePath)?.lastPathComponent as? ChangesBrowserNode<*> ?: return false
+      val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*> ?: return false
+      return matches(patchObject)
+    }
+  }
+
+  companion object {
+    private fun SpeedSearchSupply.matches(patchObject: SavedPatchesProvider.PatchObject<*>): Boolean {
+      val changes = patchObject.cachedChanges() ?: return false
+      return changes.any {
+        matchingFragments(it.filePath.name) != null
+      }
     }
   }
 }

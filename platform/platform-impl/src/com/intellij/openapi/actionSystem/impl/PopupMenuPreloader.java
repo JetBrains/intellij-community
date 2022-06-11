@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -98,11 +97,10 @@ public final class PopupMenuPreloader implements Runnable {
     Component contextComponent = ActionPlaces.MAIN_MENU.equals(myPlace) ?
                                  IJSwingUtilities.getFocusedComponentInWindowOrSelf(component) : component;
     DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(contextComponent));
-    boolean isInModalContext = ModalityState.stateForComponent(component).dominates(ModalityState.NON_MODAL);
     long start = System.nanoTime();
     myRetries ++;
     CancellablePromise<List<AnAction>> promise = Utils.expandActionGroupAsync(
-      isInModalContext, actionGroup, new PresentationFactory(), dataContext, myPlace);
+      actionGroup, new PresentationFactory(), dataContext, myPlace);
     promise.onSuccess(__ -> dispose(TimeoutUtil.getDurationMillis(start)));
     promise.onError(__ -> {
       int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));

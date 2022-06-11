@@ -27,6 +27,7 @@ class RecentProjectMetaInfo : BaseState() {
   var binFolder by string()
   var projectOpenTimestamp by property(0L)
   var buildTimestamp by property(0L)
+  var activationTimestamp by property(0L)
   var metadata by string()
 
   @get:Attribute

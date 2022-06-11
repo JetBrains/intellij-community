@@ -257,7 +257,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       changedWithIndex.addAll(caseOnlyRenameChanges);
 
       runWithMessageFile(myProject, root, message,
-                         messageFile -> exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile)));
+                         messageFile -> exceptions.addAll(commitUsingIndex(myProject, repository, changes, changedWithIndex,
+                                                                           messageFile, createCommitOptions())));
       if (!exceptions.isEmpty()) return exceptions;
 
       applyPartialChanges(partialCommitHelpers);
@@ -274,10 +275,12 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   }
 
   @NotNull
-  private List<VcsException> commitUsingIndex(@NotNull GitRepository repository,
-                                              @NotNull Collection<? extends CommitChange> rootChanges,
-                                              @NotNull Set<? extends CommitChange> changedWithIndex,
-                                              @NotNull File messageFile) {
+  public static List<VcsException> commitUsingIndex(@NotNull Project project,
+                                                    @NotNull GitRepository repository,
+                                                    @NotNull Collection<? extends ChangedPath> rootChanges,
+                                                    @NotNull Set<? extends ChangedPath> changedWithIndex,
+                                                    @NotNull File messageFile,
+                                                    @NotNull GitCommitOptions commitOptions) {
     List<VcsException> exceptions = new ArrayList<>();
     try {
       Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
@@ -292,7 +295,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       }
 
       // Check what is staged besides our changes
-      Collection<GitDiffChange> stagedChanges = GitChangeUtils.getStagedChanges(myProject, root);
+      Collection<GitDiffChange> stagedChanges = GitChangeUtils.getStagedChanges(project, root);
       LOG.debug("Found staged changes: " + getLogStringGitDiffChanges(rootPath, stagedChanges));
       Collection<ChangedPath> excludedStagedChanges = new ArrayList<>();
       Collection<FilePath> excludedStagedAdditions = new ArrayList<>();
@@ -303,7 +306,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
       // Find files with 'AD' status, we will not be able to restore them after using 'git add' command,
       // getting "pathspec 'file.txt' did not match any files" error (and preventing us from adding other files).
-      Collection<GitDiffChange> unstagedChanges = GitChangeUtils.getUnstagedChanges(myProject, root, excludedStagedAdditions, false);
+      Collection<GitDiffChange> unstagedChanges = GitChangeUtils.getUnstagedChanges(project, root, excludedStagedAdditions, false);
       LOG.debug("Found unstaged changes: " + getLogStringGitDiffChanges(rootPath, unstagedChanges));
       Set<FilePath> excludedUnstagedDeletions = new HashSet<>();
       processExcludedPaths(unstagedChanges, added, removed, (before, after) -> {
@@ -313,7 +316,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       if (!excludedStagedChanges.isEmpty()) {
         // Reset staged changes which are not selected for commit
         LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
-        resetExcluded(myProject, root, excludedStagedChanges);
+        resetExcluded(project, root, excludedStagedChanges);
       }
       try {
         List<FilePath> alreadyHandledPaths = getPaths(changedWithIndex);
@@ -326,19 +329,19 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
         toRemove.removeAll(alreadyHandledPaths);
 
         LOG.debug(String.format("Updating index: added: %s, removed: %s", toAdd, toRemove));
-        updateIndex(myProject, root, toAdd, toRemove, exceptions);
+        updateIndex(project, root, toAdd, toRemove, exceptions);
         if (!exceptions.isEmpty()) return exceptions;
 
 
         // Commit the staging area
         LOG.debug("Performing commit...");
-        GitRepositoryCommitter committer = new GitRepositoryCommitter(repository, createCommitOptions());
+        GitRepositoryCommitter committer = new GitRepositoryCommitter(repository, commitOptions);
         committer.commitStaged(messageFile);
       }
       finally {
         // Stage back the changes unstaged before commit
         if (!excludedStagedChanges.isEmpty()) {
-          restoreExcluded(myProject, root, excludedStagedChanges, excludedUnstagedDeletions);
+          restoreExcluded(project, root, excludedStagedChanges, excludedUnstagedDeletions);
         }
       }
     }
@@ -412,12 +415,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       GitIndexUtil.StagedFile stagedFile = getStagedFile(repository, change);
       boolean isExecutable = stagedFile != null && stagedFile.isExecutable();
 
-      byte[] fileContent = convertDocumentContentToBytes(repository, helper.getContent(), file);
-
-      byte[] bom = file.getBOM();
-      if (bom != null && !ArrayUtil.startsWith(fileContent, bom)) {
-        fileContent = ArrayUtil.mergeArrays(bom, fileContent);
-      }
+      byte[] fileContent = convertDocumentContentToBytesWithBOM(repository, helper.getContent(), file);
 
       GitIndexUtil.write(repository, path, fileContent, isExecutable);
     }
@@ -452,6 +450,19 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     }
 
     return LoadTextUtil.charsetForWriting(repository.getProject(), file, text, file.getCharset()).second;
+  }
+
+  public static byte @NotNull [] convertDocumentContentToBytesWithBOM(@NotNull GitRepository repository,
+                                                                      @NotNull @NonNls String documentContent,
+                                                                      @NotNull VirtualFile file) {
+    byte[] fileContent = convertDocumentContentToBytes(repository, documentContent, file);
+
+    byte[] bom = file.getBOM();
+    if (bom != null && !ArrayUtil.startsWith(fileContent, bom)) {
+      fileContent = ArrayUtil.mergeArrays(bom, fileContent);
+    }
+
+    return fileContent;
   }
 
   @Nullable
@@ -527,9 +538,9 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   }
 
   @NotNull
-  private static List<FilePath> getPaths(@NotNull Collection<? extends CommitChange> changes) {
+  private static List<FilePath> getPaths(@NotNull Collection<? extends ChangedPath> changes) {
     List<FilePath> files = new ArrayList<>();
-    for (CommitChange change : changes) {
+    for (ChangedPath change : changes) {
       if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(change.beforePath, change.afterPath)) {
         addIfNotNull(files, change.beforePath);
       }
@@ -589,7 +600,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       List<CommitChange> movedChanges = committedAndNewChanges.first;
       Collection<CommitChange> newRootChanges = committedAndNewChanges.second;
 
-      runWithMessageFile(myProject, root, message, moveMessageFile -> exceptions.addAll(commitUsingIndex(repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile)));
+      runWithMessageFile(myProject, root, message, moveMessageFile -> exceptions.addAll(
+        commitUsingIndex(myProject, repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile, createCommitOptions())));
 
       List<Couple<FilePath>> committedMovements = mapNotNull(movedChanges, it -> Couple.of(it.beforePath, it.afterPath));
       for (GitCheckinExplicitMovementProvider provider : providers) {
@@ -993,12 +1005,12 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     });
   }
 
-  private static class ChangedPath {
+  public static class ChangedPath {
     @Nullable public final FilePath beforePath;
     @Nullable public final FilePath afterPath;
 
-    ChangedPath(@Nullable FilePath beforePath,
-                @Nullable FilePath afterPath) {
+    public ChangedPath(@Nullable FilePath beforePath,
+                       @Nullable FilePath afterPath) {
       assert beforePath != null || afterPath != null;
       this.beforePath = beforePath;
       this.afterPath = afterPath;

@@ -132,7 +132,7 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
         Integer position = FileBasedIndex.getInstance().getFileData(YAMLKeysIndex.KEY, file, myProject).get(name);
         if (position != null) {
           Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, position);
-          if (!consumer.process(new YAMLKeyNavigationItem(navigatable, name, file))) {
+          if (!consumer.process(new YAMLKeyNavigationItem(myProject, name, file, position))) {
             return;
           }
         }

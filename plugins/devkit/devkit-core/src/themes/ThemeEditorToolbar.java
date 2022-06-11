@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -42,9 +43,11 @@ public final class ThemeEditorToolbar extends EditorNotifications.Provider<Edito
       EditorNotificationPanel panel = new EditorNotificationPanel(bg);
       panel.removeAll();
       DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("DevKit.ThemeEditorToolbar");
-      JComponent toolbar = ActionManager.getInstance().createActionToolbar("ThemeEditor", group, true).getComponent();
-      toolbar.setBackground(bg);
-      panel.add(toolbar);
+      ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ThemeEditor", group, true);
+      actionToolbar.setTargetComponent(panel);
+      JComponent toolbarComponent = actionToolbar.getComponent();
+      toolbarComponent.setBackground(bg);
+      panel.add(toolbarComponent);
       DataManager.registerDataProvider(panel, dataId -> CommonDataKeys.VIRTUAL_FILE.is(dataId) ? fileEditor.getFile() : null);
       return panel;
     }

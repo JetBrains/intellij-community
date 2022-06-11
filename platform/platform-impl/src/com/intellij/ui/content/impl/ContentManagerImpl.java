@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.impl;
 
 import com.intellij.ide.DataManager;
@@ -212,27 +212,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     Disposer.register(this, content);
   }
 
-  @ApiStatus.Experimental
-  public @Nullable ContentManagerImpl getActiveNestedManager() {
-    ContentManagerImpl candidate = null;
-    for (ContentManagerImpl manager : myNestedManagers) {
-      if (manager.getContentCount() > 0) candidate = manager;
-      Content[] selectedContents = manager.getSelectedContents();
-      for (Content content : selectedContents) {
-        if (UIUtil.isFocusAncestor(content.getComponent())) return manager;
-      }
-      ContentManagerImpl activeNestedManager = manager.getActiveNestedManager();
-      if (activeNestedManager != null) return activeNestedManager;
-    }
-    return candidate;
-  }
-
   @Override
   public boolean removeContent(@NotNull Content content, boolean dispose) {
-    //ContentManager manager = getManager(content);
-    //if (manager != this) {
-    //  return manager.removeContent(content, dispose);
-    //}
     boolean wasFocused = UIUtil.isFocusAncestor(content.getComponent());
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
@@ -263,8 +244,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     ApplicationManager.getApplication().assertIsDispatchThread();
     int indexToBeRemoved = getIndexOfContent(content);
     if (indexToBeRemoved == -1) {
-      //ContentManagerImpl manager = getManager(content);
-      //if (manager != null) return manager.doRemoveContent(content, dispose);
       return ActionCallback.REJECTED;
     }
 
@@ -330,9 +309,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread() && !myDisposed && myContents.isEmpty()) {
-        // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
-        // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
-        // at at the same time.
+        // cleanup visibleComponent in TabbedPaneUI only if there is no content left,
+        // otherwise immediate adding of a new content will lead to having visible two TabWrapper component at the same time.
         myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
       }
     }
@@ -344,7 +322,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return;
     }
 
-    for (Content content : new ArrayList<>(myContents)) {
+    for (Content content : List.copyOf(myContents)) {
       removeContent(content, dispose);
     }
   }
@@ -516,7 +494,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     mySelectionHistory.remove(content);
     mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
-      return getFocusManager().requestFocus(getComponent(), true).doWhenProcessed(() -> requestFocus(content, forcedFocus));
+      return getFocusManager().requestFocusInProject(getComponent(), myProject).doWhenProcessed(() -> requestFocus(content, forcedFocus));
     }
 
     if (!checkSelectionChangeShouldBeProcessed(content, implicit)) {

@@ -2,9 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface ExternalSystemProjectAware {
 
   val projectId: ExternalSystemProjectId

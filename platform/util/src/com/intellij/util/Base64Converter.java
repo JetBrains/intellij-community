@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
  * @deprecated Please use {@link java.util.Base64} instead
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public final class Base64Converter {
   private static final char[] alphabet = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',   //  0 to  7

@@ -131,22 +131,21 @@ abstract class CompletionSession(
         NotPropertiesService.getNotProperties(position)
     )
 
-    protected val shadowedFilter by lazy {
+    protected val shadowedFilter: ((Collection<DeclarationDescriptor>) -> Collection<DeclarationDescriptor>)? by lazy {
         ShadowedDeclarationsFilter.create(
             bindingContext = bindingContext,
             resolutionFacade = resolutionFacade,
             context = nameExpression!!,
             callTypeAndReceiver = callTypeAndReceiver,
-        )?.createNonImportedDeclarationsFilter<DeclarationDescriptor>(
+        )?.createNonImportedDeclarationsFilter(
             importedDeclarations = referenceVariantsCollector!!.allCollected.imported,
             allowExpectedDeclarations = allowExpectedDeclarations,
         )
     }
 
-    protected fun <T : DeclarationDescriptor> processWithShadowedFilter(descriptor: T, processor: (T) -> Unit) {
+    protected inline fun <reified T : DeclarationDescriptor> processWithShadowedFilter(descriptor: T, processor: (T) -> Unit) {
         val shadowedFilter = shadowedFilter
         val element = if (shadowedFilter != null) {
-            @Suppress("UNCHECKED_CAST")
             shadowedFilter(listOf(descriptor)).singleOrNull()?.let { it as T }
         } else {
             descriptor

@@ -6,10 +6,13 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
+import com.intellij.util.Alarm
 import training.featuresSuggester.DocumentationSuggestion
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.PopupSuggestion
@@ -18,7 +21,7 @@ import training.featuresSuggester.settings.FeatureSuggesterSettings
 import training.featuresSuggester.statistics.FeatureSuggesterStatistics
 
 interface SuggestionPresenter {
-  fun showSuggestion(project: Project, suggestion: PopupSuggestion)
+  fun showSuggestion(project: Project, suggestion: PopupSuggestion, disposable: Disposable)
 }
 
 @Suppress("UnstableApiUsage", "DialogTitleCapitalization")
@@ -27,7 +30,7 @@ class NotificationSuggestionPresenter :
   private val notificationGroup: NotificationGroup = NotificationGroupManager.getInstance()
     .getNotificationGroup("IDE Feature Suggester")
 
-  override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
+  override fun showSuggestion(project: Project, suggestion: PopupSuggestion, disposable: Disposable) {
     val notification = notificationGroup.createNotification(
       title = FeatureSuggesterBundle.message("notification.title"),
       content = suggestion.message,
@@ -48,6 +51,7 @@ class NotificationSuggestionPresenter :
     }
 
     notification.notify(project)
+    Alarm(disposable).addRequest(notification::expire, 10000, ModalityState.any())
     FeatureSuggesterStatistics.logNotificationShowed(suggestion.suggesterId)
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.notification.ActionCenter;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.notification.impl.NotificationsManagerImpl;
@@ -77,6 +78,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   private volatile Image selfie;
 
   private IdeFrameImpl frame;
+
+  // frame can be activated before project is assigned to it,
+  // so we remember the activation time and report it against the assgned project later
+  private Long myActivationTimestamp;
 
   public ProjectFrameHelper(@NotNull IdeFrameImpl frame, @Nullable Image selfie) {
     this.frame = frame;
@@ -398,6 +403,9 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     if (myFrameDecorator != null) {
       myFrameDecorator.setProject();
     }
+    if (myActivationTimestamp != null) {
+      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, myActivationTimestamp);
+    }
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
@@ -515,5 +523,13 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }
 
     return false;
+  }
+
+  @Override
+  public void notifyProjectActivation() {
+    myActivationTimestamp = System.currentTimeMillis();
+    if (project != null) {
+      RecentProjectsManagerBase.getInstanceEx().setActivationTimestamp(project, myActivationTimestamp);
+    }
   }
 }

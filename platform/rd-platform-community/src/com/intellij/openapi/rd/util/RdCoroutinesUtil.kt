@@ -110,6 +110,9 @@ fun <T> CoroutineScope.startChildNonUrgentBackgroundAsync(
 suspend fun <T> withUiContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, uiDispatcher, action)
 
+suspend fun <T> withUiAnyModalityContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
+  withContext(lifetime, uiDispatcherAnyModality, action)
+
 suspend fun <T> withIOBackgroundContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, processIODispatcher, action)
 

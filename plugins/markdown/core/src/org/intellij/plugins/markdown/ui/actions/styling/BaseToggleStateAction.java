@@ -14,13 +14,26 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+
 public abstract class BaseToggleStateAction extends ToggleAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(BaseToggleStateAction.class);
+
+  private static final List<IElementType> elementsToIgnore = Arrays.asList(
+    MarkdownElementTypes.LINK_DESTINATION,
+    MarkdownElementTypes.AUTOLINK,
+    MarkdownTokenTypes.GFM_AUTOLINK
+  );
 
   @NotNull
   protected abstract String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd);
@@ -80,41 +93,37 @@ public abstract class BaseToggleStateAction extends ToggleAction implements Dumb
   }
 
   @Override
-  public void setSelected(@NotNull AnActionEvent e, final boolean state) {
-    final Editor editor = MarkdownActionUtil.findMarkdownTextEditor(e);
-    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    if (editor == null || psiFile == null) {
+  public void setSelected(@NotNull AnActionEvent event, final boolean state) {
+    final Editor editor = MarkdownActionUtil.findMarkdownTextEditor(event);
+    final PsiFile file = event.getData(CommonDataKeys.PSI_FILE);
+    if (editor == null || file == null) {
       return;
     }
-
-
-    WriteCommandAction.runWriteCommandAction(psiFile.getProject(), getTemplatePresentation().getText(), null, () -> {
-      if (!psiFile.isValid()) {
-        return;
-      }
-
+    WriteCommandAction.runWriteCommandAction(file.getProject(), getTemplatePresentation().getText(), null, () -> {
       final Document document = editor.getDocument();
       for (Caret caret : ContainerUtil.reverse(editor.getCaretModel().getAllCarets())) {
-        if (!state) {
-          final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret);
-          final PsiElement closestEmph = MarkdownActionUtil.getCommonParentOfType(elements.getFirst(),
-                                                                                  elements.getSecond(),
-                                                                                  getTargetNodeType());
-          if (closestEmph == null) {
-            LOG.warn("Could not find enclosing element on its destruction");
-            continue;
-          }
-
-          final TextRange range = closestEmph.getTextRange();
-          removeEmphFromSelection(document, caret, range);
-        }
-        else {
-          addEmphToSelection(document, caret);
-        }
+        processCaret(file, editor, caret, state);
       }
-
-      PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(document);
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
     });
+  }
+
+  private void processCaret(@NotNull PsiFile file, @NotNull Editor editor, @NotNull Caret caret, boolean state) {
+    final var elements = MarkdownActionUtil.getElementsUnderCaretOrSelection(file, caret);
+    if (!state) {
+      final var parent = MarkdownActionUtil.getCommonParentOfType(elements.getFirst(), elements.getSecond(), getTargetNodeType());
+      if (parent == null) {
+        LOG.warn("Could not find enclosing element on its destruction");
+        return;
+      }
+      final TextRange range = parent.getTextRange();
+      removeEmphFromSelection(editor.getDocument(), caret, range);
+      return;
+    }
+    final var parent = PsiTreeUtil.findCommonParent(elements.getFirst(), elements.getSecond());
+    if (!elementsToIgnore.contains(PsiUtilCore.getElementType(parent))) {
+      addEmphToSelection(editor.getDocument(), caret);
+    }
   }
 
   public void removeEmphFromSelection(@NotNull Document document, @NotNull Caret caret, @NotNull TextRange nodeRange) {

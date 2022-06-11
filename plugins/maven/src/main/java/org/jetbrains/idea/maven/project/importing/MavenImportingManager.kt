@@ -14,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -34,12 +35,13 @@ class MavenImportingManager(val project: Project) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val manager = MavenProjectsManager.getInstance(project);
     val importPath = if(pom.isDirectory) RootPath(pom) else FilesList(pom)
-    return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings);
+    return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings, MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   fun openProjectAndImport(importPaths: ImportPaths,
                            importingSettings: MavenImportingSettings,
-                           generalSettings: MavenGeneralSettings): Promise<MavenImportFinishedContext> {
+                           generalSettings: MavenGeneralSettings,
+                           spec: MavenImportSpec): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
     assertNoCurrentImport()
     MavenUtil.setupProjectSdk(project)
@@ -52,7 +54,8 @@ class MavenImportingManager(val project: Project) {
               MavenProgressIndicator(project, indicator, null),
               importPaths,
               generalSettings,
-              importingSettings
+              importingSettings,
+              spec
             )
             val promises = getAndClearWaitingPromises(finishedContext)
             promises.forEach { it.setResult(finishedContext) }
@@ -85,11 +88,13 @@ class MavenImportingManager(val project: Project) {
   private fun doImport(indicator: MavenProgressIndicator,
                        importPaths: ImportPaths,
                        generalSettings: MavenGeneralSettings,
-                       importingSettings: MavenImportingSettings): MavenImportFinishedContext {
+                       importingSettings: MavenImportingSettings,
+                       spec: MavenImportSpec
+  ): MavenImportFinishedContext {
 
     val flow = MavenImportFlow()
 
-    return runSync {
+    return runSync(spec) {
       @Suppress("HardCodedStringLiteral")
       console.addWarning("New Maven importing flow is enabled", "New Maven importing flow is enabled, it is experimental feature. " +
                                                                 "\n\n" +
@@ -159,13 +164,13 @@ class MavenImportingManager(val project: Project) {
     return result
   }
 
-  fun sheduleImportAll(): Promise<MavenImportFinishedContext> {
+  fun scheduleImportAll(spec: MavenImportSpec): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val manager = MavenProjectsManager.getInstance(project)
     val settings = MavenWorkspaceSettingsComponent.getInstance(project)
     return openProjectAndImport(FilesList(manager.collectAllAvailablePomFiles()),
                                 settings.settings.getImportingSettings(),
-                                settings.settings.getGeneralSettings())
+                                settings.settings.getGeneralSettings(), spec)
   }
 
 
@@ -174,8 +179,8 @@ class MavenImportingManager(val project: Project) {
     return console.runTask(message, init).also { currentContext = it }
   }
 
-  private fun runSync(init: () -> MavenImportFinishedContext): MavenImportFinishedContext {
-    console.startImport(project.getService(SyncViewManager::class.java))
+  private fun runSync(spec: MavenImportSpec, init: () -> MavenImportFinishedContext): MavenImportFinishedContext {
+    console.startImport(project.getService(SyncViewManager::class.java), spec)
     try {
       return init()
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +47,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
 
   @Override
   public @Nullable VirtualFile getFileBeingCurrentlyIndexed() {
+    return null;
+  }
+
+  @Override
+  public @Nullable IndexWritingFile getFileWritingCurrentlyIndexes() {
     return null;
   }
 
@@ -177,11 +182,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
 
   @NotNull
   @Override
-  public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
+  public <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId) {
     return EmptyIndex.getInstance();
   }
 
-  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent> {
+  private static class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, UpdatableIndex.EmptyData> {
     @SuppressWarnings("rawtypes")
     private static final EmptyIndex INSTANCE = new EmptyIndex();
     private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -207,6 +212,21 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     @Override
     public @NotNull Map<Key, Value> getIndexedFileData(int fileId) {
       return Collections.emptyMap();
+    }
+
+    @Override
+    public @NotNull UpdatableIndex.EmptyData instantiateFileData() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void writeData(@NotNull UpdatableIndex.EmptyData unused, @NotNull IndexedFile file) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setIndexedStateForFileOnCachedData(int fileId, @NotNull UpdatableIndex.EmptyData unused) {
+      throw new UnsupportedOperationException();
     }
 
     @Override

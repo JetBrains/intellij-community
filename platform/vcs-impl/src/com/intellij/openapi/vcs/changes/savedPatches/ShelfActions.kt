@@ -20,14 +20,14 @@ abstract class ShelfAction : DumbAwareAction {
   abstract fun perform(project: Project, shelves: List<ShelvedChangeList>)
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null && !e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY).isNullOrEmpty()
+    e.presentation.isEnabled = e.project != null && !ShelvedChangesViewManager.getShelvedLists(e.dataContext).isEmpty()
     e.presentation.isVisible = e.isFromActionToolbar ||
                                (e.project != null && e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY) != null)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     FileDocumentManager.getInstance().saveAllDocuments()
-    perform(e.project!!, e.getRequiredData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY))
+    perform(e.project!!, ShelvedChangesViewManager.getShelvedLists(e.dataContext))
   }
 }
 

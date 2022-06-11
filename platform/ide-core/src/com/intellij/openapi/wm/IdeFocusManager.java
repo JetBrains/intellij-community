@@ -79,7 +79,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * @deprecated This method does nothing currently.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
 
   /**
@@ -98,7 +98,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * @deprecated This method does nothing currently
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setTypeaheadEnabled(boolean enabled) {}
 
   /**

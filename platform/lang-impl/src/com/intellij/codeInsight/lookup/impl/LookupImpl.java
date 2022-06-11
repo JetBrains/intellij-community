@@ -703,7 +703,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myAdComponent.clearAdvertisements();
     }
 
-    myUi = new LookupUi(this, myAdComponent, myList);//, myProject);
+    Boolean showBottomPanel = myEditor.getUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI);
+    myUi = new LookupUi(this, myAdComponent, myList, showBottomPanel == null || showBottomPanel);
     myUi.setCalculating(myCalculating);
     Point p = myUi.calculatePosition().getLocation();
     if (ScreenReader.isActive()) {

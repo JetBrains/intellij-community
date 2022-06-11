@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -86,6 +87,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private final SortedListModel<FsItem> myModel;
   private final JBList<FsItem> myList;
   private boolean myShowPathBar;
+  private boolean myPathBarActive;
   private volatile boolean myShowHiddenFiles;
 
   private final Object myLock = new String("file.chooser.panel.lock");
@@ -117,6 +119,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
     myPath.setVisible(myShowPathBar);
     myPath.setEditable(true);
+    myPath.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myPathBarActive = true;
+      }
+    });
     var pathEditor = (JTextField)myPath.getEditor().getEditorComponent();
     var finder = new LocalFsFinder(false).withBaseDir(null);
     FileLookup.LookupFilter filter =
@@ -127,10 +135,16 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     myList = new JBList<>(myModel);
     myList.setCellRenderer(new MyListCellRenderer());
     myList.setSelectionMode(descriptor.isChooseMultiple() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
+    myList.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myPathBarActive = false;
+      }
+    });
     myList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
+        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
           var idx = myList.locationToIndex(e.getPoint());
           if (idx >= 0) {
             openItemAtIndex(idx, e);
@@ -149,7 +163,23 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
       }
     });
-    new ListSpeedSearch<>(myList, rec -> rec.name);
+    new ListSpeedSearch<>(myList);
+    myList.getActionMap().put(ListActions.Left.ID, myList.getActionMap().get(ListActions.Home.ID));
+    myList.getActionMap().put(ListActions.Right.ID, myList.getActionMap().get(ListActions.End.ID));
+    myList.getActionMap().put(FileChooserPanelActions.Root.ID, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        load(null, myCurrentDirectory, 0);
+      }
+    });
+    myList.getActionMap().put(FileChooserPanelActions.LevelUp.ID, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myCurrentDirectory != null) {
+          load(parent(myCurrentDirectory), null, UPPER_LEVEL);
+        }
+      }
+    });
 
     var scrollPane = ScrollPaneFactory.createScrollPane(myList);
     var pathInsets = myPath.getInsets();
@@ -165,7 +195,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private @Nullable WatchService startWatchService() {
     try {
       var watcher = FileSystems.getDefault().newWatchService();
-      ProcessIOExecutorService.INSTANCE.execute(() -> {
+      execute(() -> {
         while (true) {
           try {
             var key = watcher.take();
@@ -198,7 +228,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void openItemAtIndex(int idx, InputEvent e) {
     FsItem item = myModel.get(idx);
     if (item.directory) {
-      load(item.path, null, item.name == FsItem.UPLINK ? UPPER_LEVEL : 0);
+      load(item.path, null, FsItem.UPLINK.equals(item.name) ? UPPER_LEVEL : 0);
     }
     else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
       load(item.path, null, INTO_ARCHIVE);
@@ -214,7 +244,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   @NotNull List<@NotNull Path> chosenPaths() {
-    if (myShowPathBar && myPath.isAncestorOf(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner())) {
+    if (myShowPathBar && myPathBarActive) {
       var object = myPath.getEditor().getItem();
       if (object instanceof PathWrapper) {
         return List.of(((PathWrapper)object).path);
@@ -229,7 +259,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
     else {
       var items = myList.getSelectedValuesList();
-      if (items.size() == 1 && items.get(0).name == FsItem.UPLINK) {
+      if (items.size() == 1 && FsItem.UPLINK.equals(items.get(0).name)) {
         items = List.of(myCurrentContent.get(0));  // substituting selected uplink with `.`
       }
       return items.stream()
@@ -310,7 +340,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   public @NotNull List<Path> selectedPaths() {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myList
            ? myList.getSelectedValuesList().stream()
-             .filter(r -> r.name != FsItem.UPLINK && r.path != null && r.path.getParent() != null)
+             .filter(r -> !FsItem.UPLINK.equals(r.name) && r.path != null && r.path.getParent() != null)
              .map(r -> r.path)
              .collect(Collectors.toList())
            : List.of();
@@ -356,7 +386,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       cancelCurrentTask();
       var id = myCounter++;
       if (LOG.isTraceEnabled()) LOG.trace("starting: " + id + ", " + path);
-      myCurrentTask = pair(id, ProcessIOExecutorService.INSTANCE.submit(() -> {
+      myCurrentTask = pair(id, execute(() -> {
         var directory = directoryToLoad(path, direction == INTO_ARCHIVE);
         if (directory != null) {
           var pathToSelect = focusOn != null ? focusOn :
@@ -415,8 +445,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var cancelled = new AtomicBoolean(false);
 
     var vfsDirectory = new PreloadedDirectory(directory);
-    var dot = new FsItem(directory, false, true, false, myDescriptor.isFileSelectable(vfsDirectory), null);
-    var uplink = new FsItem(parent(directory));
+    var dot = new FsItem(directory, ".", false, true, false, myDescriptor.isFileSelectable(vfsDirectory), null);
+    var uplink = new FsItem(parent(directory), FsItem.UPLINK, false, true, true, false, AllIcons.Nodes.UpFolder);
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
       myPath.setItem(new PathWrapper(directory));
@@ -455,7 +485,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
           var visible = myDescriptor.isFileVisible(virtualFile, false);
           var selectable = myDescriptor.isFileSelectable(virtualFile);
           var icon = myDescriptor.getIcon(virtualFile);
-          var item = new FsItem(file, cs, attrs.isDirectory(), visible, selectable, icon);
+          var item = new FsItem(file, file.getFileName().toString(), cs, attrs.isDirectory(), visible, selectable, icon);
           update(id, cancelled, () -> {
             myCurrentContent.add(item);
             if (visible || myShowHiddenFiles) {
@@ -524,8 +554,17 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       try {
         var attrs = Files.readAttributes(root, BasicFileAttributes.class);
         var virtualFile = new LazyDirectoryOrFile(null, root, attrs);
-        var selectable = myDescriptor.isFileSelectable(virtualFile);
-        var item = new FsItem(root, false, attrs.isDirectory(), true, selectable, AllIcons.Nodes.Folder);
+        var name = NioFiles.getFileName(root);
+        if (name.length() > 1 && name.endsWith(File.separator)) {
+          name = name.substring(0, name.length() - 1);
+        }
+        if (SystemInfo.isWindows) {
+          var store = Files.getFileStore(root).name();
+          if (!store.isBlank()) {
+            name += " [" + store + ']';
+          }
+        }
+        var item = new FsItem(root, name, false, true, true, myDescriptor.isFileSelectable(virtualFile), AllIcons.Nodes.Folder);
         update(id, cancelled, () -> myModel.add(item));
         if (pathToSelect != null && root.equals(pathToSelect)) {
           selection.set(item);
@@ -604,6 +643,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return "jar".equals(uri.getScheme());
   }
 
+  private static Future<Void> execute(Runnable operation) {
+    return CompletableFuture
+      .runAsync(operation, ProcessIOExecutorService.INSTANCE)
+      .exceptionally(t -> { LOG.error(t); return null; });
+  }
+
   private void update(int id, AtomicBoolean cancelled, Runnable operation) {
     update(id, operation, () -> cancelled.set(true));
   }
@@ -620,7 +665,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private static final class PathWrapper {
     private final Path path;
 
-    private PathWrapper(Path path) { this.path = path; }
+    private PathWrapper(Path path) {
+      this.path = path;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -662,20 +709,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     private final boolean selectable;
     private final @Nullable Icon icon;
 
-    private FsItem(Path path) {
+    private FsItem(Path path, String name, boolean cs, boolean directory, boolean visible, boolean selectable, @Nullable Icon icon) {
       this.path = path;
-      this.name = UPLINK;
-      this.cs = false;
-      this.directory = true;
-      this.visible = true;
-      this.selectable = false;
-      this.icon = AllIcons.Nodes.UpFolder;
-    }
-
-    private FsItem(Path path, boolean cs, boolean directory, boolean visible, boolean selectable, @Nullable Icon icon) {
-      this.path = path;
-      var name = NioFiles.getFileName(path);
-      this.name = name.length() > 1 && name.endsWith(File.separator) ? name.substring(0, name.length() - 1) : name;
+      this.name = name;
       this.cs = cs;
       this.directory = directory;
       this.visible = visible;
@@ -685,13 +721,15 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     @Override
     public String toString() {
-      return name;  // called by `JBList#doCopyToClipboardAction`
+      return name;  // called by `JBList#doCopyToClipboardAction` and `ListSpeedSearch`
     }
 
     private static final Comparator<FsItem> COMPARATOR = (o1, o2) -> {
-      if (o1.name == UPLINK) return -1;
-      if (o2.name == UPLINK) return 1;
+      if (UPLINK.equals(o1.name)) return -1;
+      if (UPLINK.equals(o2.name)) return 1;
       var byType = Boolean.compare(o2.directory, o1.directory);
+      if (byType != 0) return byType;
+      byType = Boolean.compare(o1.name.startsWith("\\\\"), o2.name.startsWith("\\\\"));
       if (byType != 0) return byType;
       return (o1.cs ? NaturalComparator.CASE_SENSITIVE_INSTANCE : NaturalComparator.INSTANCE).compare(o1.name, o2.name);
     };
@@ -705,8 +743,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       setBorder(myPadding);
       setIcon(value.icon);
       setText(value.name);
-      setForeground(selected ? UIUtil.getListSelectionForeground(focused) : UIUtil.getListForeground());
-      setEnabled(value.selectable);
+      setForeground(selected ? UIUtil.getListSelectionForeground(true) : UIUtil.getListForeground());
+      setEnabled(value.selectable || FsItem.UPLINK.equals(value.name));
     }
   }
 

@@ -6,7 +6,6 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
@@ -270,7 +269,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     boolean wasPopup = myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup();
     myPresentation.setPopupGroup(myAction instanceof ActionGroup && (myPresentation.isPopupGroup() || wasPopup));
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
-    ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
+    ActionUtil.performDumbAwareUpdate(myAction, e, false);
     ActionUpdater.assertActionGroupPopupStateIsNotChanged(myAction, myPlace, wasPopup, myPresentation);
     updateToolTipText();
     updateIcon();

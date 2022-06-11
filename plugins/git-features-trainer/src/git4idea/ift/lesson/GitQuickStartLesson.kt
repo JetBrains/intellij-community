@@ -59,9 +59,9 @@ import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message("git.quick.start.lesson.name")) {
-  override val existedFile = "git/puss_in_boots.yml"
+  override val sampleFilePath = "git/puss_in_boots.yml"
   override val branchName = "main"
-  private val fileToChange = existedFile.substringAfterLast('/')
+  private val fileToChange = sampleFilePath.substringAfterLast('/')
   private val textToHighlight = "green"
 
   private var backupSearchEverywhereLocation: Point? = null

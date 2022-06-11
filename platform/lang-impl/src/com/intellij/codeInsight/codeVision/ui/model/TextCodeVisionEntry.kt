@@ -6,9 +6,9 @@ import javax.swing.Icon
 
 open class TextCodeVisionEntry(val text: String,
                                providerId: String,
-                               icon: Icon?,
-                               longPresentation: String,
-                               tooltip: String,
-                               extraActions: List<CodeVisionEntryExtraActionModel>) : CodeVisionEntry(providerId, icon, longPresentation,
-                                                                                                 tooltip,
-                                                                                                 extraActions)
+                               icon: Icon? = null,
+                               longPresentation: String = text,
+                               tooltip: String = text,
+                               extraActions: List<CodeVisionEntryExtraActionModel> = emptyList()) : CodeVisionEntry(providerId, icon, longPresentation,
+                                                                                                                     tooltip,
+                                                                                                                     extraActions)

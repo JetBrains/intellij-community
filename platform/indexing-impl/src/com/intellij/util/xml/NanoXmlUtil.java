@@ -130,7 +130,7 @@ public final class NanoXmlUtil {
     /**
      * @deprecated left for API compatibility
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     protected static void stop() throws ParserStoppedXmlException {
       throw ParserStoppedXmlException.INSTANCE;
     }

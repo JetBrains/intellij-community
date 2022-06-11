@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -24,6 +25,7 @@ import java.io.Serializable;
  * @deprecated to be removed in 2020.1
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public interface ExtIdeaCompilerOutput extends Serializable {
   /**
    * @return the directory to generate the classes of the "main" source set into.

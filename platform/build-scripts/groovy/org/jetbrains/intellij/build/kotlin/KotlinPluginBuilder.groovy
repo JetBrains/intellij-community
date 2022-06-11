@@ -6,10 +6,10 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
+import org.jetbrains.intellij.build.tasks.ArchiveKt
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
@@ -110,17 +110,20 @@ final class KotlinPluginBuilder {
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
+    "kotlin-script-runtime",
+    "kotlinc.kotlin-scripting-compiler-impl",
+    "kotlinc.kotlin-scripting-common",
+    "kotlinc.kotlin-scripting-jvm",
+    "kotlinc.kotlin-gradle-statistics"
+  )
+
+  private static final List<String> COMPILER_PLUGINS = List.of(
     "kotlinc.android-extensions-compiler-plugin",
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
     "kotlinc.sam-with-receiver-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
-    "kotlin-script-runtime",
-    "kotlinc.kotlin-scripting-compiler-impl",
-    "kotlinc.kotlin-scripting-common",
-    "kotlinc.kotlin-scripting-jvm",
-    "kotlinc.kotlin-gradle-statistics",
     "kotlinc.lombok-compiler-plugin"
   )
 
@@ -157,6 +160,9 @@ final class KotlinPluginBuilder {
       for (String library : LIBRARIES) {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
+      for (String library : COMPILER_PLUGINS) {
+        withProjectLibrary(library, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      }
 
       if (isUltimate && kind == KotlinPluginKind.IJ) {
         withModule("kotlin-ultimate.common-native")
@@ -180,8 +186,8 @@ final class KotlinPluginBuilder {
             throw new IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
           }
 
-          BuildHelper.getInstance(context).consumeDataByPrefix
-            .invokeWithArguments(jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
+          ArchiveKt.consumeDataByPrefix(
+            jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
               @Override
               void accept(String name, byte[] data) {
                 patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
@@ -203,7 +209,6 @@ final class KotlinPluginBuilder {
       withProjectLibrary("javaslang", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("kotlinx-collections-immutable-jvm", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("javax-inject", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlinx-coroutines-jdk8", "kotlinc-lib.jar")
       withProjectLibrary("completion-ranking-kotlin")
 
       withGeneratedResources(new BiConsumer<Path, BuildContext>() {

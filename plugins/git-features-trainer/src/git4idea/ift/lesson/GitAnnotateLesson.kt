@@ -38,7 +38,7 @@ import java.awt.Point
 import java.awt.Rectangle
 
 class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("git.annotate.lesson.name")) {
-  override val existedFile = "git/martian_cat.yml"
+  override val sampleFilePath = "git/martian_cat.yml"
   override val branchName = "main"
   private val propertyName = "ears_number"
   private val editedPropertyName = "ear_number"

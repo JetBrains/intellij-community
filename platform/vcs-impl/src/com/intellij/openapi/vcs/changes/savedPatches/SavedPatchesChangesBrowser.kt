@@ -48,7 +48,6 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
   fun <S> selectPatchObject(patchObject: SavedPatchesProvider.PatchObject<S>?) {
     if (patchObject == currentPatchObject) return
     currentPatchObject = patchObject
-    currentChangesFuture?.cancel(false)
     currentChangesFuture = null
 
     if (patchObject == null) {

@@ -38,5 +38,6 @@ public interface HighlightingSession {
 
   EditorColorsScheme getColorsScheme();
 
+  @NotNull
   ProperTextRange getVisibleRange();
 }

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -15,6 +16,7 @@ class TrailingCommaIntention : SelfTargetingIntention<KtElement>(
     KotlinBundle.lazyMessage("intention.trailing.comma.text")
 ), LowPriorityAction {
     override fun applyTo(element: KtElement, editor: Editor?) {
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)
         val kotlinCustomSettings = element.containingKtFile.kotlinCustomSettings
         kotlinCustomSettings.ALLOW_TRAILING_COMMA = !kotlinCustomSettings.ALLOW_TRAILING_COMMA
         CodeStyleSettingsManager.getInstance(element.project).notifyCodeStyleSettingsChanged()

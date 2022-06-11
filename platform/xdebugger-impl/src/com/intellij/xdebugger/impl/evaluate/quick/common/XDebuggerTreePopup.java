@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -18,20 +15,18 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
@@ -45,14 +40,13 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 import static com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase.getCustomizedActionGroup;
 
 @ApiStatus.Experimental
-public class XDebuggerTreePopup<D> {
+public class XDebuggerTreePopup<D> extends XDebuggerPopupPanel {
   public static final String ACTION_PLACE = "XDebuggerTreePopup";
   private final static @NonNls String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
 
@@ -62,7 +56,7 @@ public class XDebuggerTreePopup<D> {
   protected final @NotNull Point myPoint;
   protected final @Nullable Runnable myHideRunnable;
   protected @Nullable JBPopup myPopup;
-  protected @Nullable JComponent myToolbar;
+  private boolean mySetValueModeEnabled = false;
 
   @ApiStatus.Experimental
   public XDebuggerTreePopup(@NotNull DebuggerTreeCreator<D> creator,
@@ -70,6 +64,7 @@ public class XDebuggerTreePopup<D> {
                             @NotNull Point point,
                             @NotNull Project project,
                             @Nullable Runnable hideRunnable) {
+    super();
     myTreeCreator = creator;
     myProject = project;
     myEditor = editor;
@@ -77,63 +72,22 @@ public class XDebuggerTreePopup<D> {
     myHideRunnable = hideRunnable;
   }
 
-  protected BorderLayoutPanel createMainPanel(Tree tree) {
-    return fillMainPanel(JBUI.Panels.simplePanel(), tree);
-  }
-
-  protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(tree, true);
-    JComponent toolbar = createToolbar(mainPanel, tree);
+  protected JComponent createPopupContent(Tree tree) {
     tree.setBackground(UIUtil.getToolTipBackground());
-    toolbar.setBackground(UIUtil.getToolTipActionBackground());
-    WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
-    toolbar.addMouseListener(moveListener);
-    toolbar.addMouseMotionListener(moveListener);
-    return mainPanel
-      .addToCenter(scrollPane)
-      .addToBottom(toolbar);
+    return ScrollPaneFactory.createScrollPane(tree, true);
   }
 
   public void show(@NotNull D selectedItem) {
     showTreePopup(myTreeCreator.createTree(selectedItem));
   }
 
-  protected DefaultActionGroup getToolbarActions() {
+  protected @NotNull DefaultActionGroup getToolbarActions() {
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    toolbarActions.add(new EnableSetValueMode());
+    toolbarActions.add(new SetValue());
+    toolbarActions.add(new DisableSetValueMode());
     toolbarActions.addAll(getCustomizedActionGroup(XDebuggerActions.WATCHES_INLINE_POPUP_GROUP));
-    toolbarActions.addSeparator();
     return toolbarActions;
-  }
-
-  protected DefaultActionGroup wrapActions(DefaultActionGroup toolbarActions, Tree tree) {
-    DefaultActionGroup wrappedActions = new DefaultActionGroup();
-    for (AnAction action : toolbarActions.getChildren(null)) {
-      ActionWrapper actionLink = new ActionWrapper(action);
-      actionLink.setDataProvider(tree);
-      wrappedActions.add(actionLink);
-    }
-
-    return wrappedActions;
-  }
-
-  private JComponent createToolbar(JPanel mainPanel, Tree tree) {
-    DefaultActionGroup wrappedActions = wrapActions(getToolbarActions(), tree);
-
-    var toolbarImpl = new ActionToolbarImpl(ACTION_PLACE, wrappedActions, true);
-    toolbarImpl.setTargetComponent(null);
-    for (AnAction action : wrappedActions.getChildren(null)) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), mainPanel);
-    }
-
-    toolbarImpl.setBorder(BorderFactory.createEmptyBorder());
-    myToolbar = toolbarImpl;
-    return myToolbar;
-  }
-
-  protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
-    if (tree instanceof Disposable) {
-      Disposer.register(disposable, (Disposable)tree);
-    }
   }
 
   private TreeModelListener createTreeListener(final Tree tree) {
@@ -149,9 +103,13 @@ public class XDebuggerTreePopup<D> {
     if (myPopup != null) {
       myPopup.cancel();
     }
+
     tree.getModel().addTreeModelListener(createTreeListener(tree));
-    BorderLayoutPanel popupContent = createMainPanel(tree);
-    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(popupContent, tree)
+    JComponent popupContent = createPopupContent(tree);
+
+    setContent(popupContent, getToolbarActions(), ACTION_PLACE, tree);
+
+    myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, tree)
       .setRequestFocus(true)
       .setResizable(true)
       .setModalContext(false)
@@ -161,14 +119,21 @@ public class XDebuggerTreePopup<D> {
       .setCancelOnOtherWindowOpen(true)
       .setCancelKeyEnabled(false)
       .setKeyEventHandler(event -> {
-        if (AbstractPopup.isCloseRequest(event)) {
+        if (mySetValueModeEnabled &&
+            (event.getKeyCode() == KeyEvent.VK_ENTER || event.getKeyCode() == KeyEvent.VK_ESCAPE)) {
+          disableSetValueMode();
+        }
+        if (!mySetValueModeEnabled && event.getKeyCode() == KeyEvent.VK_F2) {
+          enableSetValueMode();
+        }
+        else if (AbstractPopup.isCloseRequest(event)) {
           // Do not process a close request if the tree shows a speed search popup or 'set value' action is in process
           SpeedSearchBase speedSearch = ((SpeedSearchBase)SpeedSearchSupply.getSupply(tree));
-          if (speedSearch != null && speedSearch.isPopupActive())
-          {
+          if (speedSearch != null && speedSearch.isPopupActive()) {
             speedSearch.hidePopup();
             return true;
-          } else if (IdeFocusManager.getInstance(myProject).getFocusOwner() == tree) {
+          }
+          else if (IdeFocusManager.getInstance(myProject).getFocusOwner() == tree) {
             myPopup.cancel();
             return true;
           }
@@ -205,6 +170,9 @@ public class XDebuggerTreePopup<D> {
       return;
     }
     myPopup.setSize(new Dimension(0, 0));
+
+    setAutoResizeUntilToolbarNotFull(() -> updateDebugPopupBounds(tree, myToolbar, myPopup, false), myPopup);
+
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
     setAutoResize(tree, myToolbar, myPopup);
   }
@@ -227,6 +195,29 @@ public class XDebuggerTreePopup<D> {
     popupWindow.setBounds(targetBounds);
     popupWindow.validate();
     popupWindow.repaint();
+  }
+
+  private void enableSetValueMode() {
+    mySetValueModeEnabled = true;
+    myToolbar.updateActionsImmediately();
+  }
+
+  private void disableSetValueMode() {
+    mySetValueModeEnabled = false;
+    myToolbar.updateActionsImmediately();
+  }
+
+  @Override
+  protected boolean shouldBeVisible(AnAction action) {
+    boolean isSetValueModeAction = action instanceof XDebuggerTreePopup.SetValue ||
+                                   action instanceof XDebuggerTreePopup.DisableSetValueMode;
+    return isSetValueModeAction && mySetValueModeEnabled || !isSetValueModeAction && !mySetValueModeEnabled;
+  }
+
+  protected static void registerTreeDisposable(Disposable disposable, Tree tree) {
+    if (tree instanceof Disposable) {
+      Disposer.register(disposable, (Disposable)tree);
+    }
   }
 
   public static void setAutoResize(Tree tree, JComponent myToolbar, JBPopup myPopup) {
@@ -280,77 +271,58 @@ public class XDebuggerTreePopup<D> {
     }
   }
 
-  private static class ActionWrapper extends AnAction implements CustomComponentAction {
-    private final AnAction myDelegate;
-    private Component myProvider;
+  private class DisableSetValueMode extends AnAction {
 
-    ActionWrapper(AnAction delegate) {
-      super(delegate.getTemplateText());
-      copyFrom(delegate);
-      myDelegate = delegate;
-    }
-
-    public void setDataProvider(Component provider) {
-      myProvider = provider;
+    private DisableSetValueMode() {
+      super(XDebuggerBundle.message("xdebugger.cancel.set.action.title"));
+      setShortcutSet(CommonShortcuts.ESCAPE);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(myDelegate,
-                                                                     e.getInputEvent(),
-                                                                     ACTION_PLACE,
-                                                                     DataManager.getInstance().getDataContext(myProvider));
-      myDelegate.actionPerformed(delegateEvent);
+      disableSetValueMode();
+      Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner();
+      KeyEvent event =
+        new KeyEvent(focusedComponent, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED);
+      myContent.dispatchEvent(event);
+    }
+  }
+
+  private class EnableSetValueMode extends XSetValueAction {
+
+    private EnableSetValueMode() {
+      super();
+      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)));
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      myDelegate.update(e);
+      super.update(e);
+      Presentation presentation = e.getPresentation();
+      presentation.setText(XDebuggerBundle.message("xdebugger.enable.set.action.title"));
     }
 
     @Override
-    public boolean isDumbAware() {
-      return myDelegate.isDumbAware();
-    }
-
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      if (myDelegate instanceof Separator) {
-        return DebuggerUIUtil.getSecretComponentForToolbar(); // this is necessary because the toolbar hide if all action panels are not visible
-      }
-
-      myDelegate.applyTextOverride(ACTION_PLACE, presentation);
-
-      ActionLinkButton button = new ActionLinkButton(this, presentation, (DataProvider)myProvider);
-      JPanel actionPanel = DebuggerUIUtil.createCustomToolbarComponent(this, button);
-
-      presentation.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == Presentation.PROP_TEXT) {
-            button.setText((String)evt.getNewValue());
-            button.repaint();
-          }
-          if (evt.getPropertyName() == Presentation.PROP_ENABLED) {
-            actionPanel.setVisible((Boolean)evt.getNewValue());
-            actionPanel.repaint();
-          }
-        }
-      });
-      actionPanel.setVisible(presentation.isEnabled());
-
-      return actionPanel;
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      enableSetValueMode();
+      super.actionPerformed(e);
     }
   }
 
-  private static class ActionLinkButton extends AnActionLink {
-    ActionLinkButton(@NotNull AnAction action,
-                     @NotNull Presentation presentation,
-                     @Nullable DataProvider contextComponent) {
-      //noinspection ConstantConditions
-      super(presentation.getText(), action);
-      setDataProvider(contextComponent);
-      setFont(UIUtil.getToolTipFont());
+  private class SetValue extends AnAction {
+
+    private SetValue() {
+      super(XDebuggerBundle.message("xdebugger.set.text.value.action.title"));
+      setShortcutSet(CommonShortcuts.ENTER);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      disableSetValueMode();
+      Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner();
+      KeyEvent event =
+        new KeyEvent(focusedComponent, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ENTER, '\n');
+      myContent.dispatchEvent(event);
     }
   }
 }

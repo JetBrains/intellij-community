@@ -446,7 +446,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     getComponent(); // Make sure component exists
     component.setOpaque(false);
     component.setVisible(true);
-    myJLayeredPane.add(component, 0);
+    myJLayeredPane.add(component, null, 0);
   }
 
   @NotNull

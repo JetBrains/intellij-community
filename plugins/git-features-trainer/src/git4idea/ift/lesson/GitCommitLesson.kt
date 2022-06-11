@@ -61,7 +61,7 @@ import javax.swing.KeyStroke
 import javax.swing.tree.TreePath
 
 class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.commit.lesson.name")) {
-  override val existedFile = "git/puss_in_boots.yml"
+  override val sampleFilePath = "git/puss_in_boots.yml"
   override val branchName = "feature"
   private val firstFileName = "simple_cat.yml"
   private val secondFileName = "puss_in_boots.yml"

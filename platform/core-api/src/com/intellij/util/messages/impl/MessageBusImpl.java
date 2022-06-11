@@ -22,7 +22,10 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -649,6 +652,7 @@ public class MessageBusImpl implements MessageBus {
 
   static final class RootBus extends CompositeMessageBus {
     private final AtomicReference<CompletableFuture<?>> compactionFutureRef = new AtomicReference<>();
+    private final AtomicInteger compactionRequest = new AtomicInteger();
     private final AtomicInteger emptyConnectionCounter = new AtomicInteger();
 
     /**
@@ -667,15 +671,17 @@ public class MessageBusImpl implements MessageBus {
         return;
       }
 
-      CompletableFuture<?> oldFuture = compactionFutureRef.get();
-      if (oldFuture == null) {
-        CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
-          removeEmptyConnectionsRecursively();
-          compactionFutureRef.set(null);
-        }, AppExecutorUtil.getAppExecutorService());
-        if (!compactionFutureRef.compareAndSet(null, future)) {
-          future.cancel(false);
-        }
+      // The first thread detected a need for compaction schedules a compaction task.
+      // The task runs until all compaction requests are served.
+      if (compactionRequest.incrementAndGet() == 1) {
+        compactionFutureRef.set(CompletableFuture.runAsync(() -> {
+          int request;
+          do {
+            request = compactionRequest.get();
+            removeEmptyConnectionsRecursively();
+          }
+          while (!compactionRequest.compareAndSet(request, 0));
+        }, AppExecutorUtil.getAppExecutorService()));
       }
     }
 
@@ -685,6 +691,7 @@ public class MessageBusImpl implements MessageBus {
       if (compactionFuture != null) {
         compactionFuture.cancel(false);
       }
+      compactionRequest.set(0);
       super.dispose();
     }
   }

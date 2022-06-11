@@ -134,7 +134,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
 
   private static int version(VirtualFile dir) {
     try {
-      return Integer.valueOf(dir.getName());
+      return Integer.parseInt(dir.getName());
     }
     catch (RuntimeException ignore) {
       return Integer.MIN_VALUE;

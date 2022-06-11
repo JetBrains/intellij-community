@@ -130,7 +130,7 @@ public final class Disposer {
   /**
    * @deprecated Use {@link #register(Disposable, Disposable)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @NotNull final String key) {
     register(parent, child);
@@ -195,7 +195,7 @@ public final class Disposer {
   /**
    * @deprecated Store and use your own Disposable instead. Instead of {@code Disposer.get("ui")} use {@link com.intellij.openapi.application.ApplicationManager#getApplication()}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static Disposable get(@NotNull String key) {
     String message = "this method is deprecated and going to be removed soon. Store and use your own Disposable instead";

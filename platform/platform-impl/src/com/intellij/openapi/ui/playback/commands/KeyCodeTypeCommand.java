@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Couple;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -25,7 +26,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
   }
 
   @Override
-  public Promise<Object> _execute(final PlaybackContext context) {
+  public @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     String text = getText().substring(PREFIX.length()).trim();
 
     int textDelim = text.indexOf(" ");

@@ -144,7 +144,7 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       getTargetDirectoryComponent().setText(targetPath);
     }
     validateButtons();
-    getRefactorAction().putValue(Action.NAME, CommonBundle.getOkButtonText());
+    setRefactorButtonText(CommonBundle.getOkButtonText());
   }
 
   private static boolean canBeOpenedInEditor(PsiElement[] elements) {

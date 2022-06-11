@@ -224,7 +224,7 @@ public final class BuildManager implements Disposable {
     }
 
     Collection<File> systemDirs = Collections.singleton(getBuildSystemDirectory().toFile());
-    if (Boolean.valueOf(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
+    if (Boolean.parseBoolean(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
       final List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
       if (!distributions.isEmpty()) {
         systemDirs = new ArrayList<>(systemDirs);

@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.validation.validationTextErrorFor
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
@@ -48,37 +47,34 @@ internal fun suggestCatalogNameByLocation(location: String): String {
   }
 }
 
-internal fun ValidationInfoBuilder.validateCatalogLocation(location: String): ValidationInfo? {
-  if (location.isEmpty()) {
-    return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.empty"))
-  }
+val CHECK_MAVEN_CATALOG = validationTextErrorFor { location ->
   if (MavenCatalogManager.isLocal(location)) {
-    return validateLocalLocation(location)
+    validateLocalLocation(location)
   }
   else {
-    return validateRemoteLocation(location)
+    validateRemoteLocation(location)
   }
 }
 
-private fun ValidationInfoBuilder.validateLocalLocation(location: String): ValidationInfo? {
+private fun validateLocalLocation(location: String): String? {
   val pathOrError = getPathOrError(location)
   val exception = pathOrError.exceptionOrNull()
   if (exception != null) {
     val message = exception.message
-    return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.invalid", message))
+    return MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.invalid", message)
   }
   val path = pathOrError.getOrThrow()
   if (!path.exists()) {
-    return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.not.exists"))
+    return MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.not.exists")
   }
   return null
 }
 
-private fun ValidationInfoBuilder.validateRemoteLocation(location: String): ValidationInfo? {
+private fun validateRemoteLocation(location: String): String? {
   val exception = getUrlOrError(location).exceptionOrNull()
   if (exception != null) {
     val message = exception.message
-    return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.invalid", message))
+    return MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.invalid", message)
   }
   return null
 }

@@ -30,8 +30,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public abstract class MapReduceIndexBase<Key, Value> extends MapReduceIndex<Key, Value, FileContent>
-  implements UpdatableIndex<Key, Value, FileContent> {
+public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduceIndex<Key, Value, FileContent>
+  implements UpdatableIndex<Key, Value, FileContent, FileCache> {
   private final boolean mySingleEntryIndex;
 
   protected MapReduceIndexBase(@NotNull IndexExtension<Key, Value, FileContent> extension,

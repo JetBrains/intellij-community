@@ -31,6 +31,9 @@
     <extensionPoint dynamic="true" name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
+    <extensionPoint dynamic="true" name="editorTabsConfigurable" beanClass="com.intellij.application.options.editor.EditorTabsConfigurableEP">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
+    </extensionPoint>
     <extensionPoint dynamic="true" name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
@@ -61,6 +64,7 @@
     <extensionPoint name="daemon.externalAnnotatorsFilter" interface="com.intellij.lang.ExternalAnnotatorsFilter" dynamic="true"/>
     <extensionPoint name="daemon.changeLocalityDetector" interface="com.intellij.codeInsight.daemon.ChangeLocalityDetector" dynamic="true"/>
     <extensionPoint name="daemon.indentsPassFilter" interface="com.intellij.codeInsight.daemon.impl.IndentsPassFilter" dynamic="true"/>
+    <extensionPoint name="daemon.statusItemMerger" interface="com.intellij.codeInsight.daemon.impl.StatusItemMerger" dynamic="true"/>
 
     <extensionPoint name="implicitUsageProvider" interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider" dynamic="true"/>
 
@@ -194,6 +198,8 @@
 
     <extensionPoint name="inspectionProfileActionProvider" interface="com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider" dynamic="true"/>
     <extensionPoint name="emptyInspectionTreeActionProvider" interface="com.intellij.profile.codeInspection.ui.EmptyInspectionTreeActionProvider" dynamic="true"/>
+
+    <extensionPoint name="inspectionResultsExportActionProvider" interface="com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider" dynamic="true"/>
 
     <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.TemplateSubstitutor" dynamic="true"/>
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate" dynamic="true"/>
@@ -628,5 +634,7 @@
                     interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory"/>
     <extensionPoint name="lang.psiDocumentation" dynamic="true"
                     interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetFactory"/>
+    <extensionPoint qualifiedName="com.intellij.properties.files.provider"
+                    interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

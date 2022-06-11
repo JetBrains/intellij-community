@@ -31,7 +31,7 @@ class GitLearningCourse : LearningCourse {
   private class GitLearningModule(@NonNls id: String, initLessons: () -> List<KLesson>)
     : IftModule(id, GitLessonsBundle.message("git.module.name"), GitLessonsBundle.message("git.module.description"),
                 null, LessonType.PROJECT, initLessons) {
-    override val sanitizedName: String = ""
+    override val sampleFilePath: String? = null
 
     override fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor {
       val toolWindowLayout = ToolWindowManagerEx.getInstanceEx(project).getLayout()

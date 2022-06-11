@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.DynamicBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
@@ -14,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
@@ -27,6 +27,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
+import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.mac.screenmenu.MenuBar;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -38,7 +39,10 @@ import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
@@ -370,6 +374,38 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     ActionManagerEx.doWithLazyActionManager(manager -> doUpdateMenuActions(forceRebuild, manager));
   }
 
+  // NOTE: for OSX only
+  private void updateAppMenu() {
+    if (!Menu.isJbScreenMenuEnabled()) return;
+
+    final Menu appMenu = Menu.getAppMenu();
+
+    // 1. rename with localized
+    final DynamicBundle bundle = new DynamicBundle("messages.MacAppMenuBundle");
+    for (String title: bundle.getResourceBundle().keySet()) {
+      String localizedTitle = bundle.getMessage(title);
+      MenuItem item = appMenu.findItemByTitle(title);
+      if (item != null) {
+        item.setLabel(localizedTitle);
+        item.dispose(); // must always dispose java-wrapper for native NSMenuItem after usage
+      }
+    }
+
+    //
+    // 2. add custom new items in AppMenu
+    //
+
+    //Example (add new item after "Preferences"):
+    //int pos = appMenu.findIndexByTitle("Pref.*");
+    //int pos2 = appMenu.findIndexByTitle("NewCustomItem");
+    //if (pos2 < 0) {
+    //  MenuItem mi = new MenuItem();
+    //  mi.setLabel("NewCustomItem", null);
+    //  mi.setActionDelegate(() -> System.err.println("NewCustomItem executes"));
+    //  appMenu.add(mi, pos, true);
+    //}
+  }
+
   private void doUpdateMenuActions(boolean forceRebuild, @NotNull ActionManager manager) {
     boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
 
@@ -412,6 +448,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     myPresentationFactory.resetNeedRebuild();
 
     if (myScreenMenuPeer != null) myScreenMenuPeer.endFill();
+
+    updateAppMenu();
 
     updateGlobalMenuRoots();
     if (myClockPanel != null) {
@@ -477,14 +515,13 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
                                  @NotNull ActionManager actionManager) {
     ActionGroup mainActionGroup = getMainMenuActionGroup();
     if (mainActionGroup == null) return;
-    boolean inModalContext = LaterInvocator.isInModalContext();
     // the only code that does not reuse ActionUpdater (do not repeat that anywhere else)
     AnAction[] children = mainActionGroup.getChildren(null);
     for (AnAction action : children) {
       if (!(action instanceof ActionGroup)) continue;
       Presentation presentation = myPresentationFactory.getPresentation(action);
       AnActionEvent e = new AnActionEvent(null, context, ActionPlaces.MAIN_MENU, presentation, actionManager, 0);
-      ActionUtil.performDumbAwareUpdate(inModalContext, action, e, false);
+      ActionUtil.performDumbAwareUpdate(action, e, false);
       if (presentation.isVisible()) {
         newVisibleActions.add(action);
       }

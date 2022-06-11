@@ -3,9 +3,11 @@ package com.intellij.codeInsight.daemon.problems.pass
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
-import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.ClickableRichTextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProviderBase
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
@@ -21,16 +23,21 @@ import com.intellij.java.JavaBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
+import java.awt.Color
 import java.awt.event.MouseEvent
 import java.util.function.Consumer
 
 class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
   override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
+    // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
+    if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest(editor)) return emptyList()
     val prevState = FileStateUpdater.getState(psiFile)
     if (prevState == null) return emptyList()
     val project = editor.project ?: return emptyList()
@@ -55,13 +62,15 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     val document = editor.document
     val highlighters: MutableList<HighlightInfo> = SmartList()
     val lenses: MutableList<Pair<TextRange, CodeVisionEntry>> = ArrayList()
+
+    val lenseColor = getCodeVisionColor()
     problems.forEach { (psiMember: PsiMember?, memberProblems: Set<Problem?>?) ->
       val namedElement = ObjectUtils.tryCast(
         psiMember,
         PsiNameIdentifierOwner::class.java) ?: return@forEach
       val identifier = namedElement.nameIdentifier ?: return@forEach
       val text = JavaBundle.message("project.problems.hint.text", memberProblems.size)
-      lenses.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(psiMember) to ClickableTextCodeVisionEntry(text, id, onClick = ClickHandler(psiMember), null, text, text, emptyList()))
+      lenses.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(psiMember) to ClickableRichTextCodeVisionEntry(id, RichText(text).apply { this.setForeColor(lenseColor) }, longPresentation = text, onClick = ClickHandler(psiMember)))
       highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember!!, identifier))
     }
 
@@ -79,9 +88,13 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     return lenses
   }
 
+  private fun getCodeVisionColor(): Color {
+    return EditorColorsManager.getInstance().globalScheme.getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES).foregroundColor
+  }
+
 
   override val name: String
-    get() = "Related problems"
+    get() = JavaBundle.message("title.related.problems.inlay.hints")
   override val relativeOrderings: List<CodeVisionRelativeOrdering> = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingLast)
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default

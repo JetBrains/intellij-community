@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
+import com.jetbrains.CustomWindowDecoration.*
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import javax.swing.JFrame
@@ -31,11 +33,15 @@ internal class DefaultFrameHeader(frame: JFrame) : FrameHeader(frame) {
     super.updateActive()
   }
 
-  override fun getHitTestSpots(): List<RelativeRectangle> {
-    val hitTestSpots = ArrayList<RelativeRectangle>()
-    hitTestSpots.add(RelativeRectangle(productIcon))
-    hitTestSpots.add(RelativeRectangle(buttonPanes.getView()))
-    hitTestSpots.addAll(customDecorationTitle.getBoundList())
+  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
+    val buttons = buttonPanes as ResizableCustomFrameTitleButtons
+    val hitTestSpots = ArrayList<Pair<RelativeRectangle, Int>>()
+    hitTestSpots.add(Pair(RelativeRectangle(productIcon), OTHER_HIT_SPOT))
+    hitTestSpots.add(Pair(RelativeRectangle(buttons.minimizeButton), MINIMIZE_BUTTON))
+    hitTestSpots.add(Pair(RelativeRectangle(buttons.maximizeButton), MAXIMIZE_BUTTON))
+    hitTestSpots.add(Pair(RelativeRectangle(buttons.restoreButton), MAXIMIZE_BUTTON))
+    hitTestSpots.add(Pair(RelativeRectangle(buttons.closeButton), CLOSE_BUTTON))
+    hitTestSpots.addAll(customDecorationTitle.getBoundList().map { Pair(it, OTHER_HIT_SPOT) })
     return hitTestSpots
   }
 }

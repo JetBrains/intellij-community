@@ -74,7 +74,10 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * <p>Defines if separate tab should be shown for this contributor in <i>Search Everywhere</i> dialog.</p>
    * <p>Please do not override this method unless absolutely necessary. Too many separate tabs make the <i>Search Everywhere</i>
    * dialog unusable.</p>
+   *
+   * @deprecated method is not used since 2022.1
    */
+  @Deprecated(since = "2022.1")
   default boolean isShownInSeparateTab() {
     return false;
   }

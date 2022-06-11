@@ -31,7 +31,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   /**
    * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public LineAnnotationAspectAdapter(@NonNls @Nullable String id, boolean showByDefault) {
     this(id, null, showByDefault);
   }

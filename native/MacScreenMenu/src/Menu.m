@@ -21,6 +21,15 @@ static jclass sjc_Menu = NULL;
     return self;
 }
 
+- (id)initWithNSObject:(NSMenu *)nsMenuPtr javaPeer:(jobject)peer {
+    // NOTE: should we use here something like NSMenu.getItem ?
+    self = [super initWithPeer:peer asSeparator:NO];
+    if (self) {
+        nsMenu = nsMenuPtr; // must be already retained
+    }
+    return self;
+}
+
 - (void)dealloc {
     [nsMenu release];
     nsMenu = nil;
@@ -114,6 +123,26 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeCreateMenu
 
 /*
  * Class:     com_intellij_ui_mac_screenmenu_Menu
+ * Method:    nativeAttachMenu
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL
+Java_com_intellij_ui_mac_screenmenu_Menu_nativeAttachMenu
+(JNIEnv *env, jobject peer, jlong nsMenu)
+{
+    initGlobalVMPtr(env);
+
+    JNI_COCOA_ENTER();
+    jobject javaPeer = (*env)->NewGlobalRef(env, peer);
+    // NOTE: returns retained Menu
+    // Java owner must release it manually via nativeDispose (see Menu.dispose())
+    Menu * menu = [[Menu alloc] initWithNSObject:(NSMenu*)nsMenu javaPeer:javaPeer];
+    return (jlong)menu;
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_Menu
  * Method:    nativeSetTitle
  * Signature: (JLjava/lang/String;Z)V
  */
@@ -153,6 +182,35 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeAddItem
         dispatch_async(dispatch_get_main_queue(), ^{
             [menu addItem:child];
         });
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_Menu
+ * Method:    nativeInsertItem
+ * Signature: (JJIZ)V
+ */
+JNIEXPORT void JNICALL
+Java_com_intellij_ui_mac_screenmenu_Menu_nativeInsertItem
+(JNIEnv *env, jobject peer, jlong menuPtr, jlong itemToAdd, jint position, jboolean onAppKit)
+{
+    if (position < 0) return;
+
+    JNI_COCOA_ENTER();
+    Menu * __strong menu = (Menu *)menuPtr;
+    MenuItem * __strong child = (MenuItem *)itemToAdd;
+    dispatch_block_t block = ^{
+        if (position < menu->nsMenu.numberOfItems) {
+            [menu->nsMenu insertItem:child->nsMenuItem atIndex:position];
+        } else {
+            NSLog(@"ERROR: incorrect position %d (numberOfItems=%d, menu: %@)", position, (int)(menu->nsMenu.numberOfItems), menu->nsMenu);
+        }
+    };
+    if (!onAppKit || [NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
     JNI_COCOA_EXIT();
 }
 
@@ -278,3 +336,85 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeInitClass(JNIEnv *env, jclass pee
     }
 }
 
+static NSMenuItem* findItemByTitle(NSMenu* menu, NSString* re) {
+    NSError *error = NULL;
+    NSRegularExpression *regex = [NSRegularExpression
+            regularExpressionWithPattern:re
+                                 options:NSRegularExpressionCaseInsensitive
+                                   error:&error];
+
+    for (id object in menu.itemArray) {
+        NSMenuItem* item = (NSMenuItem *)object;
+        if (item.title != nil) {
+            NSTextCheckingResult *match = [regex firstMatchInString:item.title options:0 range:NSMakeRange(0, [item.title length])];
+            if (match != nil && match.numberOfRanges > 0) {
+                return item;
+            }
+        }
+    }
+    return nil;
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_Menu
+ * Method:    nativeFindIndexByTitle
+ * Signature: (JLjava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL
+Java_com_intellij_ui_mac_screenmenu_Menu_nativeFindIndexByTitle(JNIEnv *env, jobject peer, jlong menuObj, jstring re) {
+    JNI_COCOA_ENTER();
+    __strong Menu * menu = (Menu *)menuObj;
+    __strong NSString* regexp = JavaStringToNSString(env, re);
+    __block int index = -1;
+    dispatch_block_t block = ^{
+        NSMenuItem* result = findItemByTitle(menu->nsMenu, regexp);
+        if (result != nil) index = [menu->nsMenu indexOfItem:result];
+    };
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async_and_wait(dispatch_get_main_queue(), block);
+    }
+    return index;
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_Menu
+ * Method:    nativeFindItemByTitle
+ * Signature: (JLjava/lang/String;)J
+ */
+JNIEXPORT jlong JNICALL
+Java_com_intellij_ui_mac_screenmenu_Menu_nativeFindItemByTitle(JNIEnv *env, jobject peer, jlong menuObj, jstring re) {
+    JNI_COCOA_ENTER();
+    __strong Menu * menu = (Menu *)menuObj;
+    __strong NSString* regexp = JavaStringToNSString(env, re);
+    __block long itemPtr = 0;
+    dispatch_block_t block = ^{
+        NSMenuItem* result = findItemByTitle(menu->nsMenu, regexp);
+        if (result != nil) itemPtr = (long)[result retain];
+    };
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async_and_wait(dispatch_get_main_queue(), block);
+    }
+    return itemPtr;
+    JNI_COCOA_EXIT();
+}
+
+/*
+ * Class:     com_intellij_ui_mac_screenmenu_Menu
+ * Method:    nativeGetAppMenu
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL
+Java_com_intellij_ui_mac_screenmenu_Menu_nativeGetAppMenu(JNIEnv *env, jclass peerClass) {
+    NSMenu * mainMenu = [NSApplication sharedApplication].mainMenu;
+    id appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
+    if (appMenu != nil) {
+        appMenu = [appMenu submenu];
+        [appMenu retain];
+    }
+    return (jlong)appMenu;
+}

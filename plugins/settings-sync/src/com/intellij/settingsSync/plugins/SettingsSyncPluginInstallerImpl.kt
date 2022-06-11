@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -21,6 +22,10 @@ internal class SettingsSyncPluginInstallerImpl : SettingsSyncPluginInstaller {
 
   override fun addPluginId(pluginId: PluginId) {
     pluginsIds.add(pluginId)
+  }
+
+  companion object {
+    val LOG = logger<SettingsSyncPluginInstallerImpl>()
   }
 
   @RequiresBackgroundThread
@@ -43,6 +48,7 @@ internal class SettingsSyncPluginInstallerImpl : SettingsSyncPluginInstaller {
       if (!it.installDynamically(null)) {
         isRestartNeeded = true
       }
+      LOG.info("Installed plugin ID: " + it.id.idString)
     }
     if (isRestartNeeded) notifyRestartNeeded()
   }

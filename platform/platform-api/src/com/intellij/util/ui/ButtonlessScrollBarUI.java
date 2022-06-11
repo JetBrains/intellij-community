@@ -36,7 +36,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static JBColor getTrackBorderColorDefault() {
     return new JBColor(Gray._230, UIUtil.getListBackground());
   }
@@ -373,7 +373,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static BasicScrollBarUI createNormal() {
     return new ButtonlessScrollBarUI();
   }

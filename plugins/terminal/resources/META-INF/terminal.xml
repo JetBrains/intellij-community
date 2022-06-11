@@ -29,7 +29,6 @@
     <terminal.shellCommandHandler implementation="com.intellij.diff.actions.DiffCustomCommandHandler"/>
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
-    <notificationGroup id="Terminal" displayType="TOOL_WINDOW" toolWindowId="Terminal"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
   </extensions>

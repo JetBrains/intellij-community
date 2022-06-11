@@ -92,7 +92,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull <T> LinkedList<T> newLinkedList() {
     return new LinkedList<>();
   }
@@ -685,7 +685,7 @@ public final class ContainerUtil {
    * @deprecated Use {@link Collections#emptyList()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Contract(pure = true)
   public static @NotNull <T> Iterable<T> emptyIterable() {
     return Collections.emptyList();
@@ -2360,7 +2360,7 @@ public final class ContainerUtil {
    */
   @Contract(value = " -> new", pure = true)
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull <T> Stack<T> newStack() {
     return new Stack<>();
   }
@@ -2406,7 +2406,7 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentLongObjectMap<@NotNull V> createConcurrentLongObjectMap() {
@@ -2416,7 +2416,7 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectMap()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectMap() {
@@ -2426,7 +2426,7 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectWeakValueMap()} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectWeakValueMap() {
@@ -2576,7 +2576,7 @@ public final class ContainerUtil {
    * @deprecated use {@link List#toArray(Object[])} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Contract(mutates = "param2")
   public static <T> T @NotNull [] toArray(@NotNull List<T> collection, T @NotNull [] array) {
     return collection.toArray(array);
@@ -2586,7 +2586,7 @@ public final class ContainerUtil {
    * @deprecated use {@link Collection#toArray(Object[])} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Contract(mutates = "param2")
   public static <T> T @NotNull [] toArray(@NotNull Collection<? extends T> c, T @NotNull [] sample) {
     return c.toArray(sample);

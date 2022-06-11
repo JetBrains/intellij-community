@@ -5,10 +5,8 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection
 import com.intellij.java.JavaBundle
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.ui.ChooserInterceptor
-import com.intellij.ui.UiInterceptors
-import java.util.regex.Pattern
 
 /**
  * @author Pavel.Dolgov
@@ -23,17 +21,14 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateExpressionsFix"
 
-  fun testIntroduceVariable() {
-    UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
-    doTest(introduce("s.substring(s.length() - 9)"))
-  }
+  fun testIntroduceVariable() = doTest(introduce("s.substring(s.length() - 9)"))
   fun testReuseVariable() = doTest(reuse("substr", "s.substring(s.length() - 9)"))
   fun testReplaceOthers() = doTest(replace("substr", "s.substring(s.length() - 9)"))
-  fun testIntroduceVariableOtherVariableNotInScope() {
-    UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
-    doTest(introduce("s.substring(s.length() - 9)"))
-  }
+  fun testIntroduceVariableOtherVariableNotInScope() = doTest(introduce("s.substring(s.length() - 9)"))
   fun testVariableNotInScopeCantReplaceOthers() = doNegativeTest(replace("substr", "s.substring(s.length() - 9)"))
+  fun testIntroducePathVariableTwoPathOf() = doTest(introduce("Path.of(fileName)"))
+  fun testIntroducePathVariableTwoPathsGet() = doTest(introduce("Paths.get(fileName)"))
+  fun testIntroducePathVariablePathOfPathsGet() = doTest(introduce("Paths.get(fileName)"))
 
   private fun doTest(message: String, threshold: Int = 50) =
     withThreshold(threshold) {
@@ -58,6 +53,10 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
     finally {
       inspection.complexityThreshold = oldThreshold
     }
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_11
   }
 
   private fun introduce(expr: String) =

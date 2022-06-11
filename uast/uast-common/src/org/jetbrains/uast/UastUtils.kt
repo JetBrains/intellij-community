@@ -182,6 +182,7 @@ tailrec fun UElement.getUastContext(): UastContext {
 }
 
 @Deprecated("could unexpectedly throw exception", ReplaceWith("UastFacade.findPlugin"))
+@ApiStatus.ScheduledForRemoval
 tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
   val psi = this.sourcePsi
   if (psi != null) {

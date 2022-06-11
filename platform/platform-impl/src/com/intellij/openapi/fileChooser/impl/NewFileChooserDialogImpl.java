@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.*;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -216,11 +218,47 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   private class ChooserDialogPanel extends JPanel implements DataProvider {
     private ChooserDialogPanel() {
       super(new BorderLayout());
+      setDropTarget(new DropTarget(this, DnDConstants.ACTION_COPY, new ChooserDropTarget()));
     }
 
     @Override
     public @Nullable Object getData(@NotNull String dataId) {
       return FileChooserPanel.DATA_KEY.is(dataId) ? myPanel : myDescriptor.getUserData(dataId);
+    }
+  }
+
+  private class ChooserDropTarget extends DropTargetAdapter {
+    @Override
+    public void dragEnter(DropTargetDragEvent e) {
+      if (FileCopyPasteUtil.isFileListFlavorAvailable(e.getCurrentDataFlavors())) {
+        e.acceptDrag(DnDConstants.ACTION_COPY);
+      }
+      else {
+        e.rejectDrag();
+      }
+    }
+
+    @Override
+    public void dragOver(DropTargetDragEvent e) {
+      dragEnter(e);
+    }
+
+    @Override
+    public void dropActionChanged(DropTargetDragEvent e) {
+      dragEnter(e);
+    }
+
+    @Override
+    public void drop(DropTargetDropEvent e) {
+      e.acceptDrop(DnDConstants.ACTION_COPY);
+      var paths = FileCopyPasteUtil.getFiles(e.getTransferable());
+      if (paths != null && !paths.isEmpty()) {
+        myPanel.load(paths.get(0));
+        e.dropComplete(true);
+      }
+      else {
+        e.dropComplete(false);
+      }
     }
   }
 }

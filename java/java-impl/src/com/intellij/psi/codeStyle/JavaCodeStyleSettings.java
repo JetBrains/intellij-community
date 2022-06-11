@@ -79,11 +79,11 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean REPLACE_INSTANCEOF = false;
   /** @deprecated Use {@link #REPLACE_INSTANCEOF_AND_CAST} */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean REPLACE_CAST = false;
   public boolean REPLACE_INSTANCEOF_AND_CAST = false;
   public boolean REPLACE_NULL_CHECK = true;

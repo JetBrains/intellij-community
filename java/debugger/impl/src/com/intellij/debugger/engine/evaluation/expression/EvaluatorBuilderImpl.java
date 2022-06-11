@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -788,6 +788,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitConditionalExpression " + expression);
       }
+      final PsiType expectedType = expression.getType();
       final PsiExpression thenExpression = expression.getThenExpression();
       final PsiExpression elseExpression = expression.getElseExpression();
       if (thenExpression == null || elseExpression == null){
@@ -810,6 +811,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
       Evaluator elseEvaluator = myResult;
       myResult = new ConditionalExpressionEvaluator(conditionEvaluator, thenEvaluator, elseEvaluator);
+      if (expectedType instanceof PsiPrimitiveType) {
+        myResult = new UnBoxingEvaluator(myResult);
+      }
+      myResult = createTypeCastEvaluator(myResult, expectedType);
     }
 
     @Override

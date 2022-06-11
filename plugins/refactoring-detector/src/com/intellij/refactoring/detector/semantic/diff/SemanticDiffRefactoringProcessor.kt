@@ -24,8 +24,15 @@ class SemanticDiffRefactoringProcessor : DiffExtension() {
     val combinedDiffViewer = viewer as? CombinedDiffViewer ?: return
     val combinedDiffRequest = request as? CombinedDiffRequest ?: return
 
-    val childRequests = combinedDiffRequest.getChildRequests()
-    val changes = childRequests.mapNotNull { it.request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) }
+    val changes =
+      combinedDiffRequest.getChildRequests()
+        .asSequence()
+        .map(CombinedDiffRequest.ChildDiffRequest::producer)
+        .filterIsInstance<ChangeDiffRequestProducer>()
+        .map(ChangeDiffRequestProducer::getChange)
+        .toList()
+
+    if (changes.isEmpty()) return
 
     runBackgroundableTask(RefactoringDetectorBundle.message("progress.find.refactoring.title")) {
       val refactorings = runReadAction { KotlinRMiner.detectRefactorings(project, changes) }

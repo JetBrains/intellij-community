@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
@@ -63,12 +63,16 @@ public interface UsageView extends Disposable {
 
   void setAdditionalComponent(@Nullable JComponent component);
 
+  /**
+   * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
+   */
   void addPerformOperationAction(@NotNull Runnable processRunnable,
                                  @Nullable @NlsContexts.Command String commandName,
                                  @NotNull @NlsContexts.DialogMessage String cannotMakeString,
                                  @NotNull @NlsContexts.Button String shortDescription);
 
   /**
+   * @param cannotMakeString pass empty string to avoid "cannot perform" checks e.g., for explicit reruns
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
   void addPerformOperationAction(@NotNull Runnable processRunnable, @Nullable String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);

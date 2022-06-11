@@ -1,0 +1,10 @@
+<idea-plugin>
+  <name>Blackboard Color Scheme</name>
+  <id>com.intellij.plugins.blackboard.colorscheme</id>
+  <vendor>JetBrains</vendor>
+  <category>UI</category>
+  <depends>com.intellij.modules.lang</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <bundledColorScheme path="/colorSchemes/blackboard"/>
+  </extensions>
+</idea-plugin>

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
+import org.jetbrains.intellij.build.tasks.MacKt
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -122,33 +123,33 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  void buildArtifacts(@NotNull Path osSpecificDistDir) {
-    doCopyExtraFiles(osSpecificDistDir, null, false)
-    buildContext.executeStep("build macOS artifacts", BuildOptions.MAC_ARTIFACTS_STEP, new Runnable() {
+  void buildArtifacts(@NotNull Path osAndArchSpecificDistPath, @NotNull JvmArchitecture arch) {
+    doCopyExtraFiles(osAndArchSpecificDistPath, arch, false)
+    buildContext.executeStep(spanBuilder("build macOS artifacts")
+                               .setAttribute("arch", arch.name()), BuildOptions.MAC_ARTIFACTS_STEP, new Runnable() {
       @Override
       void run() {
-        doBuildArtifacts(osSpecificDistDir, customizer, buildContext)
+        doBuildArtifacts(osAndArchSpecificDistPath, arch, customizer, buildContext)
       }
     })
   }
 
-  private static void doBuildArtifacts(Path osSpecificDistDir, MacDistributionCustomizer customizer, BuildContext context) {
+  private static void doBuildArtifacts(Path osAndArchSpecificDistPath, JvmArchitecture arch, MacDistributionCustomizer customizer, BuildContext context) {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     boolean publishArchive = context.proprietaryBuildTools.macHostProperties == null
 
     Path macZip = ((publishArchive || customizer.publishArchive) ? context.paths.artifactDir : context.paths.tempDir)
-      .resolve(baseName + ".mac.zip")
+      .resolve(baseName + ".mac.${arch.name()}.zip")
     String zipRoot = getZipRoot(context, customizer)
-
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.buildMacZip.invokeWithArguments(macZip,
-                                                zipRoot,
-                                                generateProductJson(context, null),
-                                                context.paths.distAllDir,
-                                                osSpecificDistDir,
-                                                context.getDistFiles(),
-                                                getExecutableFilePatterns(customizer),
-                                                publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED)
+    MacKt.buildMacZip(
+      macZip,
+      zipRoot,
+      generateProductJson(context, null),
+      context.paths.distAllDir,
+      osAndArchSpecificDistPath,
+      context.getDistFiles(),
+      getExecutableFilePatterns(customizer),
+      publishArchive ? Deflater.DEFAULT_COMPRESSION : Deflater.BEST_SPEED)
     ProductInfoValidator.checkInArchive(context, macZip, "$zipRoot/Resources")
 
     if (publishArchive) {
@@ -158,10 +159,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
-    BuildHelper.invokeAllSettled(List.of(
-      createBuildForArchTask(JvmArchitecture.x64, macZip, notarize, customizer, context),
-      createBuildForArchTask(JvmArchitecture.aarch64, macZip, notarize, customizer, context),
-    ))
+    createBuildForArchTask(arch, macZip, notarize, customizer, context).invoke()
     Files.deleteIfExists(macZip)
   }
 

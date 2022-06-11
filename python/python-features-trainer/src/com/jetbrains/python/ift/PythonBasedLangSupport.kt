@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -86,11 +85,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
   override fun checkSdk(sdk: Sdk?, project: Project) {
   }
 
-  override fun blockProjectFileModification(project: Project, file: VirtualFile): Boolean {
-    return file.name != projectSandboxRelativePath
-  }
-
-  override val projectSandboxRelativePath = "src/sandbox.py"
+  override val sampleFilePath = "src/sandbox.py"
 
   override fun startFromWelcomeFrame(startCallback: (Sdk?) -> Unit) {
     val allExistingSdks = listOf(*PyConfigurableInterpreterList.getInstance(null).model.sdks)

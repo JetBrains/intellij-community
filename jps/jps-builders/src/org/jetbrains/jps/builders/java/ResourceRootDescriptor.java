@@ -17,6 +17,7 @@ package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.incremental.ResourcesTarget;
@@ -40,6 +41,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
    * excluded patterns which may be specified for the module.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public ResourceRootDescriptor(@NotNull File root,
                                 @NotNull ResourcesTarget target,
                                 @NotNull String packagePrefix,

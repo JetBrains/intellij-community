@@ -255,7 +255,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     AtomicBoolean hasErrorElement = new AtomicBoolean();
     try {
       ProperTextRange visibleRange = new ProperTextRange(0, document.getTextLength());
-      HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange, false);
+      HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange);
       GeneralHighlightingPass pass = new GeneralHighlightingPass(psiFile, document, 0, document.getTextLength(),
                                                                  false, visibleRange, null, HighlightInfoProcessor.getEmpty()) {
         @NotNull

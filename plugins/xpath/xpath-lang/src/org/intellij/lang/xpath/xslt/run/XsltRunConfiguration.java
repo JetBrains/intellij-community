@@ -249,7 +249,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         if (outputType != null) {
             final String value = outputType.getAttributeValue("value");
             myOutputType = OutputType.valueOf(value);
-            mySaveToFile = Boolean.valueOf(outputType.getAttributeValue("save-to-file"));
+            mySaveToFile = Boolean.parseBoolean(outputType.getAttributeValue("save-to-file"));
         }
         final Element fileType = element.getChild("FileType");
         if (fileType != null) {

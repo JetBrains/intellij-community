@@ -39,7 +39,7 @@ public interface PyImportElement extends PyElement, PyImportedNameDefiner, StubB
   /**
    * @deprecated Use {@link #multiResolve()} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   PsiElement resolve();
 

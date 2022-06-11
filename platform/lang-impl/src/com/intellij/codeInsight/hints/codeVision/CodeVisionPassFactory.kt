@@ -5,13 +5,15 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.lensContextOrThrow
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 
 class CodeVisionPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-  private val registry = lazy { Registry.get("editor.codeVision.new") }
 
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
@@ -21,5 +23,15 @@ class CodeVisionPassFactory : TextEditorHighlightingPassFactory, TextEditorHighl
     if (registry.value.asBoolean().not()) return null
 
     return CodeVisionPass(file, editor)
+  }
+
+  companion object {
+    private val registry = lazy { Registry.get("editor.codeVision.new") }
+
+    @JvmStatic
+    fun applyPlaceholders(editor: Editor, placeholders: MutableList<Pair<TextRange, CodeVisionEntry>>) {
+      if (registry.value.asBoolean().not()) return
+      editor.lensContextOrThrow.setResults(placeholders)
+    }
   }
 }

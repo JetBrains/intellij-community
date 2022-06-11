@@ -15,7 +15,8 @@
           </option>
           <option name="pluginClasspaths">
             <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.6.10-release-952/kotlinx-serialization-compiler-plugin-for-ide-1.6.10-release-952.jar" />
+              <option value="kotlinx-serialization-compiler-plugin.jar" />
             </array>
           </option>
           <option name="errors">
@@ -41,6 +42,9 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
-    <orderEntry type="library" name="jps-build-script-dependencies-bootstrap" level="project" />
+    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
   </component>
 </module>

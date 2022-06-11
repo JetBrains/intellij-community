@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.xml
 
-import com.intellij.util.XmlElement
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.NotNullDeserializeBinding
 import com.intellij.util.xmlb.SerializationFilter
 import kotlinx.serialization.ExperimentalSerializationApi

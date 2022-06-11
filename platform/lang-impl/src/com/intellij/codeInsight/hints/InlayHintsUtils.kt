@@ -248,4 +248,12 @@ object InlayHintsUtils {
 
     return TextRange.create(start.startOffset, element.endOffset)
   }
+
+  @JvmStatic
+  fun isFirstInLine(element: PsiElement): Boolean {
+    val prevSibling = element.prevSibling
+    return prevSibling is PsiWhiteSpace &&
+           (prevSibling.textContains('\n') || prevSibling.getTextRange().startOffset == 0) ||
+           element.textRange.startOffset == 0
+  }
 }

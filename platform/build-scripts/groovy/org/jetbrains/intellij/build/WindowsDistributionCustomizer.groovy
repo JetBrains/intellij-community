@@ -96,4 +96,11 @@ abstract class WindowsDistributionCustomizer {
   String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
     return null
   }
+
+  /**
+   * Relative paths to files not in `bin` directory of Windows distribution which should be signed
+   */
+  List<String> getBinariesToSign(BuildContext context) {
+    return []
+  }
 }

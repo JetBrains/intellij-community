@@ -21,6 +21,7 @@ package org.intellij.plugins.relaxNG.xml.dom;
 
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
@@ -41,6 +42,6 @@ public interface RngExternalRef extends RngDomElement, Pattern<XmlElement> {
   @NotNull
   @Required
   @Convert(RngHrefConverter.class)
-  @com.intellij.util.xml.Attribute("href")
+  @Attribute("href")
   GenericAttributeValue<XmlFile> getReferencedFile();
 }

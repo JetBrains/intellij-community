@@ -715,7 +715,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
     myDevtoolsFrame.setLayout(new BorderLayout());
-    JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).createBrowser();
+    JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).build();
     myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
     myDevtoolsFrame.addWindowListener(new WindowAdapter() {
       @Override

@@ -3,23 +3,23 @@ package com.intellij.formatting.visualLayer
 
 import com.intellij.application.options.RegistryManager
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 
 
 private const val REGISTRY_KEY = "editor.visual.formatting.layer.enabled"
+val visualFormattingElementKey = Key.create<Boolean>("visual.formatting.element")
 
-abstract class VisualFormattingLayerService : EditorFactoryListener, DocumentListener, Disposable {
-
-  override fun dispose() = Unit
+abstract class VisualFormattingLayerService {
 
   val editorFactory: EditorFactory by lazy { EditorFactory.getInstance() }
 
@@ -59,105 +59,102 @@ abstract class VisualFormattingLayerService : EditorFactoryListener, DocumentLis
       else {
         editor.settings.isShowVisualFormattingLayer = true
       }
-      editor.document.addDocumentListener(this)
-      editor.addVisualElements()
     }
   }
 
   fun disableForEditor(editor: Editor) {
     if (enabledForEditor(editor)) {
-      if (disabledGlobally)
+      if (disabledGlobally) {
         editor.settings.isShowVisualFormattingLayer = null
+      }
       else {
         editor.settings.isShowVisualFormattingLayer = false
       }
-      editor.document.removeDocumentListener(this)
-      editor.removeVisualElements()
     }
   }
-
 
   //------------------------------
   // Global stuff
   fun enableGlobally() {
-    editorFactory.allEditors.forEach { editor ->
-      enableForEditor(editor)
-      editor.settings.isShowVisualFormattingLayer = null
-    }
+    editorFactory.allEditors.forEach { it.settings.isShowVisualFormattingLayer = null }
     enabledGlobally = true
   }
 
   fun disableGlobally() {
-    editorFactory.allEditors.forEach { editor ->
-      disableForEditor(editor)
-      editor.settings.isShowVisualFormattingLayer = null
-    }
+    editorFactory.allEditors.forEach { it.settings.isShowVisualFormattingLayer = null }
     enabledGlobally = false
   }
   //------------------------------
 
 
-  //------------------------------
-  // Editor Factory listener stuff
-  fun addEditorFactoryListener() {
-    editorFactory.addEditorFactoryListener(this, this)
-  }
-
-  override fun editorCreated(event: EditorFactoryEvent) {
-    if (enabledGlobally) {
-      event.editor.document.addDocumentListener(this)
-      event.editor.addVisualElements()
-    }
-  }
-
-  override fun editorReleased(event: EditorFactoryEvent) {
-    if (enabledForEditor(event.editor)) {
-      event.editor.document.removeDocumentListener(this)
-      event.editor.removeVisualElements()
-    }
-  }
-  //------------------------------
-
-
-  //------------------------------
-  // Document listener stuff
-  override fun documentChanged(event: DocumentEvent) {
-    EditorFactory.getInstance()
-      .getEditors(event.document)
-      .forEach { editor ->
-        disableForEditor(editor)
-      }
-  }
-  //------------------------------
-
-  abstract fun Editor.addVisualElements()
-  abstract fun Editor.removeVisualElements()
-
-  fun Editor.refreshVisualElements() {
-    removeVisualElements()
-    if (enabledForEditor(this)) {
-      addVisualElements()
-    }
-  }
-
-  fun refreshGlobally() {
-    if (enabledBySettings != enabledGlobally) {
-      if (enabledBySettings) {
-        enableGlobally()
-      }
-      else {
-        disableGlobally()
-      }
-    }
-    EditorFactory.getInstance().allEditors.forEach { editor ->
-      editor.refreshVisualElements()
-    }
-  }
+  abstract fun getVisualFormattingLayerElements(file: PsiFile): List<VisualFormattingLayerElement>
 
   companion object {
     @JvmStatic
     fun getInstance(): VisualFormattingLayerService =
       ApplicationManager.getApplication().getService(VisualFormattingLayerService::class.java)
   }
+
+}
+
+sealed class VisualFormattingLayerElement {
+
+  abstract fun applyToEditor(editor: Editor): Unit
+
+  data class InlineInlay(val offset: Int, val length: Int) : VisualFormattingLayerElement() {
+    override fun applyToEditor(editor: Editor) {
+      editor.inlayModel
+        .addInlineElement(
+          offset,
+          false,
+          InlayPresentation(editor, length)
+        )
+    }
+  }
+
+  data class BlockInlay(val offset: Int, val lines: Int) : VisualFormattingLayerElement() {
+    override fun applyToEditor(editor: Editor) {
+      editor.inlayModel
+        .addBlockElement(
+          offset,
+          true,
+          true,
+          0,
+          InlayPresentation(editor, lines, vertical = true)
+        )
+    }
+  }
+
+  data class Folding(val offset: Int, val length: Int) : VisualFormattingLayerElement() {
+    override fun applyToEditor(editor: Editor) {
+      editor.foldingModel.runBatchFoldingOperation {
+        editor.foldingModel
+          .addFoldRegion(offset, offset + length, "")
+          ?.apply {
+            isExpanded = false
+            shouldNeverExpand()
+            putUserData(visualFormattingElementKey, true)
+          }
+      }
+    }
+  }
+}
+
+
+data class InlayPresentation(val editor: Editor,
+                             val fillerLength: Int,
+                             val vertical: Boolean = false) : EditorCustomElementRenderer {
+
+  private val editorFontMetrics by lazy {
+    val editorFont = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.PLAIN)
+    editor.contentComponent.getFontMetrics(editorFont)
+  }
+
+  override fun calcWidthInPixels(inlay: Inlay<*>) =
+    if (vertical) 0 else editorFontMetrics.stringWidth(" ".repeat(fillerLength))
+
+  override fun calcHeightInPixels(inlay: Inlay<*>) =
+    (if (vertical) fillerLength else 1) * editorFontMetrics.height
+
 
 }

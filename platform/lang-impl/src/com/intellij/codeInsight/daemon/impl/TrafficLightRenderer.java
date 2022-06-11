@@ -264,7 +264,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
                                 this::createUIController);
     }
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
-    List<StatusItem> statusItems = new ArrayList<>();
 
     String title;
     String details;
@@ -289,26 +288,32 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       details = "";
     }
 
+    List<SeverityStatusItem> statusItems = new ArrayList<>();
     int[] errorCounts = status.errorCounts;
-    Icon mainIcon = null;
     for (int i = errorCounts.length - 1; i >= 0; i--) {
       int count = errorCounts[i];
       if (count > 0) {
         HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
         if (severity != null) {
           Icon icon = mySeverityRegistrar.getRendererIconBySeverity(severity, status.minimumLevel == FileHighlightingSetting.FORCE_HIGHLIGHTING);
-          statusItems.add(new StatusItem(Integer.toString(count), icon, severity.getCountMessage(count)));
-          if (mainIcon == null) {
-            mainIcon = icon;
+          SeverityStatusItem next = new SeverityStatusItem(severity, icon, count, severity.getCountMessage(count));
+          while (!statusItems.isEmpty()) {
+            SeverityStatusItem merged = StatusItemMerger.runMerge(ContainerUtil.getLastItem(statusItems), next);
+            if (merged == null) break;
+
+            statusItems.remove(statusItems.size() - 1);
+            next = merged;
           }
+          statusItems.add(next);
         }
       }
     }
 
     if (!statusItems.isEmpty()) {
-      AnalyzerStatus result = new AnalyzerStatus(mainIcon, title, "", this::createUIController).
+      AnalyzerStatus result = new AnalyzerStatus(statusItems.get(0).getIcon(), title, "", this::createUIController).
         withNavigation().
-        withExpandedStatus(statusItems);
+        withExpandedStatus(ContainerUtil.map(statusItems, i ->
+          new StatusItem(Integer.toString(i.getProblemCount()), i.getIcon(), i.getCountMessage())));
 
       return status.errorAnalyzingFinished ? result :
              result.withAnalyzingType(AnalyzingType.PARTIAL).

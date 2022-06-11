@@ -24,7 +24,7 @@ import git4idea.repo.GitRepository
 import java.io.File
 import java.util.*
 
-internal data class GitCommitOptions(
+data class GitCommitOptions(
   val isAmend: Boolean = false,
   val isSignOff: Boolean = false,
   val isSkipHooks: Boolean = false,

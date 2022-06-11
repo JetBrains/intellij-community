@@ -78,6 +78,7 @@ internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Cla
   return PropertyBinding(prop.getter, prop.setter)
 }
 
+@Deprecated("Use MutableProperty and Kotlin UI DSL 2")
 fun <T> PropertyBinding<T>.toNullable(): PropertyBinding<T?> {
   return PropertyBinding<T?>({ get() }, { set(it!!) })
 }

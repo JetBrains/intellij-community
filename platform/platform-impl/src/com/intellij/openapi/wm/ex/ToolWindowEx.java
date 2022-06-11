@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.util.Arrays;
 import java.util.List;
 
 public interface ToolWindowEx extends ToolWindow {
@@ -37,15 +36,14 @@ public interface ToolWindowEx extends ToolWindow {
    */
   @Deprecated
   default void setTitleActions(@NotNull AnAction @NotNull ... actions) {
-    setTitleActions(Arrays.asList(actions));
+    setTitleActions(List.of(actions));
   }
 
   void setTabActions(@NotNull AnAction @NotNull ... actions);
 
   void setTabDoubleClickActions(@NotNull List<AnAction> actions);
 
-  @Nullable
-  default ToolWindowDecoration getDecoration() { return null; }
+  default @Nullable ToolWindowDecoration getDecoration() { return null; }
 
   final class Border extends EmptyBorder {
     public Border() {
@@ -75,8 +73,7 @@ public interface ToolWindowEx extends ToolWindow {
     }
   }
 
-  @Nullable
-  default StatusText getEmptyText() {
+  default @Nullable StatusText getEmptyText() {
     return null;
   }
 }

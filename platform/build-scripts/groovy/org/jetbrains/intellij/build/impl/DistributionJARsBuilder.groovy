@@ -22,6 +22,13 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.tasks.ArchiveKt
+import org.jetbrains.intellij.build.tasks.AsmKt
+import org.jetbrains.intellij.build.tasks.BrokenPluginsKt
+import org.jetbrains.intellij.build.tasks.JarBuilder
+import org.jetbrains.intellij.build.tasks.KeymapPluginKt
+import org.jetbrains.intellij.build.tasks.ReorderJarsKt
+import org.jetbrains.intellij.build.tasks.Source
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsElementReference
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -277,8 +284,9 @@ final class DistributionJARsBuilder {
             buildHelper.createTask(spanBuilder("write patched app info")) {
               Path moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
               String relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-              byte[] result = buildHelper.setAppInfo.invokeWithArguments(moduleOutDir.resolve(relativePath),
-                                                                         context.applicationInfo?.getAppInfoXml()) as byte[]
+              byte[] result = AsmKt.injectAppInfo(
+                moduleOutDir.resolve(relativePath),
+                context.applicationInfo?.getAppInfoXml()) as byte[]
               moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
               return null
             },
@@ -290,10 +298,10 @@ Android Studio: do not patch ApplicationNamesInfo yet */
             scramble(context)
           }
 
-          context.bootClassPathJarNames = (List<String>)buildHelper.generateClasspath
-            .invokeWithArguments(context.paths.distAllDir,
-                                 context.productProperties.productLayout.mainJarName,
-                                 antTargetFile)
+          context.bootClassPathJarNames = ReorderJarsKt.generateClasspath(
+            context.paths.distAllDir,
+            context.productProperties.productLayout.mainJarName,
+            antTargetFile)
           return result
         }
       }
@@ -377,8 +385,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
       new Supplier<List<DistributionFileEntry>>() {
         @Override
         List<DistributionFileEntry> get() {
-          List sources = new ArrayList<>()
-          BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
+          List<Source> sources = new ArrayList<>()
           List<DistributionFileEntry> result = new ArrayList<>()
           ProjectLibraryData libraryData = new ProjectLibraryData("Ant", "", ProjectLibraryData.PackMode.MERGED)
           buildHelper.copyDir(
@@ -396,7 +403,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
                   return true
                 }
 
-                sources.add(createZipSource.apply(file, new IntConsumer() {
+                sources.add(JarBuilder.createZipSource(file, new IntConsumer() {
                   @Override
                   void accept(int size) {
                     result.add(new ProjectLibraryEntry(antTargetFile, libraryData, file, size))
@@ -409,7 +416,8 @@ Android Studio: do not patch ApplicationNamesInfo yet */
 
           sources.sort(null)
           // path in class log - empty, do not reorder, doesn't matter
-          buildHelper.buildJars.accept(List.of(new Triple(antTargetFile, "", sources)), false)
+          List<Triple<Path, String, List<Source>>> list = List.of(new Triple(antTargetFile, "", sources))
+          JarBuilder.buildJars(list, false)
           return result
         }
       }
@@ -424,7 +432,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
 
     sources.add(context.paths.buildOutputDir.resolve("internal/internalUtilities.jar"))
 
-    BuildHelper.getInstance(context).packInternalUtilities.accept(
+    ArchiveKt.packInternalUtilities(
       context.paths.artifactDir.resolve("internalUtilities.zip"),
       sources
     )
@@ -444,7 +452,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
       new Runnable() {
         @Override
         void run() {
-          helper.brokenPluginsTask.invokeWithArguments(targetFile, buildString, context.options.isInDevelopmentMode)
+          BrokenPluginsKt.buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
           if (Files.exists(targetFile)) {
             context.addDistFile(Map.entry(targetFile, "bin"))
           }
@@ -563,6 +571,8 @@ Android Studio: do not patch ApplicationNamesInfo yet */
       Files.createDirectories(artifactDir)
       Files.copy(getThirdPartyLibrariesHtmlFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
       Files.copy(getThirdPartyLibrariesJsonFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
+      context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
+      context.notifyArtifactBuilt(artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
     }
 
     if (productProperties.buildSourcesArchive) {
@@ -727,7 +737,12 @@ Android Studio: do not patch ApplicationNamesInfo yet */
                              .setAttribute("isUpdateFromSources", isUpdateFromSources), new Supplier<List<DistributionFileEntry>>() {
       @Override
       List<DistributionFileEntry> get() {
-        return ForkJoinTask.invokeAll(OsFamily.values().findResults { osFamily ->
+        return ForkJoinTask.invokeAll([
+          new Tuple2(OsFamily.MACOS, JvmArchitecture.x64),
+          new Tuple2(OsFamily.MACOS, JvmArchitecture.aarch64),
+          new Tuple2(OsFamily.WINDOWS, JvmArchitecture.x64),
+          new Tuple2(OsFamily.LINUX, JvmArchitecture.x64)
+        ].findResults { OsFamily osFamily, JvmArchitecture arch ->
           if (!context.shouldBuildDistributionForOS(osFamily.osId)) {
             return null
           }
@@ -744,10 +759,11 @@ Android Studio: do not patch ApplicationNamesInfo yet */
 
           Path outDir = isUpdateFromSources
             ? context.paths.distAllDir.resolve("plugins")
-            : getOsSpecificDistDirectory(osFamily, context).resolve("plugins")
+            : getOsAndArchSpecificDistDirectory(osFamily, arch, context).resolve("plugins")
 
           return buildHelper.createTask(spanBuilder("build bundled plugins")
                                           .setAttribute("os", osFamily.osName)
+                                          .setAttribute("arch", arch.name())
                                           .setAttribute("count", osSpecificPlugins.size())
                                           .setAttribute("outDir", outDir.toString()), new Supplier<List<DistributionFileEntry>>() {
             @Override
@@ -760,8 +776,8 @@ Android Studio: do not patch ApplicationNamesInfo yet */
     })
   }
 
-  static Path getOsSpecificDistDirectory(OsFamily osFamily, BuildContext buildContext) {
-    return buildContext.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}")
+  static Path getOsAndArchSpecificDistDirectory(OsFamily osFamily, JvmArchitecture arch, BuildContext buildContext) {
+    return buildContext.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name()}")
   }
 
   /**
@@ -910,8 +926,7 @@ Android Studio: do not patch ApplicationNamesInfo yet */
 
   private static ForkJoinTask<List<kotlin.Pair<Path, byte[]>>> buildKeymapPlugins(Path targetDir, BuildContext context) {
     Path keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
-    return (ForkJoinTask<List<kotlin.Pair<Path, byte[]>>>)BuildHelper.getInstance(context)
-      .buildKeymapPlugins.invokeWithArguments(context.buildNumber, targetDir, keymapDir)
+    return KeymapPluginKt.buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
   }
 
   private PluginRepositorySpec buildHelpPlugin(PluginLayout helpPlugin,

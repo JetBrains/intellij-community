@@ -26,8 +26,11 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
   }
 
   override fun validate(project: Project, file: VirtualFile): String? {
+    val detected = PandocExecutableDetector.detect(project)
+
     return when {
-      PandocExecutableDetector.detect().isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
+      detected == null -> MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
+      detected.isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
       else -> null
     }
   }
@@ -48,16 +51,27 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
     }
 
     override fun onThrowable(error: Throwable) {
-      MarkdownNotifications.showError(project, message = "[${mdFile.name}] ${error.localizedMessage}")
+      MarkdownNotifications.showError(
+        project,
+        id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
+        message = "[${mdFile.name}] ${error.localizedMessage}"
+      )
     }
 
     override fun onSuccess() {
       if (output.stderrLines.isEmpty()) {
         MarkdownImportExportUtils.refreshProjectDirectory(project, mdFile.parent.path)
-        MarkdownNotifications.showInfo(project, message = MarkdownBundle.message("markdown.export.success.msg", mdFile.name))
-      }
-      else {
-        MarkdownNotifications.showError(project, message = "[${mdFile.name}] ${output.stderrLines.joinToString("\n")}")
+        MarkdownNotifications.showInfo(
+          project,
+          id = MarkdownExportProvider.Companion.NotificationIds.exportSuccess,
+          message = MarkdownBundle.message("markdown.export.success.msg", mdFile.name)
+        )
+      } else {
+        MarkdownNotifications.showError(
+          project,
+          id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
+          message = "[${mdFile.name}] ${output.stderrLines.joinToString("\n")}"
+        )
       }
     }
 

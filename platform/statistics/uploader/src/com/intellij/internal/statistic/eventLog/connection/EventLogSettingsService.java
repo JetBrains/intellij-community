@@ -38,6 +38,5 @@ public interface EventLogSettingsService {
   @NotNull
   EventLogApplicationInfo getApplicationInfo();
 
-  @NotNull
-  public Map<String, String> getOptions();
+  @NotNull Map<String, String> getOptions();
 }

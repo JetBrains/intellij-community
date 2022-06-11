@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -59,11 +60,13 @@ internal class GHAccountManager
 }
 
 @Deprecated("Use GithubAuthenticationManager.addListener")
+@ApiStatus.ScheduledForRemoval
 interface AccountRemovedListener {
   fun accountRemoved(removedAccount: GithubAccount)
 }
 
 @Deprecated("Use GithubAuthenticationManager.addListener")
+@ApiStatus.ScheduledForRemoval
 interface AccountTokenChangedListener {
   fun tokenChanged(account: GithubAccount)
 }

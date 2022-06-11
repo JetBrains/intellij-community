@@ -11,16 +11,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.Disposer
+import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.speedSearch.SpeedSearch
-import com.intellij.ui.tree.TreePathUtil
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
@@ -28,7 +28,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import java.awt.Component
@@ -56,6 +56,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   private val treeStep: GitBranchesTreePopupStep
     get() = step as GitBranchesTreePopupStep
 
+  private lateinit var searchPatternStateFlow: MutableStateFlow<String?>
+
   init {
     setMinimumSize(JBDimension(200, 200))
     dimensionServiceKey = GitBranchPopup.DIMENSION_SERVICE_KEY
@@ -63,40 +65,28 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   }
 
   override fun createContent(): JComponent {
-    val filteringTreeModel = FilteringTreeModel(treeStep.treeModel).also {
-      Disposer.register(this, it)
-    }
-
-    tree = Tree(filteringTreeModel).also {
+    tree = Tree(treeStep.treeModel).also {
       configureTreePresentation(it)
       overrideTreeActions(it)
       addTreeMouseControlsListeners(it)
+      Disposer.register(this) {
+        it.model = null
+      }
     }
+    searchPatternStateFlow = MutableStateFlow(null)
     speedSearch.installSupplyTo(tree, false)
 
     @OptIn(FlowPreview::class)
     with(uiScope(this)) {
-      val filterStateFlow = MutableStateFlow(Any())
       launch {
-        filterStateFlow.drop(1).debounce(100).collect {
-          updateFilter(speedSearch, filteringTreeModel)
-          TreeUtil.promiseSelectFirstLeaf(tree)
+        searchPatternStateFlow.drop(1).debounce(100).collectLatest { pattern ->
+          val matcher = pattern?.let { NameUtil.buildMatcher("*$it").preferringStartMatches().allOccurrences().build() }
+          treeStep.setBranchesMatcher(matcher)
+          selectPreferred()
         }
-      }
-
-      speedSearch.addChangeListener {
-        launch { filterStateFlow.emit(Any()) }
       }
     }
     return tree
-  }
-
-  private fun updateFilter(speedSearch: SpeedSearch, filteringTreeModel: FilteringTreeModel) {
-    if (speedSearch.isHoldingFilter)
-      filteringTreeModel.filterer = ::shouldBeShowing
-    else {
-      filteringTreeModel.filterer = null
-    }
   }
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
@@ -154,11 +144,18 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
   override fun getInputMap(): InputMap = tree.inputMap
 
   override fun afterShow() {
-    val preSelectedPath = treeStep.preSelectedPath?.let(TreePathUtil::convertCollectionToTreePath)
-    if (preSelectedPath == null) return
-    TreeUtil.promiseMakeVisible(tree, preSelectedPath).onSuccess {
-      tree.selectionPath = preSelectedPath
-      TreeUtil.scrollToVisible(tree, preSelectedPath, true)
+    selectPreferred()
+  }
+
+  private fun selectPreferred() {
+    val preferredSelection = treeStep.getPreferredSelection()
+    if (preferredSelection == null)
+      TreeUtil.promiseSelectFirstLeaf(tree)
+    else {
+      TreeUtil.promiseMakeVisible(tree, preferredSelection).onSuccess {
+        tree.selectionPath = it
+        TreeUtil.scrollToVisible(tree, it, true)
+      }
     }
   }
 
@@ -258,7 +255,13 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     myChild.show(content, content.locationOnScreen.x + content.width - STEP_X_PADDING, point.y, true)
   }
 
-  override fun onSpeedSearchPatternChanged() {}
+  override fun onSpeedSearchPatternChanged() {
+    with(uiScope(this)) {
+      launch {
+        searchPatternStateFlow.emit(speedSearch.enteredPrefix.nullize(true))
+      }
+    }
+  }
 
   override fun getPreferredFocusableComponent(): JComponent = tree
 

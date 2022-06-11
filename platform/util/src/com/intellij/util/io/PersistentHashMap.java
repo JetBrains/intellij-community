@@ -96,7 +96,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public interface ValueDataAppender extends AppendablePersistentMap.ValueDataAppender {
@@ -105,7 +105,7 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender} as the second parameter
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {

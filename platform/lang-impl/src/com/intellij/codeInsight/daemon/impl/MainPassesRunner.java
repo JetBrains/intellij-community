@@ -117,7 +117,7 @@ public class MainPassesRunner {
     if (psiFile == null || document == null || !ReadAction.compute(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {
       return;
     }
-    ProperTextRange range = ReadAction.compute(() -> ProperTextRange.create(psiFile.getTextRange()));
+    ProperTextRange range = ReadAction.compute(() -> ProperTextRange.create(0, document.getTextLength()));
     HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, range, false);
     ProgressManager.getInstance().runProcess(() -> runMainPasses(daemonIndicator, result, psiFile, document), daemonIndicator);
   }

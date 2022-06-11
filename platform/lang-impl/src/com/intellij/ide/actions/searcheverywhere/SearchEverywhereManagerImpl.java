@@ -383,7 +383,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
     addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
     addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
-    addShortcut(res, "SETextContributor", "SETextAction");
+    addShortcut(res, "TextSearchContributor", "TextSearchAction");
 
     return res;
   }

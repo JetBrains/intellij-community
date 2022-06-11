@@ -26,6 +26,7 @@
   <depends optional="true" config-file="properties-copyright.xml">com.intellij.copyright</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <properties.files.provider implementation="com.intellij.lang.properties.provider.PropertiesProviderImpl"/>
     <typeIcon className="com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile" icon="AllIcons.Nodes.ResourceBundle"/>
     <applicationService serviceImplementation="com.intellij.lang.properties.LastSelectedPropertiesFileStore"/>
     <applicationService serviceInterface="com.intellij.lang.properties.PropertiesQuickFixFactory"

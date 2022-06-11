@@ -4,8 +4,8 @@ package com.jetbrains.python.inspections;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -101,7 +101,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
                     : detectedSdk;
 
     if (sdk != null) {
-      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk));
+      ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> ProjectJdkTable.getInstance().addJdk(sdk));
     }
 
     return sdk;
@@ -130,7 +130,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
       if (facet == null) {
         logger.reportMessage(3, "Setting Python facet for: " + m.getName());
 
-        WriteAction.runAndWait(() -> {
+        ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
           final PythonFacet addedFacet = facetManager.addFacet(facetType, facetType.getPresentableName(), null);
           PySdkExtKt.excludeInnerVirtualEnv(m, addedFacet.getConfiguration().getSdk());
         });

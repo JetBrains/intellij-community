@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ final class JarLoader implements Loader {
 
   final ClassPath configuration;
   final URL url;
-  private final ResourceFile zipFile;
+  final ResourceFile zipFile;
   private final Path path;
 
   JarLoader(@NotNull Path path, @NotNull ClassPath configuration, @NotNull ResourceFile zipFile) throws IOException {

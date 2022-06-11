@@ -49,5 +49,9 @@ class RangeCodeVisionModel(
     return lensForRange.sortedBy { projectModel.getLensIndex(it) }
   }
 
+  fun sortedLensesMorePopup(): List<CodeVisionEntry> {
+    return sortedLenses().filter { it.showInMorePopup }
+  }
+
   fun state() = InlayState.NORMAL
 }

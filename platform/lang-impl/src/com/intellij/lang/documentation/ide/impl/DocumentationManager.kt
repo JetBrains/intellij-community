@@ -255,7 +255,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
         resolveLink(targetSupplier, url)
       }
       if (result !is InternalResolveLinkResult.Value) {
-        BrowserUtil.browseAbsolute(url)
+        BrowserUtil.browseAbsolute(project, url)
       }
       else {
         showDocumentation(result.value, InlinePopupContext(project, editor, popupPosition))

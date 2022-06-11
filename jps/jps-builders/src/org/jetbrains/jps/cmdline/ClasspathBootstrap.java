@@ -85,16 +85,18 @@ public final class ClasspathBootstrap {
   private static final String EXTERNAL_JAVAC_MODULE_NAME = "intellij.platform.jps.build.javac.rt.rpc";
   private static final String EXTERNAL_JAVAC_JAR_NAME = "jps-javac-rt-rpc.jar";
 
-  private static final String BANNED_JAR = PathManager.getLibPath() + "/app.jar";
-
   private static void addToClassPath(Class<?> aClass, Set<String> result) {
-    String path = PathManager.getJarPathForClass(aClass);
+    Path path = PathManager.getJarForClass(aClass);
     if (path == null) {
       return;
     }
 
-    if (result.add(path) && path.equals(BANNED_JAR)) {
-      LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + PathUtilRt.getFileName(path) + " is added to build process classpath");
+    final String pathString = path.toString();
+
+    if (result.add(pathString) && pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
+      if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
+        LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
+      }
     }
   }
 

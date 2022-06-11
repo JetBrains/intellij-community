@@ -3,9 +3,11 @@
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.io.IOUtils
 import org.jetbrains.intellij.build.io.isWindows
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.writeNewFile
@@ -19,6 +21,8 @@ import java.nio.file.attribute.FileTime
 import java.util.*
 import java.util.function.BiConsumer
 import java.util.zip.ZipEntry
+import kotlin.io.path.inputStream
+import kotlin.io.path.readText
 
 // 0100000
 private const val fileFlag = 32768
@@ -42,9 +46,10 @@ internal fun packInternalUtilities(outFile: Path, files: List<Path>) {
 }
 
 @Suppress("unused")
-fun crossPlatformZip(macDistDir: Path,
-                     linuxDistDir: Path,
-                     winDistDir: Path,
+fun crossPlatformZip(macX64DistDir: Path,
+                     macAarch64DistDir: Path,
+                     linuxX64DistDir: Path,
+                     winX64DistDir: Path,
                      targetFile: Path,
                      executableName: String,
                      productJson: ByteArray,
@@ -54,15 +59,15 @@ fun crossPlatformZip(macDistDir: Path,
                      extraFiles: Map<String, Path>,
                      distAllDir: Path) {
   writeNewFile(targetFile) { outFileChannel ->
-    ZipArchiveOutputStream(outFileChannel).use { out ->
+    NoDuplicateZipArchiveOutputStream(outFileChannel).use { out ->
       out.setUseZip64(Zip64Mode.Never)
 
-      out.entryToDir(winDistDir.resolve("bin/idea.properties"), "bin/win")
-      out.entryToDir(linuxDistDir.resolve("bin/idea.properties"), "bin/linux")
-      out.entryToDir(macDistDir.resolve("bin/idea.properties"), "bin/mac")
+      out.entryToDir(winX64DistDir.resolve("bin/idea.properties"), "bin/win")
+      out.entryToDir(linuxX64DistDir.resolve("bin/idea.properties"), "bin/linux")
+      out.entryToDir(macX64DistDir.resolve("bin/idea.properties"), "bin/mac")
 
-      out.entryToDir(macDistDir.resolve("bin/${executableName}.vmoptions"), "bin/mac")
-      out.entry("bin/mac/${executableName}64.vmoptions", macDistDir.resolve("bin/${executableName}.vmoptions"))
+      out.entryToDir(macX64DistDir.resolve("bin/${executableName}.vmoptions"), "bin/mac")
+      out.entry("bin/mac/${executableName}64.vmoptions", macX64DistDir.resolve("bin/${executableName}.vmoptions"))
 
       extraFiles.forEach(BiConsumer { p, f ->
         out.entry(p, f)
@@ -70,7 +75,7 @@ fun crossPlatformZip(macDistDir: Path,
 
       out.entry("product-info.json", productJson)
 
-      Files.newDirectoryStream(winDistDir.resolve("bin")).use {
+      Files.newDirectoryStream(winX64DistDir.resolve("bin")).use {
         for (file in it) {
           val path = file.toString()
           if (path.endsWith(".exe.vmoptions")) {
@@ -86,7 +91,7 @@ fun crossPlatformZip(macDistDir: Path,
         }
       }
 
-      Files.newDirectoryStream(linuxDistDir.resolve("bin")).use {
+      Files.newDirectoryStream(linuxX64DistDir.resolve("bin")).use {
         for (file in it) {
           val path = file.toString()
           if (path.endsWith(".vmoptions")) {
@@ -105,7 +110,7 @@ fun crossPlatformZip(macDistDir: Path,
         }
       }
 
-      Files.newDirectoryStream(macDistDir.resolve("bin")).use {
+      Files.newDirectoryStream(macX64DistDir.resolve("bin")).use {
         for (file in it) {
           if (file.toString().endsWith(".jnilib")) {
             out.entry("bin/mac/${file.fileName.toString().removeSuffix(".jnilib")}.dylib", file)
@@ -134,43 +139,85 @@ fun crossPlatformZip(macDistDir: Path,
         relativeFile.toString() != "bin/idea.properties"
       }, entryCustomizer = entryCustomizer)
 
-      out.dir(startDir = macDistDir, prefix = "", fileFilter = { _, relativeFile ->
+      val zipFiles = mutableMapOf<String, Path>()
+      out.dir(startDir = macX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
         val p = relativeFile.toString()
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
+        !p.startsWith("bin/repair") &&
         !p.startsWith("bin/restarter") &&
         !p.startsWith("bin/printenv") &&
         p != "bin/idea.properties" &&
         !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions"))) &&
-        // do not copy common files
-        !Files.exists(linuxDistDir.resolve(p))
+        // do not copy common files, error if they are different
+        filterFileIfAlreadyInZip(p, macX64DistDir.resolve(p), zipFiles)
       }, entryCustomizer = entryCustomizer)
 
-      out.dir(startDir = linuxDistDir, prefix = "", fileFilter = { _, relativeFile ->
+      out.dir(startDir = macAarch64DistDir, prefix = "", fileFilter = { _, relativeFile ->
         val p = relativeFile.toString()
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
+        !p.startsWith("bin/repair") &&
+        !p.startsWith("bin/restarter") &&
+        !p.startsWith("bin/printenv") &&
+        p != "bin/idea.properties" &&
+        !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions"))) &&
+        // do not copy common files, error if they are different
+        filterFileIfAlreadyInZip(p, macAarch64DistDir.resolve(p), zipFiles)
+      }, entryCustomizer = entryCustomizer)
+
+      out.dir(startDir = linuxX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
+        val p = relativeFile.toString()
+        @Suppress("SpellCheckingInspection")
+        !p.startsWith("bin/fsnotifier") &&
+        !p.startsWith("bin/repair") &&
         !p.startsWith("bin/printenv") &&
         !p.startsWith("help/") &&
         p != "bin/idea.properties" &&
-        !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions") || p.endsWith(".py")))
+        !(p.startsWith("bin/") && (p.endsWith(".sh") || p.endsWith(".vmoptions") || p.endsWith(".py"))) &&
+        // do not copy common files, error if they are different
+        filterFileIfAlreadyInZip(p, linuxX64DistDir.resolve(p), zipFiles)
       }, entryCustomizer = entryCustomizer)
 
       val winExcludes = distFiles.mapTo(HashSet(distFiles.size)) { "${it.value}/${it.key.fileName}" }
-      out.dir(startDir = winDistDir, prefix = "", fileFilter = { _, relativeFile ->
+      out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relativeFile ->
         val p = relativeFile.toString()
         @Suppress("SpellCheckingInspection")
         !p.startsWith("bin/fsnotifier") &&
+        !p.startsWith("bin/repair") &&
         !p.startsWith("bin/printenv") &&
         !p.startsWith("help/") &&
         p != "bin/idea.properties" &&
         p != "build.txt" &&
         !(p.startsWith("bin/") && p.endsWith(".exe.vmoptions")) &&
         !(p.startsWith("bin/$executableName") && p.endsWith(".exe")) &&
-        !winExcludes.contains(p)
+        !winExcludes.contains(p) &&
+        // do not copy common files, error if they are different
+        filterFileIfAlreadyInZip(p, winX64DistDir.resolve(p), zipFiles)
       }, entryCustomizer = entryCustomizer)
     }
   }
+}
+
+private fun failIfContentNotEqualOrFalse(file1: Path, file2: Path, message: String): Boolean {
+  if (IOUtils.contentEquals(file1.inputStream(), file2.inputStream()))
+    return false
+
+  val file1Text = file1.readText()
+  val file2Text = file2.readText()
+  if (!file1Text.take(1024).all { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 } ||
+      !file2Text.take(1024).all { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 })
+    error(message)
+  throw FileComparisonFailure(message, file1Text, file2Text, file1.toString(), file2.toString())
+}
+
+private fun filterFileIfAlreadyInZip(relativeFile: String, file: Path, zipFiles: MutableMap<String, Path>): Boolean {
+  val found = zipFiles.put(relativeFile, file)
+  if (found == null) {
+    return true
+  }
+
+  return failIfContentNotEqualOrFalse(found, file, "Two files $found and $file with the target path $relativeFile have different content")
 }
 
 fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiConsumer<String, ByteArray>) {

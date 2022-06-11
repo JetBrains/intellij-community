@@ -72,5 +72,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

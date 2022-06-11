@@ -29,7 +29,7 @@ import java.util.List;
 public interface BulkFileListener {
   /** @deprecated obsolete, implement {@link BulkFileListener} directly */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   class Adapter implements BulkFileListener { }
 
   default void before(@NotNull List<? extends @NotNull VFileEvent> events) { }

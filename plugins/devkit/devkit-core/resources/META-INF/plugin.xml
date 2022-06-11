@@ -83,7 +83,7 @@
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
-    <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.DevKitModuleBuilder"/>
+    <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.IdePluginModuleBuilder"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <compileServer.plugin classpath="devkit-jps.jar"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.idea.devkit.module.PluginModuleConvertToGradleStartupActivity"/>
@@ -225,12 +225,6 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
                      key="inspection.use.primitive.types.equals.display.name"/>
-    <localInspection language="JAVA" shortName="RedundantScheduledForRemovalAnnotation"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.RedundantScheduledForRemovalAnnotationInspection"
-                     key="inspection.name.redundant.scheduled.for.removal.annotation"
-                     isInternal="true"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection shortName="HighlightVisitorInternal"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -406,11 +400,10 @@
     <lang.documentationProvider language="JSON"
                                 order="first"
                                 implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
-    <notificationGroup id="IntelliJ API Annotations" displayType="BALLOON"/>
-    <notificationGroup id="Plugin DevKit Deployment" displayType="BALLOON"/>
-    <notificationGroup id="DevKit Errors" displayType="BALLOON"/>
-    <notificationGroup id="Update from Sources" displayType="BALLOON"/>
-    <notificationGroup id="testdata" displayType="BALLOON"/>
+    <notificationGroup id="Plugin DevKit Deployment" displayType="BALLOON" bundle="messages.DevKitBundle" key="notification.group.devkit.deployment"/>
+    <notificationGroup id="DevKit Errors" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Update from Sources" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="testdata" displayType="BALLOON" bundle="messages.DevKitBundle" key="notification.group.testdata"/>
     <notificationGroup id="Migrate DevKit plugin to Gradle" displayType="STICKY_BALLOON" bundle="messages.DevKitBundle" key="convert.devkit.to.gradle.notification"/>
 
     <!-- Threading Model Helper -->

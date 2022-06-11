@@ -4,7 +4,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -16,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
@@ -23,6 +26,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,5 +163,29 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
 
   protected PsiType getReturnType() {
     return myReturnType;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiVariable variable = (PsiVariable)getStartElement();
+    if (variable.getContainingFile() == file.getOriginalFile()) {
+      PsiVariable varCopy = PsiTreeUtil.findSameElementInCopy(variable, file);
+      PsiTypeElement typeElement = varCopy.getTypeElement();
+      if (typeElement != null) {
+        typeElement.replace(PsiElementFactory.getInstance(project).createTypeElement(myReturnType));
+        return IntentionPreviewInfo.DIFF;
+      }
+    }
+    PsiType oldType = variable.getType();
+    PsiModifierList modifiers = variable.getModifierList();
+    String modifiersText = modifiers == null ? "" : StreamEx.of(PsiModifier.MODIFIERS).filter(modifiers::hasExplicitModifier)
+      .map(mod -> mod + " ").joining();
+    String oldTypeText = oldType.getPresentableText() + " ";
+    String newTypeText = myReturnType.getPresentableText() + " ";
+    String name = variable.getName();
+    String initializer = variable.hasInitializer() ? " = ...;" : ";";
+    String origText = modifiersText + oldTypeText + name + initializer;
+    String newText = modifiersText + newTypeText + name + initializer;
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, origText, newText);
   }
 }

@@ -117,28 +117,23 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
       val langNode = GrazieRulesTreeNode(lang)
       model.insertNodeInto(langNode, root, root.childCount)
 
-      fun addRuleNodes(rules: List<Rule>, parent: GrazieRulesTreeNode) {
-        rules.sortedBy { it.presentableName.lowercase() }.forEach { rule ->
-          model.insertNodeInto(GrazieRulesTreeNode(rule), parent, parent.childCount)
-        }
-      }
-
-      rules.groupBy { it.category }.entries.sortedBy { it.key.lowercase() }.forEach { (category, rules) ->
-        val categoryNode = GrazieRulesTreeNode(category)
-        model.insertNodeInto(categoryNode, langNode, langNode.childCount)
-
-        rules.groupBy { it.subCategory }.entries
+      fun splitIntoCategories(level: Int, rules: List<Rule>, parent: GrazieRulesTreeNode) {
+        rules.groupBy { it.categories.getOrNull(level) }.entries
           .sortedWith(Comparator.comparing({ it.key }, nullsLast(Comparator.comparing { it.lowercase() })))
-          .forEach { (subCat, rules) ->
-            if (subCat != null) {
-              val subCatNode = GrazieRulesTreeNode(subCat)
-              model.insertNodeInto(subCatNode, categoryNode, categoryNode.childCount)
-              addRuleNodes(rules, subCatNode)
-            } else {
-              addRuleNodes(rules, categoryNode)
+          .forEach { (category, catRules) ->
+            if (category != null) {
+              val categoryNode = GrazieRulesTreeNode(category)
+              model.insertNodeInto(categoryNode, parent, parent.childCount)
+              splitIntoCategories(level + 1, catRules, categoryNode)
+            }
+            else {
+              catRules.sortedBy { it.presentableName.lowercase() }.forEach { rule ->
+                model.insertNodeInto(GrazieRulesTreeNode(rule), parent, parent.childCount)
+              }
             }
           }
       }
+      splitIntoCategories(0, rules, langNode)
     }
 
     model.setRoot(root)

@@ -193,7 +193,7 @@ public final class FilterSettings {
         String ret = getString(name);
         if (ret != null) {
             try {
-                return Integer.valueOf(ret);
+                return Integer.parseInt(ret);
             } catch (Exception ex) {
                 // return defaultValue
             }

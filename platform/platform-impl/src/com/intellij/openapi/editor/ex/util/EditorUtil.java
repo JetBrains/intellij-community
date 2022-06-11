@@ -879,7 +879,9 @@ public final class EditorUtil {
     if (hostEditor instanceof EditorImpl) {
       Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
     }
-    else LOG.warn("Cannot watch for disposal of " + editor);
+    else {
+      LOG.warn("Cannot watch for disposal of " + editor);
+    }
   }
 
   public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {

@@ -67,7 +67,7 @@ private class DelegatingIcon(baseIcon: Icon, private val delegateResult: Complet
       if (icon != null) {
         delegate = icon
         for ((_, repaintRequest) in repaintRequests) {
-          repaintScheduler.scheduleRepaint(repaintRequest, iconWidth, iconHeight)
+          repaintScheduler.scheduleRepaint(repaintRequest, iconWidth, iconHeight, alwaysSchedule = false)
         }
       }
       repaintRequests.clear()

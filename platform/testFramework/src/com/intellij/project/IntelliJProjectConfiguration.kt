@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
+import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
@@ -18,6 +19,8 @@ import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries without
@@ -86,9 +89,12 @@ class IntelliJProjectConfiguration {
 
     @JvmStatic
     fun loadIntelliJProject(projectHome: String): JpsProject {
-      val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
+      val m2Repo = getLocalMavenRepo().systemIndependentPath
       return JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo), true)
     }
+
+    @JvmStatic
+    fun getLocalMavenRepo(): Path = Paths.get(SystemProperties.getUserHome(), ".m2/repository")
   }
 
   class LibraryRoots(val classes: List<File>, val sources: List<File>) {

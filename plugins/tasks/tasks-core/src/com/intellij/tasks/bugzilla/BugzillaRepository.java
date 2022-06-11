@@ -259,8 +259,8 @@ public class BugzillaRepository extends BaseRepositoryImpl {
                             task.getLastPost(), task.getTimeSpentFromLastPost(), timeSpent));
     Matcher matcher = TIME_SPENT_PATTERN.matcher(timeSpent);
     if (matcher.find()) {
-      int hours = Integer.valueOf(matcher.group(1));
-      int minutes = Integer.valueOf(matcher.group(2));
+      int hours = Integer.parseInt(matcher.group(1));
+      int minutes = Integer.parseInt(matcher.group(2));
       BugzillaXmlRpcRequest request = new BugzillaXmlRpcRequest("Bug.update")
         .requireAuthentication(true)
         .withParameter("ids", newVector(task.getId()))

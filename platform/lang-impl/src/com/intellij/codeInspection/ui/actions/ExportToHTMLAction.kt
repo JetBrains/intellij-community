@@ -6,13 +6,16 @@ import com.intellij.codeInspection.export.InspectionTreeHtmlWriter
 import com.intellij.codeInspection.ui.InspectionResultsView
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import java.nio.file.Path
+import java.util.function.Supplier
+import javax.swing.JPanel
 
-class ExportToHTMLAction : InspectionResultsExportActionBase(InspectionsBundle.messagePointer("inspection.action.export.html.title"),
-                                                             InspectionsBundle.messagePointer("inspection.action.export.html.description"),
-                                                             AllIcons.FileTypes.Html) {
+@Suppress("ComponentNotRegistered")
+class ExportToHTMLAction : InspectionResultsExportActionProvider(Supplier { "HTML" },
+                                                                 InspectionsBundle.messagePointer("inspection.action.export.html.description"),
+                                                                 AllIcons.FileTypes.Html) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.html.progress.title")
 
   val openProperty = propertyGraph.property(false)
@@ -31,9 +34,11 @@ class ExportToHTMLAction : InspectionResultsExportActionBase(InspectionsBundle.m
     }
   }
 
-  override fun Panel.additionalSettings() {
-    row {
-      checkBox(InspectionsBundle.message("inspection.export.open.option")).bindSelected(openProperty)
+  override fun additionalSettings(): JPanel {
+    return panel {
+      row {
+        checkBox(InspectionsBundle.message("inspection.export.open.option")).bindSelected(openProperty)
+      }
     }
   }
 }

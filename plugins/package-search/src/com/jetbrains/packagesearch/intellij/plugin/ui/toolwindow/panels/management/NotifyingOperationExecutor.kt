@@ -6,9 +6,8 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.OperationFailureRenderer
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFailure
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
@@ -24,12 +23,10 @@ internal class NotifyingOperationExecutor(
     private val innerExecutor = PackageManagementOperationExecutor(
         coroutineScope = coroutineScope,
         onOperationsSuccessful = project.packageSearchProjectService::notifyOperationExecuted,
-        onOperationsFail = { failureType, failures ->
-            onOperationsFail(project, failureType, failures)
+        onOperationsFail = { failures ->
+            onOperationsFail(project, failures)
         }
     )
-
-    private val operationFailureRenderer = OperationFailureRenderer()
 
     override fun executeOperations(operations: List<PackageSearchOperation<*>>) =
         innerExecutor.executeOperations(operations)
@@ -39,27 +36,28 @@ internal class NotifyingOperationExecutor(
 
     private fun onOperationsFail(
         project: Project,
-        failureType: PackageManagementOperationExecutor.FailureType,
-        failures: List<PackageSearchOperationFailure>
+        failures: List<ModuleOperationExecutor.Result.Failure>
     ) {
-        val subtitle = when (failureType) {
-            PackageManagementOperationExecutor.FailureType.SOME -> PackageSearchBundle.message(
+
+        showErrorNotification(
+            project = project,
+            subtitle = PackageSearchBundle.message(
                 "packagesearch.operation.error.subtitle.someFailed"
-            )
-            PackageManagementOperationExecutor.FailureType.ALL -> PackageSearchBundle.message(
-                "packagesearch.operation.error.subtitle.allFailed"
-            )
-        }
-
-        val message = operationFailureRenderer.renderFailuresAsHtmlBulletList(failures)
-
-        showErrorNotification(project, subtitle, message)
+            ),
+            message = buildString {
+                append("<html><head></head><body><ul>")
+                for (failure in failures) {
+                    append("<li>${failure.message}</li>")
+                }
+                append("</ul></body></html>")
+            }
+        )
     }
 
     private fun showErrorNotification(
         project: Project,
         @Nls subtitle: String? = null,
-        @Nls message: String
+        message: String
     ) {
         val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(
             PluginEnvironment.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID

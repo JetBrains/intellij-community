@@ -48,7 +48,7 @@ abstract class AbstractExpiration : Expiration {
     get() = job.isCompleted
 
   @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-  @UseExperimental(InternalCoroutinesApi::class)
+  @OptIn(InternalCoroutinesApi::class)
   override fun invokeOnExpiration(handler: Runnable): Expiration.Handle =
     job.invokeOnCompletion(onCancelling = true) { handler.run() }.toHandlerRegistration()
 

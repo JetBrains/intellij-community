@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPathsProvider.resolveMavenArtifactInMavenRepo
+import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -116,7 +117,7 @@ private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Pa
     }
 
     override val kotlinc: File by lazy {
-        val stdlibFile = PathManager.getJarPathForClass(KotlinVersion::class.java)?.let { File(it) }
+        val stdlibFile = PathManager.getJarPathForClass(KtElement::class.java)?.let { File(it) }
             ?: error("Can't find kotlin-stdlib.jar in Maven Local")
 
         // IDEA should have downloaded the library as a part of dependency resolution in the 'kotlin.util.compiler-dependencies' module

@@ -31,14 +31,6 @@ class TextFieldWithBrowseButtonTest {
         assertEquals(textField.component.text, localProperty)
       }
     }
-
-    panel {
-      row {
-        val textField = textFieldWithBrowseButton()
-          .bindText(PropertyBinding({ localProperty }, { localProperty = it }))
-        assertEquals(textField.component.text, localProperty)
-      }
-    }
   }
 
   @Test

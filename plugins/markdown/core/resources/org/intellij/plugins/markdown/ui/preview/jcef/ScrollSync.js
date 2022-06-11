@@ -1,31 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-function throttle(callback, limit) {
-  let waiting = false;
-  return (...args) => {
-    if (!waiting) {
-      callback(...args);
-      waiting = true;
-      setTimeout(() => {
-        waiting = false;
-      }, limit);
-    }
-  };
-}
-
 class ScrollController {
+  #lastOffset = 0;
+  #scrollFinished = true;
+  // #nextScrollElement = null;
+
   constructor() {
     this.positionAttributeName = document.querySelector(`meta[name="markdown-position-attribute-name"]`).content;
-    this.collectMarkdownElements = this._collectMarkdownElements();
-    const scrollHandler = throttle(() => this._scrollHandler(), 20);
-    document.addEventListener('scroll', e => {
-      scrollHandler()
-    })
+    this.collectMarkdownElements = this.#doCollectMarkdownElements();
     IncrementalDOM.notifications.afterPatchListeners.push(() => {
-      this.collectMarkdownElements = this._collectMarkdownElements();
+      this.collectMarkdownElements = this.#doCollectMarkdownElements();
     });
+    const scrollHandler = ScrollController.#throttle(() => this.#scrollHandler(), 20);
+    document.addEventListener("scroll", event => scrollHandler());
   }
 
-  _collectMarkdownElements() {
+  #doCollectMarkdownElements() {
     let elements = null;
     return () => {
       if (elements != null) {
@@ -43,12 +32,12 @@ class ScrollController {
     };
   }
 
-  _scrollHandler() {
+  #scrollHandler() {
     const value = this._getElementsAtOffset(window.scrollY);
     window.__IntelliJTools.messagePipe.post("setScroll", value.previous.from);
   }
 
-  _getNodeOffsets(node) {
+  getNodeOffsets(node) {
     if (!node || !("getAttribute" in node)) {
       return null;
     }
@@ -59,19 +48,55 @@ class ScrollController {
     return null;
   }
 
-  _findElementAtOffset(offset, node = document.body.firstChild, result = {}) {
+  getMaxOffset() {
+    const element = document.body.firstChild;
+    const offsets = this.getNodeOffsets(element);
+    if (!offsets) {
+      throw new Error("First body child is expected to be the root of the document!");
+    }
+    return offsets[1];
+  }
+
+  #findElementAtOffset(offset, node = document.body.firstChild, result = {}) {
     for (let child = node.firstChild; child !== null; child = child.nextSibling) {
-      const position = this._getNodeOffsets(child);
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        continue;
+      }
+      const position = this.getNodeOffsets(child);
       if (!position) {
         continue;
       }
       if (offset >= position[0] && offset <= position[1]) {
         result.element = child;
-        this._findElementAtOffset(offset, child, result);
+        this.#findElementAtOffset(offset, child, result);
         break;
       }
     }
     return result.element;
+  }
+
+  #actuallyFindElement(offset, forward = false) {
+    const targetElement = this.#findElementAtOffset(offset);
+    if (targetElement) {
+      return targetElement;
+    }
+    if (forward) {
+      const maxOffset = this.getMaxOffset();
+      for (let it = offset; it <= maxOffset; it += 1) {
+        const previousElement = this.#findElementAtOffset(it);
+        if (previousElement) {
+          return previousElement;
+        }
+      }
+    } else {
+      for (let it = offset - 1; it >= 0; it -= 1) {
+        const previousElement = this.#findElementAtOffset(it);
+        if (previousElement) {
+          return previousElement;
+        }
+      }
+    }
+    return null;
   }
 
   _getElementsAtOffset(offset) {
@@ -101,9 +126,47 @@ class ScrollController {
     return { previous: hiElement };
   }
 
+  #doScroll(element, smooth) {
+    if (!smooth) {
+      element.scrollIntoView();
+      return;
+    }
+    this.#scrollFinished = false;
+    ScrollController.#performSmoothScroll(element).then(() => {
+      this.#scrollFinished = true;
+    });
+  }
+
+  // #doScroll(element, smooth) {
+  //   if (!smooth) {
+  //     element.scrollIntoView();
+  //     return;
+  //   }
+  //   if (!this.#scrollFinished) {
+  //     this.#nextScrollElement = element;
+  //     return;
+  //   }
+  //   this.#scrollFinished = false;
+  //   const resolve = () => {
+  //     this.#scrollFinished = true;
+  //     if (this.#nextScrollElement) {
+  //       const element = this.#nextScrollElement;
+  //       this.#nextScrollElement = null;
+  //       this.#doScroll(element, true).then(resolve);
+  //     }
+  //   };
+  //   return ScrollController.#performSmoothScroll(element).then(resolve);
+  // }
+
+  scrollBy(horizontal, vertical) {
+    if (this.#scrollFinished) {
+      window.scrollBy(horizontal, vertical);
+    }
+  }
+
   scrollTo(offset, smooth = true) {
     if (this.currentScrollElement) {
-      const position = this._getNodeOffsets(this.currentScrollElement);
+      const position = this.getNodeOffsets(this.currentScrollElement);
       if (offset >= position[0] && offset <= position[1]) {
         return;
       }
@@ -112,19 +175,51 @@ class ScrollController {
     if (!body || !body.firstChild || !body.firstChild.firstChild) {
       return;
     }
-    this.currentScrollElement = this._findElementAtOffset(offset);
-    if (!this.currentScrollElement) {
-      // console.warn(`Failed to find element for offset: ${offset}`);
+    const element = this.#actuallyFindElement(offset, offset >= this.#lastOffset);
+    this.#lastOffset = offset;
+    if (!element) {
+      console.warn(`Failed to find element for offset: ${offset}`);
       return;
     }
-    if (!smooth) {
-      this.currentScrollElement.scrollIntoView();
-    }
-    else {
-      this.currentScrollElement.scrollIntoView({
+    this.currentScrollElement = element;
+    this.#doScroll(element, smooth);
+  }
+
+  static #throttle(callback, limit) {
+    let waiting = false;
+    return (...args) => {
+      if (!waiting) {
+        callback(...args);
+        waiting = true;
+        setTimeout(() => {
+          waiting = false;
+        }, limit);
+      }
+    };
+  }
+
+  static #performSmoothScroll(element) {
+    return new Promise( (resolve) => {
+      let frames = 0;
+      let lastPosition = null;
+      element.scrollIntoView({
         behavior: "smooth"
       });
-    }
+      const action = () => {
+        const currentPosition = element.getBoundingClientRect().top;
+        if (currentPosition === lastPosition) {
+          frames += 1;
+          if (frames > 2) {
+            return resolve();
+          }
+        } else {
+          frames = 0;
+          lastPosition = currentPosition;
+        }
+        requestAnimationFrame(action);
+      };
+      requestAnimationFrame(action);
+    });
   }
 }
 

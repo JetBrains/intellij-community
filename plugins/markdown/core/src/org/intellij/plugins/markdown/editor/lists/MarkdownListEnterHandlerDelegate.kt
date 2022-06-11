@@ -12,13 +12,14 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
-import com.intellij.util.DocumentUtil
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBulk
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
@@ -27,6 +28,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
 /**
  * This handler does three things to the current list item:
@@ -37,7 +39,7 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
 @ExperimentalStdlibApi
 internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
 
-  private var marker: String? = null
+  private var emptyItem: String? = null
 
   override fun invokeInsideIndent(newLineCharOffset: Int, editor: Editor, dataContext: DataContext): Boolean {
     val project = editor.project ?: return false
@@ -51,8 +53,8 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
                                caretAdvance: Ref<Int>,
                                dataContext: DataContext,
                                originalHandler: EditorActionHandler?): EnterHandlerDelegate.Result {
-    marker = null // if last post-processing ended with an exception, clear the state
-    if (file !is MarkdownFile || isInBlockQuoteOrCodeFence(caretOffset.get(), file)
+    emptyItem = null // if last post-processing ended with an exception, clear the state
+    if (file !is MarkdownFile || isInCodeFence(caretOffset.get(), file)
         || !MarkdownSettings.getInstance(file.project).isEnhancedEditingEnabled) {
       return EnterHandlerDelegate.Result.Continue
     }
@@ -69,7 +71,8 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
     if (line > 0) {
       val indentRange = document.getLineIndentRange(line)
       val insideIndent = !indentRange.isEmpty && caretOffset.get() <= indentRange.endOffset
-      val prevLineBlank = DocumentUtil.isLineEmpty(document, line - 1)
+      val prevLineBlank = document.getLineIndentRange(line - 1).endOffset == document.getLineEndOffset(line - 1)
+      // this also works inside a block quote, since '>' is also treated as an indent for lists
       if (insideIndent && prevLineBlank) {
         // otherwise an item will be created, but it will be too far to be a part of the current list
         return EnterHandlerDelegate.Result.Continue
@@ -83,6 +86,11 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
       return EnterHandlerDelegate.Result.Stop
     }
 
+    val blockQuote = MarkdownPsiUtil.findNonWhiteSpacePrevSibling(file, caretOffset.get())?.parentOfType<MarkdownBlockQuote>()
+    if (blockQuote != null && item.isAncestor(blockQuote)) {
+      return EnterHandlerDelegate.Result.Continue
+    }
+
     val itemLine = document.getLineNumber(item.startOffset)
     val markerElement = item.markerElement!!
     val indentWithMakerRange = document.getLineIndentRange(itemLine).union(markerElement.textRange)
@@ -91,15 +99,15 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
       caretOffset.set(markerElement.endOffset)
     }
 
-    marker = item.normalizedMarker
+    emptyItem = document.getLineIndentSpaces(itemLine) + item.normalizedMarker
     return EnterHandlerDelegate.Result.Default
   }
 
-  private fun isInBlockQuoteOrCodeFence(caretOffset: Int, file: PsiFile): Boolean {
+  private fun isInCodeFence(caretOffset: Int, file: PsiFile): Boolean {
     if (caretOffset == 0) return false
 
     return file.findElementAt(caretOffset - 1)
-      ?.parentOfTypes(MarkdownBlockQuote::class, MarkdownCodeFence::class) != null
+      ?.parentOfTypes(MarkdownCodeFence::class) != null
   }
 
   private fun handleEmptyItem(item: MarkdownListItem, editor: Editor, file: PsiFile, originalHandler: EditorActionHandler?, dataContext: DataContext) {
@@ -129,11 +137,11 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
       editor.putUserData(AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY, null)
       return EnterHandlerDelegate.Result.Continue
     }
-    val marker = marker ?: return EnterHandlerDelegate.Result.Continue // for smart cast
+    val emptyItem = emptyItem ?: return EnterHandlerDelegate.Result.Continue // for smart cast
 
     val document = editor.document
     runWriteAction {
-      EditorModificationUtil.insertStringAtCaret(editor, marker)
+      EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     }
 
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
@@ -142,7 +150,7 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
       .list.renumberInBulk(document, recursive = false, restart = false)
 
     // it is possible that there will be no pre-processing before next post-processing, see IDEA-270501 and EnterInLineCommentHandler
-    this.marker = null
+    this.emptyItem = null
     return EnterHandlerDelegate.Result.Stop
   }
 }

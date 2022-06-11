@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Container for static utility methods useful for some of the standard lombok handlers, regardless of
+ * Container for static utility methods useful for some standard lombok handlers, regardless of
  * target platform (e.g. useful for both javac and Eclipse lombok implementations).
  */
 public class LombokHandlerUtil {
@@ -68,13 +68,13 @@ public class LombokHandlerUtil {
         }
       }
       char followupChar = fieldName.charAt(prefix.length());
-      // if prefix is a letter then follow up letter needs to not be lowercase, i.e. 'foo' is not a match
+      // if prefix is a letter then follow-up letter needs to not be lowercase, i.e. 'foo' is not a match
       // as field named 'oo' with prefix 'f', but 'fOo' would be.
       if (Character.isLetter(prefix.charAt(prefix.length() - 1)) &&
         Character.isLowerCase(followupChar)) {
         continue outer;
       }
-      return "" + Character.toLowerCase(followupChar) + fieldName.subSequence(prefix.length() + 1, fieldName.length());
+      return String.valueOf(Character.toLowerCase(followupChar)) + fieldName.subSequence(prefix.length() + 1, fieldName.length());
     }
 
     return null;
@@ -285,7 +285,7 @@ public class LombokHandlerUtil {
     if (fName.startsWith("is") && fName.length() > 2 && !Character.isLowerCase(fName.charAt(2))) {
       String baseName = fName.substring(2);
       if (fluent) {
-        baseNames.add("" + Character.toLowerCase(baseName.charAt(0)) + baseName.substring(1));
+        baseNames.add(Character.toLowerCase(baseName.charAt(0)) + baseName.substring(1));
       } else {
         baseNames.add(baseName);
       }

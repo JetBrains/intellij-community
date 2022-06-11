@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -77,7 +77,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     setFileIndexerId(fileId, UNINDEXED_STATE);
   }
 
-  private void setFileIndexerId(int fileId, int indexerId) throws IOException {
+  public void setFileIndexerId(int fileId, int indexerId) throws IOException {
     try (DataOutputStream stream = FSRecords.writeAttribute(fileId, myFileAttribute)) {
       DataInputOutputUtil.writeINT(stream, indexerId);
     }

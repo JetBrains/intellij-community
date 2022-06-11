@@ -131,7 +131,13 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     }
 
     val sha256 = sha256Deferred.await()
-    if (cache?.sha256 == sha256 && cache.fileHashCode == fileHashCode && cache.cacheVersion == PluginEnvironment.cachesVersion) {
+    if (
+        cache?.sha256 == sha256
+        && cache.fileHashCode == fileHashCode
+        && cache.cacheVersion == PluginEnvironment.Caches.version
+        // if dependencies are empty it could be because build APIs have previously failed
+        && (cache.dependencies.isNotEmpty() || cache.parsingAttempts >= PluginEnvironment.Caches.maxAttempts)
+    ) {
         return@coroutineScope cache.dependencies
     }
 
@@ -148,9 +154,10 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     nativeModule.project.lifecycleScope.launch {
         val jsonText = json.encodeToString(
             value = InstalledDependenciesCache(
-                cacheVersion = PluginEnvironment.cachesVersion,
+                cacheVersion = PluginEnvironment.Caches.version,
                 fileHashCode = fileHashCode,
                 sha256 = sha256,
+                parsingAttempts = cache?.parsingAttempts?.let { it + 1 } ?: 1,
                 projectName = name,
                 dependencies = dependencies
             )
@@ -169,6 +176,7 @@ internal data class InstalledDependenciesCache(
     val cacheVersion: Int,
     val fileHashCode: Int,
     val sha256: String,
+    val parsingAttempts: Int = 0,
     val projectName: String,
     val dependencies: List<@Serializable(with = UnifiedDependencySerializer::class) UnifiedDependency>
 )

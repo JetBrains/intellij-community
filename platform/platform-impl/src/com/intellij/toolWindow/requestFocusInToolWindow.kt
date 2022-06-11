@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
@@ -49,7 +50,8 @@ internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
 private fun bringOwnerToFront(toolWindow: ToolWindowImpl) {
   val owner = SwingUtilities.getWindowAncestor(toolWindow.component) ?: return
   val activeFrame = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
-  if (activeFrame != null && activeFrame !== owner) {
+  if (activeFrame != null && activeFrame !== owner &&
+      ProjectUtil.getProjectForWindow(activeFrame) == ProjectUtil.getProjectForWindow(owner)) {
     owner.toFront()
   }
 }

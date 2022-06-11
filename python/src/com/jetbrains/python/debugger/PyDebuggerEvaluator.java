@@ -42,7 +42,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
   }
 
   private PyDebugValue getNone() {
-    return new PyDebugValue("", "NoneType", null, "None", false, null, false, false, false, null, myDebugProcess);
+    return new PyDebugValue("", "NoneType", null, "None", false, null, false, false, false, null, null, myDebugProcess);
   }
 
   private void doEvaluate(final String expr, final XEvaluationCallback callback, final boolean doTrunc) {

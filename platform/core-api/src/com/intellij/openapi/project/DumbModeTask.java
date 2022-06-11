@@ -30,7 +30,7 @@ public abstract class DumbModeTask implements Disposable {
    *
    * @deprecated Consider using {@link DumbModeTask()} and overwriting {@link DumbModeTask#tryMergeWith(DumbModeTask)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public DumbModeTask(@NotNull Object equivalenceObject) {
     myEquivalenceObject = Pair.create(getClass(), equivalenceObject);

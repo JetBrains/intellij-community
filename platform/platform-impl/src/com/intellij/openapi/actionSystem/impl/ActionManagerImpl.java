@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actions.BackspaceAction;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -55,7 +54,7 @@ import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -1659,7 +1658,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           inputEvent == null ? 0 : inputEvent.getModifiersEx()
         );
 
-        ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, false);
+        ActionUtil.performDumbAwareUpdate(action, event, false);
         if (!event.getPresentation().isEnabled()) {
           result.setRejected();
           return;

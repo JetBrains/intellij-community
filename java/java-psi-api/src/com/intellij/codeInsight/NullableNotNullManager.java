@@ -60,7 +60,7 @@ public abstract class NullableNotNullManager {
    * Returns an annotation which marks given element as Nullable, if any.
    * @deprecated use {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public @Nullable PsiAnnotation getNullableAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     NullabilityAnnotationInfo info = findEffectiveNullabilityInfo(owner);
@@ -77,7 +77,7 @@ public abstract class NullableNotNullManager {
    * Returns an annotation which marks given element as NotNull, if any.
    * @deprecated use {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} instead.
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public @Nullable PsiAnnotation getNotNullAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     NullabilityAnnotationInfo info = findEffectiveNullabilityInfo(owner);

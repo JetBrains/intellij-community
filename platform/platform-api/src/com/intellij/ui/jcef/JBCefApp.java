@@ -62,7 +62,7 @@ public final class JBCefApp {
 
   private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 89;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 97;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 5;
 

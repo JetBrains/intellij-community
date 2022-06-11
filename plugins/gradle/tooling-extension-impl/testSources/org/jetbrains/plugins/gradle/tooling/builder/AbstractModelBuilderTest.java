@@ -184,8 +184,8 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @NotNull
-  private Set<Class<?>> getToolingExtensionClasses() {
-    final Set<Class<?>> classes = set(
+  public static Set<Class<?>> getToolingExtensionClasses() {
+    return set(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
@@ -203,14 +203,6 @@ public abstract class AbstractModelBuilderTest {
       // util-rt jat
       SystemInfoRt.class // !!! do not replace it with SystemInfo.class from util module
     );
-
-    ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());
-    return classes;
-  }
-
-  @NotNull
-  protected Set<Class<?>> doGetToolingExtensionClasses() {
-    return Collections.emptySet();
   }
 
   @After

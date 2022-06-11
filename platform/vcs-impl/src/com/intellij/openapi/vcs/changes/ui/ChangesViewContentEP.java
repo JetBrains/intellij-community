@@ -56,7 +56,7 @@ public final class ChangesViewContentEP implements PluginAware {
   public String predicateClassName;
 
   /**
-   * Optional {@link ChangesViewContentProvider.Preloader} instance that invoked on {@link com.intellij.ui.content.Content} creation.
+   * Optional {@link ChangesViewContentProvider.Preloader} instance that invoked on {@link Content} creation.
    * <p>
    * ex: it can be used to register DnD-drop handlers.
    * It can be also used to specify tab order, see {@link ChangesViewContentManager#ORDER_WEIGHT_KEY}.

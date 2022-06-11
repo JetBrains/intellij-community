@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInspection.DeprecationUtil;
@@ -31,7 +31,7 @@ public class DeprecationInspection extends DeprecationInspectionBase {
     return ApiUsageUastVisitor.createPsiElementVisitor(
       new DeprecatedApiUsageProcessor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES,
                                       IGNORE_IMPORT_STATEMENTS, IGNORE_METHODS_OF_DEPRECATED,
-                                      IGNORE_IN_SAME_OUTERMOST_CLASS, false, null)
+                                      IGNORE_IN_SAME_OUTERMOST_CLASS, false, false, null)
     );
   }
 

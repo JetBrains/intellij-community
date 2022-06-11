@@ -78,7 +78,7 @@ class HtmlHandler {
 				if (hex == 'x' || hex == 'X') {
 					return Integer.valueOf(buffer.substring(start + 2), 16);
 				}
-				return Integer.valueOf(buffer.substring(start + 1));
+				return Integer.parseInt(buffer.substring(start + 1));
 			} catch (NumberFormatException nfe) {
 				return -1;
 			}

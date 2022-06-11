@@ -5,7 +5,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
 import org.jdom.Element;

@@ -116,6 +116,11 @@ public interface HighlightInfoType {
       myNeedsUpdateOnTyping = needsUpdateOnTyping;
     }
 
+    /** Whether the corresponding severity should be available for choosing and editing in inspection settings */
+    public boolean isApplicableToInspections() {
+      return true;
+    }
+
     @Override
     @NotNull
     public HighlightSeverity getSeverity(@Nullable PsiElement psiElement) {

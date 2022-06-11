@@ -30,6 +30,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
@@ -46,6 +47,9 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.util.JpsPathUtil
+import java.awt.AWTEvent
+import java.awt.Toolkit
+import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
 import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
@@ -337,6 +341,29 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
+  open fun setActivationTimestamp(project: Project, timestamp: Long) {
+    getProjectPath(project)?.let {
+      synchronized(stateLock) {
+        state.additionalInfo[it]?.activationTimestamp = timestamp
+      }
+    }
+  }
+
+  init {
+    Toolkit.getDefaultToolkit().addAWTEventListener(
+      { e ->
+        if (e.id == WindowEvent.WINDOW_ACTIVATED) {
+          var window = (e as WindowEvent).window
+          if (window != null) {
+            while (window.owner != null) {
+              window = window.owner
+            }
+            (window as? IdeFrame)?.notifyProjectActivation()
+          }
+        }
+      }, AWTEvent.WINDOW_EVENT_MASK)
+  }
+
   @Internal
   class MyProjectListener : ProjectManagerListener {
     private val manager = instanceEx
@@ -541,7 +568,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
     get() = synchronized(stateLock) {
-      return state.additionalInfo.entries.filter { it.value.opened }.asReversed()
+      return state.additionalInfo.entries.filter { it.value.opened }.sortedBy { -it.value.activationTimestamp }
     }
 
   override fun getGroups(): List<ProjectGroup> {

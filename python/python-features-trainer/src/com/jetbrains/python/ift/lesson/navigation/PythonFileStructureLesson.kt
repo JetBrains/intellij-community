@@ -5,6 +5,6 @@ import com.intellij.openapi.editor.LogicalPosition
 import training.learn.lesson.general.navigation.FileStructureLesson
 
 class PythonFileStructureLesson : FileStructureLesson() {
-  override val existedFile: String = "src/file_structure_demo.py"
+  override val sampleFilePath: String = "src/file_structure_demo.py"
   override val methodToFindPosition: LogicalPosition = LogicalPosition(73, 8)
 }

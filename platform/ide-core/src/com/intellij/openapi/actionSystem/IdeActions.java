@@ -298,7 +298,7 @@ public interface IdeActions {
   String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
 
   /** @deprecated please use {@link #GROUP_WELCOME_SCREEN_OPTIONS} (and the corresponding action group) instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
 
   String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";

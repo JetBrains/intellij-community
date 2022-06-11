@@ -291,7 +291,6 @@
     <notificationGroup id="Package File" displayType="BALLOON" hideFromSettings="true"/>
 
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
-    <applicationService serviceInterface="com.intellij.refactoring.JavaSpecialRefactoringProvider" serviceImplementation="com.intellij.refactoring.JavaSpecialRefactoringProviderImpl"/>
     <applicationService serviceInterface="com.intellij.refactoring.util.CommonJavaInlineUtil" serviceImplementation="com.intellij.refactoring.util.InlineUtil"/>
     <applicationService serviceInterface="com.intellij.refactoring.util.RefactoringConflictsUtil" serviceImplementation="com.intellij.refactoring.util.RefactoringConflictsUtilImpl"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
@@ -575,10 +574,6 @@
 
     <postStartupActivity implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileSelectionListener$MyStartupActivity"/>
 
-    <bundledKeymap file="Visual Studio.xml"/>
-    <bundledKeymap file="Eclipse.xml"/>
-    <bundledKeymap file="Eclipse (Mac OS X).xml"/>
-    <bundledKeymap file="NetBeans 6.5.xml"/>
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
     <orderRootType implementation="com.intellij.openapi.roots.NativeLibraryOrderRootType"/>
@@ -1184,6 +1179,8 @@
              order="after explicitlyImported, before sameLogicalRoot"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ExplicitlyImportedWeigher" id="explicitlyImported"
              order="before openedInEditor"/>
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.AccessibilityWeigher" id="accessibility"
+             order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SamePsiMemberWeigher" id="samePsiMember"
              order="before explicitlyImported"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ReferenceListWeigher" id="referenceList"
@@ -1742,6 +1739,12 @@
                      groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection" alternativeId="javadoc"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.javaDoc.JavadocDeclarationMerger" />
+    <localInspection groupPath="Java" language="JAVA" shortName="JavadocBlankLines" bundle="messages.JavaBundle" key="inspection.javadoc.blank.lines.display.name"
+                     groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.javaDoc.JavadocBlankLinesInspection" alternativeId="javadoc"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="JavadocLinkAsPlainText" bundle="messages.JavaBundle" key="inspection.javadoc.link.as.plain.text.display.name"
+                     groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.javaDoc.JavadocLinkAsPlainTextInspection" alternativeId="javadoc"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.javaDoc.MissingJavadocMerger" />
     <localInspection groupPath="Java" language="JAVA" shortName="ReturnSeparatedFromComputation" bundle="messages.JavaBundle"
                      key="inspection.return.separated.from.computation.name"
@@ -1878,11 +1881,6 @@
                      groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BulkFileAttributesReadInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MultiplePathConstructions"
-                     key="inspection.multiple.path.constructions.description" bundle="messages.JavaBundle"
-                     groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WEAK WARNING"
-                     implementationClass="com.intellij.codeInspection.MultiplePathConstructionsInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
                       key="inspection.empty.method.display.name" bundle="messages.JavaBundle"/>
@@ -2233,7 +2231,6 @@
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
     <vcs.codeVisionLanguageContext language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaVcsCodeVisionContext"/>
-    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaCodeAuthorInlayHintsProvider"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider"/>
     <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider"/>

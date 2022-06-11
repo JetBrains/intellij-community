@@ -114,21 +114,7 @@ class WrapWithSafeLetCallFix(
                 else -> return null
             }
 
-            if (!isNullabilityMismatch(expected = expectedType, actual = actualType)) return null
-
-            return WrapWithSafeLetCallFix(call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call, element)
-        }
-    }
-
-    object NullabilityMismatchBasedOnJavaAnnotationsFactory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val nullabilityMismatch = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
-            val element = nullabilityMismatch.psiElement as? KtExpression ?: return null
-            val argument = element.parent as? KtValueArgument ?: return null
-            val call = argument.getParentOfType<KtCallExpression>(strict = true) ?: return null
-
-            if (!isNullabilityMismatch(expected = nullabilityMismatch.a, actual = nullabilityMismatch.b)) return null
-
+            if (element.isNull() || !isNullabilityMismatch(expected = expectedType, actual = actualType)) return null
             return WrapWithSafeLetCallFix(call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call, element)
         }
     }

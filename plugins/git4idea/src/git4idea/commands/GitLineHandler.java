@@ -133,7 +133,7 @@ public class GitLineHandler extends GitTextHandler {
   /**
    * @deprecated Do not inherit {@link GitLineHandler}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void onTextAvailable(String text, Key outputType) {
   }
 

@@ -530,7 +530,7 @@ public final class ArrayUtil {
   /**
    * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Comparator<? super T> comparator) {
     //noinspection ArrayEquality

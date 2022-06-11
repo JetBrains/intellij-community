@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -475,11 +476,26 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL, or {@code null} if path is unmappable
    */
   public @NotNull @NlsSafe String getWindowsPath(@NotNull String wslPath) {
-    String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
-    if (windowsPath != null) {
-      return windowsPath;
+    if (containsDriveLetter(wslPath)) {
+      String windowsPath = WSLUtil.getWindowsPath(wslPath, getMntRoot());
+      if (windowsPath != null) {
+        return windowsPath;
+      }
     }
     return getUNCRoot() + FileUtil.toSystemDependentName(FileUtil.normalize(wslPath));
+  }
+
+  private static boolean containsDriveLetter(@NotNull String linuxPath) {
+    int slashInd = linuxPath.indexOf('/');
+    while (slashInd >= 0) {
+      int nextSlashInd = linuxPath.indexOf('/', slashInd + 1);
+      if ((nextSlashInd == slashInd + 2 || (nextSlashInd == -1 && slashInd + 2 == linuxPath.length())) &&
+          OSAgnosticPathUtil.isDriveLetter(linuxPath.charAt(slashInd + 1))) {
+        return true;
+      }
+      slashInd = nextSlashInd;
+    }
+    return false;
   }
 
   @Override

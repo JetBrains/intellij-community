@@ -68,8 +68,13 @@ class PropertyGraph(debugName: String? = null, private val isBlockPropagation: B
    * @param listener is callback which will be called when properties changes are finished.
    * @see PropertyGraph
    */
-  fun afterPropagation(parentDisposable: Disposable, listener: () -> Unit) {
-    propagation.afterOperation(listener, parentDisposable)
+  fun afterPropagation(parentDisposable: Disposable?, listener: () -> Unit) {
+    if (parentDisposable == null) {
+      propagation.afterOperation(listener)
+    }
+    else {
+      propagation.afterOperation(listener, parentDisposable)
+    }
   }
 
   private fun getOrRegisterNode(property: ObservableProperty<*>): PropertyNode {

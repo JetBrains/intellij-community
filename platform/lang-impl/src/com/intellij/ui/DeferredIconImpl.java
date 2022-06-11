@@ -208,7 +208,7 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
           TreeUtil.invalidateCacheAndRepaint(((JTree)actualTarget).getUI());
         }
 
-        ourRepaintScheduler.scheduleRepaint(repaintRequest, getIconWidth(), getIconHeight());
+        ourRepaintScheduler.scheduleRepaint(repaintRequest, getIconWidth(), getIconHeight(), false);
       }, ModalityState.any());
     });
   }

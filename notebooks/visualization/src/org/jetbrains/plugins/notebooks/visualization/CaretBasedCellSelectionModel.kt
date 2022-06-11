@@ -47,6 +47,14 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
       }
     }
   }
+
+  override fun selectSingleCell(cell: NotebookCellLines.Interval) {
+    // carets merging based on visual position
+    // can't add another caret "<caret>#%%\n" -> "#%%\n<caret>", in jupyter visual positions are equal (header is hidden).
+    // so better to move primary caret instead of adding new. See CellBorderTest.`one cell, click on add cell above`
+    editor.caretModel.primaryCaret.moveToLogicalPosition(cell.startLogicalPosition)
+    editor.caretModel.removeSecondaryCarets()
+  }
 }
 
 private fun Document.getSelectionLines(caret: Caret): IntRange =

@@ -41,7 +41,7 @@ public final class HighlightUtils {
    * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
    * Please use {@link #highlightElement(PsiElement, Editor)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void highlightElement(@NotNull PsiElement element) {
     highlightElements(Collections.singleton(element));
   }

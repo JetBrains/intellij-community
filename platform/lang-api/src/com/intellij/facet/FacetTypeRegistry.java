@@ -13,7 +13,7 @@ public abstract class FacetTypeRegistry {
   /**
    * @deprecated register {@code facetType} as an extension instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void registerFacetType(FacetType<?, ?> facetType);
 
   public abstract FacetTypeId<?> @NotNull [] getFacetTypeIds();

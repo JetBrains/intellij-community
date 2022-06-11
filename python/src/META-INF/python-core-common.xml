@@ -125,6 +125,7 @@
     <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
                         serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
     <applicationService serviceImplementation="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"/>
+    <applicationService serviceImplementation="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebugValueExecutionService"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
@@ -269,6 +270,8 @@
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
                              id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
+    <applicationConfigurable parentId="project.propDebugger" instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
+                             id="debugger.dataViews.python.type.renderers"/>
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          bundle="messages.PyBundle"
@@ -658,6 +661,10 @@
 
     <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
+    </action>
+
+    <action id="PyDebugger.CustomizeDataView" class="com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
     </action>
 
     <action id="PyDebugger.ViewAsGroup" class="com.jetbrains.python.debugger.actions.ViewAsGroup">

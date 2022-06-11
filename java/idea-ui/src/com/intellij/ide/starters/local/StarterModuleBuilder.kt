@@ -61,8 +61,8 @@ import javax.swing.Icon
 abstract class StarterModuleBuilder : ModuleBuilder() {
 
   companion object {
-    @JvmStatic
-    private val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z0-9_.]")
+    @JvmField
+    val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z\\d_.]")
 
     @JvmStatic
     private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> =

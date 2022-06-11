@@ -141,7 +141,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * @param vcsActionName is used both in interface and as a key in settings.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName,
                                                                         @NotNull AbstractVcs vcs);
 

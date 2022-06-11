@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @deprecated use {@link PresentableGoToChangePopupAction}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>
   extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
 

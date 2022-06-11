@@ -519,7 +519,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   /**
    * @deprecated override {@link #createParametersListTable} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected boolean isEmptyRow(ParameterTableModelItemBase<ParamInfo> row) {
     return false;
   }
@@ -527,7 +527,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   /**
    * @deprecated override {@link #createParametersListTable} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParamInfo> item, boolean selected, boolean focused) {
     return null;

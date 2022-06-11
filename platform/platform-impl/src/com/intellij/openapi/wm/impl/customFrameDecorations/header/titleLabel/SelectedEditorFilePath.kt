@@ -26,7 +26,7 @@ import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 import com.intellij.openapi.wm.impl.TitleInfoProvider.Companion.getProviders
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.Alarm
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
@@ -288,13 +288,12 @@ internal open class SelectedEditorFilePath {
           } ?: baseTitle, baseTitle)
       }
         .expireWith(project)
-        .coalesceBy(this)
         .finishOnUiThread(ModalityState.any()) {
           classTitle.classPath = it.first
           classTitle.longText = if (classTitle.fullPath) it.first else it.second
           update()
         }
-        .submit(AppExecutorUtil.getAppExecutorService())
+        .submit(NonUrgentExecutor.getInstance())
     }
   }
 

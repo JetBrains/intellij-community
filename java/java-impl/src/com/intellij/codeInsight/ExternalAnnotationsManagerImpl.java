@@ -296,8 +296,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   private void annotateExternally(@Nullable XmlFile annotationsFile, @NotNull List<ExternalAnnotation> annotations) {
     XmlTag rootTag = extractRootTag(annotationsFile);
 
-    TreeMap<String, List<ExternalAnnotation>> ownerToAnnotations = StreamEx.of(annotations)
-      .mapToEntry(annotation -> StringUtil.escapeXmlEntities(getExternalName(annotation.getOwner())), Function.identity())
+    Map<String, List<ExternalAnnotation>> ownerToAnnotations = StreamEx.of(annotations)
+      .mapToEntry(annotation -> {
+        String externalName = getExternalName(annotation.getOwner());
+        return externalName == null ? null : StringUtil.escapeXmlEntities(externalName);
+      }, Function.identity())
       .distinct()
       .grouping(() -> new TreeMap<>(Comparator.nullsFirst(Comparator.naturalOrder())));
 

@@ -3,7 +3,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;

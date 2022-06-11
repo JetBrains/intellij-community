@@ -1,38 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Arrays;
 
 /**
  * @author gregsh
  */
 public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implements ComponentWithEmptyText {
-
-  private final StatusText myEmptyText = new StatusText(this) {
+  private final StatusText emptyText = new StatusText(this) {
     @Override
     protected boolean isStatusVisible() {
-      return UIUtil.uiChildren(JBPanelWithEmptyText.this).filter(Component::isVisible).isEmpty();
+      //noinspection SSBasedInspection
+      return Arrays.stream(getComponents()).noneMatch(Component::isVisible);
     }
   };
 
@@ -44,22 +30,20 @@ public class JBPanelWithEmptyText extends JBPanel<JBPanelWithEmptyText> implemen
     super(layout);
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
-    return myEmptyText;
+  public @NotNull StatusText getEmptyText() {
+    return emptyText;
   }
 
-  @NotNull
-  public JBPanelWithEmptyText withEmptyText(@Nls String str) {
-    myEmptyText.setText(str);
+  public @NotNull JBPanelWithEmptyText withEmptyText(@Nls String str) {
+    emptyText.setText(str);
     return this;
   }
 
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    myEmptyText.paint(this, g);
+    emptyText.paint(this, g);
   }
 
   @Override

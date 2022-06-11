@@ -26,7 +26,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @ApiStatus.ScheduledForRemoval
   public abstract @NotNull String getSmallIconUrl();
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.actionSystem.*;
@@ -47,20 +47,8 @@ public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
     myValueNode = valueNode;
   }
 
-  public static void showTextPopup(@NotNull String initialText,
-                                   @NotNull XDebuggerTreeCreator creator,
-                                   @NotNull Pair<XValue, String> initialItem,
-                                   @NotNull XValueNodeImpl valueNode,
-                                   @NotNull Editor editor,
-                                   @NotNull Point point,
-                                   @NotNull XSourcePosition position,
-                                   @NotNull XDebugSession session,
-                                   Runnable hideRunnable) {
-    new XDebuggerTextInlayPopup<>(creator, initialItem, editor, point, position, session, hideRunnable, valueNode).show(initialText);
-  }
-
   @Override
-  protected DefaultActionGroup getToolbarActions() {
+  protected @NotNull DefaultActionGroup getToolbarActions() {
     DefaultActionGroup toolbarActions = super.getToolbarActions();
     if (Registry.is("debugger.watches.inline.enabled")) {
       AnAction watchAction = myValueNode instanceof InlineWatchNodeImpl
@@ -73,13 +61,21 @@ public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
   }
 
   @Override
-  protected @NotNull XValueNodeImpl getNode() {
-    return myValueNode;
+  protected void showTreePopup(Runnable hideTreeRunnable) {
+    XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, myInitialItem, myValueNode, myEditor, myPoint, myPosition, mySession,
+                                          hideTreeRunnable);
   }
 
-  @Override
-  protected void showTreePopup(Runnable hideTreeRunnable) {
-    XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, myInitialItem, myValueNode, myEditor, myPoint, myPosition, mySession, hideTreeRunnable);
+  public static void showTextPopup(@NotNull String initialText,
+                                   @NotNull XDebuggerTreeCreator creator,
+                                   @NotNull Pair<XValue, String> initialItem,
+                                   @NotNull XValueNodeImpl valueNode,
+                                   @NotNull Editor editor,
+                                   @NotNull Point point,
+                                   @NotNull XSourcePosition position,
+                                   @NotNull XDebugSession session,
+                                   Runnable hideRunnable) {
+    new XDebuggerTextInlayPopup<>(creator, initialItem, editor, point, position, session, hideRunnable, valueNode).show(initialText);
   }
 
   private class EditInlineWatch extends AnAction {

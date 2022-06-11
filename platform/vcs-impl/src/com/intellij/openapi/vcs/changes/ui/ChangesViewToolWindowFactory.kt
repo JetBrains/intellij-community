@@ -23,7 +23,7 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   }
 
   override fun setEmptyState(project: Project, state: StatusText) {
-    state.setChangesViewEmptyState(project)
+    setChangesViewEmptyState(state, project)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -54,7 +54,7 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
   }
 
   override fun setEmptyState(project: Project, state: StatusText) {
-    state.setCommitViewEmptyState(project)
+    setCommitViewEmptyState(state, project)
   }
 
   override fun isAvailable(project: Project): Boolean {

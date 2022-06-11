@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NextStepHandler;
@@ -133,6 +134,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         oldCollapseAction.actionPerformed(e);
       }
     });
+
+    PopupUtil.applyNewUIBackground(myWizardTree);
 
     return myWizardTree;
   }

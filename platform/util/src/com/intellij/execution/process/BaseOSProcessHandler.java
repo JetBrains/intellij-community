@@ -40,7 +40,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    * @deprecated override {@link #executeTask(Runnable)} instead of this method
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   protected Future<?> executeOnPooledThread(@NotNull final Runnable task) {
     return ProcessIOExecutorService.INSTANCE.submit(task);

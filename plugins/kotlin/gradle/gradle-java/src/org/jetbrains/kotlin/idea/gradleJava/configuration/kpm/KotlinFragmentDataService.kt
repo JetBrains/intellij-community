@@ -112,7 +112,7 @@ class KotlinFragmentDataService : AbstractProjectDataService<KotlinFragmentData,
                         val arg = "-XXLanguage:+$it"
                         ManualLanguageFeatureSetting(feature, LanguageFeature.State.ENABLED, arg)
                     }
-                    useExperimental = it.optInAnnotationsInUse.toTypedArray()
+                    optIn = it.optInAnnotationsInUse.toTypedArray()
                     pluginOptions = it.compilerPluginArguments
                     pluginClasspaths = it.compilerPluginClasspath.map(File::getPath).toTypedArray()
                     freeArgs = it.freeCompilerArgs.toMutableList()

@@ -2,6 +2,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -488,7 +489,7 @@ public class UndoManagerImpl extends UndoManager {
 
       stack.removeLast();
 
-      var replacingGroup = new UndoableGroup("Local " + group.getCommandName(),
+      var replacingGroup = new UndoableGroup(IdeBundle.message("undo.command.local.name") + group.getCommandName(),
                                              false,
                                              group.getCommandTimestamp(),
                                              group.getStateBefore(),

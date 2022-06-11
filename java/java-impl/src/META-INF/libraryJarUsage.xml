@@ -7,7 +7,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryJar.FUSLibraryJarUsagesCollector"/>
-    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryUsage.LibraryUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.libraryUsage.LibraryUsageCollector"/>
     <backgroundPostStartupActivity implementation="com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsStartupActivity"/>
     <internal.statistic.libraryUsage.libraryUsageImportProcessor
       implementation="com.intellij.internal.statistic.libraryUsage.JavaLibraryUsageImportProcessor"/>
@@ -15,8 +15,5 @@
 
   <actions>
     <action internal="true" id="LibraryUsageStatistics" class="com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsAction"/>
-    <action internal="true"
-            id="DumpLibraryUsageStatistics"
-            class="com.intellij.internal.statistic.libraryUsage.DumpLibraryUsageStatisticsAction"/>
   </actions>
 </idea-plugin>

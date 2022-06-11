@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
@@ -35,6 +36,7 @@ public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspect
     };
 
   private static void process(@NotNull GrControlFlowOwner owner, @NotNull GrVariable variable, @NotNull ProblemsHolder problemsHolder) {
+    if (variable instanceof LightElement) return;
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return;
     if (!checkVariableDeclaredInsideScope(owner, variable)) return;
     if (checkVariableAssignedInsideClosureOrAnonymous(owner, variable)) return;

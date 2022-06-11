@@ -26,7 +26,7 @@ public class PsiClassListCellRenderer extends DelegatingPsiElementCellRenderer<P
   /**
    * @deprecated use {@link PsiClassRenderingInfo#getContainerTextStatic}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static String getContainerTextStatic(final PsiElement element) {
     return PsiClassRenderingInfo.getContainerTextStatic(element);

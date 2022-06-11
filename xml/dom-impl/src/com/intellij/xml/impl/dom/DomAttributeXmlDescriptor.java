@@ -18,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDescriptor {
-  private final DomAttributeChildDescription myDescription;
+  private final DomAttributeChildDescription<?> myDescription;
   private final Project myProject;
 
-  public DomAttributeXmlDescriptor(final DomAttributeChildDescription description, Project project) {
+  public DomAttributeXmlDescriptor(final DomAttributeChildDescription<?> description, Project project) {
     myDescription = description;
     myProject = project;
   }

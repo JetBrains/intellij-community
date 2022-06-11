@@ -572,12 +572,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     FilteredRequestorImpl requestor = new FilteredRequestorImpl(myProject);
     requestor.readTo(parentNode, this);
     try {
-      setEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "ENABLED")));
+      setEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "ENABLED")));
     }
     catch (Exception ignored) {
     }
     try {
-      setLogEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_ENABLED")));
+      setLogEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "LOG_ENABLED")));
     }
     catch (Exception ignored) {
     }
@@ -587,13 +587,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         XExpressionImpl expression = XExpressionImpl.fromText(logMessage);
         XDebuggerHistoryManager.getInstance(myProject).addRecentExpression(XBreakpointActionsPanel.LOG_EXPRESSION_HISTORY_ID, expression);
         myXBreakpoint.setLogExpressionObject(expression);
-        ((XBreakpointBase<?, ?, ?>)myXBreakpoint).setLogExpressionEnabled(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
+        ((XBreakpointBase<?, ?, ?>)myXBreakpoint).setLogExpressionEnabled(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "LOG_EXPRESSION_ENABLED")));
       }
     }
     catch (Exception ignored) {
     }
     try {
-      setRemoveAfterHit(Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "REMOVE_AFTER_HIT")));
+      setRemoveAfterHit(Boolean.parseBoolean(JDOMExternalizerUtil.readField(parentNode, "REMOVE_AFTER_HIT")));
     }
     catch (Exception ignored) {
     }

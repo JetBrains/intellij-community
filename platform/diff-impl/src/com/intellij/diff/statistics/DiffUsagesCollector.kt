@@ -22,7 +22,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 class DiffUsagesCollector : ApplicationUsagesCollector() {
 
   companion object {
-    private val GROUP = EventLogGroup("vcs.diff", 6)
+    private val GROUP = EventLogGroup("vcs.diff", 7)
     val places = listOf(DiffPlaces.DEFAULT,
       DiffPlaces.CHANGES_VIEW,
       DiffPlaces.VCS_LOG_VIEW,
@@ -54,9 +54,7 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
     private val MERGE_ENABLE_LST_MARKERS = GROUP.registerVarargEvent("merge.enable.lst.markers", DIFF_PLACE, EventFields.Enabled)
     private val USE_UNIFIED_DIFF = GROUP.registerVarargEvent("use.unified.diff", DIFF_PLACE, EventFields.Enabled)
     private val ITERATE_NEXT_FILE = GROUP.registerVarargEvent("iterate.next.file", DIFF_PLACE, EventFields.Enabled)
-    private val USE_EXTERNAL_DIFF_BY_DEFAULT = GROUP.registerVarargEvent("use.external.diff.by.default", DIFF_PLACE, EventFields.Enabled)
-    private val USE_EXTERNAL_DIFF = GROUP.registerVarargEvent("use.external.diff", DIFF_PLACE, EventFields.Enabled)
-    private val USE_EXTERNAL_MERGE = GROUP.registerVarargEvent("use.external.merge", DIFF_PLACE, EventFields.Enabled)
+    private val ENABLE_EXTERNAL_TOOLS = GROUP.registerVarargEvent("enable.external.diff.tools", DIFF_PLACE, EventFields.Enabled)
   }
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -99,10 +97,7 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
 
     val externalSettings = ExternalDiffSettings.instance
     val defaultExternalSettings = ExternalDiffSettings()
-    addBoolIfDiffers(set, externalSettings, defaultExternalSettings, { it.isDiffEnabled }, USE_EXTERNAL_DIFF)
-    addBoolIfDiffers(set, externalSettings, defaultExternalSettings, { it.isDiffEnabled && it.isDiffDefault },
-      USE_EXTERNAL_DIFF_BY_DEFAULT)
-    addBoolIfDiffers(set, externalSettings, defaultExternalSettings, { it.isMergeEnabled }, USE_EXTERNAL_MERGE)
+    addBoolIfDiffers(set, externalSettings, defaultExternalSettings, { it.isExternalToolsEnabled }, ENABLE_EXTERNAL_TOOLS)
 
     return set
   }

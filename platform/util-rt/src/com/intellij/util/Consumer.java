@@ -11,7 +11,7 @@ public interface Consumer<T> {
    * @deprecated use {@link com.intellij.util.EmptyConsumer#getInstance()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   Consumer<Object> EMPTY_CONSUMER = new Consumer<Object>() {
     public void consume(Object t) { }
   };

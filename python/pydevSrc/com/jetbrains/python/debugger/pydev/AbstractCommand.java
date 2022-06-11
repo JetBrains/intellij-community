@@ -65,6 +65,8 @@ public abstract class AbstractCommand<T> {
 
   public static final int CMD_SET_UNIT_TESTS_DEBUGGING_MODE = 170;
 
+  public static final int SET_USER_TYPE_RENDERERS = 190;
+
   // Powerful DataViewer commands
   public static final int CMD_DATAVIEWER_ACTION = 210;
   public static final int CMD_TABLE_EXEC = 211;

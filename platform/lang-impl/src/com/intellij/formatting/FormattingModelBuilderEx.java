@@ -26,7 +26,7 @@ public interface FormattingModelBuilderEx extends FormattingModelBuilder {
    * @deprecated Use {@link com.intellij.psi.codeStyle.FileIndentOptionsProvider} instead.
    */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
                                                                       @NotNull FormatTextRanges ranges,
                                                                       @NotNull CodeStyleSettings settings) {

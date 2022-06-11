@@ -36,7 +36,7 @@ public interface RefManagerExtension<T> {
   /**
    * @deprecated override {@link #getLanguages()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   Language getLanguage();
 

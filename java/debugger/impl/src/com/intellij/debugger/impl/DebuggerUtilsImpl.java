@@ -22,6 +22,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -63,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
@@ -443,13 +445,18 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return null;
   }
 
-  //TODO: use more general utils when available
+  // do not catch VMDisconnectedException
+  public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<T> action) {
+    forEachSafe(ep.getIterable(), action);
+  }
+
+  // do not catch VMDisconnectedException
   public static <T> void forEachSafe(Iterable<T> iterable, Consumer<T> action) {
     for (T o : iterable) {
       try {
         action.accept(o);
       }
-      catch (ProcessCanceledException e) {
+      catch (VMDisconnectedException | ProcessCanceledException e) {
         throw e;
       }
       catch (Throwable e) {
@@ -457,6 +464,31 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
     }
   }
+
+  // do not catch VMDisconnectedException
+  public static <T, R> R computeSafeIfAny(ExtensionPointName<T> ep, @NotNull Function<? super T, ? extends R> processor) {
+    for (T t : ep.getIterable()) {
+      if (t == null) {
+        return null;
+      }
+
+      try {
+        R result = processor.apply(t);
+        if (result != null) {
+          return result;
+        }
+      }
+      catch (VMDisconnectedException | ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    return null;
+  }
+
 
   @Nullable
   public static Range<Location> getLocalVariableBorders(@NotNull LocalVariable variable) {

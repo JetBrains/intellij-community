@@ -13,7 +13,6 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
 
   @Override
   public void applicationActivated(@NotNull IdeFrame ideFrame) {
-    System.setProperty("com.jetbrains.suppressWindowRaise", "false");
     publisher.onFrameActivated();
     // don't fire events when welcome screen is activated/deactivated
     if (ideFrame instanceof IdeFrameImpl) {
@@ -23,7 +22,6 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
 
   @Override
   public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
-    System.setProperty("com.jetbrains.suppressWindowRaise", "true");
     if (ApplicationManager.getApplication().isDisposed()) {
       return;
     }

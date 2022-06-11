@@ -28,7 +28,7 @@ abstract class AbstractFileAttributePropertyService<T: Any>(
     private fun computeValue(file: VirtualFile): T? {
         if (file !is VirtualFileWithId || !file.isValid) return null
 
-        return attribute.readAttribute(file)?.use { input ->
+        return attribute.readFileAttribute(file)?.use { input ->
             try {
                 input.readNullable {
                     read(input)
@@ -44,7 +44,7 @@ abstract class AbstractFileAttributePropertyService<T: Any>(
     operator fun set(file: VirtualFile, newValue: T?) {
         if (file !is VirtualFileWithId || !file.isValid) return
 
-        attribute.writeAttribute(file).use { output ->
+        attribute.writeFileAttribute(file).use { output ->
             output.writeNullable(newValue) { value ->
                 write(output, value)
             }

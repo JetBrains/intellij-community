@@ -259,7 +259,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       mySelectedTab = element.getAttributeValue("selected");
       final String split = element.getAttributeValue("split");
       if (split != null) {
-        mySplitProportion = Double.valueOf(split);
+        mySplitProportion = Double.parseDouble(split);
       }
       myDetached = Boolean.parseBoolean(element.getAttributeValue("detached"));
       myHorizontalToolbar = !"false".equalsIgnoreCase(element.getAttributeValue("horizontal"));

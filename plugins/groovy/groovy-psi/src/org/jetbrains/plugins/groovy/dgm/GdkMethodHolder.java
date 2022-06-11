@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.openapi.project.Project;
@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -35,6 +36,7 @@ public final class GdkMethodHolder {
   private final String myClassName;
   private final ConcurrentMap<String, MultiMap<String, PsiMethod>> myOriginalMethodsByNameAndType;
   private final NotNullLazyValue<MultiMap<String, PsiMethod>> myOriginalMethodByType;
+  private final NotNullLazyValue<MultiMap<String, PsiMethod>> myMacroMethods;
   private final boolean myStatic;
 
   private GdkMethodHolder(final PsiClass categoryClass, final boolean isStatic) {
@@ -53,6 +55,19 @@ public final class GdkMethodHolder {
     }
     myOriginalMethodByType = NotNullLazyValue.volatileLazy(() -> groupByType(byName.values()));
     myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name -> groupByType(byName.get(name)));
+    myMacroMethods = NotNullLazyValue.volatileLazy(() -> onlyMacro(byName));
+  }
+
+  private  MultiMap<String, PsiMethod> onlyMacro(MultiMap<String, PsiMethod> methodsByName) {
+    MultiMap<String, PsiMethod> map = new MultiMap<>();
+    loop: for (Map.Entry<String, Collection<PsiMethod>> entry : methodsByName.entrySet()) {
+      for (PsiMethod candidate : entry.getValue()) {
+        PsiType type = getCategoryTargetType(candidate);
+        if (type == null || !type.getCanonicalText().equals("org.codehaus.groovy.macro.runtime.MacroContext")) continue loop;
+      }
+      map.putValues(entry.getKey(), entry.getValue());
+    }
+    return map;
   }
 
   @NotNull
@@ -74,10 +89,19 @@ public final class GdkMethodHolder {
 
   public boolean processMethods(PsiScopeProcessor processor, @NotNull ResolveState state, PsiType qualifierType, Project project) {
     if (qualifierType == null) return true;
-    if (state.get(ClassHint.STATIC_CONTEXT) == Boolean.TRUE && !myStatic) return true;
+    if (state.get(ClassHint.STATIC_CONTEXT) == Boolean.TRUE && !myStatic && myMacroMethods.get().isEmpty()) return true;
 
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint == null ? null : nameHint.getName(state);
+    if (name != null) {
+
+      Collection<PsiMethod> macros = myMacroMethods.get().get(name);
+      for (PsiMethod macro : macros) {
+        if (!processor.execute(GdkMethodUtil.createMacroMethod(macro), state)) {
+          return false;
+        }
+      }
+    }
     final MultiMap<String, PsiMethod> map = name != null ? myOriginalMethodsByNameAndType.get(name) : myOriginalMethodByType.getValue();
     if (map.isEmpty()) {
       return true;

@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,11 +64,18 @@ public abstract class FileReferenceHelper {
     return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
   }
 
+  /**
+   * @return root that should be used as the context while refactor
+   */
   @Nullable
   public PsiFileSystemItem findRoot(@NotNull Project project, @NotNull final VirtualFile file) {
     return null;
   }
 
+  /**
+   * Use {@link #getRoots(Module, VirtualFile)} that provides better context
+   */
+  @Deprecated
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return emptyList();
@@ -81,8 +89,26 @@ public abstract class FileReferenceHelper {
   @NotNull
   public abstract Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull final VirtualFile file);
 
+  /**
+   * @return true, if the helper can be applied
+   */
+  @ApiStatus.Experimental
+  public boolean isMine(@NotNull Project project,
+                        @NotNull VirtualFile contextFile,
+                        @NotNull VirtualFile referencedFile) {
+    //not sure about what's more correct file here, I'd say that it should be contextFile instead of referencedFile
+    //but for backward compatibility let's keep referencedFile
+    return isMine(project, referencedFile);
+  }
+
+  /**
+   * @return true, if the helper can be applied
+   */
   public abstract boolean isMine(@NotNull Project project, @NotNull final VirtualFile file);
 
+  /**
+   * @return true if the helper is an instance of {@link NullFileReferenceHelper}
+   */
   public boolean isFallback() {
     return false;
   }

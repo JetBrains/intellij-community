@@ -136,7 +136,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     String fontName2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
     myScheme.setConsoleFontName(fontName2);
-    float scaledSize = UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
+    float scaledSize = UISettings.restoreFontSize((float)FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
 
     FontPreferencesTest.checkState(myScheme.getFontPreferences(),
                                    Collections.singletonList(fontName1),

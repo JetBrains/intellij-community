@@ -29,6 +29,7 @@ import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -192,13 +193,24 @@ public final class Switcher extends BaseSwitcherAction {
       }
 
       setBorder(JBUI.Borders.empty());
-      setBackground(JBColor.background());
       pathLabel.putClientProperty(SwingTextTrimmer.KEY, SwingTextTrimmer.THREE_DOTS_AT_LEFT);
 
       JPanel header = new JPanel(new HorizontalLayout(5));
       header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
-      header.setBorder(JBUI.Borders.empty(4, 8));
       header.add(HorizontalLayout.LEFT, RelativeFont.BOLD.install(new JLabel(title)));
+
+      if (ExperimentalUI.isNewUI()) {
+        setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+        Insets headerInsets = JBUI.CurrentTheme.Popup.headerInsets().getUnscaled();
+        // Remove size of focus ring insets around checkbox
+        int focusRing = cbShowOnlyEditedFiles == null ? 0 : 3;
+        header.setBorder(
+          JBUI.Borders.empty(headerInsets.top - focusRing, headerInsets.left, headerInsets.bottom - focusRing, headerInsets.right));
+      }
+      else {
+        setBackground(JBColor.background());
+        header.setBorder(JBUI.Borders.empty(4, 8));
+      }
 
       if (cbShowOnlyEditedFiles != null) {
         cbShowOnlyEditedFiles.setOpaque(false);
@@ -243,6 +255,7 @@ public final class Switcher extends BaseSwitcherAction {
       toolWindows.setCellRenderer(renderer);
       toolWindows.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
       toolWindows.addKeyListener(onKeyRelease);
+      PopupUtil.applyNewUIBackground(toolWindows);
       ScrollingUtil.installActions(toolWindows);
       ListHoverListener.DEFAULT.addTo(toolWindows);
       myClickListener.installOn(toolWindows);
@@ -290,6 +303,7 @@ public final class Switcher extends BaseSwitcherAction {
       files.setCellRenderer(renderer);
       files.setBorder(JBUI.Borders.empty(5, 0));
       files.addKeyListener(onKeyRelease);
+      PopupUtil.applyNewUIBackground(files);
       ScrollingUtil.installActions(files);
       ListHoverListener.DEFAULT.addTo(files);
       myClickListener.installOn(files);

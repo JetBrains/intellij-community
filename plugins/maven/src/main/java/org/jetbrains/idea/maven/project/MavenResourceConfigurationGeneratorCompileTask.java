@@ -211,7 +211,7 @@ public class MavenResourceConfigurationGeneratorCompileTask implements CompileTa
                                        @NotNull Module module,
                                        @NotNull MavenModuleResourceConfiguration resourceConfig) {
     if (mavenProject.isAggregator()) return;
-    if (Boolean.valueOf(IDEA_MAVEN_DISABLE_MANIFEST)) {
+    if (Boolean.parseBoolean(IDEA_MAVEN_DISABLE_MANIFEST)) {
       resourceConfig.manifest = null;
       return;
     }

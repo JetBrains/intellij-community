@@ -115,7 +115,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       final File tempFile = createTempFile();
       tempFile.deleteOnExit();
       Ref<Boolean> writeOnceRef = new Ref<>(false);
-      String tempFilePath = tempFile.getCanonicalPath();
+      String tempFilePath = tempFile.getAbsolutePath();
 
       TargetPaths targetPaths = TargetPaths.ordered(builder -> {
         builder

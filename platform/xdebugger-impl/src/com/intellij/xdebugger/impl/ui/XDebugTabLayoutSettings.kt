@@ -43,7 +43,7 @@ class XDebugTabLayoutSettings(
     myContentUI = runnerContentUi
     return mutableListOf(
       ViewLayoutModeActionGroup(content, threadsAndFramesOptions),
-      RestoreViewAction(runnerContentUi, content, variablesLayoutSettings)
+      RestoreViewAction(content, variablesLayoutSettings)
     )
   }
 
@@ -52,8 +52,8 @@ class XDebugTabLayoutSettings(
     variablesLayoutSettings.restore()
   }
 
-  private fun onThreadsSettingsChanged() {
-    if (threadsAndFramesOptions.isHidden) {
+  private fun onThreadsSettingsChanged(isHidden: Boolean) {
+    if (isHidden) {
       if (!variablesLayoutSettings.isSelected) {
         hideContent()
       }
@@ -107,7 +107,7 @@ class XDebugTabLayoutSettings(
         debugTab.getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)?.mainComponent?.isVisible = true
       }
 
-      onThreadsSettingsChanged()
+      onThreadsSettingsChanged(false)
     }
 
     override fun getDefaultOptionKey(): String = Registry.stringValue("debugger.default.selected.view.key")
@@ -119,10 +119,18 @@ class XDebugTabLayoutSettings(
       XDebugThreadsFramesViewChangeCollector.framesViewSelected(HIDE_OPTION_KEY)
       debugTab.getView(DebuggerContentInfo.FRAME_CONTENT, XDebugView::class.java)?.mainComponent?.isVisible = false
 
-      onThreadsSettingsChanged()
+      onThreadsSettingsChanged(true)
     }
 
     override fun getDisplayName(): String = XDebuggerBundle.message("xdebugger.threads.tab.layout.settings.title")
+
+    override fun isHideOptionVisible(): Boolean {
+      if (super.isHideOptionVisible()) {
+        return true
+      }
+
+      return variablesLayoutSettings.isSelected
+    }
   }
 
   inner class XDebugVariablesLayoutSettings(
@@ -144,6 +152,10 @@ class XDebugTabLayoutSettings(
     override fun getDisplayName(): String = XDebuggerBundle.message("debugger.session.tab.variables.title")
     override fun restore() {
       isSelected = true
+    }
+
+    override fun isEnabled(): Boolean {
+      return !isSelected || (content.manager?.contents?.size ?: 0) > 1 || !threadsAndFramesOptions.isHidden
     }
   }
 }

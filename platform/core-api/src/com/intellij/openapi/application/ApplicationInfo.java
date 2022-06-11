@@ -91,7 +91,7 @@ public abstract class ApplicationInfo {
 
   /** @deprecated use {@link #getBuild()} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public String getBuildNumber() {
     return getBuild().asString();
   }

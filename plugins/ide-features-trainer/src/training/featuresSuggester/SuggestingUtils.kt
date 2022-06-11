@@ -3,6 +3,7 @@
 package training.featuresSuggester
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
@@ -13,6 +14,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import training.featuresSuggester.actions.Action
+import training.featuresSuggester.settings.FeatureSuggesterSettings
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -25,11 +27,12 @@ internal object SuggestingUtils {
     get() = Registry.`is`("feature.suggester.force.show.suggestions", false)
     set(value) = Registry.get("feature.suggester.force.show.suggestions").setValue(value)
 
-  val isActionsProcessingEnabled: Boolean
-    get() = Registry.`is`("feature.suggester.enabled", false)
+  fun isActionsProcessingEnabled(project: Project): Boolean {
+    return !DumbService.isDumb(project) && FeatureSuggesterSettings.instance().isAnySuggesterEnabled
+  }
 
   fun handleAction(project: Project, action: Action) {
-    if (isActionsProcessingEnabled) {
+    if (isActionsProcessingEnabled(project)) {
       project.getService(FeatureSuggestersManager::class.java)?.actionPerformed(action)
     }
   }

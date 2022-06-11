@@ -1,11 +1,6 @@
-// "_ignore" "true"
-
-class ___JavadocSnippetPlaceholder {
-  void ___JavadocSnippetPlaceholderMethod() throws Throwable {
-      class  HelloWorld {
+class  HelloWorld {
    void
         f(
                              ) {
    }
    }
-}}

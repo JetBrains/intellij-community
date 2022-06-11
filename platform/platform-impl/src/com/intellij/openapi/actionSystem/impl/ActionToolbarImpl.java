@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
@@ -13,7 +14,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
@@ -173,6 +173,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons) {
+    this(place, actionGroup, horizontal, decorateButtons, null, null);
+  }
+
+
+  public ActionToolbarImpl(@NotNull String place,
+                           @NotNull ActionGroup actionGroup,
+                           boolean horizontal,
+                           boolean decorateButtons,
+                           @Nullable ActionGroup popupActionGroup,
+                           @Nullable String popupActionId) {
     super(null);
     if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
       LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
@@ -217,8 +227,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
-    myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
 
+    if (popupActionGroup == null) {
+      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
+    } else {
+      myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), place);
+    }
   }
 
   @Override
@@ -886,8 +900,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         maxHeight = Math.max(maxHeight, bounds.get(i).height);
       }
 
-      int rightOffset = 0;
       Insets insets = getInsets();
+      int rightOffset = insets.right;
       for (int i = getComponentCount() - 1, j = 1; i > 0; i--, j++) {
         final Component component = getComponent(i);
         if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
@@ -1178,8 +1192,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (forced) myForcedUpdateRequested = true;
 
     DataContext dataContext = Utils.wrapDataContext(getDataContext());
-    ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
-                                              dataContext, myPlace, false, true);
+    ActionUpdater updater = new ActionUpdater(myPresentationFactory, dataContext, myPlace, false, true);
     if (Utils.isAsyncDataContext(dataContext)) {
       CancellablePromise<List<AnAction>> lastUpdate = myLastUpdate;
       myLastUpdate = null;

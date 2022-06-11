@@ -144,6 +144,10 @@ private fun getRelativePathIfAncestor(ancestor: Path, file: String): String? =
   }
 
 private fun joinPaths(basePath: String, relativePath: String, targetPlatform: TargetPlatform): String {
+  if (relativePath == ".") {
+    return basePath
+  }
+
   val fileSeparator = targetPlatform.platform.fileSeparator.toString()
   return FileUtil.toSystemIndependentName("${basePath.removeSuffix(fileSeparator)}$fileSeparator$relativePath")
 }

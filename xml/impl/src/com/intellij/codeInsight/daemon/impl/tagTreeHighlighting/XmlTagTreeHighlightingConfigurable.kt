@@ -22,9 +22,7 @@ import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
 import com.intellij.xml.XmlBundle
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel
 
@@ -50,7 +48,7 @@ class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
         row(XmlBundle.message("settings.opacity")) {
           spinner(0.0..1.0, step = 0.05)
             .bind({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
-              PropertyBinding(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
+                  MutableProperty(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
             .onApply { clearTagTreeHighlighting() }
             .horizontalAlign(HorizontalAlign.FILL)
           cell()

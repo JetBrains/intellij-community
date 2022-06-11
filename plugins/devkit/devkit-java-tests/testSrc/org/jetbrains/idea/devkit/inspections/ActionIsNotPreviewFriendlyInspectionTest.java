@@ -18,12 +18,14 @@ public class ActionIsNotPreviewFriendlyInspectionTest extends LightJavaCodeInsig
     myFixture.addClass("package com.intellij.codeInspection; public interface ProblemDescriptor {}");
     myFixture.addClass("package com.intellij.codeInsight.intention.preview; public interface IntentionPreviewInfo {}");
     myFixture.addClass("package com.intellij.openapi.project; public interface Project {}");
+    myFixture.addClass("package com.intellij.codeInsight.intention;public interface FileModifier{@interface SafeFieldForPreview {}}");
     myFixture.addClass("package com.intellij.codeInspection;\n" +
                        "\n" +
                        "import com.intellij.codeInsight.intention.preview.*;\n" +
+                       "import com.intellij.codeInsight.intention.*;\n" +
                        "import com.intellij.openapi.project.*;\n" +
                        "\n" +
-                       "public interface LocalQuickFix {\n" +
+                       "public interface LocalQuickFix extends FileModifier {\n" +
                        "  default IntentionPreviewInfo generatePreview(Project project, ProblemDescriptor pd) {\n" +
                        "    return null;\n" +
                        "  }\n" +

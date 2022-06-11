@@ -4,6 +4,7 @@ package com.intellij.refactoring.typeMigration;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -44,6 +45,13 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       @Override
       public String getText() {
         return TypeMigrationBundle.message("migrate.fix.text", myName, StringUtil.escapeXmlEntities(getReturnType().getPresentableText()));
+      }
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+        // Avoid displaying the same diff as for VariableTypeFix, to avoid confusion.
+        // TODO: add HTML description
+        return IntentionPreviewInfo.EMPTY;
       }
 
       @Override

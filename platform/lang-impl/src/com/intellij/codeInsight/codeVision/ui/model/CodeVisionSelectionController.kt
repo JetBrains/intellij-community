@@ -106,7 +106,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
   private fun entryPressHandler(event: EditorMouseEvent) {
     val mouseEvent: MouseEvent = event.mouseEvent
 
-    val entry = checkEditorMousePosition(editor.contentComponent.componentHoverPoint()) ?: return
+    val entry = checkEditorMousePosition(mouseEvent.point) ?: return
     editor.contentComponent.requestFocus()
     event.consume()
 

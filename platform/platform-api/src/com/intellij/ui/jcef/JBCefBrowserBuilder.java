@@ -111,9 +111,17 @@ public class JBCefBrowserBuilder {
   }
 
   /**
-   * Creates the browser with the set parameters.
+   * @deprecated use {@link JBCefBrowserBuilder#build()} instead
    */
+  @Deprecated
   public @NotNull JBCefBrowser createBrowser() {
+    return build();
+  }
+
+  /**
+   * Creates and returns the browser with the set parameters.
+   */
+  public @NotNull JBCefBrowser build() {
     return JBCefBrowser.create(this);
   }
 }

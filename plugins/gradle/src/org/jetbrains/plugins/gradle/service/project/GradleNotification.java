@@ -14,7 +14,7 @@ public class GradleNotification {
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Gradle Notification Group");
 
   /** @deprecated use {@code NOTIFICATION_GROUP.createNotification(...).notify(project)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull GradleNotification getInstance(@NotNull Project project) {
     return new GradleNotification(project);
   }
@@ -26,7 +26,7 @@ public class GradleNotification {
   }
 
   /** @deprecated use {@code NOTIFICATION_GROUP.createNotification(...).notify(project)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void showBalloon(@NotNull @NlsContexts.NotificationTitle final String title,
                           @NotNull  @NlsContexts.NotificationContent final String message,
                           @NotNull final NotificationType type,

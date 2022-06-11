@@ -14,7 +14,7 @@ public final class ContentManagerWatcher {
   /**
    * @deprecated Use {@link #watchContentManager}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ContentManagerWatcher(@NotNull ToolWindow toolWindow, @NotNull ContentManager contentManager) {
     watchContentManager(toolWindow, contentManager);
   }

@@ -3,8 +3,6 @@ package com.intellij.psi.codeStyle;
 
 /**
  * Used in settings providers to indicate in which order a settings tab or panel must be shown in Settings UI.
- *
- * @author Rustam Vishnyakov
  */
 public enum DisplayPriority {
   /**

@@ -112,7 +112,7 @@ internal class RepaintHighlighting<T : Component>(val original: T,
   fun initTimer() {
     val timer = TimerUtil.createNamedTimer("IFT item", 50)
     timer.addActionListener {
-      if (!original.isShowing) {
+      if (!original.isShowing || original.bounds.isEmpty) {
         LearningUiHighlightingManager.removeIt(this)
       }
       if (this.removed) {

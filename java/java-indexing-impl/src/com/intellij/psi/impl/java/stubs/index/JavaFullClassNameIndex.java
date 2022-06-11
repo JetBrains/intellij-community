@@ -24,14 +24,18 @@ public class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<P
     return super.getVersion();
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<CharSequence, PsiClass> getKey() {
+  public @NotNull StubIndexKey<CharSequence, PsiClass> getKey() {
     return JavaStubIndexKeys.CLASS_FQN;
   }
 
   @Override
   public Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiClass.class);
+  }
+
+  @Override
+  public boolean doesKeyMatchPsi(@NotNull CharSequence key, @NotNull PsiClass aClass) {
+    return key.equals(aClass.getQualifiedName());
   }
 }

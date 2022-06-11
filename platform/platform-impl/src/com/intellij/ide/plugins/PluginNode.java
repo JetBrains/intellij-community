@@ -312,7 +312,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   public void setDate(String date) {
-    this.date = Long.valueOf(date);
+    this.date = Long.parseLong(date);
   }
 
   public void setDate(Long date) {
@@ -471,7 +471,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
     if (!StringUtil.isEmptyOrSpaces(rating)) {
       try {
-        if (Double.valueOf(rating) > 0) {
+        if (Double.parseDouble(rating) > 0) {
           return StringUtil.trimEnd(rating, ".0");
         }
       }

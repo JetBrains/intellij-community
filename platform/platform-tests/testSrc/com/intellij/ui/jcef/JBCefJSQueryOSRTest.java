@@ -73,7 +73,7 @@ public class JBCefJSQueryOSRTest {
       .setOffScreenRendering(true)
       .setClient(client)
       .setCreateImmediately(true)
-      .createBrowser();
+      .build();
 
     JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);
 
@@ -84,7 +84,7 @@ public class JBCefJSQueryOSRTest {
   public void test4() {
     JBCefBrowser browser = JBCefBrowser.createBuilder()
       .setOffScreenRendering(true)
-      .createBrowser();
+      .build();
 
     JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);
     browser.createImmediately();

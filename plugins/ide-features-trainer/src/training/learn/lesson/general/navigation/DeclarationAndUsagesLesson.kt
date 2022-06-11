@@ -22,7 +22,7 @@ import training.util.isToStringContains
 abstract class DeclarationAndUsagesLesson
   : KLesson("Declaration and usages", LessonsBundle.message("declaration.and.usages.lesson.name")) {
   abstract fun LessonContext.setInitialPosition()
-  abstract override val existedFile: String
+  abstract override val sampleFilePath: String
   abstract val entityName: String
 
   override val lessonContent: LessonContext.() -> Unit

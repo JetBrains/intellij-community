@@ -12,6 +12,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.toNullableProperty
 import org.jetbrains.annotations.Nls
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
@@ -35,7 +36,7 @@ internal fun Row.tabPlacementComboBox(model: ComboBoxModel<Int>): Cell<ComboBox<
   return comboBox(model,
                   renderer = SimpleListCellRenderer.create { label, value, _ ->
                     label.text = value.asTabPlacement()
-                  }).bindItem(ui::editorTabPlacement)
+                  }).bindItem(ui::editorTabPlacement.toNullableProperty())
 }
 
 private fun asOptionDescriptor(i: Int): BooleanOptionDescription {

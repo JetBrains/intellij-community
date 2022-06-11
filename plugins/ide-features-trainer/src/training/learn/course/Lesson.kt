@@ -15,17 +15,9 @@ import training.learn.lesson.LessonStateManager
 import training.statistic.LessonStartingWay
 import training.util.LessonEndInfo
 import training.util.filterUnseenLessons
-import training.util.findLanguageByID
 
 abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   abstract val module: IftModule
-
-  /** This name will be used for generated file with lesson sample */
-  open val fileName: String
-    get() {
-      val id = languageId
-      return module.sanitizedName + if (id != null) "." + findLanguageByID(id)!!.associatedFileType!!.defaultExtension else ""
-    }
 
   open val languageId: String? get() = module.primaryLanguage?.primaryLanguage
 
@@ -33,8 +25,12 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   open fun preferredLearnWindowAnchor(project: Project): ToolWindowAnchor = module.preferredLearnWindowAnchor(project)
 
-  /** Relative path to existed file in the learning project */
-  open val existedFile: String? = null
+  /**
+   * Relative path to file in the learning project. Will be used existed or generated the new empty file.
+   *
+   * Also this non-null value will be used for scratch file name if this is a scratch lesson.
+   */
+  open val sampleFilePath: String? = null
 
   /** This method is called for all project-based lessons before the start of any project-based lesson */
   @RequiresBackgroundThread

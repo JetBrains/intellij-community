@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import org.jetbrains.annotations.Nls;
 
@@ -67,7 +68,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
       if (myTextChanged || myTextWithMnemonic == null) myTextWithMnemonic = createTextWithMnemonic();
       // update component text only if changed
       String text = myTextWithMnemonic.getText(!disabled);
-      if (!text.equals(getText())) setText(text);
+      if (!text.equals(Strings.notNullize(getText()))) setText(text);
       // update mnemonic code only if changed
       int code = disabled ? KeyEvent.VK_UNDEFINED : myTextWithMnemonic.getMnemonicCode();
       if (code != getMnemonicCode()) setMnemonicCode(code);
@@ -139,7 +140,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
 
   private TextWithMnemonic createTextWithMnemonic() {
     String text = getText();
-    if (text == null || text.isEmpty()) return TextWithMnemonic.EMPTY;
+    if (Strings.isEmpty(text)) return TextWithMnemonic.EMPTY;
     TextWithMnemonic mnemonic = TextWithMnemonic.fromMnemonicText(text);
     if (mnemonic != null) return mnemonic;
     // assume that it is already set

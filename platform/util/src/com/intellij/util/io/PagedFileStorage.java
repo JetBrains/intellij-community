@@ -392,12 +392,6 @@ public class PagedFileStorage implements Forceable {
 
     if (isDirty) {
       myStorageLockContext.getBufferCache().flushBuffersForOwner(myStorageLockContext);
-      if (!myReadOnly) {
-        //useChannel(ch -> {
-        //  ch.force(true);
-        //  return null;
-        //}, false);
-      }
       isDirty = false;
     }
 

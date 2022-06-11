@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,8 +37,7 @@ final class PluginModuleConvertToGradleStartupActivity implements StartupActivit
   @NonNls
   private static final String ID = "Migrate DevKit plugin to Gradle";
 
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroup.balloonGroup(ID, DevKitBundle.message("convert.devkit.to.gradle.notification"));
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup(ID);
 
   private static final String DO_NOT_SHOW_AGAIN_SETTING = "PluginModuleConvertToGradleStartupActivity.DoNotShowAgain";
 

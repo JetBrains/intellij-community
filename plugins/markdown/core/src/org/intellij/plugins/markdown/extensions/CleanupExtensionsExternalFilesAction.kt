@@ -21,6 +21,7 @@ internal class CleanupExtensionsExternalFilesAction: AnAction() {
       publisher.extensionsSettingsChanged(fromSettingsDialog = false)
       MarkdownNotifications.showInfo(
         project = event.project,
+        id = "markdown.extensions.external.files.cleanup",
         title = MarkdownBundle.message("Markdown.Extensions.CleanupExternalFiles.notification.title"),
         message = MarkdownBundle.message("Markdown.Extensions.CleanupExternalFiles.notification.text"),
       )

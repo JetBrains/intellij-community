@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Tracks leaks of libraries from global {@link com.intellij.openapi.roots.libraries.LibraryTable}
+ * Tracks leaks of libraries from global {@link LibraryTable}
  * Usage:
  *
  * <pre>{@code

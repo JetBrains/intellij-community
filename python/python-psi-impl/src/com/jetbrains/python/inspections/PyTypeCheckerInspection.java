@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -155,21 +156,20 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyTypedDictType actual, @NotNull PyExpression value) {
       final PyExpression valueWithoutKeyword = value instanceof PyKeywordArgument ? ((PyKeywordArgument)value).getValueExpression() : value;
-      final Optional<PyTypedDictType.TypeCheckingResult> result =
+      final PyTypedDictType.TypeCheckingResult result =
         PyTypedDictType.Companion.checkTypes(expected, actual, myTypeEvalContext, valueWithoutKeyword);
-      if (result.isEmpty()) return false;
-      if (!result.get().getMatch()) {
-        final PyTypedDictType.TypeCheckingResult typeCheckingResult = result.get();
-        if (typeCheckingResult.getValueTypesErrors().isEmpty() &&
-            typeCheckingResult.getExtraKeys().isEmpty() &&
-            typeCheckingResult.getMissingKeys().isEmpty()) {
+      if (result == null) return false;
+      if (!result.getMatch()) {
+        if (result.getValueTypeErrors().isEmpty() &&
+            result.getExtraKeys().isEmpty() &&
+            result.getMissingKeys().isEmpty()) {
           registerProblem(valueWithoutKeyword, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
                                                                    PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
                                                                    PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)));
         }
 
-        if (!typeCheckingResult.getValueTypesErrors().isEmpty()) {
-          typeCheckingResult.getValueTypesErrors().forEach(error -> {
+        if (!result.getValueTypeErrors().isEmpty()) {
+          result.getValueTypeErrors().forEach(error -> {
             registerProblem(error.getActualExpression(), PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
                                                                              PythonDocumentationProvider.getTypeName(
                                                                                error.getExpectedType(), myTypeEvalContext),
@@ -180,20 +180,20 @@ public class PyTypeCheckerInspection extends PyInspection {
             return true;
           }
         }
-        if (!typeCheckingResult.getExtraKeys().isEmpty()) {
-          typeCheckingResult.getExtraKeys().forEach(error -> {
+        if (!result.getExtraKeys().isEmpty()) {
+          result.getExtraKeys().forEach(error -> {
             registerProblem(Objects.requireNonNullElse(error.getActualExpression(), valueWithoutKeyword),
                             PyPsiBundle.message("INSP.type.checker.typed.dict.extra.key", error.getKey(),
                                                 error.getExpectedTypedDictName()));
           });
         }
-        if (!typeCheckingResult.getMissingKeys().isEmpty()) {
-          typeCheckingResult.getMissingKeys().forEach(error -> {
+        if (!result.getMissingKeys().isEmpty()) {
+          result.getMissingKeys().forEach(error -> {
             final List<String> missingKeys = error.getMissingKeys();
             registerProblem(error.getActualExpression() != null ? error.getActualExpression() : valueWithoutKeyword,
                             PyPsiBundle.message("INSP.type.checker.typed.dict.missing.keys", error.getExpectedTypedDictName(),
                                                 missingKeys.size(),
-                                                String.join(", ", ContainerUtil.map(missingKeys, s -> String.format("'%s'", s)))));
+                                                StringUtil.join(missingKeys, s -> String.format("'%s'", s), ", ")));
           });
         }
       }

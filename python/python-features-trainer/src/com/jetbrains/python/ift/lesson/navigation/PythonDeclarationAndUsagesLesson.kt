@@ -6,6 +6,6 @@ import training.learn.lesson.general.navigation.DeclarationAndUsagesLesson
 
 class PythonDeclarationAndUsagesLesson : DeclarationAndUsagesLesson() {
   override fun LessonContext.setInitialPosition() = caret(9, 21)
-  override val existedFile: String = "src/declaration_and_usages_demo.py"
+  override val sampleFilePath: String = "src/declaration_and_usages_demo.py"
   override val entityName = "discriminant"
 }

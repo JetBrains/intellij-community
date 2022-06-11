@@ -30,7 +30,7 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
 
   @Override
   protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
-    return new RemoveModifierFix((String)infos[0]);
+    return new RemoveModifierFix((String)infos[1]);
   }
 
   @Override
@@ -176,7 +176,7 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
 
     private void registerError(@NotNull PsiKeyword modifier,
                                @NotNull @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) String key) {
-      registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, InspectionGadgetsBundle.message(key));
+      registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, InspectionGadgetsBundle.message(key), modifier.getText());
     }
   }
 }

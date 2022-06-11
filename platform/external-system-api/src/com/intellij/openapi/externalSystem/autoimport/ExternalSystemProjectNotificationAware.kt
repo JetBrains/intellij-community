@@ -6,11 +6,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Bridge between auto-reload backend and notification view about that project is needed to reload.
  * Notifications can be shown in editor floating toolbar, editor banner, etc.
  */
+@ApiStatus.NonExtendable
 interface ExternalSystemProjectNotificationAware {
 
   /**

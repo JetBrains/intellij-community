@@ -44,7 +44,7 @@ public abstract class LibraryTablesRegistrar {
   /**
    * @deprecated use {@link CustomLibraryTableDescription} extension point instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void registerLibraryTable(@NotNull LibraryTable libraryTable);
 
   public abstract @NotNull List<LibraryTable> getCustomLibraryTables();

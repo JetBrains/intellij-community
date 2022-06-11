@@ -32,6 +32,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
     with(builder) {
       val segmentedButton = segmentedButton(steps.keys) { it }
         .bind(stepProperty)
+        .gap(RightGap.SMALL)
       stepsProperty.afterChange {
         segmentedButton.items(steps.keys)
       }
@@ -61,7 +62,6 @@ abstract class AbstractNewProjectWizardMultiStepBase(
     if (step !in stepsPanels) {
       val stepUi = steps[step] ?: return null
       val panel = panel {
-        validateAfterPropagation(stepUi.propertyGraph)
         stepUi.setupUI(this)
       }
       panel.setMinimumWidthForAllRowLabels(JBUI.scale(90))

@@ -26,7 +26,7 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class AddRepositoryLocationDialog extends DialogWrapper {
   @NotNull private final List<String> myPreviousLocations;
-  private JComboBox myCombo;
+  private JComboBox<String> myCombo;
   private Url mySelected;
   private JTextField myComboField;
 

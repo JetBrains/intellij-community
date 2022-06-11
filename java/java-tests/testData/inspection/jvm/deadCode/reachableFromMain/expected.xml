@@ -6,5 +6,11 @@
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
     <description>Method is never used.</description>
   </problem>
+  <problem>
+    <file>B.kt</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Method is never used.</description>
+  </problem>
 </problems>
 

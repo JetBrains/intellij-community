@@ -51,8 +51,8 @@ import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
@@ -291,9 +291,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     tab.setTestableUi(new MyQueryable(tab));
     ReadAction.nonBlocking(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file))
       .expireWith(parentDisposable)
-      .coalesceBy(this)
       .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> tab.setText(title))
-      .submit(AppExecutorUtil.getAppExecutorService());
+      .submit(NonUrgentExecutor.getInstance());
 
     CloseTab closeTab = new CloseTab(component, file, myProject, myWindow, parentDisposable);
     DataContext dataContext = DataManager.getInstance().getDataContext(component);

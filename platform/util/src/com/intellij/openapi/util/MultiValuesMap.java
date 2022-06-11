@@ -19,7 +19,7 @@ import java.util.*;
  */
 @Debug.Renderer(text = "\"size = \" + myDelegate.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public class MultiValuesMap<K, V>{
   private final MultiMap<K, V> myDelegate;
   private final boolean myOrdered;
@@ -28,6 +28,7 @@ public class MultiValuesMap<K, V>{
    * @deprecated Use {@link MultiMap#createSet()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public MultiValuesMap() {
     this(false);
   }

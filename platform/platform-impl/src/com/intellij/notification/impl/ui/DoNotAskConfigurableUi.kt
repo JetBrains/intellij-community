@@ -51,9 +51,11 @@ internal class DoNotAskConfigurableUi {
 
   private fun getValues(manager: PropertiesComponent, list: ArrayList<DoNotAskInfo>, forProject: Boolean) {
     if (manager is BasePropertyService) {
-      manager.forEachPrimitiveValue { key, value ->
+      manager.forEachPrimitiveValue { key, _ ->
         if (key.startsWith(DO_NOT_ASK_KEY_PREFIX)) {
-          list.add(DoNotAskInfo(key.substring(DO_NOT_ASK_KEY_PREFIX.length), value, forProject))
+          val id = key.substring(DO_NOT_ASK_KEY_PREFIX.length)
+          val name = manager.getValue("Notification.DisplayName-DoNotAsk-$id", id)
+          list.add(DoNotAskInfo(id, name, forProject))
         }
       }
     }

@@ -62,14 +62,16 @@
     <delete dir="${classes.dir}" />
     <mkdir dir="${classes.dir}" />
     <javac
-      srcdir="${jps.bootstrap.dir}/src/main/java"
       destdir="${classes.dir}"
       encoding="UTF-8"
       release="11"
       debug="true"
       includeantruntime="false"
-      classpathref="classpath.buildscripts"
-    />
+      classpathref="classpath.buildscripts">
+
+      <src path="${jps.bootstrap.dir}/src/main/java" />
+      <src path="${community.home}/platform/build-scripts/downloader/src" />
+    </javac>
 
     <delete file="${classes.dir}.jar" />
     <zip destfile="${classes.dir}.jar">

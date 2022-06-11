@@ -249,9 +249,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
     val rightGap = cell.rightGap
     if (lastCell) {
-      if (rightGap != null) {
-        warn("Right gap is set for last cell and will be ignored: rightGap = $rightGap")
-      }
+      // Right gap is ignored for the last cell in a row
       return 0
     }
 

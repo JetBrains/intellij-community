@@ -850,8 +850,8 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   All usages were inlined to keep code compatibility with JDK 1.6
    */
   // inlined guava method for compatibility
-  private static interface MyPredicate<T> {
-    public boolean apply(@Nullable T input);
+  private interface MyPredicate<T> {
+    boolean apply(@Nullable T input);
   }
   // inlined guava field for compatibility
   private static final MyPredicate<?> IS_NOT_NULL = new MyPredicate<Object>() {

@@ -572,7 +572,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     /**
      * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@link Path}.
      */
-    @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated
     public @NotNull UrlClassLoader.Builder urls(@NotNull List<URL> urls) {
       List<Path> files = new ArrayList<>(urls.size());

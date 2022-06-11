@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -53,8 +53,8 @@ public final class FileTypeIndexImpl
   }
 
   @Override
-  public @NotNull UpdatableIndex<FileType, Void, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
-                                                                                        @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
+  public @NotNull UpdatableIndex<FileType, Void, FileContent, ?> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
+                                                                                           @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
     throws StorageException, IOException {
     return USE_LOG_INDEX ? new LogFileTypeIndex(extension) : new FileTypeMapReduceIndex(extension, indexStorageLayout);
   }

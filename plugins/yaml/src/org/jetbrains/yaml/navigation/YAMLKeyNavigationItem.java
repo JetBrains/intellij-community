@@ -1,24 +1,29 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.navigation;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.impl.YAMLKeyValueImpl;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class YAMLKeyNavigationItem implements NavigationItem {
-  private final Navigatable myNavigatable;
-  private final String myName;
-  private final VirtualFile myFile;
+  private final @NotNull Navigatable myNavigatable;
+  private final @NotNull String myName;
+  private final @NotNull VirtualFile myFile;
+  private final int myPosition;
 
-  YAMLKeyNavigationItem(@NotNull Navigatable navigatable, @NotNull String name, @NotNull VirtualFile file) {
-    myNavigatable = navigatable;
+  YAMLKeyNavigationItem(@NotNull Project project, @NotNull String name, @NotNull VirtualFile file, int position) {
+    myNavigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, position);
     myName = name;
     myFile = file;
+    myPosition = position;
   }
 
   @Override
@@ -64,5 +69,18 @@ public class YAMLKeyNavigationItem implements NavigationItem {
         return YAMLKeyValueImpl.YAML_KEY_ICON;
       }
     };
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    YAMLKeyNavigationItem item = (YAMLKeyNavigationItem)o;
+    return myPosition == item.myPosition && myName.equals(item.myName) && myFile.equals(item.myFile);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myName, myFile, myPosition);
   }
 }

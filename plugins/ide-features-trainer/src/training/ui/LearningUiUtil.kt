@@ -114,7 +114,7 @@ object LearningUiUtil {
     val locationOnScreen = component.locationOnScreen
     val onScreenRect = Rectangle(locationOnScreen.x, locationOnScreen.y, component.width, component.height)
     val bounds = window.bounds
-    return bounds.intersects(onScreenRect)
+    return bounds.intersects(onScreenRect) && !component.bounds.isEmpty
   }
 
   fun <ComponentType : Component> findShowingComponentWithTimeout(project: Project,

@@ -172,7 +172,7 @@ public class Chains {
   fun `test nested call chains`() {
     check("""
 public class Chains {
-  static interface Callable {
+  interface Callable {
     void call();
   }
 
@@ -196,13 +196,13 @@ public class Chains {
     new A()
       .b(() -> {
         new B()
-          .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:77]A] #>
-          .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:242]C] #>
-          .b()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:168]B] #>
+          .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:70]A] #>
+          .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:235]C] #>
+          .b()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:161]B] #>
           .a();
-      })<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:168]B] #>
-      .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:242]C] #>
-      .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:77]A] #>
+      })<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:161]B] #>
+      .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:235]C] #>
+      .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:70]A] #>
       .c();
   }
 }

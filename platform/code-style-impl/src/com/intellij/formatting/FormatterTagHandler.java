@@ -14,9 +14,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class FormatterTagHandler {
 
   public enum FormatterTag {ON, OFF, NONE}

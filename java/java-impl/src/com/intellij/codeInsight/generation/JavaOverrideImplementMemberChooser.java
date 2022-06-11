@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +41,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
   @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
   @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
+  @NonNls public static final String PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT = "OverrideImplement.generate.javadoc";
 
   private ToggleAction myMergeAction;
   private final PsiMethodMember[] myAllElements;
@@ -50,6 +52,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
   private final PsiFile myFile;
   private boolean myMerge;
   private boolean mySortedByOverriding;
+  private JBCheckBox myGenerateJavadocCheckBox;
 
   @Nullable
   public static JavaOverrideImplementMemberChooser create(final PsiElement aClass,
@@ -132,6 +135,29 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     init();
   }
 
+  @Override
+  public void resetElements(PsiMethodMember[] elements) {
+    super.resetElements(elements);
+    if (myOptionControls.length > 0) {
+      //noinspection DialogTitleCapitalization
+      myGenerateJavadocCheckBox = new JBCheckBox(JavaBundle.message("methods.to.override.generate.javadoc"));
+      myGenerateJavadocCheckBox.setSelected(isGenerateJavadoc());
+      myOptionControls = ArrayUtil.insert(super.getOptionControls(), 1, myGenerateJavadocCheckBox);
+    }
+  }
+
+  @Override
+  protected void customizeOptionsPanel() {
+    super.customizeOptionsPanel();
+    if (myGenerateJavadocCheckBox != null) {
+      myGenerateJavadocCheckBox.setSelected(isGenerateJavadoc());
+    }
+  }
+
+  public boolean isGenerateJavadoc(){
+    return PropertiesComponent.getInstance(myProject).getBoolean(PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT, false);
+  }
+
   private static PsiMethodMember[] getInitialElements(PsiMethodMember[] allElements,
                                                       PsiMethodMember[] onlyPrimaryElements,
                                                       NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent,
@@ -156,6 +182,9 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     super.doOKAction();
     PropertiesComponent.getInstance(myProject).setValue(PROP_COMBINED_OVERRIDE_IMPLEMENT, myMerge, true);
     PropertiesComponent.getInstance(myProject).setValue(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT, mySortedByOverriding);
+    if (myGenerateJavadocCheckBox != null) {
+      PropertiesComponent.getInstance(myProject).setValue(PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT, myGenerateJavadocCheckBox.isSelected());
+    }
   }
 
   @Override

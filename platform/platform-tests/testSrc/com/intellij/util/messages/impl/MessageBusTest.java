@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -376,6 +378,68 @@ public class MessageBusTest implements MessageBusOwner {
     myBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertThat(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue());
     childBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
+  }
+
+  @Test
+  public void testScheduleEmptyConnectionRemoval() throws Exception {
+    // this counter serves as a proxy to number of iterations inside the compaction task loop in root bus:
+    AtomicInteger compactionIterationCount = new AtomicInteger();
+    new MessageBusImpl(this, myBus) {
+      @Override
+      void removeEmptyConnectionsRecursively() {
+        compactionIterationCount.incrementAndGet();
+      }
+    };
+
+    // this child bus will block removal so that we can run asserts:
+    Semaphore slowRemovalStarted = new Semaphore(1);
+    slowRemovalStarted.acquire();
+    CountDownLatch slowRemovalCanFinish = new CountDownLatch(1);
+    new MessageBusImpl(this, myBus) {
+      @Override
+      void removeEmptyConnectionsRecursively() {
+        slowRemovalStarted.release(); // signal that slow removal has started
+        try {
+          slowRemovalCanFinish.await(); // block until the test allows us to finish
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+
+    // scheduleEmptyConnectionRemoving is not invoked immediately, call it until we detect that slow removal has started:
+    int callCountToTriggerRemoval = 0;
+    while (true) {
+      ((MessageBusImpl.RootBus)myBus).scheduleEmptyConnectionRemoving();
+      if (slowRemovalStarted.tryAcquire()) {
+        break;
+      }
+      callCountToTriggerRemoval++;
+    }
+
+    assertThat(compactionIterationCount.get()).isEqualTo(1);
+
+    // now compaction task is blocked in slow remove, schedule more compaction requests:
+    for (int i = 0; i < 10 * callCountToTriggerRemoval; i++) {
+      ((MessageBusImpl.RootBus)myBus).scheduleEmptyConnectionRemoving();
+    }
+
+    // no new compaction task was started:
+    assertThat(compactionIterationCount.get()).isEqualTo(1);
+
+    // allow slow removal to finish:
+    slowRemovalCanFinish.countDown();
+
+    // wait until slow removal will finish one more time: we requested removal several times,
+    // so we need one more loop iteration to handle pending removal requests
+    if (!slowRemovalStarted.tryAcquire(30, TimeUnit.SECONDS)) {
+      fail("Compaction requests were not served in 30 seconds");
+    }
+
+    Thread.sleep(50); // give compaction task a chance to do more iterations
+
+    assertThat(compactionIterationCount.get()).isEqualTo(2); // only one additional iteration is needed to handle pending removal requests
   }
 
   @Test

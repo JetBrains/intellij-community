@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentsOfType
 import com.intellij.refactoring.suggested.startOffset
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentInnerSpacesLength
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
@@ -47,7 +48,7 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
     if (line == 0) return
 
     val lineStart = document.getLineStartOffset(line)
-    if (document.getText(TextRange.create(lineStart, caretOffset)).isNotBlank()) return
+    if (document.getText(TextRange.create(lineStart, caretOffset)).any { it !in "> \t" }) return
 
     val indent = editor.caretModel.logicalPosition.column
     if (indent == 0) return
@@ -67,14 +68,18 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
       return
     }
 
-    val wantedIndent = indentLevels(aboveItem, document).find { it < indent } ?: return
+    val wantedIndent = indentLevels(aboveItem, document, file).find { it < indent } ?: return
     deletedRange = TextRange.from(lineStart + wantedIndent, indent - wantedIndent)
   }
 
   // a sequence of indent sizes for the caret to iterate over, from greatest to smallest
-  private fun indentLevels(aboveItem: MarkdownListItem, document: Document) =
-    aboveItem.parentsOfType<MarkdownListItem>(withSelf = true)
-      .map { ListItemInfo(it, document).indentInfo.indent }
+  private fun indentLevels(aboveItem: MarkdownListItem, document: Document, file: PsiFile): Sequence<Int> {
+    return aboveItem.parentsOfType<MarkdownListItem>(withSelf = true)
+      .map {
+        val itemLine = document.getLineNumber(it.startOffset)
+        document.getLineIndentSpaces(itemLine, file)!!.length
+      }
+  }
 
 
   override fun charDeleted(c: Char, file: PsiFile, editor: Editor): Boolean {
@@ -103,7 +108,7 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
     val realIndent = document.getLineIndentSpaces(line, file)!!
 
     runWriteAction {
-      if (indentRange.length < realIndent.length) {
+      if (indentRange.length < document.getLineIndentInnerSpacesLength(line, file)!!) {
         editor.document.replaceString(indentRange.startOffset, indentRange.endOffset, realIndent)
       }
 

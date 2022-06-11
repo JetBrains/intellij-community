@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.Location;
@@ -201,7 +201,8 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     List<ConfigurationFromContext> list = PreferredProducerFind.getConfigurationsFromContext(
       dataContext.getData(Location.DATA_KEY),
       ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN),
-      false
+      false,
+      true
     );
     return ContainerUtil.map(list, ConfigurationFromContext::getConfigurationSettings);
   }

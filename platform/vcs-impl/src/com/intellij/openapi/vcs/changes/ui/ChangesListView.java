@@ -412,8 +412,9 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
     return getAllChangesUnder(change, EditedCommitNode.class);
   }
 
+  @SafeVarargs
   @Nullable
-  public List<Change> getAllChangesUnder(@NotNull Change change, Class<? extends ChangesBrowserNode<?>> @NotNull ... nodeClasses) {
+  public final List<Change> getAllChangesUnder(@NotNull Change change, Class<? extends ChangesBrowserNode<?>> @NotNull ... nodeClasses) {
     DefaultMutableTreeNode node = findNodeInTree(change);
     boolean changeListNodeRequested = ArrayUtil.contains(ChangesBrowserChangeListNode.class, nodeClasses);
 

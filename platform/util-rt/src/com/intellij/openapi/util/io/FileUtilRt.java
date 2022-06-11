@@ -716,10 +716,15 @@ public class FileUtilRt {
 
   @NotNull
   public static File generateRandomTemporaryPath() throws IOException {
-    File file = new File(getTempDirectory(), UUID.randomUUID().toString());
+    return generateRandomTemporaryPath("", "");
+  }
+
+  @NotNull
+  public static File generateRandomTemporaryPath(@NotNull String prefix, @NotNull String suffix) throws IOException {
+    File file = new File(getTempDirectory(), prefix + UUID.randomUUID() + suffix);
     int i = 0;
     while (file.exists() && i < 5) {
-      file = new File(getTempDirectory(), UUID.randomUUID().toString());
+      file = new File(getTempDirectory(), prefix + UUID.randomUUID() + suffix);
       ++i;
     }
     if (file.exists()) {

@@ -320,10 +320,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   }
 
   private fun revalidateStripeButtons() {
-    if (buttonManager is ToolWindowPaneNewButtonManager) {
-      val refreshButtons = (buttonManager as ToolWindowPaneNewButtonManager)::refreshUi
-      ApplicationManager.getApplication().invokeLater(refreshButtons, project.disposed)
-    }
+    val buttonManager = toolWindowPane?.buttonManager as? ToolWindowPaneNewButtonManager ?: return
+    ApplicationManager.getApplication().invokeLater(buttonManager::refreshUi, project.disposed)
   }
 
   internal fun createNotInHierarchyIterable(): Iterable<Component> {
@@ -344,6 +342,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
           decorator.updateActiveAndHoverState()
         }
       }
+      revalidateStripeButtons()
     })
   }
 
@@ -447,6 +446,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     toolWindowSetInitializer.initUi(toolWindowPane)
   }
 
+  @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")
   override fun initToolWindow(bean: ToolWindowEP) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     initToolWindow(bean, bean.pluginDescriptor)
@@ -521,14 +521,19 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     frame = null
   }
 
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   override fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
     dispatcher.addListener(listener)
   }
 
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR,
+              replaceWith = ReplaceWith("project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)",
+                                                    "com.intellij.openapi.wm.ex.ToolWindowManagerListener"))
   override fun addToolWindowManagerListener(listener: ToolWindowManagerListener, parentDisposable: Disposable) {
     project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)
   }
 
+  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   override fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
     dispatcher.removeListener(listener)
   }
@@ -1030,6 +1035,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     return entry
   }
 
+  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
   @Suppress("OverridingDeprecatedMember")
   override fun unregisterToolWindow(id: String) {
     doUnregisterToolWindow(id)
@@ -1240,9 +1246,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     val entry = idToEntry.get(options.toolWindowId)!!
-    val existing = entry.balloon
-    if (existing != null) {
-      Disposer.dispose(existing)
+    entry.balloon?.let {
+      Disposer.dispose(it)
     }
 
     val stripe = buttonManager.getStripeFor(entry.readOnlyWindowInfo.anchor)
@@ -1255,16 +1260,20 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
     val anchor = entry.readOnlyWindowInfo.anchor
     val position = Ref(Balloon.Position.below)
-    when {
-      ToolWindowAnchor.TOP == anchor -> position.set(Balloon.Position.below)
-      ToolWindowAnchor.BOTTOM == anchor -> position.set(Balloon.Position.above)
-      ToolWindowAnchor.LEFT == anchor -> position.set(Balloon.Position.atRight)
-      ToolWindowAnchor.RIGHT == anchor -> position.set(Balloon.Position.atLeft)
+    when(anchor) {
+      ToolWindowAnchor.TOP -> position.set(Balloon.Position.below)
+      ToolWindowAnchor.BOTTOM -> position.set(Balloon.Position.above)
+      ToolWindowAnchor.LEFT -> position.set(Balloon.Position.atRight)
+      ToolWindowAnchor.RIGHT -> position.set(Balloon.Position.atLeft)
+    }
+
+    if (!entry.readOnlyWindowInfo.isVisible) {
+      toolWindowAvailable(entry.toolWindow)
     }
 
     val balloon = createBalloon(options, entry)
     val button = stripe.getButtonFor(options.toolWindowId)?.getComponent()
-    LOG.assertTrue(button != null, ("Button was not found, popup won't be shown. $options"))
+    LOG.assertTrue(button != null, "Button was not found, popup won't be shown. $options")
     if (button == null) {
       return
     }
@@ -1281,11 +1290,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
       else {
         tracker = object : PositionTracker<Balloon>(button) {
-          override fun recalculateLocation(`object`: Balloon): RelativePoint? {
+          override fun recalculateLocation(b: Balloon): RelativePoint? {
             val otherEntry = idToEntry.get(options.toolWindowId) ?: return null
             val stripeButton = otherEntry.stripeButton
             if (stripeButton == null || otherEntry.readOnlyWindowInfo.anchor != anchor) {
-              `object`.hide()
+              b.hide()
               return null
             }
             val component = stripeButton.getComponent()
@@ -1365,14 +1374,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
 
   private fun createPositionTracker(component: Component, anchor: ToolWindowAnchor): PositionTracker<Balloon> {
     return object : PositionTracker<Balloon>(component) {
-      override fun recalculateLocation(`object`: Balloon): RelativePoint {
+      override fun recalculateLocation(balloon: Balloon): RelativePoint {
         val bounds = component.bounds
         val target = StartupUiUtil.getCenterPoint(bounds, Dimension(1, 1))
-        when {
-          ToolWindowAnchor.TOP == anchor -> target.y = 0
-          ToolWindowAnchor.BOTTOM == anchor -> target.y = bounds.height - 3
-          ToolWindowAnchor.LEFT == anchor -> target.x = 0
-          ToolWindowAnchor.RIGHT == anchor -> target.x = bounds.width
+        when(anchor) {
+          ToolWindowAnchor.TOP -> target.y = 0
+          ToolWindowAnchor.BOTTOM -> target.y = bounds.height - 3
+          ToolWindowAnchor.LEFT -> target.x = 0
+          ToolWindowAnchor.RIGHT -> target.x = bounds.width
         }
         return RelativePoint(component, target)
       }

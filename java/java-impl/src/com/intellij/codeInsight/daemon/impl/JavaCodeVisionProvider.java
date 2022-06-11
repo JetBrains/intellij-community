@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -57,7 +58,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                                              @NotNull Editor editor,
                                              @NotNull JavaCodeVisionSettings settings,
                                              @NotNull InlayHintsSink __) {
-    if (Registry.is("editor.codeVision.new")) {
+    if ( Registry.is("editor.codeVision.new") && !ApplicationManager.getApplication().isUnitTestMode()) {
       return null;
     }
     return new FactoryInlayHintsCollector(editor) {

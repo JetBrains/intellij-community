@@ -427,6 +427,7 @@ public final class HighlightMethodUtil {
           highlightInfo = createIncompatibleCallHighlightInfo(holder, list, candidateInfo);
 
           if (highlightInfo != null) {
+            HighlightFixUtil.registerQualifyMethodCallFix(resolveHelper.getReferencedMethodCandidates(methodCall, false), methodCall, list, highlightInfo);
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(highlightInfo, candidateInfo, methodCall);
             registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidateInfo, resolvedMethod, highlightInfo);

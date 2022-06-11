@@ -164,20 +164,20 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     fun checkTypes(expected: PyType,
                    actual: PyTypedDictType,
                    context: TypeEvalContext,
-                   value: PyExpression?): Optional<TypeCheckingResult> {
+                   value: PyExpression?): TypeCheckingResult? {
       if (!actual.isInferred()) {
         val match = checkStructuralCompatibility(expected, actual, context)
-        if (match.isPresent) {
+        if (match != null) {
           return match
         }
       }
-      if (expected !is PyTypedDictType) return Optional.empty()
+      if (expected !is PyTypedDictType) return null
 
       val mandatoryArguments = expected.fields.filterValues { it.isRequired }.mapValues { Pair(it.value.value, it.value.type) }
       val actualArguments = actual.getKeysToValuesWithTypes()
       val expectedArguments = expected.getKeysToValuesWithTypes()
 
-      return Optional.of(match(mandatoryArguments, expectedArguments, actualArguments, context, value, expected.name))
+      return match(mandatoryArguments, expectedArguments, actualArguments, context, value, expected.name)
     }
 
     private fun match(mandatoryArguments: Map<String, Pair<PyExpression?, PyType?>>,
@@ -186,7 +186,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
                       context: TypeEvalContext,
                       actualTypedDict: PyExpression?,
                       expectedTypedDictName: String): TypeCheckingResult {
-      val valueTypesErrors = mutableListOf<ValueTypeError>()
+      val valueTypeErrors = mutableListOf<ValueTypeError>()
       val missingKeys = mutableListOf<MissingKeysError>()
       val extraKeys = mutableListOf<ExtraKeyError>()
       var match = true
@@ -194,7 +194,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
       val containedExpression = PyPsiUtils.flattenParens(
         if (actualTypedDict is PyKeywordArgument) actualTypedDict.valueExpression else actualTypedDict)
       val typedDictInstanceCreation = containedExpression is PyDictLiteralExpression ||
-                                      containedExpression is PyCallExpression && containedExpression.callee?.textMatches(PyNames.DICT) ?: false
+                                      containedExpression is PyCallExpression && containedExpression.callee?.textMatches(
+        PyNames.DICT) ?: false
 
       actualArguments.forEach {
         val actualValue = it.value.first
@@ -215,21 +216,21 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         val actualType = it.value.second
         if (expectedType is PyTypedDictType && actualType is PyTypedDictType) {
           val res = checkTypes(expectedType, actualType, context, actualValue)
-          if (res.isPresent && !res.get().match) {
+          if (res != null && !res.match) {
+            val (innerMatch, innerValueTypeErrors, innerMissingKeys, innerExtraKeys) = res
             if (typedDictInstanceCreation) {
-              val result = res.get()
-              if (!result.match && result.extraKeys.isEmpty() && result.missingKeys.isEmpty() && result.valueTypesErrors.isEmpty()) {
+              if (!innerMatch && innerExtraKeys.isEmpty() && innerMissingKeys.isEmpty() && innerValueTypeErrors.isEmpty()) {
                 match = false
-                valueTypesErrors.add(ValueTypeError(actualValue, expectedType, actualType))
+                valueTypeErrors.add(ValueTypeError(actualValue, expectedType,
+                                                   actualType)) // inner TypedDict didn't match, but it's not a dict definition
               }
               match = false
-              valueTypesErrors.addAll(result.valueTypesErrors)
-              extraKeys.addAll(result.extraKeys)
-              missingKeys.addAll(result.missingKeys)
-            } else {
-              if (!res.get().match) {
-                return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
-              }
+              valueTypeErrors.addAll(innerValueTypeErrors)
+              extraKeys.addAll(innerExtraKeys)
+              missingKeys.addAll(innerMissingKeys)
+            }
+            else if (!innerMatch) {
+              return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
             }
           }
         }
@@ -241,10 +242,11 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         )
         if (!matchResult && (expectedType !is PyTypedDictType || actualType !is PyTypedDictType)) {
           if (typedDictInstanceCreation) {
-            valueTypesErrors.add(
+            valueTypeErrors.add(
               ValueTypeError(actualValue, expectedType, it.value.second))
             match = false
-          } else {
+          }
+          else {
             return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
           }
         }
@@ -256,12 +258,13 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
             !actualArguments.containsKey(it)
           }))
           match = false
-        } else {
+        }
+        else {
           return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
         }
       }
 
-      return if (typedDictInstanceCreation) TypeCheckingResult(match, valueTypesErrors, missingKeys, extraKeys)
+      return if (typedDictInstanceCreation) TypeCheckingResult(match, valueTypeErrors, missingKeys, extraKeys)
       else TypeCheckingResult(true, emptyList(), emptyList(), emptyList())
     }
 
@@ -275,51 +278,45 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      */
     fun checkStructuralCompatibility(expected: PyType?,
                                      actual: PyTypedDictType,
-                                     context: TypeEvalContext): Optional<TypeCheckingResult> {
+                                     context: TypeEvalContext): TypeCheckingResult? {
       if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {
         val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
         val elementTypes = expected.elementTypes
-        return Optional.of(TypeCheckingResult(elementTypes.size == 2
-                                              && builtinCache.strType == elementTypes[0]
-                                              && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name), emptyList(),
-                                              emptyList(), emptyList()))
+        return TypeCheckingResult(elementTypes.size == 2
+                                  && builtinCache.strType == elementTypes[0]
+                                  && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name), emptyList(),
+                                  emptyList(), emptyList())
       }
 
-      if (expected !is PyTypedDictType) return Optional.empty()
+      if (expected !is PyTypedDictType) return null
 
       expected.fields.forEach {
         val expectedTypeAndTotality = it.value
         val actualTypeAndTotality = actual.fields[it.key]
 
         if (actualTypeAndTotality == null
-                      || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
-                      || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
-                      || expectedTypeAndTotality.isRequired.xor(actualTypeAndTotality.isRequired)) {
-          return Optional.of(TypeCheckingResult(false, emptyList(), emptyList(), emptyList()))
+            || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
+            || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
+            || expectedTypeAndTotality.isRequired.xor(actualTypeAndTotality.isRequired)) {
+          return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
         }
 
         if (!actual.fields.containsKey(it.key)) {
-          return Optional.of(TypeCheckingResult(false, emptyList(), emptyList(), emptyList()))
+          return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
         }
       }
-      return Optional.of(TypeCheckingResult(true, emptyList(), emptyList(), emptyList()))
+      return TypeCheckingResult(true, emptyList(), emptyList(), emptyList())
     }
   }
 
-  class MissingKeysError constructor(val actualExpression: PyExpression?,
-                                     val expectedTypedDictName: String,
-                                     val missingKeys: List<String>)
+  data class MissingKeysError(val actualExpression: PyExpression?, val expectedTypedDictName: String, val missingKeys: List<String>)
 
-  class ExtraKeyError constructor(val actualExpression: PyExpression?,
-                                  val expectedTypedDictName: String,
-                                  val key: String)
+  data class ExtraKeyError(val actualExpression: PyExpression?, val expectedTypedDictName: String, val key: String)
 
-  class ValueTypeError constructor(val actualExpression: PyExpression?,
-                                   val expectedType: PyType?,
-                                   val actualType: PyType?)
+  data class ValueTypeError(val actualExpression: PyExpression?, val expectedType: PyType?, val actualType: PyType?)
 
-  class TypeCheckingResult constructor(val match: Boolean,
-                                       val valueTypesErrors: List<ValueTypeError>,
-                                       val missingKeys: List<MissingKeysError>,
-                                       val extraKeys: List<ExtraKeyError>)
+  data class TypeCheckingResult(val match: Boolean,
+                                val valueTypeErrors: List<ValueTypeError>,
+                                val missingKeys: List<MissingKeysError>,
+                                val extraKeys: List<ExtraKeyError>)
 }

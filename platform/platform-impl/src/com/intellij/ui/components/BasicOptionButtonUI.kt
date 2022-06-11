@@ -410,8 +410,10 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     fun createUI(c: JComponent): BasicOptionButtonUI = BasicOptionButtonUI()
 
     fun paintBackground(g: Graphics, c: JComponent) {
-      g.color = c.background
-      g.fillRect(0, 0, c.width, c.height)
+      if (c.isOpaque) {
+        g.color = c.background
+        g.fillRect(0, 0, c.width, c.height)
+      }
     }
 
     fun cloneAndPaint(g: Graphics, block: (Graphics2D) -> Unit) {

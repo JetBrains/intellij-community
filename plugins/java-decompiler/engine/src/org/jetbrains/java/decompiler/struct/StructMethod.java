@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
@@ -369,8 +370,8 @@ public class StructMethod extends StructMember {
   }
 
   @Override
-  protected int getArrayDimensions() {
-    return MethodDescriptor.parseDescriptor(getDescriptor()).ret.getArrayDim();
+  protected Type getType() {
+    return MethodDescriptor.parseDescriptor(getDescriptor()).ret;
   }
 
   @Override

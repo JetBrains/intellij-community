@@ -723,7 +723,7 @@ public class AnnotationUtil {
     {"NotNull", "Nullable", "NonNls", "PropertyKey", "TestOnly", "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   /** @deprecated simple name is not enough for reliable identification */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {
     return ArrayUtil.find(SIMPLE_NAMES, simpleName) != -1;
@@ -731,21 +731,21 @@ public class AnnotationUtil {
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, Collection, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
     return isAnnotated(listOwner, annotations, CHECK_TYPE);
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
     return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, true, true));
   }
 
   /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull String annotationFQN,
                                     boolean checkHierarchy,

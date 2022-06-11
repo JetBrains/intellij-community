@@ -12,6 +12,9 @@ import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.ErrorDiffTool;
+import com.intellij.diff.tools.external.ExternalDiffSettings;
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool;
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup;
 import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
@@ -65,7 +68,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
 
@@ -561,7 +566,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     if (oldToolbar) {
       DiffUtil.addActionBlock(myToolbarGroup,
-                              new ShowInExternalToolAction(),
+                              new ShowInExternalToolActionGroup(),
                               ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
     }
 
@@ -680,8 +685,35 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
 
   private class ShowInExternalToolAction extends DumbAwareAction {
-    ShowInExternalToolAction() {
+    @NotNull private final ExternalDiffSettings.ExternalTool myExternalTool;
+
+    private ShowInExternalToolAction(ExternalDiffSettings.@NotNull ExternalTool externalTool) {
+      super(DiffBundle.message("action.use.external.tool.text", externalTool.getName()));
+      myExternalTool = externalTool;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      try {
+        ExternalDiffTool.showRequest(e.getProject(), myActiveRequest, myExternalTool);
+      }
+      catch (ProcessCanceledException ex) {
+        throw ex;
+      }
+      catch (Throwable ex) {
+        Messages.showErrorDialog(e.getProject(), ex.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
+      }
+    }
+  }
+
+  private class ShowInExternalToolActionGroup extends ActionGroup {
+    private ShowInExternalToolActionGroup() {
       ActionUtil.copyFrom(this, "Diff.ShowInExternalTool");
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      getShowActions().get(0).actionPerformed(e);
     }
 
     @Override
@@ -690,21 +722,29 @@ public abstract class DiffRequestProcessor implements Disposable {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
+
+      List<ShowInExternalToolAction> actions = getShowActions();
+
       e.getPresentation().setEnabled(ExternalDiffTool.canShow(myActiveRequest));
+      e.getPresentation().setPerformGroup(actions.size() == 1);
+      e.getPresentation().setPopupGroup(true);
       e.getPresentation().setVisible(true);
     }
 
     @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      try {
-        ExternalDiffTool.showRequest(e.getProject(), myActiveRequest);
-      }
-      catch (ProcessCanceledException ex) {
-        throw ex;
-      }
-      catch (Throwable ex) {
-        Messages.showErrorDialog(e.getProject(), ex.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
-      }
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      List<ShowInExternalToolAction> actions = getShowActions();
+      if (actions.size() <= 1) return AnAction.EMPTY_ARRAY;
+
+      return actions.toArray(AnAction.EMPTY_ARRAY);
+    }
+
+    @NotNull
+    private List<ShowInExternalToolAction> getShowActions() {
+      Map<ExternalToolGroup, List<ExternalTool>> externalTools = ExternalDiffSettings.getInstance().getExternalTools();
+      List<ExternalTool> diffTools = externalTools.getOrDefault(ExternalToolGroup.DIFF_TOOL, Collections.emptyList());
+
+      return ContainerUtil.map(diffTools, ShowInExternalToolAction::new);
     }
   }
 

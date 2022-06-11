@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -10,36 +10,29 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 // todo disable in guest (no file types)
 public class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  private final EventLogGroup GROUP = new EventLogGroup("file.types", 5);
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 6);
 
   private final RoundedIntEventField COUNT = EventFields.RoundedInt("count");
+
+  // temporary not collected
   private final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
   private final IntEventField PERCENT = EventFields.Int("percent");
   private final ObjectListEventField FILE_SCHEME_PERCENT = new ObjectListEventField("file_schema", SCHEMA, PERCENT);
@@ -59,50 +52,39 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
   @NotNull
   @Override
-  public CancellablePromise<Set<MetricEvent>> getMetrics(@NotNull Project project, @NotNull ProgressIndicator indicator) {
-    final Set<MetricEvent> events = new HashSet<>();
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (fileTypeManager == null) {
-      return Promises.resolvedCancellablePromise(Collections.emptySet());
+  protected Set<MetricEvent> getMetrics(@NotNull Project project) {
+    if (project.isDisposed()) {
+      return Collections.emptySet();
     }
-    final FileType[] registeredFileTypes = fileTypeManager.getRegisteredFileTypes();
-    Collection<Promise<?>> promises = new ArrayList<>(registeredFileTypes.length);
-    for (final FileType fileType : registeredFileTypes) {
-      if (project.isDisposed()) {
-        return Promises.resolvedCancellablePromise(Collections.emptySet());
-      }
-      promises.add(ReadAction.nonBlocking(() -> {
-        IProjectStore stateStore = ProjectKt.getStateStore(project);
-        Ref<Integer> counter = new Ref<>(0);
-        ConcurrentHashMap<String, Integer> schemas = new ConcurrentHashMap<>();
-        FileTypeIndex.processFiles(fileType, file -> {
-          ProgressManager.checkCanceled();
-          //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-          if (!stateStore.isProjectFile(file)) {
-            counter.set(counter.get() + 1);
-            final String schema = FileTypeUsageCounterCollector.findSchema(project, file);
-            if (schema != null) {
-              schemas.compute(schema, (k,v) -> 1 + (v == null ? 0 : v));
-            }
-          }
-          return true;
-        }, GlobalSearchScope.projectScope(project));
 
-        Integer count = counter.get();
-        if (count != 0) {
-          List<EventPair<?>> eventPairs = new ArrayList<>(4);
-          eventPairs.add(EventFields.PluginInfoFromInstance.with(fileType));
-          eventPairs.add(EventFields.FileType.with(fileType));
-          eventPairs.add(COUNT.with(count));
-          if (!schemas.isEmpty()) {
-            eventPairs.add(FILE_SCHEME_PERCENT.with(ContainerUtil.map(
-              schemas.keySet(), schema -> new ObjectEventData(SCHEMA.with(schema), PERCENT.with((schemas.get(schema) * 100) / count)))));
-          }
-          events.add(FILE_IN_PROJECT.metric(eventPairs));
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+    IProjectStore stateStore = ProjectKt.getStateStore(project);
+    final ObjectIntMap<FileType> filesByTypeCount = new ObjectIntHashMap<>();
+    projectFileIndex.iterateContent(
+      file -> {
+        FileType type = file.getFileType();
+        if (filesByTypeCount.containsKey(type)) {
+          filesByTypeCount.put(type, filesByTypeCount.get(type) + 1);
         }
-      }).wrapProgress(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
+        else {
+          filesByTypeCount.put(type, 1);
+        }
+        return true;
+      },
+      //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
+      file -> !file.isDirectory() && !stateStore.isProjectFile(file)
+    );
+
+    final Set<MetricEvent> events = new HashSet<>();
+    for (final FileType fileType : filesByTypeCount.keySet()) {
+      List<EventPair<?>> eventPairs = new ArrayList<>(3);
+      eventPairs.add(EventFields.PluginInfoFromInstance.with(fileType));
+      eventPairs.add(EventFields.FileType.with(fileType));
+      eventPairs.add(COUNT.with(filesByTypeCount.get(fileType)));
+      events.add(FILE_IN_PROJECT.metric(eventPairs));
     }
-    return ((CancellablePromise<Set<MetricEvent>>)Promises.all(promises).then(o -> events));
+
+    return events;
   }
 
   public static String getSafeFileTypeName(@NotNull FileType fileType) {

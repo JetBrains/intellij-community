@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -12,12 +11,10 @@ import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle;
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs;
 import org.jetbrains.kotlin.js.resolve.diagnostics.JsCallDataHtmlRenderer;
 
-import java.net.URL;
-
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
+import static org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.STRING;
 import static org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages.adaptGenerics1;
 import static org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages.adaptGenerics2;
-import static org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.*;
 import static org.jetbrains.kotlin.diagnostics.rendering.Renderers.*;
 import static org.jetbrains.kotlin.diagnostics.rendering.TabledDescriptorRenderer.TextElementType;
 import static org.jetbrains.kotlin.idea.highlighter.HtmlTabledDescriptorRenderer.tableForTypes;
@@ -169,10 +166,8 @@ public class IdeErrorMessages {
         MAP.put(CONFLICTING_JVM_DECLARATIONS, KotlinIdeaAnalysisBundle.htmlMessage("html.platform.declaration.clash.0.html"), HTML_CONFLICTING_JVM_DECLARATIONS_DATA);
         MAP.put(ACCIDENTAL_OVERRIDE, KotlinIdeaAnalysisBundle.htmlMessage("html.accidental.override.0.html"), HTML_CONFLICTING_JVM_DECLARATIONS_DATA);
 
-        URL errorIconUrl = AllIcons.class.getResource(ErrorIconUtil.getErrorIconUrl());
-        MAP.put(EXCEPTION_FROM_ANALYZER, KotlinIdeaAnalysisBundle.htmlMessage(
-                "html.internal.error.occurred.while.analyzing.this.expression.br.table.cellspacing.0.cellpadding.0.tr.td.strong.please.use.the.strong.td.td.img.src.0.td.td.strong.icon.in.the.bottom.right.corner.to.report.this.error.strong.td.tr.table.br.pre.0.pre.html",
-                errorIconUrl),
+        MAP.put(EXCEPTION_FROM_ANALYZER,
+                KotlinIdeaAnalysisBundle.htmlMessage("html.internal.error.occurred.while.analyzing.this.expression.br.0.html"),
                 HTML_THROWABLE);
 
         MAP.put(ErrorsJs.JSCODE_ERROR, KotlinIdeaAnalysisBundle.htmlMessage("html.javascript.0.html"), JsCallDataHtmlRenderer.INSTANCE);

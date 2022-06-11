@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -22,6 +23,8 @@ import javax.swing.*;
 
 public class MarkedForRemovalInspection extends DeprecationInspectionBase {
 
+  public boolean IGNORE_PROJECT_CLASSES = false;
+
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -29,7 +32,7 @@ public class MarkedForRemovalInspection extends DeprecationInspectionBase {
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
       HighlightSeverity severity = getCurrentSeverity(file);
       return ApiUsageUastVisitor.createPsiElementVisitor(
-        new DeprecatedApiUsageProcessor(holder, false, false, false, false, IGNORE_IN_SAME_OUTERMOST_CLASS, true, severity)
+        new DeprecatedApiUsageProcessor(holder, false, false, false, false, IGNORE_IN_SAME_OUTERMOST_CLASS, true, IGNORE_PROJECT_CLASSES, severity)
       );
     }
     return PsiElementVisitor.EMPTY_VISITOR;
@@ -59,6 +62,7 @@ public class MarkedForRemovalInspection extends DeprecationInspectionBase {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     addSameOutermostClassCheckBox(panel);
+    panel.addCheckbox(JavaAnalysisBundle.message("ignore.in.the.same.project"), "IGNORE_PROJECT_CLASSES");
     return panel;
   }
 

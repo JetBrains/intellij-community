@@ -91,7 +91,6 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
       }
     }
 
-
     FileTextFieldImpl assigned = (FileTextFieldImpl)myPathTextField.getClientProperty(KEY);
     if (assigned != null) {
       assigned.myFinder = finder;

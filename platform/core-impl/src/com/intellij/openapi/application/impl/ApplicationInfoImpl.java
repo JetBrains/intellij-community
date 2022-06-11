@@ -16,7 +16,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -932,6 +932,7 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   /** @deprecated Use {@link ApplicationManagerEx#isInStressTest} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isInStressTest() {
     return ApplicationManagerEx.isInStressTest();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions
 
 import com.intellij.CommonBundle
@@ -27,7 +27,7 @@ import com.intellij.packageDependencies.ForwardDependenciesBuilder
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
-import com.intellij.refactoring.JavaSpecialRefactoringProvider
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -151,8 +151,7 @@ class ExtractModuleFromPackageAction : AnAction() {
       }
       if (targetSourceRoot != null) {
         val targetDirectory = VfsUtil.createDirectoryIfMissing(targetSourceRoot, packagePrefix.replace('.', '/'))
-        JavaSpecialRefactoringProvider.getInstance()
-          .moveDirectoryRecursively(directory, PsiManager.getInstance(module.project).findDirectory(targetDirectory.parent))
+        MoveClassesOrPackagesUtil.moveDirectoryRecursively(directory, PsiManager.getInstance(module.project).findDirectory(targetDirectory.parent))
       }
       SaveAndSyncHandler.getInstance().scheduleProjectSave(module.project)
     }

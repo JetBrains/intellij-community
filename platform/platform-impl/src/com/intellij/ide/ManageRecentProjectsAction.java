@@ -10,8 +10,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewRecentProjectPanel;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,9 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
       }
     };
     JList<?> list = UIUtil.findComponentOfType(panel, JList.class);
+    PopupUtil.applyNewUIBackground(panel);
+    SearchTextField searchTextField = UIUtil.findComponentOfType(panel, SearchTextField.class);
+    PopupUtil.applyNewUIBackground(searchTextField);
     JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
       .setTitle(IdeBundle.message("popup.title.recent.projects"))
       .setFocusable(true)

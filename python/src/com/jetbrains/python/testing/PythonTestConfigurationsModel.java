@@ -5,7 +5,7 @@ package com.jetbrains.python.testing;
 /**
  * @deprecated Use {@link PyUnitTestFactory#id} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class PythonTestConfigurationsModel {
   private PythonTestConfigurationsModel() {
   }
@@ -13,6 +13,6 @@ public final class PythonTestConfigurationsModel {
   /**
    * @deprecated Use {@link PyUnitTestFactory#id} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final String PYTHONS_UNITTEST_NAME = PyUnitTestFactory.id;
 }

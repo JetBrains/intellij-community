@@ -78,7 +78,7 @@ class TThreadedServer(TServer):
             try:
                 client = self.trans.accept()
                 t = threading.Thread(target=self.handle, args=(client,))
-                t.setDaemon(self.daemon)
+                t.daemon = self.daemon
                 t.start()
             except KeyboardInterrupt:
                 raise

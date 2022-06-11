@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see PropertyGraph.property
  */
 @Suppress("DEPRECATION")
+@ApiStatus.NonExtendable
 interface GraphProperty<T> : ObservableClearableProperty<T> {
 
   /**
@@ -32,7 +33,7 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
    * @see PropertyGraph.afterPropagation
    */
   @JvmDefault
-  fun afterPropagation(parentDisposable: Disposable, listener: () -> Unit) {
+  fun afterPropagation(parentDisposable: Disposable?, listener: () -> Unit) {
     afterPropagation(listener)
   }
 

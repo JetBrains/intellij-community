@@ -83,8 +83,7 @@ class GitStashPainter(val tree: ChangesTree, private val renderer: ChangesTreeCe
     override fun getRefs() = mutableListOf<VcsRef>()
     override fun isExpanded() = false
     override fun getColors(): List<Color> {
-      if (isCurrent) return listOf(GitRefManager.HEAD.backgroundColor,
-                                   GitRefManager.LOCAL_BRANCH.backgroundColor)
+      if (isCurrent) return listOf(GitRefManager.HEAD.backgroundColor)
       return listOf(GitRefManager.LOCAL_BRANCH.backgroundColor)
     }
   }

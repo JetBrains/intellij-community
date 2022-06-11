@@ -80,7 +80,7 @@ public class IntroduceVariableUtil {
   }
 
   public static boolean isPreferStatements() {
-    return Boolean.valueOf(PropertiesComponent.getInstance().getBoolean(PREFER_STATEMENTS_OPTION)) || Registry.is(PREFER_STATEMENTS_OPTION, false);
+    return PropertiesComponent.getInstance().getBoolean(PREFER_STATEMENTS_OPTION) || Registry.is(PREFER_STATEMENTS_OPTION, false);
   }
 
   public static PsiElement[] findStatementsAtOffset(final Editor editor, final PsiFile file, final int offset) {

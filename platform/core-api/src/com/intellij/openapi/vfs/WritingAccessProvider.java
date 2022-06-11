@@ -17,7 +17,7 @@ public abstract class WritingAccessProvider {
    * @deprecated Use {@link #EP}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static final ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
 
   public static final ProjectExtensionPointName<WritingAccessProvider> EP = new ProjectExtensionPointName<>("com.intellij.writingAccessProvider");

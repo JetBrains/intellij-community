@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
@@ -168,7 +169,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @deprecated use {@link #run(Task)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
@@ -256,4 +257,10 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @ApiStatus.Internal
   public abstract <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E;
+
+  /**
+   * Makes {@link #getProgressIndicator()} return {@code null} until the returned token is closed.
+   */
+  @ApiStatus.Internal
+  public abstract @NotNull AccessToken silenceGlobalIndicator();
 }

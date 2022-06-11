@@ -17,7 +17,7 @@ public final class Conditions {
    * @deprecated use {@link #alwaysTrue()} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static final Condition<Object> TRUE = alwaysTrue();
 
   @NotNull
@@ -83,6 +83,7 @@ public final class Conditions {
     return t -> !Comparing.equal(t, option);
   }
 
+  @SafeVarargs
   @NotNull
   public static <T> Condition<T> oneOf(T @NotNull ... options) {
     return oneOf(Arrays.asList(options));

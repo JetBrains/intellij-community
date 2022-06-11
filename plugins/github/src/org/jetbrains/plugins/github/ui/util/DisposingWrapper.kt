@@ -5,11 +5,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagLayout
 import javax.swing.JComponent
 import kotlin.properties.Delegates
 
 @Deprecated("Proper controller is better")
+@ApiStatus.ScheduledForRemoval
 open class DisposingWrapper(parentDisposable: Disposable) : BorderLayoutPanel() {
 
   private var contentDisposable by Delegates.observable<Disposable?>(null) { _, oldValue, newValue ->

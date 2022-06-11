@@ -52,7 +52,7 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
 
   fun testConstructor() {
     addConstructors()
-    doTest(3, "Construct()", "Construct(int n)", "Construct(java.lang.String s)", "Construct(int n,java.lang.String s)")
+    doTest(1, "Construct()", "Construct(int n,java.lang.String s)", "Construct(int n)", "Construct(java.lang.String s)")
   }
 
   fun testDeclaredConstructor() {

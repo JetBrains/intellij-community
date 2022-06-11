@@ -94,7 +94,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       groupIdProperty.afterChange { logGroupIdChanged() }
       artifactIdProperty.afterChange { logArtifactIdChanged() }
       versionProperty.afterChange { logVersionChanged() }
-      groovySdkProperty.afterChange { logGroovySdkSelected(context, it) }
     }
   }
 }

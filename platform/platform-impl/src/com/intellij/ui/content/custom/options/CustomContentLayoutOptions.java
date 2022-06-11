@@ -21,4 +21,6 @@ public interface CustomContentLayoutOptions {
 
   @NotNull
   String getDisplayName();
+
+  boolean isHideOptionVisible();
 }

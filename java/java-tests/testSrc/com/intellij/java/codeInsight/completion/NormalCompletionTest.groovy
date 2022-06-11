@@ -2395,8 +2395,8 @@ class Abc {
     assert myFixture.lookupElementStrings == [
       "StriFoo", // non-final project class
       "StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException", "StringReader", "StringWriter", // non-final library classes
-      "StriBar", // final project class (red)
-      "StringBufferInputStream"] // deprecated library class
+      "StringBufferInputStream", // deprecated library class
+      "StriBar"] // final project class (red)
   }
 
   @NeedsIndex.ForStandardLibrary

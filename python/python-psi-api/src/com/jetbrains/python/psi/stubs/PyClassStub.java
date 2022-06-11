@@ -56,7 +56,7 @@ public interface PyClassStub extends NamedStub<PyClass> {
    * @deprecated It is our internal API, try to avoid using it.
    * It is planned to be removed sooner or later, so please don't rely on this method.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   default <T> T getCustomStub(@NotNull Class<T> stubClass) {
     return null;

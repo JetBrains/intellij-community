@@ -12,7 +12,7 @@ import java.util.Collections;
  * @deprecated use org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+@ApiStatus.ScheduledForRemoval
 public class ExternalDepsResolutionResult {
   public static final ExternalDepsResolutionResult
     EMPTY = new ExternalDepsResolutionResult(Collections.<ExternalDependency>emptySet(), Collections.<File>emptySet());

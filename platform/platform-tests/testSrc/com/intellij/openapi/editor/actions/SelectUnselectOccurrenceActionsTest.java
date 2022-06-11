@@ -37,7 +37,9 @@ public class SelectUnselectOccurrenceActionsTest extends BasePlatformTestCase {
     super.setUp();
     EditorHintListener listener = new EditorHintListener() {
       @Override
-      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+      public void hintShown(Project project,
+                            @NotNull LightweightHint hint,
+                            int flags) {
         hintCount++;
       }
     };

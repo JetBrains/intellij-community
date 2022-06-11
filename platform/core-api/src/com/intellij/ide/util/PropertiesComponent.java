@@ -118,7 +118,7 @@ public abstract class PropertiesComponent {
    * Init was never performed and in any case is not recommended.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public final int getOrInitInt(@NonNls @NotNull String name, int defaultValue) {
     return getInt(name, defaultValue);
   }
@@ -136,7 +136,7 @@ public abstract class PropertiesComponent {
    * Init was never performed and in any case is not recommended.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public final long getOrInitLong(@NonNls @NotNull String name, long defaultValue) {
     return getLong(name, defaultValue);
   }

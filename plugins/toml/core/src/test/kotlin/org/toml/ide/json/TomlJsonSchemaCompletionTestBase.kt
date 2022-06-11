@@ -29,4 +29,9 @@ abstract class TomlJsonSchemaCompletionTestBase : TomlJsonSchemaTestBase() {
         @Language("TOML") code: String,
         render: LookupElement.() -> String = { lookupString }
     ) = completionFixture.checkNotContainsCompletion(variants, code, render)
+
+    fun doSingleCompletion(
+        @Language("TOML") before: String,
+        @Language("TOML") after: String
+    ) = completionFixture.doSingleCompletion(before, after)
 }

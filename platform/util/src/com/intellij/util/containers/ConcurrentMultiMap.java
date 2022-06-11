@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @deprecated Use {@link MultiMap#createConcurrent()} or {@link MultiMap#createConcurrentSet()}
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public class ConcurrentMultiMap<K, V> extends MultiMap<K, V> {
   public ConcurrentMultiMap() {
     super(new ConcurrentHashMap<>());

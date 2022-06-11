@@ -5,6 +5,7 @@ import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,6 +96,17 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
 
   public void addParameterAt(int index, @NotNull TargetValue<String> parameter) {
     myParameters.add(index, parameter);
+  }
+
+  public void addFixedParametersAt(int index, @NotNull List<String> parameters) {
+    addParametersAt(index, ContainerUtil.map(parameters, p -> TargetValue.fixed(p)));
+  }
+
+  private void addParametersAt(int index, @NotNull List<TargetValue<String>> parameters) {
+    int i = 0;
+    for (TargetValue<String> parameter : parameters) {
+      addParameterAt(index + i++, parameter);
+    }
   }
 
   public void addEnvironmentVariable(@NotNull String name, @Nullable TargetValue<String> value) {

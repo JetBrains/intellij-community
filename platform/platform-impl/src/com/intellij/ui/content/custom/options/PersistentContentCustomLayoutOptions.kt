@@ -60,11 +60,16 @@ abstract class PersistentContentCustomLayoutOptions(private val content: Content
 
   override fun getDisplayName(): String = content.displayName
 
-  fun isContentHidden(): Boolean {
-    return !content.isValid || Objects.requireNonNull<ContentManager>(content.manager).getIndexOfContent(content) == -1
-  }
-
   override fun isHidden(): Boolean = getCurrentOption() == null
+
+  override fun isHideOptionVisible(): Boolean {
+    if (isHidden) {
+      return true
+    }
+
+    val contentManager: ContentManager = content.manager ?: return false
+    return contentManager.contents.size > 1
+  }
 }
 
 abstract class PersistentContentCustomLayoutOption(private val options: PersistentContentCustomLayoutOptions) : CustomContentLayoutOption {

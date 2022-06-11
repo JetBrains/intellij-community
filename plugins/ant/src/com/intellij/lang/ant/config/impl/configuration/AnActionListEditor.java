@@ -86,14 +86,14 @@ public class AnActionListEditor<T> extends JPanel {
   }
 
   public T getSelectedItem() {
-    return (T)myForm.myList.getSelectedValue();
+    return myForm.myList.getSelectedValue();
   }
 
   public void setSelection(T item) {
     myForm.select(item);
   }
 
-  public JList getList() {
+  public JList<T> getList() {
     return myForm.myList;
   }
 
@@ -106,7 +106,7 @@ public class AnActionListEditor<T> extends JPanel {
   }
 
   public void setItems(Collection<? extends T> items) {
-    DefaultListModel model = myForm.getListModel();
+    DefaultListModel<T> model = myForm.getListModel();
     model.removeAllElements();
     for (T item : items) {
       model.addElement(item);
@@ -126,11 +126,11 @@ public class AnActionListEditor<T> extends JPanel {
   private static class Form <T> {
     private JComponent myWholePanel;
     private JPanel myActionsPlace;
-    private JList myList;
+    private JList<T> myList;
     private final ReorderableListToolbar<T> myListController;
 
     Form() {
-      myList.setModel(new DefaultListModel());
+      myList.setModel(new DefaultListModel<>());
       myListController = new ReorderableListToolbar<>(myList);
     }
 
@@ -144,8 +144,8 @@ public class AnActionListEditor<T> extends JPanel {
       return myListController;
     }
 
-    private DefaultListModel getListModel() {
-      return (DefaultListModel)myList.getModel();
+    private DefaultListModel<T> getListModel() {
+      return (DefaultListModel<T>)myList.getModel();
     }
 
     public void select(T item) {
@@ -158,7 +158,7 @@ public class AnActionListEditor<T> extends JPanel {
     }
 
     public void updateItem(T item) {
-      DefaultListModel model = getListModel();
+      DefaultListModel<T> model = getListModel();
       model.setElementAt(item, model.indexOf(item));
     }
   }

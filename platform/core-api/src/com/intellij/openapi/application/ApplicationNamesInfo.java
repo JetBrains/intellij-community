@@ -3,8 +3,8 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.XmlDomReader;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlDomReader;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

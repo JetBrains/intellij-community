@@ -30,11 +30,17 @@ fun <E> DropDownLink<E>.whenItemSelected(parentDisposable: Disposable? = null, l
 }
 
 fun <T> ItemSelectable.whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
-  val itemListener = ItemListener { event ->
+  whenStateChanged(parentDisposable) { event ->
     if (event.stateChange == ItemEvent.SELECTED) {
       @Suppress("UNCHECKED_CAST")
       listener(event.item as T)
     }
+  }
+}
+
+fun ItemSelectable.whenStateChanged(parentDisposable: Disposable? = null, listener: (ItemEvent) -> Unit) {
+  val itemListener = ItemListener { event ->
+    listener(event)
   }
   addItemListener(itemListener)
   parentDisposable?.whenDisposed {

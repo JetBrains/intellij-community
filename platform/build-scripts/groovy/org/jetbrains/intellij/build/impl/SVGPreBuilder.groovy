@@ -1,23 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.module.JpsModule
 
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
+import java.util.stream.Collectors
 
 @CompileStatic
 final class SVGPreBuilder {
-  @Nullable
   static ForkJoinTask<?> createPrebuildSvgIconsTask(@NotNull BuildContext context) {
+    // Note ****************************
+    // Please do not convert this to direct call of ImageSvgPreCompiler
+    // since it brings too much modules to build scripts classpath and
+    // it'll be too slow to compile by jps-bootstrap
+    //
+    // Please do not call it via constructing special classloader, since
+    // external process does not take too much time and it's much easier to reason about
+    // Note ****************************
+
     return BuildHelper.getInstance(context).createSkippableTask(
       TracerManager.spanBuilder("prebuild SVG icons"),
       BuildOptions.SVGICONS_PREBUILD_STEP,
@@ -25,31 +31,44 @@ final class SVGPreBuilder {
       new Runnable() {
         @Override
         void run() {
-          runSvgTool(context)
+          Path requestFile = context.paths.tempDir.resolve("svg-prebuild-request.txt")
+
+          StringBuilder requestBuilder = new StringBuilder()
+          // build for all modules - so, icon db will be suitable for any non-bundled plugin
+          for (JpsModule module : context.getProject().getModules()) {
+            requestBuilder.append(context.getModuleOutputDir(module).toString()).append('\n')
+          }
+          Files.createDirectories(requestFile.getParent())
+          Files.writeString(requestFile, requestBuilder)
+
+          JpsModule buildModule = context.findModule("intellij.platform.images.build")
+          List<String> svgToolClasspath = context.getModuleRuntimeClasspath(buildModule, false)
+          runSVGTool(context, svgToolClasspath, requestFile)
         }
       }
     )
   }
 
-  private static void runSvgTool(@NotNull BuildContext context) {
-    List<Path> moduleOutputs = new ArrayList<>()
-    // build for all modules - so, icon db will be suitable for any non-bundled plugin
-    for (JpsModule module : context.getProject().getModules()) {
-      moduleOutputs.add(context.getModuleOutputDir(module))
+  private static void runSVGTool(BuildContext buildContext, List<String> svgToolClasspath, Path requestFile) {
+    Path dbDir = buildContext.paths.tempDir.resolve("icons.db.dir")
+    BuildHelper.runJava(buildContext,
+                        "org.jetbrains.intellij.build.images.ImageSvgPreCompiler",
+                        [dbDir.toString(), requestFile.toString()] + buildContext.applicationInfo.svgProductIcons,
+                        List.of("-Xmx1024m"),
+                        svgToolClasspath)
+
+    List<Path> filesToPublish = Files.list(dbDir).collect(Collectors.toList())
+
+    if (filesToPublish.size() <= 1) {
+      buildContext.messages.error("SVG tool: after running SVG prebuild it must be a least one file at $dbDir")
     }
 
-    List<Path> classPathFiles = BuildHelper.buildClasspathForModule(context.findRequiredModule("intellij.platform.images.build"), context)
-    // don't use index - avoid saving to output (reproducible builds)
-    ClassLoader classLoader = BuildHelper.createClassLoader(classPathFiles)
-    MethodHandle handle = MethodHandles.lookup().findStatic(classLoader.loadClass("org.jetbrains.intellij.build.images.ImageSvgPreCompiler"),
-                                                            "optimize",
-                                                            MethodType.methodType(List.class,
-                                                                                  Path.class, Path.class, List.class))
-    Path dbDir = context.paths.tempDir.resolve("icons")
-    List<Path> files = (List<Path>)handle.invokeWithArguments(dbDir, context.getProjectOutputDirectory().toPath().resolve("production"),
-                                                              moduleOutputs)
-    for (Path file : files) {
-      context.addDistFile(Map.entry(file, "bin/icons"))
+    for (Path file : filesToPublish) {
+      if (!Files.isRegularFile(file)) {
+        buildContext.messages.error("SVG tool: output must be a regular file: $file")
+      }
+
+      buildContext.addDistFile(Map.entry(file, "bin/icons"))
     }
   }
 }

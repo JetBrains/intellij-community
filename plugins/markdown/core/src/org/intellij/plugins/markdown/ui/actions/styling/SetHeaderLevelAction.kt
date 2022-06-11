@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
@@ -24,6 +25,15 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
   override fun actionPerformed(event: AnActionEvent) = Unit
 
   override fun update(event: AnActionEvent) {
+    updateWithChildren(event)
+    val editor = event.getData(CommonDataKeys.EDITOR)
+    if (editor?.let(this::isMultilineSelection) == true) {
+      event.presentation.isEnabled = false
+      return
+    }
+  }
+
+  private fun updateWithChildren(event: AnActionEvent) {
     event.presentation.isPopupGroup = true
     val children = group.getChildren(event).asSequence().filterIsInstance<SetHeaderLevelImpl>()
     val child = children.find { it.isSelected(event) }
@@ -39,6 +49,14 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return MyActionButton(group, presentation, place)
+  }
+
+  private fun isMultilineSelection(editor: Editor): Boolean {
+    val document = editor.document
+    val selectionModel = editor.selectionModel
+    val start = document.getLineNumber(selectionModel.selectionStart)
+    val end = document.getLineNumber(selectionModel.selectionEnd)
+    return start != end
   }
 
   private class SetHeaderLevelGroup: DefaultActionGroup(

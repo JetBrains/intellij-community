@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -62,6 +63,14 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
 
+  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
+                                         IconManager.getInstance().getIcon("expui/general/closeSmall.svg", AllIcons.class) :
+                                         AllIcons.Actions.Close;
+
+  private static final Icon CLOSE_HOVERED_ICON = ExperimentalUI.isNewUI() ?
+                                         IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons.class) :
+                                         AllIcons.Actions.CloseHovered;
+
   private static final ActionButtonLook FIELD_INPLACE_LOOK = new IdeaActionButtonLook() {
     @Override
     public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
@@ -79,9 +88,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     public void paintBackground(Graphics g, JComponent component, int state) {
       if (((MyActionButton)component).isRolloverState()) {
         super.paintBackground(g, component, state);
-        return;
       }
-      if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
+      else if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
         Rectangle rect = new Rectangle(component.getSize());
         JBInsets.removeFrom(rect, component.getInsets());
         paintLookBackground(g, rect, BUTTON_SELECTED_BACKGROUND);
@@ -192,9 +200,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     myScrollPane.getHorizontalScrollBar().putClientProperty(JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, Boolean.TRUE);
     myScrollPane.setOpaque(false);
 
-    myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false);
-    myClearButton = new MyActionButton(new ClearAction(), false);
-    myNewLineButton = new MyActionButton(new NewLineAction(), false);
+    myHistoryPopupButton = new MyActionButton(new ShowHistoryAction(), false, true);
+    myClearButton = new MyActionButton(new ClearAction(), false, false);
+    myNewLineButton = new MyActionButton(new NewLineAction(), false, true);
 
     updateLayout();
   }
@@ -278,7 +286,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
         if (action instanceof TooltipDescriptionProvider) {
           action.getTemplatePresentation().setDescription(FindBundle.message("find.embedded.buttons.description"));
         }
-        ActionButton button = new MyActionButton(action, true);
+        ActionButton button = new MyActionButton(action, true, true);
         addedButtons.add(button);
         buttonsGrid.add(button);
       }
@@ -374,8 +382,8 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
   private class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
-      super(AllIcons.Actions.Close);
-      getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
+      super(CLOSE_ICON);
+      getTemplatePresentation().setHoveredIcon(CLOSE_HOVERED_ICON);
     }
 
     @Override
@@ -399,11 +407,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   }
 
   private static final class MyActionButton extends ActionButton {
-
-    private MyActionButton(@NotNull AnAction action, boolean focusable) {
+    private MyActionButton(@NotNull AnAction action, boolean focusable, boolean fieldInplaceLook) {
       super(action, action.getTemplatePresentation().clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-
-      setLook(focusable ? FIELD_INPLACE_LOOK : ActionButtonLook.INPLACE_LOOK);
+      setLook(fieldInplaceLook ? FIELD_INPLACE_LOOK : ActionButtonLook.INPLACE_LOOK);
       setFocusable(focusable);
       updateIcon();
     }

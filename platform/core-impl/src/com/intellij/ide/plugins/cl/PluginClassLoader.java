@@ -72,7 +72,12 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       "kotlin.coroutines.Continuation",
       "kotlin.coroutines.CoroutineContext",
       "kotlin.coroutines.CoroutineContext$Element",
-      "kotlin.coroutines.CoroutineContext$Key"
+      "kotlin.coroutines.CoroutineContext$Key",
+      // Even though it's internal class, it can leak (and it does) into API surface because it's exposed by public
+      // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
+      "kotlin.coroutines.intrinsics.CoroutineSingletons",
+      "kotlin.coroutines.AbstractCoroutineContextElement",
+      "kotlin.coroutines.AbstractCoroutineContextKey"
     ));
     String classes = System.getProperty("idea.kotlin.classes.used.in.signatures");
     if (classes != null) {

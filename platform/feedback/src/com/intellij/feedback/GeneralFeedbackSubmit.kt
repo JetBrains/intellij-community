@@ -12,7 +12,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.PlatformUtils
-import com.intellij.util.readXmlAsModel
+import com.intellij.util.xml.dom.readXmlAsModel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Dimension

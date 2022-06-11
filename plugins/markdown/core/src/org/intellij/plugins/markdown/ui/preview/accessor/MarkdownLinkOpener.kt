@@ -2,10 +2,12 @@ package org.intellij.plugins.markdown.ui.preview.accessor
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Application level service to provide an implementation for opening links from Markdown document preview.
  */
+@ApiStatus.Experimental
 interface MarkdownLinkOpener {
   /**
    * Will try to open a specified [link] from Markdown document.

@@ -47,14 +47,6 @@ class ButtonTest {
         assertEquals(checkBox.component.isSelected, localProperty)
       }
     }
-
-    panel {
-      row {
-        val checkBox = checkBox("")
-          .bindSelected(PropertyBinding({ localProperty }, { localProperty = it }))
-        assertEquals(checkBox.component.isSelected, localProperty)
-      }
-    }
   }
 
   @Test
@@ -64,9 +56,6 @@ class ButtonTest {
       { boolean })
     testCheckBox(
       { checkBox("checkBox").bindSelected({ boolean }, { boolean = it }) },
-      { boolean })
-    testCheckBox(
-      { checkBox("checkBox").bindSelected(PropertyBinding({ boolean }, { boolean = it })) },
       { boolean })
 
     // Test different kinds of properties

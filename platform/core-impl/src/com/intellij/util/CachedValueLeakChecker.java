@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,7 +54,7 @@ final class CachedValueLeakChecker {
       if (value instanceof PsiElement &&
           toIgnore instanceof PsiElement &&
           ((PsiElement)toIgnore).getContainingFile() != null &&
-          PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)toIgnore, true)) {
+          isAncestor((PsiElement)value, (PsiElement)toIgnore)) {
         // allow to capture PSI parents, assuming that they stay valid at least as long as the element itself
         return false;
       }
@@ -64,5 +65,14 @@ final class CachedValueLeakChecker {
       LOG.error("Provider '" + root + "' is retaining PSI, causing memory leaks and possible invalid element access.\n" + backLink);
       return false;
     });
+  }
+
+  private static boolean isAncestor(@NotNull PsiElement ancestor, @NotNull PsiElement element) {
+    if (ancestor instanceof StubBasedPsiElementBase && ((StubBasedPsiElementBase<?>)ancestor).getStub() != null ||
+        element instanceof StubBasedPsiElementBase && ((StubBasedPsiElementBase<?>)element).getStub() != null) {
+      return ancestor.getContainingFile() == element.getContainingFile() && PsiTreeUtil.isContextAncestor(ancestor, element, true);
+    }
+
+    return PsiTreeUtil.isAncestor(ancestor, element, true);
   }
 }

@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
-internal class GrazieRuleSettingsAction(private val ruleName: String, private val rule: Rule)
+class GrazieRuleSettingsAction(private val ruleName: String, private val rule: Rule)
   : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction
 {
   override fun isShowSubmenu(): Boolean = false

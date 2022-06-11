@@ -1,10 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.Futures;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,36 +9,21 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.util.*;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
@@ -49,18 +31,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.function.IntPredicate;
 
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
   private static final class AsyncState {
-    private final Map<StubIndexKey<?, ?>, UpdatableIndex<?, Void, FileContent>> myIndices = CollectionFactory.createSmallMemoryFootprintMap();
+    private final Map<StubIndexKey<?, ?>, UpdatableIndex<?, Void, FileContent, ?>> myIndices =
+      CollectionFactory.createSmallMemoryFootprintMap();
   }
 
   private final AtomicBoolean myForcedClean = new AtomicBoolean();
@@ -150,17 +130,16 @@ public final class StubIndexImpl extends StubIndexEx {
       }
     }
 
-    UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = getStubUpdatingIndex();
+    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
     ReadWriteLock lock = stubUpdatingIndex.getLock();
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        UpdatableIndex<K, Void, FileContent> index = new TransientFileContentIndex<>(wrappedExtension,
-                                                                                     new StubIndexStorageLayout<>(wrappedExtension, indexKey),
-                                                                                     lock);
+        UpdatableIndex<K, Void, FileContent, ?> index =
+          TransientFileContentIndex.createIndex(wrappedExtension, new StubIndexStorageLayout<>(wrappedExtension, indexKey), lock);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-          UpdatableIndex<K, Void, FileContent> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
+          UpdatableIndex<K, Void, FileContent, ?> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
           if (intermediateIndex != null) {
             index = intermediateIndex;
           }
@@ -195,7 +174,7 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   public long getIndexModificationStamp(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
-    UpdatableIndex<?, Void, FileContent> index = getAsyncState().myIndices.get(indexId);
+    UpdatableIndex<?, Void, FileContent, ?> index = getAsyncState().myIndices.get(indexId);
     if (index != null) {
       FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
       return index.getModificationStamp();
@@ -207,7 +186,7 @@ public final class StubIndexImpl extends StubIndexEx {
     if (!myInitialized) {
       return;
     }
-    for (UpdatableIndex<?, Void, FileContent> index : getAsyncState().myIndices.values()) {
+    for (UpdatableIndex<?, Void, FileContent, ?> index : getAsyncState().myIndices.values()) {
       index.flush();
     }
   }
@@ -215,8 +194,8 @@ public final class StubIndexImpl extends StubIndexEx {
   @ApiStatus.Internal
   @Override
   @SuppressWarnings("unchecked")
-  protected <Key> UpdatableIndex<Key, Void, FileContent> getIndex(@NotNull StubIndexKey<Key, ?> indexKey) {
-    return (UpdatableIndex<Key, Void, FileContent>)getAsyncState().myIndices.get(indexKey);
+  protected <Key> UpdatableIndex<Key, Void, FileContent, ?> getIndex(@NotNull StubIndexKey<Key, ?> indexKey) {
+    return (UpdatableIndex<Key, Void, FileContent, ?>)getAsyncState().myIndices.get(indexKey);
   }
 
   @Override
@@ -249,7 +228,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   public void dispose() {
     try {
-      for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
+      for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.dispose();
       }
     } finally {
@@ -269,18 +248,18 @@ public final class StubIndexImpl extends StubIndexEx {
   @Override
   void setDataBufferingEnabled(final boolean enabled) {
     AsyncState state = ProgressManager.getInstance().computeInNonCancelableSection(this::getAsyncState);
-    for (UpdatableIndex<?, ?, ?> index : state.myIndices.values()) {
+    for (UpdatableIndex<?, ?, ?, ?> index : state.myIndices.values()) {
       index.setBufferingEnabled(enabled);
     }
   }
 
   @Override
   void cleanupMemoryStorage() {
-    UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = getStubUpdatingIndex();
+    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
     stubUpdatingIndex.getLock().writeLock().lock();
 
     try {
-      for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
+      for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.cleanupMemoryStorage();
       }
     }
@@ -294,7 +273,7 @@ public final class StubIndexImpl extends StubIndexEx {
       myForcedClean.set(true);
       return;
     }
-    for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
+    for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
       try {
         index.clear();
       }
@@ -307,7 +286,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   @SuppressWarnings("unchecked")
   <K> void removeTransientDataForFile(@NotNull StubIndexKey<K, ?> key, int inputId, Map<K, StubIdList> keys) {
-    UpdatableIndex<Object, Void, FileContent> index = (UpdatableIndex)getIndex(key);
+    UpdatableIndex<Object, Void, FileContent, ?> index = (UpdatableIndex)getIndex(key);
     index.removeTransientDataForKeys(inputId, new MapInputDataDiffBuilder(inputId, keys));
   }
 

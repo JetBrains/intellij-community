@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * An extension to perform activities before and after running inspections
- * (see {@link com.intellij.codeInspection.GlobalInspectionContext}).
+ * (see {@link GlobalInspectionContext}).
  */
 public interface GlobalInspectionContextExtension<T> {
   @NotNull

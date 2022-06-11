@@ -135,18 +135,18 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   private fun assertUpToDate(block: () -> Unit) {
-    val oldValue = BuildDependenciesDownloader.getExtractCount().get()
+    val oldValue = BuildDependenciesDownloader.getExtractCount()
     block()
-    val newValue = BuildDependenciesDownloader.getExtractCount().get()
+    val newValue = BuildDependenciesDownloader.getExtractCount()
     if (oldValue != newValue) {
       Assert.fail("It was expected that archive extraction will be UP-TO-DATE (noop)")
     }
   }
 
   private fun assertSomethingWasExtracted(block: () -> Unit) {
-    val oldValue = BuildDependenciesDownloader.getExtractCount().get()
+    val oldValue = BuildDependenciesDownloader.getExtractCount()
     block()
-    val newValue = BuildDependenciesDownloader.getExtractCount().get()
+    val newValue = BuildDependenciesDownloader.getExtractCount()
     if (oldValue == newValue) {
       Assert.fail("It was expected that archive extraction will take place")
     }

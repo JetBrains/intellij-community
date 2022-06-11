@@ -50,6 +50,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.jetbrains.JBR;
 import net.miginfocom.swing.MigLayout;
 import org.jdom.internal.SystemProperty;
 import org.jetbrains.annotations.NotNull;
@@ -210,7 +211,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Override
   public void addNotify() {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      JdkEx.setHasCustomDecoration(this);
+      JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
     }
     super.addNotify();
   }

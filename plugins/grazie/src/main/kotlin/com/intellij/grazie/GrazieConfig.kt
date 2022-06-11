@@ -15,6 +15,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 
@@ -56,9 +57,9 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
    */
   data class State(
     @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
-    @Deprecated("Use checkingContext.disabledLanguages") @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
-    @Deprecated("Use checkingContext.disabledLanguages") @Property val disabledGrammarStrategies: Set<String> = HashSet(),
-    @Deprecated("Moved to checkingContext in version 2") @Property val enabledCommitIntegration: Boolean = false,
+    @Deprecated("Use checkingContext.disabledLanguages") @ApiStatus.ScheduledForRemoval @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
+    @Deprecated("Use checkingContext.disabledLanguages") @ApiStatus.ScheduledForRemoval @Property val disabledGrammarStrategies: Set<String> = HashSet(),
+    @Deprecated("Moved to checkingContext in version 2") @ApiStatus.ScheduledForRemoval @Property val enabledCommitIntegration: Boolean = false,
     @Property val userDisabledRules: Set<String> = HashSet(),
     @Property val userEnabledRules: Set<String> = HashSet(),
     //Formerly suppressionContext -- name changed due to compatibility issues

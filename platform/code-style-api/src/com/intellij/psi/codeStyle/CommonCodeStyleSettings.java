@@ -42,8 +42,6 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
- *
- * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
   // Dev. notes:

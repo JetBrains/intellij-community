@@ -9,6 +9,7 @@ import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.NlsSafe
+import java.io.File
 
 /**
  * Creates observable property that represents logic negation (!) operation for passed property.
@@ -102,16 +103,31 @@ fun ObservableMutableProperty<String>.trim(): ObservableMutableProperty<String> 
 
 /**
  * Creates observable property that represents property with presentable path value.
+ * Note: Value of source property must be canonical.
  */
 fun ObservableProperty<String>.toUiPathProperty(): ObservableProperty<@NlsSafe String> =
   transform(::getPresentablePath)
 
 /**
  * Creates observable mutable property that represents property with presentable path value.
- * Note: Value of source property will be canonical.
+ * Note: Value of source property must be canonical.
  */
 fun ObservableMutableProperty<String>.toUiPathProperty(): ObservableMutableProperty<@NlsSafe String> =
   transform(::getPresentablePath, ::getCanonicalPath)
+
+/**
+ * Creates observable property that represents property with joined presentable path value.
+ * Note: Value of source properties must be presentable.
+ */
+fun ObservableProperty<@NlsSafe String>.joinPresentablePath(vararg properties: ObservableProperty<@NlsSafe String>) =
+  operation(this, *properties) { it.joinToString(File.separator) }
+
+/**
+ * Creates observable property that represents property with joined canonical path value.
+ * Note: Value of source properties must be canonical.
+ */
+fun ObservableProperty<@NlsSafe String>.joinCanonicalPath(vararg properties: ObservableProperty<@NlsSafe String>) =
+  operation(this, *properties) { it.joinToString(File.separator) }
 
 /**
  * Creates observable property that represents property with transformed value.
@@ -147,6 +163,28 @@ fun <T1, T2, R> operation(
   object : AbstractDelegateObservableProperty<R>(left, right) {
     override fun get(): R = operation(left.get(), right.get())
   }
+
+/**
+ * Creates observable property that represents custom operation between several properties.
+ * @param operation defines operation between properties' values.
+ */
+fun <T, R> operation(
+  properties: List<ObservableProperty<T>>,
+  operation: (List<T>) -> R
+): ObservableProperty<R> =
+  object : AbstractDelegateObservableProperty<R>(properties) {
+    override fun get(): R = operation(properties.map { it.get() })
+  }
+
+/**
+ * Creates observable property that represents custom operation between several properties.
+ * @param operation defines operation between properties' values.
+ */
+fun <T, R> operation(
+  vararg properties: ObservableProperty<T>,
+  operation: (List<T>) -> R
+): ObservableProperty<R> =
+  operation(properties.toList(), operation)
 
 private abstract class ObservableMutablePropertyTransformation<T, R> :
   ObservablePropertyTransformation<T, R>(),

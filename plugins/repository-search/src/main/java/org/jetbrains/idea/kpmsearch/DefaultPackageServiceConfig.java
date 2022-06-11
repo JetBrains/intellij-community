@@ -84,7 +84,7 @@ public final class DefaultPackageServiceConfig implements PackageSearchEndpointC
     Object urlMap = idea.get(fulltext);
     if (urlMap instanceof Map) {
       //noinspection unchecked
-      if (Boolean.valueOf(String.valueOf(((Map<String, Object>)urlMap).get("enabled")))) {
+      if (Boolean.parseBoolean(String.valueOf(((Map<String, Object>)urlMap).get("enabled")))) {
         @SuppressWarnings("unchecked")
         Object url = ((Map<String, ?>)urlMap).get("url");
         if (url instanceof String) {

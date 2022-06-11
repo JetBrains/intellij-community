@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.psi.PsiType
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
@@ -18,10 +20,17 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
     if (!cache.containsKey(descriptorId)) {
       try {
         if (isCompileStatic(start)) return null
-        val field = reverseMapping[descriptorId].castSafelyTo<ResolvedVariableDescriptor>()?.variable?.castSafelyTo<GrField>() ?: return null
-        val fieldType = field.typeGroovy
-        if (fieldType != null) {
-          cache[descriptorId] = fieldType
+        if (descriptorId >= reverseMapping.size) {
+          thisLogger().error("Unrecognized variable at index $descriptorId", IllegalStateException(),
+                             Attachment("block.text", start.text),
+                             Attachment("block.flow", start.controlFlow.contentDeepToString()),
+                             Attachment("block.vars", reverseMapping.contentToString()))
+        } else {
+          val field = reverseMapping[descriptorId].castSafelyTo<ResolvedVariableDescriptor>()?.variable?.castSafelyTo<GrField>() ?: return null
+          val fieldType = field.typeGroovy
+          if (fieldType != null) {
+            cache[descriptorId] = fieldType
+          }
         }
       } finally {
         cache.putIfAbsent(descriptorId, TYPE_INFERENCE_FAILED)

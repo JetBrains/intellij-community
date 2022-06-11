@@ -35,4 +35,8 @@ public abstract class CharSequenceHashStubIndexExtension<Psi extends PsiElement>
   public final KeyDescriptor<CharSequence> getKeyDescriptor() {
     return CharSequenceHashInlineKeyDescriptor.INSTANCE;
   }
+
+  public boolean doesKeyMatchPsi(@NotNull CharSequence key, @NotNull Psi psi) {
+    return true;
+  }
 }

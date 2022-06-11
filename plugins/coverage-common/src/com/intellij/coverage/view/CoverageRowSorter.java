@@ -2,7 +2,7 @@
 package com.intellij.coverage.view;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.components.JBTreeTable;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,18 +13,18 @@ import java.util.Comparator;
 import java.util.List;
 
 public class CoverageRowSorter extends RowSorter<TableModel> {
-  private final TreeTable myTreeTable;
+  private final JBTreeTable myTreeTable;
   private final CoverageTableModel myModel;
   private RowSorter.SortKey mySortKey;
 
-  public CoverageRowSorter(TreeTable table, CoverageTableModel model) {
+  public CoverageRowSorter(JBTreeTable table, CoverageTableModel model) {
     myTreeTable = table;
     myModel = model;
   }
 
   @Override
   public TableModel getModel() {
-    return myTreeTable.getModel();
+    return myTreeTable.getTable().getModel();
   }
 
   @Override
@@ -65,12 +65,12 @@ public class CoverageRowSorter extends RowSorter<TableModel> {
 
   @Override
   public int getViewRowCount() {
-    return getModel().getRowCount();
+    return myTreeTable.getTree().getRowCount();
   }
 
   @Override
   public int getModelRowCount() {
-    return getModel().getRowCount();
+    return myTreeTable.getTree().getRowCount();
   }
 
   @Override

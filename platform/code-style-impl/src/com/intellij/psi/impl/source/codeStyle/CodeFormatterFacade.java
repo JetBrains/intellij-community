@@ -431,7 +431,8 @@ public class CodeFormatterFacade {
   {
     if (!mySettings.getCommonSettings(file.getLanguage()).WRAP_LONG_LINES ||
         PostprocessReformattingAspect.getInstance(file.getProject()).isViewProviderLocked(file.getViewProvider()) ||
-        document == null) {
+        document == null ||
+        myCanChangeWhitespaceOnly) {
       return;
     }
 

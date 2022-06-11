@@ -6,6 +6,8 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.Nls
  * and group them in settings window, then @see [com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider]
  * Also @see [PlatformCodeVisionIds]
  */
+@ApiStatus.Experimental
 interface CodeVisionProvider<T> {
   companion object {
     val EP_NAME = "com.intellij.codeInsight.codeVisionProvider"
@@ -54,6 +57,16 @@ interface CodeVisionProvider<T> {
    * Handle click on an extra action on a lens at a given range
    */
   fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String) = Unit
+
+  /**
+   * Calls on background BEFORE editor opening
+   * Returns ranges where placeholders should be when editor opens
+   */
+  @Deprecated("use getPlaceholderCollector")
+  fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
+
+  @JvmDefault
+  fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?) : CodeVisionPlaceholderCollector? = null
 
   /**
    * User-visible name

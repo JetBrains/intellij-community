@@ -108,8 +108,13 @@ public class LocalFsFinder implements Finder {
 
     @Override
     public boolean isAccepted(LookupFile file) {
-      VirtualFile vFile = ((VfsFile)file).getFile();
-      return vFile != null && myDescriptor.isFileVisible(vFile, myShowHidden);
+      if (file instanceof VfsFile) {
+        VirtualFile vFile = ((VfsFile)file).getFile();
+        return vFile != null && myDescriptor.isFileVisible(vFile, myShowHidden);
+      }
+      else {
+        return false;
+      }
     }
   }
 
@@ -205,6 +210,8 @@ public class LocalFsFinder implements Finder {
   public static final class IoFile extends LookupFileWithMacro {
     private final Path myFile;
 
+    /** @deprecated please use {@link #IoFile(Path)} instead */
+    @Deprecated
     public IoFile(@NotNull File file) {
       this(file.toPath());
     }

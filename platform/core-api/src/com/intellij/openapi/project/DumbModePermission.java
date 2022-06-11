@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
  * @deprecated obsolete API
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@ApiStatus.ScheduledForRemoval
 public enum DumbModePermission {
   MAY_START_MODAL,
   MAY_START_BACKGROUND

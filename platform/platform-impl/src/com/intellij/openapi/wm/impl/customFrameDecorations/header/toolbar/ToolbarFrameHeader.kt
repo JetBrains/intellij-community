@@ -18,7 +18,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.IconManager
@@ -28,6 +29,7 @@ import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
+import com.jetbrains.CustomWindowDecoration.*
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import javax.swing.*
@@ -37,7 +39,7 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
-internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener, ToolbarHolder {
+internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
   private var myToolbar : MainToolbar? = null
@@ -81,6 +83,8 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
 
+  override fun getComponent(): JComponent = this
+
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateLayout(uiSettings)
     when (mode) {
@@ -89,23 +93,23 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     }
   }
 
-  override fun getHitTestSpots(): List<RelativeRectangle> {
+  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
     val result = super.getHitTestSpots().toMutableList()
 
     when (mode) {
       ShowMode.MENU -> {
-        result.add(getElementRect(myMenuBar) { rect ->
+        result.add(Pair(getElementRect(myMenuBar) { rect ->
           val state = frame.extendedState
           if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
             val topGap = (rect.height / 3).toFloat().roundToInt()
             rect.y += topGap
             rect.height -= topGap
           }
-        })
+        }, MENU_BAR))
       }
       ShowMode.TOOLBAR -> {
-        result.add(getElementRect(myMenuButton))
-        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(getElementRect(it)) }
+        result.add(Pair(getElementRect(myMenuButton), MENU_BAR))
+        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(Pair(getElementRect(it), MENU_BAR)) }
       }
     }
 

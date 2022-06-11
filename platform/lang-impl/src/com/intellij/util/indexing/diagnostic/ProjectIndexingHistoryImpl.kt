@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -335,6 +335,8 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     override var creatingIteratorsDuration: Duration = Duration.ZERO,
     override var scanFilesDuration: Duration = Duration.ZERO,
     override var suspendedDuration: Duration = Duration.ZERO,
+    override var appliedAllValuesSeparately: Boolean = true,
+    override var separateValueApplicationVisibleTime: TimeNano = 0,
     override var wasInterrupted: Boolean = false
   ): IndexingTimes
 

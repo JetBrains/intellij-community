@@ -383,12 +383,6 @@ final class VariableExtractor {
     }
     if (CommonJavaRefactoringUtil.isLoopOrIf(anchor.getParent())) return anchor;
     PsiElement child = locateAnchor(anchor);
-    if (IntroduceVariableBase.isFinalVariableOnLHS(expr)) {
-      child = child.getNextSibling();
-      if (child != null) {
-        child = correctDueToSyntaxErrors(child);
-      }
-    }
     return child == null ? anchor : child;
   }
 

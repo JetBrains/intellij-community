@@ -96,7 +96,7 @@
 
       "selectionBackground": "Blue2",
       "lightSelectionBackground": "Blue2",
-      "hoverBackground": "Blue1",
+      "hoverBackground": "Grey3",
       "selectionForeground": "Grey12",
       "selectionInactiveForeground": "Grey12",
       "selectionInactiveBackground": "Grey4",
@@ -147,7 +147,7 @@
       "selectedStartBorderColor": "Grey5",
       "selectedEndBorderColor": "Grey5",
       "selectedButtonColor": "Grey3",
-      "focusedSelectedButtonColor": "Blue6"
+      "focusedSelectedButtonColor": "Blue3"
     },
 
     "ComboBox": {
@@ -160,6 +160,11 @@
       "fontSizeOffset": {
         "os.windows": 0
       }
+    },
+
+    "Counter": {
+      "background": "Grey8",
+      "foreground": "#000000"
     },
 
     "FileColor": {
@@ -215,15 +220,16 @@
 
     "Menu": {
       "separatorColor": "Grey4",
-      "borderColor": "Grey2"
+      "borderColor": "Grey4"
     },
 
     "Notification": {
-      "background": "Grey2",
-      "borderColor": "Grey3",
+      "background": "Grey3",
+      "borderColor": "Grey4",
       "MoreButton": {
         "background": "Grey2",
-        "innerBorderColor": "Grey4"
+        "innerBorderColor": "Grey4",
+        "foreground": "Grey9"
       }
     },
 
@@ -235,10 +241,13 @@
 
     "OnePixelDivider.background": "Grey3",
 
+    "Plugins.SectionHeader.background": "Grey3",
+
     "Popup": {
       "borderWidth": 1,
       "paintBorder": true,
-      "borderColor": "#393B40B3",
+      "borderColor": "Grey3",
+      "inactiveBorderColor": "Grey3",
       "Advertiser": {
         "borderInsets": "6,20,6,20",
         "foreground": "Grey8",
@@ -284,7 +293,8 @@
       },
       "Advertiser": {
         "foreground": "Grey8",
-        "background": "Grey3"
+        "background": "Grey3",
+        "borderInsets": "6,20,6,20"
       }
     },
 
@@ -293,19 +303,23 @@
       "endBackground": "Yellow5"
     },
 
+    "SpeedSearch": {
+      "background": "Grey1",
+      "borderColor": "Grey4",
+      "errorForeground": "Red6"
+    },
+
 
     "StatusBar": {
       "Widget": {
         "foreground": "Grey9",
         "hoverForeground": "Grey12",
-        "hoverBackground": "Grey3",
         "pressedBackground": "Grey4",
         "widgetInsets": "6,8,6,8"
       },
       "Breadcrumbs": {
         "foreground": "Grey9",
         "hoverForeground": "Grey12",
-        "hoverBackground": "Grey3",
         "itemInsets": "0,0,0,0",
         "chevronInset": "0",
         "floatingToolbarInsets": "8,12,8,12",
@@ -315,8 +329,22 @@
 
     "TabbedPane": {
       "tabHeight": 40,
-      "tabSelectionArc": 4
+      "tabSelectionArc": 4,
+      "hoverColor": "Grey4",
+      "contentAreaColor": "Grey1",
+      "focusColor": "Blue2"
     },
+
+    "Table.gridColor": "Grey1",
+
+    "TableHeader": {
+      "bottomSeparatorColor": "Grey1",
+      "separatorColor": "Grey1"
+    },
+
+    "Tag.background": "Grey3",
+
+    "ToolbarComboWidget.borderInsets": "3,8,3,4",
 
     "ToolTip":{
       "background": "Grey2",
@@ -335,7 +363,6 @@
         "font.size.offset": 0
       },
       "HeaderTab": {
-        "hoverBackground": "Grey3",
         "hoverInactiveBackground": "Grey3",
         "leftRightInsets": "0,12,0,12"
       },
@@ -351,25 +378,39 @@
       "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
-        "hoverBackground": "Grey3",
         "pressedBackground": "Grey3"
       },
       "Dropdown": {
         "borderInsets": "12,6,12,6",
-        "hoverBackground": "Grey3",
         "pressedBackground": "Grey3"
       },
       "background": "Grey2"
     },
 
-    "Tree.rowHeight": "24",
+    "Tree": {
+      "rowHeight": 24,
+      "hash": "Grey5"
+    },
 
-    "TitlePane.Button.preferredSize": "36,40"
+    "TitlePane.Button.preferredSize": "36,40",
+
+    "VersionControl": {
+      "Log.Commit": {
+        "currentBranchBackground": "#1c2433",
+        "unmatchedForeground": "Grey7",
+        "hoveredBackground": "#FFFFFFED"
+      },
+      "FileHistory.Commit.selectedBranchBackground": "#1c2433"
+    },
+
+    "WelcomeScreen.Details.background": "Grey1"
   },
 
   "icons": {
     "/com/intellij/ide/ui/laf/icons/darcula/checkBox.svg": "/themes/expUI/icons/dark/checkBoxTemp.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/checkBoxFocused.svg": "/themes/expUI/icons/dark/checkBoxFocusedTemp.svg",
     "/com/intellij/ide/ui/laf/icons/darcula/radio.svg": "/themes/expUI/icons/dark/radioTemp.svg",
+    "/com/intellij/ide/ui/laf/icons/darcula/radioFocused.svg": "/themes/expUI/icons/dark/radioFocusedTemp.svg",
 
     "ColorPalette": {
       "Checkbox.Background.Default.Dark": "Grey2",

@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 
 enum class RightGap {
   /**
@@ -19,6 +20,7 @@ enum class RightGap {
 /**
  * Common API for cells
  */
+@ApiStatus.NonExtendable
 @LayoutDslMarker
 interface CellBase<out T : CellBase<T>> {
 
@@ -77,7 +79,7 @@ interface CellBase<out T : CellBase<T>> {
   /**
    * Separates the next cell in the current row with [rightGap]. [RightGap.SMALL] gap is set after row label automatically
    * by [Panel.row] methods.
-   * Should not be used for last cell in a row
+   * Right gap is ignored for the last cell in a row
    */
   fun gap(rightGap: RightGap): CellBase<T>
 

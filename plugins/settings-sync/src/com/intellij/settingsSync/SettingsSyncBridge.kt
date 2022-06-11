@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 internal class SettingsSyncBridge(application: Application,
                                   parentDisposable: Disposable,
                                   private val settingsLog: SettingsLog,
-                                  private val ideUpdater: SettingsSyncIdeUpdater,
+                                  private val ideUpdater: SettingsSyncIdeCommunicator,
                                   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
                                   private val updateChecker: SettingsSyncUpdateChecker
 ) {

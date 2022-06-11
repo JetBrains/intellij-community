@@ -136,7 +136,7 @@ class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
       else {
         val classLoader = pluginDescriptor.classLoader
-        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
+        bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader, true)
         if (bytes == null) {
           LOG.error("Cannot found scheme $resourceName in $classLoader")
           return

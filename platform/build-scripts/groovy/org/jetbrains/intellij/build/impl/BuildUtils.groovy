@@ -3,8 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.util.XmlDomReader
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.xml.dom.XmlDomReader
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader

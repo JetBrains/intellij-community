@@ -40,6 +40,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
     val EXTENDS_WITH = listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
+    const val NULL_ENUM_PROVIDER = "org.junit.jupiter.params.provider.NullEnum"
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -301,7 +302,14 @@ private class SingleParameterChecker(val holder: ProblemsHolder) {
                                  method: UMethod) {
     val mode = enumSource.findAttributeValue("mode")
     if (mode is PsiReferenceExpression && ("INCLUDE" == mode.referenceName || "EXCLUDE" == mode.referenceName)) {
-      val allEnumConstants = (PsiUtil.resolveClassInClassTypeOnly(enumType) ?: return).fields
+      var validType = enumType
+      if (enumType.canonicalText == JUnit5MalformedParameterizedInspection.Annotations.NULL_ENUM_PROVIDER) {
+        val parameters = method.uastParameters
+        if (parameters.isNotEmpty()) {
+          validType = parameters.first().type
+        }
+      }
+      val allEnumConstants = (PsiUtil.resolveClassInClassTypeOnly(validType) ?: return).fields
         .filterIsInstance<PsiEnumConstant>()
         .map { it.name }
         .toSet()
@@ -360,7 +368,7 @@ private class SingleParameterChecker(val holder: ProblemsHolder) {
             if (psiClass.methods.find { it.hasModifier(JvmModifier.STATIC) && factoryMethod(it) } != null) return
           }
         }
-        else if (componentType.equalsToText("org.junit.jupiter.params.provider.NullEnum")) {
+        else if (componentType.equalsToText(JUnit5MalformedParameterizedInspection.Annotations.NULL_ENUM_PROVIDER)) {
           val psiClass = PsiUtil.resolveClassInClassTypeOnly(paramType)
           if (psiClass != null && psiClass.isEnum) return
         }

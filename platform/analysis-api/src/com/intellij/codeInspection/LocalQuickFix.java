@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * N.B. Please DO NOT store PSI elements inside the LocalQuickFix instance, to avoid holding too much PSI files during inspection.
  * Instead, use the {@link ProblemDescriptor#getPsiElement()}
- * in {@link QuickFix#applyFix(com.intellij.openapi.project.Project, CommonProblemDescriptor)}
+ * in {@link QuickFix#applyFix(Project, CommonProblemDescriptor)}
  * to retrieve the PSI context the fix will work on.
  * See also {@link LocalQuickFixOnPsiElement} which uses {@link com.intellij.psi.SmartPsiElementPointer} instead of storing PSI elements.
  * <p/>

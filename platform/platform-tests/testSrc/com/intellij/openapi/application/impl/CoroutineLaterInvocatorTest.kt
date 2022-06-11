@@ -64,7 +64,7 @@ class CoroutineLaterInvocatorTest {
       withModalContext {
         withContext(Dispatchers.EDT) {
           assertTrue(LaterInvocator.isInModalContext())
-          val contextModality = contextModality()
+          val contextModality = coroutineContext.contextModality()
           assertNotEquals(ModalityState.any(), contextModality)
           assertNotEquals(ModalityState.NON_MODAL, contextModality)
           assertSame(ModalityState.current(), contextModality)
@@ -83,7 +83,7 @@ class CoroutineLaterInvocatorTest {
         assertFalse(LaterInvocator.isInModalContext())
         withModalContext {
           assertTrue(LaterInvocator.isInModalContext())
-          val contextModality = contextModality()
+          val contextModality = coroutineContext.contextModality()
           assertNotEquals(ModalityState.any(), contextModality)
           assertNotEquals(ModalityState.NON_MODAL, contextModality)
           assertSame(ModalityState.current(), contextModality)

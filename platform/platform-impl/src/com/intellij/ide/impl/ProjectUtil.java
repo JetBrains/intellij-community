@@ -35,6 +35,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.*;
@@ -472,7 +473,7 @@ public final class ProjectUtil extends ProjectUtilCore {
     return path.contains("://") || path.contains("\\\\");
   }
 
-  public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {
+  public static @Nullable Project findProject(@NotNull Path file) {
     Project[] openProjects = getOpenProjects();
     if (openProjects.length == 0) {
       return null;
@@ -480,11 +481,18 @@ public final class ProjectUtil extends ProjectUtilCore {
 
     for (Project project : openProjects) {
       if (isSameProject(file, project)) {
-        focusProjectWindow(project, false);
         return project;
       }
     }
     return null;
+  }
+
+  public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {
+    var project = findProject(file);
+    if (project != null) {
+      focusProjectWindow(project, false);
+    }
+    return project;
   }
 
   /**
@@ -831,5 +839,21 @@ public final class ProjectUtil extends ProjectUtilCore {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       WriteAction.run(() -> Disposer.dispose(project));
     });
+  }
+
+  public static @Nullable Project getProjectForWindow(@Nullable Window window) {
+    if (window != null) {
+      while (window.getOwner() != null) {
+        window = window.getOwner();
+      }
+      if (window instanceof IdeFrame) {
+        return ((IdeFrame)window).getProject();
+      }
+    }
+    return null;
+  }
+
+  public static @Nullable Project getProjectForComponent(@Nullable Component component) {
+    return getProjectForWindow(ComponentUtil.getWindow(component));
   }
 }

@@ -150,6 +150,9 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         else if (line.startsWith("Subtitle:")) {
           notification.setSubtitle(StringUtil.substringAfter(line, ":"));
         }
+        else if (line.startsWith("Help:")) {
+          notification.setHelp(StringUtil.substringAfter(line, ":"));
+        }
         else if (line.startsWith("Actions:")) {
           String value = StringUtil.substringAfter(line, ":");
           if (value != null) {
@@ -194,6 +197,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
     private String myIcon;
     private String myTitle;
     private String mySubtitle;
+    private String myHelp;
     private List<String> myContent;
     private List<String> myActions;
     private NotificationType myType = NotificationType.INFORMATION;
@@ -237,6 +241,13 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
             myNotification.addAction(new MyAnAction(action));
           }
         }
+        if (myHelp != null) {
+          myNotification.setContextHelpAction(new AnAction("", myHelp, null) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+            }
+          });
+        }
       }
       myNotification.setCollapseDirection(myRightActionsDirection ? CollapseActionsDirection.KEEP_RIGHTMOST : CollapseActionsDirection.KEEP_LEFTMOST);
       return myNotification;
@@ -257,6 +268,10 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
 
     public void setSubtitle(@Nullable String subtitle) {
       mySubtitle = subtitle;
+    }
+
+    private void setHelp(String help) {
+      myHelp = help;
     }
 
     public void setAddListener(boolean addListener) {

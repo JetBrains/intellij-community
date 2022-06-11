@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
@@ -20,6 +21,8 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     fun getInstance(): SettingsSyncPluginManager = ApplicationManager.getApplication().getService(SettingsSyncPluginManager::class.java)
 
     const val FILE_SPEC = "settingsSyncPlugins.xml"
+
+    val LOG = logger<SettingsSyncPluginManager>()
   }
 
   private val pluginStateListener = object : PluginStateListener {
@@ -106,9 +109,11 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
           if (mapEntry.value.isEnabled != plugin.isEnabled) {
             if (mapEntry.value.isEnabled) {
               pluginManagerProxy.enablePlugin(plugin.pluginId)
+              LOG.info("Disabled plugin: ${plugin.pluginId.idString}")
             }
             else {
               pluginManagerProxy.disablePlugin(plugin.pluginId)
+              LOG.info("Enabled plugin: ${plugin.pluginId.idString}")
             }
           }
         }
@@ -116,9 +121,10 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
       else {
         if (mapEntry.value.isEnabled &&
             isPluginSyncEnabled(mapEntry.key, false, mapEntry.value.category) &&
-            checkDependencies(mapEntry.value)) {
+            checkDependencies(mapEntry.key, mapEntry.value)) {
           val newPluginId = PluginId.getId(mapEntry.key)
           installer.addPluginId(newPluginId)
+          LOG.info("New plugin installation requested: ${newPluginId.idString}")
         }
       }
     }
@@ -129,9 +135,10 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     return PluginId.findId(idString)?.let { PluginManagerProxy.getInstance().findPlugin(it) }
   }
 
-  private fun checkDependencies(pluginState: PluginData): Boolean {
+  private fun checkDependencies(idString: String, pluginState: PluginData): Boolean {
     pluginState.dependencies.forEach {
       if (findPlugin(it) == null) {
+        LOG.info("Skipping ${idString} plugin installation due to missing dependency: ${it}")
         return false
       }
     }

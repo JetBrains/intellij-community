@@ -447,7 +447,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   /**
    * @deprecated Use {@link CoreCodeStyleUtil#setSequentialProcessingAllowed(boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void setSequentialProcessingAllowed(boolean allowed) {
     CoreCodeStyleUtil.setSequentialProcessingAllowed(allowed);
   }

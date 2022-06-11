@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -255,14 +256,23 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @VisibleForTesting
-  public static @Nullable Map<Class<? extends EditorNotificationProvider>, JComponent> getNotificationPanels(@NotNull FileEditor editor) {
+  public static @NotNull Map<Class<? extends EditorNotificationProvider>, JComponent> getNotificationPanels(@NotNull FileEditor editor) {
     Map<Class<? extends EditorNotificationProvider>, JComponent> panels = editor.getUserData(EDITOR_NOTIFICATION_PROVIDER);
     if (panels != null) {
       return panels;
     }
 
     editor.putUserData(EDITOR_NOTIFICATION_PROVIDER, new WeakHashMap<>());
-    return editor.getUserData(EDITOR_NOTIFICATION_PROVIDER);
+    panels = editor.getUserData(EDITOR_NOTIFICATION_PROVIDER);
+    if (panels != null) {
+      return panels;
+    }
+
+    Class<? extends FileEditor> editorClass = editor.getClass();
+    throw PluginException.createByClass(
+      "User data is not supported; editorClass='" + editorClass.getName() + "'; key='" + EDITOR_NOTIFICATION_PROVIDER + "'",
+      null,
+      editorClass);
   }
 
   @TestOnly

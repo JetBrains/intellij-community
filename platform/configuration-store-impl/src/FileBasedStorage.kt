@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SafeStAXStreamBuilder
-import com.intellij.openapi.util.createXmlStreamReader
+import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit

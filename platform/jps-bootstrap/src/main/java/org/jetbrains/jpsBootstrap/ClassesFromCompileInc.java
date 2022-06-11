@@ -6,6 +6,8 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.util.Pair;
 import groovy.transform.CompileStatic;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
@@ -28,7 +30,7 @@ import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
 public class ClassesFromCompileInc {
   public final static String MANIFEST_JSON_URL_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_URL";
 
-  public static void downloadProjectClasses(JpsProject project, Path communityRoot, Collection<JpsModule> modules) throws IOException, InterruptedException {
+  public static void downloadProjectClasses(JpsProject project, BuildDependenciesCommunityRoot communityRoot, Collection<JpsModule> modules) throws IOException, InterruptedException {
     String manifestUrl = System.getenv(MANIFEST_JSON_URL_ENV_NAME);
     if (manifestUrl == null || manifestUrl.isBlank()) {
       throw new IllegalStateException("Env variable '" + MANIFEST_JSON_URL_ENV_NAME + "' is missing or empty");
@@ -57,7 +59,7 @@ public class ClassesFromCompileInc {
     }
   }
 
-  private static Map<JpsModule, Path> downloadProductionPartsFromMetadataJson(Path metadataJson, Path communityRoot, Collection<JpsModule> modules) throws InterruptedException, IOException {
+  private static Map<JpsModule, Path> downloadProductionPartsFromMetadataJson(Path metadataJson, BuildDependenciesCommunityRoot communityRoot, Collection<JpsModule> modules) throws InterruptedException, IOException {
     CompilationPartsMetadata partsMetadata;
 
     try (BufferedReader manifestReader = Files.newBufferedReader(metadataJson, StandardCharsets.UTF_8)) {

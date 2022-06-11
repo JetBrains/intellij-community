@@ -43,9 +43,7 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
     var directory = panel.currentDirectory();
-    var visible = directory != null;
-    e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(visible && !directory.getFileSystem().isReadOnly());
+    e.getPresentation().setEnabled(directory != null && !directory.getFileSystem().isReadOnly());
   }
 
   @Override

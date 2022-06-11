@@ -52,8 +52,8 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
       }
     }
 
-    List<AnAction> actions =
-      Utils.expandActionGroup(false, group, new PresentationFactory(), DataContext.EMPTY_CONTEXT, ActionPlaces.MAIN_TOOLBAR);
+    List<AnAction> actions = Utils.expandActionGroup(
+      group, new PresentationFactory(), DataContext.EMPTY_CONTEXT, ActionPlaces.MAIN_TOOLBAR);
     assertFalse(actions.contains(combo));
 
     TaskManager manager = TaskManager.getManager(getProject());

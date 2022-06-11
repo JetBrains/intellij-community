@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 /**
  * @deprecated use {@link com.intellij.codeInsight.lookup.LookupElement#renderElement(LookupElementPresentation)}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface ElementLookupRenderer<T> {
   ExtensionPointName<ElementLookupRenderer> EP_NAME = ExtensionPointName.create("com.intellij.elementLookupRenderer");
 

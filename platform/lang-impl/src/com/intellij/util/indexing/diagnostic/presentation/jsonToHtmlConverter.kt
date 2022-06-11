@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused", "DuplicatedCode", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
@@ -400,6 +400,14 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
               tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
               tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
+              tr {
+                td("Separate application time")
+                td(if (times.isAppliedAllValuesSeparately)
+                     StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
+                   else
+                     "Applied under read lock"
+                )
+              }
             }
           }
         }

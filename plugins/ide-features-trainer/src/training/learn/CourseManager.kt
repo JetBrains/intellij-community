@@ -12,9 +12,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.KeyedLazyInstanceEP
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import training.lang.LangManager
 import training.lang.LangSupport
@@ -44,8 +42,6 @@ class CourseManager internal constructor() : Disposable {
       parseVersion
     }
   }
-
-  val mapModuleVirtualFile: MutableMap<IftModule, VirtualFile> = ContainerUtil.createWeakMap()
 
   var unfoldModuleOnInit by WeakReferenceDelegator<IftModule>()
 
@@ -100,11 +96,6 @@ class CourseManager internal constructor() : Disposable {
   fun clearModules() {
     languageCourses.clear()
     commonCourses.clear()
-  }
-
-  //TODO: remove this method or convert XmlModule to a Module
-  fun registerVirtualFile(module: IftModule, virtualFile: VirtualFile) {
-    mapModuleVirtualFile[module] = virtualFile
   }
 
   /**

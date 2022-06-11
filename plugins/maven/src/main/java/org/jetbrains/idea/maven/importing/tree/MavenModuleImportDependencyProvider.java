@@ -23,14 +23,18 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.jetbrains.idea.maven.importing.MavenModuleImporter.*;
+import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.MavenProjectImportData;
+import static org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider.SplittedMainAndTestModules;
 
 public class MavenModuleImportDependencyProvider {
+  private static final int INITIAL_CAPACITY_TEST_DEPENDENCY_LIST = 5;
+
   @NotNull private final Project project;
-  @NotNull private final Map<MavenId, MavenProjectImportContextProvider.MavenProjectImportData> moduleImportDataByMavenId;
+  @NotNull private final Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId;
   @NotNull private final Set<String> dependencyTypesFromSettings;
 
   public MavenModuleImportDependencyProvider(@NotNull Project project,
-                                             @NotNull Map<MavenId, MavenProjectImportContextProvider.MavenProjectImportData> moduleImportDataByMavenId,
+                                             @NotNull Map<MavenId, MavenProjectImportData> moduleImportDataByMavenId,
                                              @NotNull MavenImportingSettings importingSettings) {
     this.project = project;
     this.moduleImportDataByMavenId = moduleImportDataByMavenId;
@@ -38,10 +42,10 @@ public class MavenModuleImportDependencyProvider {
   }
 
   @NotNull
-  public MavenModuleImportDataWithDependencies getDependencies(MavenProjectImportContextProvider.MavenProjectImportData importData) {
+  public MavenModuleImportDataWithDependencies getDependencies(MavenProjectImportData importData) {
     MavenProject mavenProject = importData.mavenProject;
     List<MavenImportDependency<?>> mainDependencies = new ArrayList<>(mavenProject.getDependencies().size());
-    List<MavenImportDependency<?>> testDependencies = new ArrayList<>(5);
+    List<MavenImportDependency<?>> testDependencies = new ArrayList<>(INITIAL_CAPACITY_TEST_DEPENDENCY_LIST);
 
     addMainDependencyToTestModule(importData, mavenProject, testDependencies);
     for (MavenArtifact artifact : mavenProject.getDependencies()) {
@@ -57,7 +61,7 @@ public class MavenModuleImportDependencyProvider {
     return new MavenModuleImportDataWithDependencies(importData, mainDependencies, testDependencies);
   }
 
-  private static void addMainDependencyToTestModule(MavenProjectImportContextProvider.MavenProjectImportData importData,
+  private static void addMainDependencyToTestModule(MavenProjectImportData importData,
                                                     MavenProject mavenProject,
                                                     List<MavenImportDependency<?>> testDependencies) {
     if (importData.splittedMainAndTestModules != null) {
@@ -86,7 +90,7 @@ public class MavenModuleImportDependencyProvider {
     if (depProject != null) {
       if (depProject == mavenProject) return null;
 
-      MavenProjectImportContextProvider.MavenProjectImportData mavenProjectImportData = moduleImportDataByMavenId.get(depProject.getMavenId());
+      MavenProjectImportData mavenProjectImportData = moduleImportDataByMavenId.get(depProject.getMavenId());
 
       if (mavenProjectImportData == null || projectsManager.isIgnored(depProject)) {
         return new BaseDependency(createCopyForLocalRepo(artifact, mavenProject), scope);
@@ -130,8 +134,8 @@ public class MavenModuleImportDependencyProvider {
     }
   }
 
-  private static String getModuleName(MavenProjectImportContextProvider.MavenProjectImportData data) {
-    MavenProjectImportContextProvider.SplittedMainAndTestModules modules = data.splittedMainAndTestModules;
+  private static String getModuleName(MavenProjectImportData data) {
+    SplittedMainAndTestModules modules = data.splittedMainAndTestModules;
     return modules == null ? data.moduleData.getModuleName() : modules.mainData.getModuleName();
   }
 }

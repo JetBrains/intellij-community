@@ -4,98 +4,99 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.lang.Language
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
-import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.caches.project.cacheByProvider
-import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.caches.project.StrongCachedValue
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Responsible for Kotlin package only
+ */
 class SubpackagesIndexService(private val project: Project): Disposable {
 
-    private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages", false)
+    private val enableSubpackageCaching = Registry.`is`("kotlin.cache.top.level.subpackages")
 
-    private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
-        {
-            val packageTracker = KotlinPackageModificationListener.getInstance(project).packageTracker
-            val dependencies = arrayOf(
-                ProjectRootModificationTracker.getInstance(project),
-                otherLanguagesModificationTracker(),
-                packageTracker
-            )
-            CachedValueProvider.Result(
-                SubpackagesIndex(KotlinPartialPackageNamesIndex.findAllFqNames(project),
-                                 dependencies,
-                                 packageTracker.modificationCount),
-                *dependencies,
-            )
-        },
-        false
-    )
-
-    @Volatile
-    private var otherLanguagesModificationTracker: ModificationTracker? = null
+    private val cachedValue =
+        StrongCachedValue(
+            {
+                val packageTracker =
+                    KotlinPackageModificationListener.getInstance(project).packageTracker
+                val dependencies = arrayOf(
+                    ProjectRootModificationTracker.getInstance(project),
+                    packageTracker
+                )
+                val result: CachedValueProvider.Result<SubpackagesIndex> =
+                    CachedValueProvider.Result(
+                        SubpackagesIndex(KotlinPartialPackageNamesIndex.findAllFqNames(project), packageTracker.modificationCount),
+                        *dependencies,
+                    )
+                result
+            })
 
     init {
         val messageBusConnection = project.messageBus.connect(this)
         messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
             override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-                resetOtherLanguagesModificationTracker()
+                clean()
             }
 
             override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-                resetOtherLanguagesModificationTracker()
+                clean()
             }
         })
+        LowMemoryWatcher.register(::clean, this)
     }
 
-    private fun resetOtherLanguagesModificationTracker() {
-        otherLanguagesModificationTracker = null
+    private fun clean() {
+        cachedValue.clear()
     }
 
     override fun dispose() {
-        resetOtherLanguagesModificationTracker()
+        clean()
     }
 
-    private fun otherLanguagesModificationTracker(): ModificationTracker =
-        otherLanguagesModificationTracker ?: synchronized(this) {
-            otherLanguagesModificationTracker ?: run {
-                OtherLanguagesModificationTracker(project).also { otherLanguagesModificationTracker = it }
-            }
-        }
-
-    inner class SubpackagesIndex(
-        allPackageFqNames: Collection<FqName>,
-        private val dependencies: Array<ModificationTracker>,
-        private val ptCount: Long
-    ) {
+    inner class SubpackagesIndex(allPackageFqNames: Collection<FqName>, private val ptCount: Long) {
         // a map from any existing package (in kotlin) to a set of subpackages (not necessarily direct) containing files
         private val allPackageFqNames = hashSetOf<FqName>()
+        private val topLevelPackageFqNames = hashSetOf<FqName>()
         private val fqNameByPrefix = MultiMap.createSet<FqName, FqName>()
+        // SubpackagesIndex is cachedValue, therefore when we're low on memory - entire SubpackagesIndex will be freed, no reasons to
+        // cache individual knownTopFqNames as cachedValue
+        private val knownTopFqNamesPerModule = ConcurrentHashMap<Module, MutableMap<Class<out ModuleSourceScope>, Collection<FqName>>>()
 
         init {
             this.allPackageFqNames.addAll(allPackageFqNames)
+            if (allPackageFqNames.isNotEmpty()) {
+                topLevelPackageFqNames.add(FqName.ROOT)
+            }
             for (fqName in allPackageFqNames) {
-                for (prefix in generateSequence(fqName.parentOrNull(), FqName::parentOrNull)) {
+                var prefix = fqName
+                while (!prefix.isRoot) {
+                    val originalPrefix = prefix
+                    prefix = prefix.parent()
                     fqNameByPrefix.putValue(prefix, fqName)
+                    if (prefix.isRoot) {
+                        topLevelPackageFqNames.add(originalPrefix)
+                        break
+                    }
                 }
             }
         }
@@ -106,19 +107,26 @@ class SubpackagesIndexService(private val project: Project): Disposable {
          *
          * Null when it is not possible to get and cache fqNames for the scope
          */
-        private fun knownPartialFqNames(scope: GlobalSearchScope): Set<FqName>? {
+        private fun knownTopFqNames(scope: GlobalSearchScope): Collection<FqName>? {
             if (!enableSubpackageCaching) return null
 
             val moduleSourceScope = scope.safeAs<ModuleSourceScope>() ?: return null
-            val map = moduleSourceScope.module.cacheByProvider(*dependencies, provider = ::knownPartialFqNamesProvider)
+            val module = moduleSourceScope.module
+            val map: MutableMap<Class<out ModuleSourceScope>, Collection<FqName>> =
+                knownTopFqNamesPerModule.computeIfAbsent(module) {
+                    Collections.synchronizedMap(mutableMapOf<Class<out ModuleSourceScope>, Collection<FqName>>())
+                }
             val scopeClass = moduleSourceScope.javaClass
             val result = map.computeIfAbsent(scopeClass) {
-                KotlinPartialPackageNamesIndex.filterFqNames(allPackageFqNames, scope)
+                val filterFqNames = KotlinPartialPackageNamesIndex.filterFqNames(topLevelPackageFqNames, scope)
+                if (filterFqNames.size <= 3) filterFqNames.toList() else filterFqNames
             }
             // result has to have at least `<root>` element, if it is empty it means nothing is indexed in a scope, no reasons to cache it
-            return result.ifEmpty {
+            return if (result.isEmpty() && runReadAction { DumbService.isDumb(project) }) {
                 map.remove(scopeClass)
                 null
+            } else {
+                result
             }
         }
 
@@ -135,7 +143,18 @@ class SubpackagesIndexService(private val project: Project): Disposable {
                 return false
             }
 
-            return knownPartialFqNames(scope)?.let { fqName in it } ?: PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope)
+            return if (hasUnknownTopFqName(fqName, scope)) {
+                false
+            } else {
+                PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope)
+            }
+        }
+
+        private fun hasUnknownTopFqName(fqName: FqName, scope: GlobalSearchScope): Boolean {
+            val knownTopFqNames = knownTopFqNames(scope) ?: return false
+            val topLevelFqName = KotlinPartialPackageNamesIndex.toTopLevelFqName(fqName)
+            if (topLevelFqName !in knownTopFqNames) return true
+            return false
         }
 
         /**
@@ -152,9 +171,8 @@ class SubpackagesIndexService(private val project: Project): Disposable {
             }
             val fqNames = fqNameByPrefix[fqName].ifEmpty { return emptyList() }
 
-            val knownPartialFqNames = knownPartialFqNames(scope)
-            knownPartialFqNames?.let {
-                if (fqName !in it) return emptyList()
+            if (hasUnknownTopFqName(fqName, scope)) {
+                return emptyList()
             }
 
             val subPackagesNames = hashSetOf<Name>()
@@ -164,10 +182,6 @@ class SubpackagesIndexService(private val project: Project): Disposable {
 
                 val subPackageName = filesFqName.pathSegments()[len]
                 if (subPackageName in subPackagesNames || !nameFilter(subPackageName)) continue
-
-                if (knownPartialFqNames?.contains(filesFqName) == false) {
-                    continue
-                }
 
                 val containsFilesWithPartialPackage = PackageIndexUtil.containsFilesWithPartialPackage(filesFqName, scope)
                 if (containsFilesWithPartialPackage) {
@@ -188,30 +202,3 @@ class SubpackagesIndexService(private val project: Project): Disposable {
     }
 }
 private fun FqName.pathSegmentsSize() = if (isRoot) 0 else asString().count { it == '.' } + 1
-
-// to avoid capture of extra field (esp. `dependencies`) into a provider lambda
-private fun knownPartialFqNamesProvider() = Collections.synchronizedMap(mutableMapOf<Class<out ModuleSourceScope>, Set<FqName>>())
-
-private class OtherLanguagesModificationTracker(val project: Project): ModificationTracker {
-    private val delegate = PsiModificationTracker.SERVICE.getInstance(project).forLanguages {
-        // PSI changes of Kotlin and Java languages are covered by [KotlinPackageModificationListener]
-        // changes in other languages could affect packages
-        !it.`is`(Language.ANY) && !it.`is`(KotlinLanguage.INSTANCE) && !it.`is`(JavaLanguage.INSTANCE)
-    }
-
-    override fun getModificationCount(): Long = delegate.modificationCount
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as OtherLanguagesModificationTracker
-
-        return project == other.safeAs<OtherLanguagesModificationTracker>()?.project
-    }
-
-    override fun hashCode(): Int {
-        return project.hashCode()
-    }
-
-}

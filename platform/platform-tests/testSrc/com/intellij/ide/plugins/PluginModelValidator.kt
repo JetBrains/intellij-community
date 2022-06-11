@@ -4,11 +4,11 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.PathManager.getHomePath
-import com.intellij.util.XmlElement
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.getErrorsAsString
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
-import com.intellij.util.readXmlAsModel
+import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException

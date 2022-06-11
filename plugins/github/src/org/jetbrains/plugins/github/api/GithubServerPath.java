@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.collaboration.api.ServerPath;
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * Github server reference allowing to specify custom port and path to instance
  */
 @Tag("server")
-public class GithubServerPath implements ServerPath {
+public final class GithubServerPath implements ServerPath {
   public static final String DEFAULT_HOST = "github.com";
   public static final GithubServerPath DEFAULT_SERVER = new GithubServerPath(DEFAULT_HOST);
   private static final String API_PREFIX = "api.";

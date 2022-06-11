@@ -343,7 +343,7 @@ final class FileTypeDetectionService implements Disposable {
   private byte readFlagsFromCache(@NotNull VirtualFile file) {
     boolean wasAutoDetectRun = false;
     byte status = 0;
-    try (DataInputStream stream = autoDetectedAttribute.readAttribute(file)) {
+    try (DataInputStream stream = autoDetectedAttribute.readFileAttribute(file)) {
       status = stream == null ? 0 : stream.readByte();
       wasAutoDetectRun = stream != null;
     }
@@ -358,7 +358,7 @@ final class FileTypeDetectionService implements Disposable {
   // store auto-detection flags to the persistent FS file attributes
   // writes AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK bits only
   private void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
-    try (DataOutputStream stream = autoDetectedAttribute.writeAttribute(file)) {
+    try (DataOutputStream stream = autoDetectedAttribute.writeFileAttribute(file)) {
       stream.writeByte(flags & (AUTO_DETECTED_AS_TEXT_MASK | AUTO_DETECTED_AS_BINARY_MASK));
     }
     catch (IOException e) {

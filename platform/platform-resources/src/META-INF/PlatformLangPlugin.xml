@@ -81,6 +81,7 @@
     <bookmarkProvider implementation="com.intellij.ide.favoritesTreeView.AbstractUrlBookmarkProvider" order="first"/>
     <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.LineBookmarkProvider" order="last"/>
     <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.ModuleBookmarkProvider"/>
+    <bookmarkProvider implementation="com.intellij.ide.bookmark.providers.RootTypeBookmarkProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.GroupListProvider"/>
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>

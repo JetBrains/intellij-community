@@ -35,7 +35,7 @@ import training.util.LessonEndInfo
 import java.util.regex.Pattern
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
-  override val existedFile = "git/sphinx_cat.yml"
+  override val sampleFilePath = "git/sphinx_cat.yml"
   override val branchName = "feature"
   private val textToFind = "sphinx"
 
@@ -190,7 +190,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       showWarningIfGitWindowClosed()
       test {
         ideFrame {
-          val treeNodeText = existedFile
+          val treeNodeText = sampleFilePath
           val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString().contains(treeNodeText) }
           val row = invokeAndWaitIfNeeded {
             val tree = fixture.target()

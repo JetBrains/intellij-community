@@ -27,28 +27,28 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * If [cutNewLineBeforeServiceMessage] is set, each service message must have "\n" prefix which is cut.
  */
-abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
-                                       private val bufferTextUntilNewLine: Boolean,
-                                       private val cutNewLineBeforeServiceMessage: Boolean) {
+abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: String,
+                                          private val bufferTextUntilNewLine: Boolean,
+                                          private val cutNewLineBeforeServiceMessage: Boolean) {
 
-  data class OutputType(val name: String, val streamType: OutputStreamType)
+  data class OutputType<T>(val data: T, val streamType: OutputStreamType)
 
   enum class OutputStreamType {
     STDOUT, STDERR, SYSTEM
   }
 
-  private data class Output(val text: String, val outputType: OutputType)
+  private data class Output<T>(val text: String, val outputType: OutputType<T>)
 
   private var newLinePending = false
 
-  private val prevRefs = OutputStreamType.values().associateWith { AtomicReference<Output>() }
+  private val prevRefs = OutputStreamType.values().associateWith { AtomicReference<Output<T>>() }
 
   /**
    * For stderr and system [text] is provided as fast as possible unless [bufferTextUntilNewLine].
    * For stdout [text] is either TC message that starts from [serviceMessagePrefix] and ends with new line
    * or chunk of process output
    * */
-  abstract fun onTextAvailable(text: String, outputType: OutputType)
+  abstract fun onTextAvailable(text: String, outputType: OutputType<T>)
 
   /**
    * Only stdout ([OutputType.streamType] == [OutputStreamType.STDOUT]) accepts Teamcity Messages ([ServiceMessage]).
@@ -57,7 +57,7 @@ abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
    * Stdout may be buffered until the end of the message.
    * Make sure you do not process same type from different threads.
    */
-  fun process(text: String, outputType: OutputType) {
+  fun process(text: String, outputType: OutputType<T>) {
     val prevRef = requireNotNull(prevRefs[outputType.streamType]) {
       "reference to ${outputType.streamType} stream type is missing"
     }
@@ -76,7 +76,7 @@ abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
     }
   }
 
-  private fun processInternal(text: String, outputType: OutputType): String? {
+  private fun processInternal(text: String, outputType: OutputType<T>): String? {
     var from = 0
     val processServiceMessages = outputType.streamType == OutputStreamType.STDOUT
     // new line char and teamcity message start are two reasons to flush previous text
@@ -142,7 +142,7 @@ abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
     }
   }
 
-  private fun flushInternal(text: String, outputType: OutputType, lastFlush: Boolean = false) {
+  private fun flushInternal(text: String, outputType: OutputType<T>, lastFlush: Boolean = false) {
     if (cutNewLineBeforeServiceMessage && outputType.streamType == OutputStreamType.STDOUT) {
       if (newLinePending) { //Prev. flush was "\n".
         if (!text.startsWith(serviceMessagePrefix) || (lastFlush)) {

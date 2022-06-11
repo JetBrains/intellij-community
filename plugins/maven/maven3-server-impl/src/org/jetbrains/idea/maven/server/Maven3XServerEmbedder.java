@@ -676,8 +676,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     if (VersionComparatorUtil.compare(getMavenVersion(), "3.6.2") >= 0) {
       org.apache.maven.model.path.DefaultPathTranslator pathTranslator = new org.apache.maven.model.path.DefaultPathTranslator();
       UrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
-      container.addComponent(pathTranslator, org.apache.maven.model.path.PathTranslator.class.getName());
-      container.addComponent(pathTranslator, org.apache.maven.model.path.PathTranslator.class, "ide");
+      container.addComponent(pathTranslator, PathTranslator.class.getName());
+      container.addComponent(pathTranslator, PathTranslator.class, "ide");
 
       container.addComponent(urlNormalizer, UrlNormalizer.class.getName());
       container.addComponent(urlNormalizer, UrlNormalizer.class, "ide");

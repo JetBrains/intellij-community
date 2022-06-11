@@ -89,6 +89,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   default void clearOption(@NotNull String key) {
     setOption(key, null);
   }

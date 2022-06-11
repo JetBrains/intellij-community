@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.*;
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType;
@@ -60,6 +62,16 @@ public final class GdkMethodUtil {
   @NlsSafe public static final String WITH_STREAM = "withStream";
   @NlsSafe public static final String WITH_STREAMS = "withStreams";
   @NlsSafe public static final String WITH_OBJECT_STREAMS = "withObjectStreams";
+
+  private static final Map<String, String> AST_TO_EXPR_MAPPER =
+    Map.of("org.codehaus.groovy.ast.expr.ClosureExpression", "groovy.lang.Closure",
+           "org.codehaus.groovy.ast.expr.ListExpression", "java.util.List",
+           "org.codehaus.groovy.ast.expr.MapExpression", "java.util.Map",
+           "org.codehaus.groovy.ast.expr.TupleExpression", "groovy.lang.Tuple",
+           "org.codehaus.groovy.ast.expr.MethodCallExpression", "java.lang.Object");
+
+  private static final String MACRO_ORIGIN_INFO = "Macro method";
+
 
   private GdkMethodUtil() {
   }
@@ -455,5 +467,39 @@ public final class GdkMethodUtil {
       }
     }
     return false;
+  }
+
+  public static PsiMethod createMacroMethod(@NotNull PsiMethod prototype) {
+    GrLightMethodBuilder syntheticMacro = new GrLightMethodBuilder(prototype.getManager(), prototype.getName());
+    syntheticMacro.setModifiers(new String[]{PsiModifier.STATIC});
+    PsiParameterList list = prototype.getParameterList();
+    for (int i = 1; i < list.getParametersCount(); ++i) {
+      PsiParameter actualParameter = list.getParameter(i);
+      String generatedParameterType;
+      String name;
+      if (actualParameter == null) {
+        generatedParameterType = CommonClassNames.JAVA_LANG_OBJECT;
+        name = "expression";
+      } else {
+        PsiType type = actualParameter.getType();
+        if (!type.equals(PsiType.NULL)) {
+          generatedParameterType = AST_TO_EXPR_MAPPER.getOrDefault(type.getCanonicalText(), null);
+        } else {
+          generatedParameterType = CommonClassNames.JAVA_LANG_OBJECT;
+        }
+        name = actualParameter.getName();
+      }
+      syntheticMacro.addParameter(
+        new GrLightParameter(name,
+                             PsiType.getTypeByName(generatedParameterType, prototype.getProject(), prototype.getResolveScope()),
+                             prototype));
+    }
+    syntheticMacro.setNavigationElement(prototype);
+    syntheticMacro.setOriginInfo(MACRO_ORIGIN_INFO);
+    return syntheticMacro;
+  }
+
+  public static boolean isMacro(@NotNull PsiMethod method) {
+    return method instanceof OriginInfoAwareElement && MACRO_ORIGIN_INFO.equals(((OriginInfoAwareElement)method).getOriginInfo());
   }
 }

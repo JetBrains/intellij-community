@@ -65,4 +65,4 @@ class RunnableStatusListener implements DaemonCodeAnalyzer.DaemonListener {
     return true;
   }
 }
-interface I { public static void main(String[] args) { }}
+interface I { static void main(String[] args) { }}

@@ -14,8 +14,8 @@ import java.util.List;
 @Deprecated
 public class EditorWithProviderComposite extends EditorComposite {
   protected EditorWithProviderComposite(@NotNull VirtualFile file,
-                                        @NotNull List<FileEditorWithProvider> editorWithProviders,
+                                        @NotNull List<FileEditorWithProvider> editorsWithProviders,
                                         @NotNull FileEditorManagerEx fileEditorManager) {
-    super(file, editorWithProviders, fileEditorManager);
+    super(file, editorsWithProviders, fileEditorManager);
   }
 }

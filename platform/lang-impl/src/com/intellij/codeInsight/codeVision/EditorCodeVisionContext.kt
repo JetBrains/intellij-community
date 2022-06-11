@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.codeVision
 
 import com.intellij.codeInsight.codeVision.ui.CodeVisionView
+import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -138,6 +139,10 @@ open class EditorCodeVisionContext(
 
   fun hasProviderCodeVision(id: String): Boolean {
     return frontendResults.mapNotNull { it.getUserData(codeVisionEntryOnHighlighterKey) }.any { it.providerId == id }
+  }
+
+  open fun hasOnlyPlaceholders(): Boolean{
+    return frontendResults.all { it.getUserData(codeVisionEntryOnHighlighterKey) is PlaceholderCodeVisionEntry }
   }
 }
 

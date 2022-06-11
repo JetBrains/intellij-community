@@ -657,13 +657,7 @@ public class ExprProcessor implements CodeConstants {
   public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
     int tp = type.getType();
     StringBuilder sb = new StringBuilder();
-    typeAnnWriteHelpers = typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
-      if (typeAnnWriteHelper.getAnnotation().isForDeepestArrayComponent(type.getArrayDim())) {
-        typeAnnWriteHelper.writeTo(sb);
-        return false;
-      }
-      return true;
-    }).collect(Collectors.toList());
+    typeAnnWriteHelpers = writeTypeAnnotationBeforeType(type, sb, typeAnnWriteHelpers);
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       sb.append(typeNames[tp]);
       return sb.toString();
@@ -688,38 +682,82 @@ public class ExprProcessor implements CodeConstants {
         ret = buildJavaClassName(type.getValue());
       }
       if (ret == null) {
-        // FIXME: a warning should be logged
-        return UNDEFINED_TYPE_STRING;
+        return UNDEFINED_TYPE_STRING; // FIXME: a warning should be logged
       }
-      String[] nestedClasses = ret.split("\\.");
-      writeNestedClass(sb, nestedClasses, typeAnnWriteHelpers);
+      List<String> nestedTypes = Arrays.asList(ret.split("\\."));
+      writeNestedClass(sb, type, nestedTypes, typeAnnWriteHelpers);
+      popNestedTypeAnnotation(typeAnnWriteHelpers);
       return sb.toString();
     }
 
     throw new RuntimeException("invalid type");
   }
 
-  public static void writeNestedClass(StringBuilder sb, String[] nestedClasses, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+  public static List<TypeAnnotationWriteHelper> writeTypeAnnotationBeforeType(
+    Type type,
+    StringBuilder sb,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
+    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> { // TODO remove duplicate
+      if (typeAnnWriteHelper.getAnnotation().isWrittenBeforeType(type)) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
+      }
+      StructTypePathEntry pathEntry = typeAnnWriteHelper.getPaths().peek();
+      if (pathEntry != null
+          && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getId()
+          && type.isAnnotatable()
+      ) typeAnnWriteHelper.getPaths().pop();
+      return true;
+    }).collect(Collectors.toList());
+  }
+
+  public static List<TypeAnnotationWriteHelper> writeNestedClass(
+    StringBuilder sb,
+    Type type,
+    List<String> nestedTypes,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
     List<ClassesProcessor.ClassNode> enclosingClasses = enclosingClassList();
-    for (int i = 0; i < nestedClasses.length; i++) {
-      String nestedType = nestedClasses[i];
+    StringBuilder curPathBldr = new StringBuilder(type.getValue().substring(0, type.getValue().lastIndexOf('/') + 1));
+    for (int i = 0; i < nestedTypes.size(); i++) {
+      String nestedType = nestedTypes.get(i);
       boolean shouldWrite = true;
-      if (!enclosingClasses.isEmpty() && i != nestedClasses.length - 1) {
+      if (!enclosingClasses.isEmpty() && i != nestedTypes.size() - 1) {
         String enclosingType = enclosingClasses.remove(0).simpleName;
         shouldWrite = !nestedType.equals(enclosingType);
       }
       if (i == 0) { // first annotation can be written already
-        if (!sb.toString().isEmpty()) shouldWrite= true; // write if annotation exists
+        if (!sb.toString().isEmpty()) shouldWrite = true; // write if annotation exists
       } else {
-        List<TypeAnnotationWriteHelper> notWrittenTypeAnnotations = writeNestedTypeAnnotations(sb, typeAnnWriteHelpers);
-        shouldWrite |= (notWrittenTypeAnnotations.size() != typeAnnWriteHelpers.size());
-        typeAnnWriteHelpers = notWrittenTypeAnnotations;
+        if (canWriteNestedTypeAnnotation(curPathBldr + nestedType + '$', nestedTypes.subList(i + 1, nestedTypes.size()))) {
+          List<TypeAnnotationWriteHelper> notWrittenTypeAnnotations = writeNestedTypeAnnotations(sb, typeAnnWriteHelpers);
+          shouldWrite |= (notWrittenTypeAnnotations.size() != typeAnnWriteHelpers.size());
+          typeAnnWriteHelpers = notWrittenTypeAnnotations;
+          if (i != nestedTypes.size() - 1) popNestedTypeAnnotation(typeAnnWriteHelpers);
+        }
       }
       if (shouldWrite) {
         sb.append(nestedType);
-        if (i != nestedClasses.length - 1) sb.append(".");
+        curPathBldr.append(nestedType);
+        if (i != nestedTypes.size() - 1) {
+          curPathBldr.append('$');
+          sb.append('.');
+        }
       }
     }
+    return typeAnnWriteHelpers;
+  }
+
+  /**
+   * Nested type annotations can only be written when all types on the right of the currently annotated type don't reference a static class.
+   */
+  public static boolean canWriteNestedTypeAnnotation(String curPath, List<String> nestedTypes) {
+    if (nestedTypes.isEmpty()) return true;
+    String fullName = curPath + nestedTypes.get(0);
+    ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName);
+    if (classNode == null) return false;
+    return (classNode.access & CodeConstants.ACC_STATIC) == 0 && canWriteNestedTypeAnnotation(fullName + "$", nestedTypes.subList(1, nestedTypes.size()));
   }
 
   public static List<ClassesProcessor.ClassNode> enclosingClassList() {
@@ -737,24 +775,30 @@ public class ExprProcessor implements CodeConstants {
       ).collect(Collectors.toList());
   }
 
-  /**
-   * @return Whether a nested type annotation was written.
-   */
   public static List<TypeAnnotationWriteHelper> writeNestedTypeAnnotations(
     StringBuilder sb,
-    List<TypeAnnotationWriteHelper> typePathWriteHelper
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
   ) {
-    return typePathWriteHelper.stream().filter(typeAnnotationWriteHelper -> {
-      StructTypePathEntry path = typeAnnotationWriteHelper.getPaths().peek();
-      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getId()) {
-        typeAnnotationWriteHelper.getPaths().pop();
-        if (typeAnnotationWriteHelper.getPaths().isEmpty()) {
-          typeAnnotationWriteHelper.writeTo(sb);
-          return false;
-        }
+    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
+      if (path == null) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
       }
       return true;
     }).collect(Collectors.toList());
+  }
+
+  /**
+   * Pops the nested path entry of the type annotation helper stack. Should be called after writing a nested type.
+   */
+  public static void popNestedTypeAnnotation(List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    typeAnnWriteHelpers.forEach(typeAnnWriteHelper -> {
+      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
+      if (path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getId()) {
+        typeAnnWriteHelper.getPaths().pop();
+      }
+    });
   }
 
   public static String getCastTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteHelper) {

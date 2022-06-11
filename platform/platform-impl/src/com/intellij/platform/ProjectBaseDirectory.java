@@ -35,7 +35,7 @@ public final class ProjectBaseDirectory {
   /**
    * @deprecated Do not use.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setBaseDir(VirtualFile baseDir) {
     this.baseDir = Paths.get(baseDir.getPath());
   }

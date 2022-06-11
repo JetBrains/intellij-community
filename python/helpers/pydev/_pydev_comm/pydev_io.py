@@ -43,7 +43,7 @@ class PipeIO(object):
             result = bytes(self.buffer[self.read_pos:read_until_pos])
 
             self.read_pos = read_until_pos
-            self.bytes_consumed.notifyAll()
+            self.bytes_consumed.notify_all()
 
             return result
         finally:
@@ -74,7 +74,7 @@ class PipeIO(object):
                 new_buf_pos = buf_pos + bytes_to_write
 
                 self.buffer.extend(buf[buf_pos:new_buf_pos])
-                self.bytes_produced.notifyAll()
+                self.bytes_produced.notify_all()
 
                 buf_pos = new_buf_pos
         finally:
@@ -93,7 +93,7 @@ class PipeIO(object):
             self._closed = True
             # wake up the reader to let him find out that no more bytes will be
             # available
-            self.bytes_produced.notifyAll()
+            self.bytes_produced.notify_all()
         finally:
             self.lock.release()
 

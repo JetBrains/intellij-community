@@ -44,7 +44,7 @@ public interface UnknownSdkFixAction {
   /**
    * Attaches a listener to the instance. Events are not fired before
    * {@link #applySuggestionAsync(Project)} or {@link #applySuggestionBlocking(ProgressIndicator)}
-   * method is called
+   * method is called.
    */
   void addSuggestionListener(@NotNull Listener listener);
 
@@ -52,14 +52,14 @@ public interface UnknownSdkFixAction {
     /**
      * This event can be called when a prototype SDK object is created,
      * but probably it is not yet added to the
-     * {@link com.intellij.openapi.projectRoots.ProjectJdkTable}
+     * {@link com.intellij.openapi.projectRoots.ProjectJdkTable}.
      */
     void onSdkNameResolved(@NotNull Sdk sdk);
 
     /**
-     * One of the he final events of the resolution. Is called when a given SDK
-     * is fully ready and registered to the.
-     * {@link com.intellij.openapi.projectRoots.ProjectJdkTable}
+     * One of the final events of the resolution. Is called when a given SDK
+     * is fully ready and registered to the
+     * {@link com.intellij.openapi.projectRoots.ProjectJdkTable}.
      * @see #onResolveFailed()
      */
     void onSdkResolved(@NotNull Sdk sdk);

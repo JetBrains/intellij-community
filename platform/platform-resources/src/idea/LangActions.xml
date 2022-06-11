@@ -416,7 +416,7 @@
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction">
         <override-text place="MainMenu"/>
       </action>
-      <action id="SETextAction" class="com.intellij.find.impl.SETextContributor$Companion$SETextAction"/>
+      <action id="TextSearchAction" class="com.intellij.find.impl.TextSearchContributor$Companion$TextSearchAction"/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GotoLine"/>
 
@@ -1127,7 +1127,6 @@
       <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction">
-        <override-text place="XDebuggerTreePopup"/>
       </action>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction" use-shortcut-of="$Copy"/>
       <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
@@ -1278,7 +1277,6 @@
     </group>
 
     <group id="XDebugger.Watches.Inline.Popup" popup="true">
-      <reference ref="XDebugger.SetValue"/>
     </group>
 
     <group id="XDebugger.Inspect.Tree.Popup">
@@ -1302,10 +1300,10 @@
     </group>
 
     <group id="RunnerLayoutActions">
+      <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
       <group id="Runner.Layout">
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
                 icon="AllIcons.Debugger.RestoreLayout"/>
-        <action id="Runner.ToggleTabLabels" class="com.intellij.execution.ui.layout.actions.ToggleShowTabLabelsAction"/>
       </group>
       <group id="Runner.View.Close.Group" popup="false">
         <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Close"/>
@@ -1461,15 +1459,6 @@
     <group id="ExtractMethodToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>
       <reference ref="TreeNodeExclusion"/>
-    </group>
-
-    <group id="InspectionToolWindow.Toolbar" searchable="false">
-      <action id="ExportInspectionResults" class="com.intellij.codeInspection.ui.actions.InspectionResultsExportAction"/>
-    </group>
-
-    <group id="InspectionToolWindow.ExportPopup" searchable="false">
-      <action id="ExportInspectionResultsToHTML" class="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
-      <action id="ExportInspectionResultsToXML" class="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
     </group>
 
     <group id="RunDashboardContentToolbar">

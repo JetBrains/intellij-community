@@ -15,4 +15,9 @@ abstract class CodeVisionEntry(val providerId: String,
                                val icon: Icon?,
                                val longPresentation: String,
                                val tooltip: String,
-                               val extraActions: List<CodeVisionEntryExtraActionModel>) : UserDataHolderBase()
+                               val extraActions: List<CodeVisionEntryExtraActionModel>) : UserDataHolderBase() {
+  /**
+   * Defines if we show entry in 'More' popup
+   */
+  var showInMorePopup: Boolean = true
+}

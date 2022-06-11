@@ -2,11 +2,14 @@
 package training.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
@@ -28,7 +31,7 @@ import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 import kotlin.math.roundToInt
 
-internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
+internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane(), Disposable {
   //Style Attributes for LessonMessagePane(JTextPane)
   private val INACTIVE = SimpleAttributeSet()
   private val REGULAR = SimpleAttributeSet()
@@ -109,7 +112,19 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     }
     addMouseListener(listener)
     addMouseMotionListener(listener)
+
+    val connect = ApplicationManager.getApplication().messageBus.connect(this)
+    connect.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
+      override fun activeKeymapChanged(keymap: Keymap?) {
+        redrawMessages()
+      }
+      override fun shortcutChanged(keymap: Keymap, actionId: String) {
+        redrawMessages()
+      }
+    })
   }
+
+  override fun dispose() = Unit
 
   private fun getRangeDataForMouse(me: MouseEvent): RangeData? {
     val offset = viewToModel2D(Point2D.Double(me.x.toDouble(), me.y.toDouble()))
@@ -282,6 +297,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       if (insertOffset != 0)
         insertText("\n", paragraphStyle)
       for (part in messageParts) {
+        part.updateTextAndSplit()
         val startOffset = insertOffset
         part.startOffset = startOffset
         when (part.type) {

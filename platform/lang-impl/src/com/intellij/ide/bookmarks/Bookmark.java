@@ -150,7 +150,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return highlighter;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public Document getDocument() {
     return getCachedDocument();

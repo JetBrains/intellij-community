@@ -28,6 +28,6 @@ public final class SystemInfoRt {
   private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   /** @deprecated inexact, please use {@code com.intellij.util.system.CpuArch} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = !(ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32"));
 }

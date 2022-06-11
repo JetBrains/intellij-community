@@ -3,11 +3,11 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.sun.net.httpserver.HttpContext
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.PrintWriter
@@ -18,7 +18,6 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
@@ -215,13 +214,7 @@ class DevIdeaBuildServer {
     }
 
     private fun getHomePath(): Path {
-      val homePath: Path? = (PathManager.getHomePath(false) ?: PathManager.getHomePathFor(DevIdeaBuildServer::class.java))?.let {
-        Paths.get(it)
-      }
-      if (homePath == null) {
-        throw ConfigurationException("Could not find installation home path. Please specify explicitly via `idea.path` system property")
-      }
-      return homePath
+      return IdeaProjectLoaderUtil.guessUltimateHome(DevIdeaBuildServer::class.java)
     }
   }
 }

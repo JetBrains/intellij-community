@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,9 +7,12 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.DataInputOutputUtil;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -20,14 +23,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A file has three indexed states (per particular index): indexed (with particular index_stamp which monotonically increases), outdated and (trivial) unindexed.
@@ -208,14 +206,10 @@ public final class IndexingStamp {
   }
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
-    Lock readLock = getStripedLock(fileId).readLock();
-    readLock.lock();
-    try {
+    return ourLock.withReadLock(fileId, () -> {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       return stamp.get(indexName);
-    } finally {
-      readLock.unlock();
-    }
+    });
   }
 
   @TestOnly
@@ -245,31 +239,25 @@ public final class IndexingStamp {
 
   public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {
     assert fileId > 0;
-    Lock writeLock = getStripedLock(fileId).writeLock();
-    writeLock.lock();
-    try {
+    ourLock.withWriteLock(fileId, () -> {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       stamp.set(indexName, indexCreationStamp);
-    } finally {
-      writeLock.unlock();
-    }
+      return null;
+    });
   }
 
-  public static @NotNull List<ID<?,?>> getNontrivialFileIndexedStates(int fileId) {
-    Lock readLock = getStripedLock(fileId).readLock();
-    readLock.lock();
-    try {
-      Timestamps stamp = createOrGetTimeStamp(fileId);
-      if (stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
-        return List.copyOf(stamp.myIndexStamps.keySet());
+  public static @NotNull List<ID<?, ?>> getNontrivialFileIndexedStates(int fileId) {
+    return ourLock.withReadLock(fileId, () -> {
+      try {
+        Timestamps stamp = createOrGetTimeStamp(fileId);
+        if (stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
+          return List.copyOf(stamp.myIndexStamps.keySet());
+        }
       }
-    }
-    catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
-    }
-    finally {
-      readLock.unlock();
-    }
-    return Collections.emptyList();
+      catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
+      }
+      return Collections.emptyList();
+    });
   }
 
   public static void flushCaches() {
@@ -277,22 +265,36 @@ public final class IndexingStamp {
   }
 
   public static void flushCache(int finishedFile) {
-    Lock readLock = getStripedLock(finishedFile).readLock();
-    readLock.lock();
-    try {
+    boolean exit = ourLock.withReadLock(finishedFile, () -> {
       Timestamps timestamps = ourTimestampsCache.get(finishedFile);
-      if (timestamps == null) return;
+      if (timestamps == null) return true;
       if (!timestamps.isDirty()) {
         ourTimestampsCache.remove(finishedFile);
-        return;
+        return true;
       }
-    } finally {
-      readLock.unlock();
-    }
+      return false;
+    });
+    if (exit) return;
 
     while (!ourFinishedFiles.offer(finishedFile)) {
       doFlush();
     }
+  }
+
+  @TestOnly
+  public static int @NotNull [] dumpCachedUnfinishedFiles() {
+    return ourLock.withAllLocksReadLocked(() -> {
+      int[] cachedKeys = ourTimestampsCache.keys();
+      if (cachedKeys.length == 0) {
+        return ArrayUtil.EMPTY_INT_ARRAY;
+      }
+      else {
+        IntSet cachedIds = new IntArraySet(cachedKeys);
+        Set<Integer> finishedIds = new HashSet<>(ourFinishedFiles);
+        cachedIds.removeAll(finishedIds);
+        return cachedIds.toIntArray();
+      }
+    });
   }
 
   private static void doFlush() {
@@ -301,33 +303,28 @@ public final class IndexingStamp {
 
     if (!files.isEmpty()) {
       for (Integer file : files) {
-        Lock writeLock = getStripedLock(file).writeLock();
-        writeLock.lock();
-        try {
-          Timestamps timestamp = ourTimestampsCache.remove(file);
-          if (timestamp == null) continue;
+        RuntimeException exception = ourLock.withWriteLock(file, () -> {
+          try {
+            Timestamps timestamp = ourTimestampsCache.remove(file);
+            if (timestamp == null) return null;
 
-          if (timestamp.isDirty() /*&& file.isValid()*/) {
-            try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
-              timestamp.writeToStream(sink);
+            if (timestamp.isDirty() /*&& file.isValid()*/) {
+              try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
+                timestamp.writeToStream(sink);
+              }
             }
+            return null;
           }
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        } finally {
-          writeLock.unlock();
+          catch (IOException e) {
+            return new RuntimeException(e);
+          }
+        });
+        if (exception != null) {
+          throw exception;
         }
       }
     }
   }
 
-  private static final ReadWriteLock[] ourLocks = new ReadWriteLock[16];
-  static {
-    for(int i = 0; i < ourLocks.length; ++i) ourLocks[i] = new ReentrantReadWriteLock();
-  }
-
-  private static ReadWriteLock getStripedLock(int fileId) {
-    if (fileId < 0) fileId = -fileId;
-    return ourLocks[(fileId & 0xFF) % ourLocks.length];
-  }
+  private static final StripedLock ourLock = new StripedLock();
 }

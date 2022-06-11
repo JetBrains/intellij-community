@@ -11,13 +11,14 @@ import kotlin.random.Random
 
 object FeedbackTypeResolver {
   // 10 minutes
-  private const val MIN_INACTIVE_TIME = 10
+  private const val MIN_INACTIVE_TIME = 600
 
   var lastActivityTime: LocalDateTime = LocalDateTime.now()
     private set
 
   fun checkActivity(project: Project?) {
-    if (Duration.between(lastActivityTime, LocalDateTime.now()).toMinutes() >= MIN_INACTIVE_TIME) {
+    if (Duration.between(lastActivityTime, LocalDateTime.now()).toSeconds() >=
+        Registry.intValue("platform.feedback.time.to.show.notification", MIN_INACTIVE_TIME)) {
       showFeedbackNotification(project)
     }
     lastActivityTime = LocalDateTime.now()

@@ -7,4 +7,8 @@ public class NestedTypeAnnotations {
     Z.Y.X.@D W w4;
     @A Z.@B Y.@C X.@D W w5;
     @L Z.Y.X.W w6;
+    P.@A Q.R r1;
+    P. Q. @B R r2;
+    S.T. @C U u1;
+    T. @A Y.U.I.O o1;
 }

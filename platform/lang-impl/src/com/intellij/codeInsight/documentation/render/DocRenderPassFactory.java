@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.InlineDocumentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -27,7 +26,6 @@ import java.util.Map;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.inlineDocumentationItems;
 
 public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
-  private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
   private static final Key<Boolean> RESET_TO_DEFAULT = Key.create("doc.render.reset.to.default");
   private static final Key<Boolean> ICONS_ENABLED = Key.create("doc.render.icons.enabled");
@@ -94,7 +92,6 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
     }
     catch (IndexNotReadyException e) {
-      LOG.warn(e);
       return CodeInsightBundle.message("doc.render.dumb.mode.text");
     }
   }

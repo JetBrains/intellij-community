@@ -3,6 +3,9 @@ package org.jetbrains.jpsBootstrap;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -21,7 +24,7 @@ public class JpsBootstrapJdk {
   // Corretto 11 is not available on macOS aarch64
   private static final URI ZULU_MACOS_AARCH64_URL = URI.create("https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/zulu11.50.19-ca-jdk11.0.12-macosx_aarch64.tar.gz");
 
-  public static Path getJdkHome(Path communityRoot) throws Exception {
+  public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot) throws Exception {
     if (!JpsBootstrapUtil.underTeamCity) {
       // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
       return Path.of(System.getProperty("java.home"));
@@ -37,7 +40,7 @@ public class JpsBootstrapJdk {
     return getJdkHome(communityRoot, os, arch);
   }
 
-  static Path getJdkHome(Path communityRoot, OS os, CpuArch arch) throws Exception {
+  static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot, OS os, CpuArch arch) throws Exception {
     URI jdkUrl;
     if (os == OS.MACOSX && arch == CpuArch.ARM64) {
       // Corretto 11 is not available on macOS aarch64

@@ -2,6 +2,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,5 +12,5 @@ import javax.swing.*;
 public interface NavBarLeftSideExtension {
   ExtensionPointName<NavBarLeftSideExtension> EP_NAME = ExtensionPointName.create("com.intellij.navbarLeftSide");
 
-  void process(@NotNull JComponent panel);
+  void process(@NotNull JComponent panel, @NotNull Project project);
 }

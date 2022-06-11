@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +26,7 @@ public final class StaleIndexesChecker {
     return IS_IN_STALE_IDS_DELETION.get() == Boolean.TRUE;
   }
 
-  static @NotNull IntSet checkIndexForStaleRecords(@NotNull UpdatableIndex<?, ?, FileContent> index,
+  static @NotNull IntSet checkIndexForStaleRecords(@NotNull UpdatableIndex<?, ?, FileContent, ?> index,
                                                    boolean onStartup) throws StorageException {
     if (!ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isEAP()) {
       return IntSets.EMPTY_SET;
@@ -86,7 +86,7 @@ public final class StaleIndexesChecker {
     IndexConfiguration state = fileBasedIndex.getRegisteredIndexes().getState();
     for (ID<?, ?> id : state.getIndexIDs()) {
       try {
-        UpdatableIndex<?, ?, FileContent> index = state.getIndex(id);
+        UpdatableIndex<?, ?, FileContent, ?> index = state.getIndex(id);
         if (index != null) {
           fileBasedIndex.runUpdateForPersistentData(index.mapInputAndPrepareUpdate(staleInputId, null));
         }

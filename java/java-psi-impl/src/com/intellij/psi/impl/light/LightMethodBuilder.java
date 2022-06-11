@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -389,6 +389,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     if (!Objects.equals(myContainingClass, that.myContainingClass)) return false;
     if (!myMethodKind.equals(that.myMethodKind)) return false;
     if (!myName.equals(that.myName)) return false;
+    if (getParametersCount() != that.getParametersCount()) return false;
     if (!getParameterTypes().equals(that.getParameterTypes())) return false;
     if (!Objects.equals(getReturnType(), that.getReturnType())) return false;
 
@@ -397,7 +398,11 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
 
   @Override
   public int hashCode() {
-    return Objects.hash(myName, getReturnType(), myConstructor, myMethodKind, myContainingClass, getParameterTypes());
+    return Objects.hash(myName, myConstructor, myMethodKind, myContainingClass, getParametersCount());
+  }
+
+  private int getParametersCount() {
+    return getParameterList().getParametersCount();
   }
 
   @NotNull

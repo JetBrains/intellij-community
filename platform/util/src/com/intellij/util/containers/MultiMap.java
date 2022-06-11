@@ -157,7 +157,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated use {@link #remove(Object, Object)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public final void removeValue(K key, V value) {
     remove(key, value);
   }
@@ -286,7 +286,7 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated Use {@link #MultiMap()}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull <K, V> MultiMap<K, V> createSmart() {
     return new MultiMap<>();
   }

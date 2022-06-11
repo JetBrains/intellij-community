@@ -2,10 +2,7 @@
 
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
-import com.intellij.codeInsight.codeVision.CodeVisionEntry
-import com.intellij.codeInsight.codeVision.CodeVisionProvider
-import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
+import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
@@ -31,6 +28,7 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.util.application
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import java.awt.event.MouseEvent
@@ -58,6 +56,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
 
       try {
         val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language)
+                                    ?: return@runReadAction emptyList()
         val traverser = SyntaxTraverser.psiTraverser(file)
         for (element in traverser.preOrderDfsTraversal()) {
           if (visionLanguageContext.isAccepted(element)) {
@@ -66,7 +65,7 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
             val text = codeAuthorInfo.getText()
             val icon = if (codeAuthorInfo.mainAuthor != null) AllIcons.Vcs.Author else null
             val clickHandler = CodeAuthorClickHandler(element, language)
-            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList()))
+            lenses.add(textRange to ClickableTextCodeVisionEntry(text, id, onClick = clickHandler, icon, text, text, emptyList()).apply { this.showInMorePopup = false })
           }
         }
       }
@@ -75,6 +74,48 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
         throw e
       }
       return@runReadAction lenses
+    }
+  }
+
+  override fun collectPlaceholders(editor: Editor): List<TextRange> {
+
+    application.assertReadAccessAllowed()
+
+    val project = editor.project ?: return emptyList()
+    val document = editor.document
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return emptyList()
+    val language = file.language
+
+    val ranges = ArrayList<TextRange>()
+
+    try {
+      val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return emptyList()
+      val traverser = SyntaxTraverser.psiTraverser(file)
+      for (element in traverser.preOrderDfsTraversal()) {
+        if (visionLanguageContext.isAccepted(element)) {
+          ranges.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element))
+        }
+      }
+    }
+    catch (e: Exception) {
+      e.printStackTrace()
+      throw e
+    }
+    return ranges
+  }
+
+  override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
+    if (psiFile == null) return null
+    val language = psiFile.language
+    val visionLanguageContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(language) ?: return null
+    return object: BypassBasedPlaceholderCollector {
+      override fun collectPlaceholders(element: PsiElement, editor: Editor): List<TextRange> {
+        val ranges = ArrayList<TextRange>()
+        if (visionLanguageContext.isAccepted(element)) {
+          ranges.add(InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element))
+        }
+        return ranges
+      }
     }
   }
 

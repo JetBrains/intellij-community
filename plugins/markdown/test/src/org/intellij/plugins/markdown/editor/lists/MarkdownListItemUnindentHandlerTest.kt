@@ -9,6 +9,8 @@ class MarkdownListItemUnindentHandlerTest: LightPlatformCodeInsightTestCase() {
 
   fun testSubItemWithChildren() = doTest()
 
+  fun testSubItemWithChildrenInBlockQuote() = doTest()
+
   private fun doTest() {
     val testName = getTestName(true)
     configureByFile("$testName.md")

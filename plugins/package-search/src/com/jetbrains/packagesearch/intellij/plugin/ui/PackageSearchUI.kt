@@ -49,8 +49,10 @@ object PackageSearchUI {
     internal val SectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
     internal val UsualBackgroundColor = MAIN_BG_COLOR
     internal val ListRowHighlightBackground = JBColor.namedColor("PackageSearch.SearchResult.background", 0xF2F5F9, 0x4C5052)
-    internal val InfoBannerBackground = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND) }
-        ?: JBColor(0xE6EEF7, 0x1C3956)
+    internal val InfoBannerBackground = JBColor.lazy {
+        EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND)
+            ?: JBColor(0xE6EEF7, 0x1C3956)
+    }
 
     internal val MediumHeaderHeight = JBValue.Float(30f)
     internal val SmallHeaderHeight = JBValue.Float(24f)

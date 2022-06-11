@@ -147,22 +147,30 @@ public final class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public void navigateToTabAndSetMainComponent(Component component, int tabIndex) {
+  public void navigateToTabAndSetMainComponent(@NotNull DefaultWelcomeScreenTab tab, Component component) {
+    int tabIndex = 0;
+    boolean found = false;
+    while (tabIndex < tree.getRowCount()) {
+      var t = getTabByIndex(tabIndex);
+      if (t == tab) {
+        found = true;
+        break;
+      }
+      tabIndex++;
+    }
+    if (!found) return;
     tree.setSelectionRow(tabIndex);
-    var selectedTab = getSelectedTab();
-    if(selectedTab == null) return;
-    if(selectedTab.myAssociatedComponent.getComponentCount() == 0) return;
 
-    var panel = selectedTab.myAssociatedComponent.getComponent(0);
-    ((JComponent)panel).removeAll();
-    ((JComponent)panel).add(component, BorderLayout.CENTER);
+    var panel = (JComponent)tab.myAssociatedComponent.getComponent(0);
+    panel.removeAll();
+    panel.add(component, BorderLayout.CENTER);
     revalidate();
     repaint();
     leftPanel.setVisible(false);
   }
 
-  private DefaultWelcomeScreenTab getSelectedTab() {
-    var tab = tree.getLastSelectedPathComponent();
+  private DefaultWelcomeScreenTab getTabByIndex(int index) {
+    var tab = tree.getPathForRow(index).getLastPathComponent();
     if (tab == null) return null;
     if (tab instanceof DefaultMutableTreeNode) {
       var panel = ((DefaultMutableTreeNode)tab).getUserObject();

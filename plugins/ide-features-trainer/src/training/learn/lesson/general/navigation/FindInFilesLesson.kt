@@ -25,7 +25,7 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 
-class FindInFilesLesson(override val existedFile: String)
+class FindInFilesLesson(override val sampleFilePath: String)
   : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -100,7 +100,7 @@ class FindInFilesLesson(override val existedFile: String)
 
     task {
       text(LessonsBundle.message("find.in.files.go.to.file", LessonUtil.rawEnter()))
-      stateCheck { virtualFile.name != existedFile.substringAfterLast('/') }
+      stateCheck { virtualFile.name != sampleFilePath.substringAfterLast('/') }
       restoreState {
         !isSelectedNeededItem(neededText)
       }

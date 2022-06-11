@@ -8,7 +8,7 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.openapi.project.Project
 import java.util.concurrent.CompletableFuture
 
-open class GHCommentTextFieldModel(
+class GHCommentTextFieldModel(
   project: Project,
   initialText: String,
   private val submitter: (String) -> CompletableFuture<*>

@@ -5,7 +5,8 @@ import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
-@State(name = "ProjectCreationInfoState", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
+@State(name = "ProjectCreationInfoState",
+       storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE, deprecated = true), Storage("ProjectCreationInfoService.xml")])
 class ProjectCreationInfoService : PersistentStateComponent<ProjectCreationInfoState> {
   companion object {
     @JvmStatic

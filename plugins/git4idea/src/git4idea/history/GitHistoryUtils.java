@@ -333,7 +333,7 @@ public final class GitHistoryUtils {
   /**
    * @deprecated use {@link GitHistoryUtils#collectTimedCommits(Project, VirtualFile, String...)} or methods from {@link GitFileHistory}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static List<Pair<SHAHash, Date>> onlyHashesHistory(@NotNull Project project,
                                                             @NotNull FilePath path,

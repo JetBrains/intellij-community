@@ -12,7 +12,7 @@ public final class PredefinedConfigurationUtil {
    * @deprecated Predefined templates can be reference in other pattern by name, but their name can be translated.
    * Use {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static Configuration createSearchTemplateInfo(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                        @NonNls @NotNull String criteria,

@@ -17,8 +17,8 @@ public abstract class StubUpdatableIndexFactory {
   }
 
   @NotNull
-  public abstract MapReduceIndexBase<Integer, SerializedStubTree> createIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
-                                                                              @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout,
-                                                                              @NotNull SerializationManagerEx serializationManager)
+  public abstract MapReduceIndexBase<Integer, SerializedStubTree, ?> createIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
+                                                                                 @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout,
+                                                                                 @NotNull SerializationManagerEx serializationManager)
     throws IOException;
 }

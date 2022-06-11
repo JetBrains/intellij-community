@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
+import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiClass
@@ -18,6 +19,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
 
   protected fun doTest(targetClass: PsiClass, testBody: () -> Unit) {
     myFixture.openFileInEditor(targetClass.containingFile.virtualFile)
+    editor.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     myFixture.doHighlighting()
 
     assertEmpty(getProblems())

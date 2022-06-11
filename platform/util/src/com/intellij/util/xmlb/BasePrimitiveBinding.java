@@ -4,7 +4,7 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.XmlElement;
+import com.intellij.util.xml.dom.XmlElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

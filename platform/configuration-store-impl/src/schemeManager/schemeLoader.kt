@@ -7,7 +7,7 @@ import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.createXmlStreamReader
+import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile

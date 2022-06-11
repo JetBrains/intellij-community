@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.struct.StructMember;
 import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.Arrays;
@@ -102,12 +103,14 @@ public class TypeAnnotation {
       .collect(Collectors.toList());
   }
 
-  public boolean isForDeepestArrayComponent(int arrayDim) {
+  public boolean isWrittenBeforeType(Type type) {
     StructTypePathEntry pathEntry = getPaths().stream().findFirst().orElse(null);
-    if (pathEntry == null && arrayDim == 0) return true;
+    if (pathEntry == null && type.getArrayDim() == 0) {
+      return type.isAnnotatable();
+    }
     if (pathEntry != null
         && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.ARRAY.getId()
-        && getPaths().size() == arrayDim
+        && getPaths().size() == type.getArrayDim()
     ) return true;
     return false;
   }

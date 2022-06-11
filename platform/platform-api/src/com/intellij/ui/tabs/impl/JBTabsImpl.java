@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -151,7 +151,7 @@ public class JBTabsImpl extends JComponent
   private List<TabInfo> myAllTabs;
   private IdeFocusManager myFocusManager;
   private static final boolean myAdjustBorders = true;
-  private Set<JBTabsImpl> myNestedTabs = new HashSet<>();
+  private final Set<JBTabsImpl> myNestedTabs = new HashSet<>();
 
   boolean myAddNavigationGroup = true;
 
@@ -199,7 +199,7 @@ public class JBTabsImpl extends JComponent
   private boolean myMouseInsideTabsArea;
   private boolean myRemoveNotifyInProgress;
 
-  private TabsLayoutCallback myTabsLayoutCallback;
+  private final TabsLayoutCallback myTabsLayoutCallback;
   private MouseListener myTabsLayoutMouseListener;
   private MouseMotionListener myTabsLayoutMouseMotionListener;
   private MouseWheelListener myTabsLayoutMouseWheelListener;
@@ -563,7 +563,7 @@ public class JBTabsImpl extends JComponent
   private ActionToolbar createToolbar(DefaultActionGroup group) {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
-    toolbar.getComponent().setBorder(JBUI.Borders.empty());
+    toolbar.getComponent().setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.emptyRight(8) : JBUI.Borders.empty());
     toolbar.getComponent().setOpaque(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     return toolbar;
@@ -582,9 +582,7 @@ public class JBTabsImpl extends JComponent
     }
     JComponent more = myMoreToolbar.getComponent();
 
-    if (Registry.is("ide.editor.tabs.show.fadeout") && !getTabsPosition().isSide() && more.isShowing()) {
-      TabInfo selectedInfo = getSelectedInfo();
-      final JBTabsImpl.Toolbar selectedToolbar = selectedInfo != null ? myInfo2Toolbar.get(selectedInfo) : null;
+    if (!getTabsPosition().isSide() && Registry.is("ide.editor.tabs.show.fadeout") && more.isShowing()) {
       int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
       Rectangle moreRect = getMoreRect();
       Rectangle labelsArea = null;
@@ -1116,6 +1114,7 @@ public class JBTabsImpl extends JComponent
       gridPanel.add(label);
     }
     myMorePopupState.prepareToShow(popup);
+    popup.getContent().putClientProperty(MorePopupAware.class, Boolean.TRUE);
     popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
   }
 
@@ -2377,8 +2376,13 @@ public class JBTabsImpl extends JComponent
 
   private void processRemove(final TabInfo info, boolean forcedNow) {
     TabLabel tabLabel = myInfo2Label.get(info);
-    ObjectUtils.consumeIfNotNull(tabLabel, label -> remove(label));
-    ObjectUtils.consumeIfNotNull(myInfo2Toolbar.get(info), toolbar -> remove(toolbar));
+    if (tabLabel != null) {
+      remove(tabLabel);
+    }
+    Toolbar toolbar = myInfo2Toolbar.get(info);
+    if (toolbar != null) {
+      remove(toolbar);
+    }
 
     JComponent tabComponent = info.getComponent();
 

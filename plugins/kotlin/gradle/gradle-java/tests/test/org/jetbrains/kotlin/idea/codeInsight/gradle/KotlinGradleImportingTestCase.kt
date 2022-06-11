@@ -20,7 +20,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
+import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.test.AndroidStudioTestUtils
@@ -35,6 +37,7 @@ import org.junit.runners.Parameterized
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 @Suppress("ACCIDENTAL_OVERRIDE")
 abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
@@ -154,6 +157,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         importProject()
         return files
     }
+
+    protected inline fun <reified T : Any> buildGradleModel(): BuiltGradleModel<T> =
+        buildGradleModel(T::class)
+
+    protected fun <T : Any> buildGradleModel(clazz: KClass<T>): BuiltGradleModel<T> =
+        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), clazz)
+
+    protected fun buildKotlinMPPGradleModel(): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel()
 
     protected fun getSourceRootInfos(moduleName: String): List<Pair<String, JpsModuleSourceRootType<*>>> {
         return ModuleRootManager.getInstance(getModule(moduleName)).contentEntries.flatMap { contentEntry ->

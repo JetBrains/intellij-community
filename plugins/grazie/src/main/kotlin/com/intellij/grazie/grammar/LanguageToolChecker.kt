@@ -13,11 +13,11 @@ import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.html.*
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.VisibleForTesting
 import org.languagetool.JLanguageTool
 import org.languagetool.Languages
 import org.languagetool.markup.AnnotatedTextBuilder
@@ -26,7 +26,6 @@ import org.languagetool.rules.RuleMatch
 import org.slf4j.LoggerFactory
 import java.util.*
 
-@VisibleForTesting
 open class LanguageToolChecker : TextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
@@ -35,7 +34,13 @@ open class LanguageToolChecker : TextChecker() {
     return grammarRules(LangTool.getTool(lang), lang)
   }
 
-  override fun check(extracted: TextContent): @NotNull List<TextProblem> {
+  override fun check(extracted: TextContent): List<TextProblem> {
+    return CachedValuesManager.getManager(extracted.containingFile.project).getCachedValue(extracted) {
+      CachedValueProvider.Result.create(doCheck(extracted), extracted.containingFile)
+    }
+  }
+
+  private fun doCheck(extracted: TextContent): List<TextProblem> {
     val str = extracted.toString()
     if (str.isBlank()) return emptyList()
 
@@ -67,7 +72,7 @@ open class LanguageToolChecker : TextChecker() {
         throw ProcessCanceledException()
       }
 
-      logger.warn("Got exception during check for typos by LanguageTool", e)
+      logger.warn("Got exception from LanguageTool", e)
       emptyList()
     }
   }

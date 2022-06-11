@@ -24,6 +24,12 @@ public abstract class AutoPopupController {
    * This doesn't affect other conditions when autopopup is not possible (e.g. power save mode).
    */
   public static final Key<Boolean> ALWAYS_AUTO_POPUP = Key.create("Always Show Completion Auto-Popup");
+
+  /**
+   * Setting this user data key to the editor with a completion provider
+   * removes from autopopup bottom panel with buttons and hints
+   */
+  public static final Key<Boolean> SHOW_BOTTOM_PANEL_IN_LOOKUP_UI = Key.create("Show bottom panel in Auto-Popup");
   /**
    * If editor has Boolean.TRUE by this key completion popup would be shown without advertising text at the bottom.
    */

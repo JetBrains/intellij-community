@@ -22,7 +22,7 @@ abstract class OsSpecificDistributionBuilder {
 
   abstract void copyFilesForOsDistribution(@NotNull Path targetPath, JvmArchitecture arch = null)
 
-  abstract void buildArtifacts(@NotNull Path osSpecificDistPath)
+  abstract void buildArtifacts(@NotNull Path osAndArchSpecificDistPath, @NotNull JvmArchitecture arch)
 
   List<String> generateExecutableFilesPatterns(boolean includeJre) {
     return Collections.emptyList()

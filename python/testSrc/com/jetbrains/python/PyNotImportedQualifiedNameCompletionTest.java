@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.QualifiedNameMatcher;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,7 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     assertTrue(matcher.prefixMatches("foo.bar.xxx.baz"));
     assertFalse(matcher.prefixMatches("foo.bar.baz.xxx"));
     assertFalse(matcher.prefixMatches("xxx.foo.bar.baz"));
+    assertFalse(matcher.prefixMatches("nonfoo.foo.bar.baz"));
   }
 
   public void testImportForModuleFunction() {
@@ -128,7 +130,7 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     myFixture.completeBasic();
     List<String> variants = myFixture.getLookupElementStrings();
     assertEquals(2, variants.size());
-    assertContainsElements(variants, "np.invert", "fileinput.input");
+    assertContainsElements(variants, "np.invert", "nt_parser.input");
   }
 
   //PY-47253
@@ -164,6 +166,33 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   // PY-47941
   public void testAttributeReExportedWithAlias() {
     assertContainsElements(doBasicCompletion(), "pytest.mark", "pytest.param");
+  }
+
+  // PY-47254
+  public void testAlreadyImportedModulesNotSuggestedTwice() {
+    List<String> variants = doBasicCompletion();
+    assertEquals(1, ContainerUtil.count(variants, "foo"::equals));
+  }
+
+  // PY-47962
+  public void testNonImportedModulesSuggestedLast() {
+    doBasicCompletion();
+    myFixture.assertPreferredCompletionItems(0, "configuration=");
+    assertContainsElements(myFixture.getLookupElementStrings(), "config", "contrib");
+  }
+
+  // PY-47962
+  public void testModuleNamesWithMiddleMatchNotSuggested() {
+    List<String> variants = doBasicCompletion();
+    assertDoesntContain(variants, "mod_foo_bar", "mod_fb", "foobar");
+    assertContainsElements(variants, "fb", "fb_util", "foo_bar");
+  }
+
+  // PY-47962
+  public void testAttributesOfModulesWithMiddleMatchNotSuggested() {
+    List<String> variants = doBasicCompletion();
+    assertDoesntContain(variants, "mod_foo_bar.var", "mod_fb.var", "foobar.var");
+    assertContainsElements(variants, "fb.var", "fb_util.var", "foo_bar.var");
   }
 
   @Nullable

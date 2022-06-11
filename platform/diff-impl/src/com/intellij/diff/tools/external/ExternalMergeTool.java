@@ -7,7 +7,6 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.ThreesideMergeRequest;
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -16,25 +15,25 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.List;
 
 public final class ExternalMergeTool {
   private static final Logger LOG = Logger.getInstance(ExternalMergeTool.class);
 
-  public static boolean isDefault() {
-    return ExternalDiffSettings.getInstance().isMergeEnabled();
+  public static boolean isEnabled() {
+    return ExternalDiffSettings.getInstance().isExternalToolsEnabled();
   }
 
-  public static boolean isEnabled() {
-    return ExternalDiffSettings.getInstance().isMergeEnabled();
+  public static boolean isDefault() {
+    return isEnabled() && ExternalDiffSettings.isNotBuiltinMergeTool();
   }
 
   public static void show(@Nullable final Project project,
+                          @NotNull ExternalDiffSettings.ExternalTool externalTool,
                           @NotNull final MergeRequest request) {
     try {
       if (canShow(request)) {
-        showRequest(project, request);
+        ExternalDiffToolUtil.executeMerge(project, externalTool, (ThreesideMergeRequest)request, null);
       }
       else {
         DiffManagerEx.getInstance().showMergeBuiltin(project, request);
@@ -44,15 +43,8 @@ public final class ExternalMergeTool {
     }
     catch (Throwable e) {
       LOG.warn(e);
-      Messages.showErrorDialog(project, e.getMessage(),DiffBundle.message("can.t.show.merge.in.external.tool"));
+      Messages.showErrorDialog(project, e.getMessage(), DiffBundle.message("can.t.show.merge.in.external.tool"));
     }
-  }
-
-  public static void showRequest(@Nullable Project project, @NotNull MergeRequest request)
-    throws ExecutionException, IOException {
-    ExternalDiffSettings settings = ExternalDiffSettings.getInstance();
-
-    ExternalDiffToolUtil.executeMerge(project, settings, (ThreesideMergeRequest)request, null);
   }
 
   public static boolean canShow(@NotNull MergeRequest request) {

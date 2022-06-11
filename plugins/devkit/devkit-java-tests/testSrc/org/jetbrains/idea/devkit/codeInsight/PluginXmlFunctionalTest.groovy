@@ -157,6 +157,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}")
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}")
+    myFixture.addClass("package foo; @Deprecated(forRemoval=true) public interface MyDeprecatedForRemovalEP {}")
+    myFixture.addClass("package foo; public class MyDeprecatedForRemovalEPImpl implements MyDeprecatedForRemovalEP {}")
+
     myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.Experimental; " +
                        "@Experimental public class MyExperimentalEP { " +
                        " @com.intellij.util.xmlb.annotations.Attribute " +

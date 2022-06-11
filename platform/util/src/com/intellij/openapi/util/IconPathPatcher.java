@@ -13,7 +13,7 @@ public abstract class IconPathPatcher {
    * @deprecated use {@link #patchPath(String, ClassLoader)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public @Nullable String patchPath(@NotNull String path) {
     return patchPath(path, null);
   }
@@ -33,7 +33,7 @@ public abstract class IconPathPatcher {
    * @deprecated use {@link #getContextClassLoader(String, ClassLoader)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public Class<?> getContextClass(@NotNull String path) {
     return null;
   }

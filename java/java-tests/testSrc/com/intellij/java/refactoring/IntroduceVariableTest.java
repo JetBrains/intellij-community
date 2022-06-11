@@ -322,6 +322,28 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     });
   }
 
+  public void testNameSuggestionConflictingFieldName() {
+    UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Replace this occurrence only")));
+    String baseName = "/refactoring/introduceVariable/" + getTestName(false);
+    configureByFile(baseName + ".java");
+    new MockIntroduceVariableHandler("parentName1", false, false, false, JAVA_LANG_STRING) {
+      @Override
+      public IntroduceVariableSettings getSettings(Project project, Editor editor,
+                                                   PsiExpression expr, PsiExpression[] occurrences,
+                                                   TypeSelectorManagerImpl typeSelectorManager,
+                                                   boolean declareFinalIfAll,
+                                                   boolean anyAssignmentLHS,
+                                                   InputValidator validator,
+                                                   PsiElement anchor, final JavaReplaceChoice replaceChoice) {
+        final PsiType type = typeSelectorManager.getDefaultType();
+        assertEquals("parentName1", CommonJavaRefactoringUtil.getSuggestedName(type, expr).names[0]);
+        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
+                                 validator, anchor, replaceChoice);
+      }
+    }.invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(baseName + ".after.java");
+  }
+
   public void testSiblingInnerClassType() {
     doTest(new MockIntroduceVariableHandler("b", true, false, false, "A.B") {
       @Override

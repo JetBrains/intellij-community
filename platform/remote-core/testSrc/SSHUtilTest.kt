@@ -11,7 +11,10 @@ class SSHUtilTest {
   fun testPassphraseRegex() {
     passphraseRegexShouldMatch("Enter passphrase for key 'С:\\test\\dir\\.ssh\\id.rsa':", "С:\\test\\dir\\.ssh\\id.rsa")
     passphraseRegexShouldMatch("Enter passphrase for 'С:\\test\\dir\\.ssh\\id.rsa':", "С:\\test\\dir\\.ssh\\id.rsa")
+    passphraseRegexShouldMatch("Enter passphrase for С:\\test\\dir\\.ssh\\id.rsa:", "С:\\test\\dir\\.ssh\\id.rsa")
+    passphraseRegexShouldMatch("Enter passphrase for key С:\\test\\dir\\.ssh\\id.rsa:", "С:\\test\\dir\\.ssh\\id.rsa")
     passphraseRegexShouldMatch("Enter passphrase for key '/home/test/rsa':", "/home/test/rsa")
+    passphraseRegexShouldMatch("Enter passphrase for key /home/test/rsa:", "/home/test/rsa")
     passphraseRegexShouldMatch("Enter passphrase for '/home/test/rsa':", "/home/test/rsa")
   }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -276,6 +277,7 @@ class MixedResultsSearcher implements SESearcher {
       try {
         while (section.size() >= limit && !mySearchFinished) {
           indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           condition.await(100, TimeUnit.MILLISECONDS);
         }
 

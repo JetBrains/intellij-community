@@ -39,7 +39,7 @@ public final class ForcedAntFileAttribute extends FileAttribute {
 
   private static boolean isAntFileOld(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
-      try (DataInputStream is = ourAttribute.readAttribute(file)) {
+      try (DataInputStream is = ourAttribute.readFileAttribute(file)) {
         if (is != null) {
           return is.readBoolean();
         }

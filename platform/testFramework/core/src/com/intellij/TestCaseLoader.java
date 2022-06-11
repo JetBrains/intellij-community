@@ -50,8 +50,8 @@ public class TestCaseLoader {
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
   private static final boolean HARDWARE_AGENT_REQUIRED = "true".equals(System.getProperty(HARDWARE_AGENT_REQUIRED_FLAG));
 
-  private static final int TEST_RUNNERS_COUNT = Integer.valueOf(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
-  private static final int TEST_RUNNER_INDEX = Integer.valueOf(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
+  private static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
+  private static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.

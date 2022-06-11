@@ -190,6 +190,12 @@ public interface ToolWindow extends BusyObject {
 
   void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);
 
+  /**
+   * If {@link com.intellij.openapi.wm.ex.ToolWindowEx#getEmptyText()} is a default one and {@link ToolWindowEP#canCloseContents} is true,
+   * regardless of this settings tool window will be hidden.
+   * <p>
+   * If tool window doesn't have content, it will be hidden and removed from stripe bar.
+   */
   void setToHideOnEmptyContent(boolean hideOnEmpty);
 
   /**

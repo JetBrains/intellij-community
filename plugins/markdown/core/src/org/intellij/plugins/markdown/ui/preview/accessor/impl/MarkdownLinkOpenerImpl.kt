@@ -88,6 +88,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       logger.warn("Failed to browse external link!", exception)
       MarkdownNotifications.showWarning(
         project,
+        id = "markdown.links.external.open.failed",
         title = MarkdownBundle.message("markdown.browse.external.link.failed.notification.title"),
         message = MarkdownBundle.message("markdown.browse.external.link.failed.notification.content", uri),
       )

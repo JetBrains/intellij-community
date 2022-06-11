@@ -1,7 +1,4 @@
 <keymap version="1" name="Eclipse" disable-mnemonics="false" parent="$default">
-  <action id="FileChooser.TogglePathShowing">
-    <keyboard-shortcut first-keystroke="control P"/>
-  </action>
   <action id="$Redo">
     <keyboard-shortcut first-keystroke="control Y"/>
   </action>

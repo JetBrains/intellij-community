@@ -79,7 +79,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   @Override
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
-    final ColumnInfo[] columns;
+    final ColumnInfo<?, ?>[] columns;
     final Consumer<VcsFileRevision> listener;
     final JComponent addComp;
     if (((SvnHistorySession)session).isHaveMergeSources()) {

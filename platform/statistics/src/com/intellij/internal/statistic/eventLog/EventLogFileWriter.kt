@@ -42,6 +42,9 @@ open class EventLogFileWriter(
 
   open fun getActiveLogName(): String {
     synchronized(lock) {
+      if (!currentFileData.logFile.exists()) {
+        rollOver()
+      }
       return currentFileData.logFile.name
     }
   }

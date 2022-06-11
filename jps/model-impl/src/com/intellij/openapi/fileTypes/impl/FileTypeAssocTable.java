@@ -31,7 +31,7 @@ public final class FileTypeAssocTable<T> {
   private FileTypeAssocTable(@NotNull Map<? extends CharSequence, ? extends T> extensionMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameAnyCaseMappings,
-                             @NotNull Map<String, ? extends T> hashBangMap,
+                             @NotNull Map<? extends String, ? extends T> hashBangMap,
                              @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
     myExtensionMappings = createCharSequenceConcurrentMap(extensionMappings);
     myExactFileNameMappings = new ConcurrentHashMap<>(exactFileNameMappings);

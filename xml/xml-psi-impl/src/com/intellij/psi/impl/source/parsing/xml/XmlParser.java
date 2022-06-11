@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.lang.*;
@@ -26,12 +26,12 @@ public class XmlParser implements PsiParser, LightPsiParser {
       if (count < 3) return ThreeState.UNSURE;
       LighterASTNode[] children = childrenRef.get();
       if (children[0].getTokenType() != XmlTokenType.XML_START_TAG_START) return ThreeState.UNSURE;
-        if (children[1].getTokenType() != XmlTokenType.XML_NAME) return ThreeState.UNSURE;
-        if (children[2].getTokenType() != XmlTokenType.XML_TAG_END) return ThreeState.UNSURE;
-        LighterASTTokenNode name = (LighterASTTokenNode)children[1];
-        CharSequence newName = name.getText();
-        if (!Comparing.equal(oldName, newName)) return ThreeState.NO;
-      }
+      if (children[1].getTokenType() != XmlTokenType.XML_NAME) return ThreeState.UNSURE;
+      if (children[2].getTokenType() != XmlTokenType.XML_TAG_END) return ThreeState.UNSURE;
+      LighterASTTokenNode name = (LighterASTTokenNode)children[1];
+      CharSequence newName = name.getText();
+      if (!Comparing.equal(oldName, newName)) return ThreeState.NO;
+    }
 
     return ThreeState.UNSURE;
   };

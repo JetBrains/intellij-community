@@ -25,7 +25,7 @@ public /*final*/ class PsiElementModuleRenderer extends DefaultListCellRenderer 
   /**
    * @deprecated don't inherit from this class, implement {@link ModuleRendererFactory#getModuleTextWithIcon} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PsiElementModuleRenderer() {
     this(new DefaultModuleRendererFactory()::getModuleTextWithIcon);
   }

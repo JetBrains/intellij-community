@@ -23,6 +23,7 @@ public class Menu extends MenuItem {
   private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
   private static final int CLOSE_DELAY = Integer.getInteger("jbScreenMenuBar.closeDelay", 500); // in milliseconds
   private static Boolean IS_ENABLED = null;
+  private static Menu ourAppMenu = null;
   private final List<MenuItem> myItems = new ArrayList<>();
   private final List<MenuItem> myBuffer = new ArrayList<>();
   private Runnable myOnOpen;
@@ -34,6 +35,19 @@ public class Menu extends MenuItem {
 
   public Menu(String title) {
     setTitle(title);
+  }
+
+  private Menu() {}
+
+  // AppMenu is the first menu item (with title = application name) which is filled by OS
+  public static Menu getAppMenu() {
+    if (ourAppMenu == null) {
+      ourAppMenu = new Menu();
+      long nsMenu = nativeGetAppMenu(); // returns retained pointer
+      ourAppMenu.nativePeer = ourAppMenu.nativeAttachMenu(nsMenu);
+      ourAppMenu.isInHierarchy = true;
+    }
+    return ourAppMenu;
   }
 
   public void setOnOpen(Runnable fillMenuProcedure, Component component) {
@@ -57,6 +71,27 @@ public class Menu extends MenuItem {
   public void setTitle(String label) {
     ensureNativePeer();
     nativeSetTitle(nativePeer, label, isInHierarchy);
+  }
+
+  // Search for subitem by title (reg-exp) in native NSMenu peer
+  // Returns the index of first child with matched title.
+  public int findIndexByTitle(String re) {
+    if (re == null || re.isEmpty()) return -1;
+
+    ensureNativePeer();
+    return nativeFindIndexByTitle(nativePeer, re);
+  }
+
+  // Search for subitem by title (reg-exp) in native NSMenu peer
+  // Returns the first child with matched title.
+  // NOTE: Always creates java-wrapper for native NSMenuItem (that must be disposed manually)
+  synchronized
+  public MenuItem findItemByTitle(String re) {
+    if (re == null || re.isEmpty()) return null;
+
+    ensureNativePeer();
+    long child = nativeFindItemByTitle(nativePeer, re); // returns retained pointer
+    return child == 0 ? null : new MenuItem(child);
   }
 
   @SuppressWarnings("SSBasedInspection")
@@ -128,6 +163,17 @@ public class Menu extends MenuItem {
     endFill(true);
   }
 
+  synchronized
+  public void add(MenuItem item, int position, boolean onAppKit) {
+    if (position < 0) return;
+
+    ensureNativePeer();
+    item.ensureNativePeer();
+    nativeInsertItem(nativePeer, item.nativePeer, position, onAppKit);
+    myItems.add(item);
+    // TODO: fix position inside myItems !!!
+  }
+
   @Override
   synchronized
   void ensureNativePeer() {
@@ -191,9 +237,21 @@ public class Menu extends MenuItem {
   // Can be invoked from any thread.
   private native long nativeCreateMenu();
 
+  // Creates native peer (wrapper for NSMenu) with existing NSMenu (must be already retained)
+  // User must dealloc it via nativeDispose after usage.
+  // Can be invoked from any thread.
+  private native long nativeAttachMenu(long nsMenu);
+
+  // Find methods
+  // Always performs on AppKit thread with waiting for result
+  private native long nativeFindItemByTitle(long menuPtr, String re); // NOTE: returns retained pointer
+  private native int nativeFindIndexByTitle(long menuPtr, String re);
+
+  // Modification methods
   // If menu was created but wasn't added into any parent menu then all setters can be invoked from any thread.
   private native void nativeSetTitle(long menuPtr, String title, boolean onAppKit);
   private native void nativeAddItem(long menuPtr, long itemPtr/*MenuItem OR Menu*/, boolean onAppKit);
+  private native void nativeInsertItem(long menuPtr, long itemPtr/*MenuItem OR Menu*/, int position, boolean onAppKit);
 
   // Refill menu.
   // If menuPtr == null then refills sharedApplication.mainMenu with new items (except AppMenu, i.e. first item of mainMenu)
@@ -201,6 +259,10 @@ public class Menu extends MenuItem {
 
   static
   private native void nativeInitClass();
+
+  // NOTE: returns retained pointer
+  static
+  private native long nativeGetAppMenu();
 
   //
   // Static API

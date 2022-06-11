@@ -9,6 +9,14 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.job
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Default UI dispatcher, it dispatches within the [context modality state][com.intellij.openapi.application.asContextElement].
+ *
+ * Cancelled coroutines are dispatched [without modality state][ModalityState.any] to be able to finish fast.
+ * Such coroutines are not expected to access the model (PSI/VFS/etc).
+ *
+ * This dispatcher is installed as [main][kotlinx.coroutines.Dispatchers.Main].
+ */
 internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
 
   override val immediate: MainCoroutineDispatcher get() = Immediate

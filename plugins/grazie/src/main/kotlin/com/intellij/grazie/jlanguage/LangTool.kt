@@ -31,6 +31,7 @@ object LangTool : GrazieStateLifecycle {
   private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LangTool")
 
   init {
+    JLanguageTool.useCustomPasswordAuthenticator(false)
     JLanguageTool.setDataBroker(GrazieDynamicDataBroker)
     JLanguageTool.setClassBrokerBroker { qualifiedName ->
       GrazieDynamic.loadClass(qualifiedName) ?: throw ClassNotFoundException(qualifiedName)

@@ -157,6 +157,15 @@ public final class StartupUtil {
       System.exit(Main.NO_GRAPHICS);
     }
 
+    activity = activity.endAndStart("config path computing");
+    Path configPath = canonicalPath(PathManager.getConfigPath());
+    Path systemPath = canonicalPath(PathManager.getSystemPath());
+
+    activity = activity.endAndStart("system dirs locking");
+    // This needs to happen before UI initialization - if we're not going to show ui (in case another IDE instance is already running),
+    // we shouldn't initialize AWT toolkit. On macOS the latter might lead to unnecessary focus stealing and space switching.
+    boolean configImportNeeded = lockSystemDirs(!isHeadless, configPath, systemPath, args);
+
     activity = activity.endAndStart("LaF init scheduling");
     Thread busyThread = Thread.currentThread();
     // LookAndFeel type is not specified to avoid class loading
@@ -190,24 +199,11 @@ public final class StartupUtil {
       }
     }
 
-    activity = activity.endAndStart("config path computing");
-    Path configPath = canonicalPath(PathManager.getConfigPath());
-    Path systemPath = canonicalPath(PathManager.getSystemPath());
-    activity = activity.endAndStart("config path existence check");
-
-    // this check must be performed before system directories are locked
-    boolean configImportNeeded = !isHeadless &&
-                                 (!Files.exists(configPath) ||
-                                  Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)));
-
     activity = activity.endAndStart("system dirs checking");
-    // note: uses config directory
     if (!checkSystemDirs(configPath, systemPath)) {
       System.exit(Main.DIR_CHECK_FAILED);
     }
 
-    activity = activity.endAndStart("system dirs locking");
-    lockSystemDirs(configPath, systemPath, args);
     activity = activity.endAndStart("file logger configuration");
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();
@@ -466,9 +462,6 @@ public final class StartupUtil {
 
         //noinspection SpellCheckingInspection
         System.setProperty("sun.awt.noerasebackground", "true");
-        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
-          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-        }
 
         Activity activity = activityQueue.startChild("awt toolkit creating");
         Toolkit.getDefaultToolkit();
@@ -773,10 +766,16 @@ public final class StartupUtil {
     }
   }
 
-  private static void lockSystemDirs(Path configPath, Path systemPath, String[] args) throws Exception {
+  /** Returns {@code true} when {@code checkConfig} is requested and config import is needed. */
+  private static boolean lockSystemDirs(boolean checkConfig, Path configPath, Path systemPath, String[] args) throws Exception {
     if (socketLock != null) {
       throw new AssertionError("Already initialized");
     }
+
+    // this check must be performed before system directories are locked
+    boolean importNeeded =
+      checkConfig && (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)));
+
     socketLock = new SocketLock(configPath, systemPath);
 
     Map.Entry<SocketLock.ActivationStatus, CliResult> status = socketLock.lockAndTryActivate(args);
@@ -807,6 +806,8 @@ public final class StartupUtil {
         System.exit(Main.INSTANCE_CHECK_FAILED);
       }
     }
+
+    return importNeeded;
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

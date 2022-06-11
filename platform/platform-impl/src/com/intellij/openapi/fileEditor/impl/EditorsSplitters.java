@@ -48,7 +48,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -501,11 +500,10 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       Path finalIoFile = ioFile;
       ReadAction.nonBlocking(() -> FrameTitleBuilder.getInstance().getFileTitle(project, file))
         .expireWith(this)
-        .coalesceBy(this)
         .finishOnUiThread(ModalityState.any(), (@NlsContexts.TabTitle String title) -> {
           frame.setFileTitle(title, finalIoFile);
         })
-        .submit(AppExecutorUtil.getAppExecutorService());
+        .submit(NonUrgentExecutor.getInstance());
     }
   }
 

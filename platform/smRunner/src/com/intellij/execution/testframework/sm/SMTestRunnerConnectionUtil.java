@@ -150,7 +150,7 @@ public final class SMTestRunnerConnectionUtil {
    * @return true if in debug mode, otherwise false.
    */
   public static boolean isInDebugMode() {
-    return Boolean.valueOf(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
+    return Boolean.parseBoolean(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
   }
 
   private static void attachEventsProcessors(TestConsoleProperties consoleProperties,

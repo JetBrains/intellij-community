@@ -24,6 +24,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -816,7 +817,11 @@ public final class ControlFlowUtils {
     return ContainerUtil.find(controlFlow, instruction -> instruction.getElement() == place);
   }
 
-  public static @Nullable GrControlFlowOwner getTopmostOwner(PsiElement place) {
+  @Contract("null -> null")
+  public static @Nullable GrControlFlowOwner getTopmostOwner(@Nullable PsiElement place) {
+    if (place == null) {
+      return null;
+    }
     var owner = findControlFlowOwner(place);
     if ((place instanceof GrOpenBlock && owner instanceof GroovyFile) ||
         place == owner ||

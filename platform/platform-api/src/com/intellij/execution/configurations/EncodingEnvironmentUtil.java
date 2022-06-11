@@ -36,7 +36,7 @@ public final class EncodingEnvironmentUtil {
    *
    * @param commandLine GeneralCommandLine instance
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void setLocaleEnvironmentIfMac(@NotNull GeneralCommandLine commandLine) {
     if (SystemInfo.isMac && !isLocaleDefined(commandLine)) {
       setLocaleEnvironment(commandLine.getEnvironment(), commandLine.getCharset());
@@ -48,7 +48,7 @@ public final class EncodingEnvironmentUtil {
    *
    * Sets default encoding on Mac if it's undefined. <br/>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void setLocaleEnvironmentIfMac(@NotNull Map<String, String> env, @NotNull Charset charset) {
     if (SystemInfo.isMac && !isLocaleDefined(env)) {
       setLocaleEnvironment(env, charset);

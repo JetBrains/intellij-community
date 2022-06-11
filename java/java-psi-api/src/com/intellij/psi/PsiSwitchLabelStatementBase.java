@@ -26,7 +26,7 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
 
   /** @deprecated doesn't support enhanced "switch" statements; use {@link #getCaseValues()} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   default PsiExpression getCaseValue() {
     PsiExpressionList expressionList = getCaseValues();
     if (expressionList != null) {
@@ -46,6 +46,7 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
 
   /** @deprecated doesn't support "switch" expressions; use {@link #getEnclosingSwitchBlock()} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   default PsiSwitchStatement getEnclosingSwitchStatement() {
     PsiSwitchBlock block = getEnclosingSwitchBlock();
     return block instanceof PsiSwitchStatement ? (PsiSwitchStatement)block : null;

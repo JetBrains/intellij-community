@@ -38,7 +38,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
    * @deprecated Use {@link #PsiResolveHelperImpl(Project)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public PsiResolveHelperImpl(@NotNull PsiManager manager) {
     myManager = manager;
   }

@@ -55,7 +55,7 @@ public abstract class RecursionGuard<Key> {
   /** @deprecated Use {@link RecursionManager#markStack()} instead */
   @NotNull
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public StackStamp markStack() {
     return RecursionManager.markStack();
   }

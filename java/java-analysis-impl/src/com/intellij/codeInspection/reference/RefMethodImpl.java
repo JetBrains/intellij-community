@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -168,6 +168,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     PsiMethod appMainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppMainPattern();
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
+
+    if ("main".equals(psiMethod.getName()) && psiMethod.getParameterList().isEmpty() &&
+        "Kotlin".equals(psiMethod.getContainingFile().getFileType().getName())) return true;
 
     PsiMethod appPremainPattern = ((RefMethodImpl)refMethod).getRefJavaManager().getAppPremainPattern();
     if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appPremainPattern)) return true;

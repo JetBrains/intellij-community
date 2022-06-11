@@ -30,9 +30,25 @@ import java.util.List;
 public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private final List<ActionListener> myChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(PythonSdkChooserCombo.class);
+  /**
+   * @deprecated the value of the field is not used anywhere internally
+   */
+  @Deprecated
   @Nullable private String myNewProjectPath;
 
+  public PythonSdkChooserCombo(@Nullable final Project project,
+                               @Nullable final Module module,
+                               @NotNull List<? extends Sdk> sdks,
+                               @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
+    this(project, module, sdks, null, acceptableSdkCondition);
+  }
+
+  /**
+   * @deprecated the value of the field corresponding to {@code newProjectPath} is not used anywhere internally; use
+   * {@link #PythonSdkChooserCombo(Project, Module, List, Condition)} instead.
+   */
   @SuppressWarnings("unchecked")
+  @Deprecated
   public PythonSdkChooserCombo(@Nullable final Project project,
                                @Nullable final Module module,
                                @NotNull List<? extends Sdk> sdks,
@@ -105,6 +121,10 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     myChangedListeners.add(listener);
   }
 
+  /**
+   * @deprecated the value of the corresponding field is not used anywhere internally
+   */
+  @Deprecated
   public void setNewProjectPath(@Nullable String newProjectPath) {
     myNewProjectPath = newProjectPath;
   }

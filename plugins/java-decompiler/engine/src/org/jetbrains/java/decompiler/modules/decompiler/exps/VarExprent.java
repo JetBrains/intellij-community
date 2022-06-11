@@ -258,7 +258,7 @@ public class VarExprent extends Exprent {
         return engine.checkAndSetVariableValue((String)rule.value, this.index);
       }
       else {
-        return this.index == Integer.valueOf((String)rule.value);
+        return this.index == Integer.parseInt((String)rule.value);
       }
     }
 

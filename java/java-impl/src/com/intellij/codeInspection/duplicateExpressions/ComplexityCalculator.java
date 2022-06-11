@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,14 @@ class ComplexityCalculator {
   private static final int NEW_EXPR = 20;
   private static final int PARAMETER = 1;
   private static final int UNKNOWN = 15;
+  private static final int PATH_CONSTRUCTION = 71;
 
   private static final TokenSet NEGATIONS = TokenSet.create(JavaTokenType.EXCL, JavaTokenType.MINUS, JavaTokenType.TILDE);
+
+  private static final CallMatcher PATH_CONSTRUCTION_CALL = CallMatcher.anyOf(
+    CallMatcher.staticCall("java.nio.file.Path", "of"),
+    CallMatcher.staticCall("java.nio.file.Paths", "get")
+  );
 
   private final ObjectIntHashMap<PsiExpression> myCache = new ObjectIntHashMap<>();
 
@@ -103,6 +110,7 @@ class ComplexityCalculator {
     }
     if (e instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+      if (PATH_CONSTRUCTION_CALL.test(call)) return PATH_CONSTRUCTION;
       PsiReferenceExpression ref = call.getMethodExpression();
       return METHOD_CALL + getComplexity(ref.getQualifierExpression()) + calculateArgumentsComplexity(call.getArgumentList());
     }

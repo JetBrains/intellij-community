@@ -38,7 +38,7 @@ public class RenameFileAction extends AnAction implements ActionPromoter {
       file != null && file.isWritable()
       && Objects.nonNull(file.getVirtualFile()) && !(file.getVirtualFile().getFileSystem().isReadOnly())
       && (enabledInProjectView(file) || !ActionPlaces.PROJECT_VIEW_POPUP.equals(place))
-      && place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
+      && !ActionPlaces.EDITOR_POPUP.equals(place) && e.getData(CommonDataKeys.PROJECT) != null;
     presentation.setEnabledAndVisible(enabled);
   }
 

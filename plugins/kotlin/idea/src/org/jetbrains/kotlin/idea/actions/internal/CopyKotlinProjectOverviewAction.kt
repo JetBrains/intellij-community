@@ -75,8 +75,8 @@ class CopyKotlinProjectOverviewAction : AnAction() {
             for (module in modules) {
                 yield(
                     when {
-                        hasKotlinFilesInSources(module) -> "In Sources"
-                        hasKotlinFilesOnlyInTests(module) -> "In Tests"
+                        hasKotlinFilesInSources(module) -> "Sources of [${module.name}]"
+                        hasKotlinFilesOnlyInTests(module) -> "Test sources of [${module.name}]"
                         else -> null
                     }
                 )

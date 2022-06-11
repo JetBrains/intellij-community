@@ -3,7 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.util.XmlDomReader;
+import com.intellij.util.xml.dom.XmlDomReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.xxh3.Xx3UnencodedString;

@@ -7,7 +7,7 @@ import training.learn.LessonsBundle
 import training.learn.lesson.general.navigation.RecentFilesLesson
 
 class JavaRecentFilesLesson : RecentFilesLesson() {
-  override val existedFile: String = "src/RecentFilesDemo.java"
+  override val sampleFilePath: String = "src/RecentFilesDemo.java"
 
   override val transitionMethodName: String = "println"
   override val transitionFileName: String = "PrintStream"

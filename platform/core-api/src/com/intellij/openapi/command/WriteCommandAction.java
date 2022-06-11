@@ -218,6 +218,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).withGroupId(groupID).run()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   protected WriteCommandAction(@Nullable Project project,
                                @Nullable @Command String commandName,
                                @Nullable String groupID,
@@ -286,7 +287,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project)}.withGlobalUndo() instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected boolean isGlobalUndoAction() {
     return false;
   }
@@ -297,7 +298,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project)}.withUndoConfirmationPolicy() instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;

@@ -92,8 +92,11 @@ public final class ParsingTestUtil {
   public static void testIncrementalParsing(@NotNull PsiFile psiFile,
                                             @NotNull CharSequence newFileText,
                                             @NotNull String answersFilePath,
+                                            boolean checkInitialTreeForErrors,
                                             boolean checkFinalTreeForErrors) {
-    ensureNoErrorElements(psiFile);
+    if (checkInitialTreeForErrors) {
+      ensureNoErrorElements(psiFile);
+    }
     var project = psiFile.getProject();
     var psiDocumentManager = PsiDocumentManager.getInstance(project);
     var fileDocument = psiDocumentManager.getDocument(psiFile);
@@ -116,7 +119,7 @@ public final class ParsingTestUtil {
       TestCase.assertNotNull("No changes found", changedRange);
       Couple<ASTNode> reparseableRoots = BlockSupportImpl.findReparseableRoots(subTreeFile, subTree.getNode(), changedRange, newFileText);
       result.append("Subtree: ").append(subTree.getLanguage()).append(NL_SEPARATOR_NL);
-      serializeReparseableRoots(reparseableRoots, result, originalText, newFileText);
+      serializeReparseableRoots(reparseableRoots, result, newFileText);
       result.append(NL_SEPARATOR_NL);
     }
 
@@ -139,7 +142,6 @@ public final class ParsingTestUtil {
 
   private static void serializeReparseableRoots(@Nullable Couple<ASTNode> reparseableRoots,
                                                 @NotNull StringBuilder result,
-                                                @NotNull CharSequence originalText,
                                                 @NotNull CharSequence newText) {
     TextRange reparsedRange;
     if (reparseableRoots == null) {

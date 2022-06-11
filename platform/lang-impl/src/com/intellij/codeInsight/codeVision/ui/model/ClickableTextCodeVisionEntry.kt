@@ -9,10 +9,13 @@ import javax.swing.Icon
 
 /**
  * Same as [TextCodeVisionEntry], but with predefined click handler
+ * @param onClick click handler. MouseEvent can be null when click passed from ListPopup and click position shouldn't be important.
+ *
+ * WARNING: do not store PSI inside handler. Use classes to avoid accidental psi capture.
  */
 class ClickableTextCodeVisionEntry(text: String,
                                    providerId: String,
-                                   val onClick: (MouseEvent, Editor) -> Unit,
+                                   val onClick: (MouseEvent?, Editor) -> Unit,
                                    icon: Icon? = null,
                                    longPresentation: String = text,
                                    tooltip: String = "",
@@ -21,7 +24,7 @@ class ClickableTextCodeVisionEntry(text: String,
                         longPresentation, tooltip,
                         extraActions), CodeVisionPredefinedActionEntry {
   override fun onClick(editor: Editor) {
-    val mouseEvent = this.getUserData(codeVisionEntryMouseEventKey) ?: error("Mouse event lost")
+    val mouseEvent = this.getUserData(codeVisionEntryMouseEventKey)
     onClick.invoke(mouseEvent, editor)
   }
 }

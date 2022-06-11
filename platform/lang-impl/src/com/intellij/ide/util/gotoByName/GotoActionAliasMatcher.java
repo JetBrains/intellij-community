@@ -31,7 +31,7 @@ public interface GotoActionAliasMatcher {
    * Returns true if the name argument is synonym for specified action.
    * @deprecated Use {@link #matchAction(AnAction, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean match(@NotNull AnAction action, @NotNull String name) {
     return false;
   }

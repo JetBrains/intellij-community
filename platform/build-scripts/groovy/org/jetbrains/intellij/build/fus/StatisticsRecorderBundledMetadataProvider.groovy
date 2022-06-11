@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.TracerManager
+import org.jetbrains.intellij.build.io.HttpKt
 
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ForkJoinTask
@@ -61,7 +62,7 @@ final class StatisticsRecorderBundledMetadataProvider {
 
   private static byte[] download(BuildContext context, String url) {
     Span.current().addEvent("download", Attributes.of(AttributeKey.stringKey("url"), url))
-    return BuildHelper.getInstance(context).download.apply(url)
+    return HttpKt.download(url)
   }
 
   private static String metadataServiceUri(BuildContext context) {

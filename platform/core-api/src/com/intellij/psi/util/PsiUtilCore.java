@@ -30,10 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -538,6 +535,7 @@ public class PsiUtilCore {
    * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();

@@ -227,7 +227,7 @@ public final class UpdateHighlightersUtil {
       }
       return true;
     };
-    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, null, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
+    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
 
     Long2ObjectMap<RangeMarker> ranges2markersCache = new Long2ObjectOpenHashMap<>(10);
     boolean[] changed = {false};

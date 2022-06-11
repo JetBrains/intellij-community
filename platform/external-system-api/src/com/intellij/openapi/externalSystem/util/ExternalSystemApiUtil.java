@@ -382,7 +382,7 @@ public final class ExternalSystemApiUtil {
   /**
    * @deprecated there is no need to call this method since we don't put message bundles to separate resources_en.jar files (IDEA-255246)
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
     String pathToUse = bundlePath.replace('.', '/');
     if (!pathToUse.endsWith(".properties")) {

@@ -111,7 +111,7 @@ public class DescendantClassesEnumMacro extends Macro {
     if (classes == null || classes.size() == 0) return null;
 
     Set<LookupElement> set = new LinkedHashSet<>();
-    boolean isShortName = params.length > 1 && !Boolean.valueOf(params[1].calculateResult(context).toString());
+    boolean isShortName = params.length > 1 && !Boolean.parseBoolean(params[1].calculateResult(context).toString());
 
     for (PsiClass object : classes) {
       final String name = isShortName ? object.getName() : object.getQualifiedName();
@@ -130,7 +130,7 @@ public class DescendantClassesEnumMacro extends Macro {
   }
 
   private static boolean isAllowAbstract(final ExpressionContext context, final Expression[] params) {
-      return params.length > 2 ? Boolean.valueOf(params[2].calculateResult(context).toString()) : true;
+      return params.length > 2 ? Boolean.parseBoolean(params[2].calculateResult(context).toString()) : true;
   }
 
   @Override

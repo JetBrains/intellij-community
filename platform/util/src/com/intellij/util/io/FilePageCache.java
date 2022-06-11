@@ -50,6 +50,10 @@ public final class FilePageCache {
              "; max=" + (max / PagedFileStorage.MB));
   }
 
+  void assertUnderSegmentAllocationLock() {
+    assert mySegmentsAllocationLock.isHeldByCurrentThread();
+  }
+
   private static long maxDirectMemory() {
     try {
       Class<?> aClass = Class.forName("sun.misc.VM");
@@ -158,7 +162,7 @@ public final class FilePageCache {
       long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
       PagedFileStorage fileStorage = getRegisteredPagedFileStorageByIndex(key);
 
-      disposeRemovedSegments(fileStorage.getStorageLockContext());
+      disposeRemovedSegments();
 
       wrapper = createValue(key, read, readOnly, fileStorage);
 
@@ -179,7 +183,7 @@ public final class FilePageCache {
         mySegmentsAccessLock.unlock();
       }
 
-      ensureSize(mySizeLimit, fileStorage);
+      ensureSize(mySizeLimit);
 
       return wrapper;
     }
@@ -188,17 +192,14 @@ public final class FilePageCache {
     }
   }
 
-  private void disposeRemovedSegments(@NotNull StorageLockContext storageLockContext) {
-    assert mySegmentsAllocationLock.isHeldByCurrentThread();
+  private void disposeRemovedSegments() {
+    assertUnderSegmentAllocationLock();
 
     if (mySegmentsToRemove.isEmpty()) return;
     Iterator<DirectBufferWrapper> iterator = mySegmentsToRemove.iterator();
     while (iterator.hasNext()) {
       try {
-        DirectBufferWrapper wrapper = iterator.next();
-        //if (wrapper.belongs(storageLockContext)) {
-          wrapper.release();
-        //}
+        iterator.next().release();
       }
       catch (IOException e) {
         LOG.error(e);
@@ -207,8 +208,8 @@ public final class FilePageCache {
     }
   }
 
-  private void ensureSize(long sizeLimit, PagedFileStorage fileStorage) {
-    assert mySegmentsAllocationLock.isHeldByCurrentThread();
+  private void ensureSize(long sizeLimit) {
+    mySegmentsAllocationLock.isHeldByCurrentThread();
 
     try {
       mySegmentsAccessLock.lock();
@@ -220,11 +221,11 @@ public final class FilePageCache {
       mySegmentsAccessLock.unlock();
     }
 
-    disposeRemovedSegments(fileStorage.getStorageLockContext());
+    disposeRemovedSegments();
   }
 
   @NotNull
-  private DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly, PagedFileStorage owner) throws IOException {
+  private static DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly, PagedFileStorage owner) throws IOException {
     StorageLockContext context = owner.getStorageLockContext();
     if (read) {
       context.checkReadAccess();
@@ -278,7 +279,7 @@ public final class FilePageCache {
 
       mySegmentsAllocationLock.lock();
       try {
-        disposeRemovedSegments(storageLockContext);
+        disposeRemovedSegments();
       } finally {
         mySegmentsAllocationLock.unlock();
       }
@@ -286,7 +287,7 @@ public final class FilePageCache {
   }
 
   void flushBuffersForOwner(StorageLockContext storageLockContext) throws IOException {
-    storageLockContext.checkWriteAccess();
+    storageLockContext.checkReadAccess();
     Map<Integer, DirectBufferWrapper> buffers = getBuffersOrderedForOwner(storageLockContext);
 
     if (!buffers.isEmpty()) {
@@ -296,7 +297,7 @@ public final class FilePageCache {
       try {
         try {
           for (DirectBufferWrapper buffer : buffers.values()) {
-            if (buffer.isDirty()) {
+            if (buffer.isDirty() && !buffer.isReleased()) {
               buffer.force();
             }
           }
@@ -324,7 +325,7 @@ public final class FilePageCache {
     }
     mySegmentsAllocationLock.lock();
     try {
-      disposeRemovedSegments(storageLockContext);
+      disposeRemovedSegments();
     }
     finally {
       mySegmentsAllocationLock.unlock();
