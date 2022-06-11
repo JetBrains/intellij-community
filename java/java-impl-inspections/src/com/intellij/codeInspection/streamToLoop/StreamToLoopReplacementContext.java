@@ -55,7 +55,7 @@ class StreamToLoopReplacementContext extends ChainContext {
     if (element == null) return;
     element.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         super.visitVariable(variable);
         myUsedNames.add(variable.getName());
       }

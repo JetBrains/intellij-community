@@ -65,7 +65,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
   private static class MethodRefToLambdaVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReferenceExpression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
       super.visitMethodReferenceExpression(methodReferenceExpression);
       if (LambdaRefactoringUtil.canConvertToLambda(methodReferenceExpression)) {
         registerError(methodReferenceExpression, methodReferenceExpression, isOnTheFly());

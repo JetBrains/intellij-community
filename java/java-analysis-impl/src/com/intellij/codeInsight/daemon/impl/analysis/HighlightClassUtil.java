@@ -854,7 +854,7 @@ public final class HighlightClassUtil {
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiClass) {

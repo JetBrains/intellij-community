@@ -95,7 +95,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
 
         final String referenceName = expression.getMethodExpression().getReferenceName();

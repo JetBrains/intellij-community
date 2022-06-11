@@ -85,7 +85,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitNameValuePair(PsiNameValuePair pair) {
+    public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
       if (!wrappedExpression.equals(pair.getValue())) {
         return;
       }
@@ -116,7 +116,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       final PsiExpression condition = statement.getAssertCondition();
       if (wrappedExpression == condition) {
         expectedType = PsiType.BOOLEAN;
@@ -127,7 +127,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression initializer) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression initializer) {
       final PsiType type = initializer.getType();
       if (!(type instanceof PsiArrayType)) {
         expectedType = null;
@@ -138,7 +138,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitArrayAccessExpression(PsiArrayAccessExpression accessExpression) {
+    public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression accessExpression) {
       final PsiExpression indexExpression = accessExpression.getIndexExpression();
       if (wrappedExpression.equals(indexExpression)) {
         expectedType = PsiType.INT;
@@ -233,12 +233,12 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       visitSwitchBlock(expression);
     }
 
     @Override
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       visitSwitchBlock(statement);
     }
 
@@ -258,7 +258,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitExpressionStatement(PsiExpressionStatement statement) {
+    public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
       final PsiElement parent = statement.getParent();
       if (!(parent instanceof PsiSwitchLabeledRuleStatement)) {
         return;
@@ -273,7 +273,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitYieldStatement(PsiYieldStatement statement) {
+    public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
       PsiSwitchExpression expression = statement.findEnclosingExpression();
       if (expression != null) {
         expectedType = expression.getType();
@@ -281,7 +281,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       if (reportCasts) {
         expectedType = expression.getType();
       }
@@ -298,7 +298,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) {
         expectedType = null;
@@ -377,7 +377,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression conditional) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression conditional) {
       final PsiExpression condition = conditional.getCondition();
       if (condition.equals(wrappedExpression)) {
         expectedType = PsiType.BOOLEAN;
@@ -393,17 +393,17 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       expectedType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       expectedType = TypeUtils.getObjectType(expression);
     }
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement declaration) {
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement declaration) {
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       for (PsiElement declaredElement : declaredElements) {
         if (declaredElement instanceof PsiVariable) {
@@ -418,7 +418,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitExpressionList(PsiExpressionList expressionList) {
+    public void visitExpressionList(@NotNull PsiExpressionList expressionList) {
       final JavaResolveResult result = findCalledMethod(expressionList);
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) {
@@ -431,7 +431,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       final PsiExpression[] arrayDimensions = expression.getArrayDimensions();
       for (PsiExpression arrayDimension : arrayDimensions) {
         if (wrappedExpression.equals(arrayDimension)) {

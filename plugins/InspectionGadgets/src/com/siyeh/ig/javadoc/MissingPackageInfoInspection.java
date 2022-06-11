@@ -120,7 +120,7 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
     public BaseInspectionVisitor buildVisitor() {
       return new BaseInspectionVisitor() {
         @Override
-        public void visitJavaFile(PsiJavaFile file) {
+        public void visitJavaFile(@NotNull PsiJavaFile file) {
           final PsiPackageStatement packageStatement = file.getPackageStatement();
           if (packageStatement == null) {
             return;

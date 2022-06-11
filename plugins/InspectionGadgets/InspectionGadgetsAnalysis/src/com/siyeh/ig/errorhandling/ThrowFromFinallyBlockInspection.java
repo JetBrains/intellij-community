@@ -68,7 +68,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
   private class ThrowFromFinallyBlockVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitCallExpression(PsiCallExpression expression) {
+    public void visitCallExpression(@NotNull PsiCallExpression expression) {
       super.visitCallExpression(expression);
       if (!warnOnAllExceptions) {
         return;
@@ -92,7 +92,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     }
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression exception = PsiUtil.skipParenthesizedExprDown(statement.getException());
       if (exception == null) {

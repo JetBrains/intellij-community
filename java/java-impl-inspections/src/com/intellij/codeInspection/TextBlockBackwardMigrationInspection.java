@@ -27,7 +27,7 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
     if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         if (!expression.isTextBlock()|| PsiLiteralUtil.getTextBlockText(expression) == null) {
           return;
         }

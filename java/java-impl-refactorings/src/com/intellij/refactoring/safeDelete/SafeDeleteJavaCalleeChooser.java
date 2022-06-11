@@ -76,7 +76,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
       final Set<PsiElement> elementsToCheck = new HashSet<>();
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           PsiElement resolved = expression.resolve();
           if (resolved instanceof PsiMethod || resolved instanceof PsiField) {
@@ -85,7 +85,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
         }
 
         @Override
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
           super.visitLiteralExpression(expression);
           PsiReference @NotNull [] references = expression.getReferences();
           for (PsiReference reference : references) {

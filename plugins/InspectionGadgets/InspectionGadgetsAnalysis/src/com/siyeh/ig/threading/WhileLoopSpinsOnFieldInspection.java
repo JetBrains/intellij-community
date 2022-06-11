@@ -102,7 +102,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       final boolean[] result = new boolean[1];
       element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           if (predicate.test(expression)) {
             result[0] = true;

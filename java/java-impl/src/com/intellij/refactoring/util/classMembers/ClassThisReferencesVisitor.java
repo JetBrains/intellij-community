@@ -17,6 +17,7 @@ package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
@@ -32,7 +33,7 @@ public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVi
     myClassSuperClasses.add(aClass);
   }
 
-  @Override public void visitThisExpression(PsiThisExpression expression) {
+  @Override public void visitThisExpression(@NotNull PsiThisExpression expression) {
     PsiJavaCodeReferenceElement ref = expression.getQualifier();
     if(ref != null) {
       PsiElement element = ref.resolve();
@@ -58,7 +59,7 @@ public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVi
     }
   }
 
-  @Override public void visitSuperExpression(PsiSuperExpression expression) {
+  @Override public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
     PsiJavaCodeReferenceElement ref = expression.getQualifier();
     if (ref != null) {
       PsiElement element = ref.resolve();

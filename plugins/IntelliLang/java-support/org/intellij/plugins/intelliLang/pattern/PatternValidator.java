@@ -78,12 +78,12 @@ public class PatternValidator extends LocalInspectionTool {
     return new JavaElementVisitor() {
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitExpression(expression);
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         final PsiElement element = expression.getParent();
         if (element instanceof PsiExpressionList) {
           // this checks method arguments
@@ -101,7 +101,7 @@ public class PatternValidator extends LocalInspectionTool {
       }
 
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         final PsiExpression returnValue = statement.getReturnValue();
         if (returnValue != null) {
           check(returnValue, holder, false);
@@ -109,7 +109,7 @@ public class PatternValidator extends LocalInspectionTool {
       }
 
       @Override
-      public void visitVariable(PsiVariable var) {
+      public void visitVariable(@NotNull PsiVariable var) {
         final PsiExpression initializer = var.getInitializer();
         if (initializer != null) {
           // variable/field initializer
@@ -118,7 +118,7 @@ public class PatternValidator extends LocalInspectionTool {
       }
 
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         final PsiExpression e = expression.getRExpression();
         if (e != null) {
           check(e, holder, false);

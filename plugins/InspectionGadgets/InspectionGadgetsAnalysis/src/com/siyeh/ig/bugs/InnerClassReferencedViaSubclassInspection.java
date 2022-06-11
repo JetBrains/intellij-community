@@ -75,7 +75,7 @@ public class InnerClassReferencedViaSubclassInspection extends BaseInspection im
   private static class InnerClassReferencedViaSubclassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement qualifier = reference.getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
@@ -107,7 +107,7 @@ public class InnerClassReferencedViaSubclassInspection extends BaseInspection im
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
   }

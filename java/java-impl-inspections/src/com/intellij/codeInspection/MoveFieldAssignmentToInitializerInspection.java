@@ -37,7 +37,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
         if (!assignment.getOperationTokenType().equals(JavaTokenType.EQ)) return;
         if (assignment.getParent() instanceof PsiExpressionList || !ExpressionUtils.isVoidContext(assignment)) return;
         PsiField field = getAssignedField(assignment);
@@ -100,7 +100,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     if (aClass == null) return false;
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();
         if (resolved == null) return;
@@ -162,7 +162,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     final List<PsiAssignmentExpression> totalUsages = new ArrayList<>();
     containingClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression reference) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression reference) {
         if (!result.get().booleanValue()) return;
         super.visitReferenceExpression(reference);
         if (!PsiUtil.isOnAssignmentLeftHand(reference)) return;

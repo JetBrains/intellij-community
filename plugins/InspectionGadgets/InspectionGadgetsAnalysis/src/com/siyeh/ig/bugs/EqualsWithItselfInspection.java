@@ -51,7 +51,7 @@ public class EqualsWithItselfInspection extends BaseInspection {
   private static class EqualsWithItselfVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (isEqualsWithItself(expression)) {
         registerMethodCallError(expression);

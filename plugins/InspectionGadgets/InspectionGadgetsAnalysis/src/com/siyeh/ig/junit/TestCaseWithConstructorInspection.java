@@ -92,7 +92,7 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }

@@ -228,7 +228,7 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     List<PsiReferenceExpression> references = new SmartList<>();
     outerCodeBlock.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (ExpressionUtils.isReferenceTo(expression, variable)) {
           references.add(expression);

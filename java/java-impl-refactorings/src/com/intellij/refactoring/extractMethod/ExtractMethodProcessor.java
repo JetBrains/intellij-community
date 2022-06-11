@@ -370,7 +370,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         for (PsiElement element : myElements) {
           element.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
+            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               super.visitReferenceExpression(expression);
               final PsiElement resolve = expression.resolve();
               if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL) &&
@@ -524,15 +524,15 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void checkLocalClasses(final PsiMethod container) throws PrepareFailedException {
     final List<PsiClass> localClasses = new ArrayList<>();
     container.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitClass(final PsiClass aClass) {
+      @Override public void visitClass(final @NotNull PsiClass aClass) {
         localClasses.add(aClass);
       }
 
-      @Override public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      @Override public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         visitElement(aClass);
       }
 
-      @Override public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      @Override public void visitTypeParameter(final @NotNull PsiTypeParameter classParameter) {
         visitElement(classParameter);
       }
     });
@@ -665,13 +665,13 @@ public class ExtractMethodProcessor implements MatchProvider {
         for (PsiElement element : myElements) {
           element.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitLocalVariable(PsiLocalVariable variable) {
+            public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
               super.visitLocalVariable(variable);
               vars.put(variable.getName(), variable);
             }
 
             @Override
-            public void visitClass(PsiClass aClass) {}
+            public void visitClass(@NotNull PsiClass aClass) {}
           });
         }
         for (VariableData parameter : parameters) {
@@ -1254,7 +1254,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         method.accept(new JavaRecursiveElementVisitor() {
 
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
             if (resolved != null) {
               final int index = ArrayUtil.find(parameters, resolved);
@@ -1276,7 +1276,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       else if (!PsiUtil.isLanguageLevel8OrHigher(myTargetClass)){
         method.accept(new JavaRecursiveElementVisitor() {
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
             final int index = ArrayUtil.find(parameters, resolved);
             if (index >= 0) {

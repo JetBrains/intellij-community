@@ -230,7 +230,7 @@ final class VariableExtractor {
         final int[] usedFirstVar = new int[]{-1};
         initializer.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             final int i = ArrayUtilRt.find(declaredElements, expression.resolve());
             if (i > -1) {
               usedFirstVar[0] = Math.max(i, usedFirstVar[0]);

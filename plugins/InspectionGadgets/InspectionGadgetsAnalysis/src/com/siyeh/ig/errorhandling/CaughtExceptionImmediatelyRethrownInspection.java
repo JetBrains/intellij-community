@@ -63,7 +63,7 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
   private static class CaughtExceptionImmediatelyRethrownVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(statement.getException());
       if (!(expression instanceof PsiReferenceExpression)) {

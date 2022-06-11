@@ -48,15 +48,15 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
-      @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         checkSillyAssignment(expression, holder);
       }
 
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitElement(expression);
       }
 
-      @Override public void visitVariable(final PsiVariable variable) {
+      @Override public void visitVariable(final @NotNull PsiVariable variable) {
         final PsiExpression initializer = PsiUtil.deparenthesizeExpression(variable.getInitializer());
         if (initializer instanceof PsiAssignmentExpression) {
           final PsiExpression lExpr = PsiUtil.deparenthesizeExpression(((PsiAssignmentExpression)initializer).getLExpression());

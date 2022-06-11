@@ -22,7 +22,7 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
                                         @NotNull final LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitIdentifier(PsiIdentifier identifier) {
+      public void visitIdentifier(@NotNull PsiIdentifier identifier) {
         PsiElement parent = identifier.getParent();
         if (parent instanceof PsiMember && parent instanceof PsiNameIdentifierOwner && ((PsiNameIdentifierOwner)parent).getNameIdentifier() == identifier) {
           checkMember((PsiMember)parent, identifier, holder);

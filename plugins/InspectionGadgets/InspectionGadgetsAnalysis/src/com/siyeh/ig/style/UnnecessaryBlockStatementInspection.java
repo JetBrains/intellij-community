@@ -95,7 +95,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
   private class UnnecessaryBlockStatementVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBlockStatement(PsiBlockStatement blockStatement) {
+    public void visitBlockStatement(@NotNull PsiBlockStatement blockStatement) {
       super.visitBlockStatement(blockStatement);
       if (ignoreSwitchBranches) {
         final PsiElement prevStatement = PsiTreeUtil.skipWhitespacesBackward(blockStatement);

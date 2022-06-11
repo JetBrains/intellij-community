@@ -140,7 +140,7 @@ public class ListIndexOfReplaceableByContainsInspection extends BaseInspection i
 
     @Override
     public void visitBinaryExpression(
-      PsiBinaryExpression expression) {
+      @NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());

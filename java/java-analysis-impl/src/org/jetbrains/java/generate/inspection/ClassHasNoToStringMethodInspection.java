@@ -76,7 +76,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
         return new JavaElementVisitor() {
             @Override
-            public void visitClass(PsiClass clazz) {
+            public void visitClass(@NotNull PsiClass clazz) {
                 if (LOG.isDebugEnabled()) LOG.debug("checkClass: clazz=" + clazz);
 
                 // must be a class

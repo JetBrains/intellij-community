@@ -26,7 +26,7 @@ public class SlowListContainsAllInspection extends AbstractBaseJavaLocalInspecti
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (TestUtils.isInTestCode(call)) return;
         super.visitMethodCallExpression(call);
         if (!LIST_CONTAINS_ALL.test(call)) return;

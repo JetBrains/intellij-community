@@ -25,7 +25,7 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiExpressionList argList = call.getArgumentList();
         int argCount = argList.getExpressionCount();
         if (argCount < 2) return;

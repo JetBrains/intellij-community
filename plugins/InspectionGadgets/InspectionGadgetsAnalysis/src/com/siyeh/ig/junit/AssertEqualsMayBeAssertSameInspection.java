@@ -32,7 +32,7 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection implem
   private static class AssertEqualsMayBeAssertSameVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final AssertHint assertHint = AssertHint.createAssertEqualsHint(expression);
       if (assertHint == null) {

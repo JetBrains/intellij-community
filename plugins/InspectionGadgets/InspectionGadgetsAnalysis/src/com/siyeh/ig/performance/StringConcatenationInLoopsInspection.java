@@ -99,7 +99,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   private static class StringConcatenationInLoopsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final PsiExpression[] operands = expression.getOperands();
       if (operands.length <= 1) {

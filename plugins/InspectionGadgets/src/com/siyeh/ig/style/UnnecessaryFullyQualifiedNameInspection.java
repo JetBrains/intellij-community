@@ -153,7 +153,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement parent = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class);
       if (parent != null) {
@@ -191,13 +191,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
   private class UnnecessaryFullyQualifiedNameVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       checkReference(expression);
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       checkReference(reference);
     }

@@ -126,7 +126,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
   private class ListenerMayUseAdapterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList == null) {
         return;

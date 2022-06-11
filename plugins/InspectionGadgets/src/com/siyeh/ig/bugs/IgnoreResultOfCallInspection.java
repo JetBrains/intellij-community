@@ -180,7 +180,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
   private class IgnoreResultOfCallVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
         PsiElement resolve = expression.resolve();
         if (resolve instanceof PsiMethod) {
@@ -190,7 +190,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (ExpressionUtils.isVoidContext(expression)) {
         final PsiMethod method = expression.resolveMethod();
         if (method == null || method.isConstructor()) {

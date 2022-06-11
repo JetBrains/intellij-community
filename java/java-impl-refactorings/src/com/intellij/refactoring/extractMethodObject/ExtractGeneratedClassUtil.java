@@ -114,7 +114,7 @@ final class ExtractGeneratedClassUtil {
     generatedClass.putUserData(LightMethodObjectExtractedData.REFERENCED_TYPE, PsiTypesUtil.getClassType(extractedClass));
     element.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
         PsiMethod constructor = expression.resolveConstructor();
         if (constructor != null && generatedClass.equals(constructor.getContainingClass())) {
@@ -128,7 +128,7 @@ final class ExtractGeneratedClassUtil {
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         PsiMethod method = expression.resolveMethod();
         if (method != null && generatedClass.equals(method.getContainingClass())) {

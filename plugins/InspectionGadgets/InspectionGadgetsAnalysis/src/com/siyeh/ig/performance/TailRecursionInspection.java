@@ -132,7 +132,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       final List<PsiStatement> emptyElseBranches = new SmartList<>();
       element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
           super.visitIfStatement(statement);
           final PsiStatement elseBranch = statement.getElseBranch();
           if (ControlFlowUtils.isEmpty(elseBranch, false, true)) {
@@ -194,7 +194,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         if (containsCallOnOtherInstance) {
           return;
         }

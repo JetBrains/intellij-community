@@ -157,7 +157,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
 
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
         PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
         if (nameElement == null) return;
         CALL_TO_FIX_MAPPER.mapAll(methodCall)

@@ -272,7 +272,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       if (psiExpression != null) {
         psiExpression.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceExpression(final PsiReferenceExpression expression) {
+          public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement psiElement = expression.resolve();
             if (psiElement instanceof PsiField) {

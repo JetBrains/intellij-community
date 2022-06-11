@@ -162,7 +162,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       copy.accept(new JavaRecursiveElementWalkingVisitor() {
         int delta;
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
+        public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement expression) {
           if (isParameterizedReference(expression) ||
               expression instanceof PsiMethodReferenceExpression ||
               expression.getParent() instanceof PsiErrorElement) {

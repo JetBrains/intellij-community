@@ -37,7 +37,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         PsiClass aClass = method.getContainingClass();
         if (aClass == null || !aClass.isRecord()) return;
         if (JavaPsiRecordUtil.isCompactConstructor(method)) {

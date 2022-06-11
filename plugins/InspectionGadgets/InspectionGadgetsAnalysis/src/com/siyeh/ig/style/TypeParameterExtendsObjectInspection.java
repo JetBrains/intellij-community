@@ -122,7 +122,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
   private class ExtendsObjectVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeParameter(PsiTypeParameter parameter) {
+    public void visitTypeParameter(@NotNull PsiTypeParameter parameter) {
       super.visitTypeParameter(parameter);
       final PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
       if (extendsListTypes.length != 1) {
@@ -144,7 +144,7 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
 
     @Override
-    public void visitTypeElement(PsiTypeElement typeElement) {
+    public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       super.visitTypeElement(typeElement);
       final PsiElement lastChild = typeElement.getLastChild();
       if (!(lastChild instanceof PsiTypeElement)) {

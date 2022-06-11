@@ -98,7 +98,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
   private class EqualsReplaceableByObjectsCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final String methodName = expression.getMethodExpression().getReferenceName();
       if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
         return;

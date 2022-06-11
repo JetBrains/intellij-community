@@ -24,7 +24,7 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         for(LambdaAndExplicitMethodPair info : LambdaAndExplicitMethodPair.INFOS) {
           PsiExpression arg = info.getLambdaCandidateFromExplicitCall(call);
           if(arg != null && !(arg instanceof PsiEmptyExpressionImpl) && !ExpressionUtils.isSafelyRecomputableExpression(arg)) {

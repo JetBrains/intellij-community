@@ -54,7 +54,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection implements Cle
   private static class UseOfObsoleteAssertVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final Project project = expression.getProject();
       final Module module = ModuleUtilCore.findModuleForPsiElement(expression);
       if (module == null) {
@@ -175,7 +175,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection implements Cle
         }
 
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           if (expression == methodCallExpression) {
             return;

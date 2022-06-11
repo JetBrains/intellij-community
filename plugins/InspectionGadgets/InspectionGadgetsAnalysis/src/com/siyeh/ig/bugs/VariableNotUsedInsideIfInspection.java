@@ -47,7 +47,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
   private static class VariableNotUsedInsideIfVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(expression.getCondition());
       if (!(condition instanceof PsiBinaryExpression)) {
@@ -72,7 +72,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     }
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
       if (!(condition instanceof PsiBinaryExpression)) {

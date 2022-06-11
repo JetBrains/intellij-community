@@ -105,13 +105,13 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void visitImportList(PsiImportList list) {
+    public void visitImportList(@NotNull PsiImportList list) {
       checkTopLevelSemicolons(list);
       super.visitImportList(list);
     }
 
     @Override
-    public void visitModule(PsiJavaModule module) {
+    public void visitModule(@NotNull PsiJavaModule module) {
       checkTopLevelSemicolons(module);
       super.visitModule(module);
     }
@@ -152,7 +152,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void visitEmptyStatement(PsiEmptyStatement statement) {
+    public void visitEmptyStatement(@NotNull PsiEmptyStatement statement) {
       super.visitEmptyStatement(statement);
       final PsiElement parent = statement.getParent();
       if (parent instanceof PsiCodeBlock) {
@@ -165,7 +165,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void visitResourceList(final PsiResourceList resourceList) {
+    public void visitResourceList(final @NotNull PsiResourceList resourceList) {
       super.visitResourceList(resourceList);
       final PsiElement last = resourceList.getLastChild();
       if (PsiUtil.isJavaToken(last, JavaTokenType.RPARENTH)) {

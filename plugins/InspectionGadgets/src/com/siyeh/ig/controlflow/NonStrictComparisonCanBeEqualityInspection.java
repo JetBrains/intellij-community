@@ -27,7 +27,7 @@ public class NonStrictComparisonCanBeEqualityInspection extends AbstractBaseJava
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitBinaryExpression(PsiBinaryExpression binOp) {
+      public void visitBinaryExpression(@NotNull PsiBinaryExpression binOp) {
         IElementType token = binOp.getOperationTokenType();
         RelationType relation = DfaPsiUtil.getRelationByToken(token);
         if (relation != RelationType.GE && relation != RelationType.LE) return;

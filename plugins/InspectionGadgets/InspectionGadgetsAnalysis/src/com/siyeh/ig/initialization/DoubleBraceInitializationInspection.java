@@ -135,7 +135,7 @@ public class DoubleBraceInitializationInspection extends BaseInspection implemen
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
       element.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           if (expression.getQualifierExpression() != null) {
             return;
@@ -164,7 +164,7 @@ public class DoubleBraceInitializationInspection extends BaseInspection implemen
   private static class DoubleBraceInitializationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
       super.visitAnonymousClass(aClass);
       if (ClassUtils.getDoubleBraceInitializer(aClass) == null) return;
       registerClassError(aClass, aClass);

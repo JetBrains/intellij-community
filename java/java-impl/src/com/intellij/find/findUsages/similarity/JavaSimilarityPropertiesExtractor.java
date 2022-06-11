@@ -27,7 +27,7 @@ public class JavaSimilarityPropertiesExtractor extends JavaRecursiveElementVisit
   }
 
   @Override
-  public void visitKeyword(PsiKeyword keyword) {
+  public void visitKeyword(@NotNull PsiKeyword keyword) {
     final IElementType type = keyword.getTokenType();
     if (!type.equals(FINAL_KEYWORD)) {
       myUsageSimilarityFeaturesRecorder.addFeature(type.toString());
@@ -37,73 +37,73 @@ public class JavaSimilarityPropertiesExtractor extends JavaRecursiveElementVisit
 
 
   @Override
-  public void visitVariable(PsiVariable variable) {
+  public void visitVariable(@NotNull PsiVariable variable) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(variable, "VAR: " + getTypeRepresentation(variable.getType()));
     super.visitVariable(variable);
   }
 
   @Override
-  public void visitNewExpression(PsiNewExpression expression) {
+  public void visitNewExpression(@NotNull PsiNewExpression expression) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "NEW: " + getTypeRepresentation(expression));
     super.visitNewExpression(expression);
   }
 
   @Override
-  public void visitForStatement(PsiForStatement statement) {
+  public void visitForStatement(@NotNull PsiForStatement statement) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(statement, "FOR");
     super.visitForStatement(statement);
   }
 
   @Override
-  public void visitForeachStatement(PsiForeachStatement statement) {
+  public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(statement, "FOREACH");
     super.visitForeachStatement(statement);
   }
 
   @Override
-  public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+  public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(statement, "DO");
     super.visitDoWhileStatement(statement);
   }
 
   @Override
-  public void visitIfStatement(PsiIfStatement statement) {
+  public void visitIfStatement(@NotNull PsiIfStatement statement) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(statement, "IF");
     super.visitIfStatement(statement);
   }
 
   @Override
-  public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+  public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, expression.getOperationSign().getText());
     super.visitAssignmentExpression(expression);
   }
 
   @Override
-  public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+  public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "instanceof");
     super.visitInstanceOfExpression(expression);
   }
 
   @Override
-  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, expression.getOperationTokenType().toString());
     super.visitPolyadicExpression(expression);
   }
 
   @Override
-  public void visitSwitchStatement(PsiSwitchStatement statement) {
+  public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(statement, "SWITCH");
     super.visitSwitchStatement(statement);
   }
 
   @Override
-  public void visitWhileStatement(PsiWhileStatement statement) {
+  public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(statement, "WHILE");
     super.visitWhileStatement(statement);
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     String tokenFeature = null;
     if (!(expression instanceof PsiMethodReferenceExpression)) {
       tokenFeature = "VAR: ";
@@ -119,7 +119,7 @@ public class JavaSimilarityPropertiesExtractor extends JavaRecursiveElementVisit
   }
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     String tokenFeature;
     if (Registry.is("similarity.find.usages.fast.clustering")) {
       final PsiElement referenceNameElement = expression.getReferenceNameElement();
@@ -135,7 +135,7 @@ public class JavaSimilarityPropertiesExtractor extends JavaRecursiveElementVisit
   }
 
   @Override
-  public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+  public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression expression) {
     PsiExpression arrayIndex = expression.getIndexExpression();
     String tokenFeature = "{ARRAY: data: " + expression.getType() + " index:" + getTypeRepresentation(arrayIndex) + "}";
     myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, tokenFeature);
@@ -143,7 +143,7 @@ public class JavaSimilarityPropertiesExtractor extends JavaRecursiveElementVisit
   }
 
   @Override
-  public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
     String tokenFeature;
     if (Registry.is("similarity.find.usages.fast.clustering")) {
       tokenFeature = "{CALL: " + expression.getMethodExpression().getReferenceName() + "}";
@@ -158,19 +158,19 @@ public class JavaSimilarityPropertiesExtractor extends JavaRecursiveElementVisit
   }
 
   @Override
-  public void visitLiteralExpression(PsiLiteralExpression expression) {
+  public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "literal:" + getTypeRepresentation(expression));
     super.visitLiteralExpression(expression);
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(expression, "lambda");
     super.visitLambdaExpression(expression);
   }
 
   @Override
-  public void visitAnonymousClass(PsiAnonymousClass clazz) {
+  public void visitAnonymousClass(@NotNull PsiAnonymousClass clazz) {
     myUsageSimilarityFeaturesRecorder.addAllFeatures(clazz, "anonymousClazz");
     super.visitAnonymousClass(clazz);
   }

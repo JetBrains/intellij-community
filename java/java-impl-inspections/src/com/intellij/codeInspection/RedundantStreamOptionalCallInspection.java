@@ -94,7 +94,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (STREAM_OF_SINGLE.test(call)) {
           handleSingleElementStream(call);
         }

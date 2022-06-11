@@ -53,7 +53,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         SimplifyForEachContext context = SimplifyForEachContext.from(call);
         if (context == null) return;
         boolean opCountChanged = context.myTerminalBlock.getOperationCount() > 1;

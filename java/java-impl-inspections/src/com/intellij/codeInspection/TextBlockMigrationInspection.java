@@ -42,7 +42,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         if (!isConcatenation(expression)) return;
         int nNewLines = 0;
         PsiExpression[] operands = expression.getOperands();
@@ -80,7 +80,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
 
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiPolyadicExpression) return;
         boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
         if (!mySuggestLiteralReplacement && !quickFixOnly) return;

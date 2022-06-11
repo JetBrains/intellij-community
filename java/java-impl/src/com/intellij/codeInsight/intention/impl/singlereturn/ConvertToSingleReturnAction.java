@@ -124,7 +124,7 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
       private PsiReturnStatement myReturnStatement;
 
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         if (lastStatement != statement) {
           myReturnStatement = statement;
@@ -133,13 +133,13 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {}
+      public void visitExpression(@NotNull PsiExpression expression) {}
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
     }
     Visitor visitor = new Visitor();
     block.accept(visitor);

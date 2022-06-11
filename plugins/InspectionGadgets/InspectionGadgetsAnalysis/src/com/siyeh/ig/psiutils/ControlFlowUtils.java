@@ -1103,12 +1103,12 @@ public final class ControlFlowUtils {
     }
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       // don't drill down
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       if (statement.getLabelIdentifier() != null) {
         return;
       }
@@ -1117,27 +1117,27 @@ public final class ControlFlowUtils {
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       // don't drill down
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       // don't drill down
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       // don't drill down
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       // don't drill down
     }
 
     @Override
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       // don't drill down
     }
   }
@@ -1150,12 +1150,12 @@ public final class ControlFlowUtils {
     }
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       // don't drill down
     }
 
     @Override
-    public void visitContinueStatement(PsiContinueStatement statement) {
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       if (statement.getLabelIdentifier() != null) {
         return;
       }
@@ -1163,22 +1163,22 @@ public final class ControlFlowUtils {
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       // don't drill down
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       // don't drill down
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       // don't drill down
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       // don't drill down
     }
   }
@@ -1236,7 +1236,7 @@ public final class ControlFlowUtils {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     }
 
     @Override
@@ -1281,7 +1281,7 @@ public final class ControlFlowUtils {
     }
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       if (m_found) {
         return;
       }
@@ -1331,7 +1331,7 @@ public final class ControlFlowUtils {
     }
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       if (m_found) {
         return;
       }
@@ -1377,7 +1377,7 @@ public final class ControlFlowUtils {
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       if (containsCallToMethod) {
         return;
       }
@@ -1412,7 +1412,7 @@ public final class ControlFlowUtils {
 
     @Override
     public void visitContinueStatement(
-      PsiContinueStatement continueStatement) {
+      @NotNull PsiContinueStatement continueStatement) {
       if (found) {
         return;
       }

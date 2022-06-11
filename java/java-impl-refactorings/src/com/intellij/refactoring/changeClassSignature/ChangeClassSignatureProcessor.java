@@ -153,7 +153,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     final Map<PsiTypeElement, PsiClass> supersMap = new HashMap<>();
     myClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitTypeElement(PsiTypeElement typeElement) {
+      public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         final PsiType type = typeElement.getType();
         final PsiClass psiClass = PsiUtil.resolveClassInType(type);

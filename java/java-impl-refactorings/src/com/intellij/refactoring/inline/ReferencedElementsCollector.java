@@ -26,11 +26,11 @@ import java.util.HashSet;
 public class ReferencedElementsCollector extends JavaRecursiveElementVisitor {
   final HashSet<PsiMember> myReferencedMembers = new HashSet<>();
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     visitReferenceElement(expression);
   }
 
-  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     final PsiElement psiElement = reference.resolve();
     if (psiElement instanceof PsiMember) {
       checkAddMember((PsiMember)psiElement);
@@ -39,7 +39,7 @@ public class ReferencedElementsCollector extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitNewExpression(PsiNewExpression expression) {
+  public void visitNewExpression(@NotNull PsiNewExpression expression) {
     PsiMethod method = expression.resolveMethod();
     if (method != null) {
       checkAddMember(method);

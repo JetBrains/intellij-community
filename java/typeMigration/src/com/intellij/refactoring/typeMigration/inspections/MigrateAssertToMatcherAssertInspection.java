@@ -74,7 +74,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
         if (!ASSERT_METHODS.containsKey(methodName)) return;

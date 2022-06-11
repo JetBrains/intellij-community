@@ -150,7 +150,7 @@ public class ClassInitializerInspection extends BaseInspection {
   private class ClassInitializerVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       super.visitClassInitializer(initializer);
       if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
         return;

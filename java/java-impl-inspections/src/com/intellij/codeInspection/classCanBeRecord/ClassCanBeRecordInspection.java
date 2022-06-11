@@ -129,7 +129,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       PsiIdentifier classIdentifier = aClass.getNameIdentifier();
       if (classIdentifier == null) return;

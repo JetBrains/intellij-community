@@ -53,7 +53,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTypeElement(PsiTypeElement typeElement) {
+      public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
         VarianceCandidate candidate = VarianceCandidate.findVarianceCandidate(typeElement);
         if (candidate == null) return;
         PsiTypeParameterListOwner owner = candidate.typeParameter.getOwner();
@@ -310,7 +310,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     if (body == null || superMethods.isEmpty()) return;
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         PsiMethod called = expression.resolveMethod();
         if (superMethods.contains(called)) {
           result.add(expression);
@@ -369,7 +369,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     List<PsiThisExpression> these = new ArrayList<>();
     methodCopy.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         super.visitThisExpression(expression);
         if (PsiUtil.resolveClassInType(expression.getType()) == classCopy) {
           these.add(expression);

@@ -176,7 +176,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   private class LoggerInitializedWithForeignClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+    public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
       super.visitClassObjectAccessExpression(expression);
       PsiElement parent = expression.getParent();
       if (parent instanceof PsiReferenceExpression) {

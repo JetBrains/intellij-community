@@ -67,29 +67,29 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
           checkFile(file, holder);
         }
       }
 
       @Override
-      public void visitModule(PsiJavaModule module) {
+      public void visitModule(@NotNull PsiJavaModule module) {
         checkModule(module, holder);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         checkClass(aClass, holder);
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         checkField(field, holder);
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         checkMethod(method, holder);
       }
     };

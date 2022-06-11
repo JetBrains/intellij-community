@@ -36,7 +36,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchExpression(PsiSwitchExpression expression) {
+      public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
         if (!isNonemptyRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
         String message = JavaBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
@@ -44,7 +44,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
       }
 
       @Override
-      public void visitSwitchStatement(PsiSwitchStatement statement) {
+      public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
         if (!isNonemptyRuleFormatSwitch(statement)) return;
         if (findReplacer(statement) == null) return;
         String message = JavaBundle.message("inspection.switch.expression.backward.statement.migration.inspection.name");

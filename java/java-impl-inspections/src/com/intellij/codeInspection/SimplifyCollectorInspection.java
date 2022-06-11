@@ -28,7 +28,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
 
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
         if (nameElement == null || !isCollectorMethod(call, "groupingBy", "groupingByConcurrent")) return;

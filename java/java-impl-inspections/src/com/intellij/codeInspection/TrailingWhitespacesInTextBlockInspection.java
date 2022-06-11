@@ -23,7 +23,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
           String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
         if (lines == null) return;
         int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, false);

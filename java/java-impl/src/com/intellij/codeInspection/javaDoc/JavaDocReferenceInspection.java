@@ -69,29 +69,29 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitJavaFile(@NotNull PsiJavaFile file) {
         if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
           checkComment(PsiTreeUtil.getChildOfType(file, PsiDocComment.class), file, holder, isOnTheFly);
         }
       }
 
       @Override
-      public void visitModule(PsiJavaModule module) {
+      public void visitModule(@NotNull PsiJavaModule module) {
         checkComment(module.getDocComment(), module, holder, isOnTheFly);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         checkComment(aClass.getDocComment(), aClass, holder, isOnTheFly);
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         checkComment(field.getDocComment(), field, holder, isOnTheFly);
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         checkComment(method.getDocComment(), method, holder, isOnTheFly);
       }
     };
@@ -103,12 +103,12 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     JavadocManager javadocManager = JavadocManager.getInstance(holder.getProject());
     comment.accept(new JavaElementVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         visitRefElement(reference, context, isOnTheFly, holder);
       }
 
       @Override
-      public void visitDocTag(PsiDocTag tag) {
+      public void visitDocTag(@NotNull PsiDocTag tag) {
         super.visitDocTag(tag);
         visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
       }

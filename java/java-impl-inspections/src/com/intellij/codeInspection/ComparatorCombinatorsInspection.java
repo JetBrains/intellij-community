@@ -39,7 +39,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);
         PsiType type = lambda.getFunctionalInterfaceType();
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(lambda.getParent());

@@ -26,7 +26,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitDocToken(PsiDocToken token) {
+      public void visitDocToken(@NotNull PsiDocToken token) {
         super.visitDocToken(token);
         PsiElement nextWhitespace = token.getNextSibling();
         PsiElement prevWhitespace = token.getPrevSibling();

@@ -40,7 +40,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitReturnStatement(PsiReturnStatement returnStatement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
         super.visitReturnStatement(returnStatement);
         final ReturnContext context = createReturnContext(returnStatement);
         if (context != null && isApplicable(context)) {

@@ -639,7 +639,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     final boolean dumb = DumbService.isDumb(scope.getProject());
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (dumb || !addClosureFolding(aClass, document, list, processedComments, quick)) {
           addToFold(list, aClass, document, true, getCodeBlockPlaceholder(null), classRange(aClass), JavaCodeFoldingSettings.getInstance().isCollapseInnerClasses());
           addFoldsForClass(list, aClass, document, processedComments, quick);
@@ -647,7 +647,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         if (!dumb && JavaCodeFoldingSettings.getInstance().isReplaceVarWithInferredType()) {
           addLocalVariableTypeFolding(list, variable, quick);
         }
@@ -656,7 +656,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         if (!dumb) {
           addMethodGenericParametersFolding(list, expression, document, quick);
         }
@@ -665,7 +665,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (!dumb) {
           addGenericParametersFolding(list, expression, document, quick);
         }
@@ -674,7 +674,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         PsiElement body = expression.getBody();
         if (body instanceof PsiCodeBlock) {
           addToFold(list, expression, document, true, getCodeBlockPlaceholder(expression.getBody()), lambdaRange(expression),
@@ -684,7 +684,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
-      public void visitCodeBlock(PsiCodeBlock block) {
+      public void visitCodeBlock(@NotNull PsiCodeBlock block) {
         if (Registry.is("java.folding.icons.for.control.flow", true) && block.getStatementCount() > 0) {
           addToFold(list, block, document, false, getCodeBlockPlaceholder(block), block.getTextRange(), false);
         }

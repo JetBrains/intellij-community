@@ -25,12 +25,12 @@ public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJ
     return new JavaElementVisitor() {
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         checkSubClassReferences(field);
       }
 
       @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         checkSubClassReferences(initializer);
       }
 

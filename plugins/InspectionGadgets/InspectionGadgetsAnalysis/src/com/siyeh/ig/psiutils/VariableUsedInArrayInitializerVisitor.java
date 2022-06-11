@@ -36,7 +36,7 @@ class VariableUsedInArrayInitializerVisitor extends JavaRecursiveElementWalkingV
 
   @Override
   public void visitArrayInitializerExpression(
-    PsiArrayInitializerExpression expression) {
+    @NotNull PsiArrayInitializerExpression expression) {
     if (passed) {
       return;
     }

@@ -25,7 +25,7 @@ public class UseGrayInspection extends DevKitInspectionBase {
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         final ProblemDescriptor descriptor = checkNewExpression(expression, holder.getManager(), isOnTheFly);
         if (descriptor != null) {
           holder.registerProblem(descriptor);

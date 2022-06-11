@@ -55,7 +55,7 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
   private static class JUnit3StyleTestMethodInJUnit4ClassInspectionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final String name = method.getName();
       if (!name.startsWith("test")) return;
@@ -91,7 +91,7 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
     private boolean myJUnit4AnnotationFound = false;
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       @NonNls final String qualifiedName = annotation.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.startsWith("org.junit.")) {

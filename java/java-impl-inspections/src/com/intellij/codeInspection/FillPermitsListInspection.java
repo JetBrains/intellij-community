@@ -21,7 +21,7 @@ public class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTo
     if (!HighlightingFeature.SEALED_CLASSES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitClass(PsiClass psiClass) {
+      public void visitClass(@NotNull PsiClass psiClass) {
         PsiIdentifier identifier = psiClass.getNameIdentifier();
         if (identifier == null) return;
         PsiFile containingFile = tryCast(psiClass.getContainingFile(), PsiJavaFile.class);

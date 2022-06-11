@@ -56,7 +56,7 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
   private static class JavaLangImportVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitImportStatement(PsiImportStatement statement) {
+    public void visitImportStatement(@NotNull PsiImportStatement statement) {
       super.visitImportStatement(statement);
       final PsiJavaCodeReferenceElement reference = statement.getImportReference();
       if (reference == null) {

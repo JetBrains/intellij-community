@@ -52,13 +52,13 @@ public class OptionalUsedAsFieldOrParameterTypeInspection extends BaseInspection
   private static class OptionUsedAsFieldOrParameterTypeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       checkTypeElement(field.getTypeElement());
     }
 
     @Override
-    public void visitParameter(PsiParameter parameter) {
+    public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
       final PsiElement scope = parameter.getDeclarationScope();
       if (!(scope instanceof PsiMethod)) {

@@ -29,12 +29,12 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitExpression(final PsiExpression expression) {
+  public void visitExpression(final @NotNull PsiExpression expression) {
     myBuf.append(expression.getText());
   }
 
   @Override
-  public void visitInstanceOfExpression(final PsiInstanceOfExpression expression) {
+  public void visitInstanceOfExpression(final @NotNull PsiInstanceOfExpression expression) {
     expression.getOperand().accept(this);
     myBuf.append(" ").append(PsiKeyword.INSTANCEOF).append(" ");
     final PsiTypeElement checkType = expression.getCheckType();
@@ -44,7 +44,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitParenthesizedExpression(final PsiParenthesizedExpression expression) {
+  public void visitParenthesizedExpression(final @NotNull PsiParenthesizedExpression expression) {
     myBuf.append("(");
     final PsiExpression expr = expression.getExpression();
     if (expr != null) {
@@ -54,7 +54,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+  public void visitTypeCastExpression(final @NotNull PsiTypeCastExpression expression) {
     final PsiTypeElement castType = expression.getCastType();
     if (castType != null) {
       myBuf.append("(").append(castType.getText()).append(")");
@@ -66,7 +66,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+  public void visitArrayAccessExpression(final @NotNull PsiArrayAccessExpression expression) {
     expression.getArrayExpression().accept(this);
     myBuf.append("[");
     final PsiExpression indexExpression = expression.getIndexExpression();
@@ -77,7 +77,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitPrefixExpression(final PsiPrefixExpression expression) {
+  public void visitPrefixExpression(final @NotNull PsiPrefixExpression expression) {
     myBuf.append(expression.getOperationSign().getText());
     final PsiExpression operand = expression.getOperand();
     if (operand != null) {
@@ -86,13 +86,13 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitPostfixExpression(final PsiPostfixExpression expression) {
+  public void visitPostfixExpression(final @NotNull PsiPostfixExpression expression) {
     expression.getOperand().accept(this);
     myBuf.append(expression.getOperationSign().getText());
   }
 
   @Override
-  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
     PsiExpression[] operands = expression.getOperands();
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
@@ -105,7 +105,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     PsiParameterList parameterList = expression.getParameterList();
     PsiParameter[] parameters = parameterList.getParameters();
 
@@ -127,7 +127,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitConditionalExpression(final PsiConditionalExpression expression) {
+  public void visitConditionalExpression(final @NotNull PsiConditionalExpression expression) {
     expression.getCondition().accept(this);
 
     myBuf.append(" ? ");
@@ -144,7 +144,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+  public void visitAssignmentExpression(final @NotNull PsiAssignmentExpression expression) {
     expression.getLExpression().accept(this);
     myBuf.append(expression.getOperationSign().getText());
     final PsiExpression rExpression = expression.getRExpression();
@@ -154,7 +154,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitReferenceExpression(final PsiReferenceExpression expr) {
+  public void visitReferenceExpression(final @NotNull PsiReferenceExpression expr) {
     final PsiExpression qualifierExpression = expr.getQualifierExpression();
     if (qualifierExpression != null) {
       qualifierExpression.accept(this);
@@ -165,13 +165,13 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitMethodCallExpression(final PsiMethodCallExpression expr) {
+  public void visitMethodCallExpression(final @NotNull PsiMethodCallExpression expr) {
     expr.getMethodExpression().accept(this);
     expr.getArgumentList().accept(this);
   }
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     final PsiElement qualifier = expression.getQualifier();
     if (qualifier != null) {
       qualifier.accept(this);
@@ -181,7 +181,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitArrayInitializerExpression(final PsiArrayInitializerExpression expression) {
+  public void visitArrayInitializerExpression(final @NotNull PsiArrayInitializerExpression expression) {
     myBuf.append("{");
     boolean first = true;
     for (PsiExpression expr : expression.getInitializers()) {
@@ -195,7 +195,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitExpressionList(final PsiExpressionList list) {
+  public void visitExpressionList(final @NotNull PsiExpressionList list) {
     final PsiExpression[] args = list.getExpressions();
     if (args.length > 0) {
       myBuf.append("(...)");
@@ -206,7 +206,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   @Override
-  public void visitNewExpression(final PsiNewExpression expr) {
+  public void visitNewExpression(final @NotNull PsiNewExpression expr) {
     final PsiAnonymousClass anonymousClass = expr.getAnonymousClass();
 
     final PsiExpressionList argumentList = expr.getArgumentList();

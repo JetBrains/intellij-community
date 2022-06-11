@@ -92,7 +92,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitCallExpression(PsiCallExpression call) {
+      public void visitCallExpression(@NotNull PsiCallExpression call) {
         CharsetMatch match = StreamEx.of(MATCHERS)
           .map(matcher -> matcher.extractCharsetMatch(languageLevel, call))
           .nonNull()
@@ -102,7 +102,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         if (!FOR_NAME_MATCHER.matches(call)) return;
         PsiExpressionList arguments = call.getArgumentList();

@@ -23,7 +23,7 @@ public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspe
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTryStatement(PsiTryStatement statement) {
+      public void visitTryStatement(@NotNull PsiTryStatement statement) {
         PsiResourceList resourceList = statement.getResourceList();
         if (resourceList == null) return;
 

@@ -23,6 +23,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,12 +40,12 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
     myTargetPackage = targetPackage;
   }
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     visitReferenceElement(expression);
   }
 
-  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
     PsiElement resolved = reference.resolve();
     visitResolvedReference(resolved, reference);

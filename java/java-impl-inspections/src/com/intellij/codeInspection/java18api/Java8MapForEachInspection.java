@@ -54,7 +54,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!ITERABLE_FOREACH.test(call)) return;
         PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
         if (!MAP_ENTRY_SET.test(qualifierCall)) return;
@@ -78,7 +78,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       @Override
-      public void visitForeachStatement(PsiForeachStatement loop) {
+      public void visitForeachStatement(@NotNull PsiForeachStatement loop) {
         if (DO_NOT_HIGHLIGHT_LOOP && !isOnTheFly) return;
         PsiMethodCallExpression call =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue()), PsiMethodCallExpression.class);

@@ -243,7 +243,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     final Map<PsiElement, PsiElement> replacement = new HashMap<>();
     scope.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitTypeElement(PsiTypeElement typeElement) {
+      public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         PsiType type = typeElement.getType();
         if (type instanceof PsiClassType) {
@@ -496,7 +496,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
         private boolean success = true;
 
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           final PsiElement psiElement = expression.resolve();
           if (psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) {
             if (!CommonJavaRefactoringUtil.canBeDeclaredFinal((PsiVariable)psiElement)) {

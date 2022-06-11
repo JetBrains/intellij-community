@@ -352,7 +352,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
       boolean leak = false;
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
         if (qualifier instanceof PsiQualifiedExpression) {
@@ -362,7 +362,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
         if (expression.getQualifier() == null) {
           PsiJavaCodeReferenceElement reference = expression.getClassReference();
@@ -377,7 +377,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         super.visitThisExpression(expression);
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         if (!(parent instanceof PsiReferenceExpression)) {

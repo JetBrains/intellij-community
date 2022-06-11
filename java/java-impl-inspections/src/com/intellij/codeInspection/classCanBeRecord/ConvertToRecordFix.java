@@ -239,7 +239,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         boolean existsSuperMethodCalls;
 
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           if (hasSuperQualifier(expression.getMethodExpression()) && OBJECT_METHOD_CALLS.test(expression)) {
             existsSuperMethodCalls = true;
@@ -248,7 +248,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         }
 
         @Override
-        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
           super.visitMethodReferenceExpression(expression);
           if (hasSuperQualifier(expression) && OBJECT_METHOD_CALLS.methodReferenceMatches(expression)) {
             existsSuperMethodCalls = true;

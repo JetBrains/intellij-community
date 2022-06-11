@@ -162,12 +162,12 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchStatement(PsiSwitchStatement statement) {
+      public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
         visitSwitchBlock(statement);
       }
 
       @Override
-      public void visitSwitchExpression(PsiSwitchExpression expression) {
+      public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
         visitSwitchBlock(expression);
       }
 
@@ -204,7 +204,7 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!STRING_COMPARISON_METHODS.test(call)) return;
         PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();

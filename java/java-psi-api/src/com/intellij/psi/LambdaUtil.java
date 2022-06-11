@@ -1075,7 +1075,7 @@ public final class LambdaUtil {
       boolean capturing;
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (expression instanceof PsiMethodReferenceExpression) return;
         if (expression.getParent() instanceof PsiMethodCallExpression && expression.getQualifierExpression() != null) return;
@@ -1091,13 +1091,13 @@ public final class LambdaUtil {
       }
 
       @Override
-      public void visitSuperExpression(PsiSuperExpression expression) {
+      public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
         capturing = true;
         stopWalking();
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         capturing = true;
         stopWalking();
       }

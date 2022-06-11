@@ -17,7 +17,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature.
 public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
 
   @Override
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     PsiElement resolved = reference.resolve();
 
     if (!(resolved instanceof PsiModifierListOwner)) return;
@@ -28,7 +28,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     PsiElement resolved = expression.resolve();
 
     if (!(resolved instanceof PsiModifierListOwner)) return;
@@ -39,7 +39,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
   }
 
   @Override
-  public void visitModuleStatement(PsiStatement statement) {
+  public void visitModuleStatement(@NotNull PsiStatement statement) {
     if (statement instanceof PsiRequiresStatement) {
       PsiRequiresStatement requiresStatement = (PsiRequiresStatement)statement;
       PsiJavaModule module = requiresStatement.resolve();

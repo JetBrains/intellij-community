@@ -240,7 +240,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
   private class ConditionalExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression condition = expression.getCondition();
       PsiElement last = PsiTreeUtil.getDeepestLast(condition);

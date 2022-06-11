@@ -92,7 +92,7 @@ public class FixAllQuickfixTest extends LightQuickFixParameterizedTestCase {
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
       return new JavaElementVisitor() {
         @Override
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
           if ("replaced".equals(expression.getValue())) return;
           holder.registerProblem(expression, "Even in injection", new LocalQuickFix() {
             @Nls(capitalization = Nls.Capitalization.Sentence)

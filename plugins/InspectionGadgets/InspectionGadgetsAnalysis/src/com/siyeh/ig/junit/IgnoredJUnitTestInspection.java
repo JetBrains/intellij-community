@@ -45,7 +45,7 @@ public class IgnoredJUnitTestInspection extends BaseInspection {
   private class IgnoredJUnitTestVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
       if (!(modifierListOwner instanceof PsiClass || modifierListOwner instanceof PsiMethod)) {

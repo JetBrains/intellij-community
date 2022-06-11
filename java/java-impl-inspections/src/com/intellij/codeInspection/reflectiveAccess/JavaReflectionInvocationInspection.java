@@ -35,7 +35,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
         super.visitMethodCallExpression(methodCall);
 
         if (isCallToMethod(methodCall, JAVA_LANG_REFLECT_METHOD, INVOKE)) {

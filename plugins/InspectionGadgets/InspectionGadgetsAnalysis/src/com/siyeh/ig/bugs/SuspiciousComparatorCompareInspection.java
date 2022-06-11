@@ -75,7 +75,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
   private static class SuspiciousComparatorCompareVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!MethodUtils.isComparatorCompare(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
         return;
@@ -84,7 +84,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression lambda) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
       super.visitLambdaExpression(lambda);
       final PsiClass functionalInterface = LambdaUtil.resolveFunctionalInterfaceClass(lambda);
       if (functionalInterface == null || !CommonClassNames.JAVA_UTIL_COMPARATOR.equals(functionalInterface.getQualifiedName()) ||
@@ -185,7 +185,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (expression.getQualifierExpression() != null) {
           // optimization

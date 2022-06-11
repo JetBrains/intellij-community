@@ -146,7 +146,7 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection extends Bas
   private static class CollectionsFieldAccessReplaceableByMethodCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       @NonNls final String name = expression.getReferenceName();
       @NonNls final String replacement;

@@ -150,7 +150,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
     Set<PsiExpression> processedOperands = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         super.visitPolyadicExpression(expression);
         if (!expression.getOperationTokenType().equals(JavaTokenType.OROR)) return;
         for (PsiExpression operand : expression.getOperands()) {

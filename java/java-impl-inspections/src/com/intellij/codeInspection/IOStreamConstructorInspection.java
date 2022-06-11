@@ -39,7 +39,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     if (!PsiUtil.isLanguageLevel7OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression newExpression) {
+      public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
         super.visitNewExpression(newExpression);
         IOStreamConstructorModel constructorModel = IOStreamConstructorModel.create(newExpression);
         if (constructorModel == null) return;

@@ -39,14 +39,14 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression assignmentExpression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignmentExpression) {
         super.visitAssignmentExpression(assignmentExpression);
 
         visitLocation(assignmentExpression);
       }
 
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         super.visitLocalVariable(variable);
 
         // At the "information" level only bare minimal set of elements are visited when the file is being edited.

@@ -61,7 +61,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitIfStatement(PsiIfStatement ifStatement) {
+      public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
         PsiStatement[] thenStatements = unwrap(ifStatement.getThenBranch());
         PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());
         for (IfStatementInspector inspector : ourInspectors) {

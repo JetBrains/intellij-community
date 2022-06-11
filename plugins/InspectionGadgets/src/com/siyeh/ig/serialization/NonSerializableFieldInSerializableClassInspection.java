@@ -76,7 +76,7 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
     }
 
     @Override
-    public void visitRecordComponent(PsiRecordComponent recordComponent) {
+    public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
       visitVariable(recordComponent, recordComponent.getContainingClass());
     }
 

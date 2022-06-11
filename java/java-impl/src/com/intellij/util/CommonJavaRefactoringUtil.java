@@ -436,7 +436,7 @@ public class CommonJavaRefactoringUtil {
   public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, final PsiElement element,
                                            final Condition<? super PsiTypeParameter> filter) {
     element.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         if (!reference.isQualified()) {
           final PsiElement resolved = reference.resolve();
@@ -450,7 +450,7 @@ public class CommonJavaRefactoringUtil {
       }
 
       @Override
-      public void visitExpression(final PsiExpression expression) {
+      public void visitExpression(final @NotNull PsiExpression expression) {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
         if (type != null) {
@@ -942,12 +942,12 @@ public class CommonJavaRefactoringUtil {
       final boolean[] found = {false};
       place.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
 
         }
 
         @Override
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
           if (name.equals(variable.getName())) {
             found[0] = true;
             stopWalking();

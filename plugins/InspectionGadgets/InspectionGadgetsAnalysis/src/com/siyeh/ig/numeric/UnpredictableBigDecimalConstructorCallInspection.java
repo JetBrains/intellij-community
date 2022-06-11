@@ -133,7 +133,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
   private class UnpredictableBigDecimalConstructorCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
       if (!ConstructionUtils.isReferenceTo(classReference, "java.math.BigDecimal")) {

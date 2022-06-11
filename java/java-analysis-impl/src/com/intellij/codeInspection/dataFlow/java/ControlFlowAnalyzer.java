@@ -187,7 +187,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     throw new CannotAnalyzeException();
   }
 
-  @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+  @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
     PsiExpression rExpr = expression.getRExpression();
 
     startElement(expression);
@@ -250,7 +250,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitAssertStatement(PsiAssertStatement statement) {
+  @Override public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
     startElement(statement);
     addInstruction(new PushInstruction(AssertionDisabledDescriptor.createAssertionsDisabledVar(myFactory), null));
     ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, DfTypes.TRUE);
@@ -271,7 +271,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+  @Override public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
     startElement(statement);
 
     PsiElement[] elements = statement.getDeclaredElements();
@@ -292,7 +292,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitField(PsiField field) {
+  public void visitField(@NotNull PsiField field) {
     PsiExpression initializer = field.getInitializer();
     if (initializer != null) {
       startElement(field);
@@ -307,7 +307,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitClassInitializer(PsiClassInitializer initializer) {
+  public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
     visitCodeBlock(initializer.getBody());
   }
 
@@ -322,7 +322,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitCodeFragment(JavaCodeFragment codeFragment) {
+  public void visitCodeFragment(@NotNull JavaCodeFragment codeFragment) {
     startElement(codeFragment);
     if (codeFragment instanceof PsiExpressionCodeFragment) {
       PsiExpression expression = ((PsiExpressionCodeFragment)codeFragment).getExpression();
@@ -333,7 +333,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(codeFragment);
   }
 
-  @Override public void visitCodeBlock(PsiCodeBlock block) {
+  @Override public void visitCodeBlock(@NotNull PsiCodeBlock block) {
     startElement(block);
 
     PsiStatement[] blockStatements = block.getStatements();
@@ -384,20 +384,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  @Override public void visitBlockStatement(PsiBlockStatement statement) {
+  @Override public void visitBlockStatement(@NotNull PsiBlockStatement statement) {
     startElement(statement);
     statement.getCodeBlock().accept(this);
     finishElement(statement);
   }
 
-  @Override public void visitBreakStatement(PsiBreakStatement statement) {
+  @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
     startElement(statement);
     jumpOut(statement.findExitedStatement());
     finishElement(statement);
   }
 
   @Override
-  public void visitYieldStatement(PsiYieldStatement statement) {
+  public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
     startElement(statement);
     PsiSwitchExpression enclosing = statement.findEnclosingExpression();
     PsiExpression expression = statement.getExpression();
@@ -440,7 +440,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 
-  @Override public void visitContinueStatement(PsiContinueStatement statement) {
+  @Override public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
     startElement(statement);
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(myCodeFragment, continuedStatement, true)) {
@@ -453,7 +453,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+  @Override public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
     startElement(statement);
 
     PsiStatement body = statement.getBody();
@@ -474,12 +474,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitEmptyStatement(PsiEmptyStatement statement) {
+  @Override public void visitEmptyStatement(@NotNull PsiEmptyStatement statement) {
     startElement(statement);
     finishElement(statement);
   }
 
-  @Override public void visitExpressionStatement(PsiExpressionStatement statement) {
+  @Override public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
     startElement(statement);
     final PsiExpression expr = statement.getExpression();
     expr.accept(this);
@@ -487,7 +487,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitExpressionListStatement(PsiExpressionListStatement statement) {
+  @Override public void visitExpressionListStatement(@NotNull PsiExpressionListStatement statement) {
     startElement(statement);
     PsiExpression[] expressions = statement.getExpressionList().getExpressions();
     for (PsiExpression expr : expressions) {
@@ -517,7 +517,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return expressions == null ? getFactory().getUnknown() : JavaDfaValueFactory.createCommonValue(getFactory(), expressions, type);
   }
 
-  @Override public void visitForeachStatement(PsiForeachStatement statement) {
+  @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     startElement(statement);
     final PsiParameter parameter = statement.getIterationParameter();
     final PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(statement.getIteratedValue());
@@ -575,7 +575,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     removeVariable(parameter);
   }
 
-  @Override public void visitForStatement(PsiForStatement statement) {
+  @Override public void visitForStatement(@NotNull PsiForStatement statement) {
     startElement(statement);
     final ArrayList<PsiElement> declaredVariables = new ArrayList<>();
 
@@ -584,12 +584,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       initialization.accept(this);
       initialization.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           visitElement(expression);
         }
 
         @Override
-        public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+        public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
           PsiElement[] declaredElements = statement.getDeclaredElements();
           for (PsiElement element : declaredElements) {
             if (element instanceof PsiVariable) {
@@ -710,7 +710,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return true;
   }
 
-  @Override public void visitIfStatement(PsiIfStatement statement) {
+  @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
     startElement(statement);
 
     PsiExpression condition = statement.getCondition();
@@ -747,12 +747,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   // in case of JspTemplateStatement
-  @Override public void visitStatement(PsiStatement statement) {
+  @Override public void visitStatement(@NotNull PsiStatement statement) {
     startElement(statement);
     finishElement(statement);
   }
 
-  @Override public void visitLabeledStatement(PsiLabeledStatement statement) {
+  @Override public void visitLabeledStatement(@NotNull PsiLabeledStatement statement) {
     startElement(statement);
     PsiStatement childStatement = statement.getStatement();
     if (childStatement != null) {
@@ -762,7 +762,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     startElement(expression);
     DfaValue dfaValue = JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression);
     push(dfaValue == null ? myFactory.getUnknown() : dfaValue, expression);
@@ -775,7 +775,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     Set<DfaVariableValue> escapedVars = new HashSet<>();
     closure.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement target = expression.resolve();
         if (PsiUtil.isJvmLocalVariable(target)) {
@@ -793,7 +793,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         super.visitThisExpression(expression);
         DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), expression);
         if (value instanceof DfaVariableValue) {
@@ -826,7 +826,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  @Override public void visitReturnStatement(PsiReturnStatement statement) {
+  @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
     startElement(statement);
 
     PsiExpression returnValue = statement.getReturnValue();
@@ -858,7 +858,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+  public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
     startElement(statement);
     PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
     if (labelElementList != null) {
@@ -872,13 +872,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitDefaultCaseLabelElement(PsiDefaultCaseLabelElement element) {
+  public void visitDefaultCaseLabelElement(@NotNull PsiDefaultCaseLabelElement element) {
     startElement(element);
     finishElement(element);
   }
 
   @Override
-  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+  public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
     PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
     if (switchBlock == null) return;
     startElement(statement);
@@ -906,14 +906,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitSwitchStatement(PsiSwitchStatement switchStmt) {
+  @Override public void visitSwitchStatement(@NotNull PsiSwitchStatement switchStmt) {
     startElement(switchStmt);
     processSwitch(switchStmt);
     finishElement(switchStmt);
   }
 
   @Override
-  public void visitSwitchExpression(PsiSwitchExpression expression) {
+  public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     PsiCodeBlock body = expression.getBody();
     if (body == null) {
       processSwitch(expression);
@@ -1136,7 +1136,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     startElement(expression);
 
     PsiExpression qualifier = expression.getQualifierExpression();
@@ -1151,7 +1151,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+  @Override public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
     startElement(statement);
 
     PsiExpression lock = statement.getLockExpression();
@@ -1170,7 +1170,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitThrowStatement(PsiThrowStatement statement) {
+  @Override public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
     startElement(statement);
 
     PsiExpression exception = statement.getException();
@@ -1194,7 +1194,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitTryStatement(PsiTryStatement statement) {
+  public void visitTryStatement(@NotNull PsiTryStatement statement) {
     startElement(statement);
 
     PsiResourceList resourceList = statement.getResourceList();
@@ -1296,7 +1296,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitResourceList(PsiResourceList resourceList) {
+  public void visitResourceList(@NotNull PsiResourceList resourceList) {
     for (PsiResourceListElement resource : resourceList) {
       if (resource instanceof PsiResourceVariable) {
         PsiResourceVariable variable = (PsiResourceVariable)resource;
@@ -1312,7 +1312,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  @Override public void visitWhileStatement(PsiWhileStatement statement) {
+  @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
     startElement(statement);
 
     PsiExpression condition = statement.getCondition();
@@ -1337,7 +1337,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @Override public void visitExpressionList(PsiExpressionList list) {
+  @Override public void visitExpressionList(@NotNull PsiExpressionList list) {
     startElement(list);
 
     PsiExpression[] expressions = list.getExpressions();
@@ -1348,7 +1348,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(list);
   }
 
-  @Override public void visitExpression(PsiExpression expression) {
+  @Override public void visitExpression(@NotNull PsiExpression expression) {
     startElement(expression);
     DfaValue dfaValue = JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression);
     push(dfaValue == null ? myFactory.getUnknown() : dfaValue, expression);
@@ -1356,7 +1356,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+  public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression expression) {
     startElement(expression);
     PsiExpression arrayExpression = expression.getArrayExpression();
     arrayExpression.accept(this);
@@ -1401,7 +1401,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+  public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
     startElement(expression);
     initializeArray(expression, expression);
     finishElement(expression);
@@ -1466,7 +1466,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+  public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
     startElement(expression);
 
     DfaValue dfaValue = JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression);
@@ -1657,7 +1657,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(expression)));
   }
 
-  @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+  @Override public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
     startElement(expression);
     PsiTypeElement operand = expression.getOperand();
     DfType classConstant = DfTypes.referenceConstant(operand.getType(), expression.getType());
@@ -1665,7 +1665,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitConditionalExpression(PsiConditionalExpression expression) {
+  @Override public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
     startElement(expression);
 
     PsiExpression thenExpression = expression.getThenExpression();
@@ -1704,7 +1704,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PushValueInstruction(DfType.TOP, null));
   }
 
-  @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+  @Override public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
     startElement(expression);
 
     PsiPattern pattern = expression.getPattern();
@@ -1784,7 +1784,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(PsiMethodCallExpression call) {
+  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
     ArrayDeque<PsiMethodCallExpression> calls = new ArrayDeque<>();
     while (true) {
       calls.addFirst(call);
@@ -1896,7 +1896,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+  public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
     if (enumConstant.getArgumentList() == null) return;
 
     pushUnknown();
@@ -1905,7 +1905,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new PopInstruction());
   }
 
-  @Override public void visitNewExpression(PsiNewExpression expression) {
+  @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
     startElement(expression);
 
     PsiType type = expression.getType();
@@ -2044,7 +2044,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+  @Override public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
     startElement(expression);
     PsiExpression inner = expression.getExpression();
     if (inner != null) {
@@ -2056,7 +2056,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitPostfixExpression(PsiPostfixExpression expression) {
+  @Override public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
     startElement(expression);
 
     PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
@@ -2104,7 +2104,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return true;
   }
 
-  @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
+  @Override public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
     startElement(expression);
 
     DfaValue dfaValue = expression.getOperationTokenType() == JavaTokenType.EXCL ? null : JavaDfaValueFactory
@@ -2151,7 +2151,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     startElement(expression);
 
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
@@ -2174,7 +2174,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
+  @Override public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
     startElement(expression);
 
     DfType dfType = DfaPsiUtil.fromLiteral(expression);
@@ -2186,7 +2186,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  @Override public void visitTypeCastExpression(PsiTypeCastExpression castExpression) {
+  @Override public void visitTypeCastExpression(@NotNull PsiTypeCastExpression castExpression) {
     startElement(castExpression);
     PsiExpression operand = castExpression.getOperand();
 
@@ -2206,7 +2206,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(castExpression);
   }
 
-  @Override public void visitClass(PsiClass aClass) {
+  @Override public void visitClass(@NotNull PsiClass aClass) {
   }
 
   @Contract("null -> false")

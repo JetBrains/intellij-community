@@ -16,6 +16,7 @@
 package com.intellij.refactoring.psi;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -29,7 +30,7 @@ public class TypeParametersVisitor extends JavaRecursiveElementWalkingVisitor {
    }
 
    @Override
-   public void visitTypeElement(PsiTypeElement typeElement) {
+   public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
        super.visitTypeElement(typeElement);
        final PsiType type = typeElement.getType();
        if (type instanceof PsiClassType) {

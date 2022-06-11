@@ -74,7 +74,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection implements
   private static class UnclearBinaryExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       super.visitExpression(expression);
       final PsiElement parent = expression.getParent();
       if (mightBeConfusingExpression(parent) || !isUnclearExpression(expression, parent)) {

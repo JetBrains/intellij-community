@@ -84,7 +84,7 @@ public class NegatedEqualityExpressionInspection extends BaseInspection implemen
   private static class NegatedEqualsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       if (!JavaTokenType.EXCL.equals(expression.getOperationTokenType())) {
         return;

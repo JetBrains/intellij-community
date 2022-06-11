@@ -33,7 +33,7 @@ class VariableValueUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     if (read || written) return;
     super.visitReferenceExpression(expression);
     if (ExpressionUtils.isReferenceTo(expression, variable)) {

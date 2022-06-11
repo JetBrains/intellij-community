@@ -233,7 +233,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression callExpression) {
+    public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
       if (!myAccessible) {
         return;
       }
@@ -252,7 +252,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (!myAccessible) {
         return;
       }
@@ -387,7 +387,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     private class StaticMethodOnlyUsedInOneClassVisitor extends BaseInspectionVisitor {
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         super.visitField(field);
         if (!field.hasModifierProperty(PsiModifier.STATIC) || field.hasModifierProperty(PsiModifier.PRIVATE)) return;
         if (field instanceof PsiEnumConstant || isSingletonField(field)) return;
@@ -401,7 +401,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       }
 
       @Override
-      public void visitMethod(final PsiMethod method) {
+      public void visitMethod(final @NotNull PsiMethod method) {
         super.visitMethod(method);
         if (!method.hasModifierProperty(PsiModifier.STATIC) ||
             method.hasModifierProperty(PsiModifier.PRIVATE) ||

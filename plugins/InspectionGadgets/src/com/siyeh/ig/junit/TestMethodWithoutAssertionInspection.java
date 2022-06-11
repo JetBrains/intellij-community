@@ -187,7 +187,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       if (containsAssertion) {
         return;
       }

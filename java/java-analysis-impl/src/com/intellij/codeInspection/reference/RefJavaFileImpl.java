@@ -3,6 +3,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UFile;
 import org.jetbrains.uast.UastContextKt;
 
@@ -19,13 +20,13 @@ public class RefJavaFileImpl extends RefFileImpl {
         if (packageStatement != null) {
           packageStatement.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
               super.visitReferenceElement(reference);
               processReference(reference.resolve());
             }
 
             @Override
-            public void visitNameValuePair(PsiNameValuePair pair) {
+            public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
               super.visitNameValuePair(pair);
               PsiReference reference = pair.getReference();
               if (reference != null) {

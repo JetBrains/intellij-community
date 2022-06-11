@@ -37,7 +37,7 @@ public class AnnotationInspection extends BaseInspection {
   private static class AnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       registerError(annotation);
     }

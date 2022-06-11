@@ -179,7 +179,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
       super.visitReferenceExpression(ref);
       if (myVariable == null) {
         if (ref.getQualifierExpression() == null) {
@@ -192,7 +192,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
     }
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       super.visitThisExpression(expression);
       if (myVariable == null) {
         process(findEffectiveReference(expression));

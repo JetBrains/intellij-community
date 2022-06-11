@@ -55,7 +55,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitIfStatement(PsiIfStatement ifStatement) {
+      public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
         NotNullContext context = NotNullContext.from(ifStatement);
         if(context == null) return;
         String method = getMethodWithClass(context.myExpressionToReplace, context.myIsStream);
@@ -81,7 +81,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression ternary) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression ternary) {
         TernaryNotNullContext context = TernaryNotNullContext.from(ternary);
         if(context == null) return;
         String method = getMethodWithClass(context.myNullExpr, false);

@@ -34,7 +34,7 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         if (!SET_REMOVE_ALL.test(call)) return;
         final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());

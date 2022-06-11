@@ -19,7 +19,7 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitParameterList(PsiParameterList parameterList) {
+      public void visitParameterList(@NotNull PsiParameterList parameterList) {
         super.visitParameterList(parameterList);
         if (parameterList.getParent() instanceof PsiLambdaExpression &&
             RemoveRedundantParameterTypesFix.isApplicable(parameterList)) {

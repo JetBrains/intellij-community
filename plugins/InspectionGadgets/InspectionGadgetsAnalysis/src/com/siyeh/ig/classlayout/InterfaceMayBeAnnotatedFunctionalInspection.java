@@ -49,7 +49,7 @@ public class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection 
   private static class InterfaceMayBeAnnotatedFunctionalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       if (!aClass.isInterface() || AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0)) {
         return;

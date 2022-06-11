@@ -566,7 +566,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<>();
     element.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         decodeRef(reference, oldToNewMap, rebindMap);
       }

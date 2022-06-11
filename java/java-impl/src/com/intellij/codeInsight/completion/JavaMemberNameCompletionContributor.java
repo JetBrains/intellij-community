@@ -265,7 +265,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
 
     if (parentOfType != null) {
       parentOfType.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceExpression(PsiReferenceExpression reference) {
+        @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression reference) {
           final PsiElement parent = reference.getParent();
           if (parent instanceof PsiReference || referenceOnMethod != parent instanceof PsiMethodCallExpression) return;
 

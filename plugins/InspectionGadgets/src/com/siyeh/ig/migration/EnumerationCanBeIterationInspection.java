@@ -350,7 +350,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
@@ -449,7 +449,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection implemen
 
       @Override
       public void visitMethodCallExpression(
-        PsiMethodCallExpression expression) {
+        @NotNull PsiMethodCallExpression expression) {
         if (enumerationMethodCalled) {
           return;
         }

@@ -40,7 +40,7 @@ public class SynchronizationOnStaticFieldInspection extends BaseInspection {
 
     @Override
     public void visitSynchronizedStatement(
-      PsiSynchronizedStatement statement) {
+      @NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiExpression lockExpression = statement.getLockExpression();
       if (!(lockExpression instanceof PsiReferenceExpression)) {

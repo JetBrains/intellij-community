@@ -252,7 +252,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static void replaceReferences(PsiElement context, final PsiVariable variable, final PsiElement newExpression) {
     context.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.resolve() == variable)
           try {
             expression.replace(newExpression);
@@ -273,7 +273,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static void collectReferences(PsiElement context, final PsiVariable variable, final List<? super PsiReferenceExpression> references) {
     context.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
         super.visitReferenceExpression(expression);
       }

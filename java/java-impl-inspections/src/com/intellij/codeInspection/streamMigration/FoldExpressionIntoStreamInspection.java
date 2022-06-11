@@ -39,7 +39,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         TerminalGenerator generator = getGenerator(expression);
         if (generator == null) return;
         List<PsiExpression> diff = extractDiff(generator, expression);

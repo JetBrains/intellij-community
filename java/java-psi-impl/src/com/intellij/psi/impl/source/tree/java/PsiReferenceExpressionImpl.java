@@ -203,7 +203,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       boolean physical = containingFile.isPhysical();
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           if (!(expression instanceof PsiReferenceExpressionImpl)) {
             return;
           }
@@ -224,13 +224,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         // walk only qualifiers, not their arguments and other associated stuff
 
         @Override
-        public void visitExpressionList(PsiExpressionList list) { }
+        public void visitExpressionList(@NotNull PsiExpressionList list) { }
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) { }
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) { }
 
         @Override
-        public void visitClass(PsiClass aClass) { }
+        public void visitClass(@NotNull PsiClass aClass) { }
       });
       return qualifiers;
     }

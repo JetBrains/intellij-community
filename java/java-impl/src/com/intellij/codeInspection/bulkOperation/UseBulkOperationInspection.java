@@ -226,7 +226,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         BulkMethodInfo info = findInfo(call.getMethodExpression());
         if (info == null) return;
@@ -237,7 +237,7 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReference) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression methodReference) {
         super.visitMethodReferenceExpression(methodReference);
         BulkMethodInfo info = findInfo(methodReference);
         if (info == null) return;

@@ -43,7 +43,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     if (!PsiUtil.isLanguageLevel7OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
         PsiCodeBlock methodBody = method.getBody();
         if (methodBody == null) return;
@@ -122,22 +122,22 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       doVisitLoop(statement);
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       doVisitLoop(statement);
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       doVisitLoop(statement);
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       doVisitLoop(statement);
     }
 
@@ -150,7 +150,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       if (!FILE_ATTR_CALL_MATCHER.test(call)) return;
       PsiVariable variable = getFileVariable(call);

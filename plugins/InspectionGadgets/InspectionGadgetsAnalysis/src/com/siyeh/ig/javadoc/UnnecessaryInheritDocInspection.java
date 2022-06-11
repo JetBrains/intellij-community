@@ -111,7 +111,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
   private static class UnnecessaryInheritDocVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitInlineDocTag(PsiInlineDocTag tag) {
+    public void visitInlineDocTag(@NotNull PsiInlineDocTag tag) {
       @NonNls final String name = tag.getName();
       if (!"inheritDoc".equals(name)) {
         return;

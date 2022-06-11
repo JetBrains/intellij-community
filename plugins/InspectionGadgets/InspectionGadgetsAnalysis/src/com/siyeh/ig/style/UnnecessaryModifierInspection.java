@@ -40,7 +40,7 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
   private static class UnnecessaryModifierVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       final PsiElement parent = aClass.getParent();
       final boolean interfaceMember = parent instanceof PsiClass && ((PsiClass)parent).isInterface();
       final boolean redundantStrictfp = PsiUtil.isLanguageLevel17OrHigher(aClass) && aClass.hasModifierProperty(PsiModifier.STRICTFP);
@@ -101,7 +101,7 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       final boolean redundantStrictfp = PsiUtil.isLanguageLevel17OrHigher(method) && method.hasModifierProperty(PsiModifier.STRICTFP);
       if (redundantStrictfp) {
         final PsiModifierList modifierList = method.getModifierList();

@@ -138,7 +138,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (!myImportStatic && reference.getText().equals(reference.getQualifiedName())) {
         return;

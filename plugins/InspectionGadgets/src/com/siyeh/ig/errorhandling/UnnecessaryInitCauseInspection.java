@@ -111,7 +111,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
   private static class UnnecessaryInitCauseVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String name = methodExpression.getReferenceName();
@@ -153,7 +153,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection implements Cl
       final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
       cause.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           if (!result.get().booleanValue()) {
             return;
           }

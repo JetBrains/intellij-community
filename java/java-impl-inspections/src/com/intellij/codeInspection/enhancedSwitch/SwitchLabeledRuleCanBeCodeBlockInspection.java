@@ -30,7 +30,7 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
 
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+      public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
         super.visitSwitchLabeledRuleStatement(statement);
 
         PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();

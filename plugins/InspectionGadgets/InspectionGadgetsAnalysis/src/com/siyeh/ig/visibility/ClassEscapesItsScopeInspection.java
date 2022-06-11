@@ -123,7 +123,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       PsiMember member = getExportingMember(reference);
       if (member == null || isPrivate(member)) {

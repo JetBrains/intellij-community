@@ -457,12 +457,12 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     fragment.accept(new JavaRecursiveElementWalkingVisitor() {
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitReferenceElement(expression);
       }
 
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         if (!reference.isQualified()) {
           final String text = reference.getText();
           final String fqName = importMap.get(text);
@@ -596,7 +596,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   class ValidatingVisitor extends JavaRecursiveElementWalkingVisitor {
 
-    @Override public void visitAnnotation(PsiAnnotation annotation) {
+    @Override public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
 
@@ -644,18 +644,18 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public void provideAdditionalReplaceOptions(@NotNull PsiElement node, @NotNull ReplaceOptions options, @NotNull ReplacementBuilder builder) {
     node.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitElement(expression);
       }
 
       @Override
-      public void visitNameValuePair(PsiNameValuePair pair) {
+      public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
         super.visitNameValuePair(pair);
         setParameterContext(pair, pair.getNameIdentifier(), pair.getValue());
       }
 
       @Override
-      public void visitParameter(PsiParameter parameter) {
+      public void visitParameter(@NotNull PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
         if (scope instanceof PsiCatchSection || scope instanceof PsiForeachStatement) {
           return;

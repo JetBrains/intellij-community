@@ -203,7 +203,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final boolean [] dependsOnMoved = new boolean[]{false};
     initializer.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiMember) {
@@ -304,7 +304,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
           final boolean[] moveInitializerToConstructor = new boolean[1];
           initializer.accept(new JavaRecursiveElementWalkingVisitor(){
             @Override
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
+            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               super.visitReferenceExpression(expression);
               final PsiElement resolved = expression.resolve();
               if (resolved instanceof PsiField && !members.contains(resolved)) {
@@ -400,19 +400,19 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         if (methods.contains(method)) return;
         super.visitMethod(method);
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         if (fields.contains(field)) return;
         super.visitField(field);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         if (innerClasses.contains(aClass)) return;
         super.visitClass(aClass);
       }
@@ -841,7 +841,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     private final Set<PsiField> fieldsNeedingSetter = new HashSet<>();
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (isProhibitedReference(expression)) {
         final PsiField field = getReferencedField(expression);
@@ -858,7 +858,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
 
       final PsiExpression lhs = expression.getLExpression();
@@ -871,7 +871,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       checkSetterNeeded(expression.getOperand(), expression.getOperationSign());
     }

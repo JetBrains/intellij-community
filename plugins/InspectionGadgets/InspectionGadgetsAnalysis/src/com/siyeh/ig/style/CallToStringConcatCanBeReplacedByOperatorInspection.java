@@ -94,7 +94,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection extends BaseIns
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final Project project = expression.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

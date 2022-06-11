@@ -101,7 +101,7 @@ public class WaitWithoutCorrespondingNotifyInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!ThreadingUtils.isNotifyOrNotifyAllCall(expression)) {
         return;

@@ -2959,7 +2959,7 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       appendStyledSpan(myBuffer, getHighlightingManager().getKeywordAttributes(), "new ");
       PsiType type = expression.getType();
       if (type != null) {
@@ -2984,7 +2984,7 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitExpressionList(PsiExpressionList list) {
+    public void visitExpressionList(@NotNull PsiExpressionList list) {
       appendStyledSpan(myBuffer, getHighlightingManager().getParenthesesAttributes(), "(");
       String separator = ", ";
       PsiExpression[] expressions = list.getExpressions();
@@ -2997,7 +2997,7 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       appendStyledSpan(
         myBuffer,
         getHighlightingManager().getMethodCallAttributes(),
@@ -3006,13 +3006,13 @@ public class JavaDocInfoGenerator {
     }
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         doHighlightSignatures(), myBuffer, expression.getProject(), expression.getLanguage(), expression.getText());
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         doHighlightSignatures(), myBuffer, expression.getProject(), expression.getLanguage(), expression.getText());
     }

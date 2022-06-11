@@ -64,7 +64,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
                                         @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiElement nameElement = methodExpression.getReferenceNameElement();
         final String methodName = methodExpression.getReferenceName();
@@ -207,7 +207,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
 
     addAllExpression.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
         if (PsiUtil.isJvmLocalVariable(resolved)) {
           PsiVariable variable = (PsiVariable) resolved;

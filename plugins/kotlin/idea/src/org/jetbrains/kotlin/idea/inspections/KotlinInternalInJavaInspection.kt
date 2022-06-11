@@ -15,12 +15,12 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 class KotlinInternalInJavaInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : JavaElementVisitor() {
-            override fun visitReferenceExpression(expression: PsiReferenceExpression?) {
-                expression?.checkAndReport(holder)
+            override fun visitReferenceExpression(expression: PsiReferenceExpression) {
+                expression.checkAndReport(holder)
             }
 
-            override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement?) {
-                reference?.checkAndReport(holder)
+            override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
+                reference.checkAndReport(holder)
             }
         }
     }

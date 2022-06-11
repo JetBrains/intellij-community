@@ -169,7 +169,7 @@ public class UseOfConcreteClassInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (reportInstanceOf && OBJECT_GET_CLASS.test(call)) {
         PsiExpression other = ExpressionUtils.getExpressionComparedTo(call);
         if (other instanceof PsiClassObjectAccessExpression) {

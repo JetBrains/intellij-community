@@ -393,7 +393,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection implem
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return;

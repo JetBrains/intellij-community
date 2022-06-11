@@ -535,7 +535,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   private class IfCanBeSwitchVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiElement parent = statement.getParent();
       if (parent instanceof PsiIfStatement) {

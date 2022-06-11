@@ -87,7 +87,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
     member.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         final PsiElement qualifierExpression = reference.getQualifier();
         if (qualifierExpression != null) {
           final Boolean preserveQualifier = qualifierExpression.getCopyableUserData(PRESERVE_QUALIFIER);
@@ -122,17 +122,17 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       if (modifierListOwner instanceof PsiClass) {
         modifierListOwner.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitMethod(PsiMethod method) {
+          public void visitMethod(@NotNull PsiMethod method) {
             check(method);
           }
 
           @Override
-          public void visitField(PsiField field) {
+          public void visitField(@NotNull PsiField field) {
             check(field);
           }
 
           @Override
-          public void visitClass(PsiClass aClass) {
+          public void visitClass(@NotNull PsiClass aClass) {
             check(aClass);
             super.visitClass(aClass);
           }
@@ -573,7 +573,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       return myUsedFields;
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       final PsiExpression qualifierExpression = expression.getQualifierExpression();
       if (qualifierExpression != null
               && !(qualifierExpression instanceof PsiThisExpression)) {
@@ -595,11 +595,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       return myIsMovable;
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
-    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+    @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement referenceElement) {
       if (!myIsMovable) return;
       final PsiExpression qualifier;
       if (referenceElement instanceof PsiReferenceExpression) {
@@ -738,7 +738,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private class QualifiedThisSuperAdjuster extends JavaRecursiveElementVisitor {
-    @Override public void visitThisExpression(PsiThisExpression expression) {
+    @Override public void visitThisExpression(@NotNull PsiThisExpression expression) {
       super.visitThisExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null && qualifier.isReferenceTo(mySourceClass)) {
@@ -751,7 +751,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
     }
 
-    @Override public void visitSuperExpression(PsiSuperExpression expression) {
+    @Override public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       super.visitSuperExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null && qualifier.isReferenceTo(mySourceClass)) {
@@ -767,7 +767,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
   private class ExplicitSuperDeleter extends JavaRecursiveElementWalkingVisitor {
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if(expression.getQualifierExpression() instanceof PsiSuperExpression) {
         PsiElement resolved = expression.resolve();
@@ -779,7 +779,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // do nothing
     }
 

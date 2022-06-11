@@ -136,7 +136,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
   private static class UnnecessaryCallToStringValueOfVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       final PsiExpression argument = tryUnwrapRedundantConversion(call);
       if (argument == null) return;
       registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(),

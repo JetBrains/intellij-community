@@ -695,7 +695,7 @@ public final class RefactoringUtil {
     final List<PsiVariable> result = new ArrayList<>();
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiElement element = expression.resolve();
         if (element instanceof PsiVariable) {
           result.add((PsiVariable)element);

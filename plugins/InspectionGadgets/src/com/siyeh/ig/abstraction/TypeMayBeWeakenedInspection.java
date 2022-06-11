@@ -401,7 +401,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   private class TypeMayBeWeakenedVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
       if (variable instanceof PsiParameter) {
         final PsiParameter parameter = (PsiParameter)variable;
@@ -488,7 +488,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (doNotWeakenReturnType || method instanceof PsiAnnotationMethod) return;
       if (isOnTheFly() && !method.hasModifierProperty(PsiModifier.PRIVATE) && !ApplicationManager.getApplication().isUnitTestMode()) {

@@ -724,7 +724,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     final List<PsiJavaCodeReferenceElement> references = new SmartList<>();
     final JavaRecursiveElementVisitor collector = new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         final int offset = reference.getTextOffset();
         if (offset > finalEndOffset) {
           return;
@@ -794,7 +794,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     private final HashMap<String, PsiElement> namedElements = new HashMap<>(1); // uses null keys
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       if (aClass instanceof PsiAnonymousClass) {
         final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
         final String name = anonymousClass.getBaseClassReference().getReferenceName();
@@ -817,17 +817,17 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
 
     @Override
-    public void visitVariable(PsiVariable var) {
+    public void visitVariable(@NotNull PsiVariable var) {
       handleNamedElement(var);
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       handleNamedElement(method);
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
       if (referenceElement != null) {
         final String name = referenceElement.getText();

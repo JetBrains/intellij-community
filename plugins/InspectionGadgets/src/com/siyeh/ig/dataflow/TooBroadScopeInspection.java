@@ -254,7 +254,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     TooBroadScopeVisitor() {}
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       if (variable.getType() == PsiType.NULL || variable instanceof PsiResourceVariable) {
         return;

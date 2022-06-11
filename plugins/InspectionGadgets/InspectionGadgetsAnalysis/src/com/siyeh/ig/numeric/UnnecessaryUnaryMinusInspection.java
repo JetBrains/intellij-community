@@ -156,7 +156,7 @@ public final class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
   private static class UnnecessaryUnaryMinusVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression prefixExpr) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression prefixExpr) {
       super.visitPrefixExpression(prefixExpr);
       if (!ConvertDoubleUnaryToPrefixOperationFix.isDesiredPrefixExpression(prefixExpr, false)) {
         return;

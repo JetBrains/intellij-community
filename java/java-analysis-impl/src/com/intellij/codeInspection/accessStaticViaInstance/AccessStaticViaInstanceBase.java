@@ -46,7 +46,7 @@ public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspection
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         checkAccessStaticMemberViaInstanceReference(expression, holder, isOnTheFly);
       }
     };

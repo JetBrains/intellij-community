@@ -106,7 +106,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
 
   private class MinimumSwitchBranchesVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       Object[] infos = processSwitch(expression);
       if (infos == null) return;
       registerError(expression.getFirstChild(), infos);

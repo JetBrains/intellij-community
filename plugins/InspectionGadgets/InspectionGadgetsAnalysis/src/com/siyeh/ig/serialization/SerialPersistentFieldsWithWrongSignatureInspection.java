@@ -42,14 +42,14 @@ public class SerialPersistentFieldsWithWrongSignatureInspection extends BaseInsp
   private static class SerialPersistentFieldsWithWrongSignatureVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       PsiClass containingClass = field.getContainingClass();
       if (containingClass == null || containingClass.isInterface() || containingClass.isAnnotationType()) return;
       visitVariable(field, containingClass);
     }
 
     @Override
-    public void visitRecordComponent(PsiRecordComponent recordComponent) {
+    public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
       visitVariable(recordComponent, recordComponent.getContainingClass());
     }
 

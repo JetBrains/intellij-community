@@ -47,7 +47,7 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
     final List<FoldingDescriptor> result = new ArrayList<>();
     root.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
+      public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         if (Comparing.strEqual(annotation.getQualifiedName(), SuppressWarnings.class.getName())) {
           result.add(new FoldingDescriptor(annotation.getNode(), annotation.getTextRange(), null, placeholderText(annotation),
                                            JavaCodeFoldingSettings.getInstance().isCollapseSuppressWarnings(), Collections.emptySet()));

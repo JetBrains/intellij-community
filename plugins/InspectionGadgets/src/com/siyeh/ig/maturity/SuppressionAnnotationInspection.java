@@ -176,7 +176,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiJavaCodeReferenceElement reference = annotation.getNameReferenceElement();
       if (reference == null) {

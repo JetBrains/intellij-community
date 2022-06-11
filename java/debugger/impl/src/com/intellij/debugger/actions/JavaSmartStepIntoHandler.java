@@ -158,7 +158,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
           PsiExpressionList argumentList = aClass.getArgumentList();
           if (argumentList != null) {
             argumentList.accept(this);
@@ -169,7 +169,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
           boolean inLambda = myInsideLambda;
           myInsideLambda = true;
           super.visitLambdaExpression(expression);
@@ -183,7 +183,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
           PsiElement element = expression.resolve();
           if (element instanceof PsiMethod) {
             PsiElement navMethod = element.getNavigationElement();
@@ -194,33 +194,33 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
           if (checkTextRange(field, false)) {
             super.visitField(field);
           }
         }
 
         @Override
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
           if (checkTextRange(method, false)) {
             super.visitMethod(method);
           }
         }
 
         @Override
-        public void visitStatement(PsiStatement statement) {
+        public void visitStatement(@NotNull PsiStatement statement) {
           if (checkTextRange(statement, true)) {
             super.visitStatement(statement);
           }
         }
 
         @Override
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
           visitConditional(statement.getCondition(), statement.getThenBranch(), statement.getElseBranch());
         }
 
         @Override
-        public void visitConditionalExpression(PsiConditionalExpression expression) {
+        public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
           visitConditional(expression.getCondition(), expression.getThenExpression(), expression.getElseExpression());
         }
 
@@ -253,7 +253,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(@NotNull PsiExpression expression) {
           checkTextRange(expression, true);
           super.visitExpression(expression);
         }
@@ -270,7 +270,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitExpressionList(PsiExpressionList expressionList) {
+        public void visitExpressionList(@NotNull PsiExpressionList expressionList) {
           visitArguments(expressionList, myContextStack.peekFirst());
         }
 
@@ -298,7 +298,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitCallExpression(final PsiCallExpression expression) {
+        public void visitCallExpression(final @NotNull PsiCallExpression expression) {
           int pos = -1;
           if (myContextStack.isEmpty()) { // always move the outmost item in the group to the top
             pos = targets.size();

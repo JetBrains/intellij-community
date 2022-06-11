@@ -94,7 +94,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
 
     @Override
     public void visitReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+      @NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (reference.isQualified()) {
         return;

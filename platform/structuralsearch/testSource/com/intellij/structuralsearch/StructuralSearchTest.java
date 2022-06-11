@@ -2168,7 +2168,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     //noinspection AnonymousInnerClassMayBeStatic
     file.acceptChildren(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitVariable(final PsiVariable variable) {
+      @Override public void visitVariable(final @NotNull PsiVariable variable) {
         super.visitVariable(variable);
         vars.add(variable);
       }

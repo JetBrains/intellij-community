@@ -35,7 +35,7 @@ public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection impleme
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (ConstructionUtils.isEmptyArrayInitializer(expression)) {
           PsiType type = expression.getType();
           if (type instanceof PsiArrayType) {

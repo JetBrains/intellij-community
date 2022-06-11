@@ -136,7 +136,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
   private static class SimplifiableAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();

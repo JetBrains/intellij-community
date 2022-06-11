@@ -91,7 +91,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
   private static class UnnecessaryExplicitNumericCastVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       if (!isUnnecessaryPrimitiveNumericCast(expression)) {
         // equal types is caught by "Redundant type cast" inspection

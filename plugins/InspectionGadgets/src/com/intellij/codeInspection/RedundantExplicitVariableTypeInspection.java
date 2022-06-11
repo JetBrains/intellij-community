@@ -23,7 +23,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (!typeElement.isInferredType()) {
           PsiElement parent = variable.getParent();
@@ -39,7 +39,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       }
 
       @Override
-      public void visitForeachStatement(PsiForeachStatement statement) {
+      public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         PsiParameter parameter = statement.getIterationParameter();
         PsiTypeElement typeElement = parameter.getTypeElement();

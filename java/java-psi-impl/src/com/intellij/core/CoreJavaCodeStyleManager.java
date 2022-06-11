@@ -122,10 +122,10 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
             try {
               run.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+                public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
                 }
 
-                @Override public void visitVariable(PsiVariable variable) {
+                @Override public void visitVariable(@NotNull PsiVariable variable) {
                   if (name1.equals(variable.getName()) && !canBeReused.test(variable)) {
                     throw new CancelException();
                   }

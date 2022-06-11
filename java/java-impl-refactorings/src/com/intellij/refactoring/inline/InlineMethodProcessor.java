@@ -304,13 +304,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     myMethod.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
 
       @Override
-      public void visitAnonymousClass(PsiAnonymousClass aClass) {}
+      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {}
 
       @Override
-      public void visitSuperExpression(PsiSuperExpression expression) {
+      public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
         super.visitSuperExpression(expression);
         final PsiType type = expression.getType();
         final PsiClass superClass = PsiUtil.resolveClassInType(type);
@@ -626,7 +626,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     Map<PsiReferenceExpression, PsiExpression> replacement = new LinkedHashMap<>();
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiParameter &&
@@ -674,7 +674,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           } else {
             copy.accept(new JavaRecursiveElementVisitor() {
               @Override
-              public void visitReferenceExpression(PsiReferenceExpression expression) {
+              public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
                 super.visitReferenceExpression(expression);
                 inlineParameterReference(expression, blockData);
               }

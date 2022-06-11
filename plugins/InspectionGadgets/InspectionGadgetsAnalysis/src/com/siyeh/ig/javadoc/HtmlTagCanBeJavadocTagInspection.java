@@ -122,7 +122,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements 
 
   private static class HtmlTagCanBeJavaDocTagVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitDocToken(PsiDocToken token) {
+    public void visitDocToken(@NotNull PsiDocToken token) {
       super.visitDocToken(token);
       final IElementType tokenType = token.getTokenType();
       if (!JavaDocTokenType.DOC_COMMENT_DATA.equals(tokenType)) {

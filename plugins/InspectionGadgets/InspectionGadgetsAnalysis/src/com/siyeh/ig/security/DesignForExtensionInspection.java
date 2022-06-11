@@ -60,7 +60,7 @@ public class DesignForExtensionInspection extends BaseInspection {
   private static class DesignForExtensionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (method.isConstructor()) {
         return;

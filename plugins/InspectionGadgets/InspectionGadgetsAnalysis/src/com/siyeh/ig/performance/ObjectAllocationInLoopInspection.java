@@ -74,7 +74,7 @@ public final class ObjectAllocationInLoopInspection extends BaseInspection {
 
   private static class ObjectAllocationInLoopsVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       PsiMethod method = call.resolveMethod();
       if (method != null) {
@@ -87,7 +87,7 @@ public final class ObjectAllocationInLoopInspection extends BaseInspection {
     }
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       if (!(expression.getParent() instanceof PsiNewExpression) &&
           !(expression.getParent() instanceof PsiArrayInitializerExpression) &&
           isPerformedRepeatedlyInLoop(expression)) {
@@ -96,7 +96,7 @@ public final class ObjectAllocationInLoopInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
       if (!PsiMethodReferenceUtil.isStaticallyReferenced(expression) &&
           isPerformedRepeatedlyInLoop(expression)) {
@@ -105,7 +105,7 @@ public final class ObjectAllocationInLoopInspection extends BaseInspection {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression lambda) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
       super.visitLambdaExpression(lambda);
       if (isPerformedRepeatedlyInLoop(lambda) && LambdaUtil.isCapturingLambda(lambda)) {
         registerError(lambda.getParameterList(), Kind.CAPTURING_LAMBDA);
@@ -121,7 +121,7 @@ public final class ObjectAllocationInLoopInspection extends BaseInspection {
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       IElementType type = expression.getOperationTokenType();
       if (JavaTokenType.PLUS.equals(type) && TypeUtils.isJavaLangString(expression.getType()) &&
           !PsiUtil.isConstantExpression(expression) && isPerformedRepeatedlyInLoop(expression)) {

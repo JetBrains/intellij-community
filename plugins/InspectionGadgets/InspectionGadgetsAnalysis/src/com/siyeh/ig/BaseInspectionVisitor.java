@@ -230,7 +230,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     visitExpression(expression);
   }
 

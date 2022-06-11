@@ -313,14 +313,14 @@ public final class DefUseUtil {
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitReferenceExpression(PsiReferenceExpression ref) {
+                public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
                   if (PsiUtil.isAccessedForWriting(ref) && psiManager.areElementsEquivalent(ref.resolve(), def)) {
                     res.add(ref);
                   }
                 }
 
                 @Override
-                public void visitVariable(PsiVariable var) {
+                public void visitVariable(@NotNull PsiVariable var) {
                   if ((var instanceof PsiParameter || var.hasInitializer()) && psiManager.areElementsEquivalent(var, def)) {
                     res.add(var);
                   }
@@ -375,7 +375,7 @@ public final class DefUseUtil {
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitReferenceExpression(PsiReferenceExpression ref) {
+                public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
                   if (ref.isReferenceTo(def)) {
                     res.add(ref);
                   }

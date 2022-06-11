@@ -37,7 +37,7 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
       final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getPatternAnnotationPair();
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         final PsiIdentifier psiIdentifier = method.getNameIdentifier();
         if (psiIdentifier == null || !PsiUtilEx.isLanguageAnnotationTarget(method)) {
           return;

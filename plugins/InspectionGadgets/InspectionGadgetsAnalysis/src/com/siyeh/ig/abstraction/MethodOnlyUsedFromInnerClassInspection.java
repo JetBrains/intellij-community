@@ -59,7 +59,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
   private class MethodOnlyUsedFromInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.hasModifierProperty(PsiModifier.PRIVATE) || method.isConstructor()) {
         return;

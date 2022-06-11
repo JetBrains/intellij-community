@@ -52,7 +52,7 @@ public class PointlessNullCheckInspection extends BaseInspection implements Clea
   private static class PointlessNullCheckVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final IElementType operationTokenType = expression.getOperationTokenType();
       if (operationTokenType.equals(JavaTokenType.ANDAND)) {

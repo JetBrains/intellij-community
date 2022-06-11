@@ -20,7 +20,7 @@ public final class ImportsUtil {
     final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement expression) {
         if (refExpr == null || refExpr != expression) {
           final PsiElement resolveScope = expression.advancedResolve(true).getCurrentFileResolveScope();
           if (resolveScope == staticImport) {

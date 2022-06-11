@@ -16,8 +16,8 @@ class KotlinJvmAnnotationInJavaInspection : LocalInspectionTool() {
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : JavaElementVisitor() {
-        override fun visitAnnotation(annotation: PsiAnnotation?) {
-            val qualifiedName = annotation?.qualifiedName ?: return
+        override fun visitAnnotation(annotation: PsiAnnotation) {
+            val qualifiedName = annotation.qualifiedName ?: return
             if (qualifiedName.startsWith(KOTLIN_JVM_PACKAGE)) {
                 val annotationName = qualifiedName.removePrefix(KOTLIN_JVM_PACKAGE)
                 holder.registerProblem(

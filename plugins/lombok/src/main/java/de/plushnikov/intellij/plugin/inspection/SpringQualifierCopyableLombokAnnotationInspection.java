@@ -33,7 +33,7 @@ public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJav
     }
 
     @Override
-    public void visitAnnotation(final PsiAnnotation annotation) {
+    public void visitAnnotation(final @NotNull PsiAnnotation annotation) {
       if (annotation.hasQualifiedName(SPRING_QUALIFIER_FQN)) {
 
         PsiAnnotationOwner annotationOwner = annotation.getOwner();

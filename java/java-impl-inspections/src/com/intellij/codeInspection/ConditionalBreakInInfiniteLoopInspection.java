@@ -36,17 +36,17 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitWhileStatement(PsiWhileStatement statement) {
+      public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
         visitLoop(statement);
       }
 
       @Override
-      public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+      public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
         visitLoop(statement);
       }
 
       @Override
-      public void visitForStatement(PsiForStatement statement) {
+      public void visitForStatement(@NotNull PsiForStatement statement) {
         visitLoop(statement);
       }
 

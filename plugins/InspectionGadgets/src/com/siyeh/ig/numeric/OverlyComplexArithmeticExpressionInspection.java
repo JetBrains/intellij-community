@@ -71,7 +71,7 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
   private class OverlyComplexArithmeticExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       checkExpression(expression);
     }
@@ -83,7 +83,7 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
     }
 
     @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);
     }

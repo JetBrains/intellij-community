@@ -53,14 +53,14 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     DuplicateBranchesVisitor(ProblemsHolder holder) {myHolder = holder;}
 
     @Override
-    public void visitSwitchStatement(PsiSwitchStatement switchStatement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
 
       visitSwitchBlock(switchStatement);
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression switchExpression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression switchExpression) {
       super.visitSwitchExpression(switchExpression);
 
       visitSwitchBlock(switchExpression);

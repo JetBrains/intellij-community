@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameJavaMemberProcessor;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +42,7 @@ class JavaResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapshot {
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
     final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<>();
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression refExpr) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression refExpr) {
         if (!refExpr.isQualified()) {
           JavaResolveResult resolveResult = refExpr.advancedResolve(false);
           final PsiElement resolved = resolveResult.getElement();

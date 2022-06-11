@@ -19,7 +19,7 @@ class UseOfConcreteInheritorVisitor extends BaseInspectionVisitor {
   }
 
   @Override
-  public void visitTypeElement(PsiTypeElement type) {
+  public void visitTypeElement(@NotNull PsiTypeElement type) {
     super.visitTypeElement(type);
     if (!usesAWTPeerClass(type.getType())) {
       return;

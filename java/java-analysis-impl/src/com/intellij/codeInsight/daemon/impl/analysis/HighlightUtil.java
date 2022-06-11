@@ -2249,7 +2249,7 @@ public final class HighlightUtil {
       private boolean hasYield;
 
       @Override
-      public void visitYieldStatement(PsiYieldStatement statement) {
+      public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
         if (statement.findEnclosingExpression() == switchExpression) {
           hasYield = true;
           stopWalking();
@@ -2258,11 +2258,11 @@ public final class HighlightUtil {
 
       // do not go inside to save time: declarations cannot contain yield that points to outer switch expression
       @Override
-      public void visitDeclarationStatement(PsiDeclarationStatement statement) {}
+      public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {}
 
       // do not go inside to save time: expressions cannot contain yield that points to outer switch expression
       @Override
-      public void visitExpression(PsiExpression expression) {}
+      public void visitExpression(@NotNull PsiExpression expression) {}
     }
     YieldFinder finder = new YieldFinder();
     scope.accept(finder);

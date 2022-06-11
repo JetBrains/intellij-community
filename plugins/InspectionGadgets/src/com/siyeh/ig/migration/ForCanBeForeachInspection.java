@@ -656,7 +656,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (iteratorUsed || numCallsToIteratorNext > 1) return;
       super.visitReferenceExpression(expression);
       if (ExpressionUtils.isReferenceTo(expression, iterator)) {

@@ -137,7 +137,7 @@ public class PackageNamingConventionInspection extends PackageGlobalInspection {
       return new BaseInspectionVisitor() {
 
         @Override
-        public void visitPackageStatement(PsiPackageStatement statement) {
+        public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
           final PsiJavaCodeReferenceElement reference = statement.getPackageReference();
           if (reference == null) {
             return;

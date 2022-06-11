@@ -139,7 +139,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   private static class CharUsedInArithmeticContextVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (ComparisonUtils.isComparisonOperation(tokenType)) {

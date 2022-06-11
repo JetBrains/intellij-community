@@ -54,7 +54,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression callExpression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression callExpression) {
         super.visitMethodCallExpression(callExpression);
 
         for (CallChecker checker : CALL_CHECKERS) {

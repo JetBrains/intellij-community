@@ -27,7 +27,7 @@ public class PatternVariableHidesFieldInspection extends BaseInspection {
   private static class PatternVariableHidesFieldVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPatternVariable(PsiPatternVariable variable) {
+    public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
       super.visitPatternVariable(variable);
       final PsiClass aClass = LocalVariableHidingMemberVariableInspection.findSurroundingClassWithHiddenField(variable, true, true);
       if (aClass == null) {

@@ -84,7 +84,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitCodeFragment(JavaCodeFragment codeFragment) {
+    public void visitCodeFragment(@NotNull JavaCodeFragment codeFragment) {
       myVisitedFragments.add(codeFragment);
       ArrayList<Evaluator> evaluators = new ArrayList<>();
 
@@ -113,7 +113,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       final PsiExpression rExpression = expression.getRExpression();
       if(rExpression == null) {
         throwExpressionInvalid(expression);
@@ -190,7 +190,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitTryStatement(PsiTryStatement statement) {
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
       if (statement.getResourceList() != null) {
         throw new EvaluateRuntimeException(new UnsupportedExpressionException("Try with resources is not yet supported"));
       }
@@ -223,7 +223,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       Evaluator accept = accept(statement.getException());
       if (accept != null) {
         myResult = new ThrowEvaluator(accept);
@@ -231,22 +231,22 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       myResult = new ReturnEvaluator(accept(statement.getReturnValue()));
     }
 
     @Override
-    public void visitYieldStatement(PsiYieldStatement statement) {
+    public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
       myResult = new SwitchEvaluator.YieldEvaluator(accept(statement.getExpression()));
     }
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       throw new EvaluateRuntimeException(new UnsupportedExpressionException("Synchronized is not yet supported"));
     }
 
     @Override
-    public void visitStatement(PsiStatement statement) {
+    public void visitStatement(@NotNull PsiStatement statement) {
       LOG.error(JavaDebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
       throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
     }
@@ -270,7 +270,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitCodeBlock(PsiCodeBlock block) {
+    public void visitCodeBlock(@NotNull PsiCodeBlock block) {
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
       try {
         myResult = new BlockStatementEvaluator(visitStatements(block.getStatements()));
@@ -281,12 +281,12 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitBlockStatement(PsiBlockStatement statement) {
+    public void visitBlockStatement(@NotNull PsiBlockStatement statement) {
       visitCodeBlock(statement.getCodeBlock());
     }
 
     @Override
-    public void visitLabeledStatement(PsiLabeledStatement labeledStatement) {
+    public void visitLabeledStatement(@NotNull PsiLabeledStatement labeledStatement) {
       PsiStatement statement = labeledStatement.getStatement();
       if (statement != null) {
         statement.accept(this);
@@ -302,7 +302,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       Evaluator bodyEvaluator = accept(statement.getBody());
       Evaluator conditionEvaluator = accept(statement.getCondition());
       if (conditionEvaluator != null) {
@@ -311,7 +311,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
       try {
         Evaluator bodyEvaluator = accept(statement.getBody());
@@ -326,7 +326,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
       try {
         Evaluator initializerEvaluator = accept(statement.getInitialization());
@@ -346,7 +346,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
       try {
         PsiParameter parameter = statement.getIterationParameter();
@@ -375,7 +375,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
       try {
         PsiStatement thenBranch = statement.getThenBranch();
@@ -412,12 +412,12 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       visitSwitchBlock(statement);
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       visitSwitchBlock(expression);
     }
 
@@ -487,51 +487,51 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+    public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
       visitSwitchLabelStatementBase(statement);
     }
 
     @Override
-    public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
       visitSwitchLabelStatementBase(statement);
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
       myResult = BreakContinueStatementEvaluator.createBreakEvaluator(labelIdentifier != null ? labelIdentifier.getText() : null);
     }
 
     @Override
-    public void visitContinueStatement(PsiContinueStatement statement) {
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
       myResult = BreakContinueStatementEvaluator.createContinueEvaluator(labelIdentifier != null ? labelIdentifier.getText() : null);
     }
 
     @Override
-    public void visitExpressionListStatement(PsiExpressionListStatement statement) {
+    public void visitExpressionListStatement(@NotNull PsiExpressionListStatement statement) {
       myResult = new ExpressionListEvaluator(ContainerUtil.mapNotNull(statement.getExpressionList().getExpressions(), this::accept));
     }
 
     @Override
-    public void visitEmptyStatement(PsiEmptyStatement statement) {
+    public void visitEmptyStatement(@NotNull PsiEmptyStatement statement) {
       // do nothing
     }
 
     @Override
-    public void visitExpressionStatement(PsiExpressionStatement statement) {
+    public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
       statement.getExpression().accept(this);
     }
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitExpression " + expression);
       }
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression wideExpression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression wideExpression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitPolyadicExpression " + wideExpression);
       }
@@ -716,7 +716,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
       List<Evaluator> evaluators = new ArrayList<>();
 
       PsiElement[] declaredElements = statement.getDeclaredElements();
@@ -784,7 +784,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitConditionalExpression " + expression);
       }
@@ -818,7 +818,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitReferenceExpression " + expression);
       }
@@ -978,7 +978,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitSuperExpression " + expression);
       }
@@ -986,7 +986,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitThisExpression " + expression);
       }
@@ -1024,7 +1024,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitInstanceOfExpression " + expression);
       }
@@ -1060,7 +1060,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitParenthesizedExpression " + expression);
       }
@@ -1071,7 +1071,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
+    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
       if(expression.getType() == null) {
         throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
       }
@@ -1098,7 +1098,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitPrefixExpression(final PsiPrefixExpression expression) {
+    public void visitPrefixExpression(final @NotNull PsiPrefixExpression expression) {
       final PsiType expressionType = expression.getType();
       if(expressionType == null) {
         throwEvaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
@@ -1147,7 +1147,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitMethodCallExpression " + expression);
       }
@@ -1250,7 +1250,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       final HighlightInfo parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
       if (parsingError != null) {
         throwEvaluateException(parsingError.getDescription());
@@ -1267,7 +1267,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+    public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression expression) {
       final PsiExpression indexExpression = expression.getIndexExpression();
       if(indexExpression == null) {
         throwExpressionInvalid(expression);
@@ -1308,7 +1308,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       PsiExpression operandExpr = expression.getOperand();
       if (operandExpr == null) {
         throwExpressionInvalid(expression);
@@ -1365,7 +1365,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
 
     @Override
-    public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+    public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
       PsiType type = expression.getOperand().getType();
 
       if (type instanceof PsiPrimitiveType) {
@@ -1378,13 +1378,13 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       throw new EvaluateRuntimeException(new UnsupportedExpressionException(
         JavaDebuggerBundle.message("evaluation.error.lambda.evaluation.not.supported")));
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       PsiElement qualifier = expression.getQualifier();
       PsiType interfaceType = expression.getFunctionalInterfaceType();
       if (!Registry.is("debugger.compiling.evaluator.method.refs") && interfaceType != null && qualifier != null) {
@@ -1464,7 +1464,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitNewExpression(final PsiNewExpression expression) {
+    public void visitNewExpression(final @NotNull PsiNewExpression expression) {
       PsiType expressionPsiType = expression.getType();
       if (expressionPsiType instanceof PsiArrayType) {
         Evaluator dimensionEvaluator = null;
@@ -1592,7 +1592,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       PsiExpression[] initializers = expression.getInitializers();
       Evaluator[] evaluators = new Evaluator[initializers.length];
       final PsiType type = expression.getType();
@@ -1618,7 +1618,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       PsiExpression condition = statement.getAssertCondition();
       if (condition == null) {
         throwEvaluateException("Assert condition expected in: " + statement.getText());

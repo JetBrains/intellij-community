@@ -54,7 +54,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitClass(PsiClass classToVisit) {
+  public void visitClass(@NotNull PsiClass classToVisit) {
     calculatePrivateMethodUsagesIfNecessary();
     if (!classToVisit.equals(aClass)) {
       contextStack.push(m_inSynchronizedContextCount);
@@ -67,7 +67,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     contextStack.push(m_inSynchronizedContextCount);
     m_inSynchronizedContextCount = 0;
 
@@ -104,7 +104,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
     super.visitMethodCallExpression(expression);
     if (!countGettersAndSetters) {
       return;
@@ -136,7 +136,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitCodeBlock(PsiCodeBlock block) {
+  public void visitCodeBlock(@NotNull PsiCodeBlock block) {
     if (block.getParent() instanceof PsiSynchronizedStatement) {
       m_inSynchronizedContextCount++;
     }
@@ -146,7 +146,7 @@ class VariableAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   private static final Key<Boolean> CODE_BLOCK_CONTAINS_HOLDS_LOCK_CALL = Key.create("CODE_BLOCK_CONTAINS_HOLDS_LOCK_CALL");
 
   @Override
-  public void visitAssertStatement(PsiAssertStatement statement) {
+  public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
     final PsiExpression condition = statement.getAssertCondition();
     if (SynchronizationUtil.isCallToHoldsLock(condition)) {
       m_inSynchronizedContextCount++;

@@ -43,7 +43,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     final List<ProblemDescriptor> problems = new ArrayList<>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiType[] typeArguments = expression.getTypeArguments();
         if (typeArguments.length > 0) {
@@ -52,7 +52,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
         final PsiType[] typeArguments = expression.getTypeArguments();
         if (typeArguments.length > 0) {
@@ -64,7 +64,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       }
 
       @Override
-      public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         super.visitMethodReferenceExpression(expression);
         checkMethodReference(expression, inspectionManager, problems, isOnTheFly);
       }

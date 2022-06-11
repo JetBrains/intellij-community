@@ -36,7 +36,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (FILES_WRITE.test(call)) {
           PsiMethodCallExpression bytesExpression = tryCast(ExpressionUtils.resolveExpression(call.getArgumentList().getExpressions()[1]), PsiMethodCallExpression.class);
           if (STRING_GET_BYTES.test(bytesExpression) && bytesExpression.getMethodExpression().getQualifierExpression() != null) {

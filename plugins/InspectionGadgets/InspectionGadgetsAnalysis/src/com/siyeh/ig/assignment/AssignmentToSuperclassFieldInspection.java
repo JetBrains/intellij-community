@@ -45,14 +45,14 @@ public class AssignmentToSuperclassFieldInspection extends  BaseInspection {
   private static class AssignmentToSuperclassFieldVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final PsiExpression lhs = expression.getLExpression();
       checkSuperclassField(lhs);
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       final PsiExpression operand = expression.getOperand();
       checkSuperclassField(operand);

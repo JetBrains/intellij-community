@@ -296,7 +296,7 @@ public final class IfConditionalModel extends ConditionalModel {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.isReferenceTo(myVariable)) {
         myReadBeforeWritten = PsiUtil.isAccessedForReading(expression);

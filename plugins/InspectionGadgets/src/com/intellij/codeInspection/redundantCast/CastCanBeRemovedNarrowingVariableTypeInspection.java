@@ -25,7 +25,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTypeCastExpression(PsiTypeCastExpression cast) {
+      public void visitTypeCastExpression(@NotNull PsiTypeCastExpression cast) {
         PsiTypeElement castTypeElement = cast.getCastType();
         if (castTypeElement == null || castTypeElement.getAnnotations().length > 0) return;
         PsiType castType = GenericsUtil.getVariableTypeByExpressionType(cast.getType());

@@ -543,7 +543,7 @@ public final class SwitchUtils {
     }
 
     @Override
-    public void visitLabeledStatement(PsiLabeledStatement statement) {
+    public void visitLabeledStatement(@NotNull PsiLabeledStatement statement) {
       final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
       final String labelText = labelIdentifier.getText();
       if (labelText.equals(m_labelName)) {

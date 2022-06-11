@@ -52,7 +52,7 @@ public class AbstractMethodWithMissingImplementationsInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (method.getNameIdentifier() == null || !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;

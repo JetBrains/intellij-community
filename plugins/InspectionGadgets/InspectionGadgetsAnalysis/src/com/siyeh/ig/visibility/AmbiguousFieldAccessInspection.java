@@ -40,7 +40,7 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
   private static class AmbiguousFieldAccessVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.isQualified()) {
         return;

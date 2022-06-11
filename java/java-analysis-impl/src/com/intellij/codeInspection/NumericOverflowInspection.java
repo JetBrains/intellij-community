@@ -47,24 +47,24 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
           visitExpression(expression);
         }
       }
 
       @Override
-      public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+      public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression expression) {
         // never constant
       }
 
       @Override
-      public void visitCallExpression(PsiCallExpression callExpression) {
+      public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
         // never constant
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         boolean hasOverflow = hasOverflow(expression, holder.getProject());
         if (hasOverflow && (!ignoreLeftShiftWithNegativeResult || !isLeftShiftWithNegativeResult(expression, holder.getProject()))) {
           holder.registerProblem(expression, JavaErrorBundle.message("numeric.overflow.in.expression"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);

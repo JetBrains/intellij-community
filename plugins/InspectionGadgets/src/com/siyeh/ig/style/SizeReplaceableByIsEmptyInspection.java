@@ -121,7 +121,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   private class SizeReplaceableByIsEmptyVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       if (!ComparisonUtils.isComparison(expression)) {
         return;

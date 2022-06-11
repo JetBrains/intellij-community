@@ -51,7 +51,7 @@ public class ComparatorNotSerializableInspection extends BaseInspection implemen
   private static class ComparatorNotSerializableVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       if (aClass instanceof PsiAnonymousClass || !InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COMPARATOR) ||
           SerializationUtils.isSerializable(aClass)) {
         return;

@@ -51,7 +51,7 @@ public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
     private Boolean newDateTimeApiPresent = null;
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement referenceElement) {
       if (!isNewDateTimeApiPresent(referenceElement)) {
         return;
       }

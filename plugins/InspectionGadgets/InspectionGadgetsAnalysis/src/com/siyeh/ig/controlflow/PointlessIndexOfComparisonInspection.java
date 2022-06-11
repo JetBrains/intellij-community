@@ -84,7 +84,7 @@ public class PointlessIndexOfComparisonInspection extends BaseInspection {
 
     @Override
     public void visitBinaryExpression(
-      PsiBinaryExpression expression) {
+      @NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) {

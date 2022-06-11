@@ -28,7 +28,7 @@ public class SuspiciousLiteralUnderscoreInspection extends BaseInspection {
   private static class SuspiciousLiteralUnderscoreVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (!PsiType.SHORT.equals(type) && !PsiType.INT.equals(type) && !PsiType.LONG.equals(type) &&

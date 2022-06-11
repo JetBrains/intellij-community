@@ -29,12 +29,12 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       checkReassigned(variable);
     }
 
     @Override
-    public void visitParameter(PsiParameter parameter) {
+    public void visitParameter(@NotNull PsiParameter parameter) {
       myParameterIsReassigned.put(parameter, checkReassigned(parameter));
     }
 
@@ -50,7 +50,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (!myHolder.isOnTheFly()) return;
 
       PsiElement referenceNameElement = expression.getReferenceNameElement();

@@ -487,7 +487,7 @@ public final class CreateFromUsageUtils {
 
     final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression &&
             (expr.getParent() instanceof PsiMethodCallExpression == expression.getParent() instanceof PsiMethodCallExpression)) {
           if (Objects.equals(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
@@ -497,7 +497,7 @@ public final class CreateFromUsageUtils {
         visitElement(expr);
       }
 
-      @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
+      @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
           if (Objects.equals(methodExpression.getReferenceName(),

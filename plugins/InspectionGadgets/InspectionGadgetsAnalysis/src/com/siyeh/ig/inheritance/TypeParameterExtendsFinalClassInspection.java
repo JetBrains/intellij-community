@@ -114,7 +114,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
 
   private static class TypeParameterExtendsFinalClassVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitTypeParameter(PsiTypeParameter classParameter) {
+    public void visitTypeParameter(@NotNull PsiTypeParameter classParameter) {
       super.visitTypeParameter(classParameter);
       final PsiClassType[] extendsListTypes = classParameter.getExtendsListTypes();
       if (extendsListTypes.length < 1) {
@@ -135,7 +135,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection imp
     }
 
     @Override
-    public void visitTypeElement(PsiTypeElement typeElement) {
+    public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       super.visitTypeElement(typeElement);
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiWildcardType)) {

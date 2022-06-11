@@ -31,12 +31,12 @@ class ContainsSynchronizationVisitor extends JavaRecursiveElementWalkingVisitor 
   }
 
   @Override
-  public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+  public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
     containsSynchronization = true;
   }
 
   @Override
-  public void visitMethod(PsiMethod method) {
+  public void visitMethod(@NotNull PsiMethod method) {
     if (containsSynchronization) {
       return;
     }

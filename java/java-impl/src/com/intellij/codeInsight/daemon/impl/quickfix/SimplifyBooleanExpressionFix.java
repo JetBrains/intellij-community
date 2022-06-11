@@ -386,7 +386,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
         expression.accept(expressionVisitor);
@@ -431,7 +431,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
         expression.accept(expressionVisitor);
@@ -480,7 +480,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       PsiExpression[] operands = expression.getOperands();
       PsiExpression lExpr = operands[0];
       IElementType tokenType = expression.getOperationTokenType();
@@ -588,7 +588,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
     }
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       Boolean condition = getConstBoolean(expression.getCondition());
       if (condition == null) return;
       if (!markAndCheckCreateResult()) {
@@ -612,7 +612,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       PsiExpression operand = expression.getOperand();
       Boolean constBoolean = getConstBoolean(operand);
       if (constBoolean == null) return;
@@ -627,7 +627,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
 
 
     @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       PsiExpression subExpr = expression.getExpression();
       Boolean constBoolean = getConstBoolean(subExpr);
       if (constBoolean == null) return;
@@ -638,7 +638,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 

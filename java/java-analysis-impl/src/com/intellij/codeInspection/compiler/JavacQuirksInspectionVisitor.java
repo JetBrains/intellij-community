@@ -51,7 +51,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodRef) {
+  public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression methodRef) {
     PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
     PsiClass targetClass = getInaccessibleMethodReferenceClass(methodRef, method);
     if (targetClass == null) return;
@@ -81,7 +81,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitAnnotationArrayInitializer(final PsiArrayInitializerMemberValue initializer) {
+  public void visitAnnotationArrayInitializer(final @NotNull PsiArrayInitializerMemberValue initializer) {
     if (PsiUtil.isLanguageLevel7OrHigher(initializer)) return;
     final PsiElement lastElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(initializer.getLastChild());
     if (lastElement != null && PsiUtil.isJavaToken(lastElement, JavaTokenType.COMMA)) {
@@ -92,13 +92,13 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+  public void visitTypeCastExpression(final @NotNull PsiTypeCastExpression expression) {
     if (PsiUtil.isLanguageLevel7OrHigher(expression)) return;
     final PsiTypeElement type = expression.getCastType();
     if (type != null) {
       type.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceParameterList(final PsiReferenceParameterList list) {
+        public void visitReferenceParameterList(final @NotNull PsiReferenceParameterList list) {
           super.visitReferenceParameterList(list);
           if (list.getFirstChild() != null && QUALIFIER_REFERENCE.accepts(list)) {
             final String message = JavaAnalysisBundle.message("inspection.compiler.javac.quirks.qualifier.type.args.problem");
@@ -111,7 +111,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+  public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
     final PsiType lType = assignment.getLExpression().getType();
     if (lType == null) return;
@@ -136,7 +136,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
     super.visitMethodCallExpression(expression);
     if (expression.getTypeArguments().length == 0) {
       PsiExpression[] args = expression.getArgumentList().getExpressions();
@@ -200,7 +200,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitBinaryExpression(PsiBinaryExpression expression) {
+  public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
     super.visitBinaryExpression(expression);
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_7) && !myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       PsiType ltype = expression.getLOperand().getType();
@@ -220,7 +220,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) return;//javac 9 has no such bug
     if (ref.getParent() instanceof PsiTypeElement) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);

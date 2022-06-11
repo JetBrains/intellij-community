@@ -228,7 +228,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
     for (final PsiMethod method : methods) {
       method.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public void visitCallExpression(PsiCallExpression callExpression) {
+        public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
           final PsiMethod resolved = callExpression.resolveMethod();
           if (resolved != null) {
             if (resolved.getName().equals(previousLineResult.getThird())) {

@@ -453,7 +453,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (expression.getQualifierExpression() != null) {
           return;
@@ -505,7 +505,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiType type = expression.getType();
       if (!isConcatenatorConstruction(expression)) return;
@@ -558,7 +558,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)) {
         myPossibleSideEffect = expression;
@@ -566,7 +566,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound && !isArgumentOfStringBuilderMethod(expression)) {
         myPossibleSideEffect = expression;
@@ -574,7 +574,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (expression.getTextOffset() < myVariable.getTextOffset() || myToStringFound) {
         return;
@@ -661,7 +661,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection im
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (!myReplaceable || expression.getTextOffset() < myVariable.getTextOffset()) {
         return;
       }

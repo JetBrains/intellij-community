@@ -257,7 +257,7 @@ public final class StatementExtractor {
       PsiCodeBlock body = Objects.requireNonNull(copy.getBody());
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitExpressionStatement(PsiExpressionStatement statement) {
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
           if (statement.getParent() instanceof PsiSwitchLabeledRuleStatement &&
               ((PsiSwitchLabeledRuleStatement)statement.getParent()).getEnclosingSwitchBlock() == copy) {
             process(statement);
@@ -265,14 +265,14 @@ public final class StatementExtractor {
         }
 
         @Override
-        public void visitYieldStatement(PsiYieldStatement statement) {
+        public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
           if (statement.getExpression() != null && statement.findEnclosingExpression() == copy) {
             process(statement);
           }
         }
 
         @Override
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(@NotNull PsiExpression expression) {
           // Do not go into any expressions
         }
 

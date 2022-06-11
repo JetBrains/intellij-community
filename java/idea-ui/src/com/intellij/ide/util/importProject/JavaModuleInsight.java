@@ -277,7 +277,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitRequiresStatement(PsiRequiresStatement statement) {
+    public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
       super.visitRequiresStatement(statement);
       String referenceText = statement.getModuleName();
       if (referenceText != null) {
@@ -286,7 +286,7 @@ public final class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+    public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
       super.visitPackageAccessibilityStatement(statement);
       if (statement.getRole() == PsiPackageAccessibilityStatement.Role.EXPORTS) {
         PsiJavaCodeReferenceElement reference = statement.getPackageReference();

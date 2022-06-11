@@ -175,7 +175,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
   private static class TrivialStringConcatenationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!ExpressionUtils.hasStringType(expression)) {
         return;

@@ -38,7 +38,7 @@ public class BoundFieldAssignmentInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
         PsiExpression lExpression = expression.getLExpression();
         if (lExpression instanceof PsiReferenceExpression) {
           PsiReferenceExpression lExpr = (PsiReferenceExpression)lExpression;
