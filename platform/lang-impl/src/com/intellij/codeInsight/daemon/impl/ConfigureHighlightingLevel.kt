@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonBundle.message
@@ -78,9 +78,6 @@ private class LevelAction(val level: InspectionsLevel, val provider: FileViewPro
 
 
 internal class ConfigureHighlightingLevelAction : DumbAwareAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
 
   override fun update(event: AnActionEvent) {
     val enabled = event.getData(PSI_FILE)?.viewProvider?.languages?.isNotEmpty()

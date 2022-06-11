@@ -66,11 +66,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);

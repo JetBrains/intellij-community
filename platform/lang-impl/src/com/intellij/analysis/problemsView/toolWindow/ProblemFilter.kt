@@ -5,7 +5,6 @@ import com.intellij.analysis.problemsView.Problem
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
@@ -34,10 +33,6 @@ internal class SeverityFiltersActionGroup : DumbAware, ActionGroup() {
     }
     actions.add(OtherSeveritiesFilterAction(otherSeverities.map { it.myVal }, panel))
     return actions.toTypedArray()
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
   }
 }
 
