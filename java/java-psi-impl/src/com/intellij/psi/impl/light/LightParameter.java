@@ -35,11 +35,6 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder> i
     this(name, type, declarationScope, language, type instanceof PsiEllipsisType);
   }
 
-  public LightParameter(@NonNls @NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope,
-                        @NotNull Language language, @NotNull LightModifierList modifierList) {
-    this(name, type, declarationScope, language, modifierList, type instanceof PsiEllipsisType);
-  }
-
   public LightParameter(@NonNls @NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope, @NotNull Language language, boolean isVarArgs) {
     this(name, type, declarationScope, language, new LightModifierList(declarationScope.getManager()), isVarArgs);
   }
