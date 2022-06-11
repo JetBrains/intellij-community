@@ -32,17 +32,13 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ModifiableRootModelBridgeImpl(
@@ -98,7 +94,8 @@ internal class ModifiableRootModelBridgeImpl(
       savedModuleEntity = actualModuleEntity
       return actualModuleEntity
     }
-
+  // It's needed to track changed dependency to create new instance of Library if e.g dependency scope was changed
+  private val changedLibraryDependency = mutableSetOf<LibraryId>()
   private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
 
   /**
@@ -160,6 +157,10 @@ internal class ModifiableRootModelBridgeImpl(
       val copy = dependencies.toMutableList()
       copy[index] = newItem
       dependencies = copy
+    }
+
+    if (newItem is ModuleDependencyItem.Exportable.LibraryDependency && newItem.library.tableId is LibraryTableId.ModuleLibraryTableId) {
+      changedLibraryDependency.add(newItem.library)
     }
   }
 
@@ -514,6 +515,7 @@ internal class ModifiableRootModelBridgeImpl(
       }
     }
 
+    moduleLibraryTable.restoreMappingsForUnchangedLibraries(changedLibraryDependency)
     disposeWithoutLibraries()
     return diff
   }

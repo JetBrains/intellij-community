@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -288,6 +289,51 @@ class ModuleLibraryBridgeTest {
     assertTrue(moduleFile.readText().contains(antLibraryName))
 
     assertModuleLibraryDependency(moduleRootManager, antLibraryName)
+  }
+
+  @Test
+  fun `test module library instance after module root commit`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val antLibraryName = "ant-lib"
+    val mavenLibraryName = "maven-lib"
+    val gradleLibraryName = "gradle-lib"
+
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+      moduleModel.commit()
+      module
+    }
+    ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName, listOf(), emptyList())
+    ModuleRootModificationUtil.addModuleLibrary(module, mavenLibraryName, listOf(File(project.basePath, "$mavenLibraryName.jar").path), emptyList())
+    ModuleRootModificationUtil.addModuleLibrary(module, gradleLibraryName, listOf(), emptyList())
+    var moduleLibraryTable = ModuleRootComponentBridge.getInstance(module).getModuleLibraryTable()
+    val antLibraryBridgeOne = moduleLibraryTable.getLibraryByName(antLibraryName)
+    val mavenLibraryBridgeOne = moduleLibraryTable.getLibraryByName(mavenLibraryName)
+    val gradleLibraryBridgeOne = moduleLibraryTable.getLibraryByName(gradleLibraryName)
+
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    moduleRootManager.modifiableModel.let { rootModel ->
+      rootModel.moduleLibraryTable.getLibraryByName(mavenLibraryName)?.modifiableModel?.let {
+        it.removeRoot(File(project.basePath, "$mavenLibraryName.jar").path, OrderRootType.CLASSES)
+        it.commit()
+      }
+      rootModel.moduleLibraryTable.getLibraryByName(gradleLibraryName)?.modifiableModel?.let {
+        it.name = "New Name"
+        it.commit()
+      }
+      rootModel.setInvalidSdk("Test", "")
+      rootModel.commit()
+    }
+
+    moduleLibraryTable = ModuleRootComponentBridge.getInstance(module).getModuleLibraryTable()
+    val antLibraryBridgeTwo = moduleLibraryTable.getLibraryByName(antLibraryName)
+    val mavenLibraryBridgeTwo = moduleLibraryTable.getLibraryByName(mavenLibraryName)
+    val gradleLibraryBridgeTwo = moduleLibraryTable.getLibraryByName("New Name")
+
+    assertTrue(antLibraryBridgeOne === antLibraryBridgeTwo)
+    assertTrue(mavenLibraryBridgeOne !== mavenLibraryBridgeTwo)
+    assertTrue(gradleLibraryBridgeOne !== gradleLibraryBridgeTwo)
   }
 
   @Test

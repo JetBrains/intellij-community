@@ -231,6 +231,41 @@ class ProjectLibraryBridgeTest {
   }
 
   @Test
+  fun `test project library instance after rollback`() = WriteCommandAction.runWriteCommandAction(project) {
+    val libraryName = "ant-lib"
+    val anotherLibraryName = "maven-lib"
+
+    val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+    var libraryBridgeOne: Library?
+    projectLibraryTable.modifiableModel.let {
+      libraryBridgeOne = it.createLibrary(libraryName)
+      libraryBridgeOne!!.modifiableModel.let { mLib ->
+        mLib.addRoot(File(project.basePath, "$libraryName.jar").path, OrderRootType.CLASSES)
+        mLib.addRoot(File(project.basePath, "$libraryName-sources.jar").path, OrderRootType.SOURCES)
+        mLib.commit()
+      }
+      it.commit()
+    }
+
+    val libraryBridgeTwo = projectLibraryTable.getLibraryByName(libraryName)
+    assertTrue(libraryBridgeOne === libraryBridgeTwo)
+
+    var libraryBridgeTree: Library?
+    projectLibraryTable.modifiableModel.let {
+      libraryBridgeTree = it.libraries[0]
+      assertTrue(libraryBridgeTwo === libraryBridgeTree)
+
+      libraryBridgeTree!!.modifiableModel.let { mLib->
+        mLib.name = anotherLibraryName
+        mLib
+      }
+    }
+    val libraryBridgeFour = projectLibraryTable.getLibraryByName(libraryName)
+    assertTrue(libraryBridgeTree === libraryBridgeFour)
+    assertEquals(libraryName, libraryBridgeFour!!.name)
+  }
+
+  @Test
   fun `test project library rename as module dependency`() = WriteCommandAction.runWriteCommandAction(project) {
     val antLibraryName = "ant-lib"
     val mavenLibraryName = "maven-lib"

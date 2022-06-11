@@ -170,6 +170,20 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     }
   }
 
+  internal fun restoreMappingsForUnchangedLibraries(changedLibs: Set<LibraryId>) {
+    if (copyToOriginal.isEmpty()) return
+
+    libraryIterator.forEach {
+      val originalLibrary = copyToOriginal[it]
+      //originalLibrary may be null if the library was added after the table was created
+      if (originalLibrary != null && !changedLibs.contains(originalLibrary.libraryId) && originalLibrary.hasSameContent(it)) {
+        val mutableLibraryMap = modifiableModel.diff.mutableLibraryMap
+        mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(it as LibraryBridge).single(), originalLibrary)
+        Disposer.dispose(it)
+      }
+    }
+  }
+
   internal fun disposeOriginalLibrariesAndUpdateCopies() {
     if (copyToOriginal.isEmpty()) return
 
