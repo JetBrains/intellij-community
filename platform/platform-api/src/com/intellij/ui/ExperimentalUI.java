@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
-  private final IconPathPatcher iconPathPatcher = createPathPatcher();
+  private IconPathPatcher iconPathPatcher;
   private static final String KEY = "ide.experimental.ui";
 
   public static boolean isNewUI() {
@@ -66,12 +66,17 @@ public abstract class ExperimentalUI {
         }
 
         if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
+          if (getInstance().iconPathPatcher != null) {
+            IconLoader.removePathPatcher(getInstance().iconPathPatcher);
+          }
+          getInstance().iconPathPatcher = getInstance().createPathPatcher();
           IconLoader.installPathPatcher(getInstance().iconPathPatcher);
         }
         getInstance().onExpUIEnabled();
       }
       else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
         IconLoader.removePathPatcher(getInstance().iconPathPatcher);
+        getInstance().iconPathPatcher = null;
         getInstance().onExpUIDisabled();
       }
     }
@@ -80,6 +85,10 @@ public abstract class ExperimentalUI {
   public void lookAndFeelChanged() {
     if (isNewUI()) {
       if (isIconPatcherSet.compareAndSet(false, true)) {
+        if (iconPathPatcher != null) {
+          IconLoader.removePathPatcher(iconPathPatcher);
+        }
+        iconPathPatcher = createPathPatcher();
         IconLoader.installPathPatcher(iconPathPatcher);
       }
       patchUIDefaults(true);
