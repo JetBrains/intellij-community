@@ -44,6 +44,15 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     myRefElement = new LightJavaModuleReferenceElement(manager, name);
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitModule(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   public @NotNull VirtualFile getRootVirtualFile() {
     return myRoot;
   }
@@ -164,6 +173,15 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     }
 
     @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitModuleReferenceElement(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
+    @Override
     public @NotNull String getReferenceText() {
       return myText;
     }
@@ -187,6 +205,15 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
       myPackageName = packageName;
     }
 
+    @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitPackageAccessibilityStatement(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
     @Override
     public @NotNull Role getRole() {
       return Role.EXPORTS;

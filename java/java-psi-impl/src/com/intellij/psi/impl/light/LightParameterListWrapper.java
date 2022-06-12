@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.PsiMirrorElement;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +28,16 @@ public class LightParameterListWrapper extends LightElement implements PsiParame
     super(delegate.getManager(), delegate.getLanguage());
     myDelegate = delegate;
     mySubstitutor = substitutor;
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitParameterList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NotNull
