@@ -130,7 +130,7 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
-fun Project.isTrusted() = LightEdit.owns(this) || getTrustedState () == ThreeState.YES
+fun Project.isTrusted() = getTrustedState () == ThreeState.YES
 
 @ApiStatus.Internal
 fun Project.getTrustedState(): ThreeState {
@@ -197,6 +197,9 @@ private fun isProjectImplicitlyTrusted(project: Project): Boolean =
 @ApiStatus.Internal
 fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean {
   if (isTrustedCheckDisabled() || isTrustedCheckDisabledForProduct()) {
+    return true
+  }
+  if (LightEdit.owns(project)) {
     return true
   }
   if (projectDir != null && isPathTrustedInSettings(projectDir)) {
