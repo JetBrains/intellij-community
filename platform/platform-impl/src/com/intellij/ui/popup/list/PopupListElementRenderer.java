@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
@@ -199,8 +200,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       left.setBorder(JBUI.Borders.empty());
       right.setBorder(JBUI.Borders.empty());
     } else {
-      left.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, 0));
-      right.setBorder(JBUI.Borders.empty(insets.top, leftRightInset, insets.bottom, insets.right));
+      left.setBorder(new EmptyBorder(insets.top, insets.left, insets.bottom, 0));
+      right.setBorder(new EmptyBorder(insets.top, leftRightInset, insets.bottom, insets.right));
     }
 
     GridBag gbc = new GridBag()
