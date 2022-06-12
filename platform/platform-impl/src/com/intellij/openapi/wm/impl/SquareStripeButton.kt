@@ -22,6 +22,7 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Rectangle
+import java.awt.event.MouseEvent
 import java.util.function.Supplier
 
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
@@ -96,6 +97,8 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl) :
       .setHideDelay(0)
       .installOn(this)
   }
+
+  override fun checkSkipPressForEvent(e: MouseEvent) = e.button != MouseEvent.BUTTON1
 }
 
 private fun getAlignment(anchor: ToolWindowAnchor): HelpTooltip.Alignment {

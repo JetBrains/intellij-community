@@ -501,7 +501,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
 
-  private static boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
+  protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
     return e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
   }
 

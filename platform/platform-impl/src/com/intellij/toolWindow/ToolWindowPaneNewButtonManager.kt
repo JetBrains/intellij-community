@@ -27,9 +27,10 @@ internal class ToolWindowPaneNewButtonManager : ToolWindowButtonManager {
 
   override fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean {
     val oldSquareVisible = left.isVisible && right.isVisible
-    left.isVisible = showButtons
-    right.isVisible = showButtons
-    return oldSquareVisible != showButtons
+    val visible = showButtons || state.isStripesOverlaid
+    left.isVisible = visible
+    right.isVisible = visible
+    return oldSquareVisible != visible
   }
 
   override fun initMoreButton() {
