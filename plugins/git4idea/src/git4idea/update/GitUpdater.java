@@ -93,9 +93,16 @@ public abstract class GitUpdater {
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
       updateMethod = resolveUpdateMethod(repository);
     }
-    return updateMethod == UpdateMethod.REBASE ?
-           new GitRebaseUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles):
-           new GitMergeUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles);
+    switch (updateMethod) {
+      case REBASE:
+        return new GitRebaseUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles);
+      case MERGE:
+        return new GitMergeUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles);
+      case FETCH_DEFAULT:
+        return new GitFetchUpdater(project, git, repository, progressIndicator, updatedFiles);
+      default:
+        throw new UnsupportedOperationException("Update method " + updateMethod + " is not implemented");
+    }
   }
 
   @NotNull
