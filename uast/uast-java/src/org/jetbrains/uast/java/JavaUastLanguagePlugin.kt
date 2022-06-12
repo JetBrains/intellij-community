@@ -174,25 +174,70 @@ internal inline fun <reified ActualT : UElement, P : PsiElement> Class<out UElem
 internal fun Array<out Class<out UElement>>.hasAssignableFrom(cls: Class<*>): Boolean = any { it.isAssignableFrom(cls) }
 
 internal object JavaConverter {
-  internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
-    is PsiExpressionStatement -> unwrapElements(element.parent)
-    is PsiParameterList -> unwrapElements(element.parent)
-    is PsiAnnotationParameterList -> unwrapElements(element.parent)
-    is PsiModifierList -> unwrapElements(element.parent)
-    is PsiExpressionList -> unwrapElements(element.parent)
-    is PsiCaseLabelElementList -> unwrapElements(element.parent)
-    is PsiPackageStatement -> unwrapElements(element.parent)
-    is PsiImportList -> unwrapElements(element.parent)
-    is PsiReferenceList -> unwrapElements(element.parent)
-    is PsiReferenceParameterList -> unwrapElements(element.parent)
-    is PsiBlockStatement -> unwrapElements(element.parent)
-    is PsiDocTag -> unwrapElements(element.parent)
-    is PsiDocTagValue -> unwrapElements(element.parent)
-    is LazyParseablePsiElement ->
-      if (element.elementType == JavaDocElementType.DOC_REFERENCE_HOLDER)
-        unwrapElements(element.parent)
-      else element
-    else -> element
+  internal tailrec fun unwrapElements(element: PsiElement): PsiElement {
+    val parent = element.parent
+    return if (parent != null && shouldUnwrapParent(element)) unwrapElements(parent) else element
+  }
+
+  private fun shouldUnwrapParent(element: PsiElement): Boolean {
+    if (element is LazyParseablePsiElement) {
+      return element.elementType == JavaDocElementType.DOC_REFERENCE_HOLDER
+    }
+    var result:Boolean = false
+    element.accept(object:JavaElementVisitor() {
+      override fun visitAnnotationParameterList(list: PsiAnnotationParameterList) {
+        result = true
+      }
+
+      override fun visitBlockStatement(statement: PsiBlockStatement) {
+        result = true
+      }
+
+      override fun visitCaseLabelElementList(list: PsiCaseLabelElementList) {
+        result = true
+      }
+
+      override fun visitDocTag(tag: PsiDocTag) {
+        result = true
+      }
+
+      override fun visitDocTagValue(value: PsiDocTagValue) {
+        result = true
+      }
+
+      override fun visitExpressionList(list: PsiExpressionList) {
+        result = true
+      }
+
+      override fun visitExpressionStatement(statement: PsiExpressionStatement) {
+        result = true
+      }
+
+      override fun visitImportList(list: PsiImportList) {
+        result = true
+      }
+
+      override fun visitModifierList(list: PsiModifierList) {
+        result = true
+      }
+
+      override fun visitPackageStatement(statement: PsiPackageStatement) {
+        result = true
+      }
+
+      override fun visitParameterList(list: PsiParameterList) {
+        result = true
+      }
+
+      override fun visitReferenceList(list: PsiReferenceList) {
+        result = true
+      }
+
+      override fun visitReferenceParameterList(list: PsiReferenceParameterList) {
+        result = true
+      }
+    })
+    return result
   }
 
   internal fun convertPsiElement(el: PsiElement,
