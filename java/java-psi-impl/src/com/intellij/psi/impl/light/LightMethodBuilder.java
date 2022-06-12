@@ -305,6 +305,9 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitMethod(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

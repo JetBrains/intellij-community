@@ -47,6 +47,9 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClass(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

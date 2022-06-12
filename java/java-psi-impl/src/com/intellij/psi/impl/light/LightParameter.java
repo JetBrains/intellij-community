@@ -57,6 +57,9 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder> i
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitParameter(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
