@@ -5,6 +5,7 @@ import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -352,4 +353,10 @@ public class PrepareToDeployAction extends AnAction {
       e.getPresentation().setText(DevKitBundle.messagePointer("prepare.for.deployment", module.getName()));
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
 }
