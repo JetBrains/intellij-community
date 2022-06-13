@@ -1084,12 +1084,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   /**
-   * Checks that the code block throws an exception of the specified class with expected error msg.
-   * If expected error message is null it will not be checked.
+   * Checks that the code block throws an exception of the specified class with a message that contains the given message.
+   * If the expected error message is null, the actual error message is not checked, it may also be absent.
    *
-   * @param exceptionClass   Expected exception type
-   * @param expectedErrorMsgPart expected error message, of any
-   * @param runnable         Block annotated with some exception type
+   * @param exceptionClass       the expected exception type; the actual exception may also be a subtype
+   * @param expectedErrorMsgPart the expected part of the exception message, {@code null} allows any or an absent message
+   * @param runnable             the action that is supposed to throw the exception
    */
   public static void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
                                   @Nullable String expectedErrorMsgPart,
