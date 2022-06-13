@@ -25,11 +25,6 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     return settings.isSortingByMlEnabledInAnyTab() || experiment.isAllowed
   }
 
-  override fun shouldOrderByMl(): Boolean {
-    val state = getCurrentSession()?.getCurrentSearchState()
-    return state?.orderByMl ?: false
-  }
-
   internal fun shouldUseExperimentalModel(tabId: String): Boolean {
     val tab = SearchEverywhereTabWithMl.findById(tabId) ?: return false
     return experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL

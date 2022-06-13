@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereFoundElementInfoWithMl
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereTabWithMl
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
@@ -56,7 +55,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   private fun getFeaturesReport(searchEverywhereUI: SearchEverywhereUI): Map<String, Any> {
     val mlSessionService = SearchEverywhereMlSessionService.getService() ?: return emptyMap()
     val searchSession = mlSessionService.getCurrentSession()!!
-    val state = searchSession.getCurrentSearchState()
+    val state = searchSession.getCurrentSearchState()!!
 
     val features = searchEverywhereUI.foundElementsInfo
       .map { SearchEverywhereFoundElementInfoWithMl.from(it) }
@@ -82,9 +81,9 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
     val contributorFeatures = contributors.map { contributorFeaturesProvider.getFeatures(it, searchSession.mixedListInfo)}
     return mapOf(
-      SHOULD_ORDER_BY_ML_KEY to mlSessionService.shouldOrderByMl(),
+      SHOULD_ORDER_BY_ML_KEY to state.orderByMl,
       CONTEXT_INFO_KEY to searchSession.cachedContextInfo.features.associate { it.field.name to it.data },
-      SEARCH_STATE_FEATURES_KEY to state!!.searchStateFeatures.associate { it.field.name to it.data },
+      SEARCH_STATE_FEATURES_KEY to state.searchStateFeatures.associate { it.field.name to it.data },
       CONTRIBUTORS_KEY to contributorFeatures.map { c -> c.associate { it.field.name to it.data }.toSortedMap() },
       FOUND_ELEMENTS_KEY to features
     )

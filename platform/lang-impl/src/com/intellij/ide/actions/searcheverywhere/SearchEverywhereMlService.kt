@@ -34,8 +34,6 @@ abstract class SearchEverywhereMlService {
    */
   abstract fun isEnabled(): Boolean
 
-  abstract fun shouldOrderByMl(): Boolean
-
   abstract fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
 
   @Contract("_, _, _ -> new")
