@@ -5,7 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.Search
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -34,7 +34,8 @@ internal class SearchEverywhereSymbolFeaturesProvider
   }
 
   private fun getParentStatisticianFeatures(element: PsiElement): List<EventPair<*>> {
-    val parent = ReadAction.compute<PsiElement?, Nothing> { element.parent }?.takeIf { it is PsiNamedElement } ?: return emptyList()
+    val parent = runReadAction { element.takeIf { it.isValid }?.parent as? PsiNamedElement }
+                 ?: return emptyList()
     val service = service<SearchEverywhereStatisticianService>()
 
     return service.getCombinedStats(parent)?.let { stats ->
