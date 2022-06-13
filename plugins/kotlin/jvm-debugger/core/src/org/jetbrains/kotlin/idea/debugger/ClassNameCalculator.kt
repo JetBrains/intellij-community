@@ -2,14 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.Stack
-import org.jetbrains.kotlin.codegen.binding.CodegenBinding
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import java.util.*
@@ -38,20 +34,6 @@ object ClassNameCalculator {
         }
 
         return getClassNames(element.containingKtFile)[target]
-    }
-}
-
-fun ClassNameCalculator.getClassNameCompat(element: KtElement): String? {
-    return if (Registry.`is`("kotlin.debugger.enable.class.name.calculator")) {
-        getClassName(element)
-    } else {
-        @Suppress("DEPRECATION")
-        val typeMapper = KotlinDebuggerCaches.getOrCreateTypeMapper(element)
-
-        return runReadAction {
-            val type = CodegenBinding.asmTypeForAnonymousClassOrNull(typeMapper.bindingContext, element)
-            type?.internalName?.replace('/', '.')
-        }
     }
 }
 

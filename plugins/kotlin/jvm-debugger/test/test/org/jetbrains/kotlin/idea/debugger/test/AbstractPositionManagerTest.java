@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager;
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManagerFactory;
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerCaches;
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockLocation;
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockVirtualMachine;
 import org.jetbrains.kotlin.idea.debugger.test.mock.SmartMockReferenceTypeContext;
@@ -73,18 +72,9 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
     }
 
     @NotNull
-    private static KotlinPositionManager createPositionManager(
-            @NotNull DebugProcess process,
-            @NotNull List<KtFile> files,
-            @NotNull GenerationState state
-    ) {
+    private static KotlinPositionManager createPositionManager(@NotNull DebugProcess process) {
         KotlinPositionManager positionManager = (KotlinPositionManager) new KotlinPositionManagerFactory().createPositionManager(process);
         assertNotNull(positionManager);
-
-        for (KtFile file : files) {
-            KotlinDebuggerCaches.Companion.addTypeMapper(file, state.getTypeMapper());
-        }
-
         return positionManager;
     }
 
@@ -136,7 +126,7 @@ public abstract class AbstractPositionManagerTest extends KotlinLightCodeInsight
 
         debugProcess = createDebugProcess(referencesByName);
 
-        PositionManager positionManager = createPositionManager(debugProcess, files, state);
+        PositionManager positionManager = createPositionManager(debugProcess);
 
         ApplicationManager.getApplication().runReadAction(() -> {
             try {

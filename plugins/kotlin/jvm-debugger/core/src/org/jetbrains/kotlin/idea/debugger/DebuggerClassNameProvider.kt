@@ -100,7 +100,7 @@ class DebuggerClassNameProvider(
 
         return when (element) {
             is KtScript -> {
-                ClassNameCalculator.getClassNameCompat(element)?.let { return Cached(it) }
+                ClassNameCalculator.getClassName(element)?.let { return Cached(it) }
                 return EMPTY
             }
             is KtFile -> {
@@ -119,14 +119,14 @@ class DebuggerClassNameProvider(
                         // Guaranteed to be non-local class or object
                         runReadAction {
                             if (element is KtClass && element.isInterface()) {
-                                val name = ClassNameCalculator.getClassNameCompat(element)
+                                val name = ClassNameCalculator.getClassName(element)
 
                                 if (name != null)
                                     Cached(listOf(name, name + JvmAbi.DEFAULT_IMPLS_SUFFIX))
                                 else
                                     EMPTY
                             } else {
-                              ClassNameCalculator.getClassNameCompat(element)?.let { Cached(it) } ?: EMPTY
+                                ClassNameCalculator.getClassName(element)?.let { Cached(it) } ?: EMPTY
                             }
                         }
                 }
@@ -175,7 +175,7 @@ class DebuggerClassNameProvider(
                 var nonInlineClasses: ComputedClassNames = classNamesOfContainingDeclaration
 
                 if (runReadAction { element.name == null || element.isLocal }) {
-                    val nameOfAnonymousClass = runReadAction { ClassNameCalculator.getClassNameCompat(element) }
+                    val nameOfAnonymousClass = runReadAction { ClassNameCalculator.getClassName(element) }
                     if (nameOfAnonymousClass != null) {
                         nonInlineClasses += Cached(nameOfAnonymousClass)
                     }
@@ -226,7 +226,7 @@ class DebuggerClassNameProvider(
 
     private fun KtElement.getNamesInReadAction() =
         runReadAction {
-            val name = ClassNameCalculator.getClassNameCompat(this)
+            val name = ClassNameCalculator.getClassName(this)
             if (name != null) Cached(name) else EMPTY
         }
 

@@ -73,7 +73,7 @@ fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debug
             .map { it.name().drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
             .any { variableName ->
                 if (variableName.startsWith("-")) {
-                    val lambdaClassName = ClassNameCalculator.getClassNameCompat(inlineArgument)?.substringAfterLast('.') ?: return@any false
+                    val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false
                     dropInlineSuffix(variableName) == "-$functionName-$lambdaClassName"
                 } else {
                     // For Kotlin up to 1.3.10
@@ -103,7 +103,7 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
 }
 
 private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
-    val className = ClassNameCalculator.getClassNameCompat(elementAt) ?: return 0
+    val className = ClassNameCalculator.getClassName(elementAt) ?: return 0
     return className.substringAfterLast("$").toInt()
 }
 
