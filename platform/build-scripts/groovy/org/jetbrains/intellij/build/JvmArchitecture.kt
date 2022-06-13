@@ -6,8 +6,8 @@ package org.jetbrains.intellij.build
 import com.intellij.util.system.CpuArch
 
 @Suppress("EnumEntryName")
-enum class JvmArchitecture(@JvmField val fileSuffix: String) {
-  x64("64"), aarch64("aarch64");
+enum class JvmArchitecture(@JvmField val fileSuffix: String, @JvmField val dirName: String) {
+  x64("64", "amd64"), aarch64("aarch64", "aarch64");
 
   companion object {
     @JvmField
