@@ -69,6 +69,11 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
     final Project project = event.getData(CommonDataKeys.PROJECT);
