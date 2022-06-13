@@ -205,7 +205,12 @@ public class LightMethod extends LightElement implements PsiMethod {
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    myMethod.accept(visitor);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitMethod(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
